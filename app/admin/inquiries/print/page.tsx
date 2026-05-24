@@ -37,11 +37,9 @@ export default async function InquiryPrintPage({ searchParams }: { searchParams:
           <div>
             <p className="text-sm uppercase tracking-[0.25em] text-stone-500">Golara admin</p>
             <h1 className="mt-2 text-4xl font-semibold">Printable inquiry list</h1>
+            <p className="mt-2 text-sm text-stone-600">Use your browser print command to print or save this page as PDF.</p>
           </div>
-          <div className="flex gap-2">
-            <Link href="/admin" className="rounded-full border px-5 py-2 font-semibold">Back to admin</Link>
-            <button className="rounded-full bg-stone-950 px-5 py-2 font-semibold text-white" onClick={undefined}>Use browser print</button>
-          </div>
+          <Link href="/admin" className="rounded-full border px-5 py-2 font-semibold">Back to admin</Link>
         </div>
 
         <div className="mb-6 border-b pb-4">
