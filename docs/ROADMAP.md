@@ -233,9 +233,17 @@ Status: implemented foundation.
 - Allow staff-or-owner role for inquiry status and follow-up writes.
 - Hide audit logs from signed-out admin preview mode.
 
+## Phase 3.22 — Cloudinary media storage provider
+
+Status: implemented foundation.
+
+- Add dependency-free Cloudinary unsigned upload support behind the media storage provider seam.
+- Support `MEDIA_STORAGE_PROVIDER="cloudinary"` with `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_UPLOAD_PRESET`, and optional `CLOUDINARY_UPLOAD_FOLDER`.
+- Keep local storage as the default fallback provider.
+
 Remaining before production:
 - Replace password-only auth with account/provider auth.
-- Implement a real object storage provider such as S3, Cloudinary, or Supabase Storage.
+- Decide whether S3 or Supabase Storage should also be supported beyond Cloudinary.
 
 ## Phase 4 — Production ecommerce
 
