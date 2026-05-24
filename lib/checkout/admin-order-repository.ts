@@ -55,3 +55,18 @@ export async function listAdminCheckoutOrders(limit = 12): Promise<CheckoutOrder
 
   return orders.map(mapOrderSummary);
 }
+
+export async function getAdminCheckoutOrder(orderId: string) {
+  if (!hasDatabase()) return null;
+
+  return prisma.checkoutOrder.findUnique({
+    where: { id: orderId },
+    include: {
+      customer: true,
+      address: true,
+      items: { orderBy: { createdAt: 'asc' } },
+      paymentAttempts: { orderBy: { createdAt: 'desc' } },
+      timelineEvents: { orderBy: { createdAt: 'desc' } }
+    }
+  });
+}
