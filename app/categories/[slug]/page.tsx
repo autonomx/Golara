@@ -1,11 +1,31 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ProductCard } from '@/components/ProductCard';
 import { SiteHeader } from '@/components/SiteHeader';
 import { getCategoryBySlug, listCategories, listProductsByCategorySlug } from '@/lib/cms/catalog-repository';
+import { buildPageMetadata } from '@/lib/site-metadata';
 
 export async function generateStaticParams() {
   const categories = await listCategories();
   return categories.map((category) => ({ slug: category.slug }));
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const category = await getCategoryBySlug(slug);
+  if (!category) {
+    return buildPageMetadata({
+      title: 'Collection not found | Golara',
+      description: 'This Golara collection is no longer available.',
+      path: `/categories/${slug}`
+    });
+  }
+
+  return buildPageMetadata({
+    title: `${category.title} | Golara`,
+    description: category.description,
+    path: `/categories/${category.slug}`
+  });
 }
 
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
