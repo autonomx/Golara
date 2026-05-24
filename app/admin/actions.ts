@@ -2,9 +2,12 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { assertAdminAuthenticated } from '@/lib/admin-auth';
 import { prisma, hasDatabase } from '@/lib/prisma';
 
-function ensureDatabaseConfigured() {
+async function ensureCanWriteCms() {
+  await assertAdminAuthenticated();
+
   if (!hasDatabase()) {
     throw new Error('DATABASE_URL is not configured. Add a PostgreSQL connection before using admin write actions.');
   }
@@ -55,7 +58,7 @@ function revalidateCatalog() {
 }
 
 export async function createCategoryAction(formData: FormData) {
-  ensureDatabaseConfigured();
+  await ensureCanWriteCms();
 
   const title = requiredString(formData, 'title');
   const slug = stringField(formData, 'slug') || slugify(title);
@@ -76,7 +79,7 @@ export async function createCategoryAction(formData: FormData) {
 }
 
 export async function updateCategoryAction(categoryId: string, formData: FormData) {
-  ensureDatabaseConfigured();
+  await ensureCanWriteCms();
   if (!categoryId) throw new Error('categoryId is required');
 
   const title = requiredString(formData, 'title');
@@ -99,7 +102,7 @@ export async function updateCategoryAction(categoryId: string, formData: FormDat
 }
 
 export async function createProductAction(formData: FormData) {
-  ensureDatabaseConfigured();
+  await ensureCanWriteCms();
 
   const title = requiredString(formData, 'title');
   const slug = stringField(formData, 'slug') || slugify(title);
@@ -125,7 +128,7 @@ export async function createProductAction(formData: FormData) {
 }
 
 export async function updateProductAction(productId: string, formData: FormData) {
-  ensureDatabaseConfigured();
+  await ensureCanWriteCms();
   if (!productId) throw new Error('productId is required');
 
   const title = requiredString(formData, 'title');
@@ -153,7 +156,7 @@ export async function updateProductAction(productId: string, formData: FormData)
 }
 
 export async function updateHomepageAction(formData: FormData) {
-  ensureDatabaseConfigured();
+  await ensureCanWriteCms();
 
   const title = requiredString(formData, 'title');
   const eyebrow = requiredString(formData, 'eyebrow');

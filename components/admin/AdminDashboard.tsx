@@ -1,4 +1,5 @@
 import type { Category, HomepageContent, Product } from '@/lib/catalog';
+import { logoutAction } from '@/app/admin/logout/actions';
 import {
   createCategoryAction,
   createProductAction,
@@ -12,6 +13,7 @@ type AdminDashboardProps = {
   products: Product[];
   homepage: HomepageContent;
   databaseReady: boolean;
+  authenticated: boolean;
 };
 
 function Field({
@@ -47,17 +49,7 @@ function Field({
   );
 }
 
-function TextArea({
-  label,
-  name,
-  defaultValue,
-  disabled = false
-}: {
-  label: string;
-  name: string;
-  defaultValue?: string;
-  disabled?: boolean;
-}) {
+function TextArea({ label, name, defaultValue, disabled = false }: { label: string; name: string; defaultValue?: string; disabled?: boolean }) {
   return (
     <label className="grid gap-2 text-sm font-semibold text-rosewood">
       {label}
@@ -72,17 +64,7 @@ function TextArea({
   );
 }
 
-function Toggle({
-  label,
-  name,
-  defaultChecked = true,
-  disabled = false
-}: {
-  label: string;
-  name: string;
-  defaultChecked?: boolean;
-  disabled?: boolean;
-}) {
+function Toggle({ label, name, defaultChecked = true, disabled = false }: { label: string; name: string; defaultChecked?: boolean; disabled?: boolean }) {
   return (
     <label className="flex items-center gap-3 rounded-2xl border border-rosewood/10 bg-white px-4 py-3 text-sm font-semibold text-rosewood">
       <input name={name} type="checkbox" defaultChecked={defaultChecked} disabled={disabled} />
@@ -107,21 +89,32 @@ function categoryDefaultValue(product: Product, categories: Category[]) {
   return product.categoryId ?? categories.find((category) => category.slug === product.category)?.id ?? '';
 }
 
-export function AdminDashboard({ categories, products, homepage, databaseReady }: AdminDashboardProps) {
-  const disabled = !databaseReady;
+export function AdminDashboard({ categories, products, homepage, databaseReady, authenticated }: AdminDashboardProps) {
+  const disabled = !databaseReady || !authenticated;
 
   return (
     <div className="space-y-12">
-      <section className={`rounded-[2rem] border p-6 ${databaseReady ? 'border-olive/20 bg-white' : 'border-amber-300 bg-amber-50'}`}>
-        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">CMS status</p>
-        <h2 className="mt-3 font-display text-3xl text-rosewood">
-          {databaseReady ? 'Database connected' : 'Seeded preview mode'}
-        </h2>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-stone-700">
-          {databaseReady
-            ? 'Admin forms are live. Changes write to Prisma, then revalidate storefront pages.'
-            : 'The storefront is reading seeded fallback content. Add DATABASE_URL, run npm run db:push and npm run db:seed, then restart the app to enable editing.'}
-        </p>
+      <section className={`rounded-[2rem] border p-6 ${databaseReady && authenticated ? 'border-olive/20 bg-white' : 'border-amber-300 bg-amber-50'}`}>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">CMS status</p>
+            <h2 className="mt-3 font-display text-3xl text-rosewood">
+              {databaseReady && authenticated ? 'Editing enabled' : databaseReady ? 'Login required' : 'Seeded preview mode'}
+            </h2>
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-stone-700">
+              {databaseReady && authenticated
+                ? 'Admin forms are live. Changes write to Prisma, then revalidate storefront pages.'
+                : databaseReady
+                  ? 'The database is connected, but CMS writes require admin authentication.'
+                  : 'The storefront is reading seeded fallback content. Add DATABASE_URL, run npm run db:push and npm run db:seed, then restart the app to enable editing.'}
+            </p>
+          </div>
+          {authenticated ? (
+            <form action={logoutAction}>
+              <button className="rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood" type="submit">Sign out</button>
+            </form>
+          ) : null}
+        </div>
       </section>
 
       <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
@@ -205,15 +198,7 @@ export function AdminDashboard({ categories, products, homepage, databaseReady }
   );
 }
 
-function ProductFields({
-  product,
-  categories,
-  disabled
-}: {
-  product?: Product;
-  categories: Category[];
-  disabled: boolean;
-}) {
+function ProductFields({ product, categories, disabled }: { product?: Product; categories: Category[]; disabled: boolean }) {
   const selectedCategory = product ? categoryDefaultValue(product, categories) : categories[0]?.id ?? '';
 
   return (

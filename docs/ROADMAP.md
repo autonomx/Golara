@@ -22,8 +22,18 @@ Status: implemented foundation.
 - Build admin forms for products, categories, and homepage sections.
 - Add slug generation, publish/unpublish controls, product badges, image URL editing, seed data, and revalidation after writes.
 
+## Phase 2.1 — Admin write protection
+
+Status: implemented foundation.
+
+- Add an environment-based admin password gate.
+- Add `/admin/login` and logout server actions.
+- Require authentication before CMS write actions.
+- Keep unauthenticated `/admin` in read-only/status mode.
+
 Remaining before production:
-- Add authentication and role checks around `/admin`.
+- Replace password-only auth with user accounts or a provider such as Auth.js, Clerk, or Supabase Auth.
+- Add role checks and audit logging.
 - Replace image URL fields with a real media upload/storage flow.
 - Add richer validation and inline form errors.
 
