@@ -1,10 +1,8 @@
 import type { Metadata } from 'next';
+import { buildPageMetadata } from '@/lib/site-metadata';
 import './globals.css';
 
-export const metadata: Metadata = {
-  title: 'Golara | Luxury Flowers & Gifts',
-  description: 'An editable luxury flower and gift storefront for bouquets, boxes, weddings, and special moments.'
-};
+export const metadata: Metadata = buildPageMetadata();
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
