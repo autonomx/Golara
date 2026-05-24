@@ -18,6 +18,11 @@ export type AdminIdentity = {
   provider: 'password';
 };
 
+const ROLE_RANK: Record<AdminRole, number> = {
+  staff: 1,
+  owner: 2
+};
+
 function configuredPassword() {
   return process.env.ADMIN_PASSWORD?.trim() ?? '';
 }
@@ -82,6 +87,17 @@ export async function assertAdminAuthenticated() {
   if (!(await isAdminAuthenticated())) {
     throw new Error('Admin authentication is required for this CMS action.');
   }
+}
+
+export async function assertAdminRole(requiredRole: AdminRole) {
+  const identity = await getAdminIdentity();
+  if (!identity.authenticated) {
+    throw new Error('Admin authentication is required for this CMS action.');
+  }
+  if (ROLE_RANK[identity.role] < ROLE_RANK[requiredRole]) {
+    throw new Error(`${requiredRole} admin role is required for this CMS action.`);
+  }
+  return identity;
 }
 
 export async function createAdminSession(password: string) {
