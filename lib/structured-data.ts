@@ -1,5 +1,5 @@
 import { createElement } from 'react';
-import type { Product } from '@/lib/catalog';
+import type { Category, Product } from '@/lib/catalog';
 import { absoluteSiteUrl, siteMetadata } from '@/lib/site-metadata';
 
 function absoluteImageUrl(image: string) {
@@ -26,6 +26,34 @@ export function buildWebSiteJsonLd() {
     url: absoluteSiteUrl('/'),
     description: siteMetadata.description
   };
+}
+
+export function buildBreadcrumbJsonLd(items: { name: string; path: string }[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: absoluteSiteUrl(item.path)
+    }))
+  };
+}
+
+export function buildCategoryBreadcrumbJsonLd(category: Category) {
+  return buildBreadcrumbJsonLd([
+    { name: siteMetadata.name, path: '/' },
+    { name: category.title, path: `/categories/${category.slug}` }
+  ]);
+}
+
+export function buildProductBreadcrumbJsonLd(product: Product, category?: Category | null) {
+  return buildBreadcrumbJsonLd([
+    { name: siteMetadata.name, path: '/' },
+    { name: category?.title || product.categoryTitle || product.category, path: `/categories/${product.category}` },
+    { name: product.title, path: `/products/${product.slug}` }
+  ]);
 }
 
 export function buildProductJsonLd(product: Product) {
