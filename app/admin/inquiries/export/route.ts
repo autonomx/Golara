@@ -16,7 +16,8 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const status = url.searchParams.get('inquiryStatus') ?? undefined;
-  const inquiries = await listInquiries(status);
+  const search = url.searchParams.get('inquirySearch') ?? undefined;
+  const inquiries = await listInquiries(status, search);
 
   const header = csvRow([
     'created_at',
@@ -50,11 +51,12 @@ export async function GET(request: Request) {
 
   const csv = [header, ...rows].join('\n');
   const fileStatus = status ? `-${status}` : '';
+  const fileSearch = search ? '-search' : '';
 
   return new NextResponse(csv, {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': `attachment; filename="golara-inquiries${fileStatus}.csv"`
+      'Content-Disposition': `attachment; filename="golara-inquiries${fileStatus}${fileSearch}.csv"`
     }
   });
 }
