@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { SiteHeader } from '@/components/SiteHeader';
 import { formatMinorUnitAmount } from '@/lib/catalog';
@@ -15,6 +16,12 @@ function formatDate(value: Date, locale?: string) {
 
 function formatDateOnly(value: Date, locale?: string) {
   return new Intl.DateTimeFormat(locale || 'en-CA', { dateStyle: 'medium' }).format(value);
+}
+
+function localeHref(token: string, locale: string, result?: string) {
+  const params = new URLSearchParams({ locale });
+  if (result) params.set('result', result);
+  return `/orders/${token}?${params.toString()}`;
 }
 
 function ResultBanner({ result, locale }: { result?: string; locale?: string }) {
@@ -43,8 +50,16 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
       <SiteHeader />
       <section className="mx-auto max-w-4xl px-5 py-20">
         <div className="rounded-[2rem] border border-rosewood/10 bg-white p-8 shadow-sm">
-          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Order status</p>
-          <h1 className="mt-3 font-display text-5xl text-rosewood">{order.orderNumber}</h1>
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Order status</p>
+              <h1 className="mt-3 font-display text-5xl text-rosewood">{order.orderNumber}</h1>
+            </div>
+            <nav aria-label="Language" className="flex gap-2 text-sm font-semibold">
+              <Link className="rounded-full border border-rosewood/15 px-4 py-2 text-rosewood" href={localeHref(token, 'en', result)}>English</Link>
+              <Link className="rounded-full border border-rosewood/15 px-4 py-2 text-rosewood" href={localeHref(token, 'fa', result)}>فارسی</Link>
+            </nav>
+          </div>
           <p className="mt-5 text-lg leading-8 text-stone-700">
             Your order is currently <strong>{orderStatusLabel(order.status, locale)}</strong>. Staff will follow up if more information is needed.
           </p>
