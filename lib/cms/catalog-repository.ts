@@ -1,5 +1,6 @@
 import 'server-only';
 
+import type { Prisma } from '@prisma/client';
 import type { Category, CustomerInquiry, HomepageContent, MediaItem, Product } from '@/lib/catalog';
 import { prisma, hasDatabase } from '@/lib/prisma';
 import { seedCategories, seedHomepageContent, seedProducts } from '@/lib/seed-data';
@@ -71,7 +72,7 @@ type DbInquiry = {
   followUps?: DbFollowUp[];
 };
 
-type InquiryWhere = Parameters<typeof prisma.customerInquiry.findMany>[0] extends { where?: infer W } ? W : never;
+type InquiryWhere = Prisma.CustomerInquiryWhereInput;
 
 function bySortThenTitle(a: Category, b: Category) {
   return (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.title.localeCompare(b.title);
