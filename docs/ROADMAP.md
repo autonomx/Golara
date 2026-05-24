@@ -122,6 +122,16 @@ Status: implemented foundation.
 - Thread inquiry page through the thin admin route.
 - Add previous/next controls to the focused inquiry board UI.
 
+## Phase 3.9 — Inquiry search
+
+Status: implemented foundation.
+
+- Add inquiry search support in the repository.
+- Search customer fields, messages, notes, and product title.
+- Thread inquiry search through the thin admin route.
+- Add a compact search form to the focused inquiry board UI.
+- Preserve search across status filters and pagination.
+
 Remaining before production:
 - Replace log-only notifications with email/WhatsApp providers.
 - Add richer validation and inline form errors.
