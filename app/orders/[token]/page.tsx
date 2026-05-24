@@ -5,6 +5,26 @@ import { getPublicOrderByToken } from '@/lib/checkout/public-order-repository';
 
 export const dynamic = 'force-dynamic';
 
+const orderStatusLabels: Record<string, string> = {
+  draft: 'Received by the shop',
+  pending_payment: 'Waiting for payment or staff confirmation',
+  paid: 'Payment received',
+  preparing: 'Being prepared',
+  out_for_delivery: 'Out for delivery',
+  fulfilled: 'Completed',
+  cancelled: 'Cancelled'
+};
+
+const fulfillmentStatusLabels: Record<string, string> = {
+  not_scheduled: 'Not scheduled yet',
+  scheduled: 'Scheduled',
+  preparing: 'Being prepared',
+  ready_for_delivery: 'Ready for delivery',
+  out_for_delivery: 'Out for delivery',
+  delivered: 'Delivered',
+  issue: 'Needs staff review'
+};
+
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat('en-CA', {
     dateStyle: 'medium',
@@ -12,8 +32,12 @@ function formatDate(value: Date) {
   }).format(value);
 }
 
-function fulfillmentLabel(status: string) {
-  return status.replace(/_/g, ' ');
+function formatDateOnly(value: Date) {
+  return new Intl.DateTimeFormat('en-CA', { dateStyle: 'medium' }).format(value);
+}
+
+function labelFor(map: Record<string, string>, value: string) {
+  return map[value] || value.replace(/_/g, ' ');
 }
 
 export default async function PublicOrderStatusPage({ params }: { params: Promise<{ token: string }> }) {
@@ -30,7 +54,7 @@ export default async function PublicOrderStatusPage({ params }: { params: Promis
           <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Order status</p>
           <h1 className="mt-3 font-display text-5xl text-rosewood">{order.orderNumber}</h1>
           <p className="mt-5 text-lg leading-8 text-stone-700">
-            Your order draft is currently <strong>{order.status}</strong>. Staff will follow up if more information is needed.
+            Your order is currently <strong>{labelFor(orderStatusLabels, order.status)}</strong>. Staff will follow up if more information is needed.
           </p>
 
           <div className="mt-8 grid gap-4 md:grid-cols-4">
@@ -39,18 +63,28 @@ export default async function PublicOrderStatusPage({ params }: { params: Promis
               <p className="mt-2 font-display text-3xl text-rosewood">{formatMinorUnitAmount(order.totalCents, order.currency)}</p>
             </div>
             <div className="rounded-3xl border border-rosewood/10 bg-cream p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rosewood/60">Mode</p>
-              <p className="mt-2 font-display text-3xl text-rosewood">{order.checkoutMode}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rosewood/60">Order mode</p>
+              <p className="mt-2 text-sm font-semibold capitalize text-rosewood">{labelFor({}, order.checkoutMode)}</p>
             </div>
             <div className="rounded-3xl border border-rosewood/10 bg-cream p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rosewood/60">Fulfillment</p>
-              <p className="mt-2 text-sm font-semibold capitalize text-rosewood">{fulfillmentLabel(order.fulfillmentStatus)}</p>
+              <p className="mt-2 text-sm font-semibold text-rosewood">{labelFor(fulfillmentStatusLabels, order.fulfillmentStatus)}</p>
             </div>
             <div className="rounded-3xl border border-rosewood/10 bg-cream p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rosewood/60">Created</p>
               <p className="mt-2 text-sm font-semibold text-rosewood">{formatDate(order.createdAt)}</p>
             </div>
           </div>
+
+          {(order.deliveryDate || order.deliveryWindow) ? (
+            <section className="mt-8 rounded-3xl border border-rosewood/10 bg-cream p-5">
+              <h2 className="font-display text-3xl text-rosewood">Delivery timing</h2>
+              <div className="mt-4 grid gap-3 text-sm text-stone-700 md:grid-cols-2">
+                <p><strong>Date:</strong> {order.deliveryDate ? formatDateOnly(order.deliveryDate) : 'Not set yet'}</p>
+                <p><strong>Window:</strong> {order.deliveryWindow || 'Not set yet'}</p>
+              </div>
+            </section>
+          ) : null}
 
           <section className="mt-8 rounded-3xl border border-rosewood/10 bg-cream p-5">
             <h2 className="font-display text-3xl text-rosewood">Items</h2>
@@ -83,7 +117,7 @@ export default async function PublicOrderStatusPage({ params }: { params: Promis
           <p className="mt-6 text-sm leading-6 text-stone-600">
             For privacy, this page does not show address, phone, courier details, customer notes, or staff-only notes. Contact the shop with your order reference for detailed changes.
           </p>
-          {latestAttempt ? <p className="mt-2 text-xs text-stone-500">Latest payment status: {latestAttempt.provider} · {latestAttempt.status}</p> : null}
+          {latestAttempt ? <p className="mt-2 text-xs text-stone-500">Latest payment status: {labelFor({}, latestAttempt.provider)} · {labelFor({}, latestAttempt.status)}</p> : null}
         </div>
       </section>
     </main>
