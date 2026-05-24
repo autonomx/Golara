@@ -1,15 +1,11 @@
 'use server';
 
-import { mkdir, writeFile } from 'node:fs/promises';
-import path from 'node:path';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { assertAdminAuthenticated } from '@/lib/admin-auth';
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
+import { normalizeImageUrl, storeLocalMediaUpload } from '@/lib/media/media-storage';
 import { prisma, hasDatabase } from '@/lib/prisma';
-
-const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
-const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 
 async function ensureCanWriteCms() {
   await assertAdminAuthenticated();
@@ -61,25 +57,6 @@ function slugify(value: string) {
     .replace(/^-+|-+$/g, '');
 }
 
-function normalizeImageUrl(value: string) {
-  if (value.startsWith('/uploads/')) return value;
-
-  const url = new URL(value);
-  if (!['http:', 'https:'].includes(url.protocol)) {
-    throw new Error('Image URL must start with http, https, or /uploads/.');
-  }
-  return url.toString();
-}
-
-function uploadedFileExtension(file: File) {
-  const fromName = file.name.split('.').pop()?.toLowerCase();
-  if (fromName && /^[a-z0-9]+$/.test(fromName)) return fromName;
-  if (file.type === 'image/png') return 'png';
-  if (file.type === 'image/webp') return 'webp';
-  if (file.type === 'image/gif') return 'gif';
-  return 'jpg';
-}
-
 function resolveImageUrl(formData: FormData) {
   const selectedMediaUrl = stringField(formData, 'selectedMediaUrl');
   const imageUrl = stringField(formData, 'imageUrl');
@@ -127,33 +104,17 @@ export async function uploadMediaAction(formData: FormData) {
   if (!(file instanceof File) || file.size === 0) {
     throw new Error('Choose an image file to upload.');
   }
-  if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
-    throw new Error('Upload must be a JPEG, PNG, WebP, or GIF image.');
-  }
-  if (file.size > MAX_UPLOAD_BYTES) {
-    throw new Error('Image upload must be 4 MB or smaller.');
-  }
 
   const alt = stringField(formData, 'alt') || file.name;
-  const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-  await mkdir(uploadDir, { recursive: true });
-
-  const extension = uploadedFileExtension(file);
-  const safeBaseName = slugify(file.name.replace(/\.[^.]+$/, '')) || 'image';
-  const fileName = `${Date.now()}-${safeBaseName}.${extension}`;
-  const diskPath = path.join(uploadDir, fileName);
-  const bytes = Buffer.from(await file.arrayBuffer());
-  await writeFile(diskPath, bytes);
-
-  const url = `/uploads/${fileName}`;
-  const media = await prisma.media.create({ data: { url, alt } });
+  const storedFile = await storeLocalMediaUpload(file);
+  const media = await prisma.media.create({ data: { url: storedFile.url, alt } });
 
   await recordAdminAuditLog({
     action: 'media.upload',
     entity: 'media',
     entityId: media.id,
     summary: `Uploaded media: ${alt}`,
-    metadata: { url, size: file.size, type: file.type }
+    metadata: { url: storedFile.url, size: storedFile.size, type: storedFile.type }
   });
 
   revalidateCatalog();
