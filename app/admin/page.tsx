@@ -22,13 +22,18 @@ function optionalParam(value?: string) {
   return normalized || undefined;
 }
 
-export default async function AdminPage({ searchParams }: { searchParams: Promise<{ status?: string; message?: string; inquiryStatus?: string; inquiryPage?: string; inquirySearch?: string; auditAction?: string; auditEntity?: string; auditActor?: string; auditSearch?: string }> }) {
-  const { status, message, inquiryStatus, inquiryPage, inquirySearch, auditAction, auditEntity, auditActor, auditSearch } = await searchParams;
+export default async function AdminPage({ searchParams }: { searchParams: Promise<{ status?: string; message?: string; inquiryStatus?: string; inquiryPage?: string; inquirySearch?: string; auditAction?: string; auditEntity?: string; auditActor?: string; auditSearch?: string; orderStatus?: string; orderPaymentStatus?: string; orderSearch?: string }> }) {
+  const { status, message, inquiryStatus, inquiryPage, inquirySearch, auditAction, auditEntity, auditActor, auditSearch, orderStatus, orderPaymentStatus, orderSearch } = await searchParams;
   const auditFilters = {
     action: optionalParam(auditAction),
     entity: optionalParam(auditEntity),
     actor: optionalParam(auditActor),
     search: optionalParam(auditSearch)
+  };
+  const orderFilters = {
+    status: optionalParam(orderStatus),
+    paymentStatus: optionalParam(orderPaymentStatus),
+    search: optionalParam(orderSearch)
   };
   const authenticated = await isAdminAuthenticated();
   const [categories, products, homepage, media, inquiryPageData, inquiryCounts, auditLogs, orders] = await Promise.all([
@@ -39,7 +44,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     listInquiryPage(inquiryStatus, parsePage(inquiryPage), undefined, inquirySearch),
     listInquiryStatusCounts(inquirySearch),
     authenticated ? listAdminAuditLogs(auditFilters) : Promise.resolve([]),
-    authenticated ? listAdminCheckoutOrders() : Promise.resolve([])
+    authenticated ? listAdminCheckoutOrders(orderFilters) : Promise.resolve([])
   ]);
 
   const authConfigured = isAdminAuthConfigured();
@@ -68,7 +73,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         <div className="mt-10 grid gap-12">
           <AdminActionBanner status={status} message={message} />
           {authenticated ? <AdminAuditLogPanel logs={auditLogs} filters={auditFilters} /> : null}
-          {authenticated ? <AdminOrderPanel orders={orders} /> : null}
+          {authenticated ? <AdminOrderPanel orders={orders} filters={orderFilters} /> : null}
           <InquiryBoard inquiryPage={inquiryPageData} counts={inquiryCounts} activeStatus={inquiryStatus} search={inquirySearch} />
           <AdminDashboard
             categories={categories}

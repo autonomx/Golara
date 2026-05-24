@@ -67,6 +67,7 @@ export type CheckoutOrderSummary = {
   customerName?: string;
   itemCount: number;
   latestPaymentStatus?: string;
+  latestTimelineTitle?: string;
   createdAt: Date;
 };
 
