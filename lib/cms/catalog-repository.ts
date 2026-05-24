@@ -6,10 +6,19 @@ import { seedCategories, seedHomepageContent, seedProducts } from '@/lib/seed-da
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1200&q=80';
 const INQUIRY_STATUSES = ['new', 'contacted', 'confirmed', 'fulfilled', 'cancelled'];
+const DEFAULT_INQUIRY_PAGE_SIZE = 10;
 
 export type InquiryStatusCount = {
   status: string;
   count: number;
+};
+
+export type InquiryPage = {
+  inquiries: CustomerInquiry[];
+  total: number;
+  page: number;
+  pageSize: number;
+  pageCount: number;
 };
 
 type DbCategory = {
@@ -72,6 +81,21 @@ function isKnownInquiryStatus(status?: string) {
 
 function emptyInquiryCounts(): InquiryStatusCount[] {
   return INQUIRY_STATUSES.map((status) => ({ status, count: 0 }));
+}
+
+function normalizePage(page?: number) {
+  if (!page || !Number.isFinite(page)) return 1;
+  return Math.max(1, Math.floor(page));
+}
+
+function makeInquiryPage(inquiries: CustomerInquiry[], total: number, page: number, pageSize: number): InquiryPage {
+  return {
+    inquiries,
+    total,
+    page,
+    pageSize,
+    pageCount: Math.max(1, Math.ceil(total / pageSize))
+  };
 }
 
 function mapCategory(category: DbCategory): Category {
@@ -189,6 +213,33 @@ export async function listInquiries(status?: string): Promise<CustomerInquiry[]>
       return inquiries.map(mapInquiry);
     },
     () => []
+  );
+}
+
+export async function listInquiryPage(status?: string, page?: number, pageSize = DEFAULT_INQUIRY_PAGE_SIZE): Promise<InquiryPage> {
+  const normalizedPage = normalizePage(page);
+  const normalizedPageSize = Math.max(1, Math.min(50, Math.floor(pageSize)));
+
+  return readWithFallback(
+    async () => {
+      const where = isKnownInquiryStatus(status) ? { status } : undefined;
+      const [total, inquiries] = await Promise.all([
+        prisma.customerInquiry.count({ where }),
+        prisma.customerInquiry.findMany({
+          where,
+          include: {
+            product: { select: { title: true } },
+            followUps: { orderBy: { createdAt: 'desc' } }
+          },
+          orderBy: { createdAt: 'desc' },
+          skip: (normalizedPage - 1) * normalizedPageSize,
+          take: normalizedPageSize
+        })
+      ]);
+
+      return makeInquiryPage(inquiries.map(mapInquiry), total, normalizedPage, normalizedPageSize);
+    },
+    () => makeInquiryPage([], 0, normalizedPage, normalizedPageSize)
   );
 }
 
