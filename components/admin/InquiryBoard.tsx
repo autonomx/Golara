@@ -1,7 +1,8 @@
-import { saveInquiryAction } from '@/app/admin/inquiry-actions';
+import { addInquiryFollowUpAction, saveInquiryAction } from '@/app/admin/inquiry-actions';
 import type { CustomerInquiry } from '@/lib/catalog';
 
 const statuses = ['new', 'contacted', 'confirmed', 'fulfilled', 'cancelled'];
+const channels = ['internal', 'phone', 'email', 'whatsapp'];
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat('en-CA', {
@@ -22,7 +23,7 @@ export function InquiryBoard({ inquiries }: { inquiries: CustomerInquiry[] }) {
         <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Customer requests</p>
         <h2 className="mt-2 font-display text-4xl text-rosewood">Inquiry inbox</h2>
         <p className="mt-3 text-sm leading-6 text-stone-600">
-          Review incoming product requests, update their status, and keep internal staff notes.
+          Review incoming product requests, update their status, and keep a follow-up timeline.
         </p>
       </div>
 
@@ -53,23 +54,62 @@ export function InquiryBoard({ inquiries }: { inquiries: CustomerInquiry[] }) {
                 <p className="mt-3 text-sm leading-6 text-stone-700"><strong>Delivery notes:</strong> {inquiry.deliveryNotes}</p>
               ) : null}
               <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-stone-700">{inquiry.message}</p>
-              <form action={saveInquiryAction.bind(null, inquiry.id)} className="mt-5 grid gap-3 rounded-2xl border border-rosewood/10 bg-white p-4">
-                <label className="grid gap-2 text-sm font-semibold text-rosewood">
-                  Status
-                  <select className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood" name="status" defaultValue={inquiry.status}>
-                    {statuses.map((status) => (
-                      <option key={status} value={status}>{status}</option>
-                    ))}
-                  </select>
-                </label>
-                <label className="grid gap-2 text-sm font-semibold text-rosewood">
-                  Staff notes
-                  <textarea className="min-h-24 rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood" name="staffNotes" defaultValue={inquiry.staffNotes ?? ''} />
-                </label>
-                <button className="rounded-full bg-rosewood px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-rosewood/20" type="submit">
-                  Save inquiry
-                </button>
-              </form>
+
+              <div className="mt-5 grid gap-4 lg:grid-cols-2">
+                <form action={saveInquiryAction.bind(null, inquiry.id)} className="grid gap-3 rounded-2xl border border-rosewood/10 bg-white p-4">
+                  <label className="grid gap-2 text-sm font-semibold text-rosewood">
+                    Status
+                    <select className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood" name="status" defaultValue={inquiry.status}>
+                      {statuses.map((status) => (
+                        <option key={status} value={status}>{status}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="grid gap-2 text-sm font-semibold text-rosewood">
+                    Staff notes
+                    <textarea className="min-h-24 rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood" name="staffNotes" defaultValue={inquiry.staffNotes ?? ''} />
+                  </label>
+                  <button className="rounded-full bg-rosewood px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-rosewood/20" type="submit">
+                    Save inquiry
+                  </button>
+                </form>
+
+                <div className="rounded-2xl border border-rosewood/10 bg-white p-4">
+                  <h4 className="font-display text-2xl text-rosewood">Follow-up history</h4>
+                  <div className="mt-3 grid gap-3">
+                    {(inquiry.followUps ?? []).length === 0 ? (
+                      <p className="text-sm text-stone-600">No follow-ups recorded yet.</p>
+                    ) : (
+                      inquiry.followUps?.map((followUp) => (
+                        <div key={followUp.id} className="rounded-2xl bg-cream p-3 text-sm text-stone-700">
+                          <div className="flex flex-wrap items-center justify-between gap-2 text-xs uppercase tracking-[0.16em] text-rosewood/50">
+                            <span>{followUp.channel}</span>
+                            <span>{formatDate(followUp.createdAt)}</span>
+                          </div>
+                          <p className="mt-2 whitespace-pre-wrap leading-6">{followUp.note}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <form action={addInquiryFollowUpAction.bind(null, inquiry.id)} className="mt-4 grid gap-3">
+                    <label className="grid gap-2 text-sm font-semibold text-rosewood">
+                      Channel
+                      <select className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood" name="channel" defaultValue="internal">
+                        {channels.map((channel) => (
+                          <option key={channel} value={channel}>{channel}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="grid gap-2 text-sm font-semibold text-rosewood">
+                      Follow-up note
+                      <textarea className="min-h-20 rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood" name="note" required minLength={2} />
+                    </label>
+                    <button className="rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood" type="submit">
+                      Add follow-up
+                    </button>
+                  </form>
+                </div>
+              </div>
             </article>
           ))}
         </div>

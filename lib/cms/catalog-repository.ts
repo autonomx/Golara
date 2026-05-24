@@ -33,6 +33,13 @@ type DbProduct = {
   images?: { url: string; alt: string }[];
 };
 
+type DbFollowUp = {
+  id: string;
+  note: string;
+  channel: string;
+  createdAt: Date;
+};
+
 type DbInquiry = {
   id: string;
   name: string | null;
@@ -46,6 +53,7 @@ type DbInquiry = {
   status: string;
   createdAt: Date;
   product?: { title: string } | null;
+  followUps?: DbFollowUp[];
 };
 
 function bySortThenTitle(a: Category, b: Category) {
@@ -97,6 +105,12 @@ function mapInquiry(inquiry: DbInquiry): CustomerInquiry {
     deliveryDate: inquiry.deliveryDate ?? undefined,
     deliveryNotes: inquiry.deliveryNotes ?? undefined,
     staffNotes: inquiry.staffNotes ?? undefined,
+    followUps: inquiry.followUps?.map((followUp) => ({
+      id: followUp.id,
+      note: followUp.note,
+      channel: followUp.channel,
+      createdAt: followUp.createdAt
+    })),
     status: inquiry.status,
     createdAt: inquiry.createdAt
   };
@@ -136,7 +150,10 @@ export async function listInquiries(): Promise<CustomerInquiry[]> {
   return readWithFallback(
     async () => {
       const inquiries = await prisma.customerInquiry.findMany({
-        include: { product: { select: { title: true } } },
+        include: {
+          product: { select: { title: true } },
+          followUps: { orderBy: { createdAt: 'desc' } }
+        },
         orderBy: { createdAt: 'desc' }
       });
 

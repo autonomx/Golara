@@ -79,8 +79,16 @@ Status: implemented foundation.
 - Add user-facing validation messages for name, phone, email, and message length.
 - Add matching native form hints such as minLength and inputMode.
 
+## Phase 3.4 — Inquiry follow-up history
+
+Status: implemented foundation.
+
+- Add a separate follow-up history model for inquiries.
+- Load follow-up timeline data in the inquiry repository.
+- Add append-only follow-up notes with channel labels.
+- Render follow-up history inside the focused inquiry board component.
+
 Remaining before production:
-- Add customer follow-up history.
 - Replace log-only notifications with email/WhatsApp providers.
 - Add richer validation and inline form errors.
 - Replace password-only auth with user accounts or a provider such as Auth.js, Clerk, or Supabase Auth.

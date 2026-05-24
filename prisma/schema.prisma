@@ -68,20 +68,32 @@ model HomepageSection {
 }
 
 model CustomerInquiry {
-  id            String   @id @default(cuid())
+  id            String                    @id @default(cuid())
   name          String?
   email         String?
   phone         String?
   message       String
   productId     String?
-  product       Product? @relation(fields: [productId], references: [id])
+  product       Product?                  @relation(fields: [productId], references: [id])
   deliveryDate  DateTime?
   deliveryNotes String?
   staffNotes    String?
-  status        String   @default("new")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  status        String                    @default("new")
+  followUps     CustomerInquiryFollowUp[]
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
 
   @@index([status, createdAt])
   @@index([productId])
+}
+
+model CustomerInquiryFollowUp {
+  id        String          @id @default(cuid())
+  inquiryId String
+  inquiry   CustomerInquiry @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  note      String
+  channel   String          @default("internal")
+  createdAt DateTime        @default(now())
+
+  @@index([inquiryId, createdAt])
 }
