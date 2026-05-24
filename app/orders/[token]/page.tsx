@@ -25,6 +25,24 @@ const fulfillmentStatusLabels: Record<string, string> = {
   issue: 'Needs staff review'
 };
 
+const resultMessages: Record<string, { title: string; body: string; tone: 'success' | 'warning' }> = {
+  paid: {
+    title: 'Payment result received',
+    body: 'Thank you. Your order is now marked as paid while staff continue preparing the order.',
+    tone: 'success'
+  },
+  failed: {
+    title: 'Payment was not completed',
+    body: 'The shop still has your order draft. Staff can help you complete the next step.',
+    tone: 'warning'
+  },
+  cancelled: {
+    title: 'Payment was cancelled',
+    body: 'Your order draft remains available for staff follow-up if you still want to continue.',
+    tone: 'warning'
+  }
+};
+
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat('en-CA', {
     dateStyle: 'medium',
@@ -40,8 +58,23 @@ function labelFor(map: Record<string, string>, value: string) {
   return map[value] || value.replace(/_/g, ' ');
 }
 
-export default async function PublicOrderStatusPage({ params }: { params: Promise<{ token: string }> }) {
-  const { token } = await params;
+function ResultBanner({ result }: { result?: string }) {
+  if (!result) return null;
+  const message = resultMessages[result];
+  if (!message) return null;
+  const className = message.tone === 'success'
+    ? 'mt-6 rounded-3xl border border-olive/20 bg-cream p-5 text-olive'
+    : 'mt-6 rounded-3xl border border-amber-300 bg-amber-50 p-5 text-amber-900';
+  return (
+    <div className={className}>
+      <p className="text-sm font-semibold uppercase tracking-[0.2em]">{message.title}</p>
+      <p className="mt-2 text-sm leading-6">{message.body}</p>
+    </div>
+  );
+}
+
+export default async function PublicOrderStatusPage({ params, searchParams }: { params: Promise<{ token: string }>; searchParams: Promise<{ result?: string }> }) {
+  const [{ token }, { result }] = await Promise.all([params, searchParams]);
   const order = await getPublicOrderByToken(token);
   if (!order) notFound();
   const latestAttempt = order.paymentAttempts[0];
@@ -56,6 +89,7 @@ export default async function PublicOrderStatusPage({ params }: { params: Promis
           <p className="mt-5 text-lg leading-8 text-stone-700">
             Your order is currently <strong>{labelFor(orderStatusLabels, order.status)}</strong>. Staff will follow up if more information is needed.
           </p>
+          <ResultBanner result={result} />
 
           <div className="mt-8 grid gap-4 md:grid-cols-4">
             <div className="rounded-3xl border border-rosewood/10 bg-cream p-5">
