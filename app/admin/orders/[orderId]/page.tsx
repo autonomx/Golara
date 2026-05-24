@@ -30,9 +30,14 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
             <h1 className="mt-3 font-display text-5xl text-rosewood">{order.orderNumber}</h1>
             <p className="mt-4 text-stone-600">Created {formatDate(order.createdAt)} · {order.checkoutMode} · {order.status}</p>
           </div>
-          <Link href="/admin#orders" className="rounded-full border border-rosewood/15 bg-white px-5 py-3 text-sm font-semibold text-rosewood">
-            Back to orders
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link href={`/admin/orders/${order.id}/packing-slip`} className="rounded-full bg-rosewood px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20">
+              Packing slip
+            </Link>
+            <Link href="/admin#orders" className="rounded-full border border-rosewood/15 bg-white px-5 py-3 text-sm font-semibold text-rosewood">
+              Back to orders
+            </Link>
+          </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
