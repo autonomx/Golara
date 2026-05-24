@@ -24,7 +24,15 @@ function localeHref(token: string, locale: string, result?: string) {
   return `/orders/${token}?${params.toString()}`;
 }
 
-function ResultBanner({ result, locale }: { result?: string; locale?: string }) {
+function eyebrowClass(isFa: boolean) {
+  return isFa ? 'text-sm font-semibold text-olive' : 'text-sm font-semibold uppercase tracking-[0.25em] text-olive';
+}
+
+function smallLabelClass(isFa: boolean) {
+  return isFa ? 'text-xs font-semibold text-rosewood/60' : 'text-xs font-semibold uppercase tracking-[0.2em] text-rosewood/60';
+}
+
+function ResultBanner({ result, locale, isFa }: { result?: string; locale?: string; isFa: boolean }) {
   const message = resultMessageFor(result, locale);
   if (!message) return null;
   const className = message.tone === 'success'
@@ -32,7 +40,7 @@ function ResultBanner({ result, locale }: { result?: string; locale?: string }) 
     : 'mt-6 rounded-3xl border border-amber-300 bg-amber-50 p-5 text-amber-900';
   return (
     <div className={className}>
-      <p className="text-sm font-semibold uppercase tracking-[0.2em]">{message.title}</p>
+      <p className={isFa ? 'text-sm font-semibold' : 'text-sm font-semibold uppercase tracking-[0.2em]'}>{message.title}</p>
       <p className="mt-2 text-sm leading-6">{message.body}</p>
     </div>
   );
@@ -44,7 +52,7 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
   if (!order) notFound();
   const latestAttempt = order.paymentAttempts[0];
   const copy = publicOrderCopyFor(locale);
-  const isFa = locale?.toLowerCase().startsWith('fa');
+  const isFa = locale?.toLowerCase().startsWith('fa') ?? false;
 
   return (
     <main dir={isFa ? 'rtl' : 'ltr'}>
@@ -53,10 +61,10 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
         <div className="rounded-[2rem] border border-rosewood/10 bg-white p-8 shadow-sm">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">{copy.eyebrow}</p>
-              <h1 className="mt-3 font-display text-5xl text-rosewood">{order.orderNumber}</h1>
+              <p className={eyebrowClass(isFa)}>{copy.eyebrow}</p>
+              <h1 className="mt-3 font-display text-5xl text-rosewood" dir="ltr">{order.orderNumber}</h1>
             </div>
-            <nav aria-label="Language" className="flex gap-2 text-sm font-semibold">
+            <nav aria-label="Language" className="flex flex-row gap-2 text-sm font-semibold" dir="ltr">
               <Link className="rounded-full border border-rosewood/15 px-4 py-2 text-rosewood" href={localeHref(token, 'en', result)}>English</Link>
               <Link className="rounded-full border border-rosewood/15 px-4 py-2 text-rosewood" href={localeHref(token, 'fa', result)}>فارسی</Link>
             </nav>
@@ -64,23 +72,23 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
           <p className="mt-5 text-lg leading-8 text-stone-700">
             {copy.introPrefix} <strong>{orderStatusLabel(order.status, locale)}</strong>. {copy.introSuffix}
           </p>
-          <ResultBanner result={result} locale={locale} />
+          <ResultBanner result={result} locale={locale} isFa={isFa} />
 
           <div className="mt-8 grid gap-4 md:grid-cols-4">
             <div className="rounded-3xl border border-rosewood/10 bg-cream p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rosewood/60">{copy.total}</p>
-              <p className="mt-2 font-display text-3xl text-rosewood">{formatMinorUnitAmount(order.totalCents, order.currency)}</p>
+              <p className={smallLabelClass(isFa)}>{copy.total}</p>
+              <p className="mt-2 font-display text-3xl text-rosewood" dir="ltr">{formatMinorUnitAmount(order.totalCents, order.currency)}</p>
             </div>
             <div className="rounded-3xl border border-rosewood/10 bg-cream p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rosewood/60">{copy.orderMode}</p>
+              <p className={smallLabelClass(isFa)}>{copy.orderMode}</p>
               <p className="mt-2 text-sm font-semibold capitalize text-rosewood">{labelFor({}, order.checkoutMode)}</p>
             </div>
             <div className="rounded-3xl border border-rosewood/10 bg-cream p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rosewood/60">{copy.fulfillment}</p>
+              <p className={smallLabelClass(isFa)}>{copy.fulfillment}</p>
               <p className="mt-2 text-sm font-semibold text-rosewood">{fulfillmentStatusLabel(order.fulfillmentStatus, locale)}</p>
             </div>
             <div className="rounded-3xl border border-rosewood/10 bg-cream p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rosewood/60">{copy.created}</p>
+              <p className={smallLabelClass(isFa)}>{copy.created}</p>
               <p className="mt-2 text-sm font-semibold text-rosewood">{formatDate(order.createdAt, locale)}</p>
             </div>
           </div>
@@ -101,7 +109,7 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
               {order.items.map((item) => (
                 <div key={`${item.productTitle}-${item.quantity}`} className="flex justify-between gap-4 border-b border-rosewood/10 pb-2 last:border-0 last:pb-0">
                   <span>{item.productTitle}</span>
-                  <strong>× {item.quantity}</strong>
+                  <strong dir="ltr">× {item.quantity}</strong>
                 </div>
               ))}
             </div>
