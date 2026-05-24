@@ -42,6 +42,10 @@ function channelClass(channel: string) {
   return channelBadgeClass[channel] ?? 'border-rosewood/15 bg-white text-rosewood';
 }
 
+function countFor(counts: InquiryStatusCount[], status: string) {
+  return counts.find((item) => item.status === status)?.count ?? 0;
+}
+
 function adminParams(status?: string, search?: string, page?: number) {
   const params = new URLSearchParams();
   if (status) params.set('inquiryStatus', status);
@@ -82,6 +86,30 @@ function ReturnStateFields({ activeStatus, search, page }: { activeStatus?: stri
       {search ? <input type="hidden" name="returnInquirySearch" value={search} /> : null}
       <input type="hidden" name="returnInquiryPage" value={page} />
     </>
+  );
+}
+
+function InquirySummaryCards({ counts, activeStatus, search }: { counts: InquiryStatusCount[]; activeStatus?: string; search?: string }) {
+  const total = counts.reduce((sum, item) => sum + item.count, 0);
+  const needsContact = countFor(counts, 'new') + countFor(counts, 'contacted');
+  const confirmed = countFor(counts, 'confirmed');
+  const closed = countFor(counts, 'fulfilled') + countFor(counts, 'cancelled');
+  const cards = [
+    { label: 'Total inquiries', value: total, href: filterHref(undefined, search), active: !activeStatus },
+    { label: 'Needs attention', value: needsContact, href: filterHref('new', search), active: activeStatus === 'new' || activeStatus === 'contacted' },
+    { label: 'Confirmed', value: confirmed, href: filterHref('confirmed', search), active: activeStatus === 'confirmed' },
+    { label: 'Closed', value: closed, href: filterHref('fulfilled', search), active: activeStatus === 'fulfilled' || activeStatus === 'cancelled' }
+  ];
+
+  return (
+    <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {cards.map((card) => (
+        <Link key={card.label} href={card.href} className={`rounded-3xl border p-4 transition ${card.active ? 'border-rosewood bg-rosewood text-white shadow-lg shadow-rosewood/10' : 'border-rosewood/10 bg-cream text-rosewood hover:bg-white'}`}>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] opacity-70">{card.label}</p>
+          <p className="mt-2 font-display text-4xl">{card.value}</p>
+        </Link>
+      ))}
+    </div>
   );
 }
 
@@ -177,6 +205,7 @@ export function InquiryBoard({ inquiryPage, counts, activeStatus, search }: { in
         <p className="mt-3 text-sm leading-6 text-stone-600">
           Review incoming product requests, update their status, and keep a follow-up timeline.
         </p>
+        <InquirySummaryCards counts={counts} activeStatus={activeStatus} search={search} />
         <InquirySearchForm activeStatus={activeStatus} search={search} />
         <FilterPills counts={counts} activeStatus={activeStatus} search={search} />
       </div>
