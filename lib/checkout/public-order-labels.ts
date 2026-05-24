@@ -2,6 +2,25 @@ type LabelLocale = 'en' | 'fa';
 
 type ResultMessage = { title: string; body: string; tone: 'success' | 'warning' };
 
+type PublicOrderCopy = {
+  eyebrow: string;
+  introPrefix: string;
+  introSuffix: string;
+  total: string;
+  orderMode: string;
+  fulfillment: string;
+  created: string;
+  deliveryTiming: string;
+  date: string;
+  window: string;
+  notSetYet: string;
+  items: string;
+  progress: string;
+  noProgress: string;
+  privacy: string;
+  latestPaymentStatus: string;
+};
+
 export const orderStatusLabels: Record<string, string> = {
   draft: 'Received by the shop',
   pending_payment: 'Waiting for payment or staff confirmation',
@@ -40,6 +59,44 @@ export const fulfillmentStatusLabelsFa: Record<string, string> = {
   out_for_delivery: 'در مسیر ارسال',
   delivered: 'تحویل داده شده',
   issue: 'نیازمند بررسی فروشگاه'
+};
+
+export const publicOrderCopy: PublicOrderCopy = {
+  eyebrow: 'Order status',
+  introPrefix: 'Your order is currently',
+  introSuffix: 'Staff will follow up if more information is needed.',
+  total: 'Total',
+  orderMode: 'Order mode',
+  fulfillment: 'Fulfillment',
+  created: 'Created',
+  deliveryTiming: 'Delivery timing',
+  date: 'Date',
+  window: 'Window',
+  notSetYet: 'Not set yet',
+  items: 'Items',
+  progress: 'Progress',
+  noProgress: 'No progress updates have been posted yet.',
+  privacy: 'For privacy, this page does not show address, phone, courier details, customer notes, or staff-only notes. Contact the shop with your order reference for detailed changes.',
+  latestPaymentStatus: 'Latest payment status'
+};
+
+export const publicOrderCopyFa: PublicOrderCopy = {
+  eyebrow: 'وضعیت سفارش',
+  introPrefix: 'وضعیت فعلی سفارش شما',
+  introSuffix: 'در صورت نیاز، فروشگاه برای اطلاعات بیشتر پیگیری می‌کند.',
+  total: 'مبلغ کل',
+  orderMode: 'نوع سفارش',
+  fulfillment: 'آماده‌سازی و ارسال',
+  created: 'ثبت شده در',
+  deliveryTiming: 'زمان تحویل',
+  date: 'تاریخ',
+  window: 'بازه زمانی',
+  notSetYet: 'هنوز مشخص نشده',
+  items: 'آیتم‌ها',
+  progress: 'روند سفارش',
+  noProgress: 'هنوز به‌روزرسانی جدیدی برای این سفارش ثبت نشده است.',
+  privacy: 'برای حفظ حریم خصوصی، این صفحه آدرس، تلفن، اطلاعات پیک، یادداشت مشتری یا یادداشت‌های داخلی فروشگاه را نمایش نمی‌دهد. برای تغییرات دقیق‌تر، با شماره سفارش با فروشگاه تماس بگیرید.',
+  latestPaymentStatus: 'آخرین وضعیت پرداخت'
 };
 
 export const resultMessages: Record<string, ResultMessage> = {
@@ -98,4 +155,8 @@ export function resultMessageFor(value: string | undefined, locale?: string) {
   if (!value) return undefined;
   const messages = normalizeLabelLocale(locale) === 'fa' ? resultMessagesFa : resultMessages;
   return messages[value];
+}
+
+export function publicOrderCopyFor(locale?: string) {
+  return normalizeLabelLocale(locale) === 'fa' ? publicOrderCopyFa : publicOrderCopy;
 }
