@@ -166,9 +166,17 @@ Status: implemented foundation.
 - Keep unsupported notification modes and webhook failures safe by falling back to server logs.
 - Update admin readiness messaging for log, webhook, and unsupported notification modes.
 
+## Phase 3.14 — Admin audit log foundation
+
+Status: implemented foundation.
+
+- Add an `AdminAuditLog` Prisma model for CMS/inquiry mutations.
+- Add a non-blocking audit helper so logging failures do not break staff workflows.
+- Record audit events for media, category, product, homepage, inquiry status, and inquiry follow-up writes.
+
 Remaining before production:
 - Replace password-only auth with user accounts or a provider such as Auth.js, Clerk, or Supabase Auth.
-- Add role checks and audit logging.
+- Add role checks and admin audit-log viewing/filtering in the CMS.
 - Replace local file uploads with production object storage such as S3, Cloudinary, or Supabase Storage.
 
 ## Phase 4 — Production ecommerce
