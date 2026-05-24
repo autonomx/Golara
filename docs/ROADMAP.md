@@ -70,6 +70,15 @@ Status: implemented foundation.
 - Add environment placeholders for future email and WhatsApp providers.
 - Keep notification provider wiring isolated from storefront forms.
 
+## Phase 3.3 — Inquiry validation UX v1
+
+Status: implemented foundation.
+
+- Add reusable server-side inquiry validation.
+- Keep inquiry route action thin: parse, validate, write, notify, redirect.
+- Add user-facing validation messages for name, phone, email, and message length.
+- Add matching native form hints such as minLength and inputMode.
+
 Remaining before production:
 - Add customer follow-up history.
 - Replace log-only notifications with email/WhatsApp providers.
