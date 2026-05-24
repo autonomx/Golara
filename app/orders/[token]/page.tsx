@@ -12,6 +12,10 @@ function formatDate(value: Date) {
   }).format(value);
 }
 
+function fulfillmentLabel(status: string) {
+  return status.replace(/_/g, ' ');
+}
+
 export default async function PublicOrderStatusPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const order = await getPublicOrderByToken(token);
@@ -29,7 +33,7 @@ export default async function PublicOrderStatusPage({ params }: { params: Promis
             Your order draft is currently <strong>{order.status}</strong>. Staff will follow up if more information is needed.
           </p>
 
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
+          <div className="mt-8 grid gap-4 md:grid-cols-4">
             <div className="rounded-3xl border border-rosewood/10 bg-cream p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rosewood/60">Total</p>
               <p className="mt-2 font-display text-3xl text-rosewood">{formatMinorUnitAmount(order.totalCents, order.currency)}</p>
@@ -37,6 +41,10 @@ export default async function PublicOrderStatusPage({ params }: { params: Promis
             <div className="rounded-3xl border border-rosewood/10 bg-cream p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rosewood/60">Mode</p>
               <p className="mt-2 font-display text-3xl text-rosewood">{order.checkoutMode}</p>
+            </div>
+            <div className="rounded-3xl border border-rosewood/10 bg-cream p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rosewood/60">Fulfillment</p>
+              <p className="mt-2 text-sm font-semibold capitalize text-rosewood">{fulfillmentLabel(order.fulfillmentStatus)}</p>
             </div>
             <div className="rounded-3xl border border-rosewood/10 bg-cream p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rosewood/60">Created</p>
@@ -73,7 +81,7 @@ export default async function PublicOrderStatusPage({ params }: { params: Promis
           </section>
 
           <p className="mt-6 text-sm leading-6 text-stone-600">
-            For privacy, this page does not show address, phone, customer notes, or staff-only notes. Contact the shop with your order reference for detailed changes.
+            For privacy, this page does not show address, phone, courier details, customer notes, or staff-only notes. Contact the shop with your order reference for detailed changes.
           </p>
           {latestAttempt ? <p className="mt-2 text-xs text-stone-500">Latest payment status: {latestAttempt.provider} · {latestAttempt.status}</p> : null}
         </div>

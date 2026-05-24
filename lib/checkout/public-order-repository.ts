@@ -12,6 +12,7 @@ export async function getPublicOrderByToken(token: string) {
       orderNumber: true,
       status: true,
       checkoutMode: true,
+      fulfillmentStatus: true,
       currency: true,
       totalCents: true,
       deliveryDate: true,
