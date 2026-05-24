@@ -105,6 +105,14 @@ Status: implemented foundation.
 - Export all inquiries or the currently filtered inquiry status.
 - Add an export link to the focused inquiry board UI.
 
+## Phase 3.7 — Inquiry print view
+
+Status: implemented foundation.
+
+- Add a protected printable inquiry list page.
+- Support all inquiries or current status filter.
+- Add a print-view link to the focused inquiry board UI.
+
 Remaining before production:
 - Replace log-only notifications with email/WhatsApp providers.
 - Add richer validation and inline form errors.
