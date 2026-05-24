@@ -7,12 +7,36 @@ const COOKIE_NAME = 'golara_admin_session';
 const SESSION_PAYLOAD = 'golara-admin-v1';
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
 
+export type AdminRole = 'owner' | 'staff';
+
+export type AdminIdentity = {
+  authenticated: boolean;
+  type: 'password';
+  label: string;
+  email?: string;
+  role: AdminRole;
+  provider: 'password';
+};
+
 function configuredPassword() {
   return process.env.ADMIN_PASSWORD?.trim() ?? '';
 }
 
 function configuredSecret() {
   return process.env.ADMIN_SESSION_SECRET?.trim() ?? '';
+}
+
+function configuredAdminLabel() {
+  return process.env.ADMIN_LABEL?.trim() || 'Admin';
+}
+
+function configuredAdminEmail() {
+  return process.env.ADMIN_EMAIL?.trim() || undefined;
+}
+
+function configuredAdminRole(): AdminRole {
+  const role = process.env.ADMIN_ROLE?.trim().toLowerCase();
+  return role === 'staff' ? 'staff' : 'owner';
 }
 
 export function isAdminAuthConfigured() {
@@ -40,6 +64,18 @@ export async function isAdminAuthenticated() {
   if (payload !== SESSION_PAYLOAD || !signature) return false;
 
   return safeEqual(signature, sign(payload));
+}
+
+export async function getAdminIdentity(): Promise<AdminIdentity> {
+  const authenticated = await isAdminAuthenticated();
+  return {
+    authenticated,
+    type: 'password',
+    label: configuredAdminLabel(),
+    email: configuredAdminEmail(),
+    role: configuredAdminRole(),
+    provider: 'password'
+  };
 }
 
 export async function assertAdminAuthenticated() {
