@@ -191,10 +191,43 @@ Status: implemented foundation.
 - Keep `/admin` media actions thin while preserving current local `/uploads/...` behavior.
 - Prepare a clearer seam for replacing local uploads with object storage later.
 
+## Phase 3.17 — Audit log filtering v1
+
+Status: implemented foundation.
+
+- Add action, entity, actor, and free-text search filters for the admin audit log.
+- Thread audit filter query params through `/admin`.
+- Preserve seeded/database fallback behavior for audit reads.
+
+## Phase 3.18 — Admin identity seam
+
+Status: implemented foundation.
+
+- Add `getAdminIdentity()` as the central admin identity shape.
+- Keep the current password gate while exposing label, optional email, role, and provider metadata.
+- Document temporary `ADMIN_LABEL`, `ADMIN_EMAIL`, and `ADMIN_ROLE` values for password-backed sessions.
+
+## Phase 3.19 — Audit actor attribution
+
+Status: implemented foundation.
+
+- Store actor type, label, email, role, and provider on `AdminAuditLog` rows.
+- Record actor metadata from the admin identity seam for CMS and inquiry mutations.
+- Show actor information in the admin audit-log table.
+
+## Phase 3.20 — Media storage provider seam
+
+Status: implemented foundation.
+
+- Add a provider-shaped media storage interface behind `lib/media/media-storage.ts`.
+- Keep `local` as the only supported provider for now.
+- Include the selected provider in media-upload audit metadata.
+- Prepare a narrow integration point for S3, Cloudinary, or Supabase Storage later.
+
 Remaining before production:
-- Replace password-only auth with user accounts or a provider such as Auth.js, Clerk, or Supabase Auth.
-- Add role checks and richer admin audit-log filtering in the CMS.
-- Replace local file uploads with production object storage such as S3, Cloudinary, or Supabase Storage.
+- Replace password-only auth with account/provider auth.
+- Add role enforcement for staff vs owner capabilities.
+- Implement a real object storage provider such as S3, Cloudinary, or Supabase Storage.
 
 ## Phase 4 — Production ecommerce
 
