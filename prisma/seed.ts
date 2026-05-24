@@ -33,6 +33,12 @@ async function main() {
     const category = categoryBySlug.get(product.category);
     if (!category) throw new Error(`Missing category for product ${product.slug}`);
 
+    await prisma.media.upsert({
+      where: { url: product.image },
+      create: { url: product.image, alt: product.title },
+      update: { alt: product.title }
+    });
+
     await prisma.product.upsert({
       where: { slug: product.slug },
       create: {
