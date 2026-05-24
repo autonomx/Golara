@@ -102,30 +102,31 @@ model CustomerAddress {
 }
 
 model CheckoutOrder {
-  id              String                       @id @default(cuid())
-  orderNumber     String                       @unique
-  customerId      String?
-  customer        CustomerProfile?             @relation(fields: [customerId], references: [id])
-  addressId       String?
-  address         CustomerAddress?             @relation(fields: [addressId], references: [id])
-  status          String                       @default("draft")
-  checkoutMode    String                       @default("inquiry")
-  currency        String                       @default("TOMAN")
-  subtotalCents   Int                          @default(0)
-  deliveryCents   Int                          @default(0)
-  discountCents   Int                          @default(0)
-  totalCents      Int                          @default(0)
-  deliveryDate    DateTime?
-  deliveryWindow  String?
-  recipientName   String?
-  recipientPhone  String?
-  customerNote    String?
-  staffNotes      String?
-  items           CheckoutOrderItem[]
-  paymentAttempts CheckoutPaymentAttempt[]
-  timelineEvents  CheckoutOrderTimelineEvent[]
-  createdAt       DateTime                     @default(now())
-  updatedAt       DateTime                     @updatedAt
+  id                String                       @id @default(cuid())
+  orderNumber       String                       @unique
+  publicLookupToken String?                      @unique
+  customerId        String?
+  customer          CustomerProfile?             @relation(fields: [customerId], references: [id])
+  addressId         String?
+  address           CustomerAddress?             @relation(fields: [addressId], references: [id])
+  status            String                       @default("draft")
+  checkoutMode      String                       @default("inquiry")
+  currency          String                       @default("TOMAN")
+  subtotalCents     Int                          @default(0)
+  deliveryCents     Int                          @default(0)
+  discountCents     Int                          @default(0)
+  totalCents        Int                          @default(0)
+  deliveryDate      DateTime?
+  deliveryWindow    String?
+  recipientName     String?
+  recipientPhone    String?
+  customerNote      String?
+  staffNotes        String?
+  items             CheckoutOrderItem[]
+  paymentAttempts   CheckoutPaymentAttempt[]
+  timelineEvents    CheckoutOrderTimelineEvent[]
+  createdAt         DateTime                     @default(now())
+  updatedAt         DateTime                     @updatedAt
 
   @@index([status, createdAt])
   @@index([customerId, createdAt])
