@@ -22,8 +22,8 @@ function optionalParam(value?: string) {
   return normalized || undefined;
 }
 
-export default async function AdminPage({ searchParams }: { searchParams: Promise<{ status?: string; message?: string; inquiryStatus?: string; inquiryPage?: string; inquirySearch?: string; auditAction?: string; auditEntity?: string; auditActor?: string; auditSearch?: string; orderStatus?: string; orderPaymentStatus?: string; orderSearch?: string; orderPage?: string }> }) {
-  const { status, message, inquiryStatus, inquiryPage, inquirySearch, auditAction, auditEntity, auditActor, auditSearch, orderStatus, orderPaymentStatus, orderSearch, orderPage } = await searchParams;
+export default async function AdminPage({ searchParams }: { searchParams: Promise<{ status?: string; message?: string; inquiryStatus?: string; inquiryPage?: string; inquirySearch?: string; auditAction?: string; auditEntity?: string; auditActor?: string; auditSearch?: string; orderStatus?: string; orderPaymentStatus?: string; orderFulfillmentStatus?: string; orderSearch?: string; orderPage?: string }> }) {
+  const { status, message, inquiryStatus, inquiryPage, inquirySearch, auditAction, auditEntity, auditActor, auditSearch, orderStatus, orderPaymentStatus, orderFulfillmentStatus, orderSearch, orderPage } = await searchParams;
   const auditFilters = {
     action: optionalParam(auditAction),
     entity: optionalParam(auditEntity),
@@ -33,6 +33,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const orderFilters = {
     status: optionalParam(orderStatus),
     paymentStatus: optionalParam(orderPaymentStatus),
+    fulfillmentStatus: optionalParam(orderFulfillmentStatus),
     search: optionalParam(orderSearch)
   };
   const authenticated = await isAdminAuthenticated();
