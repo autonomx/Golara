@@ -66,7 +66,8 @@ export async function createCheckoutAction(productId: string | undefined, produc
     });
 
     await createCheckoutPaymentAttempt({ orderId: order.id });
-    redirect(`/orders/confirmation?order=${encodeURIComponent(order.orderNumber)}`);
+    if (!order.publicLookupToken) redirect(`/orders/confirmation?order=${encodeURIComponent(order.orderNumber)}`);
+    redirect(`/orders/${order.publicLookupToken}`);
   } catch (error) {
     console.warn('[checkout] failed to create order draft', error);
     redirect(checkoutPath(productSlug, 'failed'));
