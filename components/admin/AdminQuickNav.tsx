@@ -1,4 +1,5 @@
 const adminLinks = [
+  { href: '#readiness', label: 'Readiness' },
   { href: '#inquiries', label: 'Inquiries' },
   { href: '#media', label: 'Media' },
   { href: '#homepage', label: 'Homepage' },

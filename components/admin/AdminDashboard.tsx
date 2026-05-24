@@ -2,6 +2,7 @@ import Image from 'next/image';
 import type { Category, HomepageContent, MediaItem, Product } from '@/lib/catalog';
 import { logoutAction } from '@/app/admin/logout/actions';
 import { AdminQuickNav } from '@/components/admin/AdminQuickNav';
+import { AdminReadinessPanel } from '@/components/admin/AdminReadinessPanel';
 import {
   createCategoryAction,
   createMediaFromUrlAction,
@@ -18,7 +19,10 @@ type AdminDashboardProps = {
   homepage: HomepageContent;
   media: MediaItem[];
   databaseReady: boolean;
+  authConfigured: boolean;
   authenticated: boolean;
+  notificationMode: string;
+  hasProductionStorage: boolean;
   status?: string;
   message?: string;
 };
@@ -116,13 +120,20 @@ function StatusBanner({ status, message }: { status?: string; message?: string }
   );
 }
 
-export function AdminDashboard({ categories, products, homepage, media, databaseReady, authenticated, status, message }: AdminDashboardProps) {
+export function AdminDashboard({ categories, products, homepage, media, databaseReady, authConfigured, authenticated, notificationMode, hasProductionStorage, status, message }: AdminDashboardProps) {
   const disabled = !databaseReady || !authenticated;
 
   return (
     <div className="space-y-12">
       <StatusBanner status={status} message={message} />
       <AdminQuickNav />
+      <AdminReadinessPanel
+        databaseReady={databaseReady}
+        authConfigured={authConfigured}
+        authenticated={authenticated}
+        notificationMode={notificationMode}
+        hasProductionStorage={hasProductionStorage}
+      />
 
       <section className={`rounded-[2rem] border p-6 ${databaseReady && authenticated ? 'border-olive/20 bg-white' : 'border-amber-300 bg-amber-50'}`}>
         <div className="flex flex-wrap items-start justify-between gap-4">
