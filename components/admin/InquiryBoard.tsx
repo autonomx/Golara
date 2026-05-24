@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { addInquiryFollowUpAction, saveInquiryAction } from '@/app/admin/inquiry-actions';
 import { InquiryContactActions } from '@/components/admin/InquiryContactActions';
+import { InquiryDeliveryBadge } from '@/components/admin/InquiryDeliveryBadge';
+import { InquiryFollowUpSummary } from '@/components/admin/InquiryFollowUpSummary';
 import type { CustomerInquiry } from '@/lib/catalog';
 import type { InquiryPage, InquiryStatusCount } from '@/lib/cms/catalog-repository';
 
@@ -225,9 +227,12 @@ export function InquiryBoard({ inquiryPage, counts, activeStatus, search }: { in
                     <h3 className="font-display text-2xl text-rosewood">{inquiry.productTitle ?? 'General inquiry'}</h3>
                     <p className="mt-1 text-xs uppercase tracking-[0.2em] text-rosewood/50">{formatDate(inquiry.createdAt)}</p>
                   </div>
-                  <span className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${statusClass(inquiry.status)}`}>
-                    {inquiry.status}
-                  </span>
+                  <div className="flex flex-wrap justify-end gap-2">
+                    <InquiryDeliveryBadge deliveryDate={inquiry.deliveryDate} />
+                    <span className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${statusClass(inquiry.status)}`}>
+                      {inquiry.status}
+                    </span>
+                  </div>
                 </div>
                 <div className="mt-4 grid gap-2 text-sm text-stone-700 md:grid-cols-4">
                   <p><strong>Name:</strong> {inquiry.name ?? '—'}</p>
@@ -236,6 +241,7 @@ export function InquiryBoard({ inquiryPage, counts, activeStatus, search }: { in
                   <p><strong>Delivery:</strong> {formatDateOnly(inquiry.deliveryDate)}</p>
                 </div>
                 <InquiryContactActions inquiry={inquiry} />
+                <InquiryFollowUpSummary inquiry={inquiry} />
                 {inquiry.deliveryNotes ? (
                   <p className="mt-3 text-sm leading-6 text-stone-700"><strong>Delivery notes:</strong> {inquiry.deliveryNotes}</p>
                 ) : null}
