@@ -9,7 +9,8 @@ Required production variables:
 - `DATABASE_URL`: PostgreSQL connection string used by Prisma.
 - `ADMIN_PASSWORD`: temporary password gate for the current admin CMS.
 - `ADMIN_SESSION_SECRET`: long random secret for signing admin sessions.
-- `INQUIRY_NOTIFICATION_MODE`: currently `log`; switch when a real provider is implemented.
+- `INQUIRY_NOTIFICATION_MODE`: `log` or `webhook`.
+- `INQUIRY_NOTIFICATION_WEBHOOK_URL`: required when `INQUIRY_NOTIFICATION_MODE="webhook"`.
 - `INQUIRY_NOTIFICATION_EMAIL`: future email destination/provider setting.
 - `INQUIRY_NOTIFICATION_WHATSAPP`: future WhatsApp provider setting.
 
@@ -18,6 +19,7 @@ Rules:
 - Never commit real `.env.local` or production secrets.
 - Generate a new `ADMIN_SESSION_SECRET` per deployed environment.
 - Treat the password gate as temporary until user-account auth is added.
+- Treat webhook URLs as secrets if they include provider tokens or private routing keys.
 
 ## 2. Database setup
 
@@ -65,12 +67,35 @@ Current behavior:
 
 - Product detail pages create customer inquiries.
 - Admin can filter, search, paginate, print, export, update status, add staff notes, and append follow-ups.
-- Notifications run in log-only mode.
+- Notifications support log-only mode and generic webhook mode.
+
+Webhook notification mode:
+
+```bash
+INQUIRY_NOTIFICATION_MODE="webhook"
+INQUIRY_NOTIFICATION_WEBHOOK_URL="https://example.com/golara/inquiries"
+```
+
+Webhook payload shape:
+
+```json
+{
+  "event": "golara.customer_inquiry.created",
+  "inquiry": {
+    "id": "...",
+    "productTitle": "...",
+    "customerName": "...",
+    "customerPhone": "...",
+    "customerEmail": "...",
+    "message": "..."
+  }
+}
+```
 
 Before production launch:
 
 - Decide whether staff will monitor `/admin` manually at first.
-- Add email or WhatsApp delivery before relying on automated alerts.
+- Configure webhook delivery or add provider-specific email/WhatsApp delivery before relying on automated alerts.
 - Confirm inquiry CSV export does not expose data to unauthenticated users.
 
 ## 5. Media and storage
@@ -105,14 +130,13 @@ Manual smoke test:
 - Product/category/homepage edits show on public pages.
 - Media registration works.
 - Logout returns admin to read-only/login flow.
+- Webhook mode sends a test inquiry to the configured endpoint or safely falls back to server logs on failure.
 
 ## 7. Remaining production blockers
 
 Do not consider Golara production-complete until these roadmap items are resolved:
 
-- Replace log-only notifications with email or WhatsApp providers.
 - Replace password-only admin auth with account/provider auth.
 - Add role checks and audit logging.
 - Replace local file uploads with production object storage.
-- Add richer customer-facing inline validation UX.
 - Decide whether cart, checkout, payment, taxes, discounts, inventory, and delivery scheduling are needed for the first launch.

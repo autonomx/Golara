@@ -157,8 +157,16 @@ Status: implemented foundation.
 - Add inline field help and field-level warning text for name, phone, email, and message errors.
 - Keep the existing server action redirect contract intact.
 
+## Phase 3.13 — Inquiry webhook notifications
+
+Status: implemented foundation.
+
+- Add provider-agnostic webhook delivery for new inquiry notifications.
+- Document `INQUIRY_NOTIFICATION_MODE="webhook"` and `INQUIRY_NOTIFICATION_WEBHOOK_URL`.
+- Keep unsupported notification modes and webhook failures safe by falling back to server logs.
+- Update admin readiness messaging for log, webhook, and unsupported notification modes.
+
 Remaining before production:
-- Replace log-only notifications with email/WhatsApp providers.
 - Replace password-only auth with user accounts or a provider such as Auth.js, Clerk, or Supabase Auth.
 - Add role checks and audit logging.
 - Replace local file uploads with production object storage such as S3, Cloudinary, or Supabase Storage.
