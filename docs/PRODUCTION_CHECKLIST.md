@@ -9,6 +9,10 @@ Required production variables:
 - `DATABASE_URL`: PostgreSQL connection string used by Prisma.
 - `ADMIN_PASSWORD`: temporary password gate for the current admin CMS.
 - `ADMIN_SESSION_SECRET`: long random secret for signing admin sessions.
+- `ADMIN_LABEL`: temporary display label for password-backed admin audit logs.
+- `ADMIN_EMAIL`: optional temporary admin email for audit attribution.
+- `ADMIN_ROLE`: temporary admin role metadata, currently `owner` or `staff`.
+- `MEDIA_STORAGE_PROVIDER`: currently `local`.
 - `INQUIRY_NOTIFICATION_MODE`: `log` or `webhook`.
 - `INQUIRY_NOTIFICATION_WEBHOOK_URL`: required when `INQUIRY_NOTIFICATION_MODE="webhook"`.
 - `INQUIRY_NOTIFICATION_EMAIL`: future email destination/provider setting.
@@ -29,6 +33,7 @@ Current production target:
 - Prisma schema deployed with `npm run db:push` until migrations are formalized.
 - Seed data loaded with `npm run db:seed` only for first setup or demo resets.
 - Admin audit logs are stored in `AdminAuditLog` and require the latest Prisma schema to be pushed.
+- Audit rows include actor label, email, role, and provider metadata from the current admin identity seam.
 
 Preflight:
 
@@ -56,12 +61,13 @@ Before launch, verify:
 - Public pages revalidate after CMS edits.
 - Staff have a documented process for reviewing new inquiries.
 - Admin writes create `AdminAuditLog` rows for CMS and inquiry mutations.
+- Audit-log filters work for action, entity, actor, and free-text search.
 
 Temporary limitations:
 
 - Admin auth is password-only.
-- There are no per-user roles yet.
-- Audit log filtering and staff identity attribution are not implemented yet.
+- There are no enforced per-user roles yet.
+- Password-backed identity metadata is configurable, not a replacement for real account/provider auth.
 
 ## 4. Inquiry operations
 
@@ -106,8 +112,9 @@ Before production launch:
 Current behavior:
 
 - External image URLs can be registered.
-- Local/dev uploads are written to `public/uploads` through `lib/media/media-storage.ts`.
-- URL normalization and local upload persistence are isolated from admin CMS actions.
+- `MEDIA_STORAGE_PROVIDER="local"` writes development uploads to `public/uploads` through `lib/media/media-storage.ts`.
+- URL normalization, upload validation, and provider selection are isolated from admin CMS actions.
+- Upload audit metadata records the selected storage provider.
 
 Production decision required:
 
@@ -120,6 +127,7 @@ Production decision required:
 Run these before merging a production release:
 
 ```bash
+npm run check:file-lines
 npm run typecheck
 npm run build
 ```
@@ -137,14 +145,14 @@ Manual smoke test:
 - Media upload still writes local/dev files to `/uploads/...`.
 - Logout returns admin to read-only/login flow.
 - Webhook mode sends a test inquiry to the configured endpoint or safely falls back to server logs on failure.
-- CMS and inquiry admin writes create audit-log rows.
-- The admin audit-log panel shows recent staff activity after writes.
+- CMS and inquiry admin writes create audit-log rows with actor metadata.
+- The admin audit-log panel shows and filters recent staff activity after writes.
 
 ## 7. Remaining production blockers
 
 Do not consider Golara production-complete until these roadmap items are resolved:
 
 - Replace password-only admin auth with account/provider auth.
-- Add role checks and richer audit-log filtering/staff attribution in the CMS.
-- Replace local file uploads with production object storage.
+- Add role enforcement for staff vs owner capabilities.
+- Implement a real object storage provider.
 - Decide whether cart, checkout, payment, taxes, discounts, inventory, and delivery scheduling are needed for the first launch.
