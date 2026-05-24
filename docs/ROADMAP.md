@@ -132,6 +132,14 @@ Status: implemented foundation.
 - Add a compact search form to the focused inquiry board UI.
 - Preserve search across status filters and pagination.
 
+## Phase 3.10 — Production readiness docs
+
+Status: implemented foundation.
+
+- Add a production launch checklist in `docs/PRODUCTION_CHECKLIST.md`.
+- Document environment variables, database setup, admin CMS readiness, inquiry operations, media storage, deployment preflight, and remaining launch blockers.
+- Keep implementation work unblocked by making production decisions explicit before Phase 4.
+
 Remaining before production:
 - Replace log-only notifications with email/WhatsApp providers.
 - Add richer validation and inline form errors.
