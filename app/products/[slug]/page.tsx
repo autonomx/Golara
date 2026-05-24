@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ProductCheckoutForm } from '@/components/ProductCheckoutForm';
 import { ProductInquiryForm } from '@/components/ProductInquiryForm';
@@ -5,10 +6,30 @@ import { ProductDetail } from '@/components/product/ProductDetail';
 import { SiteHeader } from '@/components/SiteHeader';
 import { getCategoryBySlug, getProductBySlug, listProducts } from '@/lib/cms/catalog-repository';
 import { hasDatabase } from '@/lib/prisma';
+import { buildPageMetadata } from '@/lib/site-metadata';
 
 export async function generateStaticParams() {
   const products = await listProducts();
   return products.map((product) => ({ slug: product.slug }));
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await getProductBySlug(slug);
+  if (!product) {
+    return buildPageMetadata({
+      title: 'Product not found | Golara',
+      description: 'This Golara product is no longer available.',
+      path: `/products/${slug}`
+    });
+  }
+
+  return buildPageMetadata({
+    title: `${product.title} | Golara`,
+    description: product.description,
+    path: `/products/${product.slug}`,
+    image: product.image
+  });
 }
 
 export default async function ProductPage({
