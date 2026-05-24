@@ -51,6 +51,16 @@ function printHref(status?: string, search?: string) {
   return inquiryToolHref('/admin/inquiries/print', status, search);
 }
 
+function ReturnStateFields({ activeStatus, search, page }: { activeStatus?: string; search?: string; page: number }) {
+  return (
+    <>
+      {activeStatus ? <input type="hidden" name="returnInquiryStatus" value={activeStatus} /> : null}
+      {search ? <input type="hidden" name="returnInquirySearch" value={search} /> : null}
+      <input type="hidden" name="returnInquiryPage" value={page} />
+    </>
+  );
+}
+
 function InquirySearchForm({ activeStatus, search }: { activeStatus?: string; search?: string }) {
   return (
     <form action="/admin" className="mt-5 flex flex-wrap gap-2 rounded-3xl border border-rosewood/10 bg-cream p-3">
@@ -178,6 +188,7 @@ export function InquiryBoard({ inquiryPage, counts, activeStatus, search }: { in
 
                 <div className="mt-5 grid gap-4 lg:grid-cols-2">
                   <form action={saveInquiryAction.bind(null, inquiry.id)} className="grid gap-3 rounded-2xl border border-rosewood/10 bg-white p-4">
+                    <ReturnStateFields activeStatus={activeStatus} search={search} page={inquiryPage.page} />
                     <label className="grid gap-2 text-sm font-semibold text-rosewood">
                       Status
                       <select className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood" name="status" defaultValue={inquiry.status}>
@@ -213,6 +224,7 @@ export function InquiryBoard({ inquiryPage, counts, activeStatus, search }: { in
                       )}
                     </div>
                     <form action={addInquiryFollowUpAction.bind(null, inquiry.id)} className="mt-4 grid gap-3">
+                      <ReturnStateFields activeStatus={activeStatus} search={search} page={inquiryPage.page} />
                       <label className="grid gap-2 text-sm font-semibold text-rosewood">
                         Channel
                         <select className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood" name="channel" defaultValue="internal">
