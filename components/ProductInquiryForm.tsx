@@ -7,6 +7,26 @@ type ProductInquiryFormProps = {
   inquiry?: string;
 };
 
+const inquiryMessages: Record<string, { tone: 'success' | 'warning'; text: string }> = {
+  sent: { tone: 'success', text: 'Inquiry sent. The shop will follow up soon.' },
+  'database-required': { tone: 'warning', text: 'Inquiry storage requires DATABASE_URL. WhatsApp ordering is still available.' },
+  'name-required': { tone: 'warning', text: 'Please enter your name.' },
+  'phone-invalid': { tone: 'warning', text: 'Please enter a valid phone number.' },
+  'email-invalid': { tone: 'warning', text: 'Please enter a valid email address or leave it blank.' },
+  'message-short': { tone: 'warning', text: 'Please include a message with at least 10 characters.' }
+};
+
+function InquiryMessage({ inquiry }: { inquiry?: string }) {
+  if (!inquiry) return null;
+  const message = inquiryMessages[inquiry];
+  if (!message) return null;
+  const className =
+    message.tone === 'success'
+      ? 'mt-6 rounded-2xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive'
+      : 'mt-6 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm font-semibold text-amber-900';
+  return <div className={className}>{message.text}</div>;
+}
+
 export function ProductInquiryForm({ product, dbReady, inquiry }: ProductInquiryFormProps) {
   const inquiryAction = createInquiryAction.bind(null, product.id, product.slug);
 
@@ -17,22 +37,16 @@ export function ProductInquiryForm({ product, dbReady, inquiry }: ProductInquiry
         <h2 className="mt-2 font-display text-4xl text-rosewood">Send an inquiry</h2>
         <p className="mt-3 text-sm leading-6 text-stone-600">Share your contact details and notes. The shop can follow up from the admin inbox.</p>
 
-        {inquiry === 'sent' ? (
-          <div className="mt-6 rounded-2xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">Inquiry sent. The shop will follow up soon.</div>
-        ) : null}
-
-        {inquiry === 'database-required' ? (
-          <div className="mt-6 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm font-semibold text-amber-900">Inquiry storage requires DATABASE_URL. WhatsApp ordering is still available.</div>
-        ) : null}
+        <InquiryMessage inquiry={inquiry} />
 
         <form action={inquiryAction} className="mt-6 grid gap-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <label className="grid gap-2 text-sm font-semibold text-rosewood">Name<input className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood disabled:cursor-not-allowed disabled:bg-stone-100" name="name" required disabled={!dbReady} /></label>
-            <label className="grid gap-2 text-sm font-semibold text-rosewood">Phone<input className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood disabled:cursor-not-allowed disabled:bg-stone-100" name="phone" required disabled={!dbReady} /></label>
+            <label className="grid gap-2 text-sm font-semibold text-rosewood">Name<input className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood disabled:cursor-not-allowed disabled:bg-stone-100" name="name" required minLength={2} disabled={!dbReady} /></label>
+            <label className="grid gap-2 text-sm font-semibold text-rosewood">Phone<input className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood disabled:cursor-not-allowed disabled:bg-stone-100" name="phone" required inputMode="tel" disabled={!dbReady} /></label>
             <label className="grid gap-2 text-sm font-semibold text-rosewood">Email optional<input className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood disabled:cursor-not-allowed disabled:bg-stone-100" name="email" type="email" disabled={!dbReady} /></label>
             <label className="grid gap-2 text-sm font-semibold text-rosewood">Preferred date optional<input className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood disabled:cursor-not-allowed disabled:bg-stone-100" name="deliveryDate" type="date" disabled={!dbReady} /></label>
           </div>
-          <label className="grid gap-2 text-sm font-semibold text-rosewood">Message<textarea className="min-h-28 rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood disabled:cursor-not-allowed disabled:bg-stone-100" name="message" required disabled={!dbReady} defaultValue={`I am interested in ${product.title}.`} /></label>
+          <label className="grid gap-2 text-sm font-semibold text-rosewood">Message<textarea className="min-h-28 rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood disabled:cursor-not-allowed disabled:bg-stone-100" name="message" required minLength={10} disabled={!dbReady} defaultValue={`I am interested in ${product.title}.`} /></label>
           <label className="grid gap-2 text-sm font-semibold text-rosewood">Delivery notes optional<textarea className="min-h-24 rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood disabled:cursor-not-allowed disabled:bg-stone-100" name="deliveryNotes" disabled={!dbReady} /></label>
           <button className="rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none" type="submit" disabled={!dbReady}>Send inquiry</button>
         </form>
