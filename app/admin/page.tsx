@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import { AdminActionBanner } from '@/components/admin/AdminActionBanner';
+import { AdminAuditLogPanel } from '@/components/admin/AdminAuditLogPanel';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { InquiryBoard } from '@/components/admin/InquiryBoard';
 import { SiteHeader } from '@/components/SiteHeader';
 import { isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
-import { getHomepageContent, listAdminCategories, listAdminProducts, listInquiryPage, listInquiryStatusCounts, listMedia } from '@/lib/cms/catalog-repository';
+import { getHomepageContent, listAdminAuditLogs, listAdminCategories, listAdminProducts, listInquiryPage, listInquiryStatusCounts, listMedia } from '@/lib/cms/catalog-repository';
 import { hasDatabase } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -16,13 +17,14 @@ function parsePage(value?: string) {
 
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ status?: string; message?: string; inquiryStatus?: string; inquiryPage?: string; inquirySearch?: string }> }) {
   const { status, message, inquiryStatus, inquiryPage, inquirySearch } = await searchParams;
-  const [categories, products, homepage, media, inquiryPageData, inquiryCounts, authenticated] = await Promise.all([
+  const [categories, products, homepage, media, inquiryPageData, inquiryCounts, auditLogs, authenticated] = await Promise.all([
     listAdminCategories(),
     listAdminProducts(),
     getHomepageContent(),
     listMedia(),
     listInquiryPage(inquiryStatus, parsePage(inquiryPage), undefined, inquirySearch),
     listInquiryStatusCounts(inquirySearch),
+    listAdminAuditLogs(),
     isAdminAuthenticated()
   ]);
 
@@ -51,6 +53,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         </div>
         <div className="mt-10 grid gap-12">
           <AdminActionBanner status={status} message={message} />
+          <AdminAuditLogPanel logs={auditLogs} />
           <InquiryBoard inquiryPage={inquiryPageData} counts={inquiryCounts} activeStatus={inquiryStatus} search={inquirySearch} />
           <AdminDashboard
             categories={categories}
