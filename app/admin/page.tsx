@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { AdminActionBanner } from '@/components/admin/AdminActionBanner';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { InquiryBoard } from '@/components/admin/InquiryBoard';
 import { SiteHeader } from '@/components/SiteHeader';
@@ -46,6 +47,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           ) : null}
         </div>
         <div className="mt-10 grid gap-12">
+          <AdminActionBanner status={status} message={message} />
           <InquiryBoard inquiryPage={inquiryPageData} counts={inquiryCounts} activeStatus={inquiryStatus} search={inquirySearch} />
           <AdminDashboard
             categories={categories}
