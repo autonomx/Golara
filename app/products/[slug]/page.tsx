@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { ProductCheckoutForm } from '@/components/ProductCheckoutForm';
 import { ProductInquiryForm } from '@/components/ProductInquiryForm';
 import { ProductDetail } from '@/components/product/ProductDetail';
 import { SiteHeader } from '@/components/SiteHeader';
@@ -15,18 +16,20 @@ export default async function ProductPage({
   searchParams
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ inquiry?: string }>;
+  searchParams: Promise<{ inquiry?: string; checkout?: string }>;
 }) {
-  const [{ slug }, { inquiry }] = await Promise.all([params, searchParams]);
+  const [{ slug }, { inquiry, checkout }] = await Promise.all([params, searchParams]);
   const product = await getProductBySlug(slug);
   if (!product) notFound();
   const category = await getCategoryBySlug(product.category);
+  const dbReady = hasDatabase();
 
   return (
     <main>
       <SiteHeader />
       <ProductDetail product={product} category={category} />
-      <ProductInquiryForm product={product} dbReady={hasDatabase()} inquiry={inquiry} />
+      <ProductCheckoutForm product={product} dbReady={dbReady} checkout={checkout} />
+      <ProductInquiryForm product={product} dbReady={dbReady} inquiry={inquiry} />
     </main>
   );
 }
