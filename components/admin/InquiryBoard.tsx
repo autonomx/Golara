@@ -6,6 +6,22 @@ import type { InquiryPage, InquiryStatusCount } from '@/lib/cms/catalog-reposito
 const statuses = ['new', 'contacted', 'confirmed', 'fulfilled', 'cancelled'];
 const channels = ['internal', 'phone', 'email', 'whatsapp'];
 
+const statusBadgeClass: Record<string, string> = {
+  new: 'border-rosewood/20 bg-white text-rosewood',
+  contacted: 'border-olive/20 bg-cream text-olive',
+  confirmed: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+  fulfilled: 'border-stone-200 bg-stone-50 text-stone-700',
+  cancelled: 'border-red-200 bg-red-50 text-red-700'
+};
+
+const channelBadgeClass: Record<string, string> = {
+  system: 'border-stone-300 bg-stone-100 text-stone-700',
+  internal: 'border-rosewood/15 bg-white text-rosewood',
+  phone: 'border-olive/20 bg-cream text-olive',
+  email: 'border-blue-200 bg-blue-50 text-blue-800',
+  whatsapp: 'border-emerald-200 bg-emerald-50 text-emerald-800'
+};
+
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat('en-CA', {
     dateStyle: 'medium',
@@ -16,6 +32,14 @@ function formatDate(value: Date) {
 function formatDateOnly(value?: Date) {
   if (!value) return '—';
   return new Intl.DateTimeFormat('en-CA', { dateStyle: 'medium' }).format(value);
+}
+
+function statusClass(status: string) {
+  return statusBadgeClass[status] ?? 'border-rosewood/20 bg-white text-rosewood';
+}
+
+function channelClass(channel: string) {
+  return channelBadgeClass[channel] ?? 'border-rosewood/15 bg-white text-rosewood';
 }
 
 function adminParams(status?: string, search?: string, page?: number) {
@@ -93,7 +117,7 @@ function FilterPills({ counts, activeStatus, search }: { counts: InquiryStatusCo
         All <span className="ml-1 opacity-75">{total}</span>
       </Link>
       {counts.map((item) => (
-        <Link key={item.status} href={filterHref(item.status, search)} className={`${baseClass} ${activeStatus === item.status ? 'border-rosewood bg-rosewood text-white' : 'border-rosewood/20 bg-white text-rosewood'}`}>
+        <Link key={item.status} href={filterHref(item.status, search)} className={`${baseClass} ${activeStatus === item.status ? 'border-rosewood bg-rosewood text-white' : statusClass(item.status)}`}>
           {item.status} <span className="ml-1 opacity-75">{item.count}</span>
         </Link>
       ))}
@@ -171,7 +195,7 @@ export function InquiryBoard({ inquiryPage, counts, activeStatus, search }: { in
                     <h3 className="font-display text-2xl text-rosewood">{inquiry.productTitle ?? 'General inquiry'}</h3>
                     <p className="mt-1 text-xs uppercase tracking-[0.2em] text-rosewood/50">{formatDate(inquiry.createdAt)}</p>
                   </div>
-                  <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-olive">
+                  <span className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${statusClass(inquiry.status)}`}>
                     {inquiry.status}
                   </span>
                 </div>
@@ -213,10 +237,10 @@ export function InquiryBoard({ inquiryPage, counts, activeStatus, search }: { in
                         <p className="text-sm text-stone-600">No follow-ups recorded yet.</p>
                       ) : (
                         inquiry.followUps?.map((followUp) => (
-                          <div key={followUp.id} className="rounded-2xl bg-cream p-3 text-sm text-stone-700">
-                            <div className="flex flex-wrap items-center justify-between gap-2 text-xs uppercase tracking-[0.16em] text-rosewood/50">
-                              <span>{followUp.channel}</span>
-                              <span>{formatDate(followUp.createdAt)}</span>
+                          <div key={followUp.id} className={`rounded-2xl border p-3 text-sm ${followUp.channel === 'system' ? 'border-stone-200 bg-stone-50 text-stone-700' : 'border-transparent bg-cream text-stone-700'}`}>
+                            <div className="flex flex-wrap items-center justify-between gap-2 text-xs uppercase tracking-[0.16em]">
+                              <span className={`rounded-full border px-2 py-1 font-semibold ${channelClass(followUp.channel)}`}>{followUp.channel}</span>
+                              <span className="text-rosewood/50">{formatDate(followUp.createdAt)}</span>
                             </div>
                             <p className="mt-2 whitespace-pre-wrap leading-6">{followUp.note}</p>
                           </div>
