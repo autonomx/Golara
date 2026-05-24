@@ -3,19 +3,24 @@ import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { InquiryBoard } from '@/components/admin/InquiryBoard';
 import { SiteHeader } from '@/components/SiteHeader';
 import { isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
-import { getHomepageContent, listAdminCategories, listAdminProducts, listInquiries, listInquiryStatusCounts, listMedia } from '@/lib/cms/catalog-repository';
+import { getHomepageContent, listAdminCategories, listAdminProducts, listInquiryPage, listInquiryStatusCounts, listMedia } from '@/lib/cms/catalog-repository';
 import { hasDatabase } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
-export default async function AdminPage({ searchParams }: { searchParams: Promise<{ status?: string; message?: string; inquiryStatus?: string }> }) {
-  const { status, message, inquiryStatus } = await searchParams;
-  const [categories, products, homepage, media, inquiries, inquiryCounts, authenticated] = await Promise.all([
+function parsePage(value?: string) {
+  const parsed = Number.parseInt(value ?? '1', 10);
+  return Number.isFinite(parsed) ? Math.max(1, parsed) : 1;
+}
+
+export default async function AdminPage({ searchParams }: { searchParams: Promise<{ status?: string; message?: string; inquiryStatus?: string; inquiryPage?: string }> }) {
+  const { status, message, inquiryStatus, inquiryPage } = await searchParams;
+  const [categories, products, homepage, media, inquiryPageData, inquiryCounts, authenticated] = await Promise.all([
     listAdminCategories(),
     listAdminProducts(),
     getHomepageContent(),
     listMedia(),
-    listInquiries(inquiryStatus),
+    listInquiryPage(inquiryStatus, parsePage(inquiryPage)),
     listInquiryStatusCounts(),
     isAdminAuthenticated()
   ]);
@@ -41,7 +46,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           ) : null}
         </div>
         <div className="mt-10 grid gap-12">
-          <InquiryBoard inquiries={inquiries} counts={inquiryCounts} activeStatus={inquiryStatus} />
+          <InquiryBoard inquiryPage={inquiryPageData} counts={inquiryCounts} activeStatus={inquiryStatus} />
           <AdminDashboard
             categories={categories}
             products={products}

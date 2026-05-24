@@ -113,6 +113,15 @@ Status: implemented foundation.
 - Support all inquiries or current status filter.
 - Add a print-view link to the focused inquiry board UI.
 
+## Phase 3.8 — Inquiry pagination controls
+
+Status: implemented foundation.
+
+- Add a paginated inquiry read model.
+- Keep CSV export and print view on the full filtered result set.
+- Thread inquiry page through the thin admin route.
+- Add previous/next controls to the focused inquiry board UI.
+
 Remaining before production:
 - Replace log-only notifications with email/WhatsApp providers.
 - Add richer validation and inline form errors.
