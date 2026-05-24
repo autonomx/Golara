@@ -99,14 +99,21 @@ model CustomerInquiryFollowUp {
 }
 
 model AdminAuditLog {
-  id        String   @id @default(cuid())
-  action    String
-  entity    String
-  entityId  String?
-  summary   String
-  metadata  Json?
-  createdAt DateTime @default(now())
+  id           String   @id @default(cuid())
+  action       String
+  entity       String
+  entityId     String?
+  summary      String
+  actorType    String   @default("password")
+  actorLabel   String   @default("Admin")
+  actorEmail   String?
+  actorRole    String   @default("owner")
+  actorProvider String  @default("password")
+  metadata     Json?
+  createdAt    DateTime @default(now())
 
   @@index([entity, entityId])
   @@index([action, createdAt])
+  @@index([actorEmail, createdAt])
+  @@index([actorRole, createdAt])
 }

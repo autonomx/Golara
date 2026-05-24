@@ -62,6 +62,10 @@ export type AdminAuditLogEntry = {
   entity: string;
   entityId?: string;
   summary: string;
+  actorLabel: string;
+  actorEmail?: string;
+  actorRole: string;
+  actorProvider: string;
   createdAt: Date;
 };
 

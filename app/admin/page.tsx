@@ -15,8 +15,19 @@ function parsePage(value?: string) {
   return Number.isFinite(parsed) ? Math.max(1, parsed) : 1;
 }
 
-export default async function AdminPage({ searchParams }: { searchParams: Promise<{ status?: string; message?: string; inquiryStatus?: string; inquiryPage?: string; inquirySearch?: string }> }) {
-  const { status, message, inquiryStatus, inquiryPage, inquirySearch } = await searchParams;
+function optionalParam(value?: string) {
+  const normalized = value?.trim();
+  return normalized || undefined;
+}
+
+export default async function AdminPage({ searchParams }: { searchParams: Promise<{ status?: string; message?: string; inquiryStatus?: string; inquiryPage?: string; inquirySearch?: string; auditAction?: string; auditEntity?: string; auditActor?: string; auditSearch?: string }> }) {
+  const { status, message, inquiryStatus, inquiryPage, inquirySearch, auditAction, auditEntity, auditActor, auditSearch } = await searchParams;
+  const auditFilters = {
+    action: optionalParam(auditAction),
+    entity: optionalParam(auditEntity),
+    actor: optionalParam(auditActor),
+    search: optionalParam(auditSearch)
+  };
   const [categories, products, homepage, media, inquiryPageData, inquiryCounts, auditLogs, authenticated] = await Promise.all([
     listAdminCategories(),
     listAdminProducts(),
@@ -24,7 +35,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     listMedia(),
     listInquiryPage(inquiryStatus, parsePage(inquiryPage), undefined, inquirySearch),
     listInquiryStatusCounts(inquirySearch),
-    listAdminAuditLogs(),
+    listAdminAuditLogs(auditFilters),
     isAdminAuthenticated()
   ]);
 
@@ -53,7 +64,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         </div>
         <div className="mt-10 grid gap-12">
           <AdminActionBanner status={status} message={message} />
-          <AdminAuditLogPanel logs={auditLogs} />
+          <AdminAuditLogPanel logs={auditLogs} filters={auditFilters} />
           <InquiryBoard inquiryPage={inquiryPageData} counts={inquiryCounts} activeStatus={inquiryStatus} search={inquirySearch} />
           <AdminDashboard
             categories={categories}
