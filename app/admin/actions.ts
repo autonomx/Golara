@@ -5,6 +5,7 @@ import path from 'node:path';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { assertAdminAuthenticated } from '@/lib/admin-auth';
+import { recordAdminAuditLog } from '@/lib/admin-audit-log';
 import { prisma, hasDatabase } from '@/lib/prisma';
 
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
@@ -101,10 +102,18 @@ export async function createMediaFromUrlAction(formData: FormData) {
   const url = normalizeImageUrl(requiredString(formData, 'url'));
   const alt = requiredString(formData, 'alt');
 
-  await prisma.media.upsert({
+  const media = await prisma.media.upsert({
     where: { url },
     create: { url, alt },
     update: { alt }
+  });
+
+  await recordAdminAuditLog({
+    action: 'media.upsert_url',
+    entity: 'media',
+    entityId: media.id,
+    summary: `Registered media URL: ${alt}`,
+    metadata: { url }
   });
 
   revalidateCatalog();
@@ -137,7 +146,15 @@ export async function uploadMediaAction(formData: FormData) {
   await writeFile(diskPath, bytes);
 
   const url = `/uploads/${fileName}`;
-  await prisma.media.create({ data: { url, alt } });
+  const media = await prisma.media.create({ data: { url, alt } });
+
+  await recordAdminAuditLog({
+    action: 'media.upload',
+    entity: 'media',
+    entityId: media.id,
+    summary: `Uploaded media: ${alt}`,
+    metadata: { url, size: file.size, type: file.type }
+  });
 
   revalidateCatalog();
   redirect(adminPath('media-uploaded'));
@@ -149,7 +166,7 @@ export async function createCategoryAction(formData: FormData) {
   const title = requiredString(formData, 'title');
   const slug = stringField(formData, 'slug') || slugify(title);
 
-  await prisma.category.create({
+  const category = await prisma.category.create({
     data: {
       title,
       slug,
@@ -158,6 +175,14 @@ export async function createCategoryAction(formData: FormData) {
       sortOrder: intField(formData, 'sortOrder', 100),
       isActive: boolField(formData, 'isActive')
     }
+  });
+
+  await recordAdminAuditLog({
+    action: 'category.create',
+    entity: 'category',
+    entityId: category.id,
+    summary: `Created category: ${category.title}`,
+    metadata: { slug: category.slug, isActive: category.isActive }
   });
 
   revalidateCatalog();
@@ -171,7 +196,7 @@ export async function updateCategoryAction(categoryId: string, formData: FormDat
   const title = requiredString(formData, 'title');
   const slug = stringField(formData, 'slug') || slugify(title);
 
-  await prisma.category.update({
+  const category = await prisma.category.update({
     where: { id: categoryId },
     data: {
       title,
@@ -181,6 +206,14 @@ export async function updateCategoryAction(categoryId: string, formData: FormDat
       sortOrder: intField(formData, 'sortOrder', 100),
       isActive: boolField(formData, 'isActive')
     }
+  });
+
+  await recordAdminAuditLog({
+    action: 'category.update',
+    entity: 'category',
+    entityId: category.id,
+    summary: `Updated category: ${category.title}`,
+    metadata: { slug: category.slug, isActive: category.isActive }
   });
 
   revalidateCatalog();
@@ -194,7 +227,7 @@ export async function createProductAction(formData: FormData) {
   const slug = stringField(formData, 'slug') || slugify(title);
   const imageUrl = resolveImageUrl(formData);
 
-  await prisma.product.create({
+  const product = await prisma.product.create({
     data: {
       title,
       slug,
@@ -210,6 +243,14 @@ export async function createProductAction(formData: FormData) {
     }
   });
 
+  await recordAdminAuditLog({
+    action: 'product.create',
+    entity: 'product',
+    entityId: product.id,
+    summary: `Created product: ${product.title}`,
+    metadata: { slug: product.slug, code: product.code, isActive: product.isActive }
+  });
+
   revalidateCatalog();
   redirect(adminPath('product-created'));
 }
@@ -222,7 +263,7 @@ export async function updateProductAction(productId: string, formData: FormData)
   const slug = stringField(formData, 'slug') || slugify(title);
   const imageUrl = resolveImageUrl(formData);
 
-  await prisma.product.update({
+  const product = await prisma.product.update({
     where: { id: productId },
     data: {
       title,
@@ -239,6 +280,14 @@ export async function updateProductAction(productId: string, formData: FormData)
     }
   });
 
+  await recordAdminAuditLog({
+    action: 'product.update',
+    entity: 'product',
+    entityId: product.id,
+    summary: `Updated product: ${product.title}`,
+    metadata: { slug: product.slug, code: product.code, isActive: product.isActive }
+  });
+
   revalidateCatalog();
   redirect(adminPath('product-updated'));
 }
@@ -250,7 +299,7 @@ export async function updateHomepageAction(formData: FormData) {
   const eyebrow = requiredString(formData, 'eyebrow');
   const body = requiredString(formData, 'body');
 
-  await prisma.homepageSection.upsert({
+  const homepage = await prisma.homepageSection.upsert({
     where: { key: 'home.hero' },
     create: {
       key: 'home.hero',
@@ -290,6 +339,14 @@ export async function updateHomepageAction(formData: FormData) {
       },
       isActive: true
     }
+  });
+
+  await recordAdminAuditLog({
+    action: 'homepage.update',
+    entity: 'homepageSection',
+    entityId: homepage.id,
+    summary: `Updated homepage section: ${homepage.key}`,
+    metadata: { key: homepage.key, title: homepage.title }
   });
 
   revalidateCatalog();
