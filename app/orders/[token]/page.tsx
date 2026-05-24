@@ -1,47 +1,10 @@
 import { notFound } from 'next/navigation';
 import { SiteHeader } from '@/components/SiteHeader';
 import { formatMinorUnitAmount } from '@/lib/catalog';
+import { fulfillmentStatusLabels, labelFor, orderStatusLabels, resultMessages } from '@/lib/checkout/public-order-labels';
 import { getPublicOrderByToken } from '@/lib/checkout/public-order-repository';
 
 export const dynamic = 'force-dynamic';
-
-const orderStatusLabels: Record<string, string> = {
-  draft: 'Received by the shop',
-  pending_payment: 'Waiting for payment or staff confirmation',
-  paid: 'Payment received',
-  preparing: 'Being prepared',
-  out_for_delivery: 'Out for delivery',
-  fulfilled: 'Completed',
-  cancelled: 'Cancelled'
-};
-
-const fulfillmentStatusLabels: Record<string, string> = {
-  not_scheduled: 'Not scheduled yet',
-  scheduled: 'Scheduled',
-  preparing: 'Being prepared',
-  ready_for_delivery: 'Ready for delivery',
-  out_for_delivery: 'Out for delivery',
-  delivered: 'Delivered',
-  issue: 'Needs staff review'
-};
-
-const resultMessages: Record<string, { title: string; body: string; tone: 'success' | 'warning' }> = {
-  paid: {
-    title: 'Payment result received',
-    body: 'Thank you. Your order is now marked as paid while staff continue preparing the order.',
-    tone: 'success'
-  },
-  failed: {
-    title: 'Payment was not completed',
-    body: 'The shop still has your order draft. Staff can help you complete the next step.',
-    tone: 'warning'
-  },
-  cancelled: {
-    title: 'Payment was cancelled',
-    body: 'Your order draft remains available for staff follow-up if you still want to continue.',
-    tone: 'warning'
-  }
-};
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat('en-CA', {
@@ -52,10 +15,6 @@ function formatDate(value: Date) {
 
 function formatDateOnly(value: Date) {
   return new Intl.DateTimeFormat('en-CA', { dateStyle: 'medium' }).format(value);
-}
-
-function labelFor(map: Record<string, string>, value: string) {
-  return map[value] || value.replace(/_/g, ' ');
 }
 
 function ResultBanner({ result }: { result?: string }) {
