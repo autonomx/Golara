@@ -102,19 +102,19 @@ model CustomerAddress {
 }
 
 model CheckoutOrder {
-  id              String              @id @default(cuid())
-  orderNumber     String              @unique
+  id              String                   @id @default(cuid())
+  orderNumber     String                   @unique
   customerId      String?
-  customer        CustomerProfile?    @relation(fields: [customerId], references: [id])
+  customer        CustomerProfile?         @relation(fields: [customerId], references: [id])
   addressId       String?
-  address         CustomerAddress?    @relation(fields: [addressId], references: [id])
-  status          String              @default("draft")
-  checkoutMode    String              @default("inquiry")
-  currency        String              @default("TOMAN")
-  subtotalCents   Int                 @default(0)
-  deliveryCents   Int                 @default(0)
-  discountCents   Int                 @default(0)
-  totalCents      Int                 @default(0)
+  address         CustomerAddress?         @relation(fields: [addressId], references: [id])
+  status          String                   @default("draft")
+  checkoutMode    String                   @default("inquiry")
+  currency        String                   @default("TOMAN")
+  subtotalCents   Int                      @default(0)
+  deliveryCents   Int                      @default(0)
+  discountCents   Int                      @default(0)
+  totalCents      Int                      @default(0)
   deliveryDate    DateTime?
   deliveryWindow  String?
   recipientName   String?
@@ -122,8 +122,9 @@ model CheckoutOrder {
   customerNote    String?
   staffNotes      String?
   items           CheckoutOrderItem[]
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
+  paymentAttempts CheckoutPaymentAttempt[]
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
 
   @@index([status, createdAt])
   @@index([customerId, createdAt])
@@ -144,6 +145,24 @@ model CheckoutOrderItem {
 
   @@index([orderId])
   @@index([productId])
+}
+
+model CheckoutPaymentAttempt {
+  id                String        @id @default(cuid())
+  orderId           String
+  order             CheckoutOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider          String        @default("manual")
+  status            String        @default("created")
+  amountCents       Int
+  currency          String        @default("TOMAN")
+  providerReference String?
+  redirectUrl       String?
+  metadata          Json?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([orderId, createdAt])
+  @@index([provider, status])
 }
 
 model CustomerInquiry {
