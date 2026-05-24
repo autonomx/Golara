@@ -13,15 +13,15 @@ function parsePage(value?: string) {
   return Number.isFinite(parsed) ? Math.max(1, parsed) : 1;
 }
 
-export default async function AdminPage({ searchParams }: { searchParams: Promise<{ status?: string; message?: string; inquiryStatus?: string; inquiryPage?: string }> }) {
-  const { status, message, inquiryStatus, inquiryPage } = await searchParams;
+export default async function AdminPage({ searchParams }: { searchParams: Promise<{ status?: string; message?: string; inquiryStatus?: string; inquiryPage?: string; inquirySearch?: string }> }) {
+  const { status, message, inquiryStatus, inquiryPage, inquirySearch } = await searchParams;
   const [categories, products, homepage, media, inquiryPageData, inquiryCounts, authenticated] = await Promise.all([
     listAdminCategories(),
     listAdminProducts(),
     getHomepageContent(),
     listMedia(),
-    listInquiryPage(inquiryStatus, parsePage(inquiryPage)),
-    listInquiryStatusCounts(),
+    listInquiryPage(inquiryStatus, parsePage(inquiryPage), undefined, inquirySearch),
+    listInquiryStatusCounts(inquirySearch),
     isAdminAuthenticated()
   ]);
 
@@ -46,7 +46,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           ) : null}
         </div>
         <div className="mt-10 grid gap-12">
-          <InquiryBoard inquiryPage={inquiryPageData} counts={inquiryCounts} activeStatus={inquiryStatus} />
+          <InquiryBoard inquiryPage={inquiryPageData} counts={inquiryCounts} activeStatus={inquiryStatus} search={inquirySearch} />
           <AdminDashboard
             categories={categories}
             products={products}

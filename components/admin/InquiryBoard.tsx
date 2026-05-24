@@ -18,14 +18,21 @@ function formatDateOnly(value?: Date) {
   return new Intl.DateTimeFormat('en-CA', { dateStyle: 'medium' }).format(value);
 }
 
-function filterHref(status?: string) {
-  return status ? `/admin?inquiryStatus=${encodeURIComponent(status)}` : '/admin';
+function adminParams(status?: string, search?: string, page?: number) {
+  const params = new URLSearchParams();
+  if (status) params.set('inquiryStatus', status);
+  if (search) params.set('inquirySearch', search);
+  if (page && page > 1) params.set('inquiryPage', String(page));
+  const query = params.toString();
+  return query ? `/admin?${query}` : '/admin';
 }
 
-function pageHref(page: number, status?: string) {
-  const params = new URLSearchParams({ inquiryPage: String(page) });
-  if (status) params.set('inquiryStatus', status);
-  return `/admin?${params.toString()}`;
+function filterHref(status?: string, search?: string) {
+  return adminParams(status, search);
+}
+
+function pageHref(page: number, status?: string, search?: string) {
+  return adminParams(status, search, page);
 }
 
 function exportHref(status?: string) {
@@ -36,17 +43,39 @@ function printHref(status?: string) {
   return status ? `/admin/inquiries/print?inquiryStatus=${encodeURIComponent(status)}` : '/admin/inquiries/print';
 }
 
-function FilterPills({ counts, activeStatus }: { counts: InquiryStatusCount[]; activeStatus?: string }) {
+function InquirySearchForm({ activeStatus, search }: { activeStatus?: string; search?: string }) {
+  return (
+    <form action="/admin" className="mt-5 flex flex-wrap gap-2 rounded-3xl border border-rosewood/10 bg-cream p-3">
+      {activeStatus ? <input type="hidden" name="inquiryStatus" value={activeStatus} /> : null}
+      <input
+        className="min-w-64 flex-1 rounded-full border border-rosewood/15 bg-white px-4 py-2 text-sm text-stone-800 outline-none transition focus:border-rosewood"
+        name="inquirySearch"
+        placeholder="Search name, phone, email, notes, product..."
+        defaultValue={search ?? ''}
+      />
+      <button className="rounded-full bg-rosewood px-5 py-2 text-sm font-semibold text-white" type="submit">
+        Search
+      </button>
+      {search ? (
+        <Link href={filterHref(activeStatus)} className="rounded-full border border-rosewood/20 bg-white px-5 py-2 text-sm font-semibold text-rosewood">
+          Clear
+        </Link>
+      ) : null}
+    </form>
+  );
+}
+
+function FilterPills({ counts, activeStatus, search }: { counts: InquiryStatusCount[]; activeStatus?: string; search?: string }) {
   const total = counts.reduce((sum, item) => sum + item.count, 0);
   const baseClass = 'rounded-full border px-4 py-2 text-sm font-semibold transition';
 
   return (
     <div className="mt-6 flex flex-wrap items-center gap-2">
-      <Link href={filterHref()} className={`${baseClass} ${!activeStatus ? 'border-rosewood bg-rosewood text-white' : 'border-rosewood/20 bg-white text-rosewood'}`}>
+      <Link href={filterHref(undefined, search)} className={`${baseClass} ${!activeStatus ? 'border-rosewood bg-rosewood text-white' : 'border-rosewood/20 bg-white text-rosewood'}`}>
         All <span className="ml-1 opacity-75">{total}</span>
       </Link>
       {counts.map((item) => (
-        <Link key={item.status} href={filterHref(item.status)} className={`${baseClass} ${activeStatus === item.status ? 'border-rosewood bg-rosewood text-white' : 'border-rosewood/20 bg-white text-rosewood'}`}>
+        <Link key={item.status} href={filterHref(item.status, search)} className={`${baseClass} ${activeStatus === item.status ? 'border-rosewood bg-rosewood text-white' : 'border-rosewood/20 bg-white text-rosewood'}`}>
           {item.status} <span className="ml-1 opacity-75">{item.count}</span>
         </Link>
       ))}
@@ -62,7 +91,7 @@ function FilterPills({ counts, activeStatus }: { counts: InquiryStatusCount[]; a
   );
 }
 
-function PaginationControls({ inquiryPage, activeStatus }: { inquiryPage: InquiryPage; activeStatus?: string }) {
+function PaginationControls({ inquiryPage, activeStatus, search }: { inquiryPage: InquiryPage; activeStatus?: string; search?: string }) {
   if (inquiryPage.pageCount <= 1) return null;
 
   const previousPage = Math.max(1, inquiryPage.page - 1);
@@ -77,14 +106,14 @@ function PaginationControls({ inquiryPage, activeStatus }: { inquiryPage: Inquir
       </span>
       <div className="flex gap-2">
         <Link
-          href={pageHref(previousPage, activeStatus)}
+          href={pageHref(previousPage, activeStatus, search)}
           aria-disabled={inquiryPage.page <= 1}
           className={`rounded-full border px-4 py-2 font-semibold ${inquiryPage.page <= 1 ? 'pointer-events-none border-stone-200 text-stone-300' : 'border-rosewood/20 text-rosewood'}`}
         >
           Previous
         </Link>
         <Link
-          href={pageHref(nextPage, activeStatus)}
+          href={pageHref(nextPage, activeStatus, search)}
           aria-disabled={inquiryPage.page >= inquiryPage.pageCount}
           className={`rounded-full border px-4 py-2 font-semibold ${inquiryPage.page >= inquiryPage.pageCount ? 'pointer-events-none border-stone-200 text-stone-300' : 'border-rosewood/20 text-rosewood'}`}
         >
@@ -95,7 +124,7 @@ function PaginationControls({ inquiryPage, activeStatus }: { inquiryPage: Inquir
   );
 }
 
-export function InquiryBoard({ inquiryPage, counts, activeStatus }: { inquiryPage: InquiryPage; counts: InquiryStatusCount[]; activeStatus?: string }) {
+export function InquiryBoard({ inquiryPage, counts, activeStatus, search }: { inquiryPage: InquiryPage; counts: InquiryStatusCount[]; activeStatus?: string; search?: string }) {
   const inquiries = inquiryPage.inquiries;
 
   return (
@@ -106,7 +135,8 @@ export function InquiryBoard({ inquiryPage, counts, activeStatus }: { inquiryPag
         <p className="mt-3 text-sm leading-6 text-stone-600">
           Review incoming product requests, update their status, and keep a follow-up timeline.
         </p>
-        <FilterPills counts={counts} activeStatus={activeStatus} />
+        <InquirySearchForm activeStatus={activeStatus} search={search} />
+        <FilterPills counts={counts} activeStatus={activeStatus} search={search} />
       </div>
 
       {inquiries.length === 0 ? (
@@ -196,7 +226,7 @@ export function InquiryBoard({ inquiryPage, counts, activeStatus }: { inquiryPag
               </article>
             ))}
           </div>
-          <PaginationControls inquiryPage={inquiryPage} activeStatus={activeStatus} />
+          <PaginationControls inquiryPage={inquiryPage} activeStatus={activeStatus} search={search} />
         </>
       )}
     </section>
