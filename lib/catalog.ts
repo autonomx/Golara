@@ -56,6 +56,15 @@ export type CustomerInquiry = {
   createdAt: Date;
 };
 
+export type AdminAuditLogEntry = {
+  id: string;
+  action: string;
+  entity: string;
+  entityId?: string;
+  summary: string;
+  createdAt: Date;
+};
+
 export type HomepageContent = {
   eyebrow: string;
   title: string;
