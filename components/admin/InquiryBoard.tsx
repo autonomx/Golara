@@ -27,6 +27,14 @@ function adminParams(status?: string, search?: string, page?: number) {
   return query ? `/admin?${query}` : '/admin';
 }
 
+function inquiryToolHref(path: string, status?: string, search?: string) {
+  const params = new URLSearchParams();
+  if (status) params.set('inquiryStatus', status);
+  if (search) params.set('inquirySearch', search);
+  const query = params.toString();
+  return query ? `${path}?${query}` : path;
+}
+
 function filterHref(status?: string, search?: string) {
   return adminParams(status, search);
 }
@@ -35,12 +43,12 @@ function pageHref(page: number, status?: string, search?: string) {
   return adminParams(status, search, page);
 }
 
-function exportHref(status?: string) {
-  return status ? `/admin/inquiries/export?inquiryStatus=${encodeURIComponent(status)}` : '/admin/inquiries/export';
+function exportHref(status?: string, search?: string) {
+  return inquiryToolHref('/admin/inquiries/export', status, search);
 }
 
-function printHref(status?: string) {
-  return status ? `/admin/inquiries/print?inquiryStatus=${encodeURIComponent(status)}` : '/admin/inquiries/print';
+function printHref(status?: string, search?: string) {
+  return inquiryToolHref('/admin/inquiries/print', status, search);
 }
 
 function InquirySearchForm({ activeStatus, search }: { activeStatus?: string; search?: string }) {
@@ -80,10 +88,10 @@ function FilterPills({ counts, activeStatus, search }: { counts: InquiryStatusCo
         </Link>
       ))}
       <div className="ml-auto flex flex-wrap gap-2">
-        <Link href={printHref(activeStatus)} className="rounded-full border border-rosewood/20 bg-white px-4 py-2 text-sm font-semibold text-rosewood transition hover:bg-cream">
+        <Link href={printHref(activeStatus, search)} className="rounded-full border border-rosewood/20 bg-white px-4 py-2 text-sm font-semibold text-rosewood transition hover:bg-cream">
           Print view
         </Link>
-        <Link href={exportHref(activeStatus)} className="rounded-full border border-olive/30 bg-cream px-4 py-2 text-sm font-semibold text-olive transition hover:bg-white">
+        <Link href={exportHref(activeStatus, search)} className="rounded-full border border-olive/30 bg-cream px-4 py-2 text-sm font-semibold text-olive transition hover:bg-white">
           Export CSV
         </Link>
       </div>
