@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import type { Category, HomepageContent, MediaItem, Product } from '@/lib/catalog';
 import { logoutAction } from '@/app/admin/logout/actions';
+import { AdminQuickNav } from '@/components/admin/AdminQuickNav';
 import {
   createCategoryAction,
   createMediaFromUrlAction,
@@ -121,6 +122,7 @@ export function AdminDashboard({ categories, products, homepage, media, database
   return (
     <div className="space-y-12">
       <StatusBanner status={status} message={message} />
+      <AdminQuickNav />
 
       <section className={`rounded-[2rem] border p-6 ${databaseReady && authenticated ? 'border-olive/20 bg-white' : 'border-amber-300 bg-amber-50'}`}>
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -145,7 +147,7 @@ export function AdminDashboard({ categories, products, homepage, media, database
         </div>
       </section>
 
-      <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
+      <section id="media" className="scroll-mt-8 rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
         <div className="mb-6">
           <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Media library</p>
           <h2 className="mt-2 font-display text-4xl text-rosewood">Images</h2>
@@ -190,7 +192,7 @@ export function AdminDashboard({ categories, products, homepage, media, database
         </div>
       </section>
 
-      <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
+      <section id="homepage" className="scroll-mt-8 rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
         <div className="mb-6">
           <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Homepage</p>
           <h2 className="mt-2 font-display text-4xl text-rosewood">Hero content</h2>
@@ -214,7 +216,7 @@ export function AdminDashboard({ categories, products, homepage, media, database
         </form>
       </section>
 
-      <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
+      <section id="categories" className="scroll-mt-8 rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
         <div className="mb-6">
           <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Categories</p>
           <h2 className="mt-2 font-display text-4xl text-rosewood">Create category</h2>
@@ -248,7 +250,7 @@ export function AdminDashboard({ categories, products, homepage, media, database
         </div>
       </section>
 
-      <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
+      <section id="products" className="scroll-mt-8 rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
         <div className="mb-6">
           <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Products</p>
           <h2 className="mt-2 font-display text-4xl text-rosewood">Create product</h2>
