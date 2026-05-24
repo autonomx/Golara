@@ -2,6 +2,8 @@
 
 This checklist turns the roadmap's remaining production blockers into explicit launch decisions. Use it before deploying Golara as a real storefront.
 
+For the Phase 3 completion summary, see `docs/PHASE_3_CLOSEOUT.md`.
+
 ## 1. Environment and secrets
 
 Required production variables:
@@ -12,7 +14,10 @@ Required production variables:
 - `ADMIN_LABEL`: temporary display label for password-backed admin audit logs.
 - `ADMIN_EMAIL`: optional temporary admin email for audit attribution.
 - `ADMIN_ROLE`: temporary admin role metadata, currently `owner` or `staff`.
-- `MEDIA_STORAGE_PROVIDER`: currently `local`.
+- `MEDIA_STORAGE_PROVIDER`: `local` or `cloudinary`.
+- `CLOUDINARY_CLOUD_NAME`: required when `MEDIA_STORAGE_PROVIDER="cloudinary"`.
+- `CLOUDINARY_UPLOAD_PRESET`: required when `MEDIA_STORAGE_PROVIDER="cloudinary"`.
+- `CLOUDINARY_UPLOAD_FOLDER`: optional Cloudinary upload folder, defaults to `golara`.
 - `INQUIRY_NOTIFICATION_MODE`: `log` or `webhook`.
 - `INQUIRY_NOTIFICATION_WEBHOOK_URL`: required when `INQUIRY_NOTIFICATION_MODE="webhook"`.
 - `INQUIRY_NOTIFICATION_EMAIL`: future email destination/provider setting.
@@ -22,7 +27,7 @@ Rules:
 
 - Never commit real `.env.local` or production secrets.
 - Generate a new `ADMIN_SESSION_SECRET` per deployed environment.
-- Treat the password gate as temporary until user-account auth is added.
+- Treat the password gate as temporary until user-account auth is added in Phase 4.
 - Treat webhook URLs as secrets if they include provider tokens or private routing keys.
 - Use `ADMIN_ROLE="owner"` for full CMS administration and `ADMIN_ROLE="staff"` for inquiry operations only.
 
@@ -90,22 +95,6 @@ INQUIRY_NOTIFICATION_MODE="webhook"
 INQUIRY_NOTIFICATION_WEBHOOK_URL="https://example.com/golara/inquiries"
 ```
 
-Webhook payload shape:
-
-```json
-{
-  "event": "golara.customer_inquiry.created",
-  "inquiry": {
-    "id": "...",
-    "productTitle": "...",
-    "customerName": "...",
-    "customerPhone": "...",
-    "customerEmail": "...",
-    "message": "..."
-  }
-}
-```
-
 Before production launch:
 
 - Decide whether staff will monitor `/admin` manually at first.
@@ -118,14 +107,15 @@ Current behavior:
 
 - External image URLs can be registered by owner role.
 - `MEDIA_STORAGE_PROVIDER="local"` writes development uploads to `public/uploads` through `lib/media/media-storage.ts`.
+- `MEDIA_STORAGE_PROVIDER="cloudinary"` uploads through Cloudinary unsigned upload presets.
 - URL normalization, upload validation, and provider selection are isolated from admin CMS actions.
 - Upload audit metadata records the selected storage provider.
 
 Production decision required:
 
-- Replace local uploads with object storage such as S3, Cloudinary, or Supabase Storage before deploying to serverless or multi-instance hosting.
+- Configure Cloudinary for production uploads, or defer a different provider such as S3/Supabase to Phase 4+.
 - Keep media records as the CMS source of truth for product image selection.
-- Wire the production provider behind the media-storage seam instead of expanding `/admin` actions.
+- Wire any future production provider behind the media-storage seam instead of expanding `/admin` actions.
 
 ## 6. Deployment preflight
 
@@ -149,17 +139,20 @@ Manual smoke test:
 - Media registration works for owner role.
 - Staff role can update inquiry status and follow-up notes.
 - Staff role is blocked from catalog/homepage/media writes.
-- Media upload still writes local/dev files to `/uploads/...`.
+- Media upload writes local/dev files to `/uploads/...` when configured for `local`.
+- Media upload returns a hosted URL when configured for `cloudinary`.
 - Logout returns admin to read-only/login flow.
 - Signed-out admin preview does not load the audit-log panel.
 - Webhook mode sends a test inquiry to the configured endpoint or safely falls back to server logs on failure.
 - CMS and inquiry admin writes create audit-log rows with actor metadata.
 - The admin audit-log panel shows and filters recent staff activity after writes.
 
-## 7. Remaining production blockers
+## 7. Deferred to Phase 4
 
-Do not consider Golara production-complete until these roadmap items are resolved:
+These are intentionally not blockers for Phase 3 foundation completion:
 
 - Replace password-only admin auth with account/provider auth.
-- Implement a real object storage provider.
-- Decide whether cart, checkout, payment, taxes, discounts, inventory, and delivery scheduling are needed for the first launch.
+- Add real per-user admin accounts and multi-user role management.
+- Add customer accounts.
+- Decide whether cart, checkout, payments, taxes, discounts, inventory, and delivery scheduling are needed for the first launch.
+- Add optional storage providers beyond Cloudinary.
