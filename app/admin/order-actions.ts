@@ -19,7 +19,7 @@ function adminPath(status: string) {
 }
 
 export async function updateOrderStatusAction(orderId: string, formData: FormData) {
-  await assertAdminRole('staff');
+  const actor = await assertAdminRole('staff');
   if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
 
   const status = stringFormValue(formData, 'status');
@@ -35,7 +35,23 @@ export async function updateOrderStatusAction(orderId: string, formData: FormDat
 
   const order = await prisma.checkoutOrder.update({
     where: { id: orderId },
-    data: { status, staffNotes: staffNotes || undefined }
+    data: {
+      status,
+      staffNotes: staffNotes || undefined,
+      timelineEvents: {
+        create: {
+          type: 'status_changed',
+          title: `Status changed to ${status}`,
+          note: staffNotes || undefined,
+          actorLabel: actor.label,
+          actorRole: actor.role,
+          metadata: {
+            previousStatus: existingOrder.status,
+            status
+          }
+        }
+      }
+    }
   });
 
   await recordAdminAuditLog({
