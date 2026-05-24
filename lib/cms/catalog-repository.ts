@@ -1,7 +1,7 @@
 import 'server-only';
 
 import type { Prisma } from '@prisma/client';
-import type { Category, CustomerInquiry, HomepageContent, MediaItem, Product } from '@/lib/catalog';
+import type { AdminAuditLogEntry, Category, CustomerInquiry, HomepageContent, MediaItem, Product } from '@/lib/catalog';
 import { prisma, hasDatabase } from '@/lib/prisma';
 import { seedCategories, seedHomepageContent, seedProducts } from '@/lib/seed-data';
 
@@ -70,6 +70,15 @@ type DbInquiry = {
   createdAt: Date;
   product?: { title: string } | null;
   followUps?: DbFollowUp[];
+};
+
+type DbAuditLog = {
+  id: string;
+  action: string;
+  entity: string;
+  entityId: string | null;
+  summary: string;
+  createdAt: Date;
 };
 
 type InquiryWhere = Prisma.CustomerInquiryWhereInput;
@@ -185,6 +194,17 @@ function mapInquiry(inquiry: DbInquiry): CustomerInquiry {
   };
 }
 
+function mapAuditLog(log: DbAuditLog): AdminAuditLogEntry {
+  return {
+    id: log.id,
+    action: log.action,
+    entity: log.entity,
+    entityId: log.entityId ?? undefined,
+    summary: log.summary,
+    createdAt: log.createdAt
+  };
+}
+
 function fallbackMedia(): MediaItem[] {
   const seen = new Set<string>();
   return seedProducts
@@ -213,6 +233,20 @@ async function readWithFallback<T>(readFromDb: () => Promise<T>, fallback: () =>
     console.warn('[cms] database read failed; using seeded fallback content', error);
     return fallback();
   }
+}
+
+export async function listAdminAuditLogs(limit = 12): Promise<AdminAuditLogEntry[]> {
+  const safeLimit = Math.max(1, Math.min(50, Math.floor(limit)));
+  return readWithFallback(
+    async () => {
+      const logs = await prisma.adminAuditLog.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: safeLimit
+      });
+      return logs.map(mapAuditLog);
+    },
+    () => []
+  );
 }
 
 export async function listInquiryStatusCounts(search?: string): Promise<InquiryStatusCount[]> {

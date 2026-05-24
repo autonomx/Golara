@@ -51,7 +51,7 @@ npm run db:seed
 Before launch, verify:
 
 - `/admin/login` accepts the configured admin password.
-- `/admin` shows editable homepage, categories, media, products, and inquiries.
+- `/admin` shows editable homepage, categories, media, products, inquiries, and the recent audit log.
 - CMS writes are blocked when logged out.
 - Public pages revalidate after CMS edits.
 - Staff have a documented process for reviewing new inquiries.
@@ -61,7 +61,7 @@ Temporary limitations:
 
 - Admin auth is password-only.
 - There are no per-user roles yet.
-- Audit log viewing/filtering is not exposed in the CMS yet.
+- Audit log filtering and staff identity attribution are not implemented yet.
 
 ## 4. Inquiry operations
 
@@ -135,12 +135,13 @@ Manual smoke test:
 - Logout returns admin to read-only/login flow.
 - Webhook mode sends a test inquiry to the configured endpoint or safely falls back to server logs on failure.
 - CMS and inquiry admin writes create audit-log rows.
+- The admin audit-log panel shows recent staff activity after writes.
 
 ## 7. Remaining production blockers
 
 Do not consider Golara production-complete until these roadmap items are resolved:
 
 - Replace password-only admin auth with account/provider auth.
-- Add role checks and audit-log viewing/filtering in the CMS.
+- Add role checks and richer audit-log filtering/staff attribution in the CMS.
 - Replace local file uploads with production object storage.
 - Decide whether cart, checkout, payment, taxes, discounts, inventory, and delivery scheduling are needed for the first launch.

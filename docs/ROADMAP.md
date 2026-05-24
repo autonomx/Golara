@@ -174,9 +174,18 @@ Status: implemented foundation.
 - Add a non-blocking audit helper so logging failures do not break staff workflows.
 - Record audit events for media, category, product, homepage, inquiry status, and inquiry follow-up writes.
 
+## Phase 3.15 — Admin audit log viewer
+
+Status: implemented foundation.
+
+- Add a read-only recent staff activity panel to `/admin`.
+- Read recent `AdminAuditLog` rows through the CMS repository with seeded fallback safety.
+- Add an audit-log quick-nav anchor.
+- Leave staff identity, filtering, and role checks for the next auth-focused phases.
+
 Remaining before production:
 - Replace password-only auth with user accounts or a provider such as Auth.js, Clerk, or Supabase Auth.
-- Add role checks and admin audit-log viewing/filtering in the CMS.
+- Add role checks and richer admin audit-log filtering in the CMS.
 - Replace local file uploads with production object storage such as S3, Cloudinary, or Supabase Storage.
 
 ## Phase 4 — Production ecommerce
