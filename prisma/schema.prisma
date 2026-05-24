@@ -67,6 +67,37 @@ model HomepageSection {
   updatedAt DateTime @updatedAt
 }
 
+model CustomerProfile {
+  id          String            @id @default(cuid())
+  phone       String            @unique
+  displayName String?
+  email       String?
+  locale      String            @default("fa-IR")
+  addresses   CustomerAddress[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([email])
+}
+
+model CustomerAddress {
+  id         String          @id @default(cuid())
+  customerId String
+  customer   CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  label      String          @default("Delivery address")
+  recipient  String?
+  phone      String?
+  city       String?
+  line1      String
+  line2      String?
+  notes      String?
+  isDefault  Boolean         @default(false)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  @@index([customerId, isDefault])
+}
+
 model CustomerInquiry {
   id            String                    @id @default(cuid())
   name          String?
