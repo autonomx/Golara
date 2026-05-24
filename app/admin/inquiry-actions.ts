@@ -7,18 +7,30 @@ import { hasDatabase, prisma } from '@/lib/prisma';
 
 const allowedStatuses = ['new', 'contacted', 'confirmed', 'fulfilled', 'cancelled'];
 
-function adminStatus(status: string) {
-  return `/admin?status=${encodeURIComponent(status)}`;
+function stringFormValue(formData: FormData, name: string) {
+  const value = formData.get(name);
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function adminStatus(status: string, formData: FormData) {
+  const params = new URLSearchParams({ status });
+  const inquiryStatus = stringFormValue(formData, 'returnInquiryStatus');
+  const inquirySearch = stringFormValue(formData, 'returnInquirySearch');
+  const inquiryPage = stringFormValue(formData, 'returnInquiryPage');
+
+  if (inquiryStatus) params.set('inquiryStatus', inquiryStatus);
+  if (inquirySearch) params.set('inquirySearch', inquirySearch);
+  if (inquiryPage && inquiryPage !== '1') params.set('inquiryPage', inquiryPage);
+
+  return `/admin?${params.toString()}`;
 }
 
 export async function saveInquiryAction(inquiryId: string, formData: FormData) {
   await assertAdminAuthenticated();
   if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
 
-  const statusValue = formData.get('status');
-  const notesValue = formData.get('staffNotes');
-  const status = typeof statusValue === 'string' ? statusValue : 'new';
-  const staffNotes = typeof notesValue === 'string' ? notesValue.trim() : '';
+  const status = stringFormValue(formData, 'status') || 'new';
+  const staffNotes = stringFormValue(formData, 'staffNotes');
 
   if (!allowedStatuses.includes(status)) throw new Error('Invalid inquiry status.');
 
@@ -28,17 +40,15 @@ export async function saveInquiryAction(inquiryId: string, formData: FormData) {
   });
 
   revalidatePath('/admin');
-  redirect(adminStatus('inquiry-updated'));
+  redirect(adminStatus('inquiry-updated', formData));
 }
 
 export async function addInquiryFollowUpAction(inquiryId: string, formData: FormData) {
   await assertAdminAuthenticated();
   if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
 
-  const noteValue = formData.get('note');
-  const channelValue = formData.get('channel');
-  const note = typeof noteValue === 'string' ? noteValue.trim() : '';
-  const channel = typeof channelValue === 'string' && channelValue.trim() ? channelValue.trim() : 'internal';
+  const note = stringFormValue(formData, 'note');
+  const channel = stringFormValue(formData, 'channel') || 'internal';
 
   if (note.length < 2) throw new Error('Follow-up note is required.');
 
@@ -47,5 +57,5 @@ export async function addInquiryFollowUpAction(inquiryId: string, formData: Form
   });
 
   revalidatePath('/admin');
-  redirect(adminStatus('follow-up-added'));
+  redirect(adminStatus('follow-up-added', formData));
 }
