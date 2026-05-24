@@ -118,6 +118,10 @@ model CheckoutOrder {
   totalCents        Int                          @default(0)
   deliveryDate      DateTime?
   deliveryWindow    String?
+  fulfillmentStatus String                       @default("not_scheduled")
+  fulfillmentNote   String?
+  courierName       String?
+  courierPhone      String?
   recipientName     String?
   recipientPhone    String?
   customerNote      String?
@@ -129,6 +133,7 @@ model CheckoutOrder {
   updatedAt         DateTime                     @updatedAt
 
   @@index([status, createdAt])
+  @@index([fulfillmentStatus, createdAt])
   @@index([customerId, createdAt])
 }
 
