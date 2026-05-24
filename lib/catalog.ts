@@ -61,6 +61,7 @@ export type CheckoutOrderSummary = {
   orderNumber: string;
   status: string;
   checkoutMode: string;
+  fulfillmentStatus?: string;
   currency: string;
   totalCents: number;
   customerPhone?: string;
