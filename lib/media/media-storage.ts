@@ -5,9 +5,9 @@ import path from 'node:path';
 
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
-const SUPPORTED_STORAGE_PROVIDERS = new Set(['local']);
+const SUPPORTED_STORAGE_PROVIDERS = new Set(['local', 'cloudinary']);
 
-export type MediaStorageProviderName = 'local';
+export type MediaStorageProviderName = 'local' | 'cloudinary';
 
 export type StoredMediaFile = {
   url: string;
@@ -19,6 +19,15 @@ export type StoredMediaFile = {
 type MediaStorageProvider = {
   name: MediaStorageProviderName;
   storeUpload(file: File): Promise<StoredMediaFile>;
+};
+
+type CloudinaryUploadResponse = {
+  secure_url?: string;
+  url?: string;
+  bytes?: number;
+  resource_type?: string;
+  format?: string;
+  error?: { message?: string };
 };
 
 export function configuredMediaStorageProviderName(): MediaStorageProviderName {
@@ -57,6 +66,14 @@ function uploadedFileExtension(file: File) {
   return 'jpg';
 }
 
+function cloudinaryConfig() {
+  return {
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME?.trim() || '',
+    uploadPreset: process.env.CLOUDINARY_UPLOAD_PRESET?.trim() || '',
+    folder: process.env.CLOUDINARY_UPLOAD_FOLDER?.trim() || 'golara'
+  };
+}
+
 export function assertValidImageUpload(file: File) {
   if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
     throw new Error('Upload must be a JPEG, PNG, WebP, or GIF image.');
@@ -90,9 +107,48 @@ const localMediaStorageProvider: MediaStorageProvider = {
   }
 };
 
+const cloudinaryMediaStorageProvider: MediaStorageProvider = {
+  name: 'cloudinary',
+  async storeUpload(file: File) {
+    assertValidImageUpload(file);
+
+    const { cloudName, uploadPreset, folder } = cloudinaryConfig();
+    if (!cloudName || !uploadPreset) {
+      throw new Error('Cloudinary storage requires CLOUDINARY_CLOUD_NAME and CLOUDINARY_UPLOAD_PRESET.');
+    }
+
+    const formData = new FormData();
+    formData.set('file', file);
+    formData.set('upload_preset', uploadPreset);
+    if (folder) formData.set('folder', folder);
+
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+      method: 'POST',
+      body: formData
+    });
+    const payload = (await response.json()) as CloudinaryUploadResponse;
+
+    if (!response.ok || payload.error) {
+      throw new Error(payload.error?.message || `Cloudinary upload failed with status ${response.status}.`);
+    }
+
+    const url = payload.secure_url || payload.url;
+    if (!url) {
+      throw new Error('Cloudinary upload did not return a secure URL.');
+    }
+
+    return {
+      url,
+      size: payload.bytes ?? file.size,
+      type: file.type,
+      provider: 'cloudinary'
+    };
+  }
+};
+
 function getMediaStorageProvider(): MediaStorageProvider {
   const providerName = configuredMediaStorageProviderName();
-  if (providerName === 'local') return localMediaStorageProvider;
+  if (providerName === 'cloudinary') return cloudinaryMediaStorageProvider;
   return localMediaStorageProvider;
 }
 
