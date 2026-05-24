@@ -22,6 +22,13 @@ export type InquiryPage = {
   pageCount: number;
 };
 
+export type AdminAuditLogFilters = {
+  action?: string;
+  entity?: string;
+  actor?: string;
+  search?: string;
+};
+
 type DbCategory = {
   id: string;
   slug: string;
@@ -78,10 +85,15 @@ type DbAuditLog = {
   entity: string;
   entityId: string | null;
   summary: string;
+  actorLabel: string;
+  actorEmail: string | null;
+  actorRole: string;
+  actorProvider: string;
   createdAt: Date;
 };
 
 type InquiryWhere = Prisma.CustomerInquiryWhereInput;
+type AuditLogWhere = Prisma.AdminAuditLogWhereInput;
 
 function bySortThenTitle(a: Category, b: Category) {
   return (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.title.localeCompare(b.title);
@@ -123,6 +135,38 @@ function buildInquiryWhere(status?: string, search?: string): InquiryWhere {
       { staffNotes: { contains: normalizedSearch, mode: 'insensitive' } },
       { product: { title: { contains: normalizedSearch, mode: 'insensitive' } } }
     ];
+  }
+
+  return where;
+}
+
+function buildAuditLogWhere(filters: AdminAuditLogFilters = {}): AuditLogWhere {
+  const where: AuditLogWhere = {};
+  const action = normalizeSearch(filters.action);
+  const entity = normalizeSearch(filters.entity);
+  const actor = normalizeSearch(filters.actor);
+  const search = normalizeSearch(filters.search);
+
+  if (action) where.action = { contains: action, mode: 'insensitive' };
+  if (entity) where.entity = { contains: entity, mode: 'insensitive' };
+  if (actor) {
+    where.OR = [
+      { actorLabel: { contains: actor, mode: 'insensitive' } },
+      { actorEmail: { contains: actor, mode: 'insensitive' } },
+      { actorRole: { contains: actor, mode: 'insensitive' } },
+      { actorProvider: { contains: actor, mode: 'insensitive' } }
+    ];
+  }
+  if (search) {
+    const searchClauses: AuditLogWhere[] = [
+      { summary: { contains: search, mode: 'insensitive' } },
+      { action: { contains: search, mode: 'insensitive' } },
+      { entity: { contains: search, mode: 'insensitive' } },
+      { entityId: { contains: search, mode: 'insensitive' } },
+      { actorLabel: { contains: search, mode: 'insensitive' } },
+      { actorEmail: { contains: search, mode: 'insensitive' } }
+    ];
+    where.AND = [...(Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : []), { OR: searchClauses }];
   }
 
   return where;
@@ -201,6 +245,10 @@ function mapAuditLog(log: DbAuditLog): AdminAuditLogEntry {
     entity: log.entity,
     entityId: log.entityId ?? undefined,
     summary: log.summary,
+    actorLabel: log.actorLabel,
+    actorEmail: log.actorEmail ?? undefined,
+    actorRole: log.actorRole,
+    actorProvider: log.actorProvider,
     createdAt: log.createdAt
   };
 }
@@ -235,11 +283,12 @@ async function readWithFallback<T>(readFromDb: () => Promise<T>, fallback: () =>
   }
 }
 
-export async function listAdminAuditLogs(limit = 12): Promise<AdminAuditLogEntry[]> {
+export async function listAdminAuditLogs(filters: AdminAuditLogFilters = {}, limit = 12): Promise<AdminAuditLogEntry[]> {
   const safeLimit = Math.max(1, Math.min(50, Math.floor(limit)));
   return readWithFallback(
     async () => {
       const logs = await prisma.adminAuditLog.findMany({
+        where: buildAuditLogWhere(filters),
         orderBy: { createdAt: 'desc' },
         take: safeLimit
       });
