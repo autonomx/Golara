@@ -7,6 +7,7 @@ import { recordAdminAuditLog } from '@/lib/admin-audit-log';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
 const allowedOrderStatuses = ['draft', 'pending_payment', 'paid', 'preparing', 'out_for_delivery', 'fulfilled', 'cancelled'];
+const allowedFulfillmentStatuses = ['not_scheduled', 'scheduled', 'preparing', 'ready_for_delivery', 'out_for_delivery', 'delivered', 'issue'];
 
 function stringFormValue(formData: FormData, name: string) {
   const value = formData.get(name);
@@ -109,4 +110,62 @@ export async function addOrderTimelineNoteAction(orderId: string, formData: Form
   revalidatePath('/admin');
   revalidatePath(`/admin/orders/${orderId}`);
   redirect(orderDetailPath(orderId, 'order-note-added'));
+}
+
+export async function updateOrderFulfillmentAction(orderId: string, formData: FormData) {
+  const actor = await assertAdminRole('staff');
+  if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
+
+  const fulfillmentStatus = stringFormValue(formData, 'fulfillmentStatus');
+  const fulfillmentNote = stringFormValue(formData, 'fulfillmentNote');
+  const courierName = stringFormValue(formData, 'courierName');
+  const courierPhone = stringFormValue(formData, 'courierPhone');
+
+  if (!allowedFulfillmentStatuses.includes(fulfillmentStatus)) throw new Error('Invalid fulfillment status.');
+
+  const existingOrder = await prisma.checkoutOrder.findUnique({
+    where: { id: orderId },
+    select: { fulfillmentStatus: true, orderNumber: true }
+  });
+  if (!existingOrder) throw new Error('Order not found.');
+
+  const order = await prisma.checkoutOrder.update({
+    where: { id: orderId },
+    data: {
+      fulfillmentStatus,
+      fulfillmentNote: fulfillmentNote || undefined,
+      courierName: courierName || undefined,
+      courierPhone: courierPhone || undefined,
+      timelineEvents: {
+        create: {
+          type: 'fulfillment_update',
+          title: `Fulfillment changed to ${fulfillmentStatus}`,
+          note: fulfillmentNote || undefined,
+          actorLabel: actor.label,
+          actorRole: actor.role,
+          metadata: {
+            previousFulfillmentStatus: existingOrder.fulfillmentStatus,
+            fulfillmentStatus,
+            courierUpdated: Boolean(courierName || courierPhone)
+          }
+        }
+      }
+    }
+  });
+
+  await recordAdminAuditLog({
+    action: 'order.fulfillment.update',
+    entity: 'checkoutOrder',
+    entityId: order.id,
+    summary: `Updated fulfillment for order ${order.orderNumber} from ${existingOrder.fulfillmentStatus} to ${fulfillmentStatus}`,
+    metadata: {
+      previousFulfillmentStatus: existingOrder.fulfillmentStatus,
+      fulfillmentStatus,
+      courierUpdated: Boolean(courierName || courierPhone)
+    }
+  });
+
+  revalidatePath('/admin');
+  revalidatePath(`/admin/orders/${orderId}`);
+  redirect(orderDetailPath(orderId, 'fulfillment-updated'));
 }
