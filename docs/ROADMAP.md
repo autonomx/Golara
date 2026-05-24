@@ -52,19 +52,22 @@ Status: implemented foundation.
 - Add admin inquiry inbox for reviewing customer requests.
 - Keep route files thin by moving product detail and inquiry UI into focused components.
 
+## Phase 3.1 — Inquiry management
+
+Status: implemented foundation.
+
+- Add status controls for new/contacted/confirmed/fulfilled/cancelled.
+- Add internal staff notes on customer inquiries.
+- Show delivery date and delivery notes in the inquiry inbox.
+- Keep inquiry management isolated in a small server action and focused board component.
+
 Remaining before production:
-- Add inquiry status updates and internal staff notes.
+- Add customer follow-up history.
 - Add email/WhatsApp notification hooks.
 - Add richer validation and inline form errors.
 - Replace password-only auth with user accounts or a provider such as Auth.js, Clerk, or Supabase Auth.
 - Add role checks and audit logging.
 - Replace local file uploads with production object storage such as S3, Cloudinary, or Supabase Storage.
-
-## Phase 3.1 — Inquiry management
-
-- Add status mutation controls for new/contacted/confirmed/fulfilled/cancelled.
-- Add admin notes and customer follow-up history.
-- Add notification hooks.
 
 ## Phase 4 — Production ecommerce
 
