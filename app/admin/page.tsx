@@ -7,7 +7,7 @@ import { InquiryBoard } from '@/components/admin/InquiryBoard';
 import { SiteHeader } from '@/components/SiteHeader';
 import { isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
 import { getHomepageContent, listAdminAuditLogs, listAdminCategories, listAdminProducts, listInquiryPage, listInquiryStatusCounts, listMedia } from '@/lib/cms/catalog-repository';
-import { listAdminCheckoutOrders } from '@/lib/checkout/admin-order-repository';
+import { listAdminCheckoutOrderPage } from '@/lib/checkout/admin-order-repository';
 import { hasDatabase } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -22,8 +22,8 @@ function optionalParam(value?: string) {
   return normalized || undefined;
 }
 
-export default async function AdminPage({ searchParams }: { searchParams: Promise<{ status?: string; message?: string; inquiryStatus?: string; inquiryPage?: string; inquirySearch?: string; auditAction?: string; auditEntity?: string; auditActor?: string; auditSearch?: string; orderStatus?: string; orderPaymentStatus?: string; orderSearch?: string }> }) {
-  const { status, message, inquiryStatus, inquiryPage, inquirySearch, auditAction, auditEntity, auditActor, auditSearch, orderStatus, orderPaymentStatus, orderSearch } = await searchParams;
+export default async function AdminPage({ searchParams }: { searchParams: Promise<{ status?: string; message?: string; inquiryStatus?: string; inquiryPage?: string; inquirySearch?: string; auditAction?: string; auditEntity?: string; auditActor?: string; auditSearch?: string; orderStatus?: string; orderPaymentStatus?: string; orderSearch?: string; orderPage?: string }> }) {
+  const { status, message, inquiryStatus, inquiryPage, inquirySearch, auditAction, auditEntity, auditActor, auditSearch, orderStatus, orderPaymentStatus, orderSearch, orderPage } = await searchParams;
   const auditFilters = {
     action: optionalParam(auditAction),
     entity: optionalParam(auditEntity),
@@ -36,7 +36,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     search: optionalParam(orderSearch)
   };
   const authenticated = await isAdminAuthenticated();
-  const [categories, products, homepage, media, inquiryPageData, inquiryCounts, auditLogs, orders] = await Promise.all([
+  const [categories, products, homepage, media, inquiryPageData, inquiryCounts, auditLogs, orderPageData] = await Promise.all([
     listAdminCategories(),
     listAdminProducts(),
     getHomepageContent(),
@@ -44,7 +44,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     listInquiryPage(inquiryStatus, parsePage(inquiryPage), undefined, inquirySearch),
     listInquiryStatusCounts(inquirySearch),
     authenticated ? listAdminAuditLogs(auditFilters) : Promise.resolve([]),
-    authenticated ? listAdminCheckoutOrders(orderFilters) : Promise.resolve([])
+    authenticated ? listAdminCheckoutOrderPage(orderFilters, parsePage(orderPage)) : Promise.resolve({ orders: [], page: 1, pageSize: 12, totalCount: 0, totalPages: 1 })
   ]);
 
   const authConfigured = isAdminAuthConfigured();
@@ -73,7 +73,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         <div className="mt-10 grid gap-12">
           <AdminActionBanner status={status} message={message} />
           {authenticated ? <AdminAuditLogPanel logs={auditLogs} filters={auditFilters} /> : null}
-          {authenticated ? <AdminOrderPanel orders={orders} filters={orderFilters} /> : null}
+          {authenticated ? <AdminOrderPanel orderPage={orderPageData} filters={orderFilters} /> : null}
           <InquiryBoard inquiryPage={inquiryPageData} counts={inquiryCounts} activeStatus={inquiryStatus} search={inquirySearch} />
           <AdminDashboard
             categories={categories}
