@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { addInquiryFollowUpAction, saveInquiryAction } from '@/app/admin/inquiry-actions';
+import { InquiryContactActions } from '@/components/admin/InquiryContactActions';
 import type { CustomerInquiry } from '@/lib/catalog';
 import type { InquiryPage, InquiryStatusCount } from '@/lib/cms/catalog-repository';
 
@@ -234,6 +235,7 @@ export function InquiryBoard({ inquiryPage, counts, activeStatus, search }: { in
                   <p><strong>Email:</strong> {inquiry.email ?? '—'}</p>
                   <p><strong>Delivery:</strong> {formatDateOnly(inquiry.deliveryDate)}</p>
                 </div>
+                <InquiryContactActions inquiry={inquiry} />
                 {inquiry.deliveryNotes ? (
                   <p className="mt-3 text-sm leading-6 text-stone-700"><strong>Delivery notes:</strong> {inquiry.deliveryNotes}</p>
                 ) : null}
