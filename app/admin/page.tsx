@@ -27,6 +27,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   ]);
 
   const authConfigured = isAdminAuthConfigured();
+  const databaseReady = hasDatabase();
+  const notificationMode = process.env.INQUIRY_NOTIFICATION_MODE?.trim() || 'log';
+  const hasProductionStorage = Boolean(process.env.MEDIA_STORAGE_PROVIDER?.trim());
 
   return (
     <main>
@@ -54,8 +57,11 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             products={products}
             homepage={homepage}
             media={media}
-            databaseReady={hasDatabase()}
+            databaseReady={databaseReady}
+            authConfigured={authConfigured}
             authenticated={authenticated}
+            notificationMode={notificationMode}
+            hasProductionStorage={hasProductionStorage}
             status={status}
             message={message}
           />
