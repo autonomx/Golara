@@ -1,6 +1,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { notifyNewInquiry } from '@/lib/notifications/inquiry-notifications';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
 function stringField(formData: FormData, name: string, fallback = '') {
@@ -34,7 +35,7 @@ export async function createInquiryAction(productId: string | undefined, product
   const deliveryDate = optionalDate(stringField(formData, 'deliveryDate'));
   const deliveryNotes = stringField(formData, 'deliveryNotes') || undefined;
 
-  await prisma.customerInquiry.create({
+  const inquiry = await prisma.customerInquiry.create({
     data: {
       name,
       phone,
@@ -43,7 +44,19 @@ export async function createInquiryAction(productId: string | undefined, product
       deliveryDate,
       deliveryNotes,
       productId
+    },
+    include: {
+      product: { select: { title: true } }
     }
+  });
+
+  await notifyNewInquiry({
+    inquiryId: inquiry.id,
+    productTitle: inquiry.product?.title,
+    customerName: name,
+    customerPhone: phone,
+    customerEmail: email,
+    message
   });
 
   redirect(`/products/${productSlug}?inquiry=sent`);
