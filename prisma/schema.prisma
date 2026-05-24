@@ -97,3 +97,16 @@ model CustomerInquiryFollowUp {
 
   @@index([inquiryId, createdAt])
 }
+
+model AdminAuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  entity    String
+  entityId  String?
+  summary   String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([action, createdAt])
+}
