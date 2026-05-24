@@ -61,9 +61,18 @@ Status: implemented foundation.
 - Show delivery date and delivery notes in the inquiry inbox.
 - Keep inquiry management isolated in a small server action and focused board component.
 
+## Phase 3.2 — Notification hooks v1
+
+Status: implemented foundation.
+
+- Add a small inquiry notification abstraction.
+- Notify after inquiry creation in log-only mode.
+- Add environment placeholders for future email and WhatsApp providers.
+- Keep notification provider wiring isolated from storefront forms.
+
 Remaining before production:
 - Add customer follow-up history.
-- Add email/WhatsApp notification hooks.
+- Replace log-only notifications with email/WhatsApp providers.
 - Add richer validation and inline form errors.
 - Replace password-only auth with user accounts or a provider such as Auth.js, Clerk, or Supabase Auth.
 - Add role checks and audit logging.
