@@ -7,6 +7,7 @@ import { hasDatabase, prisma } from '@/lib/prisma';
 export type AdminOrderFilters = {
   status?: string;
   paymentStatus?: string;
+  fulfillmentStatus?: string;
   search?: string;
 };
 
@@ -23,6 +24,7 @@ type DbOrderSummary = {
   orderNumber: string;
   status: string;
   checkoutMode: string;
+  fulfillmentStatus: string;
   currency: string;
   totalCents: number;
   createdAt: Date;
@@ -47,10 +49,12 @@ function safePage(value = 1) {
 function buildOrderWhere(filters: AdminOrderFilters = {}): Prisma.CheckoutOrderWhereInput {
   const status = optionalText(filters.status);
   const paymentStatus = optionalText(filters.paymentStatus);
+  const fulfillmentStatus = optionalText(filters.fulfillmentStatus);
   const search = optionalText(filters.search);
   const where: Prisma.CheckoutOrderWhereInput = {};
 
   if (status) where.status = status;
+  if (fulfillmentStatus) where.fulfillmentStatus = fulfillmentStatus;
   if (paymentStatus) {
     where.paymentAttempts = { some: { status: paymentStatus } };
   }
@@ -72,6 +76,7 @@ function mapOrderSummary(order: DbOrderSummary): CheckoutOrderSummary {
     orderNumber: order.orderNumber,
     status: order.status,
     checkoutMode: order.checkoutMode,
+    fulfillmentStatus: order.fulfillmentStatus,
     currency: order.currency,
     totalCents: order.totalCents,
     customerPhone: order.customer?.phone,
