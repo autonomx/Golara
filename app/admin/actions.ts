@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { assertAdminAuthenticated } from '@/lib/admin-auth';
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
-import { normalizeImageUrl, storeLocalMediaUpload } from '@/lib/media/media-storage';
+import { normalizeImageUrl, storeMediaUpload } from '@/lib/media/media-storage';
 import { prisma, hasDatabase } from '@/lib/prisma';
 
 async function ensureCanWriteCms() {
@@ -106,7 +106,7 @@ export async function uploadMediaAction(formData: FormData) {
   }
 
   const alt = stringField(formData, 'alt') || file.name;
-  const storedFile = await storeLocalMediaUpload(file);
+  const storedFile = await storeMediaUpload(file);
   const media = await prisma.media.create({ data: { url: storedFile.url, alt } });
 
   await recordAdminAuditLog({
@@ -114,7 +114,7 @@ export async function uploadMediaAction(formData: FormData) {
     entity: 'media',
     entityId: media.id,
     summary: `Uploaded media: ${alt}`,
-    metadata: { url: storedFile.url, size: storedFile.size, type: storedFile.type }
+    metadata: { url: storedFile.url, size: storedFile.size, type: storedFile.type, provider: storedFile.provider }
   });
 
   revalidateCatalog();
