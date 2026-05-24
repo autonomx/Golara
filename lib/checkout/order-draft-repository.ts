@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { randomBytes } from 'node:crypto';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
 type OrderDraftItemInput = {
@@ -44,6 +45,10 @@ function makeOrderNumber() {
   const timestamp = new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);
   const suffix = Math.random().toString(36).slice(2, 8).toUpperCase();
   return `GL-${timestamp}-${suffix}`;
+}
+
+function makePublicLookupToken() {
+  return randomBytes(24).toString('base64url');
 }
 
 function normalizeItems(items: OrderDraftItemInput[]) {
@@ -104,6 +109,7 @@ export async function createOrderDraft(input: CreateOrderDraftInput) {
   return prisma.checkoutOrder.create({
     data: {
       orderNumber: makeOrderNumber(),
+      publicLookupToken: makePublicLookupToken(),
       customerId: optionalText(input.customerId),
       addressId: optionalText(input.addressId),
       checkoutMode: normalizeCheckoutMode(input.checkoutMode),
