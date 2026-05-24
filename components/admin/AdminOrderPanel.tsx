@@ -6,6 +6,7 @@ import type { AdminOrderFilters, AdminOrderPage } from '@/lib/checkout/admin-ord
 
 const orderStatuses = ['draft', 'pending_payment', 'paid', 'preparing', 'out_for_delivery', 'fulfilled', 'cancelled'];
 const paymentStatuses = ['manual_pending', 'redirect_required', 'verified_paid', 'failed', 'cancelled'];
+const fulfillmentStatuses = ['not_scheduled', 'scheduled', 'preparing', 'ready_for_delivery', 'out_for_delivery', 'delivered', 'issue'];
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat('en-CA', {
@@ -18,6 +19,7 @@ function orderQuery(filters: AdminOrderFilters, page?: number) {
   const params = new URLSearchParams();
   if (filters.status) params.set('orderStatus', filters.status);
   if (filters.paymentStatus) params.set('orderPaymentStatus', filters.paymentStatus);
+  if (filters.fulfillmentStatus) params.set('orderFulfillmentStatus', filters.fulfillmentStatus);
   if (filters.search) params.set('orderSearch', filters.search);
   if (page && page > 1) params.set('orderPage', String(page));
   const query = params.toString();
@@ -28,6 +30,7 @@ function orderExportQuery(filters: AdminOrderFilters, format: 'csv' | 'print') {
   const params = new URLSearchParams();
   if (filters.status) params.set('orderStatus', filters.status);
   if (filters.paymentStatus) params.set('orderPaymentStatus', filters.paymentStatus);
+  if (filters.fulfillmentStatus) params.set('orderFulfillmentStatus', filters.fulfillmentStatus);
   if (filters.search) params.set('orderSearch', filters.search);
   return `/admin/orders/${format}?${params.toString()}`;
 }
@@ -76,7 +79,7 @@ function OrderStatusForm({ order }: { order: CheckoutOrderSummary }) {
 }
 
 export function AdminOrderPanel({ orderPage, filters }: { orderPage: AdminOrderPage; filters: AdminOrderFilters }) {
-  const hasFilters = Boolean(filters.status || filters.paymentStatus || filters.search);
+  const hasFilters = Boolean(filters.status || filters.paymentStatus || filters.fulfillmentStatus || filters.search);
   const orders = orderPage.orders;
 
   return (
@@ -89,11 +92,12 @@ export function AdminOrderPanel({ orderPage, filters }: { orderPage: AdminOrderP
         </p>
       </div>
 
-      <form className="mb-6 grid gap-4 rounded-3xl border border-rosewood/10 bg-cream p-5 md:grid-cols-3" action="/admin#orders">
+      <form className="mb-6 grid gap-4 rounded-3xl border border-rosewood/10 bg-cream p-5 md:grid-cols-4" action="/admin#orders">
         <FilterSelect label="Order status" name="orderStatus" defaultValue={filters.status} values={orderStatuses} />
         <FilterSelect label="Payment status" name="orderPaymentStatus" defaultValue={filters.paymentStatus} values={paymentStatuses} />
+        <FilterSelect label="Fulfillment status" name="orderFulfillmentStatus" defaultValue={filters.fulfillmentStatus} values={fulfillmentStatuses} />
         <FilterInput label="Search" name="orderSearch" defaultValue={filters.search} placeholder="Order, phone, name, product" />
-        <div className="flex flex-wrap gap-3 md:col-span-3">
+        <div className="flex flex-wrap gap-3 md:col-span-4">
           <button className="rounded-full bg-rosewood px-5 py-2 text-sm font-semibold text-white" type="submit">Filter orders</button>
           {hasFilters ? <a className="rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood" href="/admin#orders">Clear filters</a> : null}
           <a className="rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood" href={orderExportQuery(filters, 'csv')}>Export CSV</a>
@@ -140,6 +144,7 @@ export function AdminOrderPanel({ orderPage, filters }: { orderPage: AdminOrderP
                     <span className="rounded-full border border-rosewood/15 bg-cream px-3 py-1 text-xs font-semibold text-rosewood">
                       {order.status}
                     </span>
+                    {order.fulfillmentStatus ? <p className="mt-1 text-xs text-stone-500">Fulfillment: {order.fulfillmentStatus}</p> : null}
                     {order.latestPaymentStatus ? <p className="mt-1 text-xs text-stone-500">Payment: {order.latestPaymentStatus}</p> : null}
                     <OrderStatusForm order={order} />
                   </td>
