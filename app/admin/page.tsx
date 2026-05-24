@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
+import { InquiryBoard } from '@/components/admin/InquiryBoard';
 import { SiteHeader } from '@/components/SiteHeader';
 import { isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
 import { getHomepageContent, listAdminCategories, listAdminProducts, listInquiries, listMedia } from '@/lib/cms/catalog-repository';
@@ -38,13 +39,13 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             </Link>
           ) : null}
         </div>
-        <div className="mt-10">
+        <div className="mt-10 grid gap-12">
+          <InquiryBoard inquiries={inquiries} />
           <AdminDashboard
             categories={categories}
             products={products}
             homepage={homepage}
             media={media}
-            inquiries={inquiries}
             databaseReady={hasDatabase()}
             authenticated={authenticated}
             status={status}
