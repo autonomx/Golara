@@ -54,14 +54,15 @@ const domesticRedirectProvider: PaymentProvider = {
   async createAttempt(order) {
     const baseUrl = process.env.CHECKOUT_DOMESTIC_GATEWAY_START_URL?.trim();
     if (!baseUrl) {
+      const metadata: Record<string, string | number | boolean> = {
+        instruction: 'Domestic redirect URL is not configured; manual staff follow-up required',
+        orderNumber: order.orderNumber
+      };
       return {
         provider: 'domestic_redirect',
         status: 'manual_pending',
         providerReference: order.orderNumber,
-        metadata: {
-          instruction: 'Domestic redirect URL is not configured; manual staff follow-up required',
-          orderNumber: order.orderNumber
-        }
+        metadata
       };
     }
 
@@ -73,15 +74,16 @@ const domesticRedirectProvider: PaymentProvider = {
       url.searchParams.set('callback', `${siteUrl()}/orders/${order.publicLookupToken}`);
     }
 
+    const metadata: Record<string, string | number | boolean> = {
+      orderNumber: order.orderNumber,
+      configuredUrl: baseUrl
+    };
     return {
       provider: 'domestic_redirect',
       status: 'redirect_required',
       providerReference: order.orderNumber,
       redirectUrl: url.toString(),
-      metadata: {
-        orderNumber: order.orderNumber,
-        configuredUrl: baseUrl
-      }
+      metadata
     };
   }
 };
