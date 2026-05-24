@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id             String    @id @default(cuid())
+  slug           String    @unique
+  code           String    @unique
+  title          String
+  description    String
+  priceCents     Int
+  currency       String    @default("CAD")
+  availableToday Boolean   @default(false)
+  bestSeller     Boolean   @default(false)
+  isActive       Boolean   @default(true)
+  categoryId     String
+  category       Category  @relation(fields: [categoryId], references: [id])
+  images         Media[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  title       String
+  eyebrow     String
+  description String
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Media {
+  id        String   @id @default(cuid())
+  url       String
+  alt       String
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model HomepageSection {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  title     String
+  subtitle  String?
+  body      String?
+  payload   Json
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  updatedAt DateTime @updatedAt
+}
+
+model CustomerInquiry {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String?
+  phone     String?
+  message   String
+  productId String?
+  status    String   @default("new")
+  createdAt DateTime @default(now())
+}
