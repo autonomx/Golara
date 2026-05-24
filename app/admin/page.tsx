@@ -3,19 +3,20 @@ import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { InquiryBoard } from '@/components/admin/InquiryBoard';
 import { SiteHeader } from '@/components/SiteHeader';
 import { isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
-import { getHomepageContent, listAdminCategories, listAdminProducts, listInquiries, listMedia } from '@/lib/cms/catalog-repository';
+import { getHomepageContent, listAdminCategories, listAdminProducts, listInquiries, listInquiryStatusCounts, listMedia } from '@/lib/cms/catalog-repository';
 import { hasDatabase } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
-export default async function AdminPage({ searchParams }: { searchParams: Promise<{ status?: string; message?: string }> }) {
-  const [{ status, message }, categories, products, homepage, media, inquiries, authenticated] = await Promise.all([
-    searchParams,
+export default async function AdminPage({ searchParams }: { searchParams: Promise<{ status?: string; message?: string; inquiryStatus?: string }> }) {
+  const { status, message, inquiryStatus } = await searchParams;
+  const [categories, products, homepage, media, inquiries, inquiryCounts, authenticated] = await Promise.all([
     listAdminCategories(),
     listAdminProducts(),
     getHomepageContent(),
     listMedia(),
-    listInquiries(),
+    listInquiries(inquiryStatus),
+    listInquiryStatusCounts(),
     isAdminAuthenticated()
   ]);
 
@@ -40,7 +41,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           ) : null}
         </div>
         <div className="mt-10 grid gap-12">
-          <InquiryBoard inquiries={inquiries} />
+          <InquiryBoard inquiries={inquiries} counts={inquiryCounts} activeStatus={inquiryStatus} />
           <AdminDashboard
             categories={categories}
             products={products}

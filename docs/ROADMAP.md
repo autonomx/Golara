@@ -88,6 +88,15 @@ Status: implemented foundation.
 - Add append-only follow-up notes with channel labels.
 - Render follow-up history inside the focused inquiry board component.
 
+## Phase 3.5 — Inquiry inbox filters
+
+Status: implemented foundation.
+
+- Add inquiry status counts from the repository.
+- Add status-filtered inquiry reads.
+- Thread the selected status through the thin admin route.
+- Add inquiry inbox filter pills with counts for each status.
+
 Remaining before production:
 - Replace log-only notifications with email/WhatsApp providers.
 - Add richer validation and inline form errors.

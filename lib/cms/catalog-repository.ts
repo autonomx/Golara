@@ -5,6 +5,12 @@ import { prisma, hasDatabase } from '@/lib/prisma';
 import { seedCategories, seedHomepageContent, seedProducts } from '@/lib/seed-data';
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1200&q=80';
+const INQUIRY_STATUSES = ['new', 'contacted', 'confirmed', 'fulfilled', 'cancelled'];
+
+export type InquiryStatusCount = {
+  status: string;
+  count: number;
+};
 
 type DbCategory = {
   id: string;
@@ -58,6 +64,14 @@ type DbInquiry = {
 
 function bySortThenTitle(a: Category, b: Category) {
   return (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.title.localeCompare(b.title);
+}
+
+function isKnownInquiryStatus(status?: string) {
+  return Boolean(status && INQUIRY_STATUSES.includes(status));
+}
+
+function emptyInquiryCounts(): InquiryStatusCount[] {
+  return INQUIRY_STATUSES.map((status) => ({ status, count: 0 }));
 }
 
 function mapCategory(category: DbCategory): Category {
@@ -146,10 +160,25 @@ async function readWithFallback<T>(readFromDb: () => Promise<T>, fallback: () =>
   }
 }
 
-export async function listInquiries(): Promise<CustomerInquiry[]> {
+export async function listInquiryStatusCounts(): Promise<InquiryStatusCount[]> {
+  return readWithFallback(
+    async () => {
+      const grouped = await prisma.customerInquiry.groupBy({
+        by: ['status'],
+        _count: { _all: true }
+      });
+      const counts = new Map(grouped.map((item) => [item.status, item._count._all]));
+      return INQUIRY_STATUSES.map((status) => ({ status, count: counts.get(status) ?? 0 }));
+    },
+    emptyInquiryCounts
+  );
+}
+
+export async function listInquiries(status?: string): Promise<CustomerInquiry[]> {
   return readWithFallback(
     async () => {
       const inquiries = await prisma.customerInquiry.findMany({
+        where: isKnownInquiryStatus(status) ? { status } : undefined,
         include: {
           product: { select: { title: true } },
           followUps: { orderBy: { createdAt: 'desc' } }
