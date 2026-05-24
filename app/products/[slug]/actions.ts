@@ -1,6 +1,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { validateInquiryInput } from '@/lib/inquiries/validate-inquiry';
 import { notifyNewInquiry } from '@/lib/notifications/inquiry-notifications';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
@@ -10,39 +11,36 @@ function stringField(formData: FormData, name: string, fallback = '') {
   return value.trim();
 }
 
-function requiredString(formData: FormData, name: string) {
-  const value = stringField(formData, name);
-  if (!value) throw new Error(`${name} is required`);
-  return value;
-}
-
-function optionalDate(value: string) {
-  if (!value) return undefined;
-  const date = new Date(`${value}T12:00:00.000Z`);
-  if (Number.isNaN(date.getTime())) return undefined;
-  return date;
+function inquiryPath(productSlug: string, status: string) {
+  return `/products/${productSlug}?inquiry=${encodeURIComponent(status)}`;
 }
 
 export async function createInquiryAction(productId: string | undefined, productSlug: string, formData: FormData) {
   if (!hasDatabase()) {
-    redirect(`/products/${productSlug}?inquiry=database-required`);
+    redirect(inquiryPath(productSlug, 'database-required'));
   }
 
-  const name = requiredString(formData, 'name');
-  const phone = requiredString(formData, 'phone');
-  const email = stringField(formData, 'email') || undefined;
-  const message = requiredString(formData, 'message');
-  const deliveryDate = optionalDate(stringField(formData, 'deliveryDate'));
-  const deliveryNotes = stringField(formData, 'deliveryNotes') || undefined;
+  const validation = validateInquiryInput({
+    name: stringField(formData, 'name'),
+    phone: stringField(formData, 'phone'),
+    email: stringField(formData, 'email'),
+    message: stringField(formData, 'message'),
+    deliveryDate: stringField(formData, 'deliveryDate'),
+    deliveryNotes: stringField(formData, 'deliveryNotes')
+  });
+
+  if (!validation.ok) {
+    redirect(inquiryPath(productSlug, validation.code));
+  }
 
   const inquiry = await prisma.customerInquiry.create({
     data: {
-      name,
-      phone,
-      email,
-      message,
-      deliveryDate,
-      deliveryNotes,
+      name: validation.value.name,
+      phone: validation.value.phone,
+      email: validation.value.email,
+      message: validation.value.message,
+      deliveryDate: validation.value.deliveryDate,
+      deliveryNotes: validation.value.deliveryNotes,
       productId
     },
     include: {
@@ -53,11 +51,11 @@ export async function createInquiryAction(productId: string | undefined, product
   await notifyNewInquiry({
     inquiryId: inquiry.id,
     productTitle: inquiry.product?.title,
-    customerName: name,
-    customerPhone: phone,
-    customerEmail: email,
-    message
+    customerName: validation.value.name,
+    customerPhone: validation.value.phone,
+    customerEmail: validation.value.email,
+    message: validation.value.message
   });
 
-  redirect(`/products/${productSlug}?inquiry=sent`);
+  redirect(inquiryPath(productSlug, 'sent'));
 }
