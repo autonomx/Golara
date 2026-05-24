@@ -1,19 +1,21 @@
 import Link from 'next/link';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
+import { InquiryBoard } from '@/components/admin/InquiryBoard';
 import { SiteHeader } from '@/components/SiteHeader';
 import { isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
-import { getHomepageContent, listAdminCategories, listAdminProducts, listMedia } from '@/lib/cms/catalog-repository';
+import { getHomepageContent, listAdminCategories, listAdminProducts, listInquiries, listMedia } from '@/lib/cms/catalog-repository';
 import { hasDatabase } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ status?: string; message?: string }> }) {
-  const [{ status, message }, categories, products, homepage, media, authenticated] = await Promise.all([
+  const [{ status, message }, categories, products, homepage, media, inquiries, authenticated] = await Promise.all([
     searchParams,
     listAdminCategories(),
     listAdminProducts(),
     getHomepageContent(),
     listMedia(),
+    listInquiries(),
     isAdminAuthenticated()
   ]);
 
@@ -28,7 +30,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">Admin CMS</p>
             <h1 className="mt-3 font-display text-6xl text-rosewood">Edit Golara without Joomla.</h1>
             <p className="mt-5 max-w-3xl text-lg leading-8 text-stone-700">
-              Manage homepage content, product categories, media, and product cards from one place. Phase 2.2 adds a practical media library and clearer admin status messages.
+              Manage homepage content, product categories, media, customer inquiries, and product cards from one place.
             </p>
           </div>
           {!authenticated ? (
@@ -37,7 +39,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             </Link>
           ) : null}
         </div>
-        <div className="mt-10">
+        <div className="mt-10 grid gap-12">
+          <InquiryBoard inquiries={inquiries} />
           <AdminDashboard
             categories={categories}
             products={products}

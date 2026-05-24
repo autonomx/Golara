@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { Category, HomepageContent, MediaItem, Product } from '@/lib/catalog';
+import type { Category, CustomerInquiry, HomepageContent, MediaItem, Product } from '@/lib/catalog';
 import { prisma, hasDatabase } from '@/lib/prisma';
 import { seedCategories, seedHomepageContent, seedProducts } from '@/lib/seed-data';
 
@@ -31,6 +31,18 @@ type DbProduct = {
   imageUrl: string;
   category?: DbCategory;
   images?: { url: string; alt: string }[];
+};
+
+type DbInquiry = {
+  id: string;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  message: string;
+  productId: string | null;
+  status: string;
+  createdAt: Date;
+  product?: { title: string } | null;
 };
 
 function bySortThenTitle(a: Category, b: Category) {
@@ -70,6 +82,20 @@ function mapProduct(product: DbProduct): Product {
   };
 }
 
+function mapInquiry(inquiry: DbInquiry): CustomerInquiry {
+  return {
+    id: inquiry.id,
+    name: inquiry.name ?? undefined,
+    email: inquiry.email ?? undefined,
+    phone: inquiry.phone ?? undefined,
+    message: inquiry.message,
+    productId: inquiry.productId ?? undefined,
+    productTitle: inquiry.product?.title,
+    status: inquiry.status,
+    createdAt: inquiry.createdAt
+  };
+}
+
 function fallbackMedia(): MediaItem[] {
   const seen = new Set<string>();
   return seedProducts
@@ -98,6 +124,20 @@ async function readWithFallback<T>(readFromDb: () => Promise<T>, fallback: () =>
     console.warn('[cms] database read failed; using seeded fallback content', error);
     return fallback();
   }
+}
+
+export async function listInquiries(): Promise<CustomerInquiry[]> {
+  return readWithFallback(
+    async () => {
+      const inquiries = await prisma.customerInquiry.findMany({
+        include: { product: { select: { title: true } } },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      return inquiries.map(mapInquiry);
+    },
+    () => []
+  );
 }
 
 export async function listMedia(): Promise<MediaItem[]> {

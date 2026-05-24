@@ -33,6 +33,18 @@ export type MediaItem = {
   createdAt?: Date;
 };
 
+export type CustomerInquiry = {
+  id: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  message: string;
+  productId?: string;
+  productTitle?: string;
+  status: string;
+  createdAt: Date;
+};
+
 export type HomepageContent = {
   eyebrow: string;
   title: string;

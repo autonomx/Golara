@@ -43,18 +43,28 @@ Status: implemented foundation.
 - Allow local `/uploads/...` image paths and arbitrary registered external image URLs.
 - Add clearer admin success/status banners.
 
+## Phase 3.0 — Customer inquiry flow v1
+
+Status: implemented foundation.
+
+- Add customer inquiry records linked to products.
+- Add product detail inquiry forms for name, phone, optional email, preferred date, delivery notes, and message.
+- Add admin inquiry inbox for reviewing customer requests.
+- Keep route files thin by moving product detail and inquiry UI into focused components.
+
 Remaining before production:
+- Add inquiry status updates and internal staff notes.
+- Add email/WhatsApp notification hooks.
+- Add richer validation and inline form errors.
 - Replace password-only auth with user accounts or a provider such as Auth.js, Clerk, or Supabase Auth.
 - Add role checks and audit logging.
 - Replace local file uploads with production object storage such as S3, Cloudinary, or Supabase Storage.
-- Add richer validation and inline form errors.
 
-## Phase 3 — Customer/order flow
+## Phase 3.1 — Inquiry management
 
-- Add inquiry/order records.
-- Add customer details, delivery date, notes, and fulfillment status.
-- Add admin order board.
-- Add email/WhatsApp notification hooks.
+- Add status mutation controls for new/contacted/confirmed/fulfilled/cancelled.
+- Add admin notes and customer follow-up history.
+- Add notification hooks.
 
 ## Phase 4 — Production ecommerce
 
