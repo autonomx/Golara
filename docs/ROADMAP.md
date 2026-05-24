@@ -140,6 +140,15 @@ Status: implemented foundation.
 - Document environment variables, database setup, admin CMS readiness, inquiry operations, media storage, deployment preflight, and remaining launch blockers.
 - Keep implementation work unblocked by making production decisions explicit before Phase 4.
 
+## Phase 3.11 — Admin readiness panel
+
+Status: implemented foundation.
+
+- Add advisory production-readiness cards to `/admin`.
+- Surface database, admin auth, inquiry notification, and media storage readiness.
+- Add a quick-nav anchor for the readiness panel.
+- Keep the panel advisory-only so CMS write permissions remain controlled by existing database/auth checks.
+
 Remaining before production:
 - Replace log-only notifications with email/WhatsApp providers.
 - Add richer validation and inline form errors.
