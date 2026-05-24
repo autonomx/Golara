@@ -224,9 +224,17 @@ Status: implemented foundation.
 - Include the selected provider in media-upload audit metadata.
 - Prepare a narrow integration point for S3, Cloudinary, or Supabase Storage later.
 
+## Phase 3.21 — Admin role enforcement v1
+
+Status: implemented foundation.
+
+- Add `assertAdminRole()` with owner/staff role ranking.
+- Require owner role for catalog, homepage, and media CMS writes.
+- Allow staff-or-owner role for inquiry status and follow-up writes.
+- Hide audit logs from signed-out admin preview mode.
+
 Remaining before production:
 - Replace password-only auth with account/provider auth.
-- Add role enforcement for staff vs owner capabilities.
 - Implement a real object storage provider such as S3, Cloudinary, or Supabase Storage.
 
 ## Phase 4 — Production ecommerce
