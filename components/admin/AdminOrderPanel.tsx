@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { updateOrderStatusAction } from '@/app/admin/order-actions';
 import type { CheckoutOrderSummary } from '@/lib/catalog';
 import { formatMinorUnitAmount } from '@/lib/catalog';
-import type { AdminOrderFilters } from '@/lib/checkout/admin-order-repository';
+import type { AdminOrderFilters, AdminOrderPage } from '@/lib/checkout/admin-order-repository';
 
 const orderStatuses = ['draft', 'pending_payment', 'paid', 'preparing', 'out_for_delivery', 'fulfilled', 'cancelled'];
 const paymentStatuses = ['manual_pending', 'redirect_required', 'verified_paid', 'failed', 'cancelled'];
@@ -12,6 +12,24 @@ function formatDate(value: Date) {
     dateStyle: 'medium',
     timeStyle: 'short'
   }).format(value);
+}
+
+function orderQuery(filters: AdminOrderFilters, page?: number) {
+  const params = new URLSearchParams();
+  if (filters.status) params.set('orderStatus', filters.status);
+  if (filters.paymentStatus) params.set('orderPaymentStatus', filters.paymentStatus);
+  if (filters.search) params.set('orderSearch', filters.search);
+  if (page && page > 1) params.set('orderPage', String(page));
+  const query = params.toString();
+  return query ? `/admin?${query}#orders` : '/admin#orders';
+}
+
+function orderExportQuery(filters: AdminOrderFilters, format: 'csv' | 'print') {
+  const params = new URLSearchParams();
+  if (filters.status) params.set('orderStatus', filters.status);
+  if (filters.paymentStatus) params.set('orderPaymentStatus', filters.paymentStatus);
+  if (filters.search) params.set('orderSearch', filters.search);
+  return `/admin/orders/${format}?${params.toString()}`;
 }
 
 function FilterInput({ label, name, defaultValue, placeholder }: { label: string; name: string; defaultValue?: string; placeholder?: string }) {
@@ -57,8 +75,9 @@ function OrderStatusForm({ order }: { order: CheckoutOrderSummary }) {
   );
 }
 
-export function AdminOrderPanel({ orders, filters }: { orders: CheckoutOrderSummary[]; filters: AdminOrderFilters }) {
+export function AdminOrderPanel({ orderPage, filters }: { orderPage: AdminOrderPage; filters: AdminOrderFilters }) {
   const hasFilters = Boolean(filters.status || filters.paymentStatus || filters.search);
+  const orders = orderPage.orders;
 
   return (
     <section id="orders" className="scroll-mt-8 rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
@@ -66,7 +85,7 @@ export function AdminOrderPanel({ orders, filters }: { orders: CheckoutOrderSumm
         <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Orders</p>
         <h2 className="mt-2 font-display text-4xl text-rosewood">Checkout order operations</h2>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-stone-600">
-          Review recent checkout orders, open order details, filter operational queues, update status, and keep staff-only notes.
+          Review checkout orders, page through filtered queues, export or print the current view, update status, and keep staff-only notes.
         </p>
       </div>
 
@@ -77,8 +96,14 @@ export function AdminOrderPanel({ orders, filters }: { orders: CheckoutOrderSumm
         <div className="flex flex-wrap gap-3 md:col-span-3">
           <button className="rounded-full bg-rosewood px-5 py-2 text-sm font-semibold text-white" type="submit">Filter orders</button>
           {hasFilters ? <a className="rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood" href="/admin#orders">Clear filters</a> : null}
+          <a className="rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood" href={orderExportQuery(filters, 'csv')}>Export CSV</a>
+          <a className="rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood" href={orderExportQuery(filters, 'print')}>Print view</a>
         </div>
       </form>
+
+      <div className="mb-4 text-sm text-stone-600">
+        Showing page {orderPage.page} of {orderPage.totalPages} · {orderPage.totalCount} order{orderPage.totalCount === 1 ? '' : 's'}
+      </div>
 
       {orders.length === 0 ? (
         <div className="rounded-3xl border border-rosewood/10 bg-cream p-5 text-sm text-stone-700">
@@ -127,6 +152,14 @@ export function AdminOrderPanel({ orders, filters }: { orders: CheckoutOrderSumm
           </table>
         </div>
       )}
+
+      {orderPage.totalPages > 1 ? (
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+          <a className="rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood aria-disabled:opacity-40" href={orderQuery(filters, Math.max(1, orderPage.page - 1))} aria-disabled={orderPage.page <= 1}>Previous</a>
+          <span className="text-sm text-stone-600">Page {orderPage.page} of {orderPage.totalPages}</span>
+          <a className="rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood aria-disabled:opacity-40" href={orderQuery(filters, Math.min(orderPage.totalPages, orderPage.page + 1))} aria-disabled={orderPage.page >= orderPage.totalPages}>Next</a>
+        </div>
+      ) : null}
     </section>
   );
 }
