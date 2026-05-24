@@ -7,6 +7,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { getCategoryBySlug, getProductBySlug, listProducts } from '@/lib/cms/catalog-repository';
 import { hasDatabase } from '@/lib/prisma';
 import { buildPageMetadata } from '@/lib/site-metadata';
+import { buildProductJsonLd, JsonLdScript } from '@/lib/structured-data';
 
 export async function generateStaticParams() {
   const products = await listProducts();
@@ -47,6 +48,7 @@ export default async function ProductPage({
 
   return (
     <main>
+      <JsonLdScript data={buildProductJsonLd(product)} />
       <SiteHeader />
       <ProductDetail product={product} category={category} />
       <ProductCheckoutForm product={product} dbReady={dbReady} checkout={checkout} />
