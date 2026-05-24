@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { assertAdminAuthenticated } from '@/lib/admin-auth';
+import { assertAdminRole } from '@/lib/admin-auth';
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
@@ -27,7 +27,7 @@ function adminStatus(status: string, formData: FormData) {
 }
 
 export async function saveInquiryAction(inquiryId: string, formData: FormData) {
-  await assertAdminAuthenticated();
+  await assertAdminRole('staff');
   if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
 
   const status = stringFormValue(formData, 'status') || 'new';
@@ -74,7 +74,7 @@ export async function saveInquiryAction(inquiryId: string, formData: FormData) {
 }
 
 export async function addInquiryFollowUpAction(inquiryId: string, formData: FormData) {
-  await assertAdminAuthenticated();
+  await assertAdminRole('staff');
   if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
 
   const note = stringFormValue(formData, 'note');
