@@ -10,6 +10,14 @@ export type AdminOrderFilters = {
   search?: string;
 };
 
+export type AdminOrderPage = {
+  orders: CheckoutOrderSummary[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+};
+
 type DbOrderSummary = {
   id: string;
   orderNumber: string;
@@ -30,6 +38,10 @@ type DbOrderSummary = {
 function optionalText(value?: string) {
   const normalized = value?.trim();
   return normalized || undefined;
+}
+
+function safePage(value = 1) {
+  return Number.isFinite(value) ? Math.max(1, Math.floor(value)) : 1;
 }
 
 function buildOrderWhere(filters: AdminOrderFilters = {}): Prisma.CheckoutOrderWhereInput {
@@ -71,14 +83,12 @@ function mapOrderSummary(order: DbOrderSummary): CheckoutOrderSummary {
   };
 }
 
-export async function listAdminCheckoutOrders(filters: AdminOrderFilters = {}, limit = 12): Promise<CheckoutOrderSummary[]> {
-  if (!hasDatabase()) return [];
-
-  const safeLimit = Math.max(1, Math.min(50, Math.floor(limit)));
-  const orders = await prisma.checkoutOrder.findMany({
-    where: buildOrderWhere(filters),
+async function readOrderSummaries(where: Prisma.CheckoutOrderWhereInput, take: number, skip = 0) {
+  return prisma.checkoutOrder.findMany({
+    where,
     orderBy: { createdAt: 'desc' },
-    take: safeLimit,
+    take,
+    skip,
     include: {
       customer: { select: { phone: true, displayName: true } },
       items: { select: { id: true } },
@@ -94,7 +104,43 @@ export async function listAdminCheckoutOrders(filters: AdminOrderFilters = {}, l
       }
     }
   });
+}
 
+export async function listAdminCheckoutOrders(filters: AdminOrderFilters = {}, limit = 12): Promise<CheckoutOrderSummary[]> {
+  if (!hasDatabase()) return [];
+
+  const safeLimit = Math.max(1, Math.min(50, Math.floor(limit)));
+  const orders = await readOrderSummaries(buildOrderWhere(filters), safeLimit);
+  return orders.map(mapOrderSummary);
+}
+
+export async function listAdminCheckoutOrderPage(filters: AdminOrderFilters = {}, page = 1, pageSize = 12): Promise<AdminOrderPage> {
+  if (!hasDatabase()) {
+    return { orders: [], page: 1, pageSize, totalCount: 0, totalPages: 1 };
+  }
+
+  const safePageSize = Math.max(1, Math.min(50, Math.floor(pageSize)));
+  const currentPage = safePage(page);
+  const where = buildOrderWhere(filters);
+  const [totalCount, orders] = await Promise.all([
+    prisma.checkoutOrder.count({ where }),
+    readOrderSummaries(where, safePageSize, (currentPage - 1) * safePageSize)
+  ]);
+  const totalPages = Math.max(1, Math.ceil(totalCount / safePageSize));
+
+  return {
+    orders: orders.map(mapOrderSummary),
+    page: Math.min(currentPage, totalPages),
+    pageSize: safePageSize,
+    totalCount,
+    totalPages
+  };
+}
+
+export async function listAdminCheckoutOrdersForExport(filters: AdminOrderFilters = {}): Promise<CheckoutOrderSummary[]> {
+  if (!hasDatabase()) return [];
+
+  const orders = await readOrderSummaries(buildOrderWhere(filters), 500);
   return orders.map(mapOrderSummary);
 }
 
