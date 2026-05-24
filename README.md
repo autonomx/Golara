@@ -4,7 +4,7 @@ Golara is a modern editable flower and luxury gift storefront. The project is in
 
 ## Current scope
 
-Phase 2 is now implemented as a database-ready CMS foundation:
+Phase 2.1 is now implemented as a protected CMS foundation:
 
 - Next.js App Router storefront
 - RTL-ready visual system foundation
@@ -13,10 +13,12 @@ Phase 2 is now implemented as a database-ready CMS foundation:
 - Prisma seed script
 - Async storefront data repository
 - Admin forms for homepage content, categories, and products
+- Environment-based admin login gate
+- Server-action write protection
 - Revalidation after CMS writes
 - CI for Prisma generation, typecheck, and build
 
-The storefront still works without a database by reading seeded fallback data. Admin write forms are enabled only when `DATABASE_URL` is configured.
+The storefront still works without a database by reading seeded fallback data. Admin write forms are enabled only when `DATABASE_URL`, `ADMIN_PASSWORD`, and `ADMIN_SESSION_SECRET` are configured and the admin is signed in.
 
 ## Getting started
 
@@ -33,6 +35,8 @@ Create `.env.local`:
 
 ```bash
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/golara?schema=public"
+ADMIN_PASSWORD="replace-this-password"
+ADMIN_SESSION_SECRET="replace-this-session-secret"
 ```
 
 Then run:
@@ -43,7 +47,7 @@ npm run db:seed
 npm run dev
 ```
 
-Visit http://localhost:3000/admin to edit homepage content, categories, and products.
+Visit http://localhost:3000/admin/login to sign in, then open http://localhost:3000/admin to edit homepage content, categories, and products.
 
 ## Planned stack
 
