@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { SiteHeader } from '@/components/SiteHeader';
 import { formatMinorUnitAmount } from '@/lib/catalog';
-import { fulfillmentStatusLabel, labelFor, orderStatusLabel, resultMessageFor } from '@/lib/checkout/public-order-labels';
+import { fulfillmentStatusLabel, labelFor, orderStatusLabel, publicOrderCopyFor, resultMessageFor } from '@/lib/checkout/public-order-labels';
 import { getPublicOrderByToken } from '@/lib/checkout/public-order-repository';
 
 export const dynamic = 'force-dynamic';
@@ -43,6 +43,7 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
   const order = await getPublicOrderByToken(token);
   if (!order) notFound();
   const latestAttempt = order.paymentAttempts[0];
+  const copy = publicOrderCopyFor(locale);
   const isFa = locale?.toLowerCase().startsWith('fa');
 
   return (
@@ -52,7 +53,7 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
         <div className="rounded-[2rem] border border-rosewood/10 bg-white p-8 shadow-sm">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Order status</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">{copy.eyebrow}</p>
               <h1 className="mt-3 font-display text-5xl text-rosewood">{order.orderNumber}</h1>
             </div>
             <nav aria-label="Language" className="flex gap-2 text-sm font-semibold">
@@ -61,41 +62,41 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
             </nav>
           </div>
           <p className="mt-5 text-lg leading-8 text-stone-700">
-            Your order is currently <strong>{orderStatusLabel(order.status, locale)}</strong>. Staff will follow up if more information is needed.
+            {copy.introPrefix} <strong>{orderStatusLabel(order.status, locale)}</strong>. {copy.introSuffix}
           </p>
           <ResultBanner result={result} locale={locale} />
 
           <div className="mt-8 grid gap-4 md:grid-cols-4">
             <div className="rounded-3xl border border-rosewood/10 bg-cream p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rosewood/60">Total</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rosewood/60">{copy.total}</p>
               <p className="mt-2 font-display text-3xl text-rosewood">{formatMinorUnitAmount(order.totalCents, order.currency)}</p>
             </div>
             <div className="rounded-3xl border border-rosewood/10 bg-cream p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rosewood/60">Order mode</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rosewood/60">{copy.orderMode}</p>
               <p className="mt-2 text-sm font-semibold capitalize text-rosewood">{labelFor({}, order.checkoutMode)}</p>
             </div>
             <div className="rounded-3xl border border-rosewood/10 bg-cream p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rosewood/60">Fulfillment</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rosewood/60">{copy.fulfillment}</p>
               <p className="mt-2 text-sm font-semibold text-rosewood">{fulfillmentStatusLabel(order.fulfillmentStatus, locale)}</p>
             </div>
             <div className="rounded-3xl border border-rosewood/10 bg-cream p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rosewood/60">Created</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rosewood/60">{copy.created}</p>
               <p className="mt-2 text-sm font-semibold text-rosewood">{formatDate(order.createdAt, locale)}</p>
             </div>
           </div>
 
           {(order.deliveryDate || order.deliveryWindow) ? (
             <section className="mt-8 rounded-3xl border border-rosewood/10 bg-cream p-5">
-              <h2 className="font-display text-3xl text-rosewood">Delivery timing</h2>
+              <h2 className="font-display text-3xl text-rosewood">{copy.deliveryTiming}</h2>
               <div className="mt-4 grid gap-3 text-sm text-stone-700 md:grid-cols-2">
-                <p><strong>Date:</strong> {order.deliveryDate ? formatDateOnly(order.deliveryDate, locale) : 'Not set yet'}</p>
-                <p><strong>Window:</strong> {order.deliveryWindow || 'Not set yet'}</p>
+                <p><strong>{copy.date}:</strong> {order.deliveryDate ? formatDateOnly(order.deliveryDate, locale) : copy.notSetYet}</p>
+                <p><strong>{copy.window}:</strong> {order.deliveryWindow || copy.notSetYet}</p>
               </div>
             </section>
           ) : null}
 
           <section className="mt-8 rounded-3xl border border-rosewood/10 bg-cream p-5">
-            <h2 className="font-display text-3xl text-rosewood">Items</h2>
+            <h2 className="font-display text-3xl text-rosewood">{copy.items}</h2>
             <div className="mt-4 grid gap-3 text-sm text-stone-700">
               {order.items.map((item) => (
                 <div key={`${item.productTitle}-${item.quantity}`} className="flex justify-between gap-4 border-b border-rosewood/10 pb-2 last:border-0 last:pb-0">
@@ -107,9 +108,9 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
           </section>
 
           <section className="mt-8 rounded-3xl border border-rosewood/10 bg-white p-5">
-            <h2 className="font-display text-3xl text-rosewood">Progress</h2>
+            <h2 className="font-display text-3xl text-rosewood">{copy.progress}</h2>
             {order.timelineEvents.length === 0 ? (
-              <p className="mt-4 text-sm text-stone-700">No progress updates have been posted yet.</p>
+              <p className="mt-4 text-sm text-stone-700">{copy.noProgress}</p>
             ) : (
               <div className="mt-4 grid gap-3">
                 {order.timelineEvents.map((event) => (
@@ -122,10 +123,8 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
             )}
           </section>
 
-          <p className="mt-6 text-sm leading-6 text-stone-600">
-            For privacy, this page does not show address, phone, courier details, customer notes, or staff-only notes. Contact the shop with your order reference for detailed changes.
-          </p>
-          {latestAttempt ? <p className="mt-2 text-xs text-stone-500">Latest payment status: {labelFor({}, latestAttempt.provider)} · {labelFor({}, latestAttempt.status)}</p> : null}
+          <p className="mt-6 text-sm leading-6 text-stone-600">{copy.privacy}</p>
+          {latestAttempt ? <p className="mt-2 text-xs text-stone-500">{copy.latestPaymentStatus}: {labelFor({}, latestAttempt.provider)} · {labelFor({}, latestAttempt.status)}</p> : null}
         </div>
       </section>
     </main>
