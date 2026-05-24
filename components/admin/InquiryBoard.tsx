@@ -1,5 +1,7 @@
+import Link from 'next/link';
 import { addInquiryFollowUpAction, saveInquiryAction } from '@/app/admin/inquiry-actions';
 import type { CustomerInquiry } from '@/lib/catalog';
+import type { InquiryStatusCount } from '@/lib/cms/catalog-repository';
 
 const statuses = ['new', 'contacted', 'confirmed', 'fulfilled', 'cancelled'];
 const channels = ['internal', 'phone', 'email', 'whatsapp'];
@@ -16,7 +18,29 @@ function formatDateOnly(value?: Date) {
   return new Intl.DateTimeFormat('en-CA', { dateStyle: 'medium' }).format(value);
 }
 
-export function InquiryBoard({ inquiries }: { inquiries: CustomerInquiry[] }) {
+function filterHref(status?: string) {
+  return status ? `/admin?inquiryStatus=${encodeURIComponent(status)}` : '/admin';
+}
+
+function FilterPills({ counts, activeStatus }: { counts: InquiryStatusCount[]; activeStatus?: string }) {
+  const total = counts.reduce((sum, item) => sum + item.count, 0);
+  const baseClass = 'rounded-full border px-4 py-2 text-sm font-semibold transition';
+
+  return (
+    <div className="mt-6 flex flex-wrap gap-2">
+      <Link href={filterHref()} className={`${baseClass} ${!activeStatus ? 'border-rosewood bg-rosewood text-white' : 'border-rosewood/20 bg-white text-rosewood'}`}>
+        All <span className="ml-1 opacity-75">{total}</span>
+      </Link>
+      {counts.map((item) => (
+        <Link key={item.status} href={filterHref(item.status)} className={`${baseClass} ${activeStatus === item.status ? 'border-rosewood bg-rosewood text-white' : 'border-rosewood/20 bg-white text-rosewood'}`}>
+          {item.status} <span className="ml-1 opacity-75">{item.count}</span>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+export function InquiryBoard({ inquiries, counts, activeStatus }: { inquiries: CustomerInquiry[]; counts: InquiryStatusCount[]; activeStatus?: string }) {
   return (
     <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
       <div className="mb-6">
@@ -25,11 +49,12 @@ export function InquiryBoard({ inquiries }: { inquiries: CustomerInquiry[] }) {
         <p className="mt-3 text-sm leading-6 text-stone-600">
           Review incoming product requests, update their status, and keep a follow-up timeline.
         </p>
+        <FilterPills counts={counts} activeStatus={activeStatus} />
       </div>
 
       {inquiries.length === 0 ? (
         <div className="rounded-3xl border border-rosewood/10 bg-cream p-6 text-sm text-stone-600">
-          No customer inquiries yet.
+          No customer inquiries match this filter.
         </div>
       ) : (
         <div className="grid gap-4">
