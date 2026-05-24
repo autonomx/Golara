@@ -18,6 +18,11 @@ function adminPath(status: string) {
   return `/admin?${params.toString()}#orders`;
 }
 
+function orderDetailPath(orderId: string, status: string) {
+  const params = new URLSearchParams({ status });
+  return `/admin/orders/${orderId}?${params.toString()}`;
+}
+
 export async function updateOrderStatusAction(orderId: string, formData: FormData) {
   const actor = await assertAdminRole('staff');
   if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
@@ -68,4 +73,40 @@ export async function updateOrderStatusAction(orderId: string, formData: FormDat
 
   revalidatePath('/admin');
   redirect(adminPath('order-updated'));
+}
+
+export async function addOrderTimelineNoteAction(orderId: string, formData: FormData) {
+  const actor = await assertAdminRole('staff');
+  if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
+
+  const note = stringFormValue(formData, 'note');
+  if (note.length < 2) throw new Error('Timeline note is required.');
+
+  const order = await prisma.checkoutOrder.update({
+    where: { id: orderId },
+    data: {
+      staffNotes: note,
+      timelineEvents: {
+        create: {
+          type: 'staff_note',
+          title: 'Staff note added',
+          note,
+          actorLabel: actor.label,
+          actorRole: actor.role
+        }
+      }
+    }
+  });
+
+  await recordAdminAuditLog({
+    action: 'order.timeline.note.create',
+    entity: 'checkoutOrder',
+    entityId: order.id,
+    summary: `Added staff note to order ${order.orderNumber}`,
+    metadata: { noteLength: note.length }
+  });
+
+  revalidatePath('/admin');
+  revalidatePath(`/admin/orders/${orderId}`);
+  redirect(orderDetailPath(orderId, 'order-note-added'));
 }
