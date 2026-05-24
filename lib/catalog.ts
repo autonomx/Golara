@@ -25,6 +25,14 @@ export type Product = {
   description: string;
 };
 
+export type MediaItem = {
+  id?: string;
+  url: string;
+  alt: string;
+  productId?: string;
+  createdAt?: Date;
+};
+
 export type HomepageContent = {
   eyebrow: string;
   title: string;

@@ -4,7 +4,7 @@ Golara is a modern editable flower and luxury gift storefront. The project is in
 
 ## Current scope
 
-Phase 2.1 is now implemented as a protected CMS foundation:
+Phase 2.2 is now implemented as a protected CMS foundation with media library support:
 
 - Next.js App Router storefront
 - RTL-ready visual system foundation
@@ -12,7 +12,9 @@ Phase 2.1 is now implemented as a protected CMS foundation:
 - Prisma/PostgreSQL data model
 - Prisma seed script
 - Async storefront data repository
-- Admin forms for homepage content, categories, and products
+- Admin forms for homepage content, categories, media, and products
+- Media library URL registration and local/dev uploads to `public/uploads`
+- Product image picker backed by media records
 - Environment-based admin login gate
 - Server-action write protection
 - Revalidation after CMS writes
@@ -47,7 +49,16 @@ npm run db:seed
 npm run dev
 ```
 
-Visit http://localhost:3000/admin/login to sign in, then open http://localhost:3000/admin to edit homepage content, categories, and products.
+Visit http://localhost:3000/admin/login to sign in, then open http://localhost:3000/admin to edit homepage content, categories, media, and products.
+
+## Media uploads
+
+Phase 2.2 supports two media flows:
+
+- Register an existing image URL.
+- Upload an image file into `public/uploads` for local/dev use.
+
+For production deployments on serverless hosts, replace local uploads with object storage such as S3, Cloudinary, or Supabase Storage.
 
 ## Planned stack
 

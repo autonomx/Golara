@@ -31,10 +31,22 @@ Status: implemented foundation.
 - Require authentication before CMS write actions.
 - Keep unauthenticated `/admin` in read-only/status mode.
 
+## Phase 2.2 — Media library v1
+
+Status: implemented foundation.
+
+- Seed existing product images into the media table.
+- Add media URL registration.
+- Add local/dev image uploads to `public/uploads`.
+- Add a media gallery in `/admin`.
+- Add product image picker backed by media records.
+- Allow local `/uploads/...` image paths and arbitrary registered external image URLs.
+- Add clearer admin success/status banners.
+
 Remaining before production:
 - Replace password-only auth with user accounts or a provider such as Auth.js, Clerk, or Supabase Auth.
 - Add role checks and audit logging.
-- Replace image URL fields with a real media upload/storage flow.
+- Replace local file uploads with production object storage such as S3, Cloudinary, or Supabase Storage.
 - Add richer validation and inline form errors.
 
 ## Phase 3 — Customer/order flow

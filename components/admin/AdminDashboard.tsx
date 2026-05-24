@@ -1,19 +1,35 @@
-import type { Category, HomepageContent, Product } from '@/lib/catalog';
+import Image from 'next/image';
+import type { Category, HomepageContent, MediaItem, Product } from '@/lib/catalog';
 import { logoutAction } from '@/app/admin/logout/actions';
 import {
   createCategoryAction,
+  createMediaFromUrlAction,
   createProductAction,
   updateCategoryAction,
   updateHomepageAction,
-  updateProductAction
+  updateProductAction,
+  uploadMediaAction
 } from '@/app/admin/actions';
 
 type AdminDashboardProps = {
   categories: Category[];
   products: Product[];
   homepage: HomepageContent;
+  media: MediaItem[];
   databaseReady: boolean;
   authenticated: boolean;
+  status?: string;
+  message?: string;
+};
+
+const statusLabels: Record<string, string> = {
+  'homepage-updated': 'Homepage saved.',
+  'category-created': 'Category created.',
+  'category-updated': 'Category updated.',
+  'product-created': 'Product created.',
+  'product-updated': 'Product updated.',
+  'media-created': 'Media URL added.',
+  'media-uploaded': 'Image uploaded.'
 };
 
 function Field({
@@ -89,11 +105,23 @@ function categoryDefaultValue(product: Product, categories: Category[]) {
   return product.categoryId ?? categories.find((category) => category.slug === product.category)?.id ?? '';
 }
 
-export function AdminDashboard({ categories, products, homepage, databaseReady, authenticated }: AdminDashboardProps) {
+function StatusBanner({ status, message }: { status?: string; message?: string }) {
+  if (!status && !message) return null;
+  const isError = status === 'error';
+  return (
+    <section className={`rounded-[2rem] border p-5 text-sm font-semibold ${isError ? 'border-red-200 bg-red-50 text-red-800' : 'border-olive/20 bg-white text-olive'}`}>
+      {message || statusLabels[status ?? ''] || status}
+    </section>
+  );
+}
+
+export function AdminDashboard({ categories, products, homepage, media, databaseReady, authenticated, status, message }: AdminDashboardProps) {
   const disabled = !databaseReady || !authenticated;
 
   return (
     <div className="space-y-12">
+      <StatusBanner status={status} message={message} />
+
       <section className={`rounded-[2rem] border p-6 ${databaseReady && authenticated ? 'border-olive/20 bg-white' : 'border-amber-300 bg-amber-50'}`}>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -114,6 +142,51 @@ export function AdminDashboard({ categories, products, homepage, databaseReady, 
               <button className="rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood" type="submit">Sign out</button>
             </form>
           ) : null}
+        </div>
+      </section>
+
+      <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
+        <div className="mb-6">
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Media library</p>
+          <h2 className="mt-2 font-display text-4xl text-rosewood">Images</h2>
+          <p className="mt-3 text-sm leading-6 text-stone-600">Register external image URLs or upload local/dev images into <code>public/uploads</code>. For production, this can later move to S3, Cloudinary, or another object store.</p>
+        </div>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <form action={createMediaFromUrlAction} className="grid gap-4 rounded-3xl border border-rosewood/10 bg-cream p-5">
+            <h3 className="font-display text-3xl text-rosewood">Add image URL</h3>
+            <Field label="Image URL" name="url" placeholder="https://..." disabled={disabled} />
+            <Field label="Alt text" name="alt" placeholder="Blush rose bouquet" disabled={disabled} />
+            <SubmitButton disabled={disabled}>Add media</SubmitButton>
+          </form>
+          <form action={uploadMediaAction} className="grid gap-4 rounded-3xl border border-rosewood/10 bg-cream p-5">
+            <h3 className="font-display text-3xl text-rosewood">Upload image</h3>
+            <label className="grid gap-2 text-sm font-semibold text-rosewood">
+              Image file
+              <input
+                className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood disabled:cursor-not-allowed disabled:bg-stone-100"
+                name="file"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                required
+                disabled={disabled}
+              />
+            </label>
+            <Field label="Alt text" name="alt" placeholder="Optional descriptive text" required={false} disabled={disabled} />
+            <SubmitButton disabled={disabled}>Upload image</SubmitButton>
+          </form>
+        </div>
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {media.map((item) => (
+            <article key={item.url} className="overflow-hidden rounded-3xl border border-rosewood/10 bg-cream shadow-sm">
+              <div className="relative aspect-square bg-blush">
+                <Image src={item.url} alt={item.alt} fill className="object-cover" sizes="25vw" />
+              </div>
+              <div className="space-y-2 p-4">
+                <p className="text-sm font-semibold text-rosewood">{item.alt}</p>
+                <p className="break-all text-xs text-stone-500">{item.url}</p>
+              </div>
+            </article>
+          ))}
         </div>
       </section>
 
@@ -181,14 +254,14 @@ export function AdminDashboard({ categories, products, homepage, databaseReady, 
           <h2 className="mt-2 font-display text-4xl text-rosewood">Create product</h2>
         </div>
         <form action={createProductAction} className="grid gap-4">
-          <ProductFields categories={categories} disabled={disabled} />
+          <ProductFields categories={categories} media={media} disabled={disabled} />
           <SubmitButton disabled={disabled}>Create product</SubmitButton>
         </form>
 
         <div className="mt-8 grid gap-5">
           {products.map((product) => (
             <form key={product.slug} action={updateProductAction.bind(null, product.id ?? '')} className="grid gap-4 rounded-3xl border border-rosewood/10 bg-cream p-5">
-              <ProductFields product={product} categories={categories} disabled={disabled || !product.id} />
+              <ProductFields product={product} categories={categories} media={media} disabled={disabled || !product.id} />
               <SubmitButton disabled={disabled || !product.id}>Update product</SubmitButton>
             </form>
           ))}
@@ -198,8 +271,10 @@ export function AdminDashboard({ categories, products, homepage, databaseReady, 
   );
 }
 
-function ProductFields({ product, categories, disabled }: { product?: Product; categories: Category[]; disabled: boolean }) {
+function ProductFields({ product, categories, media, disabled }: { product?: Product; categories: Category[]; media: MediaItem[]; disabled: boolean }) {
   const selectedCategory = product ? categoryDefaultValue(product, categories) : categories[0]?.id ?? '';
+  const mediaUrls = new Set(media.map((item) => item.url));
+  const selectedMediaUrl = product?.image && mediaUrls.has(product.image) ? product.image : '';
 
   return (
     <>
@@ -226,7 +301,21 @@ function ProductFields({ product, categories, disabled }: { product?: Product; c
           </select>
         </label>
       </div>
-      <Field label="Image URL" name="imageUrl" defaultValue={product?.image} placeholder="https://..." disabled={disabled} />
+      <label className="grid gap-2 text-sm font-semibold text-rosewood">
+        Media library image
+        <select
+          className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood disabled:cursor-not-allowed disabled:bg-stone-100"
+          name="selectedMediaUrl"
+          defaultValue={selectedMediaUrl}
+          disabled={disabled}
+        >
+          <option value="">Use manual image URL below</option>
+          {media.map((item) => (
+            <option key={item.url} value={item.url}>{item.alt}</option>
+          ))}
+        </select>
+      </label>
+      <Field label="Manual image URL" name="imageUrl" defaultValue={product?.image} placeholder="https://... or /uploads/file.webp" required={false} disabled={disabled} />
       <TextArea label="Description" name="description" defaultValue={product?.description} disabled={disabled} />
       <div className="grid gap-3 md:grid-cols-3">
         <Toggle label="Visible on storefront" name="isActive" defaultChecked={product?.isActive !== false} disabled={disabled} />

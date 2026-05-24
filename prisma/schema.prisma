@@ -45,7 +45,7 @@ model Category {
 
 model Media {
   id        String   @id @default(cuid())
-  url       String
+  url       String   @unique
   alt       String
   productId String?
   product   Product? @relation(fields: [productId], references: [id])

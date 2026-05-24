@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { Category, HomepageContent, Product } from '@/lib/catalog';
+import type { Category, HomepageContent, MediaItem, Product } from '@/lib/catalog';
 import { prisma, hasDatabase } from '@/lib/prisma';
 import { seedCategories, seedHomepageContent, seedProducts } from '@/lib/seed-data';
 
@@ -70,6 +70,20 @@ function mapProduct(product: DbProduct): Product {
   };
 }
 
+function fallbackMedia(): MediaItem[] {
+  const seen = new Set<string>();
+  return seedProducts
+    .filter((product) => {
+      if (seen.has(product.image)) return false;
+      seen.add(product.image);
+      return true;
+    })
+    .map((product) => ({
+      url: product.image,
+      alt: product.title
+    }));
+}
+
 function payloadObject(value: unknown): Partial<HomepageContent> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
   return value as Partial<HomepageContent>;
@@ -84,6 +98,25 @@ async function readWithFallback<T>(readFromDb: () => Promise<T>, fallback: () =>
     console.warn('[cms] database read failed; using seeded fallback content', error);
     return fallback();
   }
+}
+
+export async function listMedia(): Promise<MediaItem[]> {
+  return readWithFallback(
+    async () => {
+      const media = await prisma.media.findMany({
+        orderBy: { createdAt: 'desc' }
+      });
+
+      return media.map((item) => ({
+        id: item.id,
+        url: item.url,
+        alt: item.alt,
+        productId: item.productId ?? undefined,
+        createdAt: item.createdAt
+      }));
+    },
+    fallbackMedia
+  );
 }
 
 export async function listCategories(): Promise<Category[]> {
