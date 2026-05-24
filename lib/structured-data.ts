@@ -1,3 +1,4 @@
+import { createElement } from 'react';
 import type { Product } from '@/lib/catalog';
 import { absoluteSiteUrl, siteMetadata } from '@/lib/site-metadata';
 
@@ -29,10 +30,8 @@ export function buildProductJsonLd(product: Product) {
 }
 
 export function JsonLdScript({ data }: { data: unknown }) {
-  return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, '\\u003c') }}
-    />
-  );
+  return createElement('script', {
+    type: 'application/ld+json',
+    dangerouslySetInnerHTML: { __html: JSON.stringify(data).replace(/</g, '\\u003c') }
+  });
 }
