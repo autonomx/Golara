@@ -1,6 +1,7 @@
 const adminLinks = [
   { href: '#readiness', label: 'Readiness' },
   { href: '#audit-log', label: 'Audit log' },
+  { href: '#orders', label: 'Orders' },
   { href: '#inquiries', label: 'Inquiries' },
   { href: '#media', label: 'Media' },
   { href: '#homepage', label: 'Homepage' },
