@@ -40,6 +40,9 @@ type DbInquiry = {
   phone: string | null;
   message: string;
   productId: string | null;
+  deliveryDate: Date | null;
+  deliveryNotes: string | null;
+  staffNotes: string | null;
   status: string;
   createdAt: Date;
   product?: { title: string } | null;
@@ -91,6 +94,9 @@ function mapInquiry(inquiry: DbInquiry): CustomerInquiry {
     message: inquiry.message,
     productId: inquiry.productId ?? undefined,
     productTitle: inquiry.product?.title,
+    deliveryDate: inquiry.deliveryDate ?? undefined,
+    deliveryNotes: inquiry.deliveryNotes ?? undefined,
+    staffNotes: inquiry.staffNotes ?? undefined,
     status: inquiry.status,
     createdAt: inquiry.createdAt
   };

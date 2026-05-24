@@ -41,6 +41,9 @@ export type CustomerInquiry = {
   message: string;
   productId?: string;
   productTitle?: string;
+  deliveryDate?: Date;
+  deliveryNotes?: string;
+  staffNotes?: string;
   status: string;
   createdAt: Date;
 };
