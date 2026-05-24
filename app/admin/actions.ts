@@ -60,10 +60,12 @@ function slugify(value: string) {
     .replace(/^-+|-+$/g, '');
 }
 
-function normalizeExternalImageUrl(value: string) {
+function normalizeImageUrl(value: string) {
+  if (value.startsWith('/uploads/')) return value;
+
   const url = new URL(value);
   if (!['http:', 'https:'].includes(url.protocol)) {
-    throw new Error('Image URL must start with http or https.');
+    throw new Error('Image URL must start with http, https, or /uploads/.');
   }
   return url.toString();
 }
@@ -81,7 +83,7 @@ function resolveImageUrl(formData: FormData) {
   const selectedMediaUrl = stringField(formData, 'selectedMediaUrl');
   const imageUrl = stringField(formData, 'imageUrl');
   if (selectedMediaUrl) return selectedMediaUrl;
-  if (imageUrl) return normalizeExternalImageUrl(imageUrl);
+  if (imageUrl) return normalizeImageUrl(imageUrl);
   throw new Error('Choose a media-library image or provide an image URL.');
 }
 
@@ -96,7 +98,7 @@ function revalidateCatalog() {
 export async function createMediaFromUrlAction(formData: FormData) {
   await ensureCanWriteCms();
 
-  const url = normalizeExternalImageUrl(requiredString(formData, 'url'));
+  const url = normalizeImageUrl(requiredString(formData, 'url'));
   const alt = requiredString(formData, 'alt');
 
   await prisma.media.upsert({
