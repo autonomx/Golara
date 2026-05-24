@@ -8,24 +8,25 @@ datasource db {
 }
 
 model Product {
-  id             String            @id @default(cuid())
-  slug           String            @unique
-  code           String            @unique
+  id             String              @id @default(cuid())
+  slug           String              @unique
+  code           String              @unique
   title          String
   description    String
   priceCents     Int
-  currency       String            @default("CAD")
+  currency       String              @default("CAD")
   imageUrl       String
-  availableToday Boolean           @default(false)
-  bestSeller     Boolean           @default(false)
-  isActive       Boolean           @default(true)
-  sortOrder      Int               @default(0)
+  availableToday Boolean             @default(false)
+  bestSeller     Boolean             @default(false)
+  isActive       Boolean             @default(true)
+  sortOrder      Int                 @default(0)
   categoryId     String
-  category       Category          @relation(fields: [categoryId], references: [id])
+  category       Category            @relation(fields: [categoryId], references: [id])
   images         Media[]
   inquiries      CustomerInquiry[]
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
+  orderItems     CheckoutOrderItem[]
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
 
   @@index([categoryId])
   @@index([isActive, bestSeller])
@@ -68,14 +69,15 @@ model HomepageSection {
 }
 
 model CustomerProfile {
-  id          String            @id @default(cuid())
-  phone       String            @unique
+  id          String          @id @default(cuid())
+  phone       String          @unique
   displayName String?
   email       String?
-  locale      String            @default("fa-IR")
+  locale      String          @default("fa-IR")
   addresses   CustomerAddress[]
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  orders      CheckoutOrder[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 
   @@index([email])
 }
@@ -94,8 +96,54 @@ model CustomerAddress {
   isDefault  Boolean         @default(false)
   createdAt  DateTime        @default(now())
   updatedAt  DateTime        @updatedAt
+  orders      CheckoutOrder[]
 
   @@index([customerId, isDefault])
+}
+
+model CheckoutOrder {
+  id              String              @id @default(cuid())
+  orderNumber     String              @unique
+  customerId      String?
+  customer        CustomerProfile?    @relation(fields: [customerId], references: [id])
+  addressId       String?
+  address         CustomerAddress?    @relation(fields: [addressId], references: [id])
+  status          String              @default("draft")
+  checkoutMode    String              @default("inquiry")
+  currency        String              @default("TOMAN")
+  subtotalCents   Int                 @default(0)
+  deliveryCents   Int                 @default(0)
+  discountCents   Int                 @default(0)
+  totalCents      Int                 @default(0)
+  deliveryDate    DateTime?
+  deliveryWindow  String?
+  recipientName   String?
+  recipientPhone  String?
+  customerNote    String?
+  staffNotes      String?
+  items           CheckoutOrderItem[]
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@index([status, createdAt])
+  @@index([customerId, createdAt])
+}
+
+model CheckoutOrderItem {
+  id             String        @id @default(cuid())
+  orderId        String
+  order          CheckoutOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product       @relation(fields: [productId], references: [id])
+  productTitle   String
+  productCode    String
+  quantity       Int
+  unitPriceCents Int
+  lineTotalCents Int
+  createdAt      DateTime      @default(now())
+
+  @@index([orderId])
+  @@index([productId])
 }
 
 model CustomerInquiry {
