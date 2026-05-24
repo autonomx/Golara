@@ -7,6 +7,27 @@ function absoluteImageUrl(image: string) {
   return absoluteSiteUrl(image);
 }
 
+export function buildOrganizationJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: siteMetadata.name,
+    url: absoluteSiteUrl('/'),
+    logo: absoluteSiteUrl('/logo.png'),
+    description: siteMetadata.description
+  };
+}
+
+export function buildWebSiteJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: siteMetadata.name,
+    url: absoluteSiteUrl('/'),
+    description: siteMetadata.description
+  };
+}
+
 export function buildProductJsonLd(product: Product) {
   return {
     '@context': 'https://schema.org',
