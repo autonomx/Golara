@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { updateOrderStatusAction } from '@/app/admin/order-actions';
 import type { CheckoutOrderSummary } from '@/lib/catalog';
 import { formatMinorUnitAmount } from '@/lib/catalog';
@@ -40,7 +41,7 @@ export function AdminOrderPanel({ orders }: { orders: CheckoutOrderSummary[] }) 
         <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Orders</p>
         <h2 className="mt-2 font-display text-4xl text-rosewood">Checkout order operations</h2>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-stone-600">
-          Review recent checkout orders, update operational status, and keep staff-only notes. Payment timeline and order detail pages will follow in later Phase 4 work.
+          Review recent checkout orders, open order details, update operational status, and keep staff-only notes.
         </p>
       </div>
 
@@ -65,7 +66,9 @@ export function AdminOrderPanel({ orders }: { orders: CheckoutOrderSummary[] }) 
                 <tr key={order.id}>
                   <td className="whitespace-nowrap px-4 py-3 text-xs text-stone-500">{formatDate(order.createdAt)}</td>
                   <td className="px-4 py-3 align-top">
-                    <p className="font-semibold text-rosewood">{order.orderNumber}</p>
+                    <Link href={`/admin/orders/${order.id}`} className="font-semibold text-rosewood underline decoration-rosewood/30 underline-offset-4 hover:decoration-rosewood">
+                      {order.orderNumber}
+                    </Link>
                     <p className="text-xs text-stone-500">{order.itemCount} item{order.itemCount === 1 ? '' : 's'} · {order.checkoutMode}</p>
                   </td>
                   <td className="px-4 py-3 align-top">
