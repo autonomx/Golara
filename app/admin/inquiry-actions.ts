@@ -34,10 +34,27 @@ export async function saveInquiryAction(inquiryId: string, formData: FormData) {
 
   if (!allowedStatuses.includes(status)) throw new Error('Invalid inquiry status.');
 
+  const currentInquiry = await prisma.customerInquiry.findUnique({
+    where: { id: inquiryId },
+    select: { status: true }
+  });
+
+  if (!currentInquiry) throw new Error('Inquiry not found.');
+
   await prisma.customerInquiry.update({
     where: { id: inquiryId },
     data: { status, staffNotes }
   });
+
+  if (currentInquiry.status !== status) {
+    await prisma.customerInquiryFollowUp.create({
+      data: {
+        inquiryId,
+        channel: 'system',
+        note: `Status changed from ${currentInquiry.status} to ${status}.`
+      }
+    });
+  }
 
   revalidatePath('/admin');
   redirect(adminStatus('inquiry-updated', formData));
