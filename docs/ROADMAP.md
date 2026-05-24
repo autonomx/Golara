@@ -14,10 +14,18 @@
 
 ## Phase 2 — Editable CMS/admin
 
+Status: implemented foundation.
+
 - Add database connection through Prisma.
-- Replace seeded catalog data with database-backed records.
-- Build protected admin pages for products, categories, homepage sections, and media uploads.
-- Add form validation, image upload, slug generation, and publish/unpublish controls.
+- Replace direct seeded catalog imports with a CMS repository that reads Prisma when `DATABASE_URL` is configured.
+- Preserve seeded fallback mode so previews and CI do not need a live database.
+- Build admin forms for products, categories, and homepage sections.
+- Add slug generation, publish/unpublish controls, product badges, image URL editing, seed data, and revalidation after writes.
+
+Remaining before production:
+- Add authentication and role checks around `/admin`.
+- Replace image URL fields with a real media upload/storage flow.
+- Add richer validation and inline form errors.
 
 ## Phase 3 — Customer/order flow
 

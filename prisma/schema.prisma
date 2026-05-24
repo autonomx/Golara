@@ -8,21 +8,26 @@ datasource db {
 }
 
 model Product {
-  id             String    @id @default(cuid())
-  slug           String    @unique
-  code           String    @unique
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  code           String   @unique
   title          String
   description    String
   priceCents     Int
-  currency       String    @default("CAD")
-  availableToday Boolean   @default(false)
-  bestSeller     Boolean   @default(false)
-  isActive       Boolean   @default(true)
+  currency       String   @default("CAD")
+  imageUrl       String
+  availableToday Boolean  @default(false)
+  bestSeller     Boolean  @default(false)
+  isActive       Boolean  @default(true)
+  sortOrder      Int      @default(0)
   categoryId     String
-  category       Category  @relation(fields: [categoryId], references: [id])
+  category       Category @relation(fields: [categoryId], references: [id])
   images         Media[]
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([categoryId])
+  @@index([isActive, bestSeller])
 }
 
 model Category {
@@ -45,6 +50,8 @@ model Media {
   productId String?
   product   Product? @relation(fields: [productId], references: [id])
   createdAt DateTime @default(now())
+
+  @@index([productId])
 }
 
 model HomepageSection {

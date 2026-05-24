@@ -2,16 +2,19 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { SiteHeader } from '@/components/SiteHeader';
-import { formatPrice, getCategory, getProduct, products } from '@/lib/catalog';
+import { formatPrice } from '@/lib/catalog';
+import { getCategoryBySlug, getProductBySlug, listProducts } from '@/lib/cms/catalog-repository';
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const products = await listProducts();
   return products.map((product) => ({ slug: product.slug }));
 }
 
-export default function ProductPage({ params }: { params: { slug: string } }) {
-  const product = getProduct(params.slug);
+export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const product = await getProductBySlug(slug);
   if (!product) notFound();
-  const category = getCategory(product.category);
+  const category = await getCategoryBySlug(product.category);
 
   return (
     <main>
@@ -21,7 +24,7 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
           <Image src={product.image} alt={product.title} fill className="object-cover" sizes="50vw" />
         </div>
         <div className="flex flex-col justify-center">
-          <Link href={`/categories/${product.category}`} className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">{category?.title ?? product.category}</Link>
+          <Link href={`/categories/${product.category}`} className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">{category?.title ?? product.categoryTitle ?? product.category}</Link>
           <h1 className="mt-4 font-display text-6xl text-rosewood">{product.title}</h1>
           <p className="mt-2 text-sm uppercase tracking-[0.25em] text-rosewood/50">{product.code}</p>
           <p className="mt-6 text-lg leading-8 text-stone-700">{product.description}</p>
