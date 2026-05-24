@@ -22,12 +22,16 @@ function filterHref(status?: string) {
   return status ? `/admin?inquiryStatus=${encodeURIComponent(status)}` : '/admin';
 }
 
+function exportHref(status?: string) {
+  return status ? `/admin/inquiries/export?inquiryStatus=${encodeURIComponent(status)}` : '/admin/inquiries/export';
+}
+
 function FilterPills({ counts, activeStatus }: { counts: InquiryStatusCount[]; activeStatus?: string }) {
   const total = counts.reduce((sum, item) => sum + item.count, 0);
   const baseClass = 'rounded-full border px-4 py-2 text-sm font-semibold transition';
 
   return (
-    <div className="mt-6 flex flex-wrap gap-2">
+    <div className="mt-6 flex flex-wrap items-center gap-2">
       <Link href={filterHref()} className={`${baseClass} ${!activeStatus ? 'border-rosewood bg-rosewood text-white' : 'border-rosewood/20 bg-white text-rosewood'}`}>
         All <span className="ml-1 opacity-75">{total}</span>
       </Link>
@@ -36,6 +40,9 @@ function FilterPills({ counts, activeStatus }: { counts: InquiryStatusCount[]; a
           {item.status} <span className="ml-1 opacity-75">{item.count}</span>
         </Link>
       ))}
+      <Link href={exportHref(activeStatus)} className="ml-auto rounded-full border border-olive/30 bg-cream px-4 py-2 text-sm font-semibold text-olive transition hover:bg-white">
+        Export CSV
+      </Link>
     </div>
   );
 }
