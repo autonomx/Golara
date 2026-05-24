@@ -2,7 +2,9 @@ import Link from 'next/link';
 import { addInquiryFollowUpAction, saveInquiryAction } from '@/app/admin/inquiry-actions';
 import { InquiryContactActions } from '@/components/admin/InquiryContactActions';
 import { InquiryDeliveryBadge } from '@/components/admin/InquiryDeliveryBadge';
+import { InquiryEmptyState } from '@/components/admin/InquiryEmptyState';
 import { InquiryFollowUpSummary } from '@/components/admin/InquiryFollowUpSummary';
+import { InquiryStatusShortcuts } from '@/components/admin/InquiryStatusShortcuts';
 import type { CustomerInquiry } from '@/lib/catalog';
 import type { InquiryPage, InquiryStatusCount } from '@/lib/cms/catalog-repository';
 
@@ -214,9 +216,7 @@ export function InquiryBoard({ inquiryPage, counts, activeStatus, search }: { in
       </div>
 
       {inquiries.length === 0 ? (
-        <div className="rounded-3xl border border-rosewood/10 bg-cream p-6 text-sm text-stone-600">
-          No customer inquiries match this filter.
-        </div>
+        <InquiryEmptyState activeStatus={activeStatus} search={search} />
       ) : (
         <>
           <div className="grid gap-4">
@@ -242,6 +242,7 @@ export function InquiryBoard({ inquiryPage, counts, activeStatus, search }: { in
                 </div>
                 <InquiryContactActions inquiry={inquiry} />
                 <InquiryFollowUpSummary inquiry={inquiry} />
+                <InquiryStatusShortcuts inquiry={inquiry} activeStatus={activeStatus} search={search} page={inquiryPage.page} />
                 {inquiry.deliveryNotes ? (
                   <p className="mt-3 text-sm leading-6 text-stone-700"><strong>Delivery notes:</strong> {inquiry.deliveryNotes}</p>
                 ) : null}
