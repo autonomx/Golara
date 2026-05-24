@@ -33,6 +33,13 @@ export type MediaItem = {
   createdAt?: Date;
 };
 
+export type CustomerInquiryFollowUp = {
+  id: string;
+  note: string;
+  channel: string;
+  createdAt: Date;
+};
+
 export type CustomerInquiry = {
   id: string;
   name?: string;
@@ -44,6 +51,7 @@ export type CustomerInquiry = {
   deliveryDate?: Date;
   deliveryNotes?: string;
   staffNotes?: string;
+  followUps?: CustomerInquiryFollowUp[];
   status: string;
   createdAt: Date;
 };
