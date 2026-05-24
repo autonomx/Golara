@@ -149,9 +149,16 @@ Status: implemented foundation.
 - Add a quick-nav anchor for the readiness panel.
 - Keep the panel advisory-only so CMS write permissions remain controlled by existing database/auth checks.
 
+## Phase 3.12 — Inquiry inline validation UX
+
+Status: implemented foundation.
+
+- Map server validation codes to specific inquiry fields.
+- Add inline field help and field-level warning text for name, phone, email, and message errors.
+- Keep the existing server action redirect contract intact.
+
 Remaining before production:
 - Replace log-only notifications with email/WhatsApp providers.
-- Add richer validation and inline form errors.
 - Replace password-only auth with user accounts or a provider such as Auth.js, Clerk, or Supabase Auth.
 - Add role checks and audit logging.
 - Replace local file uploads with production object storage such as S3, Cloudinary, or Supabase Storage.
