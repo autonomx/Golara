@@ -56,6 +56,20 @@ export type CustomerInquiry = {
   createdAt: Date;
 };
 
+export type CheckoutOrderSummary = {
+  id: string;
+  orderNumber: string;
+  status: string;
+  checkoutMode: string;
+  currency: string;
+  totalCents: number;
+  customerPhone?: string;
+  customerName?: string;
+  itemCount: number;
+  latestPaymentStatus?: string;
+  createdAt: Date;
+};
+
 export type AdminAuditLogEntry = {
   id: string;
   action: string;
@@ -84,4 +98,9 @@ export type HomepageContent = {
 
 export function formatPrice(product: Product) {
   return new Intl.NumberFormat('en-CA', { style: 'currency', currency: product.currency }).format(product.price);
+}
+
+export function formatMinorUnitAmount(amountCents: number, currency: string) {
+  const amount = amountCents / 100;
+  return new Intl.NumberFormat('en-CA', { maximumFractionDigits: 0 }).format(amount) + ` ${currency}`;
 }

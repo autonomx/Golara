@@ -2,10 +2,12 @@ import Link from 'next/link';
 import { AdminActionBanner } from '@/components/admin/AdminActionBanner';
 import { AdminAuditLogPanel } from '@/components/admin/AdminAuditLogPanel';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
+import { AdminOrderPanel } from '@/components/admin/AdminOrderPanel';
 import { InquiryBoard } from '@/components/admin/InquiryBoard';
 import { SiteHeader } from '@/components/SiteHeader';
 import { isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
 import { getHomepageContent, listAdminAuditLogs, listAdminCategories, listAdminProducts, listInquiryPage, listInquiryStatusCounts, listMedia } from '@/lib/cms/catalog-repository';
+import { listAdminCheckoutOrders } from '@/lib/checkout/admin-order-repository';
 import { hasDatabase } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -29,14 +31,15 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     search: optionalParam(auditSearch)
   };
   const authenticated = await isAdminAuthenticated();
-  const [categories, products, homepage, media, inquiryPageData, inquiryCounts, auditLogs] = await Promise.all([
+  const [categories, products, homepage, media, inquiryPageData, inquiryCounts, auditLogs, orders] = await Promise.all([
     listAdminCategories(),
     listAdminProducts(),
     getHomepageContent(),
     listMedia(),
     listInquiryPage(inquiryStatus, parsePage(inquiryPage), undefined, inquirySearch),
     listInquiryStatusCounts(inquirySearch),
-    authenticated ? listAdminAuditLogs(auditFilters) : Promise.resolve([])
+    authenticated ? listAdminAuditLogs(auditFilters) : Promise.resolve([]),
+    authenticated ? listAdminCheckoutOrders() : Promise.resolve([])
   ]);
 
   const authConfigured = isAdminAuthConfigured();
@@ -53,7 +56,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">Admin CMS</p>
             <h1 className="mt-3 font-display text-6xl text-rosewood">Edit Golara without Joomla.</h1>
             <p className="mt-5 max-w-3xl text-lg leading-8 text-stone-700">
-              Manage homepage content, product categories, media, customer inquiries, and product cards from one place.
+              Manage homepage content, product categories, media, customer inquiries, orders, and product cards from one place.
             </p>
           </div>
           {!authenticated ? (
@@ -65,6 +68,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         <div className="mt-10 grid gap-12">
           <AdminActionBanner status={status} message={message} />
           {authenticated ? <AdminAuditLogPanel logs={auditLogs} filters={auditFilters} /> : null}
+          {authenticated ? <AdminOrderPanel orders={orders} /> : null}
           <InquiryBoard inquiryPage={inquiryPageData} counts={inquiryCounts} activeStatus={inquiryStatus} search={inquirySearch} />
           <AdminDashboard
             categories={categories}
