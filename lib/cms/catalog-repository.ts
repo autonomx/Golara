@@ -71,6 +71,8 @@ type DbInquiry = {
   followUps?: DbFollowUp[];
 };
 
+type InquiryWhere = Parameters<typeof prisma.customerInquiry.findMany>[0] extends { where?: infer W } ? W : never;
+
 function bySortThenTitle(a: Category, b: Category) {
   return (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.title.localeCompare(b.title);
 }
@@ -86,6 +88,34 @@ function emptyInquiryCounts(): InquiryStatusCount[] {
 function normalizePage(page?: number) {
   if (!page || !Number.isFinite(page)) return 1;
   return Math.max(1, Math.floor(page));
+}
+
+function normalizeSearch(search?: string) {
+  const normalized = search?.trim();
+  return normalized || undefined;
+}
+
+function buildInquiryWhere(status?: string, search?: string): InquiryWhere {
+  const where: InquiryWhere = {};
+  const normalizedSearch = normalizeSearch(search);
+
+  if (isKnownInquiryStatus(status)) {
+    where.status = status;
+  }
+
+  if (normalizedSearch) {
+    where.OR = [
+      { name: { contains: normalizedSearch, mode: 'insensitive' } },
+      { email: { contains: normalizedSearch, mode: 'insensitive' } },
+      { phone: { contains: normalizedSearch, mode: 'insensitive' } },
+      { message: { contains: normalizedSearch, mode: 'insensitive' } },
+      { deliveryNotes: { contains: normalizedSearch, mode: 'insensitive' } },
+      { staffNotes: { contains: normalizedSearch, mode: 'insensitive' } },
+      { product: { title: { contains: normalizedSearch, mode: 'insensitive' } } }
+    ];
+  }
+
+  return where;
 }
 
 function makeInquiryPage(inquiries: CustomerInquiry[], total: number, page: number, pageSize: number): InquiryPage {
@@ -184,25 +214,36 @@ async function readWithFallback<T>(readFromDb: () => Promise<T>, fallback: () =>
   }
 }
 
-export async function listInquiryStatusCounts(): Promise<InquiryStatusCount[]> {
+export async function listInquiryStatusCounts(search?: string): Promise<InquiryStatusCount[]> {
   return readWithFallback(
     async () => {
-      const grouped = await prisma.customerInquiry.groupBy({
-        by: ['status'],
-        _count: { _all: true }
-      });
-      const counts = new Map(grouped.map((item) => [item.status, item._count._all]));
-      return INQUIRY_STATUSES.map((status) => ({ status, count: counts.get(status) ?? 0 }));
+      const normalizedSearch = normalizeSearch(search);
+      if (!normalizedSearch) {
+        const grouped = await prisma.customerInquiry.groupBy({
+          by: ['status'],
+          _count: { _all: true }
+        });
+        const counts = new Map(grouped.map((item) => [item.status, item._count._all]));
+        return INQUIRY_STATUSES.map((status) => ({ status, count: counts.get(status) ?? 0 }));
+      }
+
+      const counts = await Promise.all(
+        INQUIRY_STATUSES.map(async (status) => ({
+          status,
+          count: await prisma.customerInquiry.count({ where: buildInquiryWhere(status, normalizedSearch) })
+        }))
+      );
+      return counts;
     },
     emptyInquiryCounts
   );
 }
 
-export async function listInquiries(status?: string): Promise<CustomerInquiry[]> {
+export async function listInquiries(status?: string, search?: string): Promise<CustomerInquiry[]> {
   return readWithFallback(
     async () => {
       const inquiries = await prisma.customerInquiry.findMany({
-        where: isKnownInquiryStatus(status) ? { status } : undefined,
+        where: buildInquiryWhere(status, search),
         include: {
           product: { select: { title: true } },
           followUps: { orderBy: { createdAt: 'desc' } }
@@ -216,13 +257,13 @@ export async function listInquiries(status?: string): Promise<CustomerInquiry[]>
   );
 }
 
-export async function listInquiryPage(status?: string, page?: number, pageSize = DEFAULT_INQUIRY_PAGE_SIZE): Promise<InquiryPage> {
+export async function listInquiryPage(status?: string, page?: number, pageSize = DEFAULT_INQUIRY_PAGE_SIZE, search?: string): Promise<InquiryPage> {
   const normalizedPage = normalizePage(page);
   const normalizedPageSize = Math.max(1, Math.min(50, Math.floor(pageSize)));
 
   return readWithFallback(
     async () => {
-      const where = isKnownInquiryStatus(status) ? { status } : undefined;
+      const where = buildInquiryWhere(status, search);
       const [total, inquiries] = await Promise.all([
         prisma.customerInquiry.count({ where }),
         prisma.customerInquiry.findMany({
