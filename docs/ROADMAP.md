@@ -97,6 +97,14 @@ Status: implemented foundation.
 - Thread the selected status through the thin admin route.
 - Add inquiry inbox filter pills with counts for each status.
 
+## Phase 3.6 — Inquiry CSV export
+
+Status: implemented foundation.
+
+- Add a protected CSV export route for inquiries.
+- Export all inquiries or the currently filtered inquiry status.
+- Add an export link to the focused inquiry board UI.
+
 Remaining before production:
 - Replace log-only notifications with email/WhatsApp providers.
 - Add richer validation and inline form errors.
