@@ -14,9 +14,9 @@ function formatDateOnly(value?: Date) {
   return new Intl.DateTimeFormat('en-CA', { dateStyle: 'medium' }).format(value);
 }
 
-export default async function InquiryPrintPage({ searchParams }: { searchParams: Promise<{ inquiryStatus?: string }> }) {
+export default async function InquiryPrintPage({ searchParams }: { searchParams: Promise<{ inquiryStatus?: string; inquirySearch?: string }> }) {
   const authenticated = await isAdminAuthenticated();
-  const { inquiryStatus } = await searchParams;
+  const { inquiryStatus, inquirySearch } = await searchParams;
 
   if (!authenticated) {
     return (
@@ -28,7 +28,7 @@ export default async function InquiryPrintPage({ searchParams }: { searchParams:
     );
   }
 
-  const inquiries = await listInquiries(inquiryStatus);
+  const inquiries = await listInquiries(inquiryStatus, inquirySearch);
 
   return (
     <main className="bg-white p-8 text-stone-950 print:p-0">
@@ -44,7 +44,7 @@ export default async function InquiryPrintPage({ searchParams }: { searchParams:
 
         <div className="mb-6 border-b pb-4">
           <h2 className="text-2xl font-semibold">Golara inquiries</h2>
-          <p className="mt-1 text-sm text-stone-600">Filter: {inquiryStatus ?? 'all'} · Count: {inquiries.length}</p>
+          <p className="mt-1 text-sm text-stone-600">Filter: {inquiryStatus ?? 'all'} · Search: {inquirySearch || 'none'} · Count: {inquiries.length}</p>
         </div>
 
         <div className="grid gap-5">
