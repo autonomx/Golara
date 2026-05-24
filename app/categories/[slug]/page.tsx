@@ -4,6 +4,7 @@ import { ProductCard } from '@/components/ProductCard';
 import { SiteHeader } from '@/components/SiteHeader';
 import { getCategoryBySlug, listCategories, listProductsByCategorySlug } from '@/lib/cms/catalog-repository';
 import { buildPageMetadata } from '@/lib/site-metadata';
+import { buildCategoryBreadcrumbJsonLd, JsonLdScript } from '@/lib/structured-data';
 
 export async function generateStaticParams() {
   const categories = await listCategories();
@@ -36,6 +37,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
 
   return (
     <main>
+      <JsonLdScript data={buildCategoryBreadcrumbJsonLd(category)} />
       <SiteHeader />
       <section className="mx-auto max-w-7xl px-5 py-14">
         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">{category.eyebrow}</p>
