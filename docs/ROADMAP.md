@@ -183,6 +183,14 @@ Status: implemented foundation.
 - Add an audit-log quick-nav anchor.
 - Leave staff identity, filtering, and role checks for the next auth-focused phases.
 
+## Phase 3.16 — Media storage helper split
+
+Status: implemented foundation.
+
+- Move image URL normalization and local upload persistence into `lib/media/media-storage.ts`.
+- Keep `/admin` media actions thin while preserving current local `/uploads/...` behavior.
+- Prepare a clearer seam for replacing local uploads with object storage later.
+
 Remaining before production:
 - Replace password-only auth with user accounts or a provider such as Auth.js, Clerk, or Supabase Auth.
 - Add role checks and richer admin audit-log filtering in the CMS.
