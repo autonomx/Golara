@@ -1,6 +1,7 @@
 import 'server-only';
 
 import type { Prisma } from '@prisma/client';
+import { getAdminIdentity } from '@/lib/admin-auth';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
 type AuditLogInput = {
@@ -15,12 +16,18 @@ export async function recordAdminAuditLog(input: AuditLogInput) {
   if (!hasDatabase()) return;
 
   try {
+    const actor = await getAdminIdentity();
     await prisma.adminAuditLog.create({
       data: {
         action: input.action,
         entity: input.entity,
         entityId: input.entityId,
         summary: input.summary,
+        actorType: actor.type,
+        actorLabel: actor.label,
+        actorEmail: actor.email,
+        actorRole: actor.role,
+        actorProvider: actor.provider,
         metadata: input.metadata
       }
     });
