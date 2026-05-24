@@ -106,12 +106,14 @@ Before production launch:
 Current behavior:
 
 - External image URLs can be registered.
-- Local/dev uploads are written to `public/uploads`.
+- Local/dev uploads are written to `public/uploads` through `lib/media/media-storage.ts`.
+- URL normalization and local upload persistence are isolated from admin CMS actions.
 
 Production decision required:
 
 - Replace local uploads with object storage such as S3, Cloudinary, or Supabase Storage before deploying to serverless or multi-instance hosting.
 - Keep media records as the CMS source of truth for product image selection.
+- Wire the production provider behind the media-storage seam instead of expanding `/admin` actions.
 
 ## 6. Deployment preflight
 
@@ -132,6 +134,7 @@ Manual smoke test:
 - Admin inquiry inbox shows the new record.
 - Product/category/homepage edits show on public pages.
 - Media registration works.
+- Media upload still writes local/dev files to `/uploads/...`.
 - Logout returns admin to read-only/login flow.
 - Webhook mode sends a test inquiry to the configured endpoint or safely falls back to server logs on failure.
 - CMS and inquiry admin writes create audit-log rows.
