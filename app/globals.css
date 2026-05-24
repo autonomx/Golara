@@ -26,3 +26,9 @@ a {
   background: #f8e8ec;
   color: #6f2438;
 }
+
+input,
+textarea,
+select {
+  font: inherit;
+}
