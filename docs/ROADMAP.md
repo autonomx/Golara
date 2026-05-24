@@ -43,207 +43,33 @@ Status: implemented foundation.
 - Allow local `/uploads/...` image paths and arbitrary registered external image URLs.
 - Add clearer admin success/status banners.
 
-## Phase 3.0 — Customer inquiry flow v1
-
-Status: implemented foundation.
-
-- Add customer inquiry records linked to products.
-- Add product detail inquiry forms for name, phone, optional email, preferred date, delivery notes, and message.
-- Add admin inquiry inbox for reviewing customer requests.
-- Keep route files thin by moving product detail and inquiry UI into focused components.
-
-## Phase 3.1 — Inquiry management
-
-Status: implemented foundation.
-
-- Add status controls for new/contacted/confirmed/fulfilled/cancelled.
-- Add internal staff notes on customer inquiries.
-- Show delivery date and delivery notes in the inquiry inbox.
-- Keep inquiry management isolated in a small server action and focused board component.
-
-## Phase 3.2 — Notification hooks v1
-
-Status: implemented foundation.
-
-- Add a small inquiry notification abstraction.
-- Notify after inquiry creation in log-only mode.
-- Add environment placeholders for future email and WhatsApp providers.
-- Keep notification provider wiring isolated from storefront forms.
-
-## Phase 3.3 — Inquiry validation UX v1
-
-Status: implemented foundation.
-
-- Add reusable server-side inquiry validation.
-- Keep inquiry route action thin: parse, validate, write, notify, redirect.
-- Add user-facing validation messages for name, phone, email, and message length.
-- Add matching native form hints such as minLength and inputMode.
-
-## Phase 3.4 — Inquiry follow-up history
-
-Status: implemented foundation.
-
-- Add a separate follow-up history model for inquiries.
-- Load follow-up timeline data in the inquiry repository.
-- Add append-only follow-up notes with channel labels.
-- Render follow-up history inside the focused inquiry board component.
-
-## Phase 3.5 — Inquiry inbox filters
-
-Status: implemented foundation.
-
-- Add inquiry status counts from the repository.
-- Add status-filtered inquiry reads.
-- Thread the selected status through the thin admin route.
-- Add inquiry inbox filter pills with counts for each status.
-
-## Phase 3.6 — Inquiry CSV export
-
-Status: implemented foundation.
-
-- Add a protected CSV export route for inquiries.
-- Export all inquiries or the currently filtered inquiry status.
-- Add an export link to the focused inquiry board UI.
-
-## Phase 3.7 — Inquiry print view
-
-Status: implemented foundation.
-
-- Add a protected printable inquiry list page.
-- Support all inquiries or current status filter.
-- Add a print-view link to the focused inquiry board UI.
-
-## Phase 3.8 — Inquiry pagination controls
-
-Status: implemented foundation.
-
-- Add a paginated inquiry read model.
-- Keep CSV export and print view on the full filtered result set.
-- Thread inquiry page through the thin admin route.
-- Add previous/next controls to the focused inquiry board UI.
-
-## Phase 3.9 — Inquiry search
-
-Status: implemented foundation.
-
-- Add inquiry search support in the repository.
-- Search customer fields, messages, notes, and product title.
-- Thread inquiry search through the thin admin route.
-- Add a compact search form to the focused inquiry board UI.
-- Preserve search across status filters and pagination.
-
-## Phase 3.10 — Production readiness docs
-
-Status: implemented foundation.
-
-- Add a production launch checklist in `docs/PRODUCTION_CHECKLIST.md`.
-- Document environment variables, database setup, admin CMS readiness, inquiry operations, media storage, deployment preflight, and remaining launch blockers.
-- Keep implementation work unblocked by making production decisions explicit before Phase 4.
-
-## Phase 3.11 — Admin readiness panel
-
-Status: implemented foundation.
-
-- Add advisory production-readiness cards to `/admin`.
-- Surface database, admin auth, inquiry notification, and media storage readiness.
-- Add a quick-nav anchor for the readiness panel.
-- Keep the panel advisory-only so CMS write permissions remain controlled by existing database/auth checks.
-
-## Phase 3.12 — Inquiry inline validation UX
-
-Status: implemented foundation.
-
-- Map server validation codes to specific inquiry fields.
-- Add inline field help and field-level warning text for name, phone, email, and message errors.
-- Keep the existing server action redirect contract intact.
-
-## Phase 3.13 — Inquiry webhook notifications
-
-Status: implemented foundation.
-
-- Add provider-agnostic webhook delivery for new inquiry notifications.
-- Document `INQUIRY_NOTIFICATION_MODE="webhook"` and `INQUIRY_NOTIFICATION_WEBHOOK_URL`.
-- Keep unsupported notification modes and webhook failures safe by falling back to server logs.
-- Update admin readiness messaging for log, webhook, and unsupported notification modes.
-
-## Phase 3.14 — Admin audit log foundation
-
-Status: implemented foundation.
-
-- Add an `AdminAuditLog` Prisma model for CMS/inquiry mutations.
-- Add a non-blocking audit helper so logging failures do not break staff workflows.
-- Record audit events for media, category, product, homepage, inquiry status, and inquiry follow-up writes.
-
-## Phase 3.15 — Admin audit log viewer
-
-Status: implemented foundation.
-
-- Add a read-only recent staff activity panel to `/admin`.
-- Read recent `AdminAuditLog` rows through the CMS repository with seeded fallback safety.
-- Add an audit-log quick-nav anchor.
-- Leave staff identity, filtering, and role checks for the next auth-focused phases.
-
-## Phase 3.16 — Media storage helper split
-
-Status: implemented foundation.
-
-- Move image URL normalization and local upload persistence into `lib/media/media-storage.ts`.
-- Keep `/admin` media actions thin while preserving current local `/uploads/...` behavior.
-- Prepare a clearer seam for replacing local uploads with object storage later.
-
-## Phase 3.17 — Audit log filtering v1
-
-Status: implemented foundation.
-
-- Add action, entity, actor, and free-text search filters for the admin audit log.
-- Thread audit filter query params through `/admin`.
-- Preserve seeded/database fallback behavior for audit reads.
-
-## Phase 3.18 — Admin identity seam
-
-Status: implemented foundation.
-
-- Add `getAdminIdentity()` as the central admin identity shape.
-- Keep the current password gate while exposing label, optional email, role, and provider metadata.
-- Document temporary `ADMIN_LABEL`, `ADMIN_EMAIL`, and `ADMIN_ROLE` values for password-backed sessions.
-
-## Phase 3.19 — Audit actor attribution
-
-Status: implemented foundation.
-
-- Store actor type, label, email, role, and provider on `AdminAuditLog` rows.
-- Record actor metadata from the admin identity seam for CMS and inquiry mutations.
-- Show actor information in the admin audit-log table.
-
-## Phase 3.20 — Media storage provider seam
-
-Status: implemented foundation.
-
-- Add a provider-shaped media storage interface behind `lib/media/media-storage.ts`.
-- Keep `local` as the only supported provider for now.
-- Include the selected provider in media-upload audit metadata.
-- Prepare a narrow integration point for S3, Cloudinary, or Supabase Storage later.
-
-## Phase 3.21 — Admin role enforcement v1
-
-Status: implemented foundation.
-
-- Add `assertAdminRole()` with owner/staff role ranking.
-- Require owner role for catalog, homepage, and media CMS writes.
-- Allow staff-or-owner role for inquiry status and follow-up writes.
-- Hide audit logs from signed-out admin preview mode.
-
-## Phase 3.22 — Cloudinary media storage provider
-
-Status: implemented foundation.
-
-- Add dependency-free Cloudinary unsigned upload support behind the media storage provider seam.
-- Support `MEDIA_STORAGE_PROVIDER="cloudinary"` with `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_UPLOAD_PRESET`, and optional `CLOUDINARY_UPLOAD_FOLDER`.
-- Keep local storage as the default fallback provider.
-
-Remaining before production:
-- Replace password-only auth with account/provider auth.
-- Decide whether S3 or Supabase Storage should also be supported beyond Cloudinary.
+## Phase 3 — Inquiry operations and admin hardening
+
+Status: foundation complete.
+
+See `docs/PHASE_3_CLOSEOUT.md` for the closeout checklist, operational launch path, and Phase 4 deferrals.
+
+Implemented foundation:
+
+- Customer inquiry creation from product detail pages.
+- Admin inquiry inbox with status management, notes, follow-ups, filters, search, pagination, CSV export, and print view.
+- Reusable inquiry validation and field-level customer-facing errors.
+- Notification abstraction with log and webhook delivery modes.
+- Production readiness checklist and admin readiness panel.
+- Admin audit logging for CMS and inquiry mutations.
+- Audit-log viewer with action, entity, actor, and free-text filters.
+- Admin identity seam with password-backed label, email, role, and provider metadata.
+- Owner/staff role enforcement for current password-backed sessions.
+- Media storage helper/provider seam with local and Cloudinary upload providers.
+- CI file-line guard to prevent oversized source files.
+
+Deferred to Phase 4:
+
+- Replace password-only admin auth with account/provider auth.
+- Per-user admin accounts and real multi-user role management.
+- Customer accounts.
+- Cart, checkout, payments, taxes, discounts, inventory, and delivery scheduling.
+- Optional storage providers beyond Cloudinary.
 
 ## Phase 4 — Production ecommerce
 
