@@ -66,7 +66,7 @@ export async function createCheckoutAction(productId: string | undefined, produc
     });
 
     await createCheckoutPaymentAttempt({ orderId: order.id });
-    redirect(`/admin/orders/${order.id}`);
+    redirect(checkoutPath(productSlug, 'created'));
   } catch (error) {
     console.warn('[checkout] failed to create order draft', error);
     redirect(checkoutPath(productSlug, 'failed'));
