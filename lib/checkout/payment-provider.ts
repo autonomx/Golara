@@ -71,7 +71,10 @@ const domesticRedirectProvider: PaymentProvider = {
     url.searchParams.set('amount', String(order.totalCents));
     url.searchParams.set('currency', order.currency);
     if (order.publicLookupToken && siteUrl()) {
-      url.searchParams.set('callback', `${siteUrl()}/orders/${order.publicLookupToken}`);
+      const returnUrl = new URL(`${siteUrl()}/orders/return`);
+      returnUrl.searchParams.set('order', order.orderNumber);
+      returnUrl.searchParams.set('token', order.publicLookupToken);
+      url.searchParams.set('callback', returnUrl.toString());
     }
 
     const metadata: Record<string, string | number | boolean> = {
