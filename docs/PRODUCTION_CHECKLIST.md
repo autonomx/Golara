@@ -24,6 +24,7 @@ Rules:
 - Generate a new `ADMIN_SESSION_SECRET` per deployed environment.
 - Treat the password gate as temporary until user-account auth is added.
 - Treat webhook URLs as secrets if they include provider tokens or private routing keys.
+- Use `ADMIN_ROLE="owner"` for full CMS administration and `ADMIN_ROLE="staff"` for inquiry operations only.
 
 ## 2. Database setup
 
@@ -56,17 +57,20 @@ npm run db:seed
 Before launch, verify:
 
 - `/admin/login` accepts the configured admin password.
-- `/admin` shows editable homepage, categories, media, products, inquiries, and the recent audit log.
+- `/admin` shows editable homepage, categories, media, products, inquiries, and the recent audit log after sign-in.
 - CMS writes are blocked when logged out.
+- Audit logs are hidden when logged out.
 - Public pages revalidate after CMS edits.
 - Staff have a documented process for reviewing new inquiries.
 - Admin writes create `AdminAuditLog` rows for CMS and inquiry mutations.
 - Audit-log filters work for action, entity, actor, and free-text search.
+- Staff role can update inquiries and follow-ups but cannot mutate catalog, homepage, or media records.
+- Owner role can perform both CMS and inquiry operations.
 
 Temporary limitations:
 
 - Admin auth is password-only.
-- There are no enforced per-user roles yet.
+- Password-backed role metadata is environment-wide, not per-user.
 - Password-backed identity metadata is configurable, not a replacement for real account/provider auth.
 
 ## 4. Inquiry operations
@@ -77,6 +81,7 @@ Current behavior:
 - Admin can filter, search, paginate, print, export, update status, add staff notes, and append follow-ups.
 - Notifications support log-only mode and generic webhook mode.
 - Inquiry status changes and follow-up notes are recorded in the admin audit log.
+- Staff and owner roles can perform inquiry write actions.
 
 Webhook notification mode:
 
@@ -111,7 +116,7 @@ Before production launch:
 
 Current behavior:
 
-- External image URLs can be registered.
+- External image URLs can be registered by owner role.
 - `MEDIA_STORAGE_PROVIDER="local"` writes development uploads to `public/uploads` through `lib/media/media-storage.ts`.
 - URL normalization, upload validation, and provider selection are isolated from admin CMS actions.
 - Upload audit metadata records the selected storage provider.
@@ -140,10 +145,13 @@ Manual smoke test:
 - Inquiry form rejects invalid input.
 - Inquiry form creates a record.
 - Admin inquiry inbox shows the new record.
-- Product/category/homepage edits show on public pages.
-- Media registration works.
+- Product/category/homepage edits show on public pages for owner role.
+- Media registration works for owner role.
+- Staff role can update inquiry status and follow-up notes.
+- Staff role is blocked from catalog/homepage/media writes.
 - Media upload still writes local/dev files to `/uploads/...`.
 - Logout returns admin to read-only/login flow.
+- Signed-out admin preview does not load the audit-log panel.
 - Webhook mode sends a test inquiry to the configured endpoint or safely falls back to server logs on failure.
 - CMS and inquiry admin writes create audit-log rows with actor metadata.
 - The admin audit-log panel shows and filters recent staff activity after writes.
@@ -153,6 +161,5 @@ Manual smoke test:
 Do not consider Golara production-complete until these roadmap items are resolved:
 
 - Replace password-only admin auth with account/provider auth.
-- Add role enforcement for staff vs owner capabilities.
 - Implement a real object storage provider.
 - Decide whether cart, checkout, payment, taxes, discounts, inventory, and delivery scheduling are needed for the first launch.

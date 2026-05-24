@@ -2,13 +2,13 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { assertAdminAuthenticated } from '@/lib/admin-auth';
+import { assertAdminRole } from '@/lib/admin-auth';
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
 import { normalizeImageUrl, storeMediaUpload } from '@/lib/media/media-storage';
 import { prisma, hasDatabase } from '@/lib/prisma';
 
 async function ensureCanWriteCms() {
-  await assertAdminAuthenticated();
+  await assertAdminRole('owner');
 
   if (!hasDatabase()) {
     throw new Error('DATABASE_URL is not configured. Add a PostgreSQL connection before using admin write actions.');

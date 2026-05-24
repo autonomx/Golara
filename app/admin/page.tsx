@@ -28,15 +28,15 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     actor: optionalParam(auditActor),
     search: optionalParam(auditSearch)
   };
-  const [categories, products, homepage, media, inquiryPageData, inquiryCounts, auditLogs, authenticated] = await Promise.all([
+  const authenticated = await isAdminAuthenticated();
+  const [categories, products, homepage, media, inquiryPageData, inquiryCounts, auditLogs] = await Promise.all([
     listAdminCategories(),
     listAdminProducts(),
     getHomepageContent(),
     listMedia(),
     listInquiryPage(inquiryStatus, parsePage(inquiryPage), undefined, inquirySearch),
     listInquiryStatusCounts(inquirySearch),
-    listAdminAuditLogs(auditFilters),
-    isAdminAuthenticated()
+    authenticated ? listAdminAuditLogs(auditFilters) : Promise.resolve([])
   ]);
 
   const authConfigured = isAdminAuthConfigured();
@@ -64,7 +64,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         </div>
         <div className="mt-10 grid gap-12">
           <AdminActionBanner status={status} message={message} />
-          <AdminAuditLogPanel logs={auditLogs} filters={auditFilters} />
+          {authenticated ? <AdminAuditLogPanel logs={auditLogs} filters={auditFilters} /> : null}
           <InquiryBoard inquiryPage={inquiryPageData} counts={inquiryCounts} activeStatus={inquiryStatus} search={inquirySearch} />
           <AdminDashboard
             categories={categories}
