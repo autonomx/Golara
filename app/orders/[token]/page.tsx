@@ -1,25 +1,24 @@
 import { notFound } from 'next/navigation';
 import { SiteHeader } from '@/components/SiteHeader';
 import { formatMinorUnitAmount } from '@/lib/catalog';
-import { fulfillmentStatusLabels, labelFor, orderStatusLabels, resultMessages } from '@/lib/checkout/public-order-labels';
+import { fulfillmentStatusLabel, labelFor, orderStatusLabel, resultMessageFor } from '@/lib/checkout/public-order-labels';
 import { getPublicOrderByToken } from '@/lib/checkout/public-order-repository';
 
 export const dynamic = 'force-dynamic';
 
-function formatDate(value: Date) {
-  return new Intl.DateTimeFormat('en-CA', {
+function formatDate(value: Date, locale?: string) {
+  return new Intl.DateTimeFormat(locale || 'en-CA', {
     dateStyle: 'medium',
     timeStyle: 'short'
   }).format(value);
 }
 
-function formatDateOnly(value: Date) {
-  return new Intl.DateTimeFormat('en-CA', { dateStyle: 'medium' }).format(value);
+function formatDateOnly(value: Date, locale?: string) {
+  return new Intl.DateTimeFormat(locale || 'en-CA', { dateStyle: 'medium' }).format(value);
 }
 
-function ResultBanner({ result }: { result?: string }) {
-  if (!result) return null;
-  const message = resultMessages[result];
+function ResultBanner({ result, locale }: { result?: string; locale?: string }) {
+  const message = resultMessageFor(result, locale);
   if (!message) return null;
   const className = message.tone === 'success'
     ? 'mt-6 rounded-3xl border border-olive/20 bg-cream p-5 text-olive'
@@ -32,23 +31,24 @@ function ResultBanner({ result }: { result?: string }) {
   );
 }
 
-export default async function PublicOrderStatusPage({ params, searchParams }: { params: Promise<{ token: string }>; searchParams: Promise<{ result?: string }> }) {
-  const [{ token }, { result }] = await Promise.all([params, searchParams]);
+export default async function PublicOrderStatusPage({ params, searchParams }: { params: Promise<{ token: string }>; searchParams: Promise<{ result?: string; locale?: string }> }) {
+  const [{ token }, { result, locale }] = await Promise.all([params, searchParams]);
   const order = await getPublicOrderByToken(token);
   if (!order) notFound();
   const latestAttempt = order.paymentAttempts[0];
+  const isFa = locale?.toLowerCase().startsWith('fa');
 
   return (
-    <main>
+    <main dir={isFa ? 'rtl' : 'ltr'}>
       <SiteHeader />
       <section className="mx-auto max-w-4xl px-5 py-20">
         <div className="rounded-[2rem] border border-rosewood/10 bg-white p-8 shadow-sm">
           <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Order status</p>
           <h1 className="mt-3 font-display text-5xl text-rosewood">{order.orderNumber}</h1>
           <p className="mt-5 text-lg leading-8 text-stone-700">
-            Your order is currently <strong>{labelFor(orderStatusLabels, order.status)}</strong>. Staff will follow up if more information is needed.
+            Your order is currently <strong>{orderStatusLabel(order.status, locale)}</strong>. Staff will follow up if more information is needed.
           </p>
-          <ResultBanner result={result} />
+          <ResultBanner result={result} locale={locale} />
 
           <div className="mt-8 grid gap-4 md:grid-cols-4">
             <div className="rounded-3xl border border-rosewood/10 bg-cream p-5">
@@ -61,11 +61,11 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
             </div>
             <div className="rounded-3xl border border-rosewood/10 bg-cream p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rosewood/60">Fulfillment</p>
-              <p className="mt-2 text-sm font-semibold text-rosewood">{labelFor(fulfillmentStatusLabels, order.fulfillmentStatus)}</p>
+              <p className="mt-2 text-sm font-semibold text-rosewood">{fulfillmentStatusLabel(order.fulfillmentStatus, locale)}</p>
             </div>
             <div className="rounded-3xl border border-rosewood/10 bg-cream p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rosewood/60">Created</p>
-              <p className="mt-2 text-sm font-semibold text-rosewood">{formatDate(order.createdAt)}</p>
+              <p className="mt-2 text-sm font-semibold text-rosewood">{formatDate(order.createdAt, locale)}</p>
             </div>
           </div>
 
@@ -73,7 +73,7 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
             <section className="mt-8 rounded-3xl border border-rosewood/10 bg-cream p-5">
               <h2 className="font-display text-3xl text-rosewood">Delivery timing</h2>
               <div className="mt-4 grid gap-3 text-sm text-stone-700 md:grid-cols-2">
-                <p><strong>Date:</strong> {order.deliveryDate ? formatDateOnly(order.deliveryDate) : 'Not set yet'}</p>
+                <p><strong>Date:</strong> {order.deliveryDate ? formatDateOnly(order.deliveryDate, locale) : 'Not set yet'}</p>
                 <p><strong>Window:</strong> {order.deliveryWindow || 'Not set yet'}</p>
               </div>
             </section>
@@ -100,7 +100,7 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
                 {order.timelineEvents.map((event) => (
                   <article key={`${event.type}-${event.createdAt.toISOString()}`} className="rounded-2xl border border-rosewood/10 bg-cream p-4">
                     <p className="font-semibold text-rosewood">{event.title}</p>
-                    <p className="text-xs text-stone-500">{formatDate(event.createdAt)}</p>
+                    <p className="text-xs text-stone-500">{formatDate(event.createdAt, locale)}</p>
                   </article>
                 ))}
               </div>
