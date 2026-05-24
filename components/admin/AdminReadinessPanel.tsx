@@ -27,7 +27,32 @@ const statusLabels: Record<ReadinessStatus, string> = {
   blocked: 'Blocked'
 };
 
+function notificationReadiness(mode: string): Pick<ReadinessItem, 'status' | 'summary' | 'detail'> {
+  if (mode === 'webhook') {
+    return {
+      status: 'ready',
+      summary: 'Webhook notification mode is configured.',
+      detail: 'New inquiries will POST a provider-agnostic JSON payload to the configured webhook URL. Verify delivery before relying on it for operations.'
+    };
+  }
+
+  if (mode === 'log') {
+    return {
+      status: 'warning',
+      summary: 'Log-only notification mode.',
+      detail: 'Staff must monitor the admin inbox until webhook, email, or WhatsApp delivery is configured.'
+    };
+  }
+
+  return {
+    status: 'warning',
+    summary: `Unsupported notification mode: ${mode}.`,
+    detail: 'The notification layer will fall back to server logs until this mode is implemented.'
+  };
+}
+
 export function AdminReadinessPanel({ databaseReady, authConfigured, authenticated, notificationMode, hasProductionStorage }: AdminReadinessPanelProps) {
+  const notificationStatus = notificationReadiness(notificationMode);
   const items: ReadinessItem[] = [
     {
       label: 'Database',
@@ -47,11 +72,7 @@ export function AdminReadinessPanel({ databaseReady, authConfigured, authenticat
     },
     {
       label: 'Inquiry notifications',
-      status: notificationMode === 'log' ? 'warning' : 'ready',
-      summary: notificationMode === 'log' ? 'Log-only notification mode.' : `Notification mode: ${notificationMode}.`,
-      detail: notificationMode === 'log'
-        ? 'Staff must monitor the admin inbox until email or WhatsApp delivery is implemented.'
-        : 'Verify provider credentials and delivery behavior before relying on automated alerts.'
+      ...notificationStatus
     },
     {
       label: 'Media storage',
