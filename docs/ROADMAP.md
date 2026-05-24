@@ -73,45 +73,44 @@ Deferred to Phase 4:
 
 ## Phase 4 — Production ecommerce
 
-Status: planned.
+Status: ecommerce foundation complete; provider-specific PSP and full cart are deferred follow-ups.
+
+See `docs/PHASE_4_CLOSEOUT.md` for the closeout checklist, implemented foundation, and remaining production hardening track.
 
 Iran-market checkout direction is documented in `docs/IRAN_CHECKOUT_FLOW.md`.
 
-### Phase 4.1 — Iran checkout foundation
+Implemented foundation:
 
-- Document the Woshe-style local market checkout pattern.
-- Support three checkout modes: inquiry, assisted, and gateway.
-- Add a provider seam for manual, Zarinpal, Zibal, or IDPay-style domestic card gateways.
-- Keep WhatsApp/manual fallback for overseas, custom, VIP, or low-stock orders.
+- Product-page order draft form and server checkout action.
+- Phone-first customer profile records.
+- Customer delivery addresses and order contact details.
+- Server-side order draft creation with recomputed totals.
+- Payment attempt records and configurable provider handoff seam.
+- Manual payment mode and external handoff mode.
+- Return/result route scaffold requiring order number plus public token.
+- Idempotent return/result handling for repeated provider returns.
+- Public order lookup tokens and customer-safe `/orders/[token]` status page.
+- Public result banners for paid/failed/cancelled states.
+- Public fulfillment status display.
+- English/Persian public order status labels, copy, and RTL polish.
+- Admin order list, filters, pagination, CSV export, and print view.
+- Admin order detail page, timeline events, staff notes, and packing slips.
+- Fulfillment status, courier/staff fields, fulfillment updates, and audit-log events.
+- Public order status QA checklist.
 
-### Phase 4.2 — Phone-first customer identity
+Deferred Phase 4 follow-up track:
 
-- Add phone-based customer records.
-- Add customer addresses and order contact details.
-- Keep account/provider auth for admin separate from customer identity.
-
-### Phase 4.3 — Cart and order draft
-
-- Add cart/session storage.
-- Create server-side order drafts with recomputed totals.
-- Add delivery date/time and recipient details.
-
-### Phase 4.4 — Gateway handoff and verification
-
-- Create payment attempts from order drafts.
-- Redirect to the configured domestic gateway.
-- Verify callbacks server-side before marking orders paid.
-- Store bounded provider reference metadata.
-
-### Phase 4.5 — Admin order operations
-
-- Add admin order list and order timeline.
-- Add fulfillment statuses, staff notes, and audit-log events.
-- Keep inquiry and order operations connected but distinct.
+- Provider-specific Zarinpal/Zibal/IDPay-style create-request implementation.
+- Provider-specific signed callback verification before marking paid.
+- Provider idempotency keys and retry handling.
+- Full multi-item cart/session flow.
+- Customer login/account dashboard and order history.
+- Public lookup rate limiting and security review.
+- Automated e2e coverage for checkout/order routes.
 
 ## Phase 5 — Polish and growth
 
-- Persian/RTL mode.
+- Persian/RTL mode beyond public order status.
 - SEO metadata and Open Graph images.
 - Analytics events.
 - Seasonal landing pages.
