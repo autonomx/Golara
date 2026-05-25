@@ -8,6 +8,9 @@ import { getAdminCheckoutOrder } from '@/lib/checkout/admin-order-repository';
 
 export const dynamic = 'force-dynamic';
 
+type AdminCheckoutOrder = NonNullable<Awaited<ReturnType<typeof getAdminCheckoutOrder>>>;
+type AdminPaymentAttempt = AdminCheckoutOrder['paymentAttempts'][number];
+
 const fulfillmentStatuses = ['not_scheduled', 'scheduled', 'preparing', 'ready_for_delivery', 'out_for_delivery', 'delivered', 'issue'];
 const paymentMetadataKeys = ['verified', 'verificationSkipped', 'reason', 'providerCode', 'authority', 'refId', 'httpStatus', 'fee', 'feeType', 'instruction'];
 
@@ -49,7 +52,7 @@ function verificationLabel(status: string, metadata: Record<string, string | num
   return status;
 }
 
-function PaymentAttemptCard({ attempt }: { attempt: Awaited<ReturnType<typeof getAdminCheckoutOrder>>['paymentAttempts'][number] }) {
+function PaymentAttemptCard({ attempt }: { attempt: AdminPaymentAttempt }) {
   const metadata = metadataRecord(attempt.metadata);
   const visibleMetadata = paymentMetadataKeys
     .filter((key) => metadata[key] !== undefined && metadata[key] !== '')
