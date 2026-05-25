@@ -205,7 +205,7 @@ Implemented foundation:
 
 ### Phase 7.7-7.9 — Cart page and quantity updates
 
-Status: PR in progress.
+Status: implemented foundation.
 
 Implemented foundation:
 
@@ -219,12 +219,24 @@ Implemented foundation:
 
 ### Phase 7.10-7.12 — Cart-to-checkout conversion
 
-Planned:
+Status: PR in progress.
 
-- Convert cart items into the existing order draft repository.
-- Keep server-recomputed totals as the source of truth.
-- Preserve existing PSP gateway request path.
-- Mark or clear cart after successful order draft creation.
+Implemented foundation:
+
+- Public `/cart/checkout` page.
+- Cart checkout delivery/contact form.
+- Cart checkout order summary.
+- Cart item conversion into the existing order draft repository.
+- Server-recomputed order totals remain the source of truth.
+- Existing PSP payment attempt and gateway handoff path reused.
+- Cart and cart cookie cleared after successful order draft creation.
+
+Deferred follow-up track:
+
+- Product detail and product card add-to-cart UI wiring.
+- Header cart link/count affordance.
+- Cart checkout localization and field-level validation polish.
+- Basic cart smoke tests.
 
 Deferred beyond Phase 7:
 
