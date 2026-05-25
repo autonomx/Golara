@@ -173,7 +173,7 @@ Implemented foundation:
 
 ### Phase 6.7-6.9 — Provider test harness and sandbox docs
 
-Status: PR in progress.
+Status: implemented foundation.
 
 Implemented foundation:
 
@@ -185,12 +185,16 @@ Implemented foundation:
 
 ### Phase 6.10-6.12 — Checkout/customer UX polish for gateway states
 
-Planned:
+Status: PR in progress.
 
-- Improve customer-facing copy for gateway redirection, failed verification, cancelled payment, and manual fallback.
-- Add clearer public order timeline messaging for payment states.
-- Preserve privacy-safe public token lookup behavior.
-- Add assisted/manual fallback copy for overseas or unsupported-payment customers.
+Implemented foundation:
+
+- Localized public payment status labels.
+- Clearer paid/failed/cancelled result-banner copy that explains gateway verification.
+- Customer-facing payment guidance panel on `/orders/[token]`.
+- Guidance for manual follow-up, gateway redirect pending, verified payment, failed/unverified payment, and cancelled payment.
+- English and Persian copy for the new payment guidance states.
+- Privacy-safe public order behavior preserved.
 
 ### Phase 6.13+ — Additional PSP adapters if required
 
