@@ -1,0 +1,123 @@
+{
+  "description": "Deterministic mock callback fixtures for Phase 6 provider verification tests.",
+  "callbacks": [
+    {
+      "name": "zarinpal_success",
+      "query": {
+        "provider": "zarinpal",
+        "Status": "OK",
+        "Authority": "AUTH_OK"
+      },
+      "expected": {
+        "requestedStatus": "paid",
+        "requiresVerify": true,
+        "verified": true,
+        "orderStatus": "paid",
+        "attemptStatus": "verified_paid"
+      }
+    },
+    {
+      "name": "zarinpal_already_verified",
+      "query": {
+        "provider": "zarinpal",
+        "Status": "OK",
+        "Authority": "AUTH_ALREADY_VERIFIED"
+      },
+      "expected": {
+        "requestedStatus": "paid",
+        "requiresVerify": true,
+        "verified": true,
+        "providerCode": 101,
+        "orderStatus": "paid",
+        "attemptStatus": "verified_paid"
+      }
+    },
+    {
+      "name": "zarinpal_declined",
+      "query": {
+        "provider": "zarinpal",
+        "Status": "NOK",
+        "Authority": "AUTH_NOK"
+      },
+      "expected": {
+        "requestedStatus": "failed",
+        "requiresVerify": false,
+        "orderStatus": "pending_payment",
+        "attemptStatus": "failed"
+      }
+    },
+    {
+      "name": "zarinpal_missing_authority",
+      "query": {
+        "provider": "zarinpal",
+        "Status": "OK"
+      },
+      "expected": {
+        "requestedStatus": "paid",
+        "requiresVerify": true,
+        "verified": false,
+        "failureReason": "missing-authority",
+        "orderStatus": "pending_payment",
+        "attemptStatus": "failed"
+      }
+    },
+    {
+      "name": "zarinpal_failed_verify",
+      "query": {
+        "provider": "zarinpal",
+        "Status": "OK",
+        "Authority": "AUTH_FAIL"
+      },
+      "expected": {
+        "requestedStatus": "paid",
+        "requiresVerify": true,
+        "verified": false,
+        "orderStatus": "pending_payment",
+        "attemptStatus": "failed"
+      }
+    },
+    {
+      "name": "generic_failed",
+      "query": {
+        "status": "failed"
+      },
+      "expected": {
+        "requestedStatus": "failed",
+        "requiresVerify": false,
+        "orderStatus": "pending_payment",
+        "attemptStatus": "failed"
+      }
+    }
+  ],
+  "mockVerifyResponses": {
+    "AUTH_OK": {
+      "data": {
+        "code": 100,
+        "ref_id": 9001001,
+        "card_pan": "****-****-****-1234",
+        "card_hash": "mock-card-hash",
+        "fee_type": "Merchant",
+        "fee": 0
+      },
+      "errors": []
+    },
+    "AUTH_ALREADY_VERIFIED": {
+      "data": {
+        "code": 101,
+        "ref_id": 9001002,
+        "card_pan": "****-****-****-1234",
+        "card_hash": "mock-card-hash",
+        "fee_type": "Merchant",
+        "fee": 0
+      },
+      "errors": []
+    },
+    "AUTH_FAIL": {
+      "data": {
+        "code": -51,
+        "message": "Payment was not verified"
+      },
+      "errors": []
+    }
+  }
+}

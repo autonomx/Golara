@@ -160,7 +160,7 @@ Implemented foundation:
 
 ### Phase 6.4-6.6 — Admin payment diagnostics
 
-Status: PR in progress.
+Status: implemented foundation.
 
 Implemented foundation:
 
@@ -173,12 +173,15 @@ Implemented foundation:
 
 ### Phase 6.7-6.9 — Provider test harness and sandbox docs
 
-Planned:
+Status: PR in progress.
 
-- Document sandbox/live configuration steps after merchant dashboard settings are confirmed.
-- Add mocked provider endpoints or test fixtures for request and verify flows.
-- Add repeat-callback tests for idempotency.
-- Add negative tests for missing authority, missing merchant config, failed verification, and non-paid statuses.
+Implemented foundation:
+
+- Sandbox/live configuration checklist.
+- Manual sandbox smoke flow.
+- Mock callback matrix for success, already-verified, declined, missing authority, failed verify, and repeated callbacks.
+- Deterministic JSON fixtures under `tests/fixtures/payment-provider-callbacks.json` for future automated tests.
+- Recommended mocked harness path using local request/verify endpoints.
 
 ### Phase 6.10-6.12 — Checkout/customer UX polish for gateway states
 
