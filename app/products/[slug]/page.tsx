@@ -48,7 +48,7 @@ export default async function ProductPage({
   const dbReady = hasDatabase();
 
   return (
-    <main>
+    <main id="main-content" tabIndex={-1}>
       <JsonLdScript data={buildProductJsonLd(product)} />
       <JsonLdScript data={buildProductBreadcrumbJsonLd(product, category)} />
       <SiteHeader />
