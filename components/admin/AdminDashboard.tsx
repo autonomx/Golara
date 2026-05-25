@@ -37,6 +37,12 @@ const statusLabels: Record<string, string> = {
   'media-uploaded': 'Image uploaded.'
 };
 
+const inputClass = 'rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100';
+const textAreaClass = 'min-h-28 rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100';
+const toggleClass = 'flex items-center gap-3 rounded-2xl border border-rosewood/10 bg-white px-4 py-3 text-sm font-semibold text-rosewood outline-none transition focus-within:ring-4 focus-within:ring-olive/20';
+const primaryButtonClass = 'rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none';
+const secondaryButtonClass = 'rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20';
+
 function Field({
   label,
   name,
@@ -58,7 +64,7 @@ function Field({
     <label className="grid gap-2 text-sm font-semibold text-rosewood">
       {label}
       <input
-        className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood disabled:cursor-not-allowed disabled:bg-stone-100"
+        className={inputClass}
         name={name}
         type={type}
         defaultValue={defaultValue}
@@ -75,7 +81,7 @@ function TextArea({ label, name, defaultValue, disabled = false }: { label: stri
     <label className="grid gap-2 text-sm font-semibold text-rosewood">
       {label}
       <textarea
-        className="min-h-28 rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood disabled:cursor-not-allowed disabled:bg-stone-100"
+        className={textAreaClass}
         name={name}
         defaultValue={defaultValue}
         required
@@ -87,7 +93,7 @@ function TextArea({ label, name, defaultValue, disabled = false }: { label: stri
 
 function Toggle({ label, name, defaultChecked = true, disabled = false }: { label: string; name: string; defaultChecked?: boolean; disabled?: boolean }) {
   return (
-    <label className="flex items-center gap-3 rounded-2xl border border-rosewood/10 bg-white px-4 py-3 text-sm font-semibold text-rosewood">
+    <label className={toggleClass}>
       <input name={name} type="checkbox" defaultChecked={defaultChecked} disabled={disabled} />
       {label}
     </label>
@@ -97,7 +103,7 @@ function Toggle({ label, name, defaultChecked = true, disabled = false }: { labe
 function SubmitButton({ children, disabled }: { children: React.ReactNode; disabled: boolean }) {
   return (
     <button
-      className="rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none"
+      className={primaryButtonClass}
       type="submit"
       disabled={disabled}
     >
@@ -152,7 +158,7 @@ export function AdminDashboard({ categories, products, homepage, media, database
           </div>
           {authenticated ? (
             <form action={logoutAction}>
-              <button className="rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood" type="submit">Sign out</button>
+              <button className={secondaryButtonClass} type="submit">Sign out</button>
             </form>
           ) : null}
         </div>
@@ -176,7 +182,7 @@ export function AdminDashboard({ categories, products, homepage, media, database
             <label className="grid gap-2 text-sm font-semibold text-rosewood">
               Image file
               <input
-                className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood disabled:cursor-not-allowed disabled:bg-stone-100"
+                className={inputClass}
                 name="file"
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/gif"
@@ -300,7 +306,7 @@ function ProductFields({ product, categories, media, disabled }: { product?: Pro
         <label className="grid gap-2 text-sm font-semibold text-rosewood">
           Category
           <select
-            className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood disabled:cursor-not-allowed disabled:bg-stone-100"
+            className={inputClass}
             name="categoryId"
             defaultValue={selectedCategory}
             required
@@ -317,7 +323,7 @@ function ProductFields({ product, categories, media, disabled }: { product?: Pro
       <label className="grid gap-2 text-sm font-semibold text-rosewood">
         Media library image
         <select
-          className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood disabled:cursor-not-allowed disabled:bg-stone-100"
+          className={inputClass}
           name="selectedMediaUrl"
           defaultValue={selectedMediaUrl}
           disabled={disabled}
