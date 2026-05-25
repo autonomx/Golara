@@ -14,8 +14,8 @@ const messages: Record<string, string> = {
   failed: 'The order draft could not be created. Please send an inquiry and staff will follow up.'
 };
 
-const inputClass = 'rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood disabled:cursor-not-allowed disabled:bg-stone-100';
-const areaClass = 'min-h-24 rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood disabled:cursor-not-allowed disabled:bg-stone-100';
+const inputClass = 'rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100';
+const areaClass = 'min-h-24 rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100';
 
 export function ProductCheckoutForm({ product, dbReady, checkout }: ProductCheckoutFormProps) {
   const action = createCheckoutAction.bind(null, product.id, product.slug);
@@ -44,7 +44,7 @@ export function ProductCheckoutForm({ product, dbReady, checkout }: ProductCheck
           <label className="grid gap-2 text-sm font-semibold text-rosewood">Address details optional<input className={inputClass} name="addressLine2" disabled={!dbReady} /></label>
           <label className="grid gap-2 text-sm font-semibold text-rosewood">Delivery notes optional<textarea className={areaClass} name="deliveryNotes" disabled={!dbReady} /></label>
           <label className="grid gap-2 text-sm font-semibold text-rosewood">Customer note optional<textarea className={areaClass} name="customerNote" defaultValue={`Order draft for ${product.title}.`} disabled={!dbReady} /></label>
-          <button className="rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none" type="submit" disabled={!dbReady}>Create order draft</button>
+          <button className="rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none focus-visible:ring-4 focus-visible:ring-olive/30 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none" type="submit" disabled={!dbReady}>Create order draft</button>
         </form>
       </div>
     </section>

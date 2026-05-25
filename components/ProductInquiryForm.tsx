@@ -24,10 +24,10 @@ const inquiryMessages: Record<string, InquiryMessageConfig> = {
   'message-short': { tone: 'warning', text: 'Please include a message with at least 10 characters.', field: 'message' }
 };
 
-const baseInputClass = 'rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood disabled:cursor-not-allowed disabled:bg-stone-100';
-const errorInputClass = 'rounded-2xl border border-amber-400 bg-amber-50 px-4 py-3 text-stone-800 outline-none transition focus:border-amber-500 disabled:cursor-not-allowed disabled:bg-stone-100';
-const baseTextAreaClass = 'min-h-28 rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood disabled:cursor-not-allowed disabled:bg-stone-100';
-const errorTextAreaClass = 'min-h-28 rounded-2xl border border-amber-400 bg-amber-50 px-4 py-3 text-stone-800 outline-none transition focus:border-amber-500 disabled:cursor-not-allowed disabled:bg-stone-100';
+const baseInputClass = 'rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100';
+const errorInputClass = 'rounded-2xl border border-amber-400 bg-amber-50 px-4 py-3 text-stone-800 outline-none transition focus:border-amber-500 focus-visible:ring-4 focus-visible:ring-amber-200 disabled:cursor-not-allowed disabled:bg-stone-100';
+const baseTextAreaClass = 'min-h-28 rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100';
+const errorTextAreaClass = 'min-h-28 rounded-2xl border border-amber-400 bg-amber-50 px-4 py-3 text-stone-800 outline-none transition focus:border-amber-500 focus-visible:ring-4 focus-visible:ring-amber-200 disabled:cursor-not-allowed disabled:bg-stone-100';
 
 function messageForInquiry(inquiry?: string) {
   if (!inquiry) return undefined;
@@ -103,9 +103,9 @@ export function ProductInquiryForm({ product, dbReady, inquiry }: ProductInquiry
           </label>
           <label className="grid gap-2 text-sm font-semibold text-rosewood">
             Delivery notes optional
-            <textarea className="min-h-24 rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood disabled:cursor-not-allowed disabled:bg-stone-100" name="deliveryNotes" disabled={!dbReady} />
+            <textarea className="min-h-24 rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100" name="deliveryNotes" disabled={!dbReady} />
           </label>
-          <button className="rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none" type="submit" disabled={!dbReady}>Send inquiry</button>
+          <button className="rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none focus-visible:ring-4 focus-visible:ring-olive/30 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none" type="submit" disabled={!dbReady}>Send inquiry</button>
         </form>
       </div>
     </section>
