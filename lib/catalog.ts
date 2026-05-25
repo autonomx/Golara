@@ -6,6 +6,7 @@ export type Category = {
   description: string;
   sortOrder?: number;
   isActive?: boolean;
+  updatedAt?: Date;
 };
 
 export type Product = {
@@ -23,6 +24,7 @@ export type Product = {
   isActive?: boolean;
   image: string;
   description: string;
+  updatedAt?: Date;
 };
 
 export type MediaItem = {
