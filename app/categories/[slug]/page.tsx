@@ -37,7 +37,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   const categoryProducts = await listProductsByCategorySlug(category.slug);
 
   return (
-    <main>
+    <main id="main-content" tabIndex={-1}>
       <JsonLdScript data={buildCategoryBreadcrumbJsonLd(category)} />
       <SiteHeader />
       <section className="mx-auto max-w-7xl px-5 py-14">
