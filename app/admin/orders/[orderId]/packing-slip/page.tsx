@@ -19,7 +19,7 @@ export default async function PackingSlipPage({ params }: { params: Promise<{ or
   if (!order) notFound();
 
   return (
-    <main className="mx-auto max-w-4xl bg-white p-8 text-stone-900">
+    <main id="main-content" tabIndex={-1} className="mx-auto max-w-4xl bg-white p-8 text-stone-900">
       <header className="mb-8 border-b border-stone-300 pb-5">
         <p className="text-sm font-semibold uppercase tracking-[0.25em] text-stone-500">Golara packing slip</p>
         <h1 className="mt-2 text-3xl font-bold">{order.orderNumber}</h1>
