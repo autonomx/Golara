@@ -9,12 +9,14 @@ type CreatePaymentAttemptInput = {
   provider?: PaymentProviderName;
 };
 
+type PaymentMetadata = Record<string, string | number | boolean>;
+
 type PaymentProviderResult = {
   provider: PaymentProviderName;
   status: 'manual_pending' | 'created' | 'redirect_required';
   providerReference?: string;
   redirectUrl?: string;
-  metadata?: Record<string, string | number | boolean>;
+  metadata?: PaymentMetadata;
 };
 
 type PaymentProviderOrder = {
@@ -100,7 +102,7 @@ const domesticRedirectProvider: PaymentProvider = {
   async createAttempt(order) {
     const baseUrl = process.env.CHECKOUT_DOMESTIC_GATEWAY_START_URL?.trim();
     if (!baseUrl) {
-      const metadata: Record<string, string | number | boolean> = {
+      const metadata: PaymentMetadata = {
         instruction: 'Domestic redirect URL is not configured; manual staff follow-up required',
         orderNumber: order.orderNumber
       };
@@ -119,7 +121,7 @@ const domesticRedirectProvider: PaymentProvider = {
     const returnUrl = checkoutReturnUrl(order, 'domestic_redirect');
     if (returnUrl) url.searchParams.set('callback', returnUrl);
 
-    const metadata: Record<string, string | number | boolean> = {
+    const metadata: PaymentMetadata = {
       orderNumber: order.orderNumber,
       configuredUrl: baseUrl
     };
@@ -135,20 +137,21 @@ const domesticRedirectProvider: PaymentProvider = {
 
 const zarinpalPaymentProvider: PaymentProvider = {
   name: 'zarinpal',
-  async createAttempt(order) {
+  async createAttempt(order): Promise<PaymentProviderResult> {
     const merchantId = zarinpalMerchantId();
     const callbackUrl = checkoutReturnUrl(order, 'zarinpal');
     if (!merchantId || !callbackUrl) {
+      const metadata: PaymentMetadata = {
+        instruction: 'Zarinpal is not fully configured; manual staff follow-up required',
+        missingMerchantId: !merchantId,
+        missingCallbackUrl: !callbackUrl,
+        orderNumber: order.orderNumber
+      };
       return {
         provider: 'zarinpal',
         status: 'manual_pending',
         providerReference: order.orderNumber,
-        metadata: {
-          instruction: 'Zarinpal is not fully configured; manual staff follow-up required',
-          missingMerchantId: !merchantId,
-          missingCallbackUrl: !callbackUrl,
-          orderNumber: order.orderNumber
-        }
+        metadata
       };
     }
 
@@ -178,32 +181,34 @@ const zarinpalPaymentProvider: PaymentProvider = {
     const code = payload?.data?.code;
     if (!response.ok || code !== 100 || !authority) {
       console.warn('[checkout] zarinpal request failed', { status: response.status, code, errors: payload?.errors });
+      const metadata: PaymentMetadata = {
+        instruction: 'Zarinpal payment request failed; manual staff follow-up required',
+        orderNumber: order.orderNumber,
+        httpStatus: response.status,
+        providerCode: code ?? 'missing'
+      };
       return {
         provider: 'zarinpal',
         status: 'manual_pending',
         providerReference: order.orderNumber,
-        metadata: {
-          instruction: 'Zarinpal payment request failed; manual staff follow-up required',
-          orderNumber: order.orderNumber,
-          httpStatus: response.status,
-          providerCode: code ?? 'missing'
-        }
+        metadata
       };
     }
 
+    const metadata: PaymentMetadata = {
+      orderNumber: order.orderNumber,
+      providerCode: code,
+      authority,
+      amount,
+      fee: payload?.data?.fee ?? 0,
+      feeType: payload?.data?.fee_type ?? ''
+    };
     return {
       provider: 'zarinpal',
       status: 'redirect_required',
       providerReference: authority,
       redirectUrl: `${zarinpalStartUrl()}/${authority}`,
-      metadata: {
-        orderNumber: order.orderNumber,
-        providerCode: code,
-        authority,
-        amount,
-        fee: payload?.data?.fee ?? 0,
-        feeType: payload?.data?.fee_type ?? ''
-      }
+      metadata
     };
   }
 };
