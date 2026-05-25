@@ -4,6 +4,9 @@ import { ProductCard } from '@/components/ProductCard';
 import { SiteHeader } from '@/components/SiteHeader';
 import { getHomepageContent, listCategories, listProducts } from '@/lib/cms/catalog-repository';
 
+const primaryCtaClass = 'rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30';
+const secondaryCtaClass = 'rounded-full border border-rosewood/20 px-6 py-3 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20';
+
 export default async function HomePage() {
   const [homepage, categories, products] = await Promise.all([
     getHomepageContent(),
@@ -22,8 +25,8 @@ export default async function HomePage() {
           <h1 className="mt-5 font-display text-6xl leading-[0.95] text-rosewood md:text-8xl">{homepage.title}</h1>
           <p className="mt-6 max-w-xl text-lg leading-8 text-stone-700">{homepage.body}</p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href={homepage.primaryCtaHref} className="rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20">{homepage.primaryCtaLabel}</Link>
-            <Link href={homepage.secondaryCtaHref} className="rounded-full border border-rosewood/20 px-6 py-3 text-sm font-semibold text-rosewood">{homepage.secondaryCtaLabel}</Link>
+            <Link href={homepage.primaryCtaHref} className={primaryCtaClass}>{homepage.primaryCtaLabel}</Link>
+            <Link href={homepage.secondaryCtaHref} className={secondaryCtaClass}>{homepage.secondaryCtaLabel}</Link>
           </div>
         </div>
         <div className="rounded-[2rem] bg-blush p-4 shadow-2xl shadow-rosewood/10">
