@@ -110,12 +110,31 @@ Deferred Phase 4 follow-up track:
 
 ## Phase 5 — Polish and growth
 
-Status: in progress; metadata, structured data, sitemap/robots, image hints, skip links, focus states, public order accessibility, and smoke-test planning are implemented.
+Status: complete as a polish foundation.
 
-- Persian/RTL mode beyond public order status.
-- SEO metadata and Open Graph images.
+See `docs/PHASE_5_CLOSEOUT.md` for the closeout summary, completed foundations, deferred items, and recommended Phase 6 directions.
+
+Implemented foundation:
+
+- Metadata and structured-data foundations.
+- Sitemap and robots routes.
+- Visible path navigation.
+- Image loading and priority hints.
+- Skip links and skip-link targets.
+- Card, form, button, and link focus-state passes.
+- Public order status accessibility polish.
+- Admin form focus consistency.
+- Smoke-test foundation planning.
+
+Deferred follow-up track:
+
+- Full Persian storefront copy.
+- Real PSP integration and callback verification.
+- Customer accounts.
+- Full cart/session flow.
+- Lighthouse CI.
+- Full Playwright suite.
+- Admin auth provider upgrade.
+- Advanced search and filters.
 - Analytics events.
 - Seasonal landing pages.
-- Advanced search and filters.
-- Performance, accessibility, and security hardening.
-- Playwright smoke-test automation is planned; see `docs/PHASE_5_71_73_SMOKE_TEST_FOUNDATION.md`.
