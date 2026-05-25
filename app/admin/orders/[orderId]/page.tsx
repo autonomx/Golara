@@ -9,12 +9,79 @@ import { getAdminCheckoutOrder } from '@/lib/checkout/admin-order-repository';
 export const dynamic = 'force-dynamic';
 
 const fulfillmentStatuses = ['not_scheduled', 'scheduled', 'preparing', 'ready_for_delivery', 'out_for_delivery', 'delivered', 'issue'];
+const paymentMetadataKeys = ['verified', 'verificationSkipped', 'reason', 'providerCode', 'authority', 'refId', 'httpStatus', 'fee', 'feeType', 'instruction'];
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat('en-CA', {
     dateStyle: 'medium',
     timeStyle: 'short'
   }).format(value);
+}
+
+function metadataRecord(value: unknown): Record<string, string | number | boolean> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  const entries = Object.entries(value).filter((entry): entry is [string, string | number | boolean] => {
+    const item = entry[1];
+    return typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean';
+  });
+  return Object.fromEntries(entries);
+}
+
+function compactValue(value: string | number | boolean) {
+  if (typeof value !== 'string') return String(value);
+  return value.length > 80 ? `${value.slice(0, 77)}...` : value;
+}
+
+function paymentTone(status: string, metadata: Record<string, string | number | boolean>) {
+  if (status === 'verified_paid' || metadata.verified === true) return 'border-emerald-200 bg-emerald-50 text-emerald-900';
+  if (status === 'failed' || metadata.verified === false) return 'border-red-200 bg-red-50 text-red-800';
+  if (status === 'cancelled') return 'border-amber-300 bg-amber-50 text-amber-900';
+  if (status === 'redirect_required') return 'border-blue-200 bg-blue-50 text-blue-900';
+  return 'border-rosewood/10 bg-cream text-stone-700';
+}
+
+function verificationLabel(status: string, metadata: Record<string, string | number | boolean>) {
+  if (status === 'verified_paid' || metadata.verified === true) return 'Verified paid';
+  if (metadata.verified === false) return `Verification failed${metadata.reason ? `: ${metadata.reason}` : ''}`;
+  if (metadata.verificationSkipped === true) return `Verification skipped${metadata.reason ? `: ${metadata.reason}` : ''}`;
+  if (status === 'redirect_required') return 'Customer redirected to gateway';
+  if (status === 'manual_pending') return 'Manual staff follow-up required';
+  return status;
+}
+
+function PaymentAttemptCard({ attempt }: { attempt: Awaited<ReturnType<typeof getAdminCheckoutOrder>>['paymentAttempts'][number] }) {
+  const metadata = metadataRecord(attempt.metadata);
+  const visibleMetadata = paymentMetadataKeys
+    .filter((key) => metadata[key] !== undefined && metadata[key] !== '')
+    .map((key) => [key, metadata[key]] as const);
+  const hasRedirect = Boolean(attempt.redirectUrl);
+
+  return (
+    <article className={`rounded-3xl border p-4 text-sm ${paymentTone(attempt.status, metadata)}`}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="font-semibold">{attempt.provider} · {attempt.status}</p>
+          <p className="mt-1 text-xs opacity-80">{verificationLabel(attempt.status, metadata)}</p>
+        </div>
+        <time className="text-xs opacity-70">{formatDate(attempt.createdAt)}</time>
+      </div>
+      <div className="mt-3 grid gap-1 text-xs">
+        <p><strong>Amount:</strong> {formatMinorUnitAmount(attempt.amountCents, attempt.currency)}</p>
+        {attempt.providerReference ? <p className="break-all"><strong>Reference:</strong> {attempt.providerReference}</p> : null}
+        {hasRedirect ? <p className="break-all"><strong>Redirect:</strong> configured</p> : null}
+      </div>
+      {visibleMetadata.length > 0 ? (
+        <dl className="mt-3 grid gap-2 rounded-2xl border border-current/10 bg-white/50 p-3 text-xs">
+          {visibleMetadata.map(([key, value]) => (
+            <div key={key} className="grid gap-1">
+              <dt className="font-semibold uppercase tracking-[0.14em] opacity-70">{key}</dt>
+              <dd className="break-all">{compactValue(value)}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
+    </article>
+  );
 }
 
 function StatusBanner({ status }: { status?: string }) {
@@ -123,7 +190,17 @@ export default async function AdminOrderDetailPage({ params, searchParams }: { p
 
             <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm"><h2 className="font-display text-3xl text-rosewood">Delivery</h2><div className="mt-4 grid gap-2 text-sm text-stone-700"><p><strong>Date:</strong> {order.deliveryDate ? formatDate(order.deliveryDate) : 'Not set'}</p><p><strong>Window:</strong> {order.deliveryWindow || 'Not set'}</p><p><strong>Address:</strong> {order.address ? `${order.address.line1}${order.address.line2 ? `, ${order.address.line2}` : ''}` : 'Not set'}</p><p><strong>City:</strong> {order.address?.city || 'Not set'}</p><p><strong>Notes:</strong> {order.address?.notes || order.customerNote || 'None'}</p></div></section>
 
-            <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm"><h2 className="font-display text-3xl text-rosewood">Payment attempts</h2>{order.paymentAttempts.length === 0 ? <p className="mt-4 text-sm text-stone-700">No payment attempts yet.</p> : <div className="mt-4 grid gap-3">{order.paymentAttempts.map((attempt) => <article key={attempt.id} className="rounded-3xl border border-rosewood/10 bg-cream p-4 text-sm text-stone-700"><p className="font-semibold text-rosewood">{attempt.provider} · {attempt.status}</p><p>{formatMinorUnitAmount(attempt.amountCents, attempt.currency)}</p>{attempt.providerReference ? <p className="text-xs text-stone-500">Ref: {attempt.providerReference}</p> : null}<p className="text-xs text-stone-500">{formatDate(attempt.createdAt)}</p></article>)}</div>}</section>
+            <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
+              <h2 className="font-display text-3xl text-rosewood">Payment diagnostics</h2>
+              <p className="mt-2 text-sm leading-6 text-stone-600">Provider status, verification outcome, and safe metadata summaries for staff review.</p>
+              {order.paymentAttempts.length === 0 ? (
+                <p className="mt-4 text-sm text-stone-700">No payment attempts yet.</p>
+              ) : (
+                <div className="mt-4 grid gap-3">
+                  {order.paymentAttempts.map((attempt) => <PaymentAttemptCard key={attempt.id} attempt={attempt} />)}
+                </div>
+              )}
+            </section>
           </aside>
         </div>
       </section>
