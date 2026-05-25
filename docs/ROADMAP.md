@@ -139,20 +139,64 @@ Deferred follow-up track:
 
 Status: in progress.
 
-Phase 6 starts the real domestic gateway path while preserving manual fallback behavior.
+Phase 6 turns the Phase 4 payment-provider seam into production-shaped domestic gateway handling while preserving manual fallback behavior.
+
+### Phase 6.1-6.3 — Gateway request and verified callback foundation
+
+Status: PR in progress.
 
 Implemented foundation:
 
-- Zarinpal-style gateway request adapter.
-- Gateway handoff redirect from checkout creation.
+- `zarinpal` configurable payment provider option.
+- Zarinpal-style server-side payment request adapter.
+- Environment-driven request, verify, handoff, merchant, description, and amount-conversion settings.
+- Gateway handoff redirect from checkout creation when the payment attempt requires customer redirection.
 - Callback routing through `/orders/return`.
+- Zarinpal `Status=OK` and `Status=NOK` callback mapping.
 - Server-side paid callback verification before marking an order paid.
-- Idempotent retry-safe payment result handling.
+- Verification failure maps to failed payment instead of trusted paid state.
+- Idempotent retry-safe payment attempt and order result handling.
+- Manual and `domestic_redirect` fallback providers remain available.
 
-Next follow-up track:
+### Phase 6.4-6.6 — Admin payment diagnostics
 
-- Admin-facing payment diagnostics and provider metadata summaries.
-- Gateway failure reason display for staff.
-- Provider sandbox/test documentation once merchant settings are confirmed.
-- Mocked Playwright coverage for success, failure, and repeated callback flows.
-- Additional PSP adapters if required.
+Planned:
+
+- Show latest payment attempt provider, status, reference, and redirect state in admin order detail.
+- Add compact provider metadata summaries for staff without exposing sensitive payloads.
+- Surface gateway failure reasons and verification outcomes.
+- Add audit/timeline clarity for request created, redirect required, verified paid, verification failed, cancelled, and failed callbacks.
+
+### Phase 6.7-6.9 — Provider test harness and sandbox docs
+
+Planned:
+
+- Document sandbox/live configuration steps after merchant dashboard settings are confirmed.
+- Add mocked provider endpoints or test fixtures for request and verify flows.
+- Add repeat-callback tests for idempotency.
+- Add negative tests for missing authority, missing merchant config, failed verification, and non-paid statuses.
+
+### Phase 6.10-6.12 — Checkout/customer UX polish for gateway states
+
+Planned:
+
+- Improve customer-facing copy for gateway redirection, failed verification, cancelled payment, and manual fallback.
+- Add clearer public order timeline messaging for payment states.
+- Preserve privacy-safe public token lookup behavior.
+- Add assisted/manual fallback copy for overseas or unsupported-payment customers.
+
+### Phase 6.13+ — Additional PSP adapters if required
+
+Planned only if needed:
+
+- Zibal adapter.
+- IDPay adapter.
+- Provider selection rules by environment, market, or checkout mode.
+- Provider-specific amount/currency conversion rules.
+
+Deferred beyond Phase 6:
+
+- Full multi-item cart/session flow.
+- Customer accounts and order history.
+- Full Persian storefront localization.
+- Lighthouse CI and full Playwright suite.
