@@ -100,9 +100,6 @@ Implemented foundation:
 
 Deferred Phase 4 follow-up track:
 
-- Provider-specific Zarinpal/Zibal/IDPay-style create-request implementation.
-- Provider-specific signed callback verification before marking paid.
-- Provider idempotency keys and retry handling.
 - Full multi-item cart/session flow.
 - Customer login/account dashboard and order history.
 - Public lookup rate limiting and security review.
@@ -129,7 +126,6 @@ Implemented foundation:
 Deferred follow-up track:
 
 - Full Persian storefront copy.
-- Real PSP integration and callback verification.
 - Customer accounts.
 - Full cart/session flow.
 - Lighthouse CI.
@@ -138,3 +134,25 @@ Deferred follow-up track:
 - Advanced search and filters.
 - Analytics events.
 - Seasonal landing pages.
+
+## Phase 6 — Real PSP integration and callback verification
+
+Status: in progress.
+
+Phase 6 starts the real domestic gateway path while preserving manual fallback behavior.
+
+Implemented foundation:
+
+- Zarinpal-style gateway request adapter.
+- Gateway handoff redirect from checkout creation.
+- Callback routing through `/orders/return`.
+- Server-side paid callback verification before marking an order paid.
+- Idempotent retry-safe payment result handling.
+
+Next follow-up track:
+
+- Admin-facing payment diagnostics and provider metadata summaries.
+- Gateway failure reason display for staff.
+- Provider sandbox/test documentation once merchant settings are confirmed.
+- Mocked Playwright coverage for success, failure, and repeated callback flows.
+- Additional PSP adapters if required.
