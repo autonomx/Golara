@@ -55,7 +55,7 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
   const isFa = locale?.toLowerCase().startsWith('fa') ?? false;
 
   return (
-    <main dir={isFa ? 'rtl' : 'ltr'}>
+    <main id="main-content" tabIndex={-1} dir={isFa ? 'rtl' : 'ltr'}>
       <SiteHeader />
       <section className="mx-auto max-w-4xl px-5 py-20">
         <div className="rounded-[2rem] border border-rosewood/10 bg-white p-8 shadow-sm">
