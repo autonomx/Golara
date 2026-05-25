@@ -192,7 +192,7 @@ Implemented foundation:
 
 ### Phase 7.4-7.6 — Cart cookie helpers and server actions
 
-Status: PR in progress.
+Status: implemented foundation.
 
 Implemented foundation:
 
@@ -205,13 +205,17 @@ Implemented foundation:
 
 ### Phase 7.7-7.9 — Cart page and quantity updates
 
-Planned:
+Status: PR in progress.
 
-- Public cart page.
+Implemented foundation:
+
+- Public `/cart` page.
 - Quantity controls.
 - Remove item controls.
-- Empty cart state.
-- Cart subtotal summary.
+- Clear cart action.
+- Empty cart and database-unavailable states.
+- Cart subtotal summary and item count.
+- Placeholder checkout link for the cart-to-checkout bundle.
 
 ### Phase 7.10-7.12 — Cart-to-checkout conversion
 
