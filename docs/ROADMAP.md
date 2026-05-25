@@ -178,7 +178,7 @@ Phase 7 moves from single-product order draft checkout toward a real cart/sessio
 
 ### Phase 7.1-7.3 — Cart data model and repository
 
-Status: PR in progress.
+Status: implemented foundation.
 
 Implemented foundation:
 
@@ -192,12 +192,16 @@ Implemented foundation:
 
 ### Phase 7.4-7.6 — Cart cookie helpers and server actions
 
-Planned:
+Status: PR in progress.
+
+Implemented foundation:
 
 - HTTP-only cart token cookie helpers.
-- Add-to-cart action from product detail and cards.
-- Update/remove/clear cart actions.
+- Add-to-cart action.
+- Update, remove, and clear cart actions.
+- Safe relative return-path handling.
 - Redirect/status behavior after cart actions.
+- Cart/product/category revalidation after mutations.
 
 ### Phase 7.7-7.9 — Cart page and quantity updates
 
