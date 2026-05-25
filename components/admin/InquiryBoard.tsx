@@ -27,6 +27,13 @@ const channelBadgeClass: Record<string, string> = {
   whatsapp: 'border-emerald-200 bg-emerald-50 text-emerald-800'
 };
 
+const inputClass = 'rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20';
+const searchInputClass = 'min-w-64 flex-1 rounded-full border border-rosewood/15 bg-white px-4 py-2 text-sm text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20';
+const textAreaClass = 'rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20';
+const primaryButtonClass = 'rounded-full bg-rosewood px-5 py-2 text-sm font-semibold text-white outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30';
+const secondaryLinkClass = 'rounded-full border border-rosewood/20 bg-white px-5 py-2 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20';
+const filterLinkBaseClass = 'rounded-full border px-4 py-2 text-sm font-semibold outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20';
+
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat('en-CA', {
     dateStyle: 'medium',
@@ -109,7 +116,7 @@ function InquirySummaryCards({ counts, activeStatus, search }: { counts: Inquiry
   return (
     <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       {cards.map((card) => (
-        <Link key={card.label} href={card.href} className={`rounded-3xl border p-4 transition ${card.active ? 'border-rosewood bg-rosewood text-white shadow-lg shadow-rosewood/10' : 'border-rosewood/10 bg-cream text-rosewood hover:bg-white'}`}>
+        <Link key={card.label} href={card.href} className={`rounded-3xl border p-4 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20 ${card.active ? 'border-rosewood bg-rosewood text-white shadow-lg shadow-rosewood/10' : 'border-rosewood/10 bg-cream text-rosewood hover:bg-white'}`}>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] opacity-70">{card.label}</p>
           <p className="mt-2 font-display text-4xl">{card.value}</p>
         </Link>
@@ -123,16 +130,16 @@ function InquirySearchForm({ activeStatus, search }: { activeStatus?: string; se
     <form action="/admin" className="mt-5 flex flex-wrap gap-2 rounded-3xl border border-rosewood/10 bg-cream p-3">
       {activeStatus ? <input type="hidden" name="inquiryStatus" value={activeStatus} /> : null}
       <input
-        className="min-w-64 flex-1 rounded-full border border-rosewood/15 bg-white px-4 py-2 text-sm text-stone-800 outline-none transition focus:border-rosewood"
+        className={searchInputClass}
         name="inquirySearch"
         placeholder="Search name, phone, email, notes, product..."
         defaultValue={search ?? ''}
       />
-      <button className="rounded-full bg-rosewood px-5 py-2 text-sm font-semibold text-white" type="submit">
+      <button className={primaryButtonClass} type="submit">
         Search
       </button>
       {search ? (
-        <Link href={filterHref(activeStatus)} className="rounded-full border border-rosewood/20 bg-white px-5 py-2 text-sm font-semibold text-rosewood">
+        <Link href={filterHref(activeStatus)} className={secondaryLinkClass}>
           Clear
         </Link>
       ) : null}
@@ -142,23 +149,22 @@ function InquirySearchForm({ activeStatus, search }: { activeStatus?: string; se
 
 function FilterPills({ counts, activeStatus, search }: { counts: InquiryStatusCount[]; activeStatus?: string; search?: string }) {
   const total = counts.reduce((sum, item) => sum + item.count, 0);
-  const baseClass = 'rounded-full border px-4 py-2 text-sm font-semibold transition';
 
   return (
     <div className="mt-6 flex flex-wrap items-center gap-2">
-      <Link href={filterHref(undefined, search)} className={`${baseClass} ${!activeStatus ? 'border-rosewood bg-rosewood text-white' : 'border-rosewood/20 bg-white text-rosewood'}`}>
+      <Link href={filterHref(undefined, search)} className={`${filterLinkBaseClass} ${!activeStatus ? 'border-rosewood bg-rosewood text-white' : 'border-rosewood/20 bg-white text-rosewood'}`}>
         All <span className="ml-1 opacity-75">{total}</span>
       </Link>
       {counts.map((item) => (
-        <Link key={item.status} href={filterHref(item.status, search)} className={`${baseClass} ${activeStatus === item.status ? 'border-rosewood bg-rosewood text-white' : statusClass(item.status)}`}>
+        <Link key={item.status} href={filterHref(item.status, search)} className={`${filterLinkBaseClass} ${activeStatus === item.status ? 'border-rosewood bg-rosewood text-white' : statusClass(item.status)}`}>
           {item.status} <span className="ml-1 opacity-75">{item.count}</span>
         </Link>
       ))}
       <div className="ml-auto flex flex-wrap gap-2">
-        <Link href={printHref(activeStatus, search)} className="rounded-full border border-rosewood/20 bg-white px-4 py-2 text-sm font-semibold text-rosewood transition hover:bg-cream">
+        <Link href={printHref(activeStatus, search)} className="rounded-full border border-rosewood/20 bg-white px-4 py-2 text-sm font-semibold text-rosewood outline-none transition hover:bg-cream focus-visible:ring-4 focus-visible:ring-olive/20">
           Print view
         </Link>
-        <Link href={exportHref(activeStatus, search)} className="rounded-full border border-olive/30 bg-cream px-4 py-2 text-sm font-semibold text-olive transition hover:bg-white">
+        <Link href={exportHref(activeStatus, search)} className="rounded-full border border-olive/30 bg-cream px-4 py-2 text-sm font-semibold text-olive outline-none transition hover:bg-white focus-visible:ring-4 focus-visible:ring-olive/20">
           Export CSV
         </Link>
       </div>
@@ -183,14 +189,14 @@ function PaginationControls({ inquiryPage, activeStatus, search }: { inquiryPage
         <Link
           href={pageHref(previousPage, activeStatus, search)}
           aria-disabled={inquiryPage.page <= 1}
-          className={`rounded-full border px-4 py-2 font-semibold ${inquiryPage.page <= 1 ? 'pointer-events-none border-stone-200 text-stone-300' : 'border-rosewood/20 text-rosewood'}`}
+          className={`rounded-full border px-4 py-2 font-semibold outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20 ${inquiryPage.page <= 1 ? 'pointer-events-none border-stone-200 text-stone-300' : 'border-rosewood/20 text-rosewood'}`}
         >
           Previous
         </Link>
         <Link
           href={pageHref(nextPage, activeStatus, search)}
           aria-disabled={inquiryPage.page >= inquiryPage.pageCount}
-          className={`rounded-full border px-4 py-2 font-semibold ${inquiryPage.page >= inquiryPage.pageCount ? 'pointer-events-none border-stone-200 text-stone-300' : 'border-rosewood/20 text-rosewood'}`}
+          className={`rounded-full border px-4 py-2 font-semibold outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20 ${inquiryPage.page >= inquiryPage.pageCount ? 'pointer-events-none border-stone-200 text-stone-300' : 'border-rosewood/20 text-rosewood'}`}
         >
           Next
         </Link>
@@ -253,7 +259,7 @@ export function InquiryBoard({ inquiryPage, counts, activeStatus, search }: { in
                     <ReturnStateFields activeStatus={activeStatus} search={search} page={inquiryPage.page} />
                     <label className="grid gap-2 text-sm font-semibold text-rosewood">
                       Status
-                      <select className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood" name="status" defaultValue={inquiry.status}>
+                      <select className={inputClass} name="status" defaultValue={inquiry.status}>
                         {statuses.map((status) => (
                           <option key={status} value={status}>{status}</option>
                         ))}
@@ -261,9 +267,9 @@ export function InquiryBoard({ inquiryPage, counts, activeStatus, search }: { in
                     </label>
                     <label className="grid gap-2 text-sm font-semibold text-rosewood">
                       Staff notes
-                      <textarea className="min-h-24 rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood" name="staffNotes" defaultValue={inquiry.staffNotes ?? ''} />
+                      <textarea className={`min-h-24 ${textAreaClass}`} name="staffNotes" defaultValue={inquiry.staffNotes ?? ''} />
                     </label>
-                    <button className="rounded-full bg-rosewood px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-rosewood/20" type="submit">
+                    <button className={`${primaryButtonClass} shadow-lg shadow-rosewood/20`} type="submit">
                       Save inquiry
                     </button>
                   </form>
@@ -289,7 +295,7 @@ export function InquiryBoard({ inquiryPage, counts, activeStatus, search }: { in
                       <ReturnStateFields activeStatus={activeStatus} search={search} page={inquiryPage.page} />
                       <label className="grid gap-2 text-sm font-semibold text-rosewood">
                         Channel
-                        <select className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood" name="channel" defaultValue="internal">
+                        <select className={inputClass} name="channel" defaultValue="internal">
                           {channels.map((channel) => (
                             <option key={channel} value={channel}>{channel}</option>
                           ))}
@@ -297,9 +303,9 @@ export function InquiryBoard({ inquiryPage, counts, activeStatus, search }: { in
                       </label>
                       <label className="grid gap-2 text-sm font-semibold text-rosewood">
                         Follow-up note
-                        <textarea className="min-h-20 rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood" name="note" required minLength={2} />
+                        <textarea className={`min-h-20 ${textAreaClass}`} name="note" required minLength={2} />
                       </label>
-                      <button className="rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood" type="submit">
+                      <button className="rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20" type="submit">
                         Add follow-up
                       </button>
                     </form>

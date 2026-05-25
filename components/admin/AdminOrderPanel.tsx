@@ -8,6 +8,11 @@ const orderStatuses = ['draft', 'pending_payment', 'paid', 'preparing', 'out_for
 const paymentStatuses = ['manual_pending', 'redirect_required', 'verified_paid', 'failed', 'cancelled'];
 const fulfillmentStatuses = ['not_scheduled', 'scheduled', 'preparing', 'ready_for_delivery', 'out_for_delivery', 'delivered', 'issue'];
 
+const filterInputClass = 'rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20';
+const inlineInputClass = 'rounded-xl border border-rosewood/15 bg-white px-3 py-2 text-sm normal-case tracking-normal text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20';
+const primaryButtonClass = 'rounded-full bg-rosewood px-5 py-2 text-sm font-semibold text-white outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30';
+const secondaryLinkClass = 'rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20 aria-disabled:opacity-40';
+
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat('en-CA', {
     dateStyle: 'medium',
@@ -39,7 +44,7 @@ function FilterInput({ label, name, defaultValue, placeholder }: { label: string
   return (
     <label className="grid gap-2 text-sm font-semibold text-rosewood">
       {label}
-      <input className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood" name={name} defaultValue={defaultValue} placeholder={placeholder} />
+      <input className={filterInputClass} name={name} defaultValue={defaultValue} placeholder={placeholder} />
     </label>
   );
 }
@@ -48,7 +53,7 @@ function FilterSelect({ label, name, defaultValue, values }: { label: string; na
   return (
     <label className="grid gap-2 text-sm font-semibold text-rosewood">
       {label}
-      <select className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood" name={name} defaultValue={defaultValue || ''}>
+      <select className={filterInputClass} name={name} defaultValue={defaultValue || ''}>
         <option value="">Any</option>
         {values.map((value) => <option key={value} value={value}>{value}</option>)}
       </select>
@@ -63,7 +68,7 @@ function OrderStatusForm({ order }: { order: CheckoutOrderSummary }) {
     <form action={updateAction} className="mt-3 grid gap-2 rounded-2xl border border-rosewood/10 bg-cream p-3">
       <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-rosewood/60">
         Update status
-        <select name="status" defaultValue={order.status} className="rounded-xl border border-rosewood/15 bg-white px-3 py-2 text-sm normal-case tracking-normal text-stone-800">
+        <select name="status" defaultValue={order.status} className={inlineInputClass}>
           {orderStatuses.map((status) => (
             <option key={status} value={status}>{status}</option>
           ))}
@@ -71,9 +76,9 @@ function OrderStatusForm({ order }: { order: CheckoutOrderSummary }) {
       </label>
       <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-rosewood/60">
         Staff note optional
-        <input name="staffNotes" className="rounded-xl border border-rosewood/15 bg-white px-3 py-2 text-sm normal-case tracking-normal text-stone-800" placeholder="Internal note" />
+        <input name="staffNotes" className={inlineInputClass} placeholder="Internal note" />
       </label>
-      <button className="rounded-full bg-rosewood px-4 py-2 text-xs font-semibold text-white" type="submit">Save order</button>
+      <button className="rounded-full bg-rosewood px-4 py-2 text-xs font-semibold text-white outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30" type="submit">Save order</button>
     </form>
   );
 }
@@ -98,10 +103,10 @@ export function AdminOrderPanel({ orderPage, filters }: { orderPage: AdminOrderP
         <FilterSelect label="Fulfillment status" name="orderFulfillmentStatus" defaultValue={filters.fulfillmentStatus} values={fulfillmentStatuses} />
         <FilterInput label="Search" name="orderSearch" defaultValue={filters.search} placeholder="Order, phone, name, product" />
         <div className="flex flex-wrap gap-3 md:col-span-4">
-          <button className="rounded-full bg-rosewood px-5 py-2 text-sm font-semibold text-white" type="submit">Filter orders</button>
-          {hasFilters ? <a className="rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood" href="/admin#orders">Clear filters</a> : null}
-          <a className="rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood" href={orderExportQuery(filters, 'csv')}>Export CSV</a>
-          <a className="rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood" href={orderExportQuery(filters, 'print')}>Print view</a>
+          <button className={primaryButtonClass} type="submit">Filter orders</button>
+          {hasFilters ? <a className={secondaryLinkClass} href="/admin#orders">Clear filters</a> : null}
+          <a className={secondaryLinkClass} href={orderExportQuery(filters, 'csv')}>Export CSV</a>
+          <a className={secondaryLinkClass} href={orderExportQuery(filters, 'print')}>Print view</a>
         </div>
       </form>
 
@@ -130,7 +135,7 @@ export function AdminOrderPanel({ orderPage, filters }: { orderPage: AdminOrderP
                 <tr key={order.id}>
                   <td className="whitespace-nowrap px-4 py-3 text-xs text-stone-500">{formatDate(order.createdAt)}</td>
                   <td className="px-4 py-3 align-top">
-                    <Link href={`/admin/orders/${order.id}`} className="font-semibold text-rosewood underline decoration-rosewood/30 underline-offset-4 hover:decoration-rosewood">
+                    <Link href={`/admin/orders/${order.id}`} className="font-semibold text-rosewood underline decoration-rosewood/30 underline-offset-4 outline-none transition hover:decoration-rosewood focus-visible:ring-4 focus-visible:ring-olive/20">
                       {order.orderNumber}
                     </Link>
                     <p className="text-xs text-stone-500">{order.itemCount} item{order.itemCount === 1 ? '' : 's'} · {order.checkoutMode}</p>
@@ -160,9 +165,9 @@ export function AdminOrderPanel({ orderPage, filters }: { orderPage: AdminOrderP
 
       {orderPage.totalPages > 1 ? (
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-          <a className="rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood aria-disabled:opacity-40" href={orderQuery(filters, Math.max(1, orderPage.page - 1))} aria-disabled={orderPage.page <= 1}>Previous</a>
+          <a className={secondaryLinkClass} href={orderQuery(filters, Math.max(1, orderPage.page - 1))} aria-disabled={orderPage.page <= 1}>Previous</a>
           <span className="text-sm text-stone-600">Page {orderPage.page} of {orderPage.totalPages}</span>
-          <a className="rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood aria-disabled:opacity-40" href={orderQuery(filters, Math.min(orderPage.totalPages, orderPage.page + 1))} aria-disabled={orderPage.page >= orderPage.totalPages}>Next</a>
+          <a className={secondaryLinkClass} href={orderQuery(filters, Math.min(orderPage.totalPages, orderPage.page + 1))} aria-disabled={orderPage.page >= orderPage.totalPages}>Next</a>
         </div>
       ) : null}
     </section>

@@ -1,6 +1,10 @@
 import type { AdminAuditLogEntry } from '@/lib/catalog';
 import type { AdminAuditLogFilters } from '@/lib/cms/catalog-repository';
 
+const filterInputClass = 'rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20';
+const primaryButtonClass = 'rounded-full bg-rosewood px-5 py-2 text-sm font-semibold text-white outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30';
+const secondaryLinkClass = 'rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20';
+
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat('en-CA', {
     dateStyle: 'medium',
@@ -13,7 +17,7 @@ function Field({ label, name, defaultValue, placeholder }: { label: string; name
     <label className="grid gap-2 text-sm font-semibold text-rosewood">
       {label}
       <input
-        className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood"
+        className={filterInputClass}
         name={name}
         defaultValue={defaultValue}
         placeholder={placeholder}
@@ -41,8 +45,8 @@ export function AdminAuditLogPanel({ logs, filters }: { logs: AdminAuditLogEntry
         <Field label="Actor" name="auditActor" defaultValue={filters.actor} placeholder="Admin, owner, email" />
         <Field label="Search" name="auditSearch" defaultValue={filters.search} placeholder="summary or ID" />
         <div className="flex flex-wrap gap-3 md:col-span-4">
-          <button className="rounded-full bg-rosewood px-5 py-2 text-sm font-semibold text-white" type="submit">Filter audit log</button>
-          {hasFilters ? <a className="rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood" href="/admin#audit-log">Clear filters</a> : null}
+          <button className={primaryButtonClass} type="submit">Filter audit log</button>
+          {hasFilters ? <a className={secondaryLinkClass} href="/admin#audit-log">Clear filters</a> : null}
         </div>
       </form>
 
