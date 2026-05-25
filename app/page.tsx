@@ -14,7 +14,7 @@ export default async function HomePage() {
   const bestSellers = products.filter((product) => product.bestSeller);
 
   return (
-    <main>
+    <main id="main-content" tabIndex={-1}>
       <SiteHeader />
       <section className="mx-auto grid max-w-7xl gap-10 px-5 py-14 md:grid-cols-[1.1fr_0.9fr] md:py-24">
         <div className="flex flex-col justify-center">
