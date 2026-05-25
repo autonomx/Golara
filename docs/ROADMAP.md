@@ -143,7 +143,7 @@ Phase 6 turns the Phase 4 payment-provider seam into production-shaped domestic 
 
 ### Phase 6.1-6.3 — Gateway request and verified callback foundation
 
-Status: PR in progress.
+Status: implemented foundation.
 
 Implemented foundation:
 
@@ -160,12 +160,16 @@ Implemented foundation:
 
 ### Phase 6.4-6.6 — Admin payment diagnostics
 
-Planned:
+Status: PR in progress.
 
-- Show latest payment attempt provider, status, reference, and redirect state in admin order detail.
-- Add compact provider metadata summaries for staff without exposing sensitive payloads.
-- Surface gateway failure reasons and verification outcomes.
-- Add audit/timeline clarity for request created, redirect required, verified paid, verification failed, cancelled, and failed callbacks.
+Implemented foundation:
+
+- Admin order detail payment diagnostics section.
+- Provider, attempt status, amount, reference, redirect presence, and created-time display.
+- Verification outcome summary for staff.
+- Distinct visual tones for verified, failed, cancelled, redirected, and manual-pending attempts.
+- Bounded allowlist of safe provider metadata fields.
+- Long metadata string truncation in the UI.
 
 ### Phase 6.7-6.9 — Provider test harness and sandbox docs
 
