@@ -9,7 +9,7 @@ export default async function AdminLoginPage({ searchParams }: { searchParams: P
   const configured = isAdminAuthConfigured();
 
   return (
-    <main className="min-h-screen bg-cream px-5 py-16">
+    <main id="main-content" tabIndex={-1} className="min-h-screen bg-cream px-5 py-16">
       <section className="mx-auto max-w-xl rounded-[2rem] border border-rosewood/10 bg-white p-8 shadow-xl shadow-rosewood/10">
         <Link href="/" className="font-display text-3xl text-rosewood">Golara</Link>
         <p className="mt-8 text-sm font-semibold uppercase tracking-[0.3em] text-olive">Admin login</p>

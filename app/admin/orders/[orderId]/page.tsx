@@ -36,7 +36,7 @@ export default async function AdminOrderDetailPage({ params, searchParams }: { p
   const fulfillmentAction = updateOrderFulfillmentAction.bind(null, order.id);
 
   return (
-    <main>
+    <main id="main-content" tabIndex={-1}>
       <SiteHeader />
       <section className="mx-auto max-w-7xl px-5 py-14">
         <StatusBanner status={status} />
