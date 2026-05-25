@@ -7,6 +7,8 @@ import { getPublicOrderByToken } from '@/lib/checkout/public-order-repository';
 
 export const dynamic = 'force-dynamic';
 
+const languageLinkClass = 'rounded-full border border-rosewood/15 px-4 py-2 text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20';
+
 function formatDate(value: Date, locale?: string) {
   return new Intl.DateTimeFormat(locale || 'en-CA', {
     dateStyle: 'medium',
@@ -65,8 +67,8 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
               <h1 className="mt-3 font-display text-5xl text-rosewood" dir="ltr">{order.orderNumber}</h1>
             </div>
             <nav aria-label="Language" className="flex flex-row gap-2 text-sm font-semibold" dir="ltr">
-              <Link className="rounded-full border border-rosewood/15 px-4 py-2 text-rosewood" href={localeHref(token, 'en', result)}>English</Link>
-              <Link className="rounded-full border border-rosewood/15 px-4 py-2 text-rosewood" href={localeHref(token, 'fa', result)}>فارسی</Link>
+              <Link className={languageLinkClass} href={localeHref(token, 'en', result)}>English</Link>
+              <Link className={languageLinkClass} href={localeHref(token, 'fa', result)}>فارسی</Link>
             </nav>
           </div>
           <p className="mt-5 text-lg leading-8 text-stone-700">
