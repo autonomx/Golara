@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { PathTrail } from '@/components/PathTrail';
 import { ProductCheckoutForm } from '@/components/ProductCheckoutForm';
 import { ProductInquiryForm } from '@/components/ProductInquiryForm';
 import { ProductDetail } from '@/components/product/ProductDetail';
@@ -51,6 +52,9 @@ export default async function ProductPage({
       <JsonLdScript data={buildProductJsonLd(product)} />
       <JsonLdScript data={buildProductBreadcrumbJsonLd(product, category)} />
       <SiteHeader />
+      <section className="mx-auto max-w-7xl px-5 pt-10">
+        <PathTrail items={[{ label: 'Home', href: '/' }, { label: category?.title || product.categoryTitle || product.category, href: `/categories/${product.category}` }, { label: product.title }]} />
+      </section>
       <ProductDetail product={product} category={category} />
       <ProductCheckoutForm product={product} dbReady={dbReady} checkout={checkout} />
       <ProductInquiryForm product={product} dbReady={dbReady} inquiry={inquiry} />
