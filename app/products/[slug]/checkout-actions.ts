@@ -65,7 +65,8 @@ export async function createCheckoutAction(productId: string | undefined, produc
       items: [{ productId, quantity }]
     });
 
-    await createCheckoutPaymentAttempt({ orderId: order.id });
+    const attempt = await createCheckoutPaymentAttempt({ orderId: order.id });
+    if (attempt.redirectUrl && attempt.status === 'redirect_required') redirect(attempt.redirectUrl);
     if (!order.publicLookupToken) redirect(`/orders/confirmation?order=${encodeURIComponent(order.orderNumber)}`);
     redirect(`/orders/${order.publicLookupToken}`);
   } catch (error) {
