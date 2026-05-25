@@ -7,7 +7,7 @@ export function ProductDetail({ product, category }: { product: Product; categor
   return (
     <section className="mx-auto grid max-w-7xl gap-10 px-5 py-14 lg:grid-cols-2">
       <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] bg-blush shadow-2xl shadow-rosewood/10">
-        <Image src={product.image} alt={product.title} fill className="object-cover" sizes="50vw" />
+        <Image src={product.image} alt={product.title} fill priority className="object-cover" sizes="(min-width: 1024px) 50vw, 100vw" />
       </div>
       <div className="flex flex-col justify-center">
         <Link href={`/categories/${product.category}`} className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">
