@@ -54,7 +54,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const hasProductionStorage = Boolean(process.env.MEDIA_STORAGE_PROVIDER?.trim());
 
   return (
-    <main>
+    <main id="main-content" tabIndex={-1}>
       <SiteHeader />
       <section className="mx-auto max-w-7xl px-5 py-14">
         <div className="flex flex-wrap items-start justify-between gap-4">
