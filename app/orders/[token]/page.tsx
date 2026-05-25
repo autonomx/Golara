@@ -41,7 +41,7 @@ function ResultBanner({ result, locale, isFa }: { result?: string; locale?: stri
     ? 'mt-6 rounded-3xl border border-olive/20 bg-cream p-5 text-olive'
     : 'mt-6 rounded-3xl border border-amber-300 bg-amber-50 p-5 text-amber-900';
   return (
-    <div className={className}>
+    <div className={className} role="status" aria-live="polite">
       <p className={isFa ? 'text-sm font-semibold' : 'text-sm font-semibold uppercase tracking-[0.2em]'}>{message.title}</p>
       <p className="mt-2 text-sm leading-6">{message.body}</p>
     </div>
@@ -55,6 +55,7 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
   const latestAttempt = order.paymentAttempts[0];
   const copy = publicOrderCopyFor(locale);
   const isFa = locale?.toLowerCase().startsWith('fa') ?? false;
+  const currentLanguage = isFa ? 'Persian' : 'English';
 
   return (
     <main id="main-content" tabIndex={-1} dir={isFa ? 'rtl' : 'ltr'}>
@@ -66,12 +67,12 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
               <p className={eyebrowClass(isFa)}>{copy.eyebrow}</p>
               <h1 className="mt-3 font-display text-5xl text-rosewood" dir="ltr">{order.orderNumber}</h1>
             </div>
-            <nav aria-label="Language" className="flex flex-row gap-2 text-sm font-semibold" dir="ltr">
-              <Link className={languageLinkClass} href={localeHref(token, 'en', result)}>English</Link>
-              <Link className={languageLinkClass} href={localeHref(token, 'fa', result)}>فارسی</Link>
+            <nav aria-label={`Order status language. Current language: ${currentLanguage}.`} className="flex flex-row gap-2 text-sm font-semibold" dir="ltr">
+              <Link className={languageLinkClass} href={localeHref(token, 'en', result)} aria-label="View this order status in English" aria-current={!isFa ? 'page' : undefined}>English</Link>
+              <Link className={languageLinkClass} href={localeHref(token, 'fa', result)} aria-label="View this order status in Persian" aria-current={isFa ? 'page' : undefined}>فارسی</Link>
             </nav>
           </div>
-          <p className="mt-5 text-lg leading-8 text-stone-700">
+          <p className="mt-5 text-lg leading-8 text-stone-700" aria-live="polite">
             {copy.introPrefix} <strong>{orderStatusLabel(order.status, locale)}</strong>. {copy.introSuffix}
           </p>
           <ResultBanner result={result} locale={locale} isFa={isFa} />
@@ -109,7 +110,7 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
             <h2 className="font-display text-3xl text-rosewood">{copy.items}</h2>
             <div className="mt-4 grid gap-3 text-sm text-stone-700">
               {order.items.map((item) => (
-                <div key={`${item.productTitle}-${item.quantity}`} className="flex justify-between gap-4 border-b border-rosewood/10 pb-2 last:border-0 last:pb-0">
+                <div key={`${item.productTitle}-${item.quantity}`} className="flex flex-wrap items-start justify-between gap-4 border-b border-rosewood/10 pb-2 last:border-0 last:pb-0">
                   <span>{item.productTitle}</span>
                   <strong dir="ltr">× {item.quantity}</strong>
                 </div>
@@ -117,8 +118,8 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
             </div>
           </section>
 
-          <section className="mt-8 rounded-3xl border border-rosewood/10 bg-white p-5">
-            <h2 className="font-display text-3xl text-rosewood">{copy.progress}</h2>
+          <section className="mt-8 rounded-3xl border border-rosewood/10 bg-white p-5" aria-labelledby="order-progress-heading">
+            <h2 id="order-progress-heading" className="font-display text-3xl text-rosewood">{copy.progress}</h2>
             {order.timelineEvents.length === 0 ? (
               <p className="mt-4 text-sm text-stone-700">{copy.noProgress}</p>
             ) : (
