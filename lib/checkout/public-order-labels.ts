@@ -19,6 +19,13 @@ type PublicOrderCopy = {
   noProgress: string;
   privacy: string;
   latestPaymentStatus: string;
+  paymentGuidance: string;
+};
+
+type PaymentGuidance = {
+  title: string;
+  body: string;
+  tone: 'success' | 'warning' | 'info';
 };
 
 export const orderStatusLabels: Record<string, string> = {
@@ -41,6 +48,15 @@ export const fulfillmentStatusLabels: Record<string, string> = {
   issue: 'Needs staff review'
 };
 
+export const paymentStatusLabels: Record<string, string> = {
+  manual_pending: 'Manual staff follow-up pending',
+  created: 'Payment request created',
+  redirect_required: 'Waiting for gateway payment',
+  verified_paid: 'Payment verified',
+  failed: 'Payment failed or was not verified',
+  cancelled: 'Payment cancelled'
+};
+
 export const orderStatusLabelsFa: Record<string, string> = {
   draft: 'دریافت شده توسط فروشگاه',
   pending_payment: 'در انتظار پرداخت یا تایید فروشگاه',
@@ -61,6 +77,15 @@ export const fulfillmentStatusLabelsFa: Record<string, string> = {
   issue: 'نیازمند بررسی فروشگاه'
 };
 
+export const paymentStatusLabelsFa: Record<string, string> = {
+  manual_pending: 'در انتظار پیگیری فروشگاه',
+  created: 'درخواست پرداخت ایجاد شد',
+  redirect_required: 'در انتظار پرداخت در درگاه',
+  verified_paid: 'پرداخت تایید شد',
+  failed: 'پرداخت ناموفق بود یا تایید نشد',
+  cancelled: 'پرداخت لغو شد'
+};
+
 export const publicOrderCopy: PublicOrderCopy = {
   eyebrow: 'Order status',
   introPrefix: 'Your order is currently',
@@ -77,7 +102,8 @@ export const publicOrderCopy: PublicOrderCopy = {
   progress: 'Progress',
   noProgress: 'No progress updates have been posted yet.',
   privacy: 'For privacy, this page does not show address, phone, courier details, customer notes, or staff-only notes. Contact the shop with your order reference for detailed changes.',
-  latestPaymentStatus: 'Latest payment status'
+  latestPaymentStatus: 'Latest payment status',
+  paymentGuidance: 'Payment guidance'
 };
 
 export const publicOrderCopyFa: PublicOrderCopy = {
@@ -96,18 +122,19 @@ export const publicOrderCopyFa: PublicOrderCopy = {
   progress: 'روند سفارش',
   noProgress: 'هنوز به‌روزرسانی جدیدی برای این سفارش ثبت نشده است.',
   privacy: 'برای حفظ حریم خصوصی، این صفحه آدرس، تلفن، اطلاعات پیک، یادداشت مشتری یا یادداشت‌های داخلی فروشگاه را نمایش نمی‌دهد. برای تغییرات دقیق‌تر، با شماره سفارش با فروشگاه تماس بگیرید.',
-  latestPaymentStatus: 'آخرین وضعیت پرداخت'
+  latestPaymentStatus: 'آخرین وضعیت پرداخت',
+  paymentGuidance: 'راهنمای پرداخت'
 };
 
 export const resultMessages: Record<string, ResultMessage> = {
   paid: {
-    title: 'Payment result received',
-    body: 'Thank you. Your order is now marked as paid while staff continue preparing the order.',
+    title: 'Payment verified',
+    body: 'Thank you. The gateway result was verified and your order is marked as paid while staff continue preparing it.',
     tone: 'success'
   },
   failed: {
-    title: 'Payment was not completed',
-    body: 'The shop still has your order draft. Staff can help you complete the next step.',
+    title: 'Payment was not verified',
+    body: 'The shop still has your order draft. You can retry with staff help; the order is not marked paid unless the gateway confirms it.',
     tone: 'warning'
   },
   cancelled: {
@@ -119,18 +146,74 @@ export const resultMessages: Record<string, ResultMessage> = {
 
 export const resultMessagesFa: Record<string, ResultMessage> = {
   paid: {
-    title: 'نتیجه پرداخت دریافت شد',
-    body: 'سپاسگزاریم. سفارش شما به عنوان پرداخت‌شده ثبت شد و فروشگاه آماده‌سازی را ادامه می‌دهد.',
+    title: 'پرداخت تایید شد',
+    body: 'سپاسگزاریم. نتیجه درگاه تایید شد و سفارش شما به عنوان پرداخت‌شده ثبت شد؛ فروشگاه آماده‌سازی را ادامه می‌دهد.',
     tone: 'success'
   },
   failed: {
-    title: 'پرداخت تکمیل نشد',
-    body: 'پیش‌نویس سفارش شما نزد فروشگاه باقی می‌ماند. تیم فروشگاه برای مرحله بعدی می‌تواند پیگیری کند.',
+    title: 'پرداخت تایید نشد',
+    body: 'پیش‌نویس سفارش شما نزد فروشگاه باقی می‌ماند. سفارش فقط پس از تایید درگاه به عنوان پرداخت‌شده ثبت می‌شود.',
     tone: 'warning'
   },
   cancelled: {
     title: 'پرداخت لغو شد',
     body: 'پیش‌نویس سفارش شما همچنان برای پیگیری فروشگاه باقی می‌ماند.',
+    tone: 'warning'
+  }
+};
+
+export const paymentGuidance: Record<string, PaymentGuidance> = {
+  manual_pending: {
+    title: 'Staff will confirm payment manually',
+    body: 'This order may need a manual payment step or staff confirmation. Keep your order reference and contact the shop if you need help.',
+    tone: 'info'
+  },
+  redirect_required: {
+    title: 'Payment is waiting at the gateway',
+    body: 'If you left the payment page before completing it, the order remains pending until the gateway confirms payment or staff follows up.',
+    tone: 'info'
+  },
+  verified_paid: {
+    title: 'Gateway payment verified',
+    body: 'Your payment has been verified. Staff can now continue fulfillment and delivery preparation.',
+    tone: 'success'
+  },
+  failed: {
+    title: 'Payment needs attention',
+    body: 'The gateway did not verify this payment. Staff can help retry or complete the order another way.',
+    tone: 'warning'
+  },
+  cancelled: {
+    title: 'Payment was cancelled',
+    body: 'The order has not been marked paid. Staff can help if you want to continue with this order.',
+    tone: 'warning'
+  }
+};
+
+export const paymentGuidanceFa: Record<string, PaymentGuidance> = {
+  manual_pending: {
+    title: 'فروشگاه پرداخت را دستی بررسی می‌کند',
+    body: 'این سفارش ممکن است نیازمند پرداخت دستی یا تایید فروشگاه باشد. شماره سفارش را نگه دارید و در صورت نیاز با فروشگاه تماس بگیرید.',
+    tone: 'info'
+  },
+  redirect_required: {
+    title: 'پرداخت در انتظار درگاه است',
+    body: 'اگر صفحه پرداخت را قبل از تکمیل ترک کرده‌اید، سفارش تا زمان تایید درگاه یا پیگیری فروشگاه در انتظار می‌ماند.',
+    tone: 'info'
+  },
+  verified_paid: {
+    title: 'پرداخت درگاه تایید شد',
+    body: 'پرداخت شما تایید شده است. فروشگاه آماده‌سازی و ارسال را ادامه می‌دهد.',
+    tone: 'success'
+  },
+  failed: {
+    title: 'پرداخت نیازمند پیگیری است',
+    body: 'درگاه این پرداخت را تایید نکرد. فروشگاه می‌تواند برای تلاش دوباره یا روش دیگر پرداخت کمک کند.',
+    tone: 'warning'
+  },
+  cancelled: {
+    title: 'پرداخت لغو شد',
+    body: 'این سفارش به عنوان پرداخت‌شده ثبت نشده است. اگر می‌خواهید ادامه دهید، فروشگاه می‌تواند کمک کند.',
     tone: 'warning'
   }
 };
@@ -151,9 +234,19 @@ export function fulfillmentStatusLabel(value: string, locale?: string) {
   return labelFor(normalizeLabelLocale(locale) === 'fa' ? fulfillmentStatusLabelsFa : fulfillmentStatusLabels, value);
 }
 
+export function paymentStatusLabel(value: string, locale?: string) {
+  return labelFor(normalizeLabelLocale(locale) === 'fa' ? paymentStatusLabelsFa : paymentStatusLabels, value);
+}
+
 export function resultMessageFor(value: string | undefined, locale?: string) {
   if (!value) return undefined;
   const messages = normalizeLabelLocale(locale) === 'fa' ? resultMessagesFa : resultMessages;
+  return messages[value];
+}
+
+export function paymentGuidanceFor(value: string | undefined, locale?: string) {
+  if (!value) return undefined;
+  const messages = normalizeLabelLocale(locale) === 'fa' ? paymentGuidanceFa : paymentGuidance;
   return messages[value];
 }
 

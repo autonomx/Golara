@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { SiteHeader } from '@/components/SiteHeader';
 import { formatMinorUnitAmount } from '@/lib/catalog';
-import { fulfillmentStatusLabel, labelFor, orderStatusLabel, publicOrderCopyFor, resultMessageFor } from '@/lib/checkout/public-order-labels';
+import { fulfillmentStatusLabel, labelFor, orderStatusLabel, paymentGuidanceFor, paymentStatusLabel, publicOrderCopyFor, resultMessageFor } from '@/lib/checkout/public-order-labels';
 import { getPublicOrderByToken } from '@/lib/checkout/public-order-repository';
 
 export const dynamic = 'force-dynamic';
@@ -34,6 +34,12 @@ function smallLabelClass(isFa: boolean) {
   return isFa ? 'text-xs font-semibold text-rosewood/60' : 'text-xs font-semibold uppercase tracking-[0.2em] text-rosewood/60';
 }
 
+function guidanceClass(tone: 'success' | 'warning' | 'info') {
+  if (tone === 'success') return 'border-olive/20 bg-cream text-olive';
+  if (tone === 'warning') return 'border-amber-300 bg-amber-50 text-amber-900';
+  return 'border-blue-200 bg-blue-50 text-blue-900';
+}
+
 function ResultBanner({ result, locale, isFa }: { result?: string; locale?: string; isFa: boolean }) {
   const message = resultMessageFor(result, locale);
   if (!message) return null;
@@ -45,6 +51,18 @@ function ResultBanner({ result, locale, isFa }: { result?: string; locale?: stri
       <p className={isFa ? 'text-sm font-semibold' : 'text-sm font-semibold uppercase tracking-[0.2em]'}>{message.title}</p>
       <p className="mt-2 text-sm leading-6">{message.body}</p>
     </div>
+  );
+}
+
+function PaymentGuidancePanel({ status, locale, title }: { status?: string; locale?: string; title: string }) {
+  const guidance = paymentGuidanceFor(status, locale);
+  if (!guidance) return null;
+  return (
+    <section className={`mt-6 rounded-3xl border p-5 ${guidanceClass(guidance.tone)}`} aria-labelledby="payment-guidance-heading">
+      <p id="payment-guidance-heading" className="text-sm font-semibold uppercase tracking-[0.2em]">{title}</p>
+      <h2 className="mt-2 font-display text-3xl">{guidance.title}</h2>
+      <p className="mt-2 text-sm leading-6">{guidance.body}</p>
+    </section>
   );
 }
 
@@ -76,6 +94,7 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
             {copy.introPrefix} <strong>{orderStatusLabel(order.status, locale)}</strong>. {copy.introSuffix}
           </p>
           <ResultBanner result={result} locale={locale} isFa={isFa} />
+          <PaymentGuidancePanel status={latestAttempt?.status} locale={locale} title={copy.paymentGuidance} />
 
           <div className="mt-8 grid gap-4 md:grid-cols-4">
             <div className="rounded-3xl border border-rosewood/10 bg-cream p-5">
@@ -135,7 +154,7 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
           </section>
 
           <p className="mt-6 text-sm leading-6 text-stone-600">{copy.privacy}</p>
-          {latestAttempt ? <p className="mt-2 text-xs text-stone-500">{copy.latestPaymentStatus}: {labelFor({}, latestAttempt.provider)} · {labelFor({}, latestAttempt.status)}</p> : null}
+          {latestAttempt ? <p className="mt-2 text-xs text-stone-500">{copy.latestPaymentStatus}: {paymentStatusLabel(latestAttempt.status, locale)} · {labelFor({}, latestAttempt.provider)}</p> : null}
         </div>
       </section>
     </main>
