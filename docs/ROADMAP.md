@@ -219,7 +219,7 @@ Implemented foundation:
 
 ### Phase 7.10-7.12 — Cart-to-checkout conversion
 
-Status: PR in progress.
+Status: implemented foundation.
 
 Implemented foundation:
 
@@ -231,12 +231,23 @@ Implemented foundation:
 - Existing PSP payment attempt and gateway handoff path reused.
 - Cart and cart cookie cleared after successful order draft creation.
 
+### Phase 7.13-7.15 — Add-to-cart storefront UI wiring
+
+Status: PR in progress.
+
+Implemented foundation:
+
+- Product detail add-to-cart form with quantity selection.
+- Product card add-to-cart button.
+- Database-backed product guard for cart actions.
+- Product cards split product detail navigation from cart action controls.
+
 Deferred follow-up track:
 
-- Product detail and product card add-to-cart UI wiring.
 - Header cart link/count affordance.
 - Cart checkout localization and field-level validation polish.
 - Basic cart smoke tests.
+- Phase 7 closeout.
 
 Deferred beyond Phase 7:
 
