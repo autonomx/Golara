@@ -172,18 +172,51 @@ Deferred follow-up track:
 
 ## Phase 7 — Cart and session checkout flow
 
-Status: planned.
+Status: in progress.
 
-Phase 7 should move from single-product order draft checkout toward a real cart/session flow that feeds the existing server-recomputed order draft and PSP path.
+Phase 7 moves from single-product order draft checkout toward a real cart/session flow that feeds the existing server-recomputed order draft and PSP path.
 
-Planned foundation:
+### Phase 7.1-7.3 — Cart data model and repository
 
-- Cart data model and server-side cart repository.
-- Add-to-cart actions from product detail/cards.
-- Cart page and quantity updates.
-- Cart-to-checkout flow using the existing order draft and PSP path.
-- Cart expiry/session cleanup.
-- Basic cart smoke tests or documented fallback if test dependencies are still deferred.
+Status: PR in progress.
+
+Implemented foundation:
+
+- `CartSession` and `CartItem` Prisma models.
+- Product-to-cart item relation.
+- Server-side cart repository.
+- Token generation and configurable cart TTL.
+- Active cart lookup with product/category active filtering.
+- Add, update, remove, clear, and expire-old-cart helpers.
+- Quantity bounds from 1 to 99.
+
+### Phase 7.4-7.6 — Cart cookie helpers and server actions
+
+Planned:
+
+- HTTP-only cart token cookie helpers.
+- Add-to-cart action from product detail and cards.
+- Update/remove/clear cart actions.
+- Redirect/status behavior after cart actions.
+
+### Phase 7.7-7.9 — Cart page and quantity updates
+
+Planned:
+
+- Public cart page.
+- Quantity controls.
+- Remove item controls.
+- Empty cart state.
+- Cart subtotal summary.
+
+### Phase 7.10-7.12 — Cart-to-checkout conversion
+
+Planned:
+
+- Convert cart items into the existing order draft repository.
+- Keep server-recomputed totals as the source of truth.
+- Preserve existing PSP gateway request path.
+- Mark or clear cart after successful order draft creation.
 
 Deferred beyond Phase 7:
 
