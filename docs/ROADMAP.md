@@ -137,13 +137,9 @@ Deferred follow-up track:
 
 ## Phase 6 — Real PSP integration and callback verification
 
-Status: in progress.
+Status: complete as a PSP foundation.
 
-Phase 6 turns the Phase 4 payment-provider seam into production-shaped domestic gateway handling while preserving manual fallback behavior.
-
-### Phase 6.1-6.3 — Gateway request and verified callback foundation
-
-Status: implemented foundation.
+See `docs/PHASE_6_CLOSEOUT.md` for the closeout summary, production activation checklist, deferred items, and recommended Phase 7 direction.
 
 Implemented foundation:
 
@@ -157,57 +153,40 @@ Implemented foundation:
 - Verification failure maps to failed payment instead of trusted paid state.
 - Idempotent retry-safe payment attempt and order result handling.
 - Manual and `domestic_redirect` fallback providers remain available.
-
-### Phase 6.4-6.6 — Admin payment diagnostics
-
-Status: implemented foundation.
-
-Implemented foundation:
-
-- Admin order detail payment diagnostics section.
-- Provider, attempt status, amount, reference, redirect presence, and created-time display.
-- Verification outcome summary for staff.
-- Distinct visual tones for verified, failed, cancelled, redirected, and manual-pending attempts.
-- Bounded allowlist of safe provider metadata fields.
-- Long metadata string truncation in the UI.
-
-### Phase 6.7-6.9 — Provider test harness and sandbox docs
-
-Status: implemented foundation.
-
-Implemented foundation:
-
+- Admin order detail payment diagnostics.
+- Safe bounded provider metadata summaries for staff.
 - Sandbox/live configuration checklist.
 - Manual sandbox smoke flow.
-- Mock callback matrix for success, already-verified, declined, missing authority, failed verify, and repeated callbacks.
-- Deterministic JSON fixtures under `tests/fixtures/payment-provider-callbacks.json` for future automated tests.
-- Recommended mocked harness path using local request/verify endpoints.
-
-### Phase 6.10-6.12 — Checkout/customer UX polish for gateway states
-
-Status: PR in progress.
-
-Implemented foundation:
-
+- Mock callback matrix and deterministic fixtures for future automated tests.
 - Localized public payment status labels.
-- Clearer paid/failed/cancelled result-banner copy that explains gateway verification.
-- Customer-facing payment guidance panel on `/orders/[token]`.
-- Guidance for manual follow-up, gateway redirect pending, verified payment, failed/unverified payment, and cancelled payment.
-- English and Persian copy for the new payment guidance states.
-- Privacy-safe public order behavior preserved.
+- Customer-facing payment guidance for manual, redirect-pending, verified, failed/unverified, and cancelled states.
 
-### Phase 6.13+ — Additional PSP adapters if required
+Deferred follow-up track:
 
-Planned only if needed:
+- Additional PSP adapters such as Zibal or IDPay, only if merchant requirements demand them.
+- Retry-payment button / second gateway-attempt flow.
+- Full automated Playwright or unit-test coverage for mocked request/verify callbacks.
+- Live merchant-dashboard screenshots or provider-specific runbooks.
+- Public lookup rate limiting and security review.
+- Full Persian storefront localization.
 
-- Zibal adapter.
-- IDPay adapter.
-- Provider selection rules by environment, market, or checkout mode.
-- Provider-specific amount/currency conversion rules.
+## Phase 7 — Cart and session checkout flow
 
-Deferred beyond Phase 6:
+Status: planned.
 
-- Full multi-item cart/session flow.
+Phase 7 should move from single-product order draft checkout toward a real cart/session flow that feeds the existing server-recomputed order draft and PSP path.
+
+Planned foundation:
+
+- Cart data model and server-side cart repository.
+- Add-to-cart actions from product detail/cards.
+- Cart page and quantity updates.
+- Cart-to-checkout flow using the existing order draft and PSP path.
+- Cart expiry/session cleanup.
+- Basic cart smoke tests or documented fallback if test dependencies are still deferred.
+
+Deferred beyond Phase 7:
+
 - Customer accounts and order history.
 - Full Persian storefront localization.
 - Lighthouse CI and full Playwright suite.
