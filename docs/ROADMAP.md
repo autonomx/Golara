@@ -110,9 +110,12 @@ Deferred Phase 4 follow-up track:
 
 ## Phase 5 — Polish and growth
 
+Status: in progress; metadata, structured data, sitemap/robots, image hints, skip links, focus states, public order accessibility, and smoke-test planning are implemented.
+
 - Persian/RTL mode beyond public order status.
 - SEO metadata and Open Graph images.
 - Analytics events.
 - Seasonal landing pages.
 - Advanced search and filters.
 - Performance, accessibility, and security hardening.
+- Playwright smoke-test automation is planned; see `docs/PHASE_5_71_73_SMOKE_TEST_FOUNDATION.md`.
