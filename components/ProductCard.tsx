@@ -4,7 +4,7 @@ import { formatPrice, type Product } from '@/lib/catalog';
 
 export function ProductCard({ product, priority = false }: { product: Product; priority?: boolean }) {
   return (
-    <Link href={`/products/${product.slug}`} aria-label={`View ${product.title}`} className="group overflow-hidden rounded-3xl border border-rosewood/10 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+    <Link href={`/products/${product.slug}`} aria-label={`View ${product.title}`} className="group overflow-hidden rounded-3xl border border-rosewood/10 bg-white shadow-sm outline-none transition hover:-translate-y-1 hover:shadow-xl focus-visible:ring-4 focus-visible:ring-olive/30">
       <div className="relative aspect-[4/5] overflow-hidden bg-blush">
         <Image
           src={product.image}
