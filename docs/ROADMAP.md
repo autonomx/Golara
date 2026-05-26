@@ -208,18 +208,47 @@ Deferred follow-up track:
 
 ## Phase 8 — Customer accounts and order history
 
-Status: planned.
+Status: in progress.
 
-Phase 8 should add customer accounts and order history on top of the existing phone-first customer profile and public order token system.
+Phase 8 adds customer accounts and order history on top of the existing phone-first customer profile and public order token system.
 
-Planned foundation:
+### Phase 8.1-8.3 — Customer account/session foundation
 
-- Account/auth provider decision and customer login/session seam.
-- Customer order-history page backed by customer profile ownership.
-- Saved contact/address management.
-- Account-aware checkout prefill.
-- Privacy/security review for authenticated order access.
-- Customer-account smoke-test plan.
+Status: PR in progress.
+
+Implemented foundation:
+
+- `CustomerAccount` and `CustomerSession` Prisma models.
+- Customer account relation to existing phone-first `CustomerProfile`.
+- Provider/provider-account identity seam without locking a final auth vendor.
+- Hashed customer session tokens.
+- Session expiry, revocation, provider, user-agent, and optional IP hash fields.
+- Repository helpers for account linking, session creation, session lookup, session revocation, session expiry, and customer order-history lookup.
+
+### Phase 8.4-8.6 — Customer session cookie and route shell
+
+Planned:
+
+- HTTP-only customer session cookie helpers.
+- Account route shell.
+- Login/register placeholder surfaces.
+- Logout action.
+
+### Phase 8.7-8.9 — Customer order history
+
+Planned:
+
+- Authenticated customer order-history page.
+- Order detail links using authenticated ownership plus existing public token pages.
+- Empty states and privacy-safe copy.
+
+### Phase 8.10-8.12 — Saved address/contact management
+
+Planned:
+
+- Customer saved address list.
+- Default address management.
+- Checkout prefill from authenticated customer profile.
 
 Deferred beyond Phase 8:
 
