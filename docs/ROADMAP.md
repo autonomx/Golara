@@ -280,13 +280,9 @@ Deferred follow-up track:
 
 ## Phase 10 — Production sign-in delivery and account security
 
-Status: in progress.
+Status: complete as a production sign-in and account-security foundation.
 
-Phase 10 makes customer sign-in production-ready.
-
-### Phase 10.1-10.3 — Message delivery provider seam
-
-Status: implemented foundation.
+See `docs/PHASE_10_CLOSEOUT.md` for the closeout summary, production limitations, manual launch checklist, deferred items, and recommended Phase 11 direction.
 
 Implemented foundation:
 
@@ -298,13 +294,6 @@ Implemented foundation:
 - OTP issuance now uses the message provider seam.
 - OTP challenge creation is blocked when delivery fails.
 - Delivery provider/reference metadata is stored with OTP challenges.
-
-### Phase 10.4-10.6 — Account privacy and security review
-
-Status: implemented foundation.
-
-Implemented foundation:
-
 - Account surface inventory.
 - Current protections checklist.
 - Account takeover risk review.
@@ -312,13 +301,6 @@ Implemented foundation:
 - Session cookie handling review.
 - Delivery provider secret-handling review.
 - Production launch checklist.
-
-### Phase 10.7-10.9 — Customer profile/contact editing
-
-Status: PR in progress.
-
-Implemented foundation:
-
 - Signed-in customer profile edit page.
 - Display name, email, and locale update action.
 - Verified phone-change deferral note.
@@ -327,11 +309,29 @@ Implemented foundation:
 
 Deferred follow-up track:
 
-- Verified phone-change flow if needed.
-- Concrete delivery provider runbook after provider selection.
-- Manual QA checklist for login, resend/cooldown, profile editing, order history, address management, checkout prefill, and logout.
-
-Deferred beyond Phase 10:
-
+- Concrete SMS provider adapter and production delivery runbook.
+- IP-level and broader abuse throttling.
+- Automated Playwright or equivalent smoke coverage.
+- Verified phone-change flow.
+- Field-level login and checkout validation polish.
 - Full Persian storefront localization.
-- Lighthouse CI and full Playwright suite.
+- Lighthouse CI.
+
+## Phase 11 — Localization and Persian storefront readiness
+
+Status: planned.
+
+Recommended direction:
+
+- Move from partial Persian labels to broader customer-facing Persian copy.
+- Keep English fallback behavior intact.
+- Prioritize public customer surfaces before admin surfaces.
+- Add RTL manual QA notes for customer-facing pages.
+- Avoid a full i18n framework rewrite unless the copy surface demands it.
+
+Suggested bundles:
+
+- Phase 11.1-11.3 — Localization copy registry.
+- Phase 11.4-11.6 — Account/login Persian copy pass.
+- Phase 11.7-11.9 — Cart/checkout Persian copy pass.
+- Phase 11.10-11.12 — Public storefront Persian copy pass.
