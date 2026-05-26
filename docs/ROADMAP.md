@@ -172,13 +172,9 @@ Deferred follow-up track:
 
 ## Phase 7 — Cart and session checkout flow
 
-Status: in progress.
+Status: complete as a cart/session checkout foundation.
 
-Phase 7 moves from single-product order draft checkout toward a real cart/session flow that feeds the existing server-recomputed order draft and PSP path.
-
-### Phase 7.1-7.3 — Cart data model and repository
-
-Status: implemented foundation.
+See `docs/PHASE_7_CLOSEOUT.md` for the closeout summary, deferred items, and recommended Phase 8 direction.
 
 Implemented foundation:
 
@@ -189,78 +185,43 @@ Implemented foundation:
 - Active cart lookup with product/category active filtering.
 - Add, update, remove, clear, and expire-old-cart helpers.
 - Quantity bounds from 1 to 99.
-
-### Phase 7.4-7.6 — Cart cookie helpers and server actions
-
-Status: implemented foundation.
-
-Implemented foundation:
-
 - HTTP-only cart token cookie helpers.
-- Add-to-cart action.
-- Update, remove, and clear cart actions.
-- Safe relative return-path handling.
-- Redirect/status behavior after cart actions.
-- Cart/product/category revalidation after mutations.
-
-### Phase 7.7-7.9 — Cart page and quantity updates
-
-Status: implemented foundation.
-
-Implemented foundation:
-
-- Public `/cart` page.
-- Quantity controls.
-- Remove item controls.
-- Clear cart action.
-- Empty cart and database-unavailable states.
-- Cart subtotal summary and item count.
-- Placeholder checkout link for the cart-to-checkout bundle.
-
-### Phase 7.10-7.12 — Cart-to-checkout conversion
-
-Status: implemented foundation.
-
-Implemented foundation:
-
-- Public `/cart/checkout` page.
-- Cart checkout delivery/contact form.
-- Cart checkout order summary.
+- Add-to-cart, update, remove, and clear cart server actions.
+- Safe relative return-path handling for cart actions.
+- Public `/cart` page with item rows, quantity controls, removal, clear action, empty state, item count, and subtotal summary.
+- Public `/cart/checkout` page with delivery/contact form and order summary.
 - Cart item conversion into the existing order draft repository.
 - Server-recomputed order totals remain the source of truth.
-- Existing PSP payment attempt and gateway handoff path reused.
+- Existing PSP payment attempt and gateway handoff path reused for cart checkout.
 - Cart and cart cookie cleared after successful order draft creation.
-
-### Phase 7.13-7.15 — Add-to-cart storefront UI wiring
-
-Status: implemented foundation.
-
-Implemented foundation:
-
 - Product detail add-to-cart form with quantity selection.
 - Product card add-to-cart button.
-- Database-backed product guard for cart actions.
-- Product cards split product detail navigation from cart action controls.
-
-### Phase 7.16-7.18 — Header cart affordance
-
-Status: PR in progress.
-
-Implemented foundation:
-
-- Header cart icon links to `/cart`.
-- Cart count badge reads from the server-side HTTP-only cart token cookie.
-- Accessible cart label includes item count.
-- Search/account remain non-interactive placeholders.
+- Shared header `/cart` link and server-rendered cart count badge.
 
 Deferred follow-up track:
 
 - Cart checkout localization and field-level validation polish.
-- Basic cart smoke tests.
-- Phase 7 closeout.
+- Basic cart smoke tests or Playwright/Vitest coverage.
+- Search and customer account header interactions.
+- Cart expiry cleanup job/schedule.
+- Full Persian storefront localization.
 
-Deferred beyond Phase 7:
+## Phase 8 — Customer accounts and order history
 
-- Customer accounts and order history.
+Status: planned.
+
+Phase 8 should add customer accounts and order history on top of the existing phone-first customer profile and public order token system.
+
+Planned foundation:
+
+- Account/auth provider decision and customer login/session seam.
+- Customer order-history page backed by customer profile ownership.
+- Saved contact/address management.
+- Account-aware checkout prefill.
+- Privacy/security review for authenticated order access.
+- Customer-account smoke-test plan.
+
+Deferred beyond Phase 8:
+
 - Full Persian storefront localization.
 - Lighthouse CI and full Playwright suite.
