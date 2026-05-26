@@ -1,11 +1,22 @@
 import Link from 'next/link';
 import { Search, ShoppingBag, UserRound } from 'lucide-react';
+import { getCartTokenCookie } from '@/lib/cart/cart-cookie';
+import { getCartByToken } from '@/lib/cart/cart-repository';
 import { listCategories } from '@/lib/cms/catalog-repository';
+import { hasDatabase } from '@/lib/prisma';
 
 const headerLinkClass = 'rounded-full px-3 py-2 outline-none transition hover:text-rosewood focus-visible:ring-4 focus-visible:ring-olive/20';
+const iconLinkClass = 'relative rounded-full p-2 outline-none transition hover:bg-white/70 focus-visible:ring-4 focus-visible:ring-olive/20';
+
+async function cartItemCount() {
+  if (!hasDatabase()) return 0;
+  const token = await getCartTokenCookie();
+  const cart = await getCartByToken(token);
+  return cart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
+}
 
 export async function SiteHeader() {
-  const categories = await listCategories();
+  const [categories, itemCount] = await Promise.all([listCategories(), cartItemCount()]);
 
   return (
     <header className="sticky top-0 z-20 border-b border-rosewood/10 bg-cream/90 backdrop-blur">
@@ -18,10 +29,17 @@ export async function SiteHeader() {
           <Link href="/products" className={headerLinkClass}>Catalog</Link>
           <Link href="/admin" className={headerLinkClass}>Admin</Link>
         </nav>
-        <div className="flex items-center gap-3 text-rosewood">
-          <Search className="h-5 w-5" aria-label="Search" />
-          <UserRound className="h-5 w-5" aria-label="Account" />
-          <ShoppingBag className="h-5 w-5" aria-label="Cart" />
+        <div className="flex items-center gap-1 text-rosewood">
+          <span className="rounded-full p-2 text-rosewood/70" aria-hidden="true"><Search className="h-5 w-5" /></span>
+          <span className="rounded-full p-2 text-rosewood/70" aria-hidden="true"><UserRound className="h-5 w-5" /></span>
+          <Link href="/cart" className={iconLinkClass} aria-label={`Cart${itemCount > 0 ? ` with ${itemCount} item${itemCount === 1 ? '' : 's'}` : ''}`}>
+            <ShoppingBag className="h-5 w-5" aria-hidden="true" />
+            {itemCount > 0 ? (
+              <span className="absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-rosewood px-1 text-[0.65rem] font-bold leading-none text-white">
+                {itemCount > 99 ? '99+' : itemCount}
+              </span>
+            ) : null}
+          </Link>
         </div>
       </div>
     </header>
