@@ -55,7 +55,7 @@ export default async function ProductPage({
       <section className="mx-auto max-w-7xl px-5 pt-10">
         <PathTrail items={[{ label: 'Home', href: '/' }, { label: category?.title || product.categoryTitle || product.category, href: `/categories/${product.category}` }, { label: product.title }]} />
       </section>
-      <ProductDetail product={product} category={category} />
+      <ProductDetail product={product} category={category} dbReady={dbReady} />
       <ProductCheckoutForm product={product} dbReady={dbReady} checkout={checkout} />
       <ProductInquiryForm product={product} dbReady={dbReady} inquiry={inquiry} />
     </main>
