@@ -16,16 +16,6 @@
 
 Status: implemented foundation.
 
-- Add database connection through Prisma.
-- Replace direct seeded catalog imports with a CMS repository that reads Prisma when `DATABASE_URL` is configured.
-- Preserve seeded fallback mode so previews and CI do not need a live database.
-- Build admin forms for products, categories, and homepage sections.
-- Add slug generation, publish/unpublish controls, product badges, image URL editing, seed data, and revalidation after writes.
-
-## Phase 2.1 — Admin write protection
-
-Status: implemented foundation.
-
 - Add an environment-based admin password gate.
 - Add `/admin/login` and logout server actions.
 - Require authentication before CMS write actions.
@@ -346,7 +336,19 @@ Implemented foundation:
 - Signed-in account and profile pages opt into RTL direction when the saved customer locale is Persian.
 - Existing OTP, profile update, logout, and account navigation behavior is preserved.
 
-Next bundles:
+### Phase 11.7-11.9 — Cart/checkout Persian copy pass
 
-- Phase 11.7-11.9 — Cart/checkout Persian copy pass.
+Status: implemented foundation.
+
+Implemented foundation:
+
+- Expanded customer copy keys for cart and checkout surfaces.
+- `/cart` uses the customer copy registry for static labels.
+- `/cart/checkout` uses the customer copy registry for static labels.
+- Checkout uses the signed-in customer locale and direction helper when available.
+- Signed-out checkout keeps English fallback copy.
+- Existing cart update, remove, clear, checkout form, order creation, and payment handoff behavior is preserved.
+
+Next bundle:
+
 - Phase 11.10-11.12 — Public storefront Persian copy pass.
