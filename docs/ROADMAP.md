@@ -149,7 +149,7 @@ Implemented foundation:
 - Gateway handoff redirect from checkout creation when the payment attempt requires customer redirection.
 - Callback routing through `/orders/return`.
 - Zarinpal `Status=OK` and `Status=NOK` callback mapping.
-- Server-side paid callback verification before marking an order paid.
+- Server-side paid callback verification before marking orders paid.
 - Verification failure maps to failed payment instead of trusted paid state.
 - Idempotent retry-safe payment attempt and order result handling.
 - Manual and `domestic_redirect` fallback providers remain available.
@@ -244,66 +244,56 @@ Deferred follow-up track:
 
 ## Phase 9 — Customer authentication and account hardening
 
-Status: in progress.
+Status: complete as a phone-first customer sign-in foundation.
 
-Phase 9 implements the real customer authentication path that creates customer sessions for the Phase 8 account surfaces.
-
-### Phase 9.1-9.3 — Authentication decision and implementation plan
-
-Status: implemented foundation.
+See `docs/PHASE_9_CLOSEOUT.md` for the closeout summary, production limitation note, deferred items, and recommended Phase 10 direction.
 
 Implemented foundation:
 
 - Phone-first OTP selected as the primary customer sign-in model.
-- Passwordless email, OAuth/social login, managed-auth providers, and custom password login remain later options through the provider seam.
-- OTP/login/hardening implementation path documented.
-
-### Phase 9.4-9.6 — OTP request and verification model
-
-Status: implemented foundation.
-
-Implemented foundation:
-
+- Authentication decision and implementation path documented.
 - `CustomerOtpChallenge` Prisma model.
 - Salted hashed OTP code storage.
-- Expiry, consumed timestamp, attempt count, and maximum attempts.
-- OTP issue, verify, consume, failed-attempt, and expiry helpers.
+- OTP expiry, consumed timestamp, attempt count, and maximum attempts.
+- OTP issue, verify, consume, failed-attempt, and expiry repository helpers.
 - Development OTP delivery logging seam.
-
-### Phase 9.7-9.9 — Customer login/register UI
-
-Status: implemented foundation.
-
-Implemented foundation:
-
 - `/account/login` phone entry page.
 - OTP verification step.
 - OTP request and verification server actions.
 - Customer profile/account linking after successful verification.
 - Customer session creation and HTTP-only customer session cookie set after verification.
 - Safe relative return redirects after login.
-- Account shell links unauthenticated customers to the real login page.
-
-### Phase 9.10-9.12 — Auth hardening and account polish
-
-Status: PR in progress.
-
-Implemented foundation:
-
+- `/account` links unauthenticated customers to the real login page.
 - OTP resend cooldown checks before issuing new challenges.
 - Rolling OTP request-window limit per destination and purpose.
 - Structured cooldown and rate-limit request-block reasons.
-- Login action surfaces cooldown and rate-limit states.
-- Login page explains resend cooldown and request limits.
+- Login page copy explaining resend cooldown and request limits.
 
 Deferred follow-up track:
 
-- Production SMS provider integration.
+- Production message delivery provider integration.
+- IP-level and broader request throttling.
 - Customer profile/contact editing.
 - Privacy/security review docs for authenticated account and order access.
-- Broader abuse controls such as IP-level throttling if needed.
+- Field-level login and checkout validation polish.
+- Full Persian storefront localization.
 
-Deferred beyond Phase 9:
+## Phase 10 — Production sign-in delivery and account security
+
+Status: planned.
+
+Phase 10 should make customer sign-in production-ready.
+
+Planned foundation:
+
+- Production message delivery provider seam and one concrete provider adapter.
+- Delivery environment configuration docs and local/dev fallback behavior.
+- Account privacy/security review docs.
+- Customer profile/contact editing for signed-in customers.
+- Manual QA checklist for login, resend/cooldown, order history, address management, checkout prefill, and logout.
+- Automated smoke coverage when the test stack is introduced.
+
+Deferred beyond Phase 10:
 
 - Full Persian storefront localization.
 - Lighthouse CI and full Playwright suite.
