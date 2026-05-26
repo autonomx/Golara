@@ -22,6 +22,7 @@ export type Product = {
   availableToday: boolean;
   bestSeller?: boolean;
   isActive?: boolean;
+  requiresQuote?: boolean;
   image: string;
   description: string;
   updatedAt?: Date;
@@ -100,7 +101,12 @@ export type HomepageContent = {
   panelBody: string;
 };
 
+export function productRequiresQuote(product: Product) {
+  return Boolean(product.requiresQuote || product.price <= 0);
+}
+
 export function formatPrice(product: Product) {
+  if (productRequiresQuote(product)) return 'Call for purchase';
   return new Intl.NumberFormat('en-CA', { style: 'currency', currency: product.currency }).format(product.price);
 }
 
