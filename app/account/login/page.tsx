@@ -7,6 +7,8 @@ export const dynamic = 'force-dynamic';
 
 function statusMessage(status?: string) {
   if (status === 'code-sent') return 'Verification code sent. In development, check the server logs for the code.';
+  if (status === 'cooldown') return 'A code was sent recently. Please wait before requesting another one.';
+  if (status === 'rate_limited') return 'Too many code requests. Please try again later.';
   if (status === 'missing_or_expired') return 'The code is missing or expired. Request a new code.';
   if (status === 'invalid_code') return 'The code was not correct. Please try again.';
   if (status === 'too_many_attempts') return 'Too many attempts. Request a new code.';
@@ -25,7 +27,7 @@ export default async function AccountLoginPage({ searchParams }: { searchParams:
   const { status, phone = '', returnTo } = await searchParams;
   const normalizedReturnTo = safeReturnTo(returnTo);
   const message = statusMessage(status);
-  const showVerify = Boolean(phone) && status !== 'request-failed' && status !== 'database-required';
+  const showVerify = Boolean(phone) && !['request-failed', 'database-required', 'rate_limited'].includes(status || '');
 
   return (
     <main id="main-content" tabIndex={-1}>
@@ -54,6 +56,7 @@ export default async function AccountLoginPage({ searchParams }: { searchParams:
           <div className="mt-8 grid gap-6 md:grid-cols-2">
             <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
               <h2 className="font-display text-4xl text-rosewood">Request code</h2>
+              <p className="mt-3 text-sm leading-6 text-stone-600">For safety, code requests have a short resend cooldown and request limit.</p>
               <form action={requestCustomerOtpAction} className="mt-5 grid gap-4">
                 <input type="hidden" name="returnTo" value={normalizedReturnTo} />
                 <label className="grid gap-2 text-sm font-semibold text-rosewood">

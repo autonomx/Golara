@@ -272,7 +272,7 @@ Implemented foundation:
 
 ### Phase 9.7-9.9 — Customer login/register UI
 
-Status: PR in progress.
+Status: implemented foundation.
 
 Implemented foundation:
 
@@ -286,13 +286,22 @@ Implemented foundation:
 
 ### Phase 9.10-9.12 — Auth hardening and account polish
 
-Planned:
+Status: PR in progress.
 
-- Rate-limit OTP requests and verification attempts.
-- Add resend cooldown copy.
-- Add session revocation hardening.
-- Add profile/contact editing.
-- Add privacy/security review docs for authenticated account and order access.
+Implemented foundation:
+
+- OTP resend cooldown checks before issuing new challenges.
+- Rolling OTP request-window limit per destination and purpose.
+- Structured cooldown and rate-limit request-block reasons.
+- Login action surfaces cooldown and rate-limit states.
+- Login page explains resend cooldown and request limits.
+
+Deferred follow-up track:
+
+- Production SMS provider integration.
+- Customer profile/contact editing.
+- Privacy/security review docs for authenticated account and order access.
+- Broader abuse controls such as IP-level throttling if needed.
 
 Deferred beyond Phase 9:
 

@@ -7,6 +7,9 @@ import { normalizeCustomerPhone } from '@/lib/customers/customer-repository';
 const DEFAULT_OTP_TTL_MINUTES = 10;
 const DEFAULT_OTP_MAX_ATTEMPTS = 5;
 const DEFAULT_OTP_LENGTH = 6;
+const DEFAULT_OTP_RESEND_COOLDOWN_SECONDS = 60;
+const DEFAULT_OTP_REQUEST_WINDOW_MINUTES = 15;
+const DEFAULT_OTP_MAX_REQUESTS_PER_WINDOW = 5;
 
 type IssueOtpInput = {
   phone: string;
@@ -25,25 +28,51 @@ function optionalText(value?: string) {
   return normalized || undefined;
 }
 
+function intEnv(name: string, fallback: number, min = 1, max = Number.MAX_SAFE_INTEGER) {
+  const parsed = Number.parseInt(process.env[name] || String(fallback), 10);
+  return Number.isFinite(parsed) && parsed >= min && parsed <= max ? parsed : fallback;
+}
+
 function otpTtlMinutes() {
-  const parsed = Number.parseInt(process.env.CUSTOMER_OTP_TTL_MINUTES || String(DEFAULT_OTP_TTL_MINUTES), 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_OTP_TTL_MINUTES;
+  return intEnv('CUSTOMER_OTP_TTL_MINUTES', DEFAULT_OTP_TTL_MINUTES);
 }
 
 function otpMaxAttempts() {
-  const parsed = Number.parseInt(process.env.CUSTOMER_OTP_MAX_ATTEMPTS || String(DEFAULT_OTP_MAX_ATTEMPTS), 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_OTP_MAX_ATTEMPTS;
+  return intEnv('CUSTOMER_OTP_MAX_ATTEMPTS', DEFAULT_OTP_MAX_ATTEMPTS);
 }
 
 function otpLength() {
-  const parsed = Number.parseInt(process.env.CUSTOMER_OTP_LENGTH || String(DEFAULT_OTP_LENGTH), 10);
-  return Number.isFinite(parsed) && parsed >= 4 && parsed <= 8 ? parsed : DEFAULT_OTP_LENGTH;
+  return intEnv('CUSTOMER_OTP_LENGTH', DEFAULT_OTP_LENGTH, 4, 8);
+}
+
+function resendCooldownSeconds() {
+  return intEnv('CUSTOMER_OTP_RESEND_COOLDOWN_SECONDS', DEFAULT_OTP_RESEND_COOLDOWN_SECONDS);
+}
+
+function requestWindowMinutes() {
+  return intEnv('CUSTOMER_OTP_REQUEST_WINDOW_MINUTES', DEFAULT_OTP_REQUEST_WINDOW_MINUTES);
+}
+
+function maxRequestsPerWindow() {
+  return intEnv('CUSTOMER_OTP_MAX_REQUESTS_PER_WINDOW', DEFAULT_OTP_MAX_REQUESTS_PER_WINDOW);
 }
 
 function expiresAt() {
   const expires = new Date();
   expires.setMinutes(expires.getMinutes() + otpTtlMinutes());
   return expires;
+}
+
+function requestWindowStart() {
+  const since = new Date();
+  since.setMinutes(since.getMinutes() - requestWindowMinutes());
+  return since;
+}
+
+function cooldownStart() {
+  const since = new Date();
+  since.setSeconds(since.getSeconds() - resendCooldownSeconds());
+  return since;
 }
 
 function makeOtpCode() {
@@ -64,11 +93,44 @@ async function logOtpDelivery(destination: string, code: string, purpose: string
   console.info('[customer-otp] development delivery', { destination, code, purpose });
 }
 
+export async function getCustomerOtpRequestStatus(phone: string, purpose = 'login') {
+  if (!hasDatabase()) return { ok: false as const, reason: 'database_required' };
+
+  const destination = normalizeCustomerPhone(phone);
+  const recentActive = await prisma.customerOtpChallenge.findFirst({
+    where: {
+      destination,
+      purpose,
+      createdAt: { gt: cooldownStart() }
+    },
+    orderBy: { createdAt: 'desc' }
+  });
+  if (recentActive) {
+    return { ok: false as const, reason: 'cooldown', retryAfterSeconds: resendCooldownSeconds() };
+  }
+
+  const recentCount = await prisma.customerOtpChallenge.count({
+    where: {
+      destination,
+      purpose,
+      createdAt: { gt: requestWindowStart() }
+    }
+  });
+  if (recentCount >= maxRequestsPerWindow()) {
+    return { ok: false as const, reason: 'rate_limited', retryAfterSeconds: requestWindowMinutes() * 60 };
+  }
+
+  return { ok: true as const, destination, purpose };
+}
+
 export async function issueCustomerOtp(input: IssueOtpInput) {
   if (!hasDatabase()) throw new Error('DATABASE_URL is required for customer OTP challenges.');
 
   const destination = normalizeCustomerPhone(input.phone);
   const purpose = optionalText(input.purpose) || 'login';
+  const requestStatus = await getCustomerOtpRequestStatus(destination, purpose);
+  if (!requestStatus.ok) return requestStatus;
+
   const code = makeOtpCode();
 
   await prisma.customerOtpChallenge.updateMany({
@@ -94,7 +156,7 @@ export async function issueCustomerOtp(input: IssueOtpInput) {
   });
 
   await logOtpDelivery(destination, code, purpose);
-  return { challenge, expiresAt: challenge.expiresAt };
+  return { ok: true as const, challenge, expiresAt: challenge.expiresAt };
 }
 
 export async function verifyCustomerOtp(input: VerifyOtpInput) {
