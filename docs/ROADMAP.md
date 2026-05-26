@@ -208,13 +208,9 @@ Deferred follow-up track:
 
 ## Phase 8 — Customer accounts and order history
 
-Status: in progress.
+Status: complete as a customer account foundation.
 
-Phase 8 adds customer accounts and order history on top of the existing phone-first customer profile and public order token system.
-
-### Phase 8.1-8.3 — Customer account/session foundation
-
-Status: implemented foundation.
+See `docs/PHASE_8_CLOSEOUT.md` for the closeout summary, limitation note, deferred items, and recommended Phase 9 direction.
 
 Implemented foundation:
 
@@ -224,67 +220,44 @@ Implemented foundation:
 - Hashed customer session tokens.
 - Session expiry, revocation, provider, user-agent, and optional IP hash fields.
 - Repository helpers for account linking, session creation, session lookup, session revocation, session expiry, and customer order-history lookup.
-
-### Phase 8.4-8.6 — Customer session cookie and route shell
-
-Status: implemented foundation.
-
-Implemented foundation:
-
 - HTTP-only customer session cookie helpers.
 - Account route shell.
 - Signed-in account profile summary when a valid customer session exists.
 - Saved-address summaries from the customer profile.
 - Sign-in placeholder surface when no session exists.
 - Logout action that revokes the active session and clears the cookie.
-
-### Phase 8.7-8.9 — Customer order history
-
-Status: implemented foundation.
-
-Implemented foundation:
-
 - Authenticated customer order-history page.
-- Active customer session requirement.
 - Order cards scoped to the signed-in customer profile.
-- Order status, fulfillment status, payment summary, totals, item counts, and top line items.
-- Links back to privacy-safe public order status pages when public lookup tokens exist.
-- Empty and database-unavailable states.
-
-### Phase 8.10-8.12 — Saved address/contact management
-
-Status: implemented foundation.
-
-Implemented foundation:
-
 - Customer-owned saved address page.
 - Add, update, make-default, and delete address actions.
 - Customer ownership checks for every address mutation.
 - Default address management.
-- Empty, database-unavailable, and status states.
-- Account/address page revalidation after mutations.
-
-### Phase 8.13-8.15 — Account-aware checkout prefill
-
-Status: PR in progress.
-
-Implemented foundation:
-
-- Cart checkout reads active customer session cookie.
-- Recipient name, phone, and email prefill from signed-in customer profile.
-- Delivery address fields prefill from default saved address when available.
-- Most recent saved address fallback when no default exists.
-- Signed-in checkout prefill notice.
-- Manage saved addresses link from checkout.
+- Cart checkout prefill from signed-in customer profile and default saved address.
 
 Deferred follow-up track:
 
+- Real phone-first login or provider-backed sign-in flow.
 - Customer profile/contact editing.
 - Privacy/security review docs for authenticated order and address access.
-- Real phone-first login or provider-backed sign-in flow.
 - Field-level checkout validation polish and localization.
+- Full Persian storefront localization.
 
-Deferred beyond Phase 8:
+## Phase 9 — Customer authentication and account hardening
+
+Status: planned.
+
+Phase 9 should decide and implement the real customer authentication path that creates customer sessions for the Phase 8 account surfaces.
+
+Planned foundation:
+
+- Auth provider decision: phone OTP, passwordless email, Auth.js, Clerk, Supabase Auth, or custom provider.
+- Customer login/register route and session creation.
+- Secure logout/session revocation hardening.
+- Account-aware checkout validation and profile/contact editing.
+- Privacy/security review for authenticated account and order access.
+- Basic smoke tests or documented manual QA for login, order history, address management, and checkout prefill.
+
+Deferred beyond Phase 9:
 
 - Full Persian storefront localization.
 - Lighthouse CI and full Playwright suite.
