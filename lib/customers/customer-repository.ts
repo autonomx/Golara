@@ -20,6 +20,12 @@ export type CustomerProfileInput = {
   locale?: string;
 };
 
+export type CustomerProfileUpdateInput = {
+  displayName?: string;
+  email?: string;
+  locale?: string;
+};
+
 export function normalizeCustomerPhone(phone: string) {
   const trimmed = phone.trim();
   if (!trimmed) throw new Error('Customer phone is required.');
@@ -54,6 +60,19 @@ export async function upsertCustomerProfile(input: CustomerProfileInput) {
       locale: optionalText(input.locale) || 'fa-IR'
     },
     update: {
+      displayName: optionalText(input.displayName),
+      email: optionalText(input.email),
+      locale: optionalText(input.locale) || 'fa-IR'
+    }
+  });
+}
+
+export async function updateCustomerProfile(customerId: string, input: CustomerProfileUpdateInput) {
+  if (!hasDatabase()) throw new Error('DATABASE_URL is required for customer profiles.');
+
+  return prisma.customerProfile.update({
+    where: { id: customerId },
+    data: {
       displayName: optionalText(input.displayName),
       email: optionalText(input.email),
       locale: optionalText(input.locale) || 'fa-IR'

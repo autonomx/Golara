@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { logoutCustomerAction } from '@/app/account/actions';
+import { logoutCustomerAction, updateCustomerProfileAction } from '@/app/account/actions';
 import { SiteHeader } from '@/components/SiteHeader';
 import { getCustomerSession } from '@/lib/customers/customer-account-repository';
 import { getCustomerSessionCookie } from '@/lib/customers/customer-session-cookie';
@@ -10,6 +10,9 @@ export const dynamic = 'force-dynamic';
 function statusMessage(status?: string) {
   if (status === 'signed-out') return 'You have been signed out.';
   if (status === 'session-required') return 'Please sign in to view your account.';
+  if (status === 'profile-updated') return 'Account profile updated.';
+  if (status === 'profile-failed') return 'We could not update your account profile. Please try again.';
+  if (status === 'database-required') return 'Customer accounts require a configured database.';
   return undefined;
 }
 
@@ -46,14 +49,36 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
             <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
               <h2 className="font-display text-4xl text-rosewood">Account profile</h2>
               <div className="mt-5 grid gap-3 text-sm text-stone-700">
-                <p><strong>Name:</strong> {session.customer.displayName || 'Not set'}</p>
                 <p><strong>Phone:</strong> {session.customer.phone}</p>
-                <p><strong>Email:</strong> {session.customer.email || 'Not set'}</p>
-                <p><strong>Locale:</strong> {session.customer.locale}</p>
               </div>
+              <form action={updateCustomerProfileAction} className="mt-5 grid gap-4 rounded-3xl border border-rosewood/10 bg-cream p-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="grid gap-2 text-sm font-semibold text-rosewood">
+                    Display name
+                    <input name="displayName" defaultValue={session.customer.displayName || ''} className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20" />
+                  </label>
+                  <label className="grid gap-2 text-sm font-semibold text-rosewood">
+                    Email
+                    <input name="email" type="email" defaultValue={session.customer.email || ''} className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20" />
+                  </label>
+                  <label className="grid gap-2 text-sm font-semibold text-rosewood md:col-span-2">
+                    Locale
+                    <select name="locale" defaultValue={session.customer.locale} className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20">
+                      <option value="fa-IR">Persian / Iran</option>
+                      <option value="en-CA">English / Canada</option>
+                    </select>
+                  </label>
+                </div>
+                <button type="submit" className="rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30">
+                  Save profile
+                </button>
+              </form>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link href="/account/orders" className="rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30">
                   View order history
+                </Link>
+                <Link href="/account/addresses" className="rounded-full border border-rosewood/20 px-6 py-3 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20">
+                  Manage addresses
                 </Link>
                 <form action={logoutCustomerAction}>
                   <button type="submit" className="rounded-full border border-rosewood/20 px-6 py-3 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20">
