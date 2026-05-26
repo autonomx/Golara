@@ -52,7 +52,10 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                 <p><strong>Locale:</strong> {session.customer.locale}</p>
               </div>
               <div className="mt-6 flex flex-wrap gap-3">
-                <Link href="/account/orders" className="rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30">
+                <Link href="/account/profile" className="rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30">
+                  Edit profile
+                </Link>
+                <Link href="/account/orders" className="rounded-full border border-rosewood/20 px-6 py-3 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20">
                   View order history
                 </Link>
                 <form action={logoutCustomerAction}>
