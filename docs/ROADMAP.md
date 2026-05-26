@@ -244,18 +244,56 @@ Deferred follow-up track:
 
 ## Phase 9 — Customer authentication and account hardening
 
-Status: planned.
+Status: in progress.
 
-Phase 9 should decide and implement the real customer authentication path that creates customer sessions for the Phase 8 account surfaces.
+Phase 9 implements the real customer authentication path that creates customer sessions for the Phase 8 account surfaces.
 
-Planned foundation:
+### Phase 9.1-9.3 — Authentication decision and implementation plan
 
-- Auth provider decision: phone OTP, passwordless email, Auth.js, Clerk, Supabase Auth, or custom provider.
-- Customer login/register route and session creation.
-- Secure logout/session revocation hardening.
-- Account-aware checkout validation and profile/contact editing.
-- Privacy/security review for authenticated account and order access.
-- Basic smoke tests or documented manual QA for login, order history, address management, and checkout prefill.
+Status: PR in progress.
+
+Recommended direction:
+
+- Use phone-first OTP authentication as the primary customer sign-in model.
+- Keep passwordless email, OAuth/social login, managed-auth providers, and custom password login as later options through the provider seam.
+
+Planned implementation path:
+
+- OTP challenge model with hashed codes, expiry, attempt count, and consumed timestamp.
+- OTP repository helpers for issuing, verifying, consuming, and expiring challenges.
+- Notification-provider seam for development logs and production SMS providers.
+- `/account/login` phone entry page and verification-code step.
+- Customer profile/account linking after successful verification.
+- Customer session creation and HTTP-only session cookie set after verification.
+- Rate limiting, resend cooldown copy, profile/contact editing, and privacy/security review.
+
+### Phase 9.4-9.6 — OTP request and verification model
+
+Planned:
+
+- Add OTP challenge model.
+- Add hashed OTP code storage.
+- Add expiry, consumed timestamp, and attempt count.
+- Add development notification logging seam.
+
+### Phase 9.7-9.9 — Customer login/register UI
+
+Planned:
+
+- Add `/account/login` phone entry page.
+- Add verification code step.
+- Create/link customer profile and account after verification.
+- Create customer session and set the HTTP-only session cookie.
+
+### Phase 9.10-9.12 — Auth hardening and account polish
+
+Planned:
+
+- Rate-limit OTP requests and verification attempts.
+- Add resend cooldown copy.
+- Add session revocation hardening.
+- Add profile/contact editing.
+- Add privacy/security review docs for authenticated account and order access.
 
 Deferred beyond Phase 9:
 
