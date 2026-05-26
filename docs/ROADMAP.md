@@ -250,31 +250,25 @@ Phase 9 implements the real customer authentication path that creates customer s
 
 ### Phase 9.1-9.3 — Authentication decision and implementation plan
 
-Status: PR in progress.
+Status: implemented foundation.
 
-Recommended direction:
+Implemented foundation:
 
-- Use phone-first OTP authentication as the primary customer sign-in model.
-- Keep passwordless email, OAuth/social login, managed-auth providers, and custom password login as later options through the provider seam.
-
-Planned implementation path:
-
-- OTP challenge model with hashed codes, expiry, attempt count, and consumed timestamp.
-- OTP repository helpers for issuing, verifying, consuming, and expiring challenges.
-- Notification-provider seam for development logs and production SMS providers.
-- `/account/login` phone entry page and verification-code step.
-- Customer profile/account linking after successful verification.
-- Customer session creation and HTTP-only session cookie set after verification.
-- Rate limiting, resend cooldown copy, profile/contact editing, and privacy/security review.
+- Phone-first OTP selected as the primary customer sign-in model.
+- Passwordless email, OAuth/social login, managed-auth providers, and custom password login remain later options through the provider seam.
+- OTP/login/hardening implementation path documented.
 
 ### Phase 9.4-9.6 — OTP request and verification model
 
-Planned:
+Status: PR in progress.
 
-- Add OTP challenge model.
-- Add hashed OTP code storage.
-- Add expiry, consumed timestamp, and attempt count.
-- Add development notification logging seam.
+Implemented foundation:
+
+- `CustomerOtpChallenge` Prisma model.
+- Salted hashed OTP code storage.
+- Expiry, consumed timestamp, attempt count, and maximum attempts.
+- OTP issue, verify, consume, failed-attempt, and expiry helpers.
+- Development OTP delivery logging seam.
 
 ### Phase 9.7-9.9 — Customer login/register UI
 
