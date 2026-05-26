@@ -1,8 +1,9 @@
 import 'server-only';
 
 import { createHash, randomInt } from 'node:crypto';
-import { hasDatabase, prisma } from '@/lib/prisma';
+import { sendCustomerMessage } from '@/lib/customers/customer-message-provider';
 import { normalizeCustomerPhone } from '@/lib/customers/customer-repository';
+import { hasDatabase, prisma } from '@/lib/prisma';
 
 const DEFAULT_OTP_TTL_MINUTES = 10;
 const DEFAULT_OTP_MAX_ATTEMPTS = 5;
@@ -88,9 +89,13 @@ export function hashOtpCode(destination: string, code: string, purpose = 'login'
     .digest('hex');
 }
 
-async function logOtpDelivery(destination: string, code: string, purpose: string) {
-  if (process.env.CUSTOMER_OTP_DELIVERY_PROVIDER && process.env.CUSTOMER_OTP_DELIVERY_PROVIDER !== 'log') return;
-  console.info('[customer-otp] development delivery', { destination, code, purpose });
+async function deliverOtp(destination: string, code: string, purpose: string) {
+  return sendCustomerMessage({
+    to: destination,
+    purpose,
+    message: `Your Golara verification code is ${code}`,
+    metadata: { channel: 'otp' }
+  });
 }
 
 export async function getCustomerOtpRequestStatus(phone: string, purpose = 'login') {
@@ -143,20 +148,28 @@ export async function issueCustomerOtp(input: IssueOtpInput) {
     data: { consumedAt: new Date() }
   });
 
+  const delivery = await deliverOtp(destination, code, purpose);
+  if (!delivery.ok) {
+    return { ok: false as const, reason: 'delivery_failed', delivery };
+  }
+
   const challenge = await prisma.customerOtpChallenge.create({
     data: {
-      channel: 'sms',
+      channel: delivery.provider,
       destination,
       purpose,
       codeHash: hashOtpCode(destination, code, purpose),
       maxAttempts: otpMaxAttempts(),
       expiresAt: expiresAt(),
-      metadata: input.metadata || undefined
+      metadata: {
+        ...(input.metadata || {}),
+        deliveryProvider: delivery.provider,
+        deliveryReference: delivery.reference || ''
+      }
     }
   });
 
-  await logOtpDelivery(destination, code, purpose);
-  return { ok: true as const, challenge, expiresAt: challenge.expiresAt };
+  return { ok: true as const, challenge, expiresAt: challenge.expiresAt, delivery };
 }
 
 export async function verifyCustomerOtp(input: VerifyOtpInput) {

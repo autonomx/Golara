@@ -280,18 +280,42 @@ Deferred follow-up track:
 
 ## Phase 10 — Production sign-in delivery and account security
 
-Status: planned.
+Status: in progress.
 
-Phase 10 should make customer sign-in production-ready.
+Phase 10 makes customer sign-in production-ready.
 
-Planned foundation:
+### Phase 10.1-10.3 — Message delivery provider seam
 
-- Production message delivery provider seam and one concrete provider adapter.
-- Delivery environment configuration docs and local/dev fallback behavior.
-- Account privacy/security review docs.
-- Customer profile/contact editing for signed-in customers.
-- Manual QA checklist for login, resend/cooldown, order history, address management, checkout prefill, and logout.
-- Automated smoke coverage when the test stack is introduced.
+Status: PR in progress.
+
+Implemented foundation:
+
+- Reusable customer message provider seam.
+- Log delivery mode for local/development use.
+- Disabled mode for deployments that need sign-in disabled until provider configuration is ready.
+- Webhook-style delivery mode.
+- Optional bearer token support for the webhook adapter.
+- OTP issuance now uses the message provider seam.
+- OTP challenge creation is blocked when delivery fails.
+- Delivery provider/reference metadata is stored with OTP challenges.
+
+### Phase 10.4-10.6 — Account privacy and security review
+
+Planned:
+
+- Account access threat model.
+- Authenticated order-history privacy review.
+- Saved-address privacy review.
+- Session/cookie configuration review.
+- Production launch checklist.
+
+### Phase 10.7-10.9 — Customer profile/contact editing
+
+Planned:
+
+- Signed-in customer profile edit page.
+- Display name and email update action.
+- Phone-change deferral note or verified phone-change plan.
 
 Deferred beyond Phase 10:
 
