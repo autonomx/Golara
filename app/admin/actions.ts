@@ -187,6 +187,7 @@ export async function createProductAction(formData: FormData) {
   const title = requiredString(formData, 'title');
   const slug = stringField(formData, 'slug') || slugify(title);
   const imageUrl = resolveImageUrl(formData);
+  const requiresQuote = boolField(formData, 'requiresQuote');
 
   const product = await prisma.product.create({
     data: {
@@ -200,6 +201,7 @@ export async function createProductAction(formData: FormData) {
       categoryId: requiredString(formData, 'categoryId'),
       availableToday: boolField(formData, 'availableToday'),
       bestSeller: boolField(formData, 'bestSeller'),
+      requiresQuote,
       isActive: boolField(formData, 'isActive')
     }
   });
@@ -209,7 +211,7 @@ export async function createProductAction(formData: FormData) {
     entity: 'product',
     entityId: product.id,
     summary: `Created product: ${product.title}`,
-    metadata: { slug: product.slug, code: product.code, isActive: product.isActive }
+    metadata: { slug: product.slug, code: product.code, isActive: product.isActive, requiresQuote: product.requiresQuote }
   });
 
   revalidateCatalog();
@@ -223,6 +225,7 @@ export async function updateProductAction(productId: string, formData: FormData)
   const title = requiredString(formData, 'title');
   const slug = stringField(formData, 'slug') || slugify(title);
   const imageUrl = resolveImageUrl(formData);
+  const requiresQuote = boolField(formData, 'requiresQuote');
 
   const product = await prisma.product.update({
     where: { id: productId },
@@ -237,6 +240,7 @@ export async function updateProductAction(productId: string, formData: FormData)
       categoryId: requiredString(formData, 'categoryId'),
       availableToday: boolField(formData, 'availableToday'),
       bestSeller: boolField(formData, 'bestSeller'),
+      requiresQuote,
       isActive: boolField(formData, 'isActive')
     }
   });
@@ -246,7 +250,7 @@ export async function updateProductAction(productId: string, formData: FormData)
     entity: 'product',
     entityId: product.id,
     summary: `Updated product: ${product.title}`,
-    metadata: { slug: product.slug, code: product.code, isActive: product.isActive }
+    metadata: { slug: product.slug, code: product.code, isActive: product.isActive, requiresQuote: product.requiresQuote }
   });
 
   revalidateCatalog();
