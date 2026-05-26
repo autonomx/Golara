@@ -319,19 +319,22 @@ Deferred follow-up track:
 
 ## Phase 11 — Localization and Persian storefront readiness
 
-Status: planned.
+Status: in progress.
 
-Recommended direction:
+### Phase 11.1-11.3 — Localization copy registry
 
-- Move from partial Persian labels to broader customer-facing Persian copy.
-- Keep English fallback behavior intact.
-- Prioritize public customer surfaces before admin surfaces.
-- Add RTL manual QA notes for customer-facing pages.
-- Avoid a full i18n framework rewrite unless the copy surface demands it.
+Status: implemented foundation.
 
-Suggested bundles:
+Implemented foundation:
 
-- Phase 11.1-11.3 — Localization copy registry.
+- Customer-facing copy registry for common account, login, cart, checkout, order-history, order-status, and shared labels.
+- Typed English and Persian copy keys.
+- English fallback helper for missing or unsupported locales.
+- Locale normalization helper.
+- RTL/LTR direction helper for future page migrations.
+
+Next bundles:
+
 - Phase 11.4-11.6 — Account/login Persian copy pass.
 - Phase 11.7-11.9 — Cart/checkout Persian copy pass.
 - Phase 11.10-11.12 — Public storefront Persian copy pass.
