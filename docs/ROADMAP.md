@@ -240,7 +240,7 @@ Implemented foundation:
 
 ### Phase 8.7-8.9 — Customer order history
 
-Status: PR in progress.
+Status: implemented foundation.
 
 Implemented foundation:
 
@@ -253,11 +253,23 @@ Implemented foundation:
 
 ### Phase 8.10-8.12 — Saved address/contact management
 
-Planned:
+Status: PR in progress.
 
-- Customer saved address list.
+Implemented foundation:
+
+- Customer-owned saved address page.
+- Add, update, make-default, and delete address actions.
+- Customer ownership checks for every address mutation.
 - Default address management.
-- Checkout prefill from authenticated customer profile.
+- Empty, database-unavailable, and status states.
+- Account/address page revalidation after mutations.
+
+Deferred follow-up track:
+
+- Account-aware checkout prefill from customer profile/default address.
+- Customer profile/contact editing.
+- Privacy/security review docs for authenticated order and address access.
+- Real phone-first login or provider-backed sign-in flow.
 
 Deferred beyond Phase 8:
 
