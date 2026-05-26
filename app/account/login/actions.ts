@@ -31,7 +31,8 @@ export async function requestCustomerOtpAction(formData: FormData) {
 
   try {
     const phone = normalizeCustomerPhone(stringField(formData, 'phone'));
-    await issueCustomerOtp({ phone, purpose: 'login' });
+    const result = await issueCustomerOtp({ phone, purpose: 'login' });
+    if (!result.ok) redirect(loginPath(result.reason, phone, returnTo));
     redirect(loginPath('code-sent', phone, returnTo));
   } catch (error) {
     console.warn('[account-login] failed to request OTP', error);
