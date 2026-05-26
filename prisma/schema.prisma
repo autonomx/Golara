@@ -70,17 +70,58 @@ model HomepageSection {
 }
 
 model CustomerProfile {
-  id          String          @id @default(cuid())
-  phone       String          @unique
+  id          String            @id @default(cuid())
+  phone       String            @unique
   displayName String?
   email       String?
-  locale      String          @default("fa-IR")
+  locale      String            @default("fa-IR")
+  accounts    CustomerAccount[]
+  sessions    CustomerSession[]
   addresses   CustomerAddress[]
   orders      CheckoutOrder[]
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
 
   @@index([email])
+}
+
+model CustomerAccount {
+  id                 String          @id @default(cuid())
+  customerId         String
+  customer           CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  provider           String          @default("phone")
+  providerAccountId  String
+  email              String?
+  phone              String?
+  passwordHash       String?
+  emailVerifiedAt    DateTime?
+  phoneVerifiedAt    DateTime?
+  lastLoginAt        DateTime?
+  metadata           Json?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  @@unique([provider, providerAccountId])
+  @@index([customerId])
+  @@index([email])
+  @@index([phone])
+}
+
+model CustomerSession {
+  id         String          @id @default(cuid())
+  customerId String
+  customer   CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  tokenHash  String          @unique
+  provider   String          @default("customer")
+  userAgent  String?
+  ipHash     String?
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  @@index([customerId, expiresAt])
+  @@index([expiresAt, revokedAt])
 }
 
 model CustomerAddress {
