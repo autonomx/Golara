@@ -253,7 +253,7 @@ Implemented foundation:
 
 ### Phase 8.10-8.12 — Saved address/contact management
 
-Status: PR in progress.
+Status: implemented foundation.
 
 Implemented foundation:
 
@@ -264,12 +264,25 @@ Implemented foundation:
 - Empty, database-unavailable, and status states.
 - Account/address page revalidation after mutations.
 
+### Phase 8.13-8.15 — Account-aware checkout prefill
+
+Status: PR in progress.
+
+Implemented foundation:
+
+- Cart checkout reads active customer session cookie.
+- Recipient name, phone, and email prefill from signed-in customer profile.
+- Delivery address fields prefill from default saved address when available.
+- Most recent saved address fallback when no default exists.
+- Signed-in checkout prefill notice.
+- Manage saved addresses link from checkout.
+
 Deferred follow-up track:
 
-- Account-aware checkout prefill from customer profile/default address.
 - Customer profile/contact editing.
 - Privacy/security review docs for authenticated order and address access.
 - Real phone-first login or provider-backed sign-in flow.
+- Field-level checkout validation polish and localization.
 
 Deferred beyond Phase 8:
 

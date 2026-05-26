@@ -4,6 +4,8 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { getCartTokenCookie } from '@/lib/cart/cart-cookie';
 import { getCartByToken } from '@/lib/cart/cart-repository';
 import { formatMinorUnitAmount } from '@/lib/catalog';
+import { getCustomerSession } from '@/lib/customers/customer-account-repository';
+import { getCustomerSessionCookie } from '@/lib/customers/customer-session-cookie';
 import { hasDatabase } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -19,12 +21,18 @@ function checkoutMessage(status?: string) {
 }
 
 export default async function CartCheckoutPage({ searchParams }: { searchParams: Promise<{ checkout?: string }> }) {
-  const [{ checkout }, token] = await Promise.all([searchParams, getCartTokenCookie()]);
+  const [{ checkout }, cartToken, customerToken] = await Promise.all([searchParams, getCartTokenCookie(), getCustomerSessionCookie()]);
   const message = checkoutMessage(checkout);
-  const cart = hasDatabase() ? await getCartByToken(token) : null;
+  const [cart, customerSession] = hasDatabase()
+    ? await Promise.all([getCartByToken(cartToken), getCustomerSession(customerToken)])
+    : [null, null] as const;
   const items = cart?.items ?? [];
   const subtotalCents = items.reduce((sum, item) => sum + item.product.priceCents * item.quantity, 0);
   const currency = cart?.currency || items[0]?.product.currency || process.env.CHECKOUT_DOMESTIC_CURRENCY || 'TOMAN';
+  const defaultAddress = customerSession?.customer.addresses.find((address) => address.isDefault) ?? customerSession?.customer.addresses[0];
+  const defaultName = defaultAddress?.recipient || customerSession?.customer.displayName || '';
+  const defaultPhone = defaultAddress?.phone || customerSession?.customer.phone || '';
+  const defaultEmail = customerSession?.customer.email || '';
 
   return (
     <main id="main-content" tabIndex={-1}>
@@ -46,6 +54,12 @@ export default async function CartCheckoutPage({ searchParams }: { searchParams:
         {message ? (
           <div className="mt-8 rounded-3xl border border-amber-300 bg-amber-50 p-4 text-sm font-semibold text-amber-900" role="status" aria-live="polite">
             {message}
+          </div>
+        ) : null}
+
+        {customerSession ? (
+          <div className="mt-8 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive" role="status">
+            Checkout details were prefilled from your signed-in account{defaultAddress ? ' and default saved address' : ''}.
           </div>
         ) : null}
 
@@ -73,27 +87,27 @@ export default async function CartCheckoutPage({ searchParams }: { searchParams:
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="grid gap-2 text-sm font-semibold text-rosewood">
                   Recipient name
-                  <input name="name" required minLength={2} className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20" />
+                  <input name="name" required minLength={2} defaultValue={defaultName} className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20" />
                 </label>
                 <label className="grid gap-2 text-sm font-semibold text-rosewood">
                   Phone
-                  <input name="phone" required className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20" />
+                  <input name="phone" required defaultValue={defaultPhone} className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20" />
                 </label>
                 <label className="grid gap-2 text-sm font-semibold text-rosewood">
                   Email optional
-                  <input name="email" type="email" className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20" />
+                  <input name="email" type="email" defaultValue={defaultEmail} className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20" />
                 </label>
                 <label className="grid gap-2 text-sm font-semibold text-rosewood">
                   City
-                  <input name="city" className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20" />
+                  <input name="city" defaultValue={defaultAddress?.city ?? ''} className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20" />
                 </label>
                 <label className="grid gap-2 text-sm font-semibold text-rosewood md:col-span-2">
                   Address line 1
-                  <input name="addressLine1" required minLength={4} className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20" />
+                  <input name="addressLine1" required minLength={4} defaultValue={defaultAddress?.line1 ?? ''} className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20" />
                 </label>
                 <label className="grid gap-2 text-sm font-semibold text-rosewood md:col-span-2">
                   Address line 2 optional
-                  <input name="addressLine2" className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20" />
+                  <input name="addressLine2" defaultValue={defaultAddress?.line2 ?? ''} className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20" />
                 </label>
                 <label className="grid gap-2 text-sm font-semibold text-rosewood">
                   Delivery date optional
@@ -105,7 +119,7 @@ export default async function CartCheckoutPage({ searchParams }: { searchParams:
                 </label>
                 <label className="grid gap-2 text-sm font-semibold text-rosewood md:col-span-2">
                   Delivery notes optional
-                  <textarea name="deliveryNotes" className="min-h-24 rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20" />
+                  <textarea name="deliveryNotes" defaultValue={defaultAddress?.notes ?? ''} className="min-h-24 rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20" />
                 </label>
                 <label className="grid gap-2 text-sm font-semibold text-rosewood md:col-span-2">
                   Customer note optional
@@ -129,6 +143,11 @@ export default async function CartCheckoutPage({ searchParams }: { searchParams:
                 ))}
               </div>
               <p className="mt-4 text-xs leading-5 text-stone-500">Delivery, discounts, and payment state are finalized when the order is created.</p>
+              {customerSession ? (
+                <Link href="/account/addresses" className="mt-4 inline-flex rounded-full border border-rosewood/20 px-4 py-2 text-xs font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20">
+                  Manage saved addresses
+                </Link>
+              ) : null}
             </aside>
           </div>
         ) : null}
