@@ -141,10 +141,10 @@ export async function addCartItem(input: AddCartItemInput) {
       isActive: true,
       category: { isActive: true }
     },
-    select: { id: true, priceCents: true }
+    select: { id: true, priceCents: true, requiresQuote: true }
   });
   if (!product) throw new Error('Product is unavailable.');
-  if (product.priceCents <= 0) throw new Error('Product requires manual quote.');
+  if (product.requiresQuote || product.priceCents <= 0) throw new Error('Product is custom order only.');
 
   const cart = await getOrCreateCart(input);
   const quantity = normalizeQuantity(input.quantity);
