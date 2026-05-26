@@ -5,9 +5,12 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { getCartTokenCookie } from '@/lib/cart/cart-cookie';
 import { getCartByToken } from '@/lib/cart/cart-repository';
 import { formatMinorUnitAmount } from '@/lib/catalog';
+import { getCustomerCopy } from '@/lib/localization/customer-copy';
 import { hasDatabase } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
+
+const copy = (key: Parameters<typeof getCustomerCopy>[0]) => getCustomerCopy(key);
 
 function statusMessage(status?: string) {
   if (status === 'added') return 'Item added to your cart.';
@@ -39,14 +42,14 @@ export default async function CartPage({ searchParams }: { searchParams: Promise
       <section className="mx-auto max-w-7xl px-5 py-14">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">Cart</p>
-            <h1 className="mt-3 font-display text-6xl text-rosewood">Your flower cart</h1>
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">{copy('cart.eyebrow')}</p>
+            <h1 className="mt-3 font-display text-6xl text-rosewood">{copy('cart.title')}</h1>
             <p className="mt-5 max-w-3xl text-lg leading-8 text-stone-700">
-              Review quantities before moving into checkout. Totals are recomputed on the server before payment.
+              {copy('cart.subtitle')}
             </p>
           </div>
           <Link href="/products" className="rounded-full border border-rosewood/15 bg-white px-5 py-3 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20">
-            Continue shopping
+            {copy('common.continueShopping')}
           </Link>
         </div>
 
@@ -58,17 +61,17 @@ export default async function CartPage({ searchParams }: { searchParams: Promise
 
         {!hasDatabase() ? (
           <div className="mt-8 rounded-[2rem] border border-amber-300 bg-amber-50 p-6 text-amber-900">
-            <h2 className="font-display text-3xl">Cart unavailable</h2>
-            <p className="mt-3 text-sm leading-6">Cart checkout requires a configured database because cart sessions are persisted server-side.</p>
+            <h2 className="font-display text-3xl">{copy('cart.unavailableTitle')}</h2>
+            <p className="mt-3 text-sm leading-6">{copy('cart.unavailableBody')}</p>
           </div>
         ) : null}
 
         {hasDatabase() && items.length === 0 ? (
           <div className="mt-8 rounded-[2rem] border border-rosewood/10 bg-white p-8 shadow-sm">
-            <h2 className="font-display text-4xl text-rosewood">Your cart is empty.</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-stone-700">Browse the catalog and add arrangements before checkout.</p>
+            <h2 className="font-display text-4xl text-rosewood">{copy('cart.emptyTitle')}</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-stone-700">{copy('cart.emptyBody')}</p>
             <Link href="/products" className="mt-6 inline-flex rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30">
-              Shop products
+              {copy('cart.shopProducts')}
             </Link>
           </div>
         ) : null}
@@ -90,7 +93,7 @@ export default async function CartPage({ searchParams }: { searchParams: Promise
                             {item.product.title}
                           </Link>
                           <p className="mt-1 text-xs uppercase tracking-[0.2em] text-rosewood/50">{item.product.code}</p>
-                          <p className="mt-2 text-sm text-stone-600">{formatMinorUnitAmount(item.product.priceCents, item.product.currency)} each</p>
+                          <p className="mt-2 text-sm text-stone-600">{formatMinorUnitAmount(item.product.priceCents, item.product.currency)} {copy('cart.each')}</p>
                         </div>
                         <p className="font-display text-3xl text-rosewood">{formatMinorUnitAmount(lineTotal, item.product.currency)}</p>
                       </div>
@@ -99,17 +102,17 @@ export default async function CartPage({ searchParams }: { searchParams: Promise
                           <input type="hidden" name="productId" value={item.productId} />
                           <input type="hidden" name="returnTo" value="/cart" />
                           <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.16em] text-rosewood/60">
-                            Qty
+                            {copy('cart.quantity')}
                             <select name="quantity" defaultValue={item.quantity} className="rounded-2xl border border-rosewood/15 bg-white px-3 py-2 text-sm text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20">
                               {quantityOptions(item.quantity).map((quantity) => <option key={quantity} value={quantity}>{quantity}</option>)}
                             </select>
                           </label>
-                          <button type="submit" className="rounded-full bg-rosewood px-4 py-2 text-xs font-semibold text-white outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30">Update</button>
+                          <button type="submit" className="rounded-full bg-rosewood px-4 py-2 text-xs font-semibold text-white outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30">{copy('cart.update')}</button>
                         </form>
                         <form action={removeCartItemAction}>
                           <input type="hidden" name="productId" value={item.productId} />
                           <input type="hidden" name="returnTo" value="/cart" />
-                          <button type="submit" className="rounded-full border border-rosewood/20 bg-white px-4 py-2 text-xs font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20">Remove</button>
+                          <button type="submit" className="rounded-full border border-rosewood/20 bg-white px-4 py-2 text-xs font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20">{copy('cart.remove')}</button>
                         </form>
                       </div>
                     </div>
@@ -119,27 +122,27 @@ export default async function CartPage({ searchParams }: { searchParams: Promise
             </div>
 
             <aside className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm lg:sticky lg:top-24 lg:self-start">
-              <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Summary</p>
-              <h2 className="mt-2 font-display text-4xl text-rosewood">Cart total</h2>
+              <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">{copy('cart.summary')}</p>
+              <h2 className="mt-2 font-display text-4xl text-rosewood">{copy('cart.total')}</h2>
               <div className="mt-5 grid gap-3 text-sm text-stone-700">
                 <div className="flex justify-between gap-4">
-                  <span>Items</span>
+                  <span>{copy('cart.items')}</span>
                   <strong>{items.reduce((sum, item) => sum + item.quantity, 0)}</strong>
                 </div>
                 <div className="flex justify-between gap-4 border-t border-rosewood/10 pt-3 text-lg text-rosewood">
-                  <span>Subtotal</span>
+                  <span>{copy('cart.subtotal')}</span>
                   <strong>{formatMinorUnitAmount(subtotalCents, currency)}</strong>
                 </div>
               </div>
-              <p className="mt-4 text-xs leading-5 text-stone-500">Delivery, discounts, and final totals are recomputed during checkout.</p>
+              <p className="mt-4 text-xs leading-5 text-stone-500">{copy('cart.finalTotalsNote')}</p>
               <div className="mt-6 grid gap-3">
                 <Link href="/cart/checkout" className="rounded-full bg-rosewood px-6 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30">
-                  Continue to checkout
+                  {copy('cart.checkout')}
                 </Link>
                 <form action={clearCartAction}>
                   <input type="hidden" name="returnTo" value="/cart" />
                   <button type="submit" className="w-full rounded-full border border-rosewood/20 px-6 py-3 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20">
-                    Clear cart
+                    {copy('cart.clear')}
                   </button>
                 </form>
               </div>
