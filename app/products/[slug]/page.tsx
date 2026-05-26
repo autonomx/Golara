@@ -6,6 +6,7 @@ import { ProductInquiryForm } from '@/components/ProductInquiryForm';
 import { ProductDetail } from '@/components/product/ProductDetail';
 import { SiteHeader } from '@/components/SiteHeader';
 import { getCategoryBySlug, getProductBySlug, listProducts } from '@/lib/cms/catalog-repository';
+import { getStorefrontCopy } from '@/lib/localization/storefront-copy';
 import { hasDatabase } from '@/lib/prisma';
 import { buildPageMetadata } from '@/lib/site-metadata';
 import { buildProductBreadcrumbJsonLd, buildProductJsonLd, JsonLdScript } from '@/lib/structured-data';
@@ -53,7 +54,7 @@ export default async function ProductPage({
       <JsonLdScript data={buildProductBreadcrumbJsonLd(product, category)} />
       <SiteHeader />
       <section className="mx-auto max-w-7xl px-5 pt-10">
-        <PathTrail items={[{ label: 'Home', href: '/' }, { label: category?.title || product.categoryTitle || product.category, href: `/categories/${product.category}` }, { label: product.title }]} />
+        <PathTrail items={[{ label: getStorefrontCopy('common.home'), href: '/' }, { label: category?.title || product.categoryTitle || product.category, href: `/categories/${product.category}` }, { label: product.title }]} />
       </section>
       <ProductDetail product={product} category={category} dbReady={dbReady} />
       <ProductCheckoutForm product={product} dbReady={dbReady} checkout={checkout} />

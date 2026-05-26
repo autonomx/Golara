@@ -309,46 +309,54 @@ Deferred follow-up track:
 
 ## Phase 11 — Localization and Persian storefront readiness
 
-Status: in progress.
-
-### Phase 11.1-11.3 — Localization copy registry
-
-Status: implemented foundation.
+Status: complete as an initial localization foundation.
 
 Implemented foundation:
 
-- Customer-facing copy registry for common account, login, cart, checkout, order-history, order-status, and shared labels.
+- Customer-facing copy registry for account, login, cart, checkout, order-history, order-status, and shared labels.
 - Typed English and Persian copy keys.
 - English fallback helper for missing or unsupported locales.
 - Locale normalization helper.
-- RTL/LTR direction helper for future page migrations.
+- RTL/LTR direction helper for customer-facing page migrations.
+- Account, login, profile, cart, and checkout static labels use the customer copy registry.
+- Signed-in account, profile, and checkout surfaces use RTL direction when the saved customer locale is Persian.
+- Storefront copy helper for reusable homepage, product card, product detail, availability, CTA, quantity, and breadcrumb labels.
+- Homepage collection/favorites section labels use the storefront copy helper.
+- Product card badges and add-to-cart label use the storefront copy helper.
+- Product detail quantity, add-to-cart, WhatsApp, availability, pre-order, and cart-unavailable labels use the storefront copy helper.
+- Product and category breadcrumb `Home` label uses the storefront copy helper.
 
-### Phase 11.4-11.6 — Account/login Persian copy pass
+See also:
 
-Status: implemented foundation.
+- `docs/PHASE_11_1_3_LOCALIZATION_COPY_REGISTRY.md`
+- `docs/PHASE_11_4_6_ACCOUNT_LOGIN_COPY.md`
+- `docs/PHASE_11_7_9_CART_CHECKOUT_COPY.md`
+- `docs/PHASE_11_10_12_PUBLIC_STOREFRONT_COPY.md`
 
-Implemented foundation:
+Deferred follow-up track:
 
-- Expanded customer copy keys for account, login, and profile surfaces.
-- `/account` uses the customer copy registry for static labels.
-- `/account/login` uses the customer copy registry for static labels.
-- `/account/profile` uses the customer copy registry for static labels.
-- Signed-in account and profile pages opt into RTL direction when the saved customer locale is Persian.
-- Existing OTP, profile update, logout, and account navigation behavior is preserved.
+- Locale-aware public routing or customer/browser locale selection.
+- CMS fields for translated homepage hero, category, and product content.
+- Localized query-string status/error messages.
+- Automated RTL smoke coverage.
+- Full Playwright suite.
 
-### Phase 11.7-11.9 — Cart/checkout Persian copy pass
+## Phase 12 — Production launch QA and smoke tests
 
-Status: implemented foundation.
+Status: planned.
 
-Implemented foundation:
+Recommended direction:
 
-- Expanded customer copy keys for cart and checkout surfaces.
-- `/cart` uses the customer copy registry for static labels.
-- `/cart/checkout` uses the customer copy registry for static labels.
-- Checkout uses the signed-in customer locale and direction helper when available.
-- Signed-out checkout keeps English fallback copy.
-- Existing cart update, remove, clear, checkout form, order creation, and payment handoff behavior is preserved.
+- Add a lightweight smoke-test foundation before larger storefront rewrites.
+- Prioritize public and account-critical routes.
+- Keep tests stable with seeded fallback data where possible.
+- Avoid a large test framework rewrite beyond what the current stack needs.
 
-Next bundle:
+Suggested first bundle:
 
-- Phase 11.10-11.12 — Public storefront Persian copy pass.
+- Homepage loads.
+- Product page loads.
+- Cart page loads.
+- Account login page loads.
+- Sitemap and robots respond.
+- Unauthenticated account/orders redirects safely.

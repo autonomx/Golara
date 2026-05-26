@@ -2,6 +2,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { addToCartAction } from '@/app/cart/actions';
 import { formatPrice, type Product } from '@/lib/catalog';
+import { getStorefrontCopy } from '@/lib/localization/storefront-copy';
+
+const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key);
 
 export function ProductCard({ product, priority = false }: { product: Product; priority?: boolean }) {
   const canAddToCart = Boolean(product.id);
@@ -19,8 +22,8 @@ export function ProductCard({ product, priority = false }: { product: Product; p
             priority={priority}
           />
           <div className="absolute left-4 top-4 flex gap-2 text-xs font-semibold">
-            {product.bestSeller ? <span className="rounded-full bg-rosewood px-3 py-1 text-white">Best seller</span> : null}
-            {product.availableToday ? <span className="rounded-full bg-white/90 px-3 py-1 text-rosewood">Available today</span> : null}
+            {product.bestSeller ? <span className="rounded-full bg-rosewood px-3 py-1 text-white">{copy('product.bestSeller')}</span> : null}
+            {product.availableToday ? <span className="rounded-full bg-white/90 px-3 py-1 text-rosewood">{copy('product.availableToday')}</span> : null}
           </div>
         </div>
         <div className="space-y-2 p-5 pb-3">
@@ -36,7 +39,7 @@ export function ProductCard({ product, priority = false }: { product: Product; p
         <input type="hidden" name="currency" value={product.currency} />
         <input type="hidden" name="quantity" value="1" />
         <button type="submit" disabled={!canAddToCart} className="w-full rounded-full bg-rosewood px-4 py-2 text-xs font-semibold text-white outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30 disabled:cursor-not-allowed disabled:bg-stone-300">
-          Add to cart
+          {copy('product.addToCart')}
         </button>
       </form>
     </article>

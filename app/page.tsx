@@ -3,9 +3,12 @@ import { CategoryCard } from '@/components/CategoryCard';
 import { ProductCard } from '@/components/ProductCard';
 import { SiteHeader } from '@/components/SiteHeader';
 import { getHomepageContent, listCategories, listProducts } from '@/lib/cms/catalog-repository';
+import { getStorefrontCopy } from '@/lib/localization/storefront-copy';
 
 const primaryCtaClass = 'rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30';
 const secondaryCtaClass = 'rounded-full border border-rosewood/20 px-6 py-3 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20';
+
+const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key);
 
 export default async function HomePage() {
   const [homepage, categories, products] = await Promise.all([
@@ -43,8 +46,8 @@ export default async function HomePage() {
       <section className="mx-auto max-w-7xl px-5 py-12">
         <div className="mb-8 flex items-end justify-between gap-4">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">Collections</p>
-            <h2 className="mt-2 font-display text-4xl text-rosewood">Shop by occasion</h2>
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">{copy('home.collectionsEyebrow')}</p>
+            <h2 className="mt-2 font-display text-4xl text-rosewood">{copy('home.collectionsTitle')}</h2>
           </div>
         </div>
         <div className="grid gap-5 md:grid-cols-4">
@@ -54,8 +57,8 @@ export default async function HomePage() {
 
       <section className="mx-auto max-w-7xl px-5 py-12">
         <div className="mb-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">Favorites</p>
-          <h2 className="mt-2 font-display text-4xl text-rosewood">Best sellers</h2>
+          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">{copy('home.favoritesEyebrow')}</p>
+          <h2 className="mt-2 font-display text-4xl text-rosewood">{copy('home.favoritesTitle')}</h2>
         </div>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {bestSellers.map((product, index) => <ProductCard key={product.slug} product={product} priority={index < 3} />)}
