@@ -32,6 +32,7 @@ async function main() {
   for (const product of seedProducts) {
     const category = categoryBySlug.get(product.category);
     if (!category) throw new Error(`Missing category for product ${product.slug}`);
+    const requiresQuote = Boolean(product.requiresQuote || product.price <= 0);
 
     await prisma.media.upsert({
       where: { url: product.image },
@@ -51,6 +52,7 @@ async function main() {
         imageUrl: product.image,
         availableToday: product.availableToday,
         bestSeller: Boolean(product.bestSeller),
+        requiresQuote,
         isActive: product.isActive !== false,
         categoryId: category.id
       },
@@ -63,6 +65,7 @@ async function main() {
         imageUrl: product.image,
         availableToday: product.availableToday,
         bestSeller: Boolean(product.bestSeller),
+        requiresQuote,
         isActive: product.isActive !== false,
         categoryId: category.id
       }
