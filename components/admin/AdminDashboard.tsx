@@ -336,10 +336,11 @@ function ProductFields({ product, categories, media, disabled }: { product?: Pro
       </label>
       <Field label="Manual image URL" name="imageUrl" defaultValue={product?.image} placeholder="https://... or /uploads/file.webp" required={false} disabled={disabled} />
       <TextArea label="Description" name="description" defaultValue={product?.description} disabled={disabled} />
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-4">
         <Toggle label="Visible on storefront" name="isActive" defaultChecked={product?.isActive !== false} disabled={disabled} />
         <Toggle label="Best seller" name="bestSeller" defaultChecked={Boolean(product?.bestSeller)} disabled={disabled} />
         <Toggle label="Available today" name="availableToday" defaultChecked={Boolean(product?.availableToday)} disabled={disabled} />
+        <Toggle label="Manual purchase" name="requiresQuote" defaultChecked={Boolean(product?.requiresQuote)} disabled={disabled} />
       </div>
     </>
   );
