@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "check:file-lines": "node tools/check-file-lines.mjs",
     "smoke:routes": "node tools/smoke-routes.mjs",
+    "smoke:routes:local": "node tools/run-smoke-routes-local.mjs",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
