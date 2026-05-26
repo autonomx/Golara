@@ -40,15 +40,51 @@ export type CustomerCopyKey =
   | 'profile.verifiedPhone'
   | 'profile.phoneDeferredNote'
   | 'profile.unavailableBody'
+  | 'cart.eyebrow'
   | 'cart.title'
+  | 'cart.subtitle'
   | 'cart.emptyTitle'
   | 'cart.emptyBody'
+  | 'cart.unavailableTitle'
+  | 'cart.unavailableBody'
+  | 'cart.shopProducts'
+  | 'cart.each'
+  | 'cart.quantity'
+  | 'cart.update'
+  | 'cart.remove'
+  | 'cart.summary'
+  | 'cart.total'
+  | 'cart.items'
   | 'cart.subtotal'
+  | 'cart.finalTotalsNote'
   | 'cart.checkout'
+  | 'cart.clear'
+  | 'checkout.eyebrow'
   | 'checkout.title'
+  | 'checkout.subtitle'
+  | 'checkout.backToCart'
+  | 'checkout.prefillNotice'
+  | 'checkout.prefillWithAddressNotice'
+  | 'checkout.unavailableTitle'
+  | 'checkout.unavailableBody'
   | 'checkout.contactDetails'
   | 'checkout.deliveryAddress'
+  | 'checkout.recipientDetails'
+  | 'checkout.recipientName'
+  | 'checkout.emailOptional'
+  | 'checkout.city'
+  | 'checkout.addressLine1'
+  | 'checkout.addressLine2Optional'
+  | 'checkout.deliveryDateOptional'
+  | 'checkout.deliveryWindowOptional'
+  | 'checkout.deliveryWindowPlaceholder'
+  | 'checkout.deliveryNotesOptional'
+  | 'checkout.customerNoteOptional'
   | 'checkout.placeOrder'
+  | 'checkout.createOrderAndPay'
+  | 'checkout.orderSummary'
+  | 'checkout.finalizedNote'
+  | 'checkout.manageAddresses'
   | 'orders.title'
   | 'orders.emptyTitle'
   | 'orders.emptyBody'
@@ -59,6 +95,7 @@ export type CustomerCopyKey =
   | 'orderStatus.cancelled'
   | 'common.accountOverview'
   | 'common.backToCheckout'
+  | 'common.continueShopping'
   | 'common.name'
   | 'common.phone'
   | 'common.email'
@@ -109,15 +146,51 @@ export const customerCopy: CustomerCopyRegistry = {
     'profile.verifiedPhone': 'Verified phone',
     'profile.phoneDeferredNote': 'Phone changes are intentionally deferred until a separate verification flow is added.',
     'profile.unavailableBody': 'Profile editing requires a configured database.',
-    'cart.title': 'Your cart',
+    'cart.eyebrow': 'Cart',
+    'cart.title': 'Your flower cart',
+    'cart.subtitle': 'Review quantities before moving into checkout. Totals are recomputed on the server before payment.',
     'cart.emptyTitle': 'Your cart is empty',
-    'cart.emptyBody': 'Add arrangements to your cart before checkout.',
+    'cart.emptyBody': 'Browse the catalog and add arrangements before checkout.',
+    'cart.unavailableTitle': 'Cart unavailable',
+    'cart.unavailableBody': 'Cart checkout requires a configured database because cart sessions are persisted server-side.',
+    'cart.shopProducts': 'Shop products',
+    'cart.each': 'each',
+    'cart.quantity': 'Qty',
+    'cart.update': 'Update',
+    'cart.remove': 'Remove',
+    'cart.summary': 'Summary',
+    'cart.total': 'Cart total',
+    'cart.items': 'Items',
     'cart.subtotal': 'Subtotal',
-    'cart.checkout': 'Checkout',
-    'checkout.title': 'Checkout',
+    'cart.finalTotalsNote': 'Delivery, discounts, and final totals are recomputed during checkout.',
+    'cart.checkout': 'Continue to checkout',
+    'cart.clear': 'Clear cart',
+    'checkout.eyebrow': 'Cart checkout',
+    'checkout.title': 'Delivery and payment',
+    'checkout.subtitle': 'Confirm delivery details. Final totals are recomputed on the server before the payment handoff.',
+    'checkout.backToCart': 'Back to cart',
+    'checkout.prefillNotice': 'Checkout details were prefilled from your signed-in account.',
+    'checkout.prefillWithAddressNotice': 'Checkout details were prefilled from your signed-in account and default saved address.',
+    'checkout.unavailableTitle': 'Checkout unavailable',
+    'checkout.unavailableBody': 'Cart checkout requires a configured database.',
     'checkout.contactDetails': 'Contact details',
     'checkout.deliveryAddress': 'Delivery address',
+    'checkout.recipientDetails': 'Recipient details',
+    'checkout.recipientName': 'Recipient name',
+    'checkout.emailOptional': 'Email optional',
+    'checkout.city': 'City',
+    'checkout.addressLine1': 'Address line 1',
+    'checkout.addressLine2Optional': 'Address line 2 optional',
+    'checkout.deliveryDateOptional': 'Delivery date optional',
+    'checkout.deliveryWindowOptional': 'Delivery window optional',
+    'checkout.deliveryWindowPlaceholder': 'Morning, afternoon, evening',
+    'checkout.deliveryNotesOptional': 'Delivery notes optional',
+    'checkout.customerNoteOptional': 'Customer note optional',
     'checkout.placeOrder': 'Place order',
+    'checkout.createOrderAndPay': 'Create order and continue to payment',
+    'checkout.orderSummary': 'Order summary',
+    'checkout.finalizedNote': 'Delivery, discounts, and payment state are finalized when the order is created.',
+    'checkout.manageAddresses': 'Manage saved addresses',
     'orders.title': 'Order history',
     'orders.emptyTitle': 'No orders yet',
     'orders.emptyBody': 'Orders placed with this phone number will appear here.',
@@ -128,6 +201,7 @@ export const customerCopy: CustomerCopyRegistry = {
     'orderStatus.cancelled': 'Cancelled',
     'common.accountOverview': 'Account overview',
     'common.backToCheckout': 'Back to checkout',
+    'common.continueShopping': 'Continue shopping',
     'common.name': 'Name',
     'common.phone': 'Phone',
     'common.email': 'Email',
@@ -175,15 +249,51 @@ export const customerCopy: CustomerCopyRegistry = {
     'profile.verifiedPhone': 'تلفن تاییدشده',
     'profile.phoneDeferredNote': 'تغییر شماره تلفن عمدا تا زمان اضافه‌شدن جریان تایید جداگانه به تعویق افتاده است.',
     'profile.unavailableBody': 'ویرایش پروفایل به پایگاه داده پیکربندی‌شده نیاز دارد.',
-    'cart.title': 'سبد خرید شما',
+    'cart.eyebrow': 'سبد خرید',
+    'cart.title': 'سبد گل‌های شما',
+    'cart.subtitle': 'پیش از پرداخت، تعداد اقلام را بررسی کنید. جمع‌ها پیش از پرداخت روی سرور دوباره محاسبه می‌شوند.',
     'cart.emptyTitle': 'سبد خرید شما خالی است',
-    'cart.emptyBody': 'پیش از پرداخت، گل‌آرایی‌های موردنظر را به سبد خرید اضافه کنید.',
+    'cart.emptyBody': 'کاتالوگ را مرور کنید و پیش از پرداخت، گل‌آرایی‌های موردنظر را اضافه کنید.',
+    'cart.unavailableTitle': 'سبد خرید در دسترس نیست',
+    'cart.unavailableBody': 'پرداخت سبد خرید به پایگاه داده پیکربندی‌شده نیاز دارد، چون نشست‌های سبد خرید روی سرور ذخیره می‌شوند.',
+    'cart.shopProducts': 'مشاهده محصولات',
+    'cart.each': 'هر عدد',
+    'cart.quantity': 'تعداد',
+    'cart.update': 'به‌روزرسانی',
+    'cart.remove': 'حذف',
+    'cart.summary': 'خلاصه',
+    'cart.total': 'جمع سبد خرید',
+    'cart.items': 'اقلام',
     'cart.subtotal': 'جمع جزء',
-    'cart.checkout': 'پرداخت',
-    'checkout.title': 'پرداخت',
+    'cart.finalTotalsNote': 'هزینه ارسال، تخفیف‌ها و جمع نهایی هنگام پرداخت دوباره محاسبه می‌شوند.',
+    'cart.checkout': 'ادامه به پرداخت',
+    'cart.clear': 'خالی کردن سبد',
+    'checkout.eyebrow': 'پرداخت سبد خرید',
+    'checkout.title': 'ارسال و پرداخت',
+    'checkout.subtitle': 'اطلاعات ارسال را تایید کنید. جمع نهایی پیش از انتقال به پرداخت روی سرور دوباره محاسبه می‌شود.',
+    'checkout.backToCart': 'بازگشت به سبد خرید',
+    'checkout.prefillNotice': 'اطلاعات پرداخت از حساب واردشده شما تکمیل شد.',
+    'checkout.prefillWithAddressNotice': 'اطلاعات پرداخت از حساب واردشده و نشانی پیش‌فرض ذخیره‌شده شما تکمیل شد.',
+    'checkout.unavailableTitle': 'پرداخت در دسترس نیست',
+    'checkout.unavailableBody': 'پرداخت سبد خرید به پایگاه داده پیکربندی‌شده نیاز دارد.',
     'checkout.contactDetails': 'اطلاعات تماس',
     'checkout.deliveryAddress': 'نشانی ارسال',
+    'checkout.recipientDetails': 'اطلاعات گیرنده',
+    'checkout.recipientName': 'نام گیرنده',
+    'checkout.emailOptional': 'ایمیل اختیاری',
+    'checkout.city': 'شهر',
+    'checkout.addressLine1': 'خط اول نشانی',
+    'checkout.addressLine2Optional': 'خط دوم نشانی اختیاری',
+    'checkout.deliveryDateOptional': 'تاریخ ارسال اختیاری',
+    'checkout.deliveryWindowOptional': 'بازه ارسال اختیاری',
+    'checkout.deliveryWindowPlaceholder': 'صبح، بعدازظهر، عصر',
+    'checkout.deliveryNotesOptional': 'یادداشت ارسال اختیاری',
+    'checkout.customerNoteOptional': 'یادداشت مشتری اختیاری',
     'checkout.placeOrder': 'ثبت سفارش',
+    'checkout.createOrderAndPay': 'ثبت سفارش و ادامه به پرداخت',
+    'checkout.orderSummary': 'خلاصه سفارش',
+    'checkout.finalizedNote': 'ارسال، تخفیف‌ها و وضعیت پرداخت هنگام ایجاد سفارش نهایی می‌شوند.',
+    'checkout.manageAddresses': 'مدیریت نشانی‌های ذخیره‌شده',
     'orders.title': 'تاریخچه سفارش‌ها',
     'orders.emptyTitle': 'هنوز سفارشی ثبت نشده است',
     'orders.emptyBody': 'سفارش‌هایی که با این شماره تلفن ثبت شوند، اینجا نمایش داده می‌شوند.',
@@ -194,6 +304,7 @@ export const customerCopy: CustomerCopyRegistry = {
     'orderStatus.cancelled': 'لغوشده',
     'common.accountOverview': 'نمای کلی حساب',
     'common.backToCheckout': 'بازگشت به پرداخت',
+    'common.continueShopping': 'ادامه خرید',
     'common.name': 'نام',
     'common.phone': 'تلفن',
     'common.email': 'ایمیل',
