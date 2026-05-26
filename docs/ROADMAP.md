@@ -233,7 +233,7 @@ Implemented foundation:
 
 ### Phase 7.13-7.15 — Add-to-cart storefront UI wiring
 
-Status: PR in progress.
+Status: implemented foundation.
 
 Implemented foundation:
 
@@ -242,9 +242,19 @@ Implemented foundation:
 - Database-backed product guard for cart actions.
 - Product cards split product detail navigation from cart action controls.
 
+### Phase 7.16-7.18 — Header cart affordance
+
+Status: PR in progress.
+
+Implemented foundation:
+
+- Header cart icon links to `/cart`.
+- Cart count badge reads from the server-side HTTP-only cart token cookie.
+- Accessible cart label includes item count.
+- Search/account remain non-interactive placeholders.
+
 Deferred follow-up track:
 
-- Header cart link/count affordance.
 - Cart checkout localization and field-level validation polish.
 - Basic cart smoke tests.
 - Phase 7 closeout.
