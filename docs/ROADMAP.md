@@ -214,7 +214,7 @@ Phase 8 adds customer accounts and order history on top of the existing phone-fi
 
 ### Phase 8.1-8.3 — Customer account/session foundation
 
-Status: PR in progress.
+Status: implemented foundation.
 
 Implemented foundation:
 
@@ -227,12 +227,16 @@ Implemented foundation:
 
 ### Phase 8.4-8.6 — Customer session cookie and route shell
 
-Planned:
+Status: PR in progress.
+
+Implemented foundation:
 
 - HTTP-only customer session cookie helpers.
 - Account route shell.
-- Login/register placeholder surfaces.
-- Logout action.
+- Signed-in account profile summary when a valid customer session exists.
+- Saved-address summaries from the customer profile.
+- Sign-in placeholder surface when no session exists.
+- Logout action that revokes the active session and clears the cookie.
 
 ### Phase 8.7-8.9 — Customer order history
 
