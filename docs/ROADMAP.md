@@ -286,7 +286,7 @@ Phase 10 makes customer sign-in production-ready.
 
 ### Phase 10.1-10.3 — Message delivery provider seam
 
-Status: PR in progress.
+Status: implemented foundation.
 
 Implemented foundation:
 
@@ -301,12 +301,16 @@ Implemented foundation:
 
 ### Phase 10.4-10.6 — Account privacy and security review
 
-Planned:
+Status: PR in progress.
 
-- Account access threat model.
-- Authenticated order-history privacy review.
-- Saved-address privacy review.
-- Session/cookie configuration review.
+Implemented foundation:
+
+- Account surface inventory.
+- Current protections checklist.
+- Account takeover risk review.
+- Account-page data exposure review.
+- Session cookie handling review.
+- Delivery provider secret-handling review.
 - Production launch checklist.
 
 ### Phase 10.7-10.9 — Customer profile/contact editing
