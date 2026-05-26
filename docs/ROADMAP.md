@@ -227,7 +227,7 @@ Implemented foundation:
 
 ### Phase 8.4-8.6 — Customer session cookie and route shell
 
-Status: PR in progress.
+Status: implemented foundation.
 
 Implemented foundation:
 
@@ -240,11 +240,16 @@ Implemented foundation:
 
 ### Phase 8.7-8.9 — Customer order history
 
-Planned:
+Status: PR in progress.
+
+Implemented foundation:
 
 - Authenticated customer order-history page.
-- Order detail links using authenticated ownership plus existing public token pages.
-- Empty states and privacy-safe copy.
+- Active customer session requirement.
+- Order cards scoped to the signed-in customer profile.
+- Order status, fulfillment status, payment summary, totals, item counts, and top line items.
+- Links back to privacy-safe public order status pages when public lookup tokens exist.
+- Empty and database-unavailable states.
 
 ### Phase 8.10-8.12 — Saved address/contact management
 
