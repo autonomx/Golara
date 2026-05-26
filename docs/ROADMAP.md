@@ -301,7 +301,7 @@ Implemented foundation:
 
 ### Phase 10.4-10.6 — Account privacy and security review
 
-Status: PR in progress.
+Status: implemented foundation.
 
 Implemented foundation:
 
@@ -315,11 +315,21 @@ Implemented foundation:
 
 ### Phase 10.7-10.9 — Customer profile/contact editing
 
-Planned:
+Status: PR in progress.
+
+Implemented foundation:
 
 - Signed-in customer profile edit page.
-- Display name and email update action.
-- Phone-change deferral note or verified phone-change plan.
+- Display name, email, and locale update action.
+- Verified phone-change deferral note.
+- Account overview edit-profile link.
+- Account, profile, and checkout revalidation after profile changes.
+
+Deferred follow-up track:
+
+- Verified phone-change flow if needed.
+- Concrete delivery provider runbook after provider selection.
+- Manual QA checklist for login, resend/cooldown, profile editing, order history, address management, checkout prefill, and logout.
 
 Deferred beyond Phase 10:
 
