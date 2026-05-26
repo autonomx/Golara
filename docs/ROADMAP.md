@@ -266,7 +266,7 @@ Implemented foundation:
 
 ### Phase 8.13-8.15 — Account-aware checkout prefill
 
-Status: PR in progress.
+Status: implemented foundation.
 
 Implemented foundation:
 
@@ -277,12 +277,25 @@ Implemented foundation:
 - Signed-in checkout prefill notice.
 - Manage saved addresses link from checkout.
 
+### Phase 8.16-8.18 — Customer profile/contact editing
+
+Status: PR in progress.
+
+Implemented foundation:
+
+- Customer profile update repository helper.
+- Account profile update server action.
+- Editable display name, email, and locale fields on `/account`.
+- Phone remains read-only because it is the current customer identity key.
+- Account and cart checkout revalidation after profile updates.
+- Profile update success/failure status messages.
+
 Deferred follow-up track:
 
-- Customer profile/contact editing.
 - Privacy/security review docs for authenticated order and address access.
 - Real phone-first login or provider-backed sign-in flow.
 - Field-level checkout validation polish and localization.
+- Account deletion/export policy if needed.
 
 Deferred beyond Phase 8:
 
