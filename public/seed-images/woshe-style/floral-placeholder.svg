@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1500" role="img" aria-labelledby="title desc">
+  <title id="title">Original floral placeholder</title>
+  <desc id="desc">A stylized original placeholder image for Golara floral test products.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff7f3"/>
+      <stop offset="48%" stop-color="#f6d7df"/>
+      <stop offset="100%" stop-color="#c58a98"/>
+    </linearGradient>
+    <radialGradient id="petalPink" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#fff1f6"/>
+      <stop offset="55%" stop-color="#e8a9b9"/>
+      <stop offset="100%" stop-color="#9a4f61"/>
+    </radialGradient>
+    <radialGradient id="petalCream" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#fffaf0"/>
+      <stop offset="70%" stop-color="#f1d0a0"/>
+      <stop offset="100%" stop-color="#b68455"/>
+    </radialGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="24" stdDeviation="24" flood-color="#6d2d3a" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="1500" fill="url(#bg)"/>
+  <circle cx="1010" cy="180" r="210" fill="#ffffff" opacity="0.32"/>
+  <circle cx="180" cy="1290" r="260" fill="#ffffff" opacity="0.20"/>
+  <g filter="url(#softShadow)">
+    <ellipse cx="600" cy="1020" rx="310" ry="150" fill="#6f7d50" opacity="0.35"/>
+    <path d="M405 1110 C450 905 520 800 600 690 C690 820 760 920 805 1110 Z" fill="#53683e" opacity="0.72"/>
+    <path d="M470 1115 C500 870 548 760 610 640" stroke="#405535" stroke-width="24" stroke-linecap="round" fill="none"/>
+    <path d="M725 1110 C698 870 660 760 608 640" stroke="#405535" stroke-width="22" stroke-linecap="round" fill="none"/>
+    <g transform="translate(600 565)">
+      <ellipse rx="120" ry="240" fill="url(#petalPink)" transform="rotate(0) translate(0 -72)"/>
+      <ellipse rx="120" ry="240" fill="url(#petalPink)" transform="rotate(45) translate(0 -72)"/>
+      <ellipse rx="120" ry="240" fill="url(#petalCream)" transform="rotate(90) translate(0 -72)"/>
+      <ellipse rx="120" ry="240" fill="url(#petalPink)" transform="rotate(135) translate(0 -72)"/>
+      <ellipse rx="120" ry="240" fill="url(#petalCream)" transform="rotate(180) translate(0 -72)"/>
+      <ellipse rx="120" ry="240" fill="url(#petalPink)" transform="rotate(225) translate(0 -72)"/>
+      <ellipse rx="120" ry="240" fill="url(#petalCream)" transform="rotate(270) translate(0 -72)"/>
+      <ellipse rx="120" ry="240" fill="url(#petalPink)" transform="rotate(315) translate(0 -72)"/>
+      <circle r="120" fill="#7d3f50"/>
+      <circle r="66" fill="#f3c76e"/>
+    </g>
+    <g transform="translate(390 770) scale(0.72)">
+      <ellipse rx="92" ry="185" fill="url(#petalCream)" transform="rotate(20) translate(0 -60)"/>
+      <ellipse rx="92" ry="185" fill="url(#petalPink)" transform="rotate(92) translate(0 -60)"/>
+      <ellipse rx="92" ry="185" fill="url(#petalCream)" transform="rotate(164) translate(0 -60)"/>
+      <ellipse rx="92" ry="185" fill="url(#petalPink)" transform="rotate(236) translate(0 -60)"/>
+      <ellipse rx="92" ry="185" fill="url(#petalCream)" transform="rotate(308) translate(0 -60)"/>
+      <circle r="82" fill="#8d4a55"/>
+      <circle r="42" fill="#e5b85d"/>
+    </g>
+    <g transform="translate(815 800) scale(0.68)">
+      <ellipse rx="92" ry="185" fill="url(#petalPink)" transform="rotate(8) translate(0 -60)"/>
+      <ellipse rx="92" ry="185" fill="url(#petalCream)" transform="rotate(80) translate(0 -60)"/>
+      <ellipse rx="92" ry="185" fill="url(#petalPink)" transform="rotate(152) translate(0 -60)"/>
+      <ellipse rx="92" ry="185" fill="url(#petalCream)" transform="rotate(224) translate(0 -60)"/>
+      <ellipse rx="92" ry="185" fill="url(#petalPink)" transform="rotate(296) translate(0 -60)"/>
+      <circle r="82" fill="#7c4456"/>
+      <circle r="42" fill="#efcc78"/>
+    </g>
+  </g>
+  <rect x="120" y="1260" width="960" height="88" rx="44" fill="#ffffff" opacity="0.52"/>
+  <text x="600" y="1318" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="38" fill="#6e2f3d">Golara test catalog image</text>
+</svg>
