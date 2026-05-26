@@ -260,7 +260,7 @@ Implemented foundation:
 
 ### Phase 9.4-9.6 — OTP request and verification model
 
-Status: PR in progress.
+Status: implemented foundation.
 
 Implemented foundation:
 
@@ -272,12 +272,17 @@ Implemented foundation:
 
 ### Phase 9.7-9.9 — Customer login/register UI
 
-Planned:
+Status: PR in progress.
 
-- Add `/account/login` phone entry page.
-- Add verification code step.
-- Create/link customer profile and account after verification.
-- Create customer session and set the HTTP-only session cookie.
+Implemented foundation:
+
+- `/account/login` phone entry page.
+- OTP verification step.
+- OTP request and verification server actions.
+- Customer profile/account linking after successful verification.
+- Customer session creation and HTTP-only customer session cookie set after verification.
+- Safe relative return redirects after login.
+- Account shell links unauthenticated customers to the real login page.
 
 ### Phase 9.10-9.12 — Auth hardening and account polish
 

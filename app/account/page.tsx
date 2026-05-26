@@ -84,14 +84,17 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
         {hasDatabase() && !session ? (
           <section className="mt-8 rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
-            <h2 className="font-display text-4xl text-rosewood">Sign-in foundation</h2>
+            <h2 className="font-display text-4xl text-rosewood">Sign in to continue</h2>
             <p className="mt-4 max-w-3xl text-sm leading-6 text-stone-700">
-              The account data model and session cookie are ready. The next bundle will choose or implement the phone-first sign-in flow that creates a customer session.
+              Use phone verification to access your order history, saved addresses, and checkout prefill.
             </p>
-            <div className="mt-6 grid gap-3 rounded-3xl border border-rosewood/10 bg-cream p-5 text-sm text-stone-700">
-              <p><strong>Planned:</strong> phone-first login or provider-backed authentication.</p>
-              <p><strong>Planned:</strong> order history tied to authenticated customer ownership.</p>
-              <p><strong>Planned:</strong> saved address management and checkout prefill.</p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link href="/account/login" className="rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30">
+                Sign in with phone
+              </Link>
+              <Link href="/products" className="rounded-full border border-rosewood/20 px-6 py-3 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20">
+                Continue shopping
+              </Link>
             </div>
           </section>
         ) : null}
