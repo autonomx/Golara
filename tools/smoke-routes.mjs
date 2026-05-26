@@ -3,14 +3,19 @@ const baseUrl = (process.env.SMOKE_BASE_URL || DEFAULT_BASE_URL).replace(/\/$/, 
 const timeoutMs = Number.parseInt(process.env.SMOKE_TIMEOUT_MS || '10000', 10);
 
 const routes = [
-  { path: '/', expectedStatuses: [200], label: 'homepage' },
-  { path: '/products', expectedStatuses: [200], label: 'product listing' },
-  { path: '/cart', expectedStatuses: [200], label: 'cart' },
-  { path: '/account/login', expectedStatuses: [200], label: 'account login' },
-  { path: '/sitemap.xml', expectedStatuses: [200], label: 'sitemap' },
-  { path: '/robots.txt', expectedStatuses: [200], label: 'robots' },
+  { path: '/', expectedStatuses: [200], label: 'homepage', expectedContent: ['Golara'] },
+  { path: '/products', expectedStatuses: [200], label: 'product listing', expectedContent: ['All products'] },
+  { path: '/cart', expectedStatuses: [200], label: 'cart', expectedContent: ['cart'] },
+  { path: '/account/login', expectedStatuses: [200], label: 'account login', expectedContent: ['phone'] },
+  { path: '/sitemap.xml', expectedStatuses: [200], label: 'sitemap', expectedContent: ['<urlset'] },
+  { path: '/robots.txt', expectedStatuses: [200], label: 'robots', expectedContent: ['User-agent'] },
   { path: '/account/orders', expectedStatuses: [200, 302, 303, 307, 308], label: 'unauthenticated account orders' }
 ];
+
+function includesExpectedContent(body, expectedContent = []) {
+  const normalizedBody = body.toLowerCase();
+  return expectedContent.every((value) => normalizedBody.includes(value.toLowerCase()));
+}
 
 async function checkRoute(route) {
   const controller = new AbortController();
@@ -22,11 +27,26 @@ async function checkRoute(route) {
       redirect: 'manual',
       signal: controller.signal
     });
-    const ok = route.expectedStatuses.includes(response.status);
+    const statusOk = route.expectedStatuses.includes(response.status);
+    let contentOk = true;
+    let missingContent = [];
+
+    if (statusOk && route.expectedContent?.length) {
+      const body = await response.text();
+      contentOk = includesExpectedContent(body, route.expectedContent);
+      if (!contentOk) {
+        const normalizedBody = body.toLowerCase();
+        missingContent = route.expectedContent.filter((value) => !normalizedBody.includes(value.toLowerCase()));
+      }
+    }
+
     return {
       ...route,
-      ok,
+      ok: statusOk && contentOk,
       status: response.status,
+      statusOk,
+      contentOk,
+      missingContent,
       url
     };
   } catch (error) {
@@ -34,6 +54,9 @@ async function checkRoute(route) {
       ...route,
       ok: false,
       status: 'error',
+      statusOk: false,
+      contentOk: false,
+      missingContent: route.expectedContent || [],
       url,
       error: error instanceof Error ? error.message : String(error)
     };
@@ -50,8 +73,12 @@ for (const route of routes) {
 
 for (const result of results) {
   const marker = result.ok ? 'PASS' : 'FAIL';
-  const detail = result.error ? `${result.status} (${result.error})` : result.status;
-  console.log(`${marker} ${result.label}: ${result.url} -> ${detail}`);
+  const details = [`status ${result.status}`];
+  if (result.expectedContent?.length) {
+    details.push(result.contentOk ? 'content ok' : `missing content: ${result.missingContent.join(', ')}`);
+  }
+  if (result.error) details.push(result.error);
+  console.log(`${marker} ${result.label}: ${result.url} -> ${details.join('; ')}`);
 }
 
 const failures = results.filter((result) => !result.ok);
