@@ -87,6 +87,54 @@ export async function addCustomerAddress(customerId: string, input: CustomerAddr
   });
 }
 
+export async function updateCustomerAddress(customerId: string, addressId: string, input: CustomerAddressInput) {
+  if (!hasDatabase()) throw new Error('DATABASE_URL is required for customer addresses.');
+  if (!input.line1.trim()) throw new Error('Address line1 is required.');
+
+  const existing = await prisma.customerAddress.findFirst({ where: { id: addressId, customerId } });
+  if (!existing) throw new Error('Address was not found.');
+
+  if (input.isDefault) {
+    await prisma.customerAddress.updateMany({
+      where: { customerId, id: { not: addressId } },
+      data: { isDefault: false }
+    });
+  }
+
+  return prisma.customerAddress.update({
+    where: { id: addressId },
+    data: {
+      label: optionalText(input.label) || 'Delivery address',
+      recipient: optionalText(input.recipient),
+      phone: input.phone ? normalizeCustomerPhone(input.phone) : undefined,
+      city: optionalText(input.city),
+      line1: input.line1.trim(),
+      line2: optionalText(input.line2),
+      notes: optionalText(input.notes),
+      isDefault: Boolean(input.isDefault)
+    }
+  });
+}
+
+export async function setDefaultCustomerAddress(customerId: string, addressId: string) {
+  if (!hasDatabase()) throw new Error('DATABASE_URL is required for customer addresses.');
+
+  const existing = await prisma.customerAddress.findFirst({ where: { id: addressId, customerId } });
+  if (!existing) throw new Error('Address was not found.');
+
+  await prisma.customerAddress.updateMany({ where: { customerId }, data: { isDefault: false } });
+  return prisma.customerAddress.update({ where: { id: addressId }, data: { isDefault: true } });
+}
+
+export async function deleteCustomerAddress(customerId: string, addressId: string) {
+  if (!hasDatabase()) throw new Error('DATABASE_URL is required for customer addresses.');
+
+  const existing = await prisma.customerAddress.findFirst({ where: { id: addressId, customerId } });
+  if (!existing) throw new Error('Address was not found.');
+
+  return prisma.customerAddress.delete({ where: { id: addressId } });
+}
+
 export async function listCustomerAddresses(customerId: string) {
   if (!hasDatabase()) return [];
 
