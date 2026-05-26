@@ -124,6 +124,24 @@ model CustomerSession {
   @@index([expiresAt, revokedAt])
 }
 
+model CustomerOtpChallenge {
+  id           String    @id @default(cuid())
+  channel      String    @default("sms")
+  destination  String
+  codeHash     String
+  purpose      String    @default("login")
+  attemptCount Int       @default(0)
+  maxAttempts  Int       @default(5)
+  expiresAt    DateTime
+  consumedAt   DateTime?
+  metadata     Json?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([destination, purpose, expiresAt])
+  @@index([expiresAt, consumedAt])
+}
+
 model CustomerAddress {
   id         String          @id @default(cuid())
   customerId String
