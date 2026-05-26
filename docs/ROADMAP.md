@@ -333,8 +333,20 @@ Implemented foundation:
 - Locale normalization helper.
 - RTL/LTR direction helper for future page migrations.
 
+### Phase 11.4-11.6 — Account/login Persian copy pass
+
+Status: implemented foundation.
+
+Implemented foundation:
+
+- Expanded customer copy keys for account, login, and profile surfaces.
+- `/account` uses the customer copy registry for static labels.
+- `/account/login` uses the customer copy registry for static labels.
+- `/account/profile` uses the customer copy registry for static labels.
+- Signed-in account and profile pages opt into RTL direction when the saved customer locale is Persian.
+- Existing OTP, profile update, logout, and account navigation behavior is preserved.
+
 Next bundles:
 
-- Phase 11.4-11.6 — Account/login Persian copy pass.
 - Phase 11.7-11.9 — Cart/checkout Persian copy pass.
 - Phase 11.10-11.12 — Public storefront Persian copy pass.
