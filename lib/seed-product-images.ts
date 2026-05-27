@@ -40,7 +40,7 @@ const descriptors: Record<string, SeedImageDescriptor> = {
 };
 
 export function getSeedProductImagePath(slug: string): string {
-  return `${seedImagePrefix}/${slug}.svg`;
+  return `${seedImagePrefix}/${slug}`;
 }
 
 function flowers(item: SeedImageDescriptor): string {
