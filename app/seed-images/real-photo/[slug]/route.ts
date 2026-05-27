@@ -10,28 +10,46 @@ type RouteContext = {
   }>;
 };
 
+type AssetCandidate = {
+  extension: string;
+  contentType: string;
+};
+
+const assetCandidates: AssetCandidate[] = [
+  { extension: 'jpg', contentType: 'image/jpeg' },
+  { extension: 'png', contentType: 'image/png' },
+  { extension: 'webp', contentType: 'image/webp' }
+];
+
 function safeSlug(value: string) {
   return value.replace(/[^a-z0-9-]/gi, '-').toLowerCase();
 }
 
-async function readGeneratedPng(slug: string) {
-  const filePath = path.join(process.cwd(), 'public', 'seed-images', 'photo-real', `${safeSlug(slug)}.png`);
-  try {
-    return await readFile(filePath);
-  } catch {
-    return null;
+async function readGeneratedImage(slug: string) {
+  const normalizedSlug = safeSlug(slug);
+
+  for (const candidate of assetCandidates) {
+    const filePath = path.join(process.cwd(), 'public', 'seed-images', 'photo-real', `${normalizedSlug}.${candidate.extension}`);
+    try {
+      const image = await readFile(filePath);
+      return { image, contentType: candidate.contentType };
+    } catch {
+      // Try the next supported image format.
+    }
   }
+
+  return null;
 }
 
 export async function GET(_request: Request, context: RouteContext) {
   const { slug } = await context.params;
-  const image = await readGeneratedPng(slug);
+  const generatedImage = await readGeneratedImage(slug);
 
-  if (image) {
-    return new NextResponse(image, {
+  if (generatedImage) {
+    return new NextResponse(generatedImage.image, {
       status: 200,
       headers: {
-        'content-type': 'image/png',
+        'content-type': generatedImage.contentType,
         'cache-control': 'public, max-age=31536000, immutable'
       }
     });
