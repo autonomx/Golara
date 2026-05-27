@@ -1,0 +1,100 @@
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+
+const ROOT = process.cwd();
+const DEFAULT_MANIFEST = 'data/seed-product-photo-prompts.json';
+
+function requireEnv(name) {
+  const value = process.env[name];
+  if (!value) throw new Error(`${name} is required.`);
+  return value;
+}
+
+function argValue(name, fallback) {
+  const prefix = `--${name}=`;
+  const found = process.argv.find((arg) => arg.startsWith(prefix));
+  return found ? found.slice(prefix.length) : fallback;
+}
+
+function safeSlug(value) {
+  return value.replace(/[^a-z0-9-]/gi, '-').toLowerCase();
+}
+
+async function readManifest() {
+  const manifestPath = path.join(ROOT, argValue('manifest', DEFAULT_MANIFEST));
+  return JSON.parse(await readFile(manifestPath, 'utf8'));
+}
+
+function endpointUrl() {
+  return process.env.IMAGE_GENERATION_BASE_URL || 'https://api.openai.com/v1/images/generations';
+}
+
+function requestBody(prompt, size) {
+  const model = process.env.IMAGE_GENERATION_MODEL || 'gpt-image-1';
+  return {
+    model,
+    prompt,
+    size,
+    n: 1
+  };
+}
+
+async function downloadUrl(url) {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Image download failed: ${response.status} ${response.statusText}`);
+  return Buffer.from(await response.arrayBuffer());
+}
+
+function decodeBase64Image(value) {
+  return Buffer.from(value, 'base64');
+}
+
+async function generateImage(prompt, size) {
+  const response = await fetch(endpointUrl(), {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${requireEnv('IMAGE_GENERATION_API_KEY')}`,
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify(requestBody(prompt, size))
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Generation failed: ${response.status} ${response.statusText}\n${body}`);
+  }
+
+  const payload = await response.json();
+  const first = payload.data?.[0];
+  if (!first) throw new Error('Generation response did not include image data.');
+  if (first.b64_json) return decodeBase64Image(first.b64_json);
+  if (first.url) return downloadUrl(first.url);
+  throw new Error('Generation response did not include b64_json or url.');
+}
+
+async function main() {
+  const manifest = await readManifest();
+  const outputDirectory = path.join(ROOT, manifest.outputDirectory || 'public/seed-images/photo-real');
+  const size = argValue('size', process.env.IMAGE_GENERATION_SIZE || '1024x1024');
+  const only = argValue('only', '');
+  const limit = Number.parseInt(argValue('limit', '0'), 10);
+  const products = manifest.products
+    .filter((product) => !only || product.slug === only)
+    .slice(0, Number.isFinite(limit) && limit > 0 ? limit : undefined);
+
+  await mkdir(outputDirectory, { recursive: true });
+
+  for (const product of products) {
+    const filename = `${safeSlug(product.slug)}.png`;
+    const outputPath = path.join(outputDirectory, filename);
+    const prompt = `${manifest.styleGuide}\n\nProduct: ${product.title}\nCode: ${product.code}\n\n${product.prompt}`;
+    console.log(`Generating ${product.slug} -> ${path.relative(ROOT, outputPath)}`);
+    const image = await generateImage(prompt, size);
+    await writeFile(outputPath, image);
+  }
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
