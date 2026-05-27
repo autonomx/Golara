@@ -10,7 +10,23 @@ type SeedImageDescriptor = {
   background: string;
 };
 
-const seedImagePrefix = '/seed-images/catalog';
+const catalogImagePrefix = '/seed-images/catalog';
+const photoImagePrefix = '/seed-images/photo-catalog';
+
+const photoStyleSlugs = new Set([
+  'vip-box-blue',
+  'signiture-round-baby-pink',
+  'imperium-vip-red-roses',
+  'imperium-vip-peach',
+  'woshe-grand-cream',
+  'woshe-round-hand-bouquet-honey-rose',
+  'woshe-round-hand-bouquet-ruby-harmony',
+  'woshe-round-hand-bouquet-white-lily',
+  'steel-bloom-wild-1001372',
+  'woshe-christmas-collection-round-hand-bouquet',
+  'vip-box-red-pink',
+  'imperium-pink'
+]);
 
 const descriptors: Record<string, SeedImageDescriptor> = {
   'vip-box-blue': { slug: 'vip-box-blue', code: '1004488', kind: 'box', dark: '#1f4f7a', main: '#3c7fb1', light: '#d7ecff', background: '#f5f9ff' },
@@ -40,7 +56,7 @@ const descriptors: Record<string, SeedImageDescriptor> = {
 };
 
 export function getSeedProductImagePath(slug: string): string {
-  return `${seedImagePrefix}/${slug}`;
+  return `${photoStyleSlugs.has(slug) ? photoImagePrefix : catalogImagePrefix}/${slug}`;
 }
 
 function flowers(item: SeedImageDescriptor): string {
@@ -55,8 +71,28 @@ function objectShape(item: SeedImageDescriptor): string {
   return `<rect x="405" y="540" rx="30" width="390" height="220" fill="white" opacity=".88"/><rect x="455" y="735" rx="24" width="290" height="70" fill="${item.dark}" opacity=".9"/>`;
 }
 
+function portraitClusters(item: SeedImageDescriptor): string {
+  const blooms = [
+    [410, 455, 96, item.main], [510, 365, 118, item.light], [640, 390, 128, item.main], [760, 470, 104, item.light],
+    [500, 565, 92, item.background], [620, 575, 108, item.light], [725, 590, 82, item.main]
+  ];
+  return blooms.map(([cx, cy, r, fill]) => `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" opacity=".94"/>`).join('');
+}
+
+function renderPhotoObject(item: SeedImageDescriptor): string {
+  if (item.kind === 'bouquet') return `<path d="M390 610 C475 740 530 930 600 1025 C680 925 735 735 812 610 Z" fill="#fffaf7" opacity=".96"/><path d="M470 675 C540 735 665 735 735 675 L675 960 Q600 1035 525 960 Z" fill="${item.main}" opacity=".18"/><rect x="500" y="775" width="200" height="42" rx="21" fill="${item.dark}" opacity=".58" transform="rotate(-8 600 796)"/>`;
+  if (item.kind === 'pot') return `<path d="M405 660 H795 L735 1020 H465 Z" fill="#fffaf7" opacity=".96"/><rect x="445" y="635" width="310" height="44" rx="22" fill="${item.dark}" opacity=".2"/>`;
+  return `<rect x="355" y="610" width="490" height="340" rx="42" fill="#fffaf7" opacity=".96"/><rect x="420" y="880" width="360" height="92" rx="30" fill="${item.dark}" opacity=".78"/>`;
+}
+
 export function renderSeedProductImageSvg(slug: string): string | null {
   const item = descriptors[slug];
   if (!item) return null;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1400" viewBox="0 0 1200 1400"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${item.background}"/><stop offset="100%" stop-color="${item.light}"/></linearGradient><filter id="shadow"><feDropShadow dx="0" dy="24" stdDeviation="24" flood-color="${item.dark}" flood-opacity=".18"/></filter></defs><rect width="1200" height="1400" fill="url(#bg)"/><circle cx="1060" cy="160" r="180" fill="white" opacity=".35"/><path d="M0 1180 C240 1080 360 1040 600 1120 C850 1200 980 1170 1200 1070 V1400 H0 Z" fill="white" opacity=".38"/><g filter="url(#shadow)"><rect x="70" y="72" width="1060" height="1256" rx="42" fill="white" opacity=".88"/></g><text x="92" y="132" fill="${item.dark}" font-size="28" font-family="Arial,Helvetica,sans-serif" letter-spacing="6" font-weight="700">GOLARA SEED CATALOG</text><text x="92" y="180" fill="${item.main}" font-size="24" font-family="Arial,Helvetica,sans-serif" font-weight="700">${item.kind.toUpperCase()}</text><ellipse cx="600" cy="930" rx="225" ry="28" fill="${item.dark}" opacity=".14"/>${flowers(item)}${objectShape(item)}<text x="92" y="1040" fill="#2f2a28" font-size="52" font-family="Georgia,serif" font-weight="700">${item.kind} arrangement</text><text x="92" y="1170" fill="${item.dark}" font-size="24" font-family="Arial,Helvetica,sans-serif" letter-spacing="4" font-weight="700">PRODUCT CODE</text><text x="92" y="1212" fill="#2f2a28" font-size="44" font-family="Arial,Helvetica,sans-serif" font-weight="700">${item.code}</text><text x="92" y="1280" fill="#6b625d" font-size="22" font-family="Arial,Helvetica,sans-serif">Original local placeholder artwork for seed data.</text></svg>`;
+}
+
+export function renderSeedProductPhotoSvg(slug: string): string | null {
+  const item = descriptors[slug];
+  if (!item || !photoStyleSlugs.has(slug)) return null;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1400" viewBox="0 0 1200 1400"><defs><radialGradient id="glow" cx="50%" cy="36%" r="58%"><stop offset="0%" stop-color="${item.light}"/><stop offset="58%" stop-color="${item.background}"/><stop offset="100%" stop-color="${item.dark}" stop-opacity=".32"/></radialGradient><filter id="soft"><feGaussianBlur stdDeviation="14"/></filter><filter id="shadow"><feDropShadow dx="0" dy="34" stdDeviation="32" flood-color="${item.dark}" flood-opacity=".26"/></filter></defs><rect width="1200" height="1400" fill="url(#glow)"/><circle cx="190" cy="210" r="120" fill="#fff" opacity=".24" filter="url(#soft)"/><circle cx="1010" cy="260" r="170" fill="#fff" opacity=".2" filter="url(#soft)"/><circle cx="930" cy="1030" r="230" fill="${item.main}" opacity=".13" filter="url(#soft)"/><ellipse cx="600" cy="1085" rx="330" ry="62" fill="${item.dark}" opacity=".2" filter="url(#soft)"/><g filter="url(#shadow)">${portraitClusters(item)}${renderPhotoObject(item)}</g><rect x="88" y="94" width="1024" height="1212" rx="54" fill="none" stroke="#ffffff" stroke-opacity=".64" stroke-width="8"/><text x="105" y="1200" fill="${item.dark}" font-size="28" font-family="Arial,Helvetica,sans-serif" letter-spacing="5" font-weight="700">ORIGINAL GOLARA TEST IMAGE</text><text x="105" y="1254" fill="#403936" font-size="42" font-family="Arial,Helvetica,sans-serif" font-weight="700">${item.code}</text></svg>`;
 }
