@@ -1,8 +1,9 @@
 import Link from 'next/link';
-import { CategoryCard } from '@/components/CategoryCard';
+import { HomepageCategoryTileCard } from '@/components/HomepageCategoryTileCard';
 import { ProductCard } from '@/components/ProductCard';
 import { SiteHeader } from '@/components/SiteHeader';
-import { getHomepageContent, listCategories, listProducts } from '@/lib/cms/catalog-repository';
+import { getHomepageContent, listProducts } from '@/lib/cms/catalog-repository';
+import { homepageCategoryTiles } from '@/lib/homepage-category-tiles';
 import { getStorefrontCopy } from '@/lib/localization/storefront-copy';
 
 const primaryCtaClass = 'rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30';
@@ -11,9 +12,8 @@ const secondaryCtaClass = 'rounded-full border border-rosewood/20 px-6 py-3 text
 const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key);
 
 export default async function HomePage() {
-  const [homepage, categories, products] = await Promise.all([
+  const [homepage, products] = await Promise.all([
     getHomepageContent(),
-    listCategories(),
     listProducts()
   ]);
 
@@ -50,8 +50,8 @@ export default async function HomePage() {
             <h2 className="mt-2 font-display text-4xl text-rosewood">{copy('home.collectionsTitle')}</h2>
           </div>
         </div>
-        <div className="grid gap-5 md:grid-cols-4">
-          {categories.map((category) => <CategoryCard key={category.slug} category={category} />)}
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          {homepageCategoryTiles.map((tile, index) => <HomepageCategoryTileCard key={tile.slug} tile={tile} priority={index < 4} />)}
         </div>
       </section>
 
