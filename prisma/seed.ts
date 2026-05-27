@@ -14,6 +14,8 @@ async function main() {
         title: category.title,
         eyebrow: category.eyebrow,
         description: category.description,
+        imageUrl: category.image,
+        showOnHomepage: category.showOnHomepage !== false,
         sortOrder: category.sortOrder ?? 0,
         isActive: category.isActive !== false
       },
@@ -21,12 +23,22 @@ async function main() {
         title: category.title,
         eyebrow: category.eyebrow,
         description: category.description,
+        imageUrl: category.image,
+        showOnHomepage: category.showOnHomepage !== false,
         sortOrder: category.sortOrder ?? 0,
         isActive: category.isActive !== false
       }
     });
 
     categoryBySlug.set(category.slug, savedCategory);
+  }
+
+  for (const category of seedCategories) {
+    const parentId = category.parentSlug ? categoryBySlug.get(category.parentSlug)?.id : null;
+    await prisma.category.update({
+      where: { slug: category.slug },
+      data: { parentId }
+    });
   }
 
   for (const product of seedProducts) {
