@@ -20,9 +20,11 @@ export default async function HomePage() {
   ]);
 
   const bestSellers = products.filter((product) => product.bestSeller);
-  const homepageCategoriesWithCounts = withCategoryProductCounts(homepageCategories, products).map((category) => ({
+  const categoriesWithCounts = withCategoryProductCounts(categories, products);
+  const productCountBySlug = new Map(categoriesWithCounts.map((category) => [category.slug, category.productCount]));
+  const homepageCategoriesWithCounts = homepageCategories.map((category) => ({
     ...category,
-    productCount: withCategoryProductCounts(categories, products).find((candidate) => candidate.slug === category.slug)?.productCount ?? category.productCount
+    productCount: productCountBySlug.get(category.slug) ?? 0
   }));
 
   return (
