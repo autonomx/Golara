@@ -9,10 +9,7 @@ const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1490750967868-88aa4486
 const INQUIRY_STATUSES = ['new', 'contacted', 'confirmed', 'fulfilled', 'cancelled'];
 const DEFAULT_INQUIRY_PAGE_SIZE = 10;
 
-export type InquiryStatusCount = {
-  status: string;
-  count: number;
-};
+export type InquiryStatusCount = { status: string; count: number };
 
 export type InquiryPage = {
   inquiries: CustomerInquiry[];
@@ -22,12 +19,7 @@ export type InquiryPage = {
   pageCount: number;
 };
 
-export type AdminAuditLogFilters = {
-  action?: string;
-  entity?: string;
-  actor?: string;
-  search?: string;
-};
+export type AdminAuditLogFilters = { action?: string; entity?: string; actor?: string; search?: string };
 
 type DbCategory = {
   id: string;
@@ -35,6 +27,10 @@ type DbCategory = {
   title: string;
   eyebrow: string;
   description: string;
+  imageUrl: string | null;
+  parentId: string | null;
+  parent?: { slug: string; title: string } | null;
+  showOnHomepage: boolean;
   sortOrder: number;
   isActive: boolean;
 };
@@ -57,12 +53,7 @@ type DbProduct = {
   images?: { url: string; alt: string }[];
 };
 
-type DbFollowUp = {
-  id: string;
-  note: string;
-  channel: string;
-  createdAt: Date;
-};
+type DbFollowUp = { id: string; note: string; channel: string; createdAt: Date };
 
 type DbInquiry = {
   id: string;
@@ -122,9 +113,7 @@ function buildInquiryWhere(status?: string, search?: string): InquiryWhere {
   const where: InquiryWhere = {};
   const normalizedSearch = normalizeSearch(search);
 
-  if (isKnownInquiryStatus(status)) {
-    where.status = status;
-  }
+  if (isKnownInquiryStatus(status)) where.status = status;
 
   if (normalizedSearch) {
     where.OR = [
@@ -174,13 +163,7 @@ function buildAuditLogWhere(filters: AdminAuditLogFilters = {}): AuditLogWhere {
 }
 
 function makeInquiryPage(inquiries: CustomerInquiry[], total: number, page: number, pageSize: number): InquiryPage {
-  return {
-    inquiries,
-    total,
-    page,
-    pageSize,
-    pageCount: Math.max(1, Math.ceil(total / pageSize))
-  };
+  return { inquiries, total, page, pageSize, pageCount: Math.max(1, Math.ceil(total / pageSize)) };
 }
 
 function mapCategory(category: DbCategory): Category {
@@ -190,6 +173,11 @@ function mapCategory(category: DbCategory): Category {
     title: category.title,
     eyebrow: category.eyebrow,
     description: category.description,
+    image: category.imageUrl ?? undefined,
+    parentId: category.parentId ?? undefined,
+    parentSlug: category.parent?.slug,
+    parentTitle: category.parent?.title,
+    showOnHomepage: category.showOnHomepage,
     sortOrder: category.sortOrder,
     isActive: category.isActive
   };
@@ -229,12 +217,7 @@ function mapInquiry(inquiry: DbInquiry): CustomerInquiry {
     deliveryDate: inquiry.deliveryDate ?? undefined,
     deliveryNotes: inquiry.deliveryNotes ?? undefined,
     staffNotes: inquiry.staffNotes ?? undefined,
-    followUps: inquiry.followUps?.map((followUp) => ({
-      id: followUp.id,
-      note: followUp.note,
-      channel: followUp.channel,
-      createdAt: followUp.createdAt
-    })),
+    followUps: inquiry.followUps?.map((followUp) => ({ id: followUp.id, note: followUp.note, channel: followUp.channel, createdAt: followUp.createdAt })),
     status: inquiry.status,
     createdAt: inquiry.createdAt
   };
@@ -263,10 +246,7 @@ function fallbackMedia(): MediaItem[] {
       seen.add(product.image);
       return true;
     })
-    .map((product) => ({
-      url: product.image,
-      alt: product.title
-    }));
+    .map((product) => ({ url: product.image, alt: product.title }));
 }
 
 function payloadObject(value: unknown): Partial<HomepageContent> {
@@ -287,133 +267,70 @@ async function readWithFallback<T>(readFromDb: () => Promise<T>, fallback: () =>
 
 export async function listAdminAuditLogs(filters: AdminAuditLogFilters = {}, limit = 12): Promise<AdminAuditLogEntry[]> {
   const safeLimit = Math.max(1, Math.min(50, Math.floor(limit)));
-  return readWithFallback(
-    async () => {
-      const logs = await prisma.adminAuditLog.findMany({
-        where: buildAuditLogWhere(filters),
-        orderBy: { createdAt: 'desc' },
-        take: safeLimit
-      });
-      return logs.map(mapAuditLog);
-    },
-    () => []
-  );
+  return readWithFallback(async () => {
+    const logs = await prisma.adminAuditLog.findMany({ where: buildAuditLogWhere(filters), orderBy: { createdAt: 'desc' }, take: safeLimit });
+    return logs.map(mapAuditLog);
+  }, () => []);
 }
 
 export async function listInquiryStatusCounts(search?: string): Promise<InquiryStatusCount[]> {
-  return readWithFallback(
-    async () => {
-      const normalizedSearch = normalizeSearch(search);
-      if (!normalizedSearch) {
-        const grouped = await prisma.customerInquiry.groupBy({
-          by: ['status'],
-          _count: { _all: true }
-        });
-        const counts = new Map(grouped.map((item) => [item.status, item._count._all]));
-        return INQUIRY_STATUSES.map((status) => ({ status, count: counts.get(status) ?? 0 }));
-      }
-
-      const counts = await Promise.all(
-        INQUIRY_STATUSES.map(async (status) => ({
-          status,
-          count: await prisma.customerInquiry.count({ where: buildInquiryWhere(status, normalizedSearch) })
-        }))
-      );
-      return counts;
-    },
-    emptyInquiryCounts
-  );
+  return readWithFallback(async () => {
+    const normalizedSearch = normalizeSearch(search);
+    if (!normalizedSearch) {
+      const grouped = await prisma.customerInquiry.groupBy({ by: ['status'], _count: { _all: true } });
+      const counts = new Map(grouped.map((item) => [item.status, item._count._all]));
+      return INQUIRY_STATUSES.map((status) => ({ status, count: counts.get(status) ?? 0 }));
+    }
+    return Promise.all(INQUIRY_STATUSES.map(async (status) => ({ status, count: await prisma.customerInquiry.count({ where: buildInquiryWhere(status, normalizedSearch) }) })));
+  }, emptyInquiryCounts);
 }
 
 export async function listInquiries(status?: string, search?: string): Promise<CustomerInquiry[]> {
-  return readWithFallback(
-    async () => {
-      const inquiries = await prisma.customerInquiry.findMany({
-        where: buildInquiryWhere(status, search),
-        include: {
-          product: { select: { title: true } },
-          followUps: { orderBy: { createdAt: 'desc' } }
-        },
-        orderBy: { createdAt: 'desc' }
-      });
-
-      return inquiries.map(mapInquiry);
-    },
-    () => []
-  );
+  return readWithFallback(async () => {
+    const inquiries = await prisma.customerInquiry.findMany({ where: buildInquiryWhere(status, search), include: { product: { select: { title: true } }, followUps: { orderBy: { createdAt: 'desc' } } }, orderBy: { createdAt: 'desc' } });
+    return inquiries.map(mapInquiry);
+  }, () => []);
 }
 
 export async function listInquiryPage(status?: string, page?: number, pageSize = DEFAULT_INQUIRY_PAGE_SIZE, search?: string): Promise<InquiryPage> {
   const normalizedPage = normalizePage(page);
   const normalizedPageSize = Math.max(1, Math.min(50, Math.floor(pageSize)));
-
-  return readWithFallback(
-    async () => {
-      const where = buildInquiryWhere(status, search);
-      const [total, inquiries] = await Promise.all([
-        prisma.customerInquiry.count({ where }),
-        prisma.customerInquiry.findMany({
-          where,
-          include: {
-            product: { select: { title: true } },
-            followUps: { orderBy: { createdAt: 'desc' } }
-          },
-          orderBy: { createdAt: 'desc' },
-          skip: (normalizedPage - 1) * normalizedPageSize,
-          take: normalizedPageSize
-        })
-      ]);
-
-      return makeInquiryPage(inquiries.map(mapInquiry), total, normalizedPage, normalizedPageSize);
-    },
-    () => makeInquiryPage([], 0, normalizedPage, normalizedPageSize)
-  );
+  return readWithFallback(async () => {
+    const where = buildInquiryWhere(status, search);
+    const [total, inquiries] = await Promise.all([
+      prisma.customerInquiry.count({ where }),
+      prisma.customerInquiry.findMany({ where, include: { product: { select: { title: true } }, followUps: { orderBy: { createdAt: 'desc' } } }, orderBy: { createdAt: 'desc' }, skip: (normalizedPage - 1) * normalizedPageSize, take: normalizedPageSize })
+    ]);
+    return makeInquiryPage(inquiries.map(mapInquiry), total, normalizedPage, normalizedPageSize);
+  }, () => makeInquiryPage([], 0, normalizedPage, normalizedPageSize));
 }
 
 export async function listMedia(): Promise<MediaItem[]> {
-  return readWithFallback(
-    async () => {
-      const media = await prisma.media.findMany({
-        orderBy: { createdAt: 'desc' }
-      });
-
-      return media.map((item) => ({
-        id: item.id,
-        url: item.url,
-        alt: item.alt,
-        productId: item.productId ?? undefined,
-        createdAt: item.createdAt
-      }));
-    },
-    fallbackMedia
-  );
+  return readWithFallback(async () => {
+    const media = await prisma.media.findMany({ orderBy: { createdAt: 'desc' } });
+    return media.map((item) => ({ id: item.id, url: item.url, alt: item.alt, productId: item.productId ?? undefined, createdAt: item.createdAt }));
+  }, fallbackMedia);
 }
 
 export async function listCategories(): Promise<Category[]> {
-  return readWithFallback(
-    async () => {
-      const categories = await prisma.category.findMany({
-        where: { isActive: true },
-        orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }]
-      });
+  return readWithFallback(async () => {
+    const categories = await prisma.category.findMany({ where: { isActive: true }, include: { parent: { select: { slug: true, title: true } } }, orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }] });
+    return categories.map(mapCategory);
+  }, () => [...seedCategories].filter((category) => category.isActive !== false).sort(bySortThenTitle));
+}
 
-      return categories.map(mapCategory);
-    },
-    () => [...seedCategories].filter((category) => category.isActive !== false).sort(bySortThenTitle)
-  );
+export async function listHomepageCategories(): Promise<Category[]> {
+  return readWithFallback(async () => {
+    const categories = await prisma.category.findMany({ where: { isActive: true, showOnHomepage: true }, include: { parent: { select: { slug: true, title: true } } }, orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }] });
+    return categories.map(mapCategory);
+  }, () => [...seedCategories].filter((category) => category.isActive !== false && category.showOnHomepage !== false).sort(bySortThenTitle));
 }
 
 export async function listAdminCategories(): Promise<Category[]> {
-  return readWithFallback(
-    async () => {
-      const categories = await prisma.category.findMany({
-        orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }]
-      });
-
-      return categories.map(mapCategory);
-    },
-    () => [...seedCategories].sort(bySortThenTitle)
-  );
+  return readWithFallback(async () => {
+    const categories = await prisma.category.findMany({ include: { parent: { select: { slug: true, title: true } } }, orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }] });
+    return categories.map(mapCategory);
+  }, () => [...seedCategories].sort(bySortThenTitle));
 }
 
 export async function getCategoryBySlug(slug: string): Promise<Category | undefined> {
@@ -422,81 +339,38 @@ export async function getCategoryBySlug(slug: string): Promise<Category | undefi
 }
 
 export async function listProducts(): Promise<Product[]> {
-  return readWithFallback(
-    async () => {
-      const products = await prisma.product.findMany({
-        where: { isActive: true, category: { isActive: true } },
-        include: { category: true, images: true },
-        orderBy: [{ bestSeller: 'desc' }, { title: 'asc' }]
-      });
-
-      return products.map(mapProduct);
-    },
-    () => seedProducts.filter((product) => product.isActive !== false)
-  );
+  return readWithFallback(async () => {
+    const products = await prisma.product.findMany({ where: { isActive: true, category: { isActive: true } }, include: { category: { include: { parent: { select: { slug: true, title: true } } } }, images: true }, orderBy: [{ bestSeller: 'desc' }, { title: 'asc' }] });
+    return products.map(mapProduct);
+  }, () => seedProducts.filter((product) => product.isActive !== false));
 }
 
 export async function listAdminProducts(): Promise<Product[]> {
-  return readWithFallback(
-    async () => {
-      const products = await prisma.product.findMany({
-        include: { category: true, images: true },
-        orderBy: [{ title: 'asc' }]
-      });
-
-      return products.map(mapProduct);
-    },
-    () => seedProducts
-  );
+  return readWithFallback(async () => {
+    const products = await prisma.product.findMany({ include: { category: { include: { parent: { select: { slug: true, title: true } } } }, images: true }, orderBy: [{ title: 'asc' }] });
+    return products.map(mapProduct);
+  }, () => seedProducts);
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {
-  return readWithFallback(
-    async () => {
-      const product = await prisma.product.findUnique({
-        where: { slug },
-        include: { category: true, images: true }
-      });
-
-      if (!product || !product.isActive || !product.category?.isActive) return undefined;
-      return mapProduct(product);
-    },
-    () => seedProducts.find((product) => product.slug === slug && product.isActive !== false)
-  );
+  return readWithFallback(async () => {
+    const product = await prisma.product.findUnique({ where: { slug }, include: { category: { include: { parent: { select: { slug: true, title: true } } } }, images: true } });
+    if (!product || !product.isActive || !product.category?.isActive) return undefined;
+    return mapProduct(product);
+  }, () => seedProducts.find((product) => product.slug === slug && product.isActive !== false));
 }
 
 export async function listProductsByCategorySlug(slug: string): Promise<Product[]> {
-  return readWithFallback(
-    async () => {
-      const products = await prisma.product.findMany({
-        where: { isActive: true, category: { slug, isActive: true } },
-        include: { category: true, images: true },
-        orderBy: [{ bestSeller: 'desc' }, { title: 'asc' }]
-      });
-
-      return products.map(mapProduct);
-    },
-    () => seedProducts.filter((product) => product.category === slug && product.isActive !== false)
-  );
+  return readWithFallback(async () => {
+    const products = await prisma.product.findMany({ where: { isActive: true, category: { slug, isActive: true } }, include: { category: { include: { parent: { select: { slug: true, title: true } } } }, images: true }, orderBy: [{ bestSeller: 'desc' }, { title: 'asc' }] });
+    return products.map(mapProduct);
+  }, () => seedProducts.filter((product) => product.category === slug && product.isActive !== false));
 }
 
 export async function getHomepageContent(): Promise<HomepageContent> {
-  return readWithFallback(
-    async () => {
-      const section = await prisma.homepageSection.findUnique({
-        where: { key: 'home.hero' }
-      });
-
-      if (!section?.isActive) return seedHomepageContent;
-
-      return {
-        ...seedHomepageContent,
-        eyebrow: section.subtitle ?? seedHomepageContent.eyebrow,
-        title: section.title,
-        body: section.body ?? seedHomepageContent.body,
-        ...payloadObject(section.payload)
-      };
-    },
-    () => seedHomepageContent
-  );
+  return readWithFallback(async () => {
+    const section = await prisma.homepageSection.findUnique({ where: { key: 'home.hero' } });
+    if (!section?.isActive) return seedHomepageContent;
+    return { ...seedHomepageContent, eyebrow: section.subtitle ?? seedHomepageContent.eyebrow, title: section.title, body: section.body ?? seedHomepageContent.body, ...payloadObject(section.payload) };
+  }, () => seedHomepageContent);
 }
