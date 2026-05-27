@@ -43,35 +43,11 @@ const toggleClass = 'flex items-center gap-3 rounded-2xl border border-rosewood/
 const primaryButtonClass = 'rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none';
 const secondaryButtonClass = 'rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20';
 
-function Field({
-  label,
-  name,
-  defaultValue,
-  placeholder,
-  type = 'text',
-  required = true,
-  disabled = false
-}: {
-  label: string;
-  name: string;
-  defaultValue?: string | number;
-  placeholder?: string;
-  type?: string;
-  required?: boolean;
-  disabled?: boolean;
-}) {
+function Field({ label, name, defaultValue, placeholder, type = 'text', required = true, disabled = false }: { label: string; name: string; defaultValue?: string | number; placeholder?: string; type?: string; required?: boolean; disabled?: boolean }) {
   return (
     <label className="grid gap-2 text-sm font-semibold text-rosewood">
       {label}
-      <input
-        className={inputClass}
-        name={name}
-        type={type}
-        defaultValue={defaultValue}
-        placeholder={placeholder}
-        required={required}
-        disabled={disabled}
-      />
+      <input className={inputClass} name={name} type={type} defaultValue={defaultValue} placeholder={placeholder} required={required} disabled={disabled} />
     </label>
   );
 }
@@ -80,13 +56,7 @@ function TextArea({ label, name, defaultValue, disabled = false }: { label: stri
   return (
     <label className="grid gap-2 text-sm font-semibold text-rosewood">
       {label}
-      <textarea
-        className={textAreaClass}
-        name={name}
-        defaultValue={defaultValue}
-        required
-        disabled={disabled}
-      />
+      <textarea className={textAreaClass} name={name} defaultValue={defaultValue} required disabled={disabled} />
     </label>
   );
 }
@@ -101,15 +71,7 @@ function Toggle({ label, name, defaultChecked = true, disabled = false }: { labe
 }
 
 function SubmitButton({ children, disabled }: { children: React.ReactNode; disabled: boolean }) {
-  return (
-    <button
-      className={primaryButtonClass}
-      type="submit"
-      disabled={disabled}
-    >
-      {children}
-    </button>
-  );
+  return <button className={primaryButtonClass} type="submit" disabled={disabled}>{children}</button>;
 }
 
 function categoryDefaultValue(product: Product, categories: Category[]) {
@@ -119,11 +81,7 @@ function categoryDefaultValue(product: Product, categories: Category[]) {
 function StatusBanner({ status, message }: { status?: string; message?: string }) {
   if (!status && !message) return null;
   const isError = status === 'error';
-  return (
-    <section className={`rounded-[2rem] border p-5 text-sm font-semibold ${isError ? 'border-red-200 bg-red-50 text-red-800' : 'border-olive/20 bg-white text-olive'}`}>
-      {message || statusLabels[status ?? ''] || status}
-    </section>
-  );
+  return <section className={`rounded-[2rem] border p-5 text-sm font-semibold ${isError ? 'border-red-200 bg-red-50 text-red-800' : 'border-olive/20 bg-white text-olive'}`}>{message || statusLabels[status ?? ''] || status}</section>;
 }
 
 export function AdminDashboard({ categories, products, homepage, media, databaseReady, authConfigured, authenticated, notificationMode, hasProductionStorage, status, message }: AdminDashboardProps) {
@@ -133,34 +91,16 @@ export function AdminDashboard({ categories, products, homepage, media, database
     <div className="space-y-12">
       <StatusBanner status={status} message={message} />
       <AdminQuickNav />
-      <AdminReadinessPanel
-        databaseReady={databaseReady}
-        authConfigured={authConfigured}
-        authenticated={authenticated}
-        notificationMode={notificationMode}
-        hasProductionStorage={hasProductionStorage}
-      />
+      <AdminReadinessPanel databaseReady={databaseReady} authConfigured={authConfigured} authenticated={authenticated} notificationMode={notificationMode} hasProductionStorage={hasProductionStorage} />
 
       <section className={`rounded-[2rem] border p-6 ${databaseReady && authenticated ? 'border-olive/20 bg-white' : 'border-amber-300 bg-amber-50'}`}>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">CMS status</p>
-            <h2 className="mt-3 font-display text-3xl text-rosewood">
-              {databaseReady && authenticated ? 'Editing enabled' : databaseReady ? 'Login required' : 'Seeded preview mode'}
-            </h2>
-            <p className="mt-3 max-w-3xl text-sm leading-6 text-stone-700">
-              {databaseReady && authenticated
-                ? 'Admin forms are live. Changes write to Prisma, then revalidate storefront pages.'
-                : databaseReady
-                  ? 'The database is connected, but CMS writes require admin authentication.'
-                  : 'The storefront is reading seeded fallback content. Add DATABASE_URL, run npm run db:push and npm run db:seed, then restart the app to enable editing.'}
-            </p>
+            <h2 className="mt-3 font-display text-3xl text-rosewood">{databaseReady && authenticated ? 'Editing enabled' : databaseReady ? 'Login required' : 'Seeded preview mode'}</h2>
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-stone-700">{databaseReady && authenticated ? 'Admin forms are live. Changes write to Prisma, then revalidate storefront pages.' : databaseReady ? 'The database is connected, but CMS writes require admin authentication.' : 'The storefront is reading seeded fallback content. Add DATABASE_URL, run npm run db:push and npm run db:seed, then restart the app to enable editing.'}</p>
           </div>
-          {authenticated ? (
-            <form action={logoutAction}>
-              <button className={secondaryButtonClass} type="submit">Sign out</button>
-            </form>
-          ) : null}
+          {authenticated ? <form action={logoutAction}><button className={secondaryButtonClass} type="submit">Sign out</button></form> : null}
         </div>
       </section>
 
@@ -179,17 +119,7 @@ export function AdminDashboard({ categories, products, homepage, media, database
           </form>
           <form action={uploadMediaAction} className="grid gap-4 rounded-3xl border border-rosewood/10 bg-cream p-5">
             <h3 className="font-display text-3xl text-rosewood">Upload image</h3>
-            <label className="grid gap-2 text-sm font-semibold text-rosewood">
-              Image file
-              <input
-                className={inputClass}
-                name="file"
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                required
-                disabled={disabled}
-              />
-            </label>
+            <label className="grid gap-2 text-sm font-semibold text-rosewood">Image file<input className={inputClass} name="file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" required disabled={disabled} /></label>
             <Field label="Alt text" name="alt" placeholder="Optional descriptive text" required={false} disabled={disabled} />
             <SubmitButton disabled={disabled}>Upload image</SubmitButton>
           </form>
@@ -197,28 +127,17 @@ export function AdminDashboard({ categories, products, homepage, media, database
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {media.map((item) => (
             <article key={item.url} className="overflow-hidden rounded-3xl border border-rosewood/10 bg-cream shadow-sm">
-              <div className="relative aspect-square bg-blush">
-                <Image src={item.url} alt={item.alt} fill className="object-cover" sizes="25vw" />
-              </div>
-              <div className="space-y-2 p-4">
-                <p className="text-sm font-semibold text-rosewood">{item.alt}</p>
-                <p className="break-all text-xs text-stone-500">{item.url}</p>
-              </div>
+              <div className="relative aspect-square bg-blush"><Image src={item.url} alt={item.alt} fill className="object-cover" sizes="25vw" /></div>
+              <div className="space-y-2 p-4"><p className="text-sm font-semibold text-rosewood">{item.alt}</p><p className="break-all text-xs text-stone-500">{item.url}</p></div>
             </article>
           ))}
         </div>
       </section>
 
       <section id="homepage" className="scroll-mt-8 rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
-        <div className="mb-6">
-          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Homepage</p>
-          <h2 className="mt-2 font-display text-4xl text-rosewood">Hero content</h2>
-        </div>
+        <div className="mb-6"><p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Homepage</p><h2 className="mt-2 font-display text-4xl text-rosewood">Hero content</h2></div>
         <form action={updateHomepageAction} className="grid gap-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Eyebrow" name="eyebrow" defaultValue={homepage.eyebrow} disabled={disabled} />
-            <Field label="Title" name="title" defaultValue={homepage.title} disabled={disabled} />
-          </div>
+          <div className="grid gap-4 md:grid-cols-2"><Field label="Eyebrow" name="eyebrow" defaultValue={homepage.eyebrow} disabled={disabled} /><Field label="Title" name="title" defaultValue={homepage.title} disabled={disabled} /></div>
           <TextArea label="Body" name="body" defaultValue={homepage.body} disabled={disabled} />
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="Primary CTA label" name="primaryCtaLabel" defaultValue={homepage.primaryCtaLabel} disabled={disabled} />
@@ -234,33 +153,15 @@ export function AdminDashboard({ categories, products, homepage, media, database
       </section>
 
       <section id="categories" className="scroll-mt-8 rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
-        <div className="mb-6">
-          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Categories</p>
-          <h2 className="mt-2 font-display text-4xl text-rosewood">Create category</h2>
-        </div>
+        <div className="mb-6"><p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Categories</p><h2 className="mt-2 font-display text-4xl text-rosewood">Create category</h2></div>
         <form action={createCategoryAction} className="grid gap-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Title" name="title" placeholder="Condolences" disabled={disabled} />
-            <Field label="Slug" name="slug" placeholder="condolences" required={false} disabled={disabled} />
-            <Field label="Eyebrow" name="eyebrow" placeholder="Sympathy flowers" disabled={disabled} />
-            <Field label="Sort order" name="sortOrder" type="number" defaultValue={100} disabled={disabled} />
-          </div>
-          <TextArea label="Description" name="description" disabled={disabled} />
-          <Toggle label="Visible on storefront" name="isActive" disabled={disabled} />
+          <CategoryFields categories={categories} media={media} disabled={disabled} />
           <SubmitButton disabled={disabled}>Create category</SubmitButton>
         </form>
-
         <div className="mt-8 grid gap-5">
           {categories.map((category) => (
             <form key={category.slug} action={updateCategoryAction.bind(null, category.id ?? '')} className="grid gap-4 rounded-3xl border border-rosewood/10 bg-cream p-5">
-              <div className="grid gap-4 md:grid-cols-2">
-                <Field label="Title" name="title" defaultValue={category.title} disabled={disabled || !category.id} />
-                <Field label="Slug" name="slug" defaultValue={category.slug} disabled={disabled || !category.id} />
-                <Field label="Eyebrow" name="eyebrow" defaultValue={category.eyebrow} disabled={disabled || !category.id} />
-                <Field label="Sort order" name="sortOrder" type="number" defaultValue={category.sortOrder ?? 100} disabled={disabled || !category.id} />
-              </div>
-              <TextArea label="Description" name="description" defaultValue={category.description} disabled={disabled || !category.id} />
-              <Toggle label="Visible on storefront" name="isActive" defaultChecked={category.isActive !== false} disabled={disabled || !category.id} />
+              <CategoryFields category={category} categories={categories} media={media} disabled={disabled || !category.id} />
               <SubmitButton disabled={disabled || !category.id}>Update category</SubmitButton>
             </form>
           ))}
@@ -268,25 +169,37 @@ export function AdminDashboard({ categories, products, homepage, media, database
       </section>
 
       <section id="products" className="scroll-mt-8 rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
-        <div className="mb-6">
-          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Products</p>
-          <h2 className="mt-2 font-display text-4xl text-rosewood">Create product</h2>
-        </div>
-        <form action={createProductAction} className="grid gap-4">
-          <ProductFields categories={categories} media={media} disabled={disabled} />
-          <SubmitButton disabled={disabled}>Create product</SubmitButton>
-        </form>
-
-        <div className="mt-8 grid gap-5">
-          {products.map((product) => (
-            <form key={product.slug} action={updateProductAction.bind(null, product.id ?? '')} className="grid gap-4 rounded-3xl border border-rosewood/10 bg-cream p-5">
-              <ProductFields product={product} categories={categories} media={media} disabled={disabled || !product.id} />
-              <SubmitButton disabled={disabled || !product.id}>Update product</SubmitButton>
-            </form>
-          ))}
-        </div>
+        <div className="mb-6"><p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Products</p><h2 className="mt-2 font-display text-4xl text-rosewood">Create product</h2></div>
+        <form action={createProductAction} className="grid gap-4"><ProductFields categories={categories} media={media} disabled={disabled} /><SubmitButton disabled={disabled}>Create product</SubmitButton></form>
+        <div className="mt-8 grid gap-5">{products.map((product) => <form key={product.slug} action={updateProductAction.bind(null, product.id ?? '')} className="grid gap-4 rounded-3xl border border-rosewood/10 bg-cream p-5"><ProductFields product={product} categories={categories} media={media} disabled={disabled || !product.id} /><SubmitButton disabled={disabled || !product.id}>Update product</SubmitButton></form>)}</div>
       </section>
     </div>
+  );
+}
+
+function CategoryFields({ category, categories, media, disabled }: { category?: Category; categories: Category[]; media: MediaItem[]; disabled: boolean }) {
+  const mediaUrls = new Set(media.map((item) => item.url));
+  const selectedMediaUrl = category?.image && mediaUrls.has(category.image) ? category.image : '';
+  const manualImageUrl = category?.image && !mediaUrls.has(category.image) ? category.image : '';
+  const parentOptions = categories.filter((option) => option.id && option.id !== category?.id);
+
+  return (
+    <>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Field label="Title" name="title" defaultValue={category?.title} placeholder="Flower Boxes" disabled={disabled} />
+        <Field label="Slug" name="slug" defaultValue={category?.slug} placeholder="flower-boxes" required={false} disabled={disabled} />
+        <Field label="Eyebrow" name="eyebrow" defaultValue={category?.eyebrow} placeholder="Signature gifts" disabled={disabled} />
+        <Field label="Sort order" name="sortOrder" type="number" defaultValue={category?.sortOrder ?? 100} disabled={disabled} />
+      </div>
+      <label className="grid gap-2 text-sm font-semibold text-rosewood">Parent category<select className={inputClass} name="parentId" defaultValue={category?.parentId ?? ''} disabled={disabled}><option value="">No parent category</option>{parentOptions.map((option) => <option key={option.id} value={option.id}>{option.title}</option>)}</select></label>
+      <label className="grid gap-2 text-sm font-semibold text-rosewood">Category image from media library<select className={inputClass} name="categorySelectedMediaUrl" defaultValue={selectedMediaUrl} disabled={disabled}><option value="">Use manual category image URL below</option>{media.map((item) => <option key={item.url} value={item.url}>{item.alt}</option>)}</select></label>
+      <Field label="Manual category image URL" name="categoryImageUrl" defaultValue={manualImageUrl} placeholder="/seed-images/category-real/flower-boxes or /uploads/file.webp" required={false} disabled={disabled} />
+      <TextArea label="Description" name="description" defaultValue={category?.description} disabled={disabled} />
+      <div className="grid gap-3 md:grid-cols-3">
+        <Toggle label="Visible on storefront" name="isActive" defaultChecked={category?.isActive !== false} disabled={disabled} />
+        <Toggle label="Show on homepage" name="showOnHomepage" defaultChecked={category?.showOnHomepage !== false} disabled={disabled} />
+      </div>
+    </>
   );
 }
 
@@ -303,37 +216,9 @@ function ProductFields({ product, categories, media, disabled }: { product?: Pro
         <Field label="Product code" name="code" defaultValue={product?.code} placeholder="GL-4001" disabled={disabled} />
         <Field label="Price" name="price" type="number" defaultValue={product?.price ?? 0} disabled={disabled} />
         <Field label="Currency" name="currency" defaultValue={product?.currency ?? 'CAD'} disabled={disabled} />
-        <label className="grid gap-2 text-sm font-semibold text-rosewood">
-          Category
-          <select
-            className={inputClass}
-            name="categoryId"
-            defaultValue={selectedCategory}
-            required
-            disabled={disabled}
-          >
-            {categories.map((category) => (
-              <option key={category.slug} value={category.id ?? ''}>
-                {category.title}
-              </option>
-            ))}
-          </select>
-        </label>
+        <label className="grid gap-2 text-sm font-semibold text-rosewood">Category<select className={inputClass} name="categoryId" defaultValue={selectedCategory} required disabled={disabled}>{categories.map((category) => <option key={category.slug} value={category.id ?? ''}>{category.parentTitle ? `${category.parentTitle} / ${category.title}` : category.title}</option>)}</select></label>
       </div>
-      <label className="grid gap-2 text-sm font-semibold text-rosewood">
-        Media library image
-        <select
-          className={inputClass}
-          name="selectedMediaUrl"
-          defaultValue={selectedMediaUrl}
-          disabled={disabled}
-        >
-          <option value="">Use manual image URL below</option>
-          {media.map((item) => (
-            <option key={item.url} value={item.url}>{item.alt}</option>
-          ))}
-        </select>
-      </label>
+      <label className="grid gap-2 text-sm font-semibold text-rosewood">Media library image<select className={inputClass} name="selectedMediaUrl" defaultValue={selectedMediaUrl} disabled={disabled}><option value="">Use manual image URL below</option>{media.map((item) => <option key={item.url} value={item.url}>{item.alt}</option>)}</select></label>
       <Field label="Manual image URL" name="imageUrl" defaultValue={product?.image} placeholder="https://... or /uploads/file.webp" required={false} disabled={disabled} />
       <TextArea label="Description" name="description" defaultValue={product?.description} disabled={disabled} />
       <div className="grid gap-3 md:grid-cols-4">

@@ -14,16 +14,22 @@ export const seedHomepageContent: HomepageContent = {
   panelBody: 'Seed data uses public product names, codes, and prices for realistic testing while descriptions and images remain original placeholders.'
 };
 
+const categoryImage = (slug: string) => `/seed-images/category-real/${slug}`;
+
 export const seedCategories: Category[] = [
-  { slug: 'available-today', title: 'Available Today', eyebrow: 'Daily selection', description: 'Ready-to-order arrangements inspired by the public Woshe daily and VIP catalog structure.', sortOrder: 10, isActive: true },
-  { slug: 'vip', title: 'VIP', eyebrow: 'Premium line', description: 'Large premium flower boxes, hand bouquets, and statement arrangements for luxury gifting tests.', sortOrder: 20, isActive: true },
-  { slug: 'flower-boxes', title: 'Flower Boxes', eyebrow: 'Signature gifts', description: 'Boxed floral arrangements, rose boxes, and premium packaged gifts for ecommerce testing.', sortOrder: 30, isActive: true },
-  { slug: 'bouquets', title: 'Bouquets', eyebrow: 'Hand bouquets', description: 'Round and hand-tied bouquet products for listing, cart, checkout, and order-history tests.', sortOrder: 40, isActive: true },
-  { slug: 'birthday', title: 'Birthday', eyebrow: 'Celebration gifts', description: 'Birthday flowers and gift-style arrangements for seasonal storefront testing.', sortOrder: 50, isActive: true },
-  { slug: 'pots', title: 'Pots', eyebrow: 'Vases and pots', description: 'Potted, vase, and steel-bloom arrangements for testing broader product categories.', sortOrder: 60, isActive: true },
-  { slug: 'cake-balloon', title: 'Cake & Balloon', eyebrow: 'Add-on gifts', description: 'Cake, balloon, and celebration add-on category placeholders for navigation parity.', sortOrder: 70, isActive: true },
-  { slug: 'weddings', title: 'Weddings', eyebrow: 'Ceremony design', description: 'Wedding, proposal, and ceremony design category placeholders for future event products.', sortOrder: 80, isActive: true },
-  { slug: 'condolences', title: 'Condolences', eyebrow: 'Sympathy flowers', description: 'Sympathy and condolence arrangement placeholders for full catalog coverage.', sortOrder: 90, isActive: true }
+  { slug: 'available-today', title: 'Available Today', eyebrow: 'Daily selection', description: 'Ready-to-order arrangements inspired by the public Woshe daily and VIP catalog structure.', image: categoryImage('bouquets'), showOnHomepage: true, sortOrder: 10, isActive: true },
+  { slug: 'vip', title: 'VIP', eyebrow: 'Premium line', description: 'Large premium flower boxes, hand bouquets, and statement arrangements for luxury gifting tests.', image: categoryImage('royal'), showOnHomepage: true, sortOrder: 20, isActive: true },
+  { slug: 'flower-boxes', title: 'Flower Boxes', eyebrow: 'Signature gifts', description: 'Boxed floral arrangements, rose boxes, and premium packaged gifts for ecommerce testing.', image: categoryImage('flower-boxes'), showOnHomepage: true, sortOrder: 30, isActive: true },
+  { slug: 'bouquets', title: 'Bouquets', eyebrow: 'Hand bouquets', description: 'Round and hand-tied bouquet products for listing, cart, checkout, and order-history tests.', image: categoryImage('bouquets'), showOnHomepage: true, sortOrder: 40, isActive: true },
+  { slug: 'birthday', title: 'Birthday', eyebrow: 'Celebration gifts', description: 'Birthday flowers and gift-style arrangements for seasonal storefront testing.', image: categoryImage('birthday'), showOnHomepage: true, sortOrder: 50, isActive: true },
+  { slug: 'pots', title: 'Pots', eyebrow: 'Vases and pots', description: 'Potted, vase, and steel-bloom arrangements for testing broader product categories.', image: categoryImage('pots'), showOnHomepage: true, sortOrder: 60, isActive: true },
+  { slug: 'cake-balloon', title: 'Cake & Balloon', eyebrow: 'Add-on gifts', description: 'Cake, balloon, and celebration add-on category placeholders for navigation parity.', image: categoryImage('cake-balloon'), showOnHomepage: true, sortOrder: 70, isActive: true },
+  { slug: 'weddings', title: 'Weddings', eyebrow: 'Ceremony design', description: 'Wedding, proposal, and ceremony design category placeholders for future event products.', image: categoryImage('weddings'), showOnHomepage: true, sortOrder: 80, isActive: true },
+  { slug: 'condolences', title: 'Condolences', eyebrow: 'Sympathy flowers', description: 'Sympathy and condolence arrangement placeholders for full catalog coverage.', image: categoryImage('condolences'), showOnHomepage: true, sortOrder: 90, isActive: true },
+  { slug: 'baby-flowers', title: 'Baby Flowers', eyebrow: 'New baby gifts', description: 'Pastel arrangements and gentle gift designs for new baby celebrations.', image: categoryImage('baby-flowers'), parentSlug: 'birthday', showOnHomepage: true, sortOrder: 100, isActive: true },
+  { slug: 'proposal', title: 'Proposal', eyebrow: 'Romantic moments', description: 'Romantic proposal flowers and ceremony-ready arrangements.', image: categoryImage('proposal'), parentSlug: 'weddings', showOnHomepage: true, sortOrder: 110, isActive: true },
+  { slug: 'ceremony-design', title: 'Ceremony Design', eyebrow: 'Event styling', description: 'Ceremony, aisle, and event floral design placeholders.', image: categoryImage('ceremony-design'), parentSlug: 'weddings', showOnHomepage: true, sortOrder: 120, isActive: true },
+  { slug: 'royal', title: 'Royal', eyebrow: 'Premium collection', description: 'Royal and VVIP floral arrangement placeholders for luxury navigation.', image: categoryImage('royal'), parentSlug: 'vip', showOnHomepage: true, sortOrder: 130, isActive: true }
 ];
 
 const seedCurrency = 'IRR';

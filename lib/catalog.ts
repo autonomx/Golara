@@ -4,6 +4,11 @@ export type Category = {
   title: string;
   eyebrow: string;
   description: string;
+  image?: string;
+  parentId?: string;
+  parentSlug?: string;
+  parentTitle?: string;
+  showOnHomepage?: boolean;
   sortOrder?: number;
   isActive?: boolean;
   updatedAt?: Date;

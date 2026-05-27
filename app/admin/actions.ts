@@ -27,6 +27,10 @@ function stringField(formData: FormData, name: string, fallback = '') {
   return value.trim();
 }
 
+function optionalString(formData: FormData, name: string) {
+  return stringField(formData, name) || undefined;
+}
+
 function requiredString(formData: FormData, name: string) {
   const value = stringField(formData, name);
   if (!value) throw new Error(`${name} is required`);
@@ -65,6 +69,20 @@ function resolveImageUrl(formData: FormData) {
   throw new Error('Choose a media-library image or provide an image URL.');
 }
 
+function resolveOptionalImageUrl(formData: FormData, selectedName: string, manualName: string) {
+  const selectedMediaUrl = stringField(formData, selectedName);
+  const imageUrl = stringField(formData, manualName);
+  if (selectedMediaUrl) return selectedMediaUrl;
+  if (imageUrl) return normalizeImageUrl(imageUrl);
+  return null;
+}
+
+function parentCategoryId(formData: FormData, categoryId?: string) {
+  const parentId = optionalString(formData, 'parentId');
+  if (!parentId || parentId === categoryId) return null;
+  return parentId;
+}
+
 function revalidateCatalog() {
   revalidatePath('/');
   revalidatePath('/products');
@@ -79,19 +97,9 @@ export async function createMediaFromUrlAction(formData: FormData) {
   const url = normalizeImageUrl(requiredString(formData, 'url'));
   const alt = requiredString(formData, 'alt');
 
-  const media = await prisma.media.upsert({
-    where: { url },
-    create: { url, alt },
-    update: { alt }
-  });
+  const media = await prisma.media.upsert({ where: { url }, create: { url, alt }, update: { alt } });
 
-  await recordAdminAuditLog({
-    action: 'media.upsert_url',
-    entity: 'media',
-    entityId: media.id,
-    summary: `Registered media URL: ${alt}`,
-    metadata: { url }
-  });
+  await recordAdminAuditLog({ action: 'media.upsert_url', entity: 'media', entityId: media.id, summary: `Registered media URL: ${alt}`, metadata: { url } });
 
   revalidateCatalog();
   redirect(adminPath('media-created'));
@@ -101,21 +109,13 @@ export async function uploadMediaAction(formData: FormData) {
   await ensureCanWriteCms();
 
   const file = formData.get('file');
-  if (!(file instanceof File) || file.size === 0) {
-    throw new Error('Choose an image file to upload.');
-  }
+  if (!(file instanceof File) || file.size === 0) throw new Error('Choose an image file to upload.');
 
   const alt = stringField(formData, 'alt') || file.name;
   const storedFile = await storeMediaUpload(file);
   const media = await prisma.media.create({ data: { url: storedFile.url, alt } });
 
-  await recordAdminAuditLog({
-    action: 'media.upload',
-    entity: 'media',
-    entityId: media.id,
-    summary: `Uploaded media: ${alt}`,
-    metadata: { url: storedFile.url, size: storedFile.size, type: storedFile.type, provider: storedFile.provider }
-  });
+  await recordAdminAuditLog({ action: 'media.upload', entity: 'media', entityId: media.id, summary: `Uploaded media: ${alt}`, metadata: { url: storedFile.url, size: storedFile.size, type: storedFile.type, provider: storedFile.provider } });
 
   revalidateCatalog();
   redirect(adminPath('media-uploaded'));
@@ -126,6 +126,7 @@ export async function createCategoryAction(formData: FormData) {
 
   const title = requiredString(formData, 'title');
   const slug = stringField(formData, 'slug') || slugify(title);
+  const imageUrl = resolveOptionalImageUrl(formData, 'categorySelectedMediaUrl', 'categoryImageUrl');
 
   const category = await prisma.category.create({
     data: {
@@ -133,18 +134,15 @@ export async function createCategoryAction(formData: FormData) {
       slug,
       eyebrow: requiredString(formData, 'eyebrow'),
       description: requiredString(formData, 'description'),
+      imageUrl,
+      parentId: parentCategoryId(formData),
+      showOnHomepage: boolField(formData, 'showOnHomepage'),
       sortOrder: intField(formData, 'sortOrder', 100),
       isActive: boolField(formData, 'isActive')
     }
   });
 
-  await recordAdminAuditLog({
-    action: 'category.create',
-    entity: 'category',
-    entityId: category.id,
-    summary: `Created category: ${category.title}`,
-    metadata: { slug: category.slug, isActive: category.isActive }
-  });
+  await recordAdminAuditLog({ action: 'category.create', entity: 'category', entityId: category.id, summary: `Created category: ${category.title}`, metadata: { slug: category.slug, isActive: category.isActive, parentId: category.parentId, showOnHomepage: category.showOnHomepage } });
 
   revalidateCatalog();
   redirect(adminPath('category-created'));
@@ -156,6 +154,7 @@ export async function updateCategoryAction(categoryId: string, formData: FormDat
 
   const title = requiredString(formData, 'title');
   const slug = stringField(formData, 'slug') || slugify(title);
+  const imageUrl = resolveOptionalImageUrl(formData, 'categorySelectedMediaUrl', 'categoryImageUrl');
 
   const category = await prisma.category.update({
     where: { id: categoryId },
@@ -164,18 +163,15 @@ export async function updateCategoryAction(categoryId: string, formData: FormDat
       slug,
       eyebrow: requiredString(formData, 'eyebrow'),
       description: requiredString(formData, 'description'),
+      imageUrl,
+      parentId: parentCategoryId(formData, categoryId),
+      showOnHomepage: boolField(formData, 'showOnHomepage'),
       sortOrder: intField(formData, 'sortOrder', 100),
       isActive: boolField(formData, 'isActive')
     }
   });
 
-  await recordAdminAuditLog({
-    action: 'category.update',
-    entity: 'category',
-    entityId: category.id,
-    summary: `Updated category: ${category.title}`,
-    metadata: { slug: category.slug, isActive: category.isActive }
-  });
+  await recordAdminAuditLog({ action: 'category.update', entity: 'category', entityId: category.id, summary: `Updated category: ${category.title}`, metadata: { slug: category.slug, isActive: category.isActive, parentId: category.parentId, showOnHomepage: category.showOnHomepage } });
 
   revalidateCatalog();
   redirect(adminPath('category-updated'));
@@ -206,13 +202,7 @@ export async function createProductAction(formData: FormData) {
     }
   });
 
-  await recordAdminAuditLog({
-    action: 'product.create',
-    entity: 'product',
-    entityId: product.id,
-    summary: `Created product: ${product.title}`,
-    metadata: { slug: product.slug, code: product.code, isActive: product.isActive, requiresQuote: product.requiresQuote }
-  });
+  await recordAdminAuditLog({ action: 'product.create', entity: 'product', entityId: product.id, summary: `Created product: ${product.title}`, metadata: { slug: product.slug, code: product.code, isActive: product.isActive, requiresQuote: product.requiresQuote } });
 
   revalidateCatalog();
   redirect(adminPath('product-created'));
@@ -245,13 +235,7 @@ export async function updateProductAction(productId: string, formData: FormData)
     }
   });
 
-  await recordAdminAuditLog({
-    action: 'product.update',
-    entity: 'product',
-    entityId: product.id,
-    summary: `Updated product: ${product.title}`,
-    metadata: { slug: product.slug, code: product.code, isActive: product.isActive, requiresQuote: product.requiresQuote }
-  });
+  await recordAdminAuditLog({ action: 'product.update', entity: 'product', entityId: product.id, summary: `Updated product: ${product.title}`, metadata: { slug: product.slug, code: product.code, isActive: product.isActive, requiresQuote: product.requiresQuote } });
 
   revalidateCatalog();
   redirect(adminPath('product-updated'));
@@ -306,13 +290,7 @@ export async function updateHomepageAction(formData: FormData) {
     }
   });
 
-  await recordAdminAuditLog({
-    action: 'homepage.update',
-    entity: 'homepageSection',
-    entityId: homepage.id,
-    summary: `Updated homepage section: ${homepage.key}`,
-    metadata: { key: homepage.key, title: homepage.title }
-  });
+  await recordAdminAuditLog({ action: 'homepage.update', entity: 'homepageSection', entityId: homepage.id, summary: `Updated homepage section: ${homepage.key}`, metadata: { key: homepage.key, title: homepage.title } });
 
   revalidateCatalog();
   redirect(adminPath('homepage-updated'));
