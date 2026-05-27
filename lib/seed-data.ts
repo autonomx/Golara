@@ -1,9 +1,10 @@
 import type { Category, HomepageContent, Product } from './catalog';
+import { getSeedProductImagePath } from './seed-product-images';
 
 export const seedHomepageContent: HomepageContent = {
   eyebrow: 'Luxury floral studio',
   title: 'Flowers for moments worth keeping.',
-  body: 'Golara is an editable ecommerce storefront for bouquets, flower boxes, weddings, events, and premium gifts. The test catalog mirrors public Woshe-style product facts while using original placeholder imagery and editable product copy.',
+  body: 'Golara is an editable ecommerce storefront for bouquets, flower boxes, weddings, events, and premium gifts. The test catalog mirrors public Woshe-style product facts while using original product-specific placeholder imagery and editable product copy.',
   primaryCtaLabel: 'Shop catalog',
   primaryCtaHref: '/products',
   secondaryCtaLabel: 'Manage CMS',
@@ -25,7 +26,6 @@ export const seedCategories: Category[] = [
   { slug: 'condolences', title: 'Condolences', eyebrow: 'Sympathy flowers', description: 'Sympathy and condolence arrangement placeholders for full catalog coverage.', sortOrder: 90, isActive: true }
 ];
 
-const seedImage = '/seed-images/woshe-style/floral-placeholder.svg';
 const seedCurrency = 'IRR';
 
 type SeedProductInput = Omit<Product, 'currency' | 'image' | 'isActive' | 'bestSeller'> & {
@@ -36,7 +36,7 @@ function seedProduct(input: SeedProductInput): Product {
   return {
     ...input,
     currency: seedCurrency,
-    image: seedImage,
+    image: getSeedProductImagePath(input.slug),
     bestSeller: input.bestSeller ?? true,
     isActive: true
   };
