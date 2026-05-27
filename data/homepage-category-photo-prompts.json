@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "outputDirectory": "public/seed-images/category-real",
+  "styleGuide": "Photorealistic luxury floral ecommerce category photography, horizontal 4:3 composition, soft studio window light, elegant neutral background, realistic flowers and styling, no visible brand logos, no text, no watermark, no people, original generated asset.",
+  "categories": [
+    {
+      "slug": "weddings",
+      "title": "Weddings",
+      "prompt": "Photorealistic wedding floral category image with ivory roses, blush peonies, white orchids, soft bridal bouquet styling, elegant ceremony floral details, luxury floral storefront category photo, horizontal 4:3 composition, soft natural studio light, neutral cream background, no text, no logo, no people."
+    },
+    {
+      "slug": "baby-flowers",
+      "title": "Baby Flowers",
+      "prompt": "Photorealistic new baby floral gift category image with pastel blue and pastel pink flowers, white roses, soft hydrangeas, delicate ribbon and neutral gift styling, luxury floral ecommerce category photo, horizontal 4:3 composition, soft window light, no text, no logo, no people."
+    },
+    {
+      "slug": "proposal",
+      "title": "Proposal",
+      "prompt": "Photorealistic proposal flowers category image with romantic red and blush roses, elegant ring-box-like styling without visible jewelry branding, candles blurred in background, luxury floral category photo, horizontal 4:3 composition, soft warm light, no text, no logo, no people."
+    },
+    {
+      "slug": "flower-boxes",
+      "title": "Flower Boxes",
+      "prompt": "Photorealistic luxury flower box category image with several elegant round and square floral boxes, pink roses, cream roses, burgundy accent blooms, premium gift presentation, horizontal 4:3 ecommerce category photography, soft studio light, no text, no logo, no people."
+    },
+    {
+      "slug": "birthday",
+      "title": "Birthday",
+      "prompt": "Photorealistic birthday floral category image with cheerful pink and yellow flowers, premium bouquet wrapping, tasteful cake and balloon accents in the background, luxury floral ecommerce category photo, horizontal 4:3 composition, bright soft studio light, no text, no logo, no people."
+    },
+    {
+      "slug": "pots",
+      "title": "Pots",
+      "prompt": "Photorealistic potted floral arrangement category image with modern ceramic and brushed steel vases, white roses, blue accent flowers, eucalyptus and soft greenery, contemporary luxury floral ecommerce category photo, horizontal 4:3 composition, neutral background, no text, no logo, no people."
+    },
+    {
+      "slug": "ceremony-design",
+      "title": "Ceremony Design",
+      "prompt": "Photorealistic ceremony floral design category image with elegant aisle flowers, cream and blush arrangements, soft draped fabric, event styling details, luxury floral design storefront category photo, horizontal 4:3 composition, soft warm light, no text, no logo, no people."
+    },
+    {
+      "slug": "royal",
+      "title": "Royal",
+      "prompt": "Photorealistic royal premium floral category image with dramatic luxury arrangement, deep purple, ivory and blush flowers, gold-toned vase accents, elegant high-end gift styling, horizontal 4:3 ecommerce category photo, soft studio lighting, no text, no logo, no people."
+    },
+    {
+      "slug": "condolences",
+      "title": "Condolences",
+      "prompt": "Photorealistic sympathy flowers category image with white lilies, ivory roses, soft greenery, calm elegant arrangement, respectful luxury floral storefront category photo, horizontal 4:3 composition, gentle neutral lighting, no text, no logo, no people."
+    },
+    {
+      "slug": "cake-balloon",
+      "title": "Cake and Balloon",
+      "prompt": "Photorealistic celebration gift category image with tasteful cake, balloons, and floral arrangement, pink, cream, and gold accents, luxury ecommerce gift category photo, horizontal 4:3 composition, soft bright studio lighting, no text, no logo, no people."
+    },
+    {
+      "slug": "bouquets",
+      "title": "Bouquets",
+      "prompt": "Photorealistic hand bouquet category image with several elegant wrapped bouquets, blush roses, cream roses, red accent flowers, premium wrapping paper and ribbons, luxury floral ecommerce category photo, horizontal 4:3 composition, soft studio lighting, no text, no logo, no people."
+    }
+  ]
+}
