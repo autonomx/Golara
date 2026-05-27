@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "outputDirectory": "public/seed-images/photo-real",
+  "styleGuide": "Photorealistic luxury floral ecommerce product photography, vertical 4:5 composition, soft studio window light, elegant neutral background, shallow depth of field, realistic flowers and packaging, no visible brand logos, no text, no watermark, no people, original generated asset.",
+  "products": [
+    {
+      "slug": "vip-box-blue",
+      "title": "VIP Box - Blue",
+      "code": "1004488",
+      "prompt": "Photorealistic luxury blue flower box arrangement with blue hydrangeas, white roses, pale cream accent flowers, elegant matte round box, premium floral gift packaging, vertical ecommerce product photo, soft window light, neutral cream studio background, shallow depth of field, no text, no logo, no watermark, no people."
+    },
+    {
+      "slug": "signiture-round-baby-pink",
+      "title": "Signiture Round - Baby Pink",
+      "code": "1001519",
+      "prompt": "Photorealistic baby pink round flower box with blush roses, pale pink peonies, soft white filler flowers, elegant luxury gift box, vertical ecommerce product photography, soft natural studio light, warm cream background, shallow depth of field, no text, no logo, no watermark, no people."
+    },
+    {
+      "slug": "imperium-vip-red-roses",
+      "title": "Imperium VIP - Red Roses",
+      "code": "1001495",
+      "prompt": "Photorealistic premium red rose VIP floral arrangement in an elegant luxury box, deep red roses, dark green leaves, high-end romantic gift presentation, vertical ecommerce product photo, dramatic soft studio lighting, neutral background, shallow depth of field, no text, no logo, no watermark, no people."
+    },
+    {
+      "slug": "imperium-vip-peach",
+      "title": "Imperium VIP - Peach",
+      "code": "1001494",
+      "prompt": "Photorealistic peach and cream VIP floral arrangement in a luxury box, peach roses, cream ranunculus, soft greenery, elegant premium gift styling, vertical ecommerce product photography, warm studio lighting, neutral beige background, shallow depth of field, no text, no logo, no watermark, no people."
+    },
+    {
+      "slug": "woshe-grand-cream",
+      "title": "Woshe Grand - Cream",
+      "code": "1001471",
+      "prompt": "Photorealistic grand cream floral arrangement with ivory roses, white orchids, cream hydrangeas, lush greenery, premium oversized luxury flower box, vertical ecommerce product photo, elegant cream studio background, soft diffused lighting, shallow depth of field, no text, no logo, no watermark, no people."
+    },
+    {
+      "slug": "woshe-round-hand-bouquet-honey-rose",
+      "title": "WOSHE Round Hand Bouquet - Honey Rose",
+      "code": "1001467",
+      "prompt": "Photorealistic round hand bouquet of honey rose, caramel, champagne, and cream roses wrapped in elegant neutral paper, tied with ribbon, luxury floral ecommerce photo, vertical 4:5 composition, soft studio lighting, shallow depth of field, no text, no logo, no watermark, no people."
+    },
+    {
+      "slug": "woshe-round-hand-bouquet-ruby-harmony",
+      "title": "WOSHE Round Hand Bouquet - Ruby Harmony",
+      "code": "1001466",
+      "prompt": "Photorealistic round hand bouquet with ruby red roses, burgundy accent blooms, blush filler flowers, dark green leaves, premium wrapping paper and ribbon, vertical ecommerce product photography, soft studio lighting, elegant neutral background, no text, no logo, no watermark, no people."
+    },
+    {
+      "slug": "woshe-round-hand-bouquet-white-lily",
+      "title": "Woshe Round Hand Bouquet -White Lily",
+      "code": "1001464",
+      "prompt": "Photorealistic round hand bouquet with white lilies, ivory roses, pale green leaves, elegant white and cream wrapping, premium floral gift photo, vertical ecommerce product photography, soft natural studio light, clean neutral background, no text, no logo, no watermark, no people."
+    },
+    {
+      "slug": "steel-bloom-wild-1001372",
+      "title": "Steel Bloom Wild",
+      "code": "1001372",
+      "prompt": "Photorealistic wild floral arrangement in a modern brushed steel vase, mixed wildflowers, white roses, blue accent flowers, eucalyptus, premium contemporary floral product photo, vertical ecommerce composition, soft studio lighting, neutral background, no text, no logo, no watermark, no people."
+    },
+    {
+      "slug": "woshe-christmas-collection-round-hand-bouquet",
+      "title": "Woshe Christmas Collection - Round Hand Bouquet",
+      "code": "1001187",
+      "prompt": "Photorealistic seasonal round hand bouquet with red roses, white flowers, pine greenery, subtle gold accents, elegant holiday wrapping, luxury floral ecommerce product photography, vertical composition, warm studio light, neutral background, no text, no logo, no watermark, no people."
+    },
+    {
+      "slug": "vip-box-red-pink",
+      "title": "VIP Box - Red Pink",
+      "code": "1001153",
+      "prompt": "Photorealistic VIP flower box with red and pink roses, blush peonies, dark green leaves, premium gift box, luxury floral ecommerce photo, vertical 4:5 composition, soft window light, elegant neutral studio background, no text, no logo, no watermark, no people."
+    },
+    {
+      "slug": "imperium-pink",
+      "title": "Imperium - Pink",
+      "code": "1001148",
+      "prompt": "Photorealistic pink floral arrangement in an elegant premium box, pink roses, blush ranunculus, soft white filler flowers, delicate greenery, luxury gift styling, vertical ecommerce product photo, soft studio lighting, neutral background, no text, no logo, no watermark, no people."
+    }
+  ]
+}
