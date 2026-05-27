@@ -12,7 +12,7 @@ export type HomepageCategoryTile = {
   };
 };
 
-const categoryImagePrefix = '/seed-images/category';
+const categoryImagePrefix = '/seed-images/category-real';
 
 export const homepageCategoryTiles: HomepageCategoryTile[] = [
   {
