@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { HomepageCategoryTileCard } from '@/components/HomepageCategoryTileCard';
 import { ProductCard } from '@/components/ProductCard';
 import { SiteHeader } from '@/components/SiteHeader';
-import { getHomepageContent, listHomepageCategories, listProducts } from '@/lib/cms/catalog-repository';
+import { withCategoryProductCounts } from '@/lib/category-tree';
+import { getHomepageContent, listCategories, listHomepageCategories, listProducts } from '@/lib/cms/catalog-repository';
 import { getStorefrontCopy } from '@/lib/localization/storefront-copy';
 
 const primaryCtaClass = 'rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30';
@@ -11,13 +12,20 @@ const secondaryCtaClass = 'rounded-full border border-rosewood/20 px-6 py-3 text
 const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key);
 
 export default async function HomePage() {
-  const [homepage, homepageCategories, products] = await Promise.all([
+  const [homepage, categories, homepageCategories, products] = await Promise.all([
     getHomepageContent(),
+    listCategories(),
     listHomepageCategories(),
     listProducts()
   ]);
 
   const bestSellers = products.filter((product) => product.bestSeller);
+  const categoriesWithCounts = withCategoryProductCounts(categories, products);
+  const productCountBySlug = new Map(categoriesWithCounts.map((category) => [category.slug, category.productCount]));
+  const homepageCategoriesWithCounts = homepageCategories.map((category) => ({
+    ...category,
+    productCount: productCountBySlug.get(category.slug) ?? 0
+  }));
 
   return (
     <main id="main-content" tabIndex={-1}>
@@ -51,7 +59,7 @@ export default async function HomePage() {
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {homepageCategories.map((category, index) => <HomepageCategoryTileCard key={category.slug} category={category} priority={index < 4} />)}
+          {homepageCategoriesWithCounts.map((category, index) => <HomepageCategoryTileCard key={category.slug} category={category} priority={index < 4} />)}
         </div>
       </section>
 

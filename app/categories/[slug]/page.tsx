@@ -4,36 +4,12 @@ import { HomepageCategoryTileCard } from '@/components/HomepageCategoryTileCard'
 import { PathTrail } from '@/components/PathTrail';
 import { ProductCard } from '@/components/ProductCard';
 import { SiteHeader } from '@/components/SiteHeader';
-import type { Category, Product } from '@/lib/catalog';
+import type { Category } from '@/lib/catalog';
+import { childCategoriesFor, descendantCategoriesFor, productsForCategoryTree, withCategoryProductCounts } from '@/lib/category-tree';
 import { getCategoryBySlug, listCategories, listProducts } from '@/lib/cms/catalog-repository';
 import { getStorefrontCopy } from '@/lib/localization/storefront-copy';
 import { buildPageMetadata } from '@/lib/site-metadata';
 import { buildCategoryBreadcrumbJsonLd, JsonLdScript } from '@/lib/structured-data';
-
-function childCategoriesFor(category: Category, categories: Category[]) {
-  return categories.filter((candidate) => candidate.parentSlug === category.slug && candidate.isActive !== false);
-}
-
-function descendantCategoriesFor(category: Category, categories: Category[]) {
-  const descendants: Category[] = [];
-  const queue = childCategoriesFor(category, categories);
-  const seen = new Set<string>([category.slug]);
-
-  while (queue.length > 0) {
-    const current = queue.shift();
-    if (!current || seen.has(current.slug)) continue;
-    seen.add(current.slug);
-    descendants.push(current);
-    queue.push(...childCategoriesFor(current, categories));
-  }
-
-  return descendants;
-}
-
-function productsForCategoryTree(category: Category, descendants: Category[], products: Product[]) {
-  const categorySlugs = new Set([category.slug, ...descendants.map((child) => child.slug)]);
-  return products.filter((product) => categorySlugs.has(product.category));
-}
 
 function categoryTrail(category: Category, categories: Category[]) {
   const parent = category.parentSlug ? categories.find((candidate) => candidate.slug === category.parentSlug) : undefined;
@@ -77,19 +53,21 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
 
   if (!category) notFound();
 
-  const childCategories = childCategoriesFor(category, categories);
-  const descendants = descendantCategoriesFor(category, categories);
-  const categoryProducts = productsForCategoryTree(category, descendants, products);
+  const categoriesWithCounts = withCategoryProductCounts(categories, products);
+  const categoryWithCount = categoriesWithCounts.find((candidate) => candidate.slug === category.slug) ?? category;
+  const childCategories = childCategoriesFor(categoryWithCount, categoriesWithCounts);
+  const descendants = descendantCategoriesFor(categoryWithCount, categoriesWithCounts);
+  const categoryProducts = productsForCategoryTree(categoryWithCount, categoriesWithCounts, products);
 
   return (
     <main id="main-content" tabIndex={-1}>
-      <JsonLdScript data={buildCategoryBreadcrumbJsonLd(category)} />
+      <JsonLdScript data={buildCategoryBreadcrumbJsonLd(categoryWithCount)} />
       <SiteHeader />
       <section className="mx-auto max-w-7xl px-5 py-14">
-        <PathTrail items={categoryTrail(category, categories)} />
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">{category.eyebrow}</p>
-        <h1 className="mt-3 font-display text-6xl text-rosewood">{category.title}</h1>
-        <p className="mt-4 max-w-2xl text-lg leading-8 text-stone-700">{category.description}</p>
+        <PathTrail items={categoryTrail(categoryWithCount, categoriesWithCounts)} />
+        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">{categoryWithCount.eyebrow}</p>
+        <h1 className="mt-3 font-display text-6xl text-rosewood">{categoryWithCount.title}</h1>
+        <p className="mt-4 max-w-2xl text-lg leading-8 text-stone-700">{categoryWithCount.description}</p>
 
         {childCategories.length > 0 ? (
           <section className="mt-10">
@@ -106,7 +84,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
         <section className="mt-10">
           <div className="mb-5">
             <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Products</p>
-            <h2 className="mt-2 font-display text-4xl text-rosewood">{descendants.length > 0 ? 'All in this collection' : category.title}</h2>
+            <h2 className="mt-2 font-display text-4xl text-rosewood">{descendants.length > 0 ? 'All in this collection' : categoryWithCount.title}</h2>
           </div>
           {categoryProducts.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

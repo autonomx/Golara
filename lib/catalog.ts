@@ -9,6 +9,7 @@ export type Category = {
   parentSlug?: string;
   parentTitle?: string;
   showOnHomepage?: boolean;
+  productCount?: number;
   sortOrder?: number;
   isActive?: boolean;
   updatedAt?: Date;

@@ -6,7 +6,14 @@ function categoryImage(category: Category) {
   return category.image || `/seed-images/category-real/${category.slug}`;
 }
 
+function productCountLabel(count?: number) {
+  if (typeof count !== 'number') return null;
+  return `${count} ${count === 1 ? 'product' : 'products'}`;
+}
+
 export function HomepageCategoryTileCard({ category, priority = false }: { category: Category; priority?: boolean }) {
+  const countLabel = productCountLabel(category.productCount);
+
   return (
     <Link
       href={`/categories/${category.slug}`}
@@ -22,6 +29,7 @@ export function HomepageCategoryTileCard({ category, priority = false }: { categ
           className="object-cover transition duration-500 group-hover:scale-105"
           sizes="(min-width: 1280px) 20vw, (min-width: 768px) 33vw, 50vw"
         />
+        {countLabel ? <span className="absolute bottom-3 left-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-rosewood shadow-sm backdrop-blur">{countLabel}</span> : null}
       </div>
       <div className="p-5 text-center">
         <p className="text-xs font-semibold uppercase tracking-[0.25em] text-olive">{category.eyebrow}</p>
