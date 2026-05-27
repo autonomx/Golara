@@ -26,47 +26,47 @@ const assetCandidates: AssetCandidate[] = [
   { extension: 'webp', contentType: 'image/webp' }
 ];
 
-const uploadedCategoryImageAliases: Record<string, string> = {
-  'available-today': 'bouquets',
-  daily: 'birthday',
-  'cacao-roses': 'rose-bag',
-  'today-vip': 'woshe-royal',
-  'vip-boxes': 'vip-flower-box',
-  'standard-boxes': 'standard-flower-box',
-  'rose-envelope': 'rose-bag',
-  'kids-boxes': 'kids-flower-box',
-  'vip-bouquets': 'vip-bouquet',
-  'standard-bouquets': 'standard-bouquet',
-  royal: 'woshe-royal',
-  'chocolate-eternal-rose': 'rose-bag',
-  'birthday-package': 'birthday',
-  'birthday-box': 'birthday',
-  'birthday-ceremony-design': 'ceremony-design',
-  surprise: 'balloons-2',
-  'cake-balloon': 'cakes-balloons',
-  cakes: 'cakes',
-  'birthday-cake': 'cakes-2',
-  'wedding-ceremony-cake': 'wedding',
-  'kids-cake': 'cakes-2',
-  'classic-cake': 'cakes',
-  'mini-cake-trio': 'cakes-2',
-  pots: 'vases',
-  'steel-vases': 'vases',
-  'glass-vases': 'vases',
-  orchids: 'vases',
-  'flower-baskets': 'vases',
-  condolences: 'condolence',
-  'proposal-ceremony': 'pre-weddings',
-  proposal: 'pre-weddings',
-  'bale-boroon': 'pre-weddings',
-  'baby-flowers': 'first-bloom',
-  'newborn-flowers': 'first-bloom',
-  'gender-reveal': 'first-bloom',
-  weddings: 'wedding',
-  'bridal-bouquet': 'wedding',
-  'bridal-car-design': 'wedding',
-  'groom-boutonniere': 'wedding',
-  'woshe-distance': 'bouquets'
+const uploadedCategoryImageAliases: Record<string, AssetLookup[]> = {
+  'available-today': [{ directory: 'photo-real', stem: 'bouquets' }],
+  daily: [{ directory: 'photo-real', stem: 'birthday' }],
+  'cacao-roses': [{ directory: 'photo-real', stem: 'rose-bag' }],
+  'today-vip': [{ directory: 'photo-real', stem: 'woshe-royal' }],
+  'vip-boxes': [{ directory: 'photo-real', stem: 'vip-flower-box' }],
+  'standard-boxes': [{ directory: 'photo-real', stem: 'standard-flower-box' }],
+  'rose-envelope': [{ directory: 'photo-real', stem: 'rose-bag' }],
+  'kids-boxes': [{ directory: 'photo-real', stem: 'kids-flower-box' }],
+  'vip-bouquets': [{ directory: 'photo-real', stem: 'vip-bouquet' }],
+  'standard-bouquets': [{ directory: 'photo-real', stem: 'standard-bouquet' }],
+  royal: [{ directory: 'photo-real', stem: 'woshe-royal' }],
+  'chocolate-eternal-rose': [{ directory: 'photo-real', stem: 'rose-bag' }],
+  'birthday-package': [{ directory: 'category-real', stem: 'birthday-packages' }, { directory: 'photo-real', stem: 'birthday' }],
+  'birthday-box': [{ directory: 'category-real', stem: 'birthday-box' }, { directory: 'photo-real', stem: 'birthday' }],
+  'birthday-ceremony-design': [{ directory: 'photo-real', stem: 'ceremony-design' }],
+  surprise: [{ directory: 'category-real', stem: 'surprise' }, { directory: 'photo-real', stem: 'balloons-2' }],
+  'cake-balloon': [{ directory: 'photo-real', stem: 'cakes-balloons' }],
+  cakes: [{ directory: 'photo-real', stem: 'cakes' }],
+  'birthday-cake': [{ directory: 'photo-real', stem: 'cakes-2' }],
+  'wedding-ceremony-cake': [{ directory: 'photo-real', stem: 'wedding' }],
+  'kids-cake': [{ directory: 'photo-real', stem: 'cakes-2' }],
+  'classic-cake': [{ directory: 'photo-real', stem: 'cakes' }],
+  'mini-cake-trio': [{ directory: 'photo-real', stem: 'cakes-2' }],
+  pots: [{ directory: 'photo-real', stem: 'vases' }],
+  'steel-vases': [{ directory: 'category-real', stem: 'steel-vase' }, { directory: 'photo-real', stem: 'vases' }],
+  'glass-vases': [{ directory: 'category-real', stem: 'glass-vase' }, { directory: 'photo-real', stem: 'vases' }],
+  orchids: [{ directory: 'category-real', stem: 'orchid-vase' }, { directory: 'photo-real', stem: 'vases' }],
+  'flower-baskets': [{ directory: 'category-real', stem: 'flower-basket' }, { directory: 'photo-real', stem: 'vases' }],
+  condolences: [{ directory: 'photo-real', stem: 'condolence' }],
+  'proposal-ceremony': [{ directory: 'photo-real', stem: 'pre-weddings' }],
+  proposal: [{ directory: 'photo-real', stem: 'pre-weddings' }],
+  'bale-boroon': [{ directory: 'photo-real', stem: 'pre-weddings' }],
+  'baby-flowers': [{ directory: 'photo-real', stem: 'first-bloom' }],
+  'newborn-flowers': [{ directory: 'photo-real', stem: 'first-bloom' }],
+  'gender-reveal': [{ directory: 'photo-real', stem: 'first-bloom' }],
+  weddings: [{ directory: 'photo-real', stem: 'wedding' }],
+  'bridal-bouquet': [{ directory: 'photo-real', stem: 'wedding' }],
+  'bridal-car-design': [{ directory: 'photo-real', stem: 'wedding' }],
+  'groom-boutonniere': [{ directory: 'photo-real', stem: 'wedding' }],
+  'woshe-distance': [{ directory: 'photo-real', stem: 'bouquets' }]
 };
 
 function safeSlug(value: string) {
@@ -75,10 +75,9 @@ function safeSlug(value: string) {
 
 function lookupCandidates(slug: string): AssetLookup[] {
   const normalizedSlug = safeSlug(slug);
-  const alias = uploadedCategoryImageAliases[normalizedSlug];
   return [
     { directory: 'category-real', stem: normalizedSlug },
-    ...(alias ? [{ directory: 'photo-real' as const, stem: alias }] : []),
+    ...(uploadedCategoryImageAliases[normalizedSlug] ?? []),
     { directory: 'photo-real', stem: normalizedSlug }
   ];
 }
