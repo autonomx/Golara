@@ -18,6 +18,7 @@ model Product {
   imageUrl       String
   availableToday Boolean             @default(false)
   bestSeller     Boolean             @default(false)
+  requiresQuote  Boolean             @default(false)
   isActive       Boolean             @default(true)
   sortOrder      Int                 @default(0)
   categoryId     String

@@ -49,6 +49,7 @@ type DbProduct = {
   currency: string;
   availableToday: boolean;
   bestSeller: boolean;
+  requiresQuote: boolean;
   isActive: boolean;
   categoryId: string;
   imageUrl: string;
@@ -209,6 +210,7 @@ function mapProduct(product: DbProduct): Product {
     currency: product.currency,
     availableToday: product.availableToday,
     bestSeller: product.bestSeller,
+    requiresQuote: product.requiresQuote || product.priceCents <= 0,
     isActive: product.isActive,
     image,
     description: product.description
