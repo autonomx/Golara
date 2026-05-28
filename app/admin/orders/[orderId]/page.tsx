@@ -5,13 +5,14 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { formatMinorUnitAmount } from '@/lib/catalog';
 import { getAdminCheckoutOrder } from '@/lib/checkout/admin-order-repository';
+import { CHECKOUT_FULFILLMENT_STATUSES } from '@/lib/checkout/checkout-state-machine';
 
 export const dynamic = 'force-dynamic';
 
 type AdminCheckoutOrder = NonNullable<Awaited<ReturnType<typeof getAdminCheckoutOrder>>>;
 type AdminPaymentAttempt = AdminCheckoutOrder['paymentAttempts'][number];
 
-const fulfillmentStatuses = ['not_scheduled', 'scheduled', 'preparing', 'ready_for_delivery', 'out_for_delivery', 'delivered', 'issue'];
+const fulfillmentStatuses = [...CHECKOUT_FULFILLMENT_STATUSES];
 const paymentMetadataKeys = ['verified', 'verificationSkipped', 'reason', 'providerCode', 'authority', 'refId', 'httpStatus', 'fee', 'feeType', 'instruction'];
 
 function formatDate(value: Date) {
@@ -36,19 +37,19 @@ function compactValue(value: string | number | boolean) {
 }
 
 function paymentTone(status: string, metadata: Record<string, string | number | boolean>) {
-  if (status === 'verified_paid' || metadata.verified === true) return 'border-emerald-200 bg-emerald-50 text-emerald-900';
+  if (status === 'paid' || metadata.verified === true) return 'border-emerald-200 bg-emerald-50 text-emerald-900';
   if (status === 'failed' || metadata.verified === false) return 'border-red-200 bg-red-50 text-red-800';
   if (status === 'cancelled') return 'border-amber-300 bg-amber-50 text-amber-900';
-  if (status === 'redirect_required') return 'border-blue-200 bg-blue-50 text-blue-900';
+  if (status === 'pending') return 'border-blue-200 bg-blue-50 text-blue-900';
   return 'border-rosewood/10 bg-cream text-stone-700';
 }
 
 function verificationLabel(status: string, metadata: Record<string, string | number | boolean>) {
-  if (status === 'verified_paid' || metadata.verified === true) return 'Verified paid';
+  if (status === 'paid' || metadata.verified === true) return 'Verified paid';
   if (metadata.verified === false) return `Verification failed${metadata.reason ? `: ${metadata.reason}` : ''}`;
   if (metadata.verificationSkipped === true) return `Verification skipped${metadata.reason ? `: ${metadata.reason}` : ''}`;
-  if (status === 'redirect_required') return 'Customer redirected to gateway';
-  if (status === 'manual_pending') return 'Manual staff follow-up required';
+  if (status === 'pending') return 'Payment pending';
+  if (status === 'created') return 'Payment created';
   return status;
 }
 
@@ -189,21 +190,9 @@ export default async function AdminOrderDetailPage({ params, searchParams }: { p
               </form>
             </section>
 
-            <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm"><h2 className="font-display text-3xl text-rosewood">Customer</h2><div className="mt-4 grid gap-2 text-sm text-stone-700"><p><strong>Name:</strong> {order.customer?.displayName || order.recipientName || 'Guest / draft'}</p><p><strong>Phone:</strong> {order.customer?.phone || order.recipientPhone || 'Not set'}</p><p><strong>Email:</strong> {order.customer?.email || 'Not set'}</p><p><strong>Locale:</strong> {order.customer?.locale || 'Not set'}</p></div></section>
+            <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm"><h2 className="font-display text-3xl text-rosewood">Customer</h2><div className="mt-4 grid gap-2 text-sm text-stone-700"><p><strong>Name:</strong> {order.customer?.displayName || order.recipientName || 'Guest / draft'}</p><p><strong>Phone:</strong> {order.customer?.phone || order.recipientPhone || 'Not set'}</p><p><strong>Email:</strong> {order.customer?.email || 'Not set'}</p>{order.address ? <p><strong>Address:</strong> {order.address.line1}{order.address.line2 ? `, ${order.address.line2}` : ''}</p> : null}<p><strong>Delivery:</strong> {order.deliveryDate ? formatDate(order.deliveryDate) : 'Not scheduled'} {order.deliveryWindow ? `· ${order.deliveryWindow}` : ''}</p>{order.customerNote ? <p><strong>Customer note:</strong> {order.customerNote}</p> : null}</div></section>
 
-            <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm"><h2 className="font-display text-3xl text-rosewood">Delivery</h2><div className="mt-4 grid gap-2 text-sm text-stone-700"><p><strong>Date:</strong> {order.deliveryDate ? formatDate(order.deliveryDate) : 'Not set'}</p><p><strong>Window:</strong> {order.deliveryWindow || 'Not set'}</p><p><strong>Address:</strong> {order.address ? `${order.address.line1}${order.address.line2 ? `, ${order.address.line2}` : ''}` : 'Not set'}</p><p><strong>City:</strong> {order.address?.city || 'Not set'}</p><p><strong>Notes:</strong> {order.address?.notes || order.customerNote || 'None'}</p></div></section>
-
-            <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
-              <h2 className="font-display text-3xl text-rosewood">Payment diagnostics</h2>
-              <p className="mt-2 text-sm leading-6 text-stone-600">Provider status, verification outcome, and safe metadata summaries for staff review.</p>
-              {order.paymentAttempts.length === 0 ? (
-                <p className="mt-4 text-sm text-stone-700">No payment attempts yet.</p>
-              ) : (
-                <div className="mt-4 grid gap-3">
-                  {order.paymentAttempts.map((attempt) => <PaymentAttemptCard key={attempt.id} attempt={attempt} />)}
-                </div>
-              )}
-            </section>
+            <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm"><h2 className="font-display text-3xl text-rosewood">Payments</h2>{order.paymentAttempts.length === 0 ? <p className="mt-4 rounded-3xl border border-rosewood/10 bg-cream p-4 text-sm text-stone-700">No payment attempts yet.</p> : <div className="mt-4 grid gap-3">{order.paymentAttempts.map((attempt) => <PaymentAttemptCard key={attempt.id} attempt={attempt} />)}</div>}</section>
           </aside>
         </div>
       </section>

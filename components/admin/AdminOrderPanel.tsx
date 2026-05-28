@@ -3,10 +3,11 @@ import { updateOrderStatusAction } from '@/app/admin/order-actions';
 import type { CheckoutOrderSummary } from '@/lib/catalog';
 import { formatMinorUnitAmount } from '@/lib/catalog';
 import type { AdminOrderFilters, AdminOrderPage } from '@/lib/checkout/admin-order-repository';
+import { CHECKOUT_FULFILLMENT_STATUSES, CHECKOUT_ORDER_STATUSES, CHECKOUT_PAYMENT_STATUSES } from '@/lib/checkout/checkout-state-machine';
 
-const orderStatuses = ['draft', 'pending_payment', 'paid', 'preparing', 'out_for_delivery', 'fulfilled', 'cancelled'];
-const paymentStatuses = ['manual_pending', 'redirect_required', 'verified_paid', 'failed', 'cancelled'];
-const fulfillmentStatuses = ['not_scheduled', 'scheduled', 'preparing', 'ready_for_delivery', 'out_for_delivery', 'delivered', 'issue'];
+const orderStatuses = [...CHECKOUT_ORDER_STATUSES];
+const paymentStatuses = [...CHECKOUT_PAYMENT_STATUSES];
+const fulfillmentStatuses = [...CHECKOUT_FULFILLMENT_STATUSES];
 
 const filterInputClass = 'rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20';
 const inlineInputClass = 'rounded-xl border border-rosewood/15 bg-white px-3 py-2 text-sm normal-case tracking-normal text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20';
