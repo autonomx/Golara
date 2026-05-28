@@ -1,6 +1,16 @@
 import 'server-only';
 
 import { createHash, randomInt } from 'node:crypto';
+import { hashCustomerAuthIp, hashCustomerAuthPhone, hashCustomerAuthUserAgent } from '@/lib/customer-auth/identity';
+import {
+  buildOtpRequestAuthEvent,
+  DEFAULT_OTP_REQUEST_THROTTLE_CONFIG,
+  evaluateOtpRequestThrottle,
+  type CustomerAuthEventLike,
+  type OtpRequestThrottleDecision,
+  type OtpRequestThrottleMessageKey,
+  type OtpRequestThrottleReasonCode
+} from '@/lib/customer-auth/otp-rate-limit';
 import { sendCustomerMessage } from '@/lib/customers/customer-message-provider';
 import { normalizeCustomerPhone } from '@/lib/customers/customer-repository';
 import { hasDatabase, prisma } from '@/lib/prisma';
@@ -8,13 +18,20 @@ import { hasDatabase, prisma } from '@/lib/prisma';
 const DEFAULT_OTP_TTL_MINUTES = 10;
 const DEFAULT_OTP_MAX_ATTEMPTS = 5;
 const DEFAULT_OTP_LENGTH = 6;
-const DEFAULT_OTP_RESEND_COOLDOWN_SECONDS = 60;
-const DEFAULT_OTP_REQUEST_WINDOW_MINUTES = 15;
-const DEFAULT_OTP_MAX_REQUESTS_PER_WINDOW = 5;
+
+const THROTTLE_LOOKBACK_MS = Math.max(
+  DEFAULT_OTP_REQUEST_THROTTLE_CONFIG.phoneWindowMs,
+  DEFAULT_OTP_REQUEST_THROTTLE_CONFIG.phoneDailyWindowMs,
+  DEFAULT_OTP_REQUEST_THROTTLE_CONFIG.ipWindowMs,
+  DEFAULT_OTP_REQUEST_THROTTLE_CONFIG.phoneIpWindowMs,
+  DEFAULT_OTP_REQUEST_THROTTLE_CONFIG.resendCooldownMs
+);
 
 type IssueOtpInput = {
   phone: string;
   purpose?: string;
+  ipAddress?: string;
+  userAgent?: string;
   metadata?: Record<string, string | number | boolean>;
 };
 
@@ -23,6 +40,31 @@ type VerifyOtpInput = {
   code: string;
   purpose?: string;
 };
+
+type OtpThrottleStatusReason = 'cooldown' | 'rate_limited' | 'request-failed';
+
+type OtpRequestStatus =
+  | { ok: false; reason: 'database_required' }
+  | {
+      ok: false;
+      reason: OtpThrottleStatusReason;
+      retryAfterSeconds?: number;
+      destination: string;
+      purpose: string;
+      phoneHash: string;
+      ipHash?: string;
+      userAgentHash?: string;
+      decision: OtpRequestThrottleDecision;
+    }
+  | {
+      ok: true;
+      destination: string;
+      purpose: string;
+      phoneHash: string;
+      ipHash?: string;
+      userAgentHash?: string;
+      decision: OtpRequestThrottleDecision;
+    };
 
 function optionalText(value?: string) {
   const normalized = value?.trim();
@@ -46,40 +88,26 @@ function otpLength() {
   return intEnv('CUSTOMER_OTP_LENGTH', DEFAULT_OTP_LENGTH, 4, 8);
 }
 
-function resendCooldownSeconds() {
-  return intEnv('CUSTOMER_OTP_RESEND_COOLDOWN_SECONDS', DEFAULT_OTP_RESEND_COOLDOWN_SECONDS);
-}
-
-function requestWindowMinutes() {
-  return intEnv('CUSTOMER_OTP_REQUEST_WINDOW_MINUTES', DEFAULT_OTP_REQUEST_WINDOW_MINUTES);
-}
-
-function maxRequestsPerWindow() {
-  return intEnv('CUSTOMER_OTP_MAX_REQUESTS_PER_WINDOW', DEFAULT_OTP_MAX_REQUESTS_PER_WINDOW);
-}
-
 function expiresAt() {
   const expires = new Date();
   expires.setMinutes(expires.getMinutes() + otpTtlMinutes());
   return expires;
 }
 
-function requestWindowStart() {
-  const since = new Date();
-  since.setMinutes(since.getMinutes() - requestWindowMinutes());
-  return since;
-}
-
-function cooldownStart() {
-  const since = new Date();
-  since.setSeconds(since.getSeconds() - resendCooldownSeconds());
-  return since;
+function throttleLookbackStart(now = new Date()) {
+  return new Date(now.getTime() - THROTTLE_LOOKBACK_MS);
 }
 
 function makeOtpCode() {
   const length = otpLength();
   const max = 10 ** length;
   return randomInt(0, max).toString().padStart(length, '0');
+}
+
+function statusForThrottleReason(reason?: OtpRequestThrottleReasonCode): OtpThrottleStatusReason {
+  if (reason === 'phone_resend_cooldown') return 'cooldown';
+  if (reason === 'missing_phone_hash') return 'request-failed';
+  return 'rate_limited';
 }
 
 export function hashOtpCode(destination: string, code: string, purpose = 'login') {
@@ -98,34 +126,100 @@ async function deliverOtp(destination: string, code: string, purpose: string) {
   });
 }
 
-export async function getCustomerOtpRequestStatus(phone: string, purpose = 'login') {
-  if (!hasDatabase()) return { ok: false as const, reason: 'database_required' };
-
-  const destination = normalizeCustomerPhone(phone);
-  const recentActive = await prisma.customerOtpChallenge.findFirst({
+async function listRecentOtpRequestEvents(phoneHash: string, ipHash?: string, now = new Date()): Promise<CustomerAuthEventLike[]> {
+  const events = await prisma.customerAuthEvent.findMany({
     where: {
-      destination,
-      purpose,
-      createdAt: { gt: cooldownStart() }
+      eventType: { in: ['otp_request_allowed', 'otp_request_blocked'] },
+      createdAt: { gt: throttleLookbackStart(now) },
+      OR: [
+        { phoneHash },
+        ...(ipHash ? [{ ipHash }] : [])
+      ]
     },
-    orderBy: { createdAt: 'desc' }
-  });
-  if (recentActive) {
-    return { ok: false as const, reason: 'cooldown', retryAfterSeconds: resendCooldownSeconds() };
-  }
-
-  const recentCount = await prisma.customerOtpChallenge.count({
-    where: {
-      destination,
-      purpose,
-      createdAt: { gt: requestWindowStart() }
+    select: {
+      eventType: true,
+      phoneHash: true,
+      ipHash: true,
+      createdAt: true
     }
   });
-  if (recentCount >= maxRequestsPerWindow()) {
-    return { ok: false as const, reason: 'rate_limited', retryAfterSeconds: requestWindowMinutes() * 60 };
+
+  return events;
+}
+
+async function recordOtpRequestAuthEvent(input: {
+  allowed: boolean;
+  reasonCode?: OtpRequestThrottleReasonCode;
+  messageKey: OtpRequestThrottleMessageKey;
+  retryAfterMs?: number;
+  phoneHash: string;
+  ipHash?: string;
+  userAgentHash?: string;
+  purpose: string;
+  channel?: string;
+}) {
+  const event = buildOtpRequestAuthEvent({
+    decision: {
+      allowed: input.allowed,
+      reasonCode: input.reasonCode,
+      messageKey: input.messageKey,
+      retryAfterMs: input.retryAfterMs
+    },
+    phoneHash: input.phoneHash,
+    ipHash: input.ipHash,
+    userAgentHash: input.userAgentHash,
+    purpose: input.purpose,
+    channel: input.channel
+  });
+
+  return prisma.customerAuthEvent.create({
+    data: {
+      eventType: event.eventType,
+      phoneHash: event.phoneHash,
+      ipHash: event.ipHash,
+      userAgentHash: event.userAgentHash,
+      metadata: event.metadata
+    }
+  });
+}
+
+export async function getCustomerOtpRequestStatus(phone: string, purpose = 'login', context?: { ipAddress?: string; userAgent?: string }): Promise<OtpRequestStatus> {
+  if (!hasDatabase()) return { ok: false, reason: 'database_required' };
+
+  const destination = normalizeCustomerPhone(phone);
+  const phoneHash = hashCustomerAuthPhone(destination);
+  const ipHash = hashCustomerAuthIp(context?.ipAddress) || undefined;
+  const userAgentHash = hashCustomerAuthUserAgent(context?.userAgent) || undefined;
+  const events = await listRecentOtpRequestEvents(phoneHash, ipHash);
+  const decision = evaluateOtpRequestThrottle({
+    phoneHash,
+    ipHash,
+    events
+  });
+
+  if (!decision.allowed) {
+    return {
+      ok: false,
+      reason: statusForThrottleReason(decision.reasonCode),
+      retryAfterSeconds: decision.retryAfterMs ? Math.ceil(decision.retryAfterMs / 1000) : undefined,
+      destination,
+      purpose,
+      phoneHash,
+      ipHash,
+      userAgentHash,
+      decision
+    };
   }
 
-  return { ok: true as const, destination, purpose };
+  return {
+    ok: true,
+    destination,
+    purpose,
+    phoneHash,
+    ipHash,
+    userAgentHash,
+    decision
+  };
 }
 
 export async function issueCustomerOtp(input: IssueOtpInput) {
@@ -133,8 +227,25 @@ export async function issueCustomerOtp(input: IssueOtpInput) {
 
   const destination = normalizeCustomerPhone(input.phone);
   const purpose = optionalText(input.purpose) || 'login';
-  const requestStatus = await getCustomerOtpRequestStatus(destination, purpose);
-  if (!requestStatus.ok) return requestStatus;
+  const requestStatus = await getCustomerOtpRequestStatus(destination, purpose, {
+    ipAddress: input.ipAddress,
+    userAgent: input.userAgent
+  });
+  if (!requestStatus.ok) {
+    if (requestStatus.reason !== 'database_required') {
+      await recordOtpRequestAuthEvent({
+        allowed: false,
+        reasonCode: requestStatus.decision.reasonCode,
+        messageKey: requestStatus.decision.messageKey,
+        retryAfterMs: requestStatus.decision.retryAfterMs,
+        phoneHash: requestStatus.phoneHash,
+        ipHash: requestStatus.ipHash,
+        userAgentHash: requestStatus.userAgentHash,
+        purpose
+      });
+    }
+    return requestStatus;
+  }
 
   const code = makeOtpCode();
 
@@ -150,8 +261,32 @@ export async function issueCustomerOtp(input: IssueOtpInput) {
 
   const delivery = await deliverOtp(destination, code, purpose);
   if (!delivery.ok) {
+    await prisma.customerAuthEvent.create({
+      data: {
+        eventType: 'otp_delivery_failed',
+        phoneHash: requestStatus.phoneHash,
+        ipHash: requestStatus.ipHash,
+        userAgentHash: requestStatus.userAgentHash,
+        metadata: {
+          purpose,
+          channel: 'sms',
+          provider: delivery.provider,
+          skipped: Boolean(delivery.skipped)
+        }
+      }
+    });
     return { ok: false as const, reason: 'delivery_failed', delivery };
   }
+
+  await recordOtpRequestAuthEvent({
+    allowed: true,
+    messageKey: 'otp_request_allowed',
+    phoneHash: requestStatus.phoneHash,
+    ipHash: requestStatus.ipHash,
+    userAgentHash: requestStatus.userAgentHash,
+    purpose,
+    channel: delivery.provider
+  });
 
   const challenge = await prisma.customerOtpChallenge.create({
     data: {

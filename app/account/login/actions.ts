@@ -1,5 +1,6 @@
 'use server';
 
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createCustomerSession, linkCustomerAccount } from '@/lib/customers/customer-account-repository';
 import { setCustomerSessionCookie } from '@/lib/customers/customer-session-cookie';
@@ -25,13 +26,21 @@ function loginPath(status: string, phone?: string, returnTo?: string) {
   return `/account/login?${params.toString()}`;
 }
 
+async function requestContext() {
+  const requestHeaders = await headers();
+  return {
+    ipAddress: requestHeaders.get('x-forwarded-for') || requestHeaders.get('x-real-ip') || undefined,
+    userAgent: requestHeaders.get('user-agent') || undefined
+  };
+}
+
 export async function requestCustomerOtpAction(formData: FormData) {
   const returnTo = safeReturnTo(stringField(formData, 'returnTo', '/account'));
   if (!hasDatabase()) redirect(loginPath('database-required', undefined, returnTo));
 
   try {
     const phone = normalizeCustomerPhone(stringField(formData, 'phone'));
-    const result = await issueCustomerOtp({ phone, purpose: 'login' });
+    const result = await issueCustomerOtp({ phone, purpose: 'login', ...(await requestContext()) });
     if (!result.ok) redirect(loginPath(result.reason, phone, returnTo));
     redirect(loginPath('code-sent', phone, returnTo));
   } catch (error) {
