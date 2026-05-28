@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "test:unit": "tsx tests/unit/*.test.ts",
     "check:file-lines": "node tools/check-file-lines.mjs",
     "smoke:routes": "node tools/smoke-routes.mjs",
     "smoke:routes:local": "node tools/run-smoke-routes-local.mjs",
