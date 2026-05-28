@@ -20,21 +20,22 @@ export function getAppRuntimeMode(): AppRuntimeMode {
   return 'preview';
 }
 
-export function hasDatabase() {
-  return Boolean(process.env.DATABASE_URL?.trim());
-}
-
 export function canUseSeedFallback() {
   return getAppRuntimeMode() !== 'production';
 }
 
 export function assertDatabaseOrPreviewFallback(context: string) {
-  if (hasDatabase() || canUseSeedFallback()) return;
+  if (process.env.DATABASE_URL?.trim() || canUseSeedFallback()) return;
 
   throw new Error(
     `${context}: DATABASE_URL is required when APP_MODE=production or VERCEL_ENV=production. ` +
       'Set APP_MODE=preview for seeded preview builds, or configure DATABASE_URL for production.'
   );
+}
+
+export function hasDatabase() {
+  assertDatabaseOrPreviewFallback('database availability check');
+  return Boolean(process.env.DATABASE_URL?.trim());
 }
 
 export const prisma =
