@@ -22,11 +22,18 @@ Goal: prevent production from silently falling back to seeded preview data.
 - Seed fallback should be explicit preview behavior.
 - Add clear error messages for misconfigured production.
 
-### 15.3 Deployment architecture doc
+### 15.3 Admin runtime readiness surface
 
-- Document required environment variables.
-- Document preview vs production behavior.
-- Document migration/seed process.
+- Expose effective runtime status in `/admin`.
+- Show `APP_MODE`, `NODE_ENV`, `VERCEL_ENV`, `DATABASE_URL` presence, seed fallback allowance, and production-safe status.
+- Redact secret values and show only presence flags.
+- Add unit coverage for runtime readiness states.
+
+### 15.4 Production runtime smoke checks
+
+- Add a runtime smoke/check script for production-mode safety.
+- Prove production mode fails without a database.
+- Prove production repository read errors do not fall back to seed data.
 
 ## Phase 16 — Customer OTP abuse prevention
 
