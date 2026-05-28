@@ -269,21 +269,40 @@ model CheckoutOrderItem {
 }
 
 model CheckoutPaymentAttempt {
-  id                String        @id @default(cuid())
+  id                String                 @id @default(cuid())
   orderId           String
-  order             CheckoutOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  provider          String        @default("manual")
-  status            String        @default("created")
+  order             CheckoutOrder          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider          String                 @default("manual")
+  status            String                 @default("created")
   amountCents       Int
-  currency          String        @default("TOMAN")
+  currency          String                 @default("TOMAN")
   providerReference String?
   redirectUrl       String?
   metadata          Json?
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  events            CheckoutPaymentEvent[]
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
 
   @@index([orderId, createdAt])
   @@index([provider, status])
+}
+
+model CheckoutPaymentEvent {
+  id               String                 @id @default(cuid())
+  paymentAttemptId String
+  paymentAttempt   CheckoutPaymentAttempt @relation(fields: [paymentAttemptId], references: [id], onDelete: Cascade)
+  provider         String
+  eventType        String
+  idempotencyKey   String
+  status           String?
+  metadata         Json?
+  processedAt      DateTime?
+  createdAt        DateTime               @default(now())
+
+  @@unique([provider, idempotencyKey])
+  @@index([paymentAttemptId, createdAt])
+  @@index([provider, eventType, createdAt])
+  @@index([processedAt])
 }
 
 model CheckoutOrderTimelineEvent {
