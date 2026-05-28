@@ -151,6 +151,22 @@ model CustomerOtpChallenge {
   @@index([expiresAt, consumedAt])
 }
 
+model CustomerAuthEvent {
+  id            String   @id @default(cuid())
+  eventType     String
+  phoneHash     String?
+  ipHash        String?
+  userAgentHash String?
+  challengeId   String?
+  metadata      Json?
+  createdAt     DateTime @default(now())
+
+  @@index([phoneHash, eventType, createdAt])
+  @@index([ipHash, eventType, createdAt])
+  @@index([challengeId, eventType, createdAt])
+  @@index([eventType, createdAt])
+}
+
 model CustomerAddress {
   id         String          @id @default(cuid())
   customerId String
