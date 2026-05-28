@@ -271,7 +271,7 @@ export async function issueCustomerOtp(input: IssueOtpInput) {
           purpose,
           channel: 'sms',
           provider: delivery.provider,
-          reason: delivery.reason || 'delivery_failed'
+          skipped: Boolean(delivery.skipped)
         }
       }
     });
