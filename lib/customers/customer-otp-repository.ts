@@ -39,6 +39,8 @@ type VerifyOtpInput = {
   phone: string;
   code: string;
   purpose?: string;
+  ipAddress?: string;
+  userAgent?: string;
 };
 
 type OtpThrottleStatusReason = 'cooldown' | 'rate_limited' | 'request-failed';
@@ -65,6 +67,8 @@ type OtpRequestStatus =
       userAgentHash?: string;
       decision: OtpRequestThrottleDecision;
     };
+
+type VerifyAuthEventType = 'otp_verify_failed' | 'otp_verify_blocked' | 'otp_verify_success';
 
 function optionalText(value?: string) {
   const normalized = value?.trim();
@@ -179,6 +183,36 @@ async function recordOtpRequestAuthEvent(input: {
       ipHash: event.ipHash,
       userAgentHash: event.userAgentHash,
       metadata: event.metadata
+    }
+  });
+}
+
+async function recordOtpVerifyAuthEvent(input: {
+  eventType: VerifyAuthEventType;
+  phoneHash: string;
+  ipHash?: string;
+  userAgentHash?: string;
+  challengeId?: string;
+  purpose: string;
+  reason?: string;
+  remainingAttempts?: number;
+  attemptCount?: number;
+  maxAttempts?: number;
+}) {
+  return prisma.customerAuthEvent.create({
+    data: {
+      eventType: input.eventType,
+      phoneHash: input.phoneHash,
+      ipHash: input.ipHash,
+      userAgentHash: input.userAgentHash,
+      challengeId: input.challengeId,
+      metadata: {
+        purpose: input.purpose,
+        reason: input.reason || null,
+        remainingAttempts: input.remainingAttempts ?? null,
+        attemptCount: input.attemptCount ?? null,
+        maxAttempts: input.maxAttempts ?? null
+      }
     }
   });
 }
@@ -312,6 +346,9 @@ export async function verifyCustomerOtp(input: VerifyOtpInput) {
 
   const destination = normalizeCustomerPhone(input.phone);
   const purpose = optionalText(input.purpose) || 'login';
+  const phoneHash = hashCustomerAuthPhone(destination);
+  const ipHash = hashCustomerAuthIp(input.ipAddress) || undefined;
+  const userAgentHash = hashCustomerAuthUserAgent(input.userAgent) || undefined;
   const challenge = await prisma.customerOtpChallenge.findFirst({
     where: {
       destination,
@@ -322,9 +359,31 @@ export async function verifyCustomerOtp(input: VerifyOtpInput) {
     orderBy: { createdAt: 'desc' }
   });
 
-  if (!challenge) return { ok: false as const, reason: 'missing_or_expired' };
+  if (!challenge) {
+    await recordOtpVerifyAuthEvent({
+      eventType: 'otp_verify_failed',
+      phoneHash,
+      ipHash,
+      userAgentHash,
+      purpose,
+      reason: 'missing_or_expired'
+    });
+    return { ok: false as const, reason: 'missing_or_expired' };
+  }
+
   if (challenge.attemptCount >= challenge.maxAttempts) {
-    await prisma.customerOtpChallenge.update({ where: { id: challenge.id }, data: { consumedAt: new Date() } });
+    await recordOtpVerifyAuthEvent({
+      eventType: 'otp_verify_blocked',
+      phoneHash,
+      ipHash,
+      userAgentHash,
+      challengeId: challenge.id,
+      purpose,
+      reason: 'too_many_attempts',
+      remainingAttempts: 0,
+      attemptCount: challenge.attemptCount,
+      maxAttempts: challenge.maxAttempts
+    });
     return { ok: false as const, reason: 'too_many_attempts' };
   }
 
@@ -334,10 +393,24 @@ export async function verifyCustomerOtp(input: VerifyOtpInput) {
       where: { id: challenge.id },
       data: { attemptCount: { increment: 1 } }
     });
+    const remainingAttempts = Math.max(0, updated.maxAttempts - updated.attemptCount);
+    const exhausted = updated.attemptCount >= updated.maxAttempts;
+    await recordOtpVerifyAuthEvent({
+      eventType: exhausted ? 'otp_verify_blocked' : 'otp_verify_failed',
+      phoneHash,
+      ipHash,
+      userAgentHash,
+      challengeId: updated.id,
+      purpose,
+      reason: exhausted ? 'too_many_attempts' : 'invalid_code',
+      remainingAttempts,
+      attemptCount: updated.attemptCount,
+      maxAttempts: updated.maxAttempts
+    });
     return {
       ok: false as const,
-      reason: updated.attemptCount >= updated.maxAttempts ? 'too_many_attempts' : 'invalid_code',
-      remainingAttempts: Math.max(0, updated.maxAttempts - updated.attemptCount)
+      reason: exhausted ? 'too_many_attempts' : 'invalid_code',
+      remainingAttempts
     };
   }
 
@@ -347,6 +420,18 @@ export async function verifyCustomerOtp(input: VerifyOtpInput) {
       consumedAt: new Date(),
       attemptCount: { increment: 1 }
     }
+  });
+
+  await recordOtpVerifyAuthEvent({
+    eventType: 'otp_verify_success',
+    phoneHash,
+    ipHash,
+    userAgentHash,
+    challengeId: consumed.id,
+    purpose,
+    remainingAttempts: Math.max(0, consumed.maxAttempts - consumed.attemptCount),
+    attemptCount: consumed.attemptCount,
+    maxAttempts: consumed.maxAttempts
   });
 
   return { ok: true as const, challenge: consumed, destination, purpose };
