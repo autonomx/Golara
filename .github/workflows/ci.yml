@@ -15,6 +15,7 @@ jobs:
           node-version: 22
       - run: npm install
       - run: npm run check:file-lines
+      - run: npm run check:runtime
       - run: npm run db:generate
       - run: npm run typecheck
       - run: npm run test:unit
