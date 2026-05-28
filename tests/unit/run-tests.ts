@@ -1,10 +1,7 @@
-const tests = [
-  './runtime-mode.test.ts',
-  './repository-fallback-policy.test.ts'
-];
+import { runRepositoryFallbackPolicyTests } from './repository-fallback-policy.test';
+import { runRuntimeModeTests } from './runtime-mode.test';
 
-for (const test of tests) {
-  await import(test);
-}
+await runRuntimeModeTests();
+await runRepositoryFallbackPolicyTests();
 
-console.log(`unit tests passed (${tests.length} files)`);
+console.log('unit tests passed (2 files)');
