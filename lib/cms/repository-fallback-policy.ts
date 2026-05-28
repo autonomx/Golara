@@ -1,4 +1,4 @@
-import { assertDatabaseOrPreviewFallback, canUseSeedFallback, hasDatabase } from '@/lib/runtime-mode';
+import { assertDatabaseOrPreviewFallback, canUseSeedFallback, hasDatabase } from '../runtime-mode';
 
 export async function readWithSeedFallback<T>(
   readFromDb: () => Promise<T>,
