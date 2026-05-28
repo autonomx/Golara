@@ -1,3 +1,4 @@
+import { runCheckoutStateMachineTests } from './checkout-state-machine.test';
 import { runCustomerAuthIdentityTests } from './customer-auth-identity.test';
 import { runOtpRateLimitTests } from './otp-rate-limit.test';
 import { runRepositoryFallbackPolicyTests } from './repository-fallback-policy.test';
@@ -10,7 +11,8 @@ async function main() {
   await runRuntimeReadinessTests();
   await runCustomerAuthIdentityTests();
   await runOtpRateLimitTests();
-  console.log('unit tests passed (5 files)');
+  await runCheckoutStateMachineTests();
+  console.log('unit tests passed (6 files)');
 }
 
 main().catch((error) => {
