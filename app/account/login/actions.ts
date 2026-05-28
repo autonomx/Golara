@@ -56,7 +56,7 @@ export async function verifyCustomerOtpAction(formData: FormData) {
   try {
     const phone = normalizeCustomerPhone(stringField(formData, 'phone'));
     const code = stringField(formData, 'code');
-    const result = await verifyCustomerOtp({ phone, code, purpose: 'login' });
+    const result = await verifyCustomerOtp({ phone, code, purpose: 'login', ...(await requestContext()) });
     if (!result.ok) redirect(loginPath(result.reason, phone, returnTo));
 
     const account = await linkCustomerAccount({
