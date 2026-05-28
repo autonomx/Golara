@@ -6,7 +6,10 @@ import {
   buildOtpRequestAuthEvent,
   DEFAULT_OTP_REQUEST_THROTTLE_CONFIG,
   evaluateOtpRequestThrottle,
-  type CustomerAuthEventLike
+  type CustomerAuthEventLike,
+  type OtpRequestThrottleDecision,
+  type OtpRequestThrottleMessageKey,
+  type OtpRequestThrottleReasonCode
 } from '@/lib/customer-auth/otp-rate-limit';
 import { sendCustomerMessage } from '@/lib/customers/customer-message-provider';
 import { normalizeCustomerPhone } from '@/lib/customers/customer-repository';
@@ -37,6 +40,31 @@ type VerifyOtpInput = {
   code: string;
   purpose?: string;
 };
+
+type OtpThrottleStatusReason = 'cooldown' | 'rate_limited' | 'request-failed';
+
+type OtpRequestStatus =
+  | { ok: false; reason: 'database_required' }
+  | {
+      ok: false;
+      reason: OtpThrottleStatusReason;
+      retryAfterSeconds?: number;
+      destination: string;
+      purpose: string;
+      phoneHash: string;
+      ipHash?: string;
+      userAgentHash?: string;
+      decision: OtpRequestThrottleDecision;
+    }
+  | {
+      ok: true;
+      destination: string;
+      purpose: string;
+      phoneHash: string;
+      ipHash?: string;
+      userAgentHash?: string;
+      decision: OtpRequestThrottleDecision;
+    };
 
 function optionalText(value?: string) {
   const normalized = value?.trim();
@@ -76,9 +104,9 @@ function makeOtpCode() {
   return randomInt(0, max).toString().padStart(length, '0');
 }
 
-function statusForThrottleReason(reason?: string) {
+function statusForThrottleReason(reason?: OtpRequestThrottleReasonCode): OtpThrottleStatusReason {
   if (reason === 'phone_resend_cooldown') return 'cooldown';
-  if (reason === 'missing_phone_hash') return 'request_failed';
+  if (reason === 'missing_phone_hash') return 'request-failed';
   return 'rate_limited';
 }
 
@@ -121,8 +149,8 @@ async function listRecentOtpRequestEvents(phoneHash: string, ipHash?: string, no
 
 async function recordOtpRequestAuthEvent(input: {
   allowed: boolean;
-  reasonCode?: string;
-  messageKey: 'otp_request_allowed' | 'otp_request_wait' | 'otp_request_unavailable';
+  reasonCode?: OtpRequestThrottleReasonCode;
+  messageKey: OtpRequestThrottleMessageKey;
   retryAfterMs?: number;
   phoneHash: string;
   ipHash?: string;
@@ -133,7 +161,7 @@ async function recordOtpRequestAuthEvent(input: {
   const event = buildOtpRequestAuthEvent({
     decision: {
       allowed: input.allowed,
-      reasonCode: input.reasonCode as never,
+      reasonCode: input.reasonCode,
       messageKey: input.messageKey,
       retryAfterMs: input.retryAfterMs
     },
@@ -155,31 +183,43 @@ async function recordOtpRequestAuthEvent(input: {
   });
 }
 
-export async function getCustomerOtpRequestStatus(phone: string, purpose = 'login', context?: { ipAddress?: string; userAgent?: string }) {
-  if (!hasDatabase()) return { ok: false as const, reason: 'database_required' };
+export async function getCustomerOtpRequestStatus(phone: string, purpose = 'login', context?: { ipAddress?: string; userAgent?: string }): Promise<OtpRequestStatus> {
+  if (!hasDatabase()) return { ok: false, reason: 'database_required' };
 
   const destination = normalizeCustomerPhone(phone);
   const phoneHash = hashCustomerAuthPhone(destination);
-  const ipHash = hashCustomerAuthIp(context?.ipAddress);
-  const userAgentHash = hashCustomerAuthUserAgent(context?.userAgent);
-  const events = await listRecentOtpRequestEvents(phoneHash, ipHash || undefined);
+  const ipHash = hashCustomerAuthIp(context?.ipAddress) || undefined;
+  const userAgentHash = hashCustomerAuthUserAgent(context?.userAgent) || undefined;
+  const events = await listRecentOtpRequestEvents(phoneHash, ipHash);
   const decision = evaluateOtpRequestThrottle({
     phoneHash,
-    ipHash: ipHash || undefined,
+    ipHash,
     events
   });
 
+  if (!decision.allowed) {
+    return {
+      ok: false,
+      reason: statusForThrottleReason(decision.reasonCode),
+      retryAfterSeconds: decision.retryAfterMs ? Math.ceil(decision.retryAfterMs / 1000) : undefined,
+      destination,
+      purpose,
+      phoneHash,
+      ipHash,
+      userAgentHash,
+      decision
+    };
+  }
+
   return {
-    ok: decision.allowed,
-    reason: decision.allowed ? undefined : statusForThrottleReason(decision.reasonCode),
-    retryAfterSeconds: decision.retryAfterMs ? Math.ceil(decision.retryAfterMs / 1000) : undefined,
+    ok: true,
     destination,
     purpose,
     phoneHash,
-    ipHash: ipHash || undefined,
-    userAgentHash: userAgentHash || undefined,
+    ipHash,
+    userAgentHash,
     decision
-  } as const;
+  };
 }
 
 export async function issueCustomerOtp(input: IssueOtpInput) {
@@ -192,7 +232,7 @@ export async function issueCustomerOtp(input: IssueOtpInput) {
     userAgent: input.userAgent
   });
   if (!requestStatus.ok) {
-    if (requestStatus.phoneHash) {
+    if (requestStatus.reason !== 'database_required') {
       await recordOtpRequestAuthEvent({
         allowed: false,
         reasonCode: requestStatus.decision.reasonCode,
