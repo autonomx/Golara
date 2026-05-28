@@ -8,6 +8,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
 import { getHomepageContent, listAdminAuditLogs, listAdminCategories, listAdminProducts, listInquiryPage, listInquiryStatusCounts, listMedia } from '@/lib/cms/catalog-repository';
 import { listAdminCheckoutOrderPage } from '@/lib/checkout/admin-order-repository';
+import { getCustomerAuthEventSummary } from '@/lib/customers/customer-auth-event-summary';
 import { getRuntimeReadiness } from '@/lib/runtime-readiness';
 
 export const dynamic = 'force-dynamic';
@@ -37,7 +38,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     search: optionalParam(orderSearch)
   };
   const authenticated = await isAdminAuthenticated();
-  const [categories, products, homepage, media, inquiryPageData, inquiryCounts, auditLogs, orderPageData] = await Promise.all([
+  const [categories, products, homepage, media, inquiryPageData, inquiryCounts, auditLogs, orderPageData, authEventSummary] = await Promise.all([
     listAdminCategories(),
     listAdminProducts(),
     getHomepageContent(),
@@ -45,12 +46,12 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     listInquiryPage(inquiryStatus, parsePage(inquiryPage), undefined, inquirySearch),
     listInquiryStatusCounts(inquirySearch),
     authenticated ? listAdminAuditLogs(auditFilters) : Promise.resolve([]),
-    authenticated ? listAdminCheckoutOrderPage(orderFilters, parsePage(orderPage)) : Promise.resolve({ orders: [], page: 1, pageSize: 12, totalCount: 0, totalPages: 1 })
+    authenticated ? listAdminCheckoutOrderPage(orderFilters, parsePage(orderPage)) : Promise.resolve({ orders: [], page: 1, pageSize: 12, totalCount: 0, totalPages: 1 }),
+    authenticated ? getCustomerAuthEventSummary() : getCustomerAuthEventSummary(1)
   ]);
 
   const authConfigured = isAdminAuthConfigured();
   const runtimeReadiness = getRuntimeReadiness();
-  const databaseReady = runtimeReadiness.databaseUrlPresent;
   const notificationMode = process.env.INQUIRY_NOTIFICATION_MODE?.trim() || 'log';
   const hasProductionStorage = Boolean(process.env.MEDIA_STORAGE_PROVIDER?.trim());
 
@@ -82,6 +83,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             products={products}
             homepage={homepage}
             media={media}
+            authEventSummary={authEventSummary}
             runtimeReadiness={runtimeReadiness}
             authConfigured={authConfigured}
             authenticated={authenticated}
