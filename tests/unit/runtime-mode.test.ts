@@ -24,8 +24,8 @@ async function importPrismaHelpers() {
 await withEnv({ APP_MODE: 'production', DATABASE_URL: undefined, VERCEL_ENV: undefined, NODE_ENV: 'production' }, async () => {
   const { getAppRuntimeMode, hasDatabase, canUseSeedFallback, assertDatabaseOrPreviewFallback } = await importPrismaHelpers();
   assert.equal(getAppRuntimeMode(), 'production');
-  assert.equal(hasDatabase(), false);
   assert.equal(canUseSeedFallback(), false);
+  assert.throws(() => hasDatabase(), /DATABASE_URL is required/);
   assert.throws(() => assertDatabaseOrPreviewFallback('unit-test'), /DATABASE_URL is required/);
 });
 
@@ -38,9 +38,10 @@ await withEnv({ APP_MODE: 'preview', DATABASE_URL: undefined, VERCEL_ENV: undefi
 });
 
 await withEnv({ APP_MODE: undefined, DATABASE_URL: undefined, VERCEL_ENV: 'production', NODE_ENV: 'production' }, async () => {
-  const { getAppRuntimeMode, canUseSeedFallback } = await importPrismaHelpers();
+  const { getAppRuntimeMode, hasDatabase, canUseSeedFallback } = await importPrismaHelpers();
   assert.equal(getAppRuntimeMode(), 'production');
   assert.equal(canUseSeedFallback(), false);
+  assert.throws(() => hasDatabase(), /DATABASE_URL is required/);
 });
 
 await withEnv({ APP_MODE: 'development', DATABASE_URL: 'postgresql://example.invalid/db', VERCEL_ENV: undefined, NODE_ENV: 'development' }, async () => {
