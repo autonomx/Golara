@@ -5,6 +5,8 @@ This folder contains detailed architecture design notes for the Golara storefron
 ## Documents
 
 - [System architecture](./SYSTEM_ARCHITECTURE.md) — current production architecture, major modules, data flow, boundaries, and follow-up design direction.
+- [Architecture risk register](./RISK_REGISTER.md) — launch blockers, high-risk architecture decisions, and review follow-up priorities.
+- [Checkout architecture](./CHECKOUT_ARCHITECTURE.md) — cart/order/payment/fulfillment state machines, idempotency, and inventory/capacity direction.
 
 ## Documentation principles
 
@@ -12,11 +14,14 @@ This folder contains detailed architecture design notes for the Golara storefron
 - Document current behavior separately from planned behavior.
 - Prefer explicit module boundaries, data ownership, and operational notes over vague diagrams.
 - Avoid copying vendor/source-site implementation details. Golara should use owned architecture and owned/generated assets.
+- Treat launch-blocking risks as explicit architecture work, not as vague future improvements.
 
-## Suggested future documents
+## Recommended next documents
 
-- `CATALOG_ARCHITECTURE.md` — category/product/media model and CMS editing flows.
-- `CHECKOUT_ARCHITECTURE.md` — cart, checkout order, payment attempt, fulfillment, and order timeline flows.
-- `CUSTOMER_ACCOUNT_ARCHITECTURE.md` — phone OTP login, sessions, profile, address book, and account security.
-- `MEDIA_ARCHITECTURE.md` — local uploads, generated seed assets, image routes, and future object storage.
-- `DEPLOYMENT_ARCHITECTURE.md` — environment variables, migrations, seed workflow, CI, hosting, and production launch checklist.
+The current priority order follows the architecture review: checkout state and OTP abuse prevention are launch blockers, and deployment mode safety must be settled before production.
+
+1. `CUSTOMER_ACCOUNT_ARCHITECTURE.md` — phone OTP login, throttling, sessions, profile, address book, and account security.
+2. `DEPLOYMENT_ARCHITECTURE.md` — preview/prod boundary, environment variables, migrations, seed workflow, CI, hosting, and production launch checklist.
+3. `MEDIA_ARCHITECTURE.md` — local uploads, generated seed assets, image routes, alias migration, object storage, and CDN plan.
+4. `CATALOG_ARCHITECTURE.md` — category/product/media model and CMS editing flows after localization persistence is decided.
+5. `LOCALIZATION_ARCHITECTURE.md` — Persian/English copy storage, URL strategy, fallback behavior, and RTL QA.
