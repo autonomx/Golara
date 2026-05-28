@@ -26,12 +26,21 @@ If `APP_MODE` is not configured:
 
 Production must not silently serve seed data.
 
-The runtime helper in `lib/prisma.ts` provides:
+The runtime helper in `lib/runtime-mode.ts` provides:
 
 - `getAppRuntimeMode()`
 - `hasDatabase()`
 - `canUseSeedFallback()`
 - `assertDatabaseOrPreviewFallback(context)`
+
+The runtime readiness helper in `lib/runtime-readiness.ts` exposes admin-safe status fields:
+
+- effective `APP_MODE`
+- `NODE_ENV`
+- `VERCEL_ENV`
+- `DATABASE_URL` presence only
+- seed fallback allowance
+- production-safe yes/no
 
 The intended rule is:
 
@@ -42,6 +51,8 @@ else:
   allow database reads or seeded preview fallback
 ```
 
+Repository fallback helpers must also rethrow production database read failures instead of returning seed data.
+
 ## Current implementation status
 
 Implemented in Phase 15.1:
@@ -51,11 +62,24 @@ Implemented in Phase 15.1:
 - clear error message for missing production database;
 - roadmap for repository fallback enforcement.
 
-Still to implement in Phase 15.2:
+Implemented in Phase 15.2 and 15.2.1:
 
-- update all seeded repository fallback helpers so database read failures do not fall back to seed data in production;
-- add tests around runtime mode behavior;
-- expose runtime status in admin readiness UI.
+- repository fallback policy helper;
+- catalog repository migration to the central fallback policy;
+- unit-test CI coverage for runtime mode and fallback behavior.
+
+Implemented in Phase 15.3:
+
+- admin readiness surface for runtime mode, database presence, fallback policy, and production-safe status;
+- `DATABASE_URL` redaction to a presence flag only;
+- runtime readiness unit tests.
+
+Implemented in Phase 15.4:
+
+- `npm run check:runtime` smoke script;
+- production missing-database smoke check;
+- production database-read-error smoke check;
+- preview seeded-fallback smoke check.
 
 ## Environment contract
 
@@ -97,6 +121,23 @@ DATABASE_URL=postgresql://...
 
 Production deployment should run migrations or schema push through the selected deployment process before serving traffic.
 
+## Runtime validation
+
+Before production launch or after changing runtime environment variables, run:
+
+```bash
+npm run check:runtime
+npm run test:unit
+npm run typecheck
+npm run build
+```
+
+`npm run check:runtime` validates that:
+
+- production mode without `DATABASE_URL` fails `hasDatabase()`;
+- production DB read errors rethrow instead of falling back to seeds;
+- preview mode without `DATABASE_URL` can intentionally use seeded fallback.
+
 ## Migration and seed policy
 
 Preview/demo:
@@ -113,8 +154,9 @@ Production:
 
 ## Follow-up checklist
 
-- [ ] Enforce repository fallback guard in production.
-- [ ] Add runtime mode tests.
-- [ ] Add admin readiness row for `APP_MODE`.
+- [x] Enforce repository fallback guard in production.
+- [x] Add runtime mode tests.
+- [x] Add admin readiness row for `APP_MODE`.
+- [x] Add runtime smoke checks.
 - [ ] Add staging migration checklist.
 - [ ] Document production deployment provider-specific setup.
