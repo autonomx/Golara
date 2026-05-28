@@ -6,7 +6,9 @@ This folder contains detailed architecture design notes for the Golara storefron
 
 - [System architecture](./SYSTEM_ARCHITECTURE.md) — current production architecture, major modules, data flow, boundaries, and follow-up design direction.
 - [Architecture risk register](./RISK_REGISTER.md) — launch blockers, high-risk architecture decisions, and review follow-up priorities.
+- [Architecture fix implementation roadmap](./ARCHITECTURE_FIX_ROADMAP.md) — implementation phases for resolving the architecture review concerns.
 - [Checkout architecture](./CHECKOUT_ARCHITECTURE.md) — cart/order/payment/fulfillment state machines, idempotency, and inventory/capacity direction.
+- [Deployment architecture](./DEPLOYMENT_ARCHITECTURE.md) — runtime mode contract, preview-vs-production fallback boundary, and environment setup.
 
 ## Documentation principles
 
@@ -21,7 +23,6 @@ This folder contains detailed architecture design notes for the Golara storefron
 The current priority order follows the architecture review: checkout state and OTP abuse prevention are launch blockers, and deployment mode safety must be settled before production.
 
 1. `CUSTOMER_ACCOUNT_ARCHITECTURE.md` — phone OTP login, throttling, sessions, profile, address book, and account security.
-2. `DEPLOYMENT_ARCHITECTURE.md` — preview/prod boundary, environment variables, migrations, seed workflow, CI, hosting, and production launch checklist.
-3. `MEDIA_ARCHITECTURE.md` — local uploads, generated seed assets, image routes, alias migration, object storage, and CDN plan.
-4. `CATALOG_ARCHITECTURE.md` — category/product/media model and CMS editing flows after localization persistence is decided.
-5. `LOCALIZATION_ARCHITECTURE.md` — Persian/English copy storage, URL strategy, fallback behavior, and RTL QA.
+2. `MEDIA_ARCHITECTURE.md` — local uploads, generated seed assets, image routes, alias migration, object storage, and CDN plan.
+3. `CATALOG_ARCHITECTURE.md` — category/product/media model and CMS editing flows after localization persistence is decided.
+4. `LOCALIZATION_ARCHITECTURE.md` — Persian/English copy storage, URL strategy, fallback behavior, and RTL QA.
