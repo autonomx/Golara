@@ -12,13 +12,14 @@ import {
   updateProductAction,
   uploadMediaAction
 } from '@/app/admin/actions';
+import type { RuntimeReadiness } from '@/lib/runtime-readiness';
 
 type AdminDashboardProps = {
   categories: Category[];
   products: Product[];
   homepage: HomepageContent;
   media: MediaItem[];
-  databaseReady: boolean;
+  runtimeReadiness: RuntimeReadiness;
   authConfigured: boolean;
   authenticated: boolean;
   notificationMode: string;
@@ -84,14 +85,15 @@ function StatusBanner({ status, message }: { status?: string; message?: string }
   return <section className={`rounded-[2rem] border p-5 text-sm font-semibold ${isError ? 'border-red-200 bg-red-50 text-red-800' : 'border-olive/20 bg-white text-olive'}`}>{message || statusLabels[status ?? ''] || status}</section>;
 }
 
-export function AdminDashboard({ categories, products, homepage, media, databaseReady, authConfigured, authenticated, notificationMode, hasProductionStorage, status, message }: AdminDashboardProps) {
+export function AdminDashboard({ categories, products, homepage, media, runtimeReadiness, authConfigured, authenticated, notificationMode, hasProductionStorage, status, message }: AdminDashboardProps) {
+  const databaseReady = runtimeReadiness.databaseUrlPresent;
   const disabled = !databaseReady || !authenticated;
 
   return (
     <div className="space-y-12">
       <StatusBanner status={status} message={message} />
       <AdminQuickNav />
-      <AdminReadinessPanel databaseReady={databaseReady} authConfigured={authConfigured} authenticated={authenticated} notificationMode={notificationMode} hasProductionStorage={hasProductionStorage} />
+      <AdminReadinessPanel runtimeReadiness={runtimeReadiness} authConfigured={authConfigured} authenticated={authenticated} notificationMode={notificationMode} hasProductionStorage={hasProductionStorage} />
 
       <section className={`rounded-[2rem] border p-6 ${databaseReady && authenticated ? 'border-olive/20 bg-white' : 'border-amber-300 bg-amber-50'}`}>
         <div className="flex flex-wrap items-start justify-between gap-4">
