@@ -4,10 +4,9 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
+import { transitionCheckoutFulfillmentStatus, transitionCheckoutOrderStatus } from '@/lib/checkout/checkout-status-service';
+import { assertCheckoutFulfillmentStatus, assertCheckoutOrderStatus } from '@/lib/checkout/checkout-state-machine';
 import { hasDatabase, prisma } from '@/lib/prisma';
-
-const allowedOrderStatuses = ['draft', 'pending_payment', 'paid', 'preparing', 'out_for_delivery', 'fulfilled', 'cancelled'];
-const allowedFulfillmentStatuses = ['not_scheduled', 'scheduled', 'preparing', 'ready_for_delivery', 'out_for_delivery', 'delivered', 'issue'];
 
 function stringFormValue(formData: FormData, name: string) {
   const value = formData.get(name);
@@ -28,43 +27,31 @@ export async function updateOrderStatusAction(orderId: string, formData: FormDat
   const actor = await assertAdminRole('staff');
   if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
 
-  const status = stringFormValue(formData, 'status');
+  const status = assertCheckoutOrderStatus(stringFormValue(formData, 'status'));
   const staffNotes = stringFormValue(formData, 'staffNotes');
-
-  if (!allowedOrderStatuses.includes(status)) throw new Error('Invalid order status.');
-
   const existingOrder = await prisma.checkoutOrder.findUnique({
     where: { id: orderId },
     select: { status: true, orderNumber: true }
   });
   if (!existingOrder) throw new Error('Order not found.');
 
-  const order = await prisma.checkoutOrder.update({
-    where: { id: orderId },
-    data: {
-      status,
-      staffNotes: staffNotes || undefined,
-      timelineEvents: {
-        create: {
-          type: 'status_changed',
-          title: `Status changed to ${status}`,
-          note: staffNotes || undefined,
-          actorLabel: actor.label,
-          actorRole: actor.role,
-          metadata: {
-            previousStatus: existingOrder.status,
-            status
-          }
-        }
-      }
-    }
+  const order = await transitionCheckoutOrderStatus({
+    orderId,
+    to: status,
+    note: staffNotes,
+    actorLabel: actor.label,
+    actorRole: actor.role
   });
+
+  if (staffNotes) {
+    await prisma.checkoutOrder.update({ where: { id: orderId }, data: { staffNotes } });
+  }
 
   await recordAdminAuditLog({
     action: 'order.status.update',
     entity: 'checkoutOrder',
     entityId: order.id,
-    summary: `Updated order ${order.orderNumber} from ${existingOrder.status} to ${status}`,
+    summary: `Updated order ${existingOrder.orderNumber} from ${existingOrder.status} to ${status}`,
     metadata: {
       previousStatus: existingOrder.status,
       status,
@@ -116,40 +103,30 @@ export async function updateOrderFulfillmentAction(orderId: string, formData: Fo
   const actor = await assertAdminRole('staff');
   if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
 
-  const fulfillmentStatus = stringFormValue(formData, 'fulfillmentStatus');
+  const fulfillmentStatus = assertCheckoutFulfillmentStatus(stringFormValue(formData, 'fulfillmentStatus'));
   const fulfillmentNote = stringFormValue(formData, 'fulfillmentNote');
   const courierName = stringFormValue(formData, 'courierName');
   const courierPhone = stringFormValue(formData, 'courierPhone');
-
-  if (!allowedFulfillmentStatuses.includes(fulfillmentStatus)) throw new Error('Invalid fulfillment status.');
-
   const existingOrder = await prisma.checkoutOrder.findUnique({
     where: { id: orderId },
     select: { fulfillmentStatus: true, orderNumber: true }
   });
   if (!existingOrder) throw new Error('Order not found.');
 
-  const order = await prisma.checkoutOrder.update({
+  const order = await transitionCheckoutFulfillmentStatus({
+    orderId,
+    to: fulfillmentStatus,
+    note: fulfillmentNote,
+    actorLabel: actor.label,
+    actorRole: actor.role
+  });
+
+  await prisma.checkoutOrder.update({
     where: { id: orderId },
     data: {
-      fulfillmentStatus,
       fulfillmentNote: fulfillmentNote || undefined,
       courierName: courierName || undefined,
-      courierPhone: courierPhone || undefined,
-      timelineEvents: {
-        create: {
-          type: 'fulfillment_update',
-          title: `Fulfillment changed to ${fulfillmentStatus}`,
-          note: fulfillmentNote || undefined,
-          actorLabel: actor.label,
-          actorRole: actor.role,
-          metadata: {
-            previousFulfillmentStatus: existingOrder.fulfillmentStatus,
-            fulfillmentStatus,
-            courierUpdated: Boolean(courierName || courierPhone)
-          }
-        }
-      }
+      courierPhone: courierPhone || undefined
     }
   });
 
@@ -157,7 +134,7 @@ export async function updateOrderFulfillmentAction(orderId: string, formData: Fo
     action: 'order.fulfillment.update',
     entity: 'checkoutOrder',
     entityId: order.id,
-    summary: `Updated fulfillment for order ${order.orderNumber} from ${existingOrder.fulfillmentStatus} to ${fulfillmentStatus}`,
+    summary: `Updated fulfillment for order ${existingOrder.orderNumber} from ${existingOrder.fulfillmentStatus} to ${fulfillmentStatus}`,
     metadata: {
       previousFulfillmentStatus: existingOrder.fulfillmentStatus,
       fulfillmentStatus,
