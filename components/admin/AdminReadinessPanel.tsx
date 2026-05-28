@@ -1,3 +1,5 @@
+import type { RuntimeReadiness } from '@/lib/runtime-readiness';
+
 type ReadinessStatus = 'ready' | 'warning' | 'blocked';
 
 type ReadinessItem = {
@@ -8,7 +10,7 @@ type ReadinessItem = {
 };
 
 type AdminReadinessPanelProps = {
-  databaseReady: boolean;
+  runtimeReadiness: RuntimeReadiness;
   authConfigured: boolean;
   authenticated: boolean;
   notificationMode: string;
@@ -26,6 +28,10 @@ const statusLabels: Record<ReadinessStatus, string> = {
   warning: 'Needs decision',
   blocked: 'Blocked'
 };
+
+function yesNo(value: boolean) {
+  return value ? 'yes' : 'no';
+}
 
 function notificationReadiness(mode: string): Pick<ReadinessItem, 'status' | 'summary' | 'detail'> {
   if (mode === 'webhook') {
@@ -51,16 +57,31 @@ function notificationReadiness(mode: string): Pick<ReadinessItem, 'status' | 'su
   };
 }
 
-export function AdminReadinessPanel({ databaseReady, authConfigured, authenticated, notificationMode, hasProductionStorage }: AdminReadinessPanelProps) {
+export function AdminReadinessPanel({ runtimeReadiness, authConfigured, authenticated, notificationMode, hasProductionStorage }: AdminReadinessPanelProps) {
   const notificationStatus = notificationReadiness(notificationMode);
+  const databaseReady = runtimeReadiness.databaseUrlPresent;
   const items: ReadinessItem[] = [
     {
+      label: 'Runtime mode',
+      status: runtimeReadiness.productionSafe ? (runtimeReadiness.appMode === 'production' ? 'ready' : 'warning') : 'blocked',
+      summary: runtimeReadiness.productionSafe ? `Running in ${runtimeReadiness.appMode} mode.` : 'Production runtime is missing DATABASE_URL.',
+      detail: `APP_MODE: ${runtimeReadiness.appMode}. NODE_ENV: ${runtimeReadiness.nodeEnv}. VERCEL_ENV: ${runtimeReadiness.vercelEnv}. Production-safe: ${yesNo(runtimeReadiness.productionSafe)}.`
+    },
+    {
       label: 'Database',
-      status: databaseReady ? 'ready' : 'blocked',
+      status: databaseReady ? 'ready' : runtimeReadiness.seedFallbackAllowed ? 'warning' : 'blocked',
       summary: databaseReady ? 'DATABASE_URL is configured.' : 'DATABASE_URL is missing.',
       detail: databaseReady
-        ? 'CMS reads and writes can use Prisma-backed content.'
-        : 'The storefront can still use seeded fallback content, but CMS writes and inquiry storage need PostgreSQL.'
+        ? 'CMS reads and writes can use Prisma-backed content. The DATABASE_URL value is intentionally hidden.'
+        : `Seed fallback allowed: ${yesNo(runtimeReadiness.seedFallbackAllowed)}. Configure DATABASE_URL before production writes or public launch.`
+    },
+    {
+      label: 'Seed fallback policy',
+      status: runtimeReadiness.seedFallbackAllowed ? 'warning' : 'ready',
+      summary: runtimeReadiness.seedFallbackAllowed ? 'Seed fallback is allowed in this runtime.' : 'Seed fallback is disabled for this runtime.',
+      detail: runtimeReadiness.seedFallbackAllowed
+        ? 'Preview, development, and test can use seeded catalog fallback when the database is unavailable.'
+        : 'Production runtime will throw on missing database configuration or production repository read failures instead of silently using seed data.'
     },
     {
       label: 'Admin auth',
