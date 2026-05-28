@@ -3,6 +3,7 @@ import type { Category, HomepageContent, MediaItem, Product } from '@/lib/catalo
 import { logoutAction } from '@/app/admin/logout/actions';
 import { AdminQuickNav } from '@/components/admin/AdminQuickNav';
 import { AdminReadinessPanel } from '@/components/admin/AdminReadinessPanel';
+import { AdminSecurityPanel } from '@/components/admin/AdminSecurityPanel';
 import {
   createCategoryAction,
   createMediaFromUrlAction,
@@ -12,6 +13,7 @@ import {
   updateProductAction,
   uploadMediaAction
 } from '@/app/admin/actions';
+import type { CustomerAuthEventSummary } from '@/lib/customers/customer-auth-event-summary';
 import type { RuntimeReadiness } from '@/lib/runtime-readiness';
 
 type AdminDashboardProps = {
@@ -19,6 +21,7 @@ type AdminDashboardProps = {
   products: Product[];
   homepage: HomepageContent;
   media: MediaItem[];
+  authEventSummary: CustomerAuthEventSummary;
   runtimeReadiness: RuntimeReadiness;
   authConfigured: boolean;
   authenticated: boolean;
@@ -85,7 +88,7 @@ function StatusBanner({ status, message }: { status?: string; message?: string }
   return <section className={`rounded-[2rem] border p-5 text-sm font-semibold ${isError ? 'border-red-200 bg-red-50 text-red-800' : 'border-olive/20 bg-white text-olive'}`}>{message || statusLabels[status ?? ''] || status}</section>;
 }
 
-export function AdminDashboard({ categories, products, homepage, media, runtimeReadiness, authConfigured, authenticated, notificationMode, hasProductionStorage, status, message }: AdminDashboardProps) {
+export function AdminDashboard({ categories, products, homepage, media, authEventSummary, runtimeReadiness, authConfigured, authenticated, notificationMode, hasProductionStorage, status, message }: AdminDashboardProps) {
   const databaseReady = runtimeReadiness.databaseUrlPresent;
   const disabled = !databaseReady || !authenticated;
 
@@ -94,6 +97,7 @@ export function AdminDashboard({ categories, products, homepage, media, runtimeR
       <StatusBanner status={status} message={message} />
       <AdminQuickNav />
       <AdminReadinessPanel runtimeReadiness={runtimeReadiness} authConfigured={authConfigured} authenticated={authenticated} notificationMode={notificationMode} hasProductionStorage={hasProductionStorage} />
+      {authenticated ? <AdminSecurityPanel summary={authEventSummary} /> : null}
 
       <section className={`rounded-[2rem] border p-6 ${databaseReady && authenticated ? 'border-olive/20 bg-white' : 'border-amber-300 bg-amber-50'}`}>
         <div className="flex flex-wrap items-start justify-between gap-4">
