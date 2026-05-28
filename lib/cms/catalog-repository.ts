@@ -2,7 +2,8 @@ import 'server-only';
 
 import type { Prisma } from '@prisma/client';
 import type { AdminAuditLogEntry, Category, CustomerInquiry, HomepageContent, MediaItem, Product } from '@/lib/catalog';
-import { prisma, hasDatabase } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
+import { readWithSeedFallback } from '@/lib/cms/repository-fallback-policy';
 import { seedCategories, seedHomepageContent, seedProducts } from '@/lib/seed-data';
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1200&q=80';
@@ -255,14 +256,7 @@ function payloadObject(value: unknown): Partial<HomepageContent> {
 }
 
 async function readWithFallback<T>(readFromDb: () => Promise<T>, fallback: () => T): Promise<T> {
-  if (!hasDatabase()) return fallback();
-
-  try {
-    return await readFromDb();
-  } catch (error) {
-    console.warn('[cms] database read failed; using seeded fallback content', error);
-    return fallback();
-  }
+  return readWithSeedFallback(readFromDb, fallback, 'catalog repository read');
 }
 
 export async function listAdminAuditLogs(filters: AdminAuditLogFilters = {}, limit = 12): Promise<AdminAuditLogEntry[]> {
