@@ -8,7 +8,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
 import { getHomepageContent, listAdminAuditLogs, listAdminCategories, listAdminProducts, listInquiryPage, listInquiryStatusCounts, listMedia } from '@/lib/cms/catalog-repository';
 import { listAdminCheckoutOrderPage } from '@/lib/checkout/admin-order-repository';
-import { hasDatabase } from '@/lib/prisma';
+import { getRuntimeReadiness } from '@/lib/runtime-readiness';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,7 +49,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   ]);
 
   const authConfigured = isAdminAuthConfigured();
-  const databaseReady = hasDatabase();
+  const runtimeReadiness = getRuntimeReadiness();
+  const databaseReady = runtimeReadiness.databaseUrlPresent;
   const notificationMode = process.env.INQUIRY_NOTIFICATION_MODE?.trim() || 'log';
   const hasProductionStorage = Boolean(process.env.MEDIA_STORAGE_PROVIDER?.trim());
 
@@ -81,7 +82,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             products={products}
             homepage={homepage}
             media={media}
-            databaseReady={databaseReady}
+            runtimeReadiness={runtimeReadiness}
             authConfigured={authConfigured}
             authenticated={authenticated}
             notificationMode={notificationMode}
