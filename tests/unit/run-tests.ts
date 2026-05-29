@@ -1,6 +1,7 @@
 import { runCheckoutCapacityHoldTests } from './checkout-capacity-hold.test';
 import { runCheckoutStateMachineTests } from './checkout-state-machine.test';
 import { runCustomerAuthIdentityTests } from './customer-auth-identity.test';
+import { runI18nLocalizationTests } from './i18n-localization.test';
 import { runOtpRateLimitTests } from './otp-rate-limit.test';
 import { runRepositoryFallbackPolicyTests } from './repository-fallback-policy.test';
 import { runRuntimeModeTests } from './runtime-mode.test';
@@ -14,7 +15,8 @@ async function main() {
   await runOtpRateLimitTests();
   await runCheckoutStateMachineTests();
   await runCheckoutCapacityHoldTests();
-  console.log('unit tests passed (7 files)');
+  await runI18nLocalizationTests();
+  console.log('unit tests passed (8 files)');
 }
 
 main().catch((error) => {
