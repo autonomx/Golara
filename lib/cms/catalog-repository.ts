@@ -5,6 +5,7 @@ import type { AdminAuditLogEntry, Category, CustomerInquiry, HomepageContent, Me
 import { prisma } from '@/lib/prisma';
 import { readWithSeedFallback } from '@/lib/cms/repository-fallback-policy';
 import { seedCategories, seedHomepageContent, seedProducts } from '@/lib/seed-data';
+import { localizedField, selectTranslatedContent, type TranslationLike } from '@/lib/i18n/translated-content';
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1200&q=80';
 const INQUIRY_STATUSES = ['new', 'contacted', 'confirmed', 'fulfilled', 'cancelled'];
@@ -22,6 +23,28 @@ export type InquiryPage = {
 
 export type AdminAuditLogFilters = { action?: string; entity?: string; actor?: string; search?: string };
 
+type CatalogReadOptions = { locale?: string | null };
+
+type DbCategoryTranslation = TranslationLike & {
+  title: string;
+  eyebrow: string | null;
+  description: string | null;
+  imageAlt: string | null;
+};
+
+type DbProductTranslation = TranslationLike & {
+  title: string;
+  description: string | null;
+  imageAlt: string | null;
+};
+
+type DbHomepageTranslation = TranslationLike & {
+  title: string | null;
+  subtitle: string | null;
+  body: string | null;
+  payload: Prisma.JsonValue | null;
+};
+
 type DbCategory = {
   id: string;
   slug: string;
@@ -30,10 +53,11 @@ type DbCategory = {
   description: string;
   imageUrl: string | null;
   parentId: string | null;
-  parent?: { slug: string; title: string } | null;
+  parent?: { slug: string; title: string; translations?: DbCategoryTranslation[] } | null;
   showOnHomepage: boolean;
   sortOrder: number;
   isActive: boolean;
+  translations?: DbCategoryTranslation[];
 };
 
 type DbProduct = {
@@ -52,6 +76,7 @@ type DbProduct = {
   imageUrl: string;
   category?: DbCategory;
   images?: { url: string; alt: string }[];
+  translations?: DbProductTranslation[];
 };
 
 type DbFollowUp = { id: string; note: string; channel: string; createdAt: Date };
@@ -87,6 +112,9 @@ type DbAuditLog = {
 
 type InquiryWhere = Prisma.CustomerInquiryWhereInput;
 type AuditLogWhere = Prisma.AdminAuditLogWhereInput;
+
+const categoryInclude = { parent: { select: { slug: true, title: true, translations: true } }, translations: true } satisfies Prisma.CategoryInclude;
+const productInclude = { category: { include: categoryInclude }, images: true, translations: true } satisfies Prisma.ProductInclude;
 
 function bySortThenTitle(a: Category, b: Category) {
   return (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.title.localeCompare(b.title);
@@ -167,34 +195,57 @@ function makeInquiryPage(inquiries: CustomerInquiry[], total: number, page: numb
   return { inquiries, total, page, pageSize, pageCount: Math.max(1, Math.ceil(total / pageSize)) };
 }
 
-function mapCategory(category: DbCategory): Category {
+function localizeCategory(category: DbCategory, options: CatalogReadOptions = {}) {
+  const selection = selectTranslatedContent({ translations: category.translations, base: category, requestedLocale: options.locale });
+  const parentSelection = category.parent ? selectTranslatedContent({ translations: category.parent.translations, base: category.parent, requestedLocale: options.locale }) : undefined;
+
+  return {
+    title: localizedField({ selection, field: 'title' }),
+    eyebrow: localizedField({ selection, field: 'eyebrow' }),
+    description: localizedField({ selection, field: 'description' }),
+    parentTitle: parentSelection ? localizedField({ selection: parentSelection, field: 'title' }) : undefined
+  };
+}
+
+function localizeProduct(product: DbProduct, options: CatalogReadOptions = {}) {
+  const selection = selectTranslatedContent({ translations: product.translations, base: product, requestedLocale: options.locale });
+  return {
+    title: localizedField({ selection, field: 'title' }),
+    description: localizedField({ selection, field: 'description' })
+  };
+}
+
+function mapCategory(category: DbCategory, options: CatalogReadOptions = {}): Category {
+  const localized = localizeCategory(category, options);
   return {
     id: category.id,
     slug: category.slug,
-    title: category.title,
-    eyebrow: category.eyebrow,
-    description: category.description,
+    title: localized.title,
+    eyebrow: localized.eyebrow,
+    description: localized.description,
     image: category.imageUrl ?? undefined,
     parentId: category.parentId ?? undefined,
     parentSlug: category.parent?.slug,
-    parentTitle: category.parent?.title,
+    parentTitle: localized.parentTitle,
     showOnHomepage: category.showOnHomepage,
     sortOrder: category.sortOrder,
     isActive: category.isActive
   };
 }
 
-function mapProduct(product: DbProduct): Product {
+function mapProduct(product: DbProduct, options: CatalogReadOptions = {}): Product {
   const image = product.imageUrl || product.images?.[0]?.url || FALLBACK_IMAGE;
+  const localized = localizeProduct(product, options);
+  const localizedCategory = product.category ? localizeCategory(product.category, options) : undefined;
 
   return {
     id: product.id,
     slug: product.slug,
     code: product.code,
-    title: product.title,
+    title: localized.title,
     category: product.category?.slug ?? '',
     categoryId: product.categoryId,
-    categoryTitle: product.category?.title,
+    categoryTitle: localizedCategory?.title,
     price: product.priceCents / 100,
     currency: product.currency,
     availableToday: product.availableToday,
@@ -202,7 +253,7 @@ function mapProduct(product: DbProduct): Product {
     requiresQuote: product.requiresQuote || product.priceCents <= 0,
     isActive: product.isActive,
     image,
-    description: product.description
+    description: localized.description
   };
 }
 
@@ -253,6 +304,26 @@ function fallbackMedia(): MediaItem[] {
 function payloadObject(value: unknown): Partial<HomepageContent> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
   return value as Partial<HomepageContent>;
+}
+
+function localizedHomepageContent(section: { title: string; subtitle: string | null; body: string | null; payload: Prisma.JsonValue; translations?: DbHomepageTranslation[] }, options: CatalogReadOptions = {}): HomepageContent {
+  const base = {
+    title: section.title,
+    subtitle: section.subtitle,
+    body: section.body,
+    payload: section.payload
+  };
+  const selection = selectTranslatedContent({ translations: section.translations, base, requestedLocale: options.locale });
+  const translationPayload = selection.translation?.payload ? payloadObject(selection.translation.payload) : {};
+
+  return {
+    ...seedHomepageContent,
+    eyebrow: localizedField({ selection, field: 'subtitle' }) || seedHomepageContent.eyebrow,
+    title: localizedField({ selection, field: 'title' }) || seedHomepageContent.title,
+    body: localizedField({ selection, field: 'body' }) || seedHomepageContent.body,
+    ...payloadObject(section.payload),
+    ...translationPayload
+  };
 }
 
 async function readWithFallback<T>(readFromDb: () => Promise<T>, fallback: () => T): Promise<T> {
@@ -306,65 +377,65 @@ export async function listMedia(): Promise<MediaItem[]> {
   }, fallbackMedia);
 }
 
-export async function listCategories(): Promise<Category[]> {
+export async function listCategories(options: CatalogReadOptions = {}): Promise<Category[]> {
   return readWithFallback(async () => {
-    const categories = await prisma.category.findMany({ where: { isActive: true }, include: { parent: { select: { slug: true, title: true } } }, orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }] });
-    return categories.map(mapCategory);
+    const categories = await prisma.category.findMany({ where: { isActive: true }, include: categoryInclude, orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }] });
+    return categories.map((category) => mapCategory(category, options));
   }, () => [...seedCategories].filter((category) => category.isActive !== false).sort(bySortThenTitle));
 }
 
-export async function listHomepageCategories(): Promise<Category[]> {
+export async function listHomepageCategories(options: CatalogReadOptions = {}): Promise<Category[]> {
   return readWithFallback(async () => {
-    const categories = await prisma.category.findMany({ where: { isActive: true, showOnHomepage: true }, include: { parent: { select: { slug: true, title: true } } }, orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }] });
-    return categories.map(mapCategory);
+    const categories = await prisma.category.findMany({ where: { isActive: true, showOnHomepage: true }, include: categoryInclude, orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }] });
+    return categories.map((category) => mapCategory(category, options));
   }, () => [...seedCategories].filter((category) => category.isActive !== false && category.showOnHomepage !== false).sort(bySortThenTitle));
 }
 
 export async function listAdminCategories(): Promise<Category[]> {
   return readWithFallback(async () => {
-    const categories = await prisma.category.findMany({ include: { parent: { select: { slug: true, title: true } } }, orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }] });
-    return categories.map(mapCategory);
+    const categories = await prisma.category.findMany({ include: categoryInclude, orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }] });
+    return categories.map((category) => mapCategory(category));
   }, () => [...seedCategories].sort(bySortThenTitle));
 }
 
-export async function getCategoryBySlug(slug: string): Promise<Category | undefined> {
-  const categories = await listCategories();
+export async function getCategoryBySlug(slug: string, options: CatalogReadOptions = {}): Promise<Category | undefined> {
+  const categories = await listCategories(options);
   return categories.find((category) => category.slug === slug);
 }
 
-export async function listProducts(): Promise<Product[]> {
+export async function listProducts(options: CatalogReadOptions = {}): Promise<Product[]> {
   return readWithFallback(async () => {
-    const products = await prisma.product.findMany({ where: { isActive: true, category: { isActive: true } }, include: { category: { include: { parent: { select: { slug: true, title: true } } } }, images: true }, orderBy: [{ bestSeller: 'desc' }, { title: 'asc' }] });
-    return products.map(mapProduct);
+    const products = await prisma.product.findMany({ where: { isActive: true, category: { isActive: true } }, include: productInclude, orderBy: [{ bestSeller: 'desc' }, { title: 'asc' }] });
+    return products.map((product) => mapProduct(product, options));
   }, () => seedProducts.filter((product) => product.isActive !== false));
 }
 
 export async function listAdminProducts(): Promise<Product[]> {
   return readWithFallback(async () => {
-    const products = await prisma.product.findMany({ include: { category: { include: { parent: { select: { slug: true, title: true } } } }, images: true }, orderBy: [{ title: 'asc' }] });
-    return products.map(mapProduct);
+    const products = await prisma.product.findMany({ include: productInclude, orderBy: [{ title: 'asc' }] });
+    return products.map((product) => mapProduct(product));
   }, () => seedProducts);
 }
 
-export async function getProductBySlug(slug: string): Promise<Product | undefined> {
+export async function getProductBySlug(slug: string, options: CatalogReadOptions = {}): Promise<Product | undefined> {
   return readWithFallback(async () => {
-    const product = await prisma.product.findUnique({ where: { slug }, include: { category: { include: { parent: { select: { slug: true, title: true } } } }, images: true } });
+    const product = await prisma.product.findUnique({ where: { slug }, include: productInclude });
     if (!product || !product.isActive || !product.category?.isActive) return undefined;
-    return mapProduct(product);
+    return mapProduct(product, options);
   }, () => seedProducts.find((product) => product.slug === slug && product.isActive !== false));
 }
 
-export async function listProductsByCategorySlug(slug: string): Promise<Product[]> {
+export async function listProductsByCategorySlug(slug: string, options: CatalogReadOptions = {}): Promise<Product[]> {
   return readWithFallback(async () => {
-    const products = await prisma.product.findMany({ where: { isActive: true, category: { slug, isActive: true } }, include: { category: { include: { parent: { select: { slug: true, title: true } } } }, images: true }, orderBy: [{ bestSeller: 'desc' }, { title: 'asc' }] });
-    return products.map(mapProduct);
+    const products = await prisma.product.findMany({ where: { isActive: true, category: { slug, isActive: true } }, include: productInclude, orderBy: [{ bestSeller: 'desc' }, { title: 'asc' }] });
+    return products.map((product) => mapProduct(product, options));
   }, () => seedProducts.filter((product) => product.category === slug && product.isActive !== false));
 }
 
-export async function getHomepageContent(): Promise<HomepageContent> {
+export async function getHomepageContent(options: CatalogReadOptions = {}): Promise<HomepageContent> {
   return readWithFallback(async () => {
-    const section = await prisma.homepageSection.findUnique({ where: { key: 'home.hero' } });
+    const section = await prisma.homepageSection.findUnique({ where: { key: 'home.hero' }, include: { translations: true } });
     if (!section?.isActive) return seedHomepageContent;
-    return { ...seedHomepageContent, eyebrow: section.subtitle ?? seedHomepageContent.eyebrow, title: section.title, body: section.body ?? seedHomepageContent.body, ...payloadObject(section.payload) };
+    return localizedHomepageContent(section, options);
   }, () => seedHomepageContent);
 }
