@@ -216,39 +216,42 @@ model CartItem {
 }
 
 model CheckoutOrder {
-  id                String                       @id @default(cuid())
-  orderNumber       String                       @unique
-  publicLookupToken String?                      @unique
-  customerId        String?
-  customer          CustomerProfile?             @relation(fields: [customerId], references: [id])
-  addressId         String?
-  address           CustomerAddress?             @relation(fields: [addressId], references: [id])
-  status            String                       @default("draft")
-  checkoutMode      String                       @default("inquiry")
-  currency          String                       @default("TOMAN")
-  subtotalCents     Int                          @default(0)
-  deliveryCents     Int                          @default(0)
-  discountCents     Int                          @default(0)
-  totalCents        Int                          @default(0)
-  deliveryDate      DateTime?
-  deliveryWindow    String?
-  fulfillmentStatus String                       @default("not_scheduled")
-  fulfillmentNote   String?
-  courierName       String?
-  courierPhone      String?
-  recipientName     String?
-  recipientPhone    String?
-  customerNote      String?
-  staffNotes        String?
-  items             CheckoutOrderItem[]
-  paymentAttempts   CheckoutPaymentAttempt[]
-  timelineEvents    CheckoutOrderTimelineEvent[]
-  createdAt         DateTime                     @default(now())
-  updatedAt         DateTime                     @updatedAt
+  id                   String                           @id @default(cuid())
+  orderNumber          String                           @unique
+  publicLookupToken    String?                          @unique
+  customerId           String?
+  customer             CustomerProfile?                 @relation(fields: [customerId], references: [id])
+  addressId            String?
+  address              CustomerAddress?                 @relation(fields: [addressId], references: [id])
+  capacityReservationId String?                         @unique
+  capacityReservation   FulfillmentCapacityReservation? @relation(fields: [capacityReservationId], references: [id])
+  status               String                           @default("draft")
+  checkoutMode         String                           @default("inquiry")
+  currency             String                           @default("TOMAN")
+  subtotalCents        Int                              @default(0)
+  deliveryCents        Int                              @default(0)
+  discountCents        Int                              @default(0)
+  totalCents           Int                              @default(0)
+  deliveryDate         DateTime?
+  deliveryWindow       String?
+  fulfillmentStatus    String                           @default("not_scheduled")
+  fulfillmentNote      String?
+  courierName          String?
+  courierPhone         String?
+  recipientName        String?
+  recipientPhone       String?
+  customerNote         String?
+  staffNotes           String?
+  items                CheckoutOrderItem[]
+  paymentAttempts      CheckoutPaymentAttempt[]
+  timelineEvents       CheckoutOrderTimelineEvent[]
+  createdAt            DateTime                         @default(now())
+  updatedAt            DateTime                         @updatedAt
 
   @@index([status, createdAt])
   @@index([fulfillmentStatus, createdAt])
   @@index([customerId, createdAt])
+  @@index([capacityReservationId])
 }
 
 model CheckoutOrderItem {
@@ -303,6 +306,38 @@ model CheckoutPaymentEvent {
   @@index([paymentAttemptId, createdAt])
   @@index([provider, eventType, createdAt])
   @@index([processedAt])
+}
+
+model FulfillmentCapacityBucket {
+  id           String                            @id @default(cuid())
+  capacityDate DateTime
+  windowKey    String
+  fulfillmentType String                         @default("delivery")
+  capacity     Int
+  reserved     Int                               @default(0)
+  metadata     Json?
+  reservations FulfillmentCapacityReservation[]
+  createdAt    DateTime                          @default(now())
+  updatedAt    DateTime                          @updatedAt
+
+  @@unique([capacityDate, windowKey, fulfillmentType])
+  @@index([capacityDate, fulfillmentType])
+}
+
+model FulfillmentCapacityReservation {
+  id        String                    @id @default(cuid())
+  bucketId  String
+  bucket    FulfillmentCapacityBucket @relation(fields: [bucketId], references: [id], onDelete: Cascade)
+  order     CheckoutOrder?
+  status    String                    @default("held")
+  quantity  Int                       @default(1)
+  expiresAt DateTime?
+  metadata  Json?
+  createdAt DateTime                  @default(now())
+  updatedAt DateTime                  @updatedAt
+
+  @@index([bucketId, status])
+  @@index([status, expiresAt])
 }
 
 model CheckoutOrderTimelineEvent {
