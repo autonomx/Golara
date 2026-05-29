@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
+import { normalizeLocale } from '@/lib/i18n/locales';
 import { normalizeImageUrl, storeMediaUpload } from '@/lib/media/media-storage';
 import { prisma, hasDatabase } from '@/lib/prisma';
 
@@ -177,6 +178,38 @@ export async function updateCategoryAction(categoryId: string, formData: FormDat
   redirect(adminPath('category-updated'));
 }
 
+export async function upsertCategoryTranslationAction(categoryId: string, formData: FormData) {
+  await ensureCanWriteCms();
+  if (!categoryId) throw new Error('categoryId is required');
+
+  const locale = normalizeLocale(requiredString(formData, 'locale'));
+  const title = requiredString(formData, 'translationTitle');
+  const translation = await prisma.categoryTranslation.upsert({
+    where: { categoryId_locale: { categoryId, locale } },
+    create: {
+      categoryId,
+      locale,
+      title,
+      eyebrow: optionalString(formData, 'translationEyebrow'),
+      description: optionalString(formData, 'translationDescription'),
+      imageAlt: optionalString(formData, 'translationImageAlt'),
+      isPublished: boolField(formData, 'translationIsPublished')
+    },
+    update: {
+      title,
+      eyebrow: optionalString(formData, 'translationEyebrow'),
+      description: optionalString(formData, 'translationDescription'),
+      imageAlt: optionalString(formData, 'translationImageAlt'),
+      isPublished: boolField(formData, 'translationIsPublished')
+    }
+  });
+
+  await recordAdminAuditLog({ action: 'category.translation.upsert', entity: 'category', entityId: categoryId, summary: `Updated ${locale} category translation`, metadata: { locale, translationId: translation.id, isPublished: translation.isPublished } });
+
+  revalidateCatalog();
+  redirect(adminPath('category-translation-updated'));
+}
+
 export async function createProductAction(formData: FormData) {
   await ensureCanWriteCms();
 
@@ -239,6 +272,36 @@ export async function updateProductAction(productId: string, formData: FormData)
 
   revalidateCatalog();
   redirect(adminPath('product-updated'));
+}
+
+export async function upsertProductTranslationAction(productId: string, formData: FormData) {
+  await ensureCanWriteCms();
+  if (!productId) throw new Error('productId is required');
+
+  const locale = normalizeLocale(requiredString(formData, 'locale'));
+  const title = requiredString(formData, 'translationTitle');
+  const translation = await prisma.productTranslation.upsert({
+    where: { productId_locale: { productId, locale } },
+    create: {
+      productId,
+      locale,
+      title,
+      description: optionalString(formData, 'translationDescription'),
+      imageAlt: optionalString(formData, 'translationImageAlt'),
+      isPublished: boolField(formData, 'translationIsPublished')
+    },
+    update: {
+      title,
+      description: optionalString(formData, 'translationDescription'),
+      imageAlt: optionalString(formData, 'translationImageAlt'),
+      isPublished: boolField(formData, 'translationIsPublished')
+    }
+  });
+
+  await recordAdminAuditLog({ action: 'product.translation.upsert', entity: 'product', entityId: productId, summary: `Updated ${locale} product translation`, metadata: { locale, translationId: translation.id, isPublished: translation.isPublished } });
+
+  revalidateCatalog();
+  redirect(adminPath('product-translation-updated'));
 }
 
 export async function updateHomepageAction(formData: FormData) {
