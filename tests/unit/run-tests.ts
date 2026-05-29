@@ -1,3 +1,4 @@
+import { runCheckoutCapacityHoldTests } from './checkout-capacity-hold.test';
 import { runCheckoutStateMachineTests } from './checkout-state-machine.test';
 import { runCustomerAuthIdentityTests } from './customer-auth-identity.test';
 import { runOtpRateLimitTests } from './otp-rate-limit.test';
@@ -12,7 +13,8 @@ async function main() {
   await runCustomerAuthIdentityTests();
   await runOtpRateLimitTests();
   await runCheckoutStateMachineTests();
-  console.log('unit tests passed (6 files)');
+  await runCheckoutCapacityHoldTests();
+  console.log('unit tests passed (7 files)');
 }
 
 main().catch((error) => {
