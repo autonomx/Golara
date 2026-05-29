@@ -1,7 +1,7 @@
 import 'server-only';
 
 import type { Prisma } from '@prisma/client';
-import type { AdminAuditLogEntry, Category, CustomerInquiry, HomepageContent, MediaItem, Product } from '@/lib/catalog';
+import type { AdminAuditLogEntry, CatalogTranslation, Category, CustomerInquiry, HomepageContent, MediaItem, Product } from '@/lib/catalog';
 import { prisma } from '@/lib/prisma';
 import { readWithSeedFallback } from '@/lib/cms/repository-fallback-policy';
 import { seedCategories, seedHomepageContent, seedProducts } from '@/lib/seed-data';
@@ -23,19 +23,21 @@ export type InquiryPage = {
 
 export type AdminAuditLogFilters = { action?: string; entity?: string; actor?: string; search?: string };
 
-type CatalogReadOptions = { locale?: string | null };
+type CatalogReadOptions = { locale?: string | null; includeTranslations?: boolean };
 
 type DbCategoryTranslation = TranslationLike & {
   title: string;
   eyebrow: string | null;
   description: string | null;
   imageAlt: string | null;
+  updatedAt?: Date;
 };
 
 type DbProductTranslation = TranslationLike & {
   title: string;
   description: string | null;
   imageAlt: string | null;
+  updatedAt?: Date;
 };
 
 type DbHomepageTranslation = TranslationLike & {
@@ -215,6 +217,31 @@ function localizeProduct(product: DbProduct, options: CatalogReadOptions = {}) {
   };
 }
 
+function mapCategoryTranslations(translations?: DbCategoryTranslation[]): CatalogTranslation[] | undefined {
+  if (!translations?.length) return undefined;
+  return translations.map((translation) => ({
+    locale: translation.locale,
+    title: translation.title,
+    eyebrow: translation.eyebrow ?? undefined,
+    description: translation.description ?? undefined,
+    imageAlt: translation.imageAlt ?? undefined,
+    isPublished: translation.isPublished !== false,
+    updatedAt: translation.updatedAt
+  }));
+}
+
+function mapProductTranslations(translations?: DbProductTranslation[]): CatalogTranslation[] | undefined {
+  if (!translations?.length) return undefined;
+  return translations.map((translation) => ({
+    locale: translation.locale,
+    title: translation.title,
+    description: translation.description ?? undefined,
+    imageAlt: translation.imageAlt ?? undefined,
+    isPublished: translation.isPublished !== false,
+    updatedAt: translation.updatedAt
+  }));
+}
+
 function mapCategory(category: DbCategory, options: CatalogReadOptions = {}): Category {
   const localized = localizeCategory(category, options);
   return {
@@ -229,7 +256,8 @@ function mapCategory(category: DbCategory, options: CatalogReadOptions = {}): Ca
     parentTitle: localized.parentTitle,
     showOnHomepage: category.showOnHomepage,
     sortOrder: category.sortOrder,
-    isActive: category.isActive
+    isActive: category.isActive,
+    translations: options.includeTranslations ? mapCategoryTranslations(category.translations) : undefined
   };
 }
 
@@ -253,7 +281,8 @@ function mapProduct(product: DbProduct, options: CatalogReadOptions = {}): Produ
     requiresQuote: product.requiresQuote || product.priceCents <= 0,
     isActive: product.isActive,
     image,
-    description: localized.description
+    description: localized.description,
+    translations: options.includeTranslations ? mapProductTranslations(product.translations) : undefined
   };
 }
 
@@ -394,7 +423,7 @@ export async function listHomepageCategories(options: CatalogReadOptions = {}): 
 export async function listAdminCategories(): Promise<Category[]> {
   return readWithFallback(async () => {
     const categories = await prisma.category.findMany({ include: categoryInclude, orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }] });
-    return categories.map((category) => mapCategory(category));
+    return categories.map((category) => mapCategory(category, { includeTranslations: true }));
   }, () => [...seedCategories].sort(bySortThenTitle));
 }
 
@@ -413,7 +442,7 @@ export async function listProducts(options: CatalogReadOptions = {}): Promise<Pr
 export async function listAdminProducts(): Promise<Product[]> {
   return readWithFallback(async () => {
     const products = await prisma.product.findMany({ include: productInclude, orderBy: [{ title: 'asc' }] });
-    return products.map((product) => mapProduct(product));
+    return products.map((product) => mapProduct(product, { includeTranslations: true }));
   }, () => seedProducts);
 }
 
