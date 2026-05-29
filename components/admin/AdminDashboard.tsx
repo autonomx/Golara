@@ -4,6 +4,7 @@ import { logoutAction } from '@/app/admin/logout/actions';
 import { AdminQuickNav } from '@/components/admin/AdminQuickNav';
 import { AdminReadinessPanel } from '@/components/admin/AdminReadinessPanel';
 import { AdminSecurityPanel } from '@/components/admin/AdminSecurityPanel';
+import { AdminTranslationPanel } from '@/components/admin/AdminTranslationPanel';
 import {
   createCategoryAction,
   createMediaFromUrlAction,
@@ -35,8 +36,10 @@ const statusLabels: Record<string, string> = {
   'homepage-updated': 'Homepage saved.',
   'category-created': 'Category created.',
   'category-updated': 'Category updated.',
+  'category-translation-updated': 'Category translation saved.',
   'product-created': 'Product created.',
   'product-updated': 'Product updated.',
+  'product-translation-updated': 'Product translation saved.',
   'media-created': 'Media URL added.',
   'media-uploaded': 'Image uploaded.'
 };
@@ -157,6 +160,8 @@ export function AdminDashboard({ categories, products, homepage, media, authEven
           <SubmitButton disabled={disabled}>Save homepage</SubmitButton>
         </form>
       </section>
+
+      {authenticated ? <AdminTranslationPanel categories={categories} products={products} disabled={disabled} /> : null}
 
       <section id="categories" className="scroll-mt-8 rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
         <div className="mb-6"><p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Categories</p><h2 className="mt-2 font-display text-4xl text-rosewood">Create category</h2></div>
