@@ -2,9 +2,8 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { STOREFRONT_LOCALE_COOKIE } from '@/lib/i18n/locale-cookie';
 import { normalizeLocale } from '@/lib/i18n/locales';
-
-export const STOREFRONT_LOCALE_COOKIE = 'golara_locale';
 
 function safeReturnPath(value: string | null) {
   const normalized = value?.trim();
