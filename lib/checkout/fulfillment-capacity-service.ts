@@ -26,6 +26,17 @@ function isActiveReservation(status: string) {
   return status === 'held' || status === 'confirmed';
 }
 
+async function recalculateBucketReserved(bucketId: string) {
+  const activeReservations = await prisma.fulfillmentCapacityReservation.findMany({
+    where: { bucketId, status: { in: ['held', 'confirmed'] } },
+    select: { quantity: true }
+  });
+  return prisma.fulfillmentCapacityBucket.update({
+    where: { id: bucketId },
+    data: { reserved: activeReservations.reduce((total, item) => total + item.quantity, 0) }
+  });
+}
+
 export async function reserveFulfillmentCapacity(input: ReserveFulfillmentCapacityInput) {
   assertDatabaseReady();
   const quantity = normalizeQuantity(input.quantity);
@@ -103,4 +114,49 @@ export async function confirmFulfillmentCapacityReservation(reservationId: strin
     where: { id: reservationId },
     data: { status: 'confirmed' }
   });
+}
+
+export async function getOrderCapacityReservationId(orderId: string) {
+  assertDatabaseReady();
+  const order = await prisma.checkoutOrder.findUnique({
+    where: { id: orderId },
+    select: { capacityReservationId: true }
+  });
+  return order?.capacityReservationId ?? null;
+}
+
+export async function confirmOrderFulfillmentCapacityReservation(orderId: string) {
+  const reservationId = await getOrderCapacityReservationId(orderId);
+  if (!reservationId) return null;
+  return confirmFulfillmentCapacityReservation(reservationId);
+}
+
+export async function releaseOrderFulfillmentCapacityReservation(orderId: string, status: Extract<FulfillmentReservationStatus, 'released' | 'expired'> = 'released') {
+  const reservationId = await getOrderCapacityReservationId(orderId);
+  if (!reservationId) return null;
+  return releaseFulfillmentCapacityReservation(reservationId, status);
+}
+
+export async function expireHeldFulfillmentCapacityReservations(now = new Date()) {
+  assertDatabaseReady();
+
+  const reservations = await prisma.fulfillmentCapacityReservation.findMany({
+    where: {
+      status: 'held',
+      expiresAt: { lte: now }
+    },
+    select: { id: true, bucketId: true }
+  });
+
+  const expired = [];
+  for (const reservation of reservations) {
+    expired.push(await releaseFulfillmentCapacityReservation(reservation.id, 'expired'));
+  }
+
+  const bucketIds = [...new Set(reservations.map((reservation) => reservation.bucketId))];
+  for (const bucketId of bucketIds) {
+    await recalculateBucketReserved(bucketId);
+  }
+
+  return { count: expired.length, reservations: expired };
 }

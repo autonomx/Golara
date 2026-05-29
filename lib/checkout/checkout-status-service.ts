@@ -11,6 +11,7 @@ import {
   type CheckoutOrderStatus,
   type CheckoutPaymentStatus
 } from '@/lib/checkout/checkout-state-machine';
+import { confirmOrderFulfillmentCapacityReservation, releaseOrderFulfillmentCapacityReservation } from '@/lib/checkout/fulfillment-capacity-service';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
 type TransitionActor = {
@@ -48,17 +49,35 @@ function throwIllegalTransition(result: { ok: true } | { ok: false; reason: stri
   throw new Error(`${result.reason} Allowed transitions: ${result.allowedTransitions.join(', ') || 'none'}.`);
 }
 
+async function applyOrderCapacityLifecycle(orderId: string, status: CheckoutOrderStatus) {
+  if (status === 'confirmed') {
+    await confirmOrderFulfillmentCapacityReservation(orderId);
+  }
+  if (status === 'cancelled') {
+    await releaseOrderFulfillmentCapacityReservation(orderId, 'released');
+  }
+}
+
+async function applyPaymentCapacityLifecycle(orderId: string, status: CheckoutPaymentStatus) {
+  if (status === 'paid') {
+    await confirmOrderFulfillmentCapacityReservation(orderId);
+  }
+  if (status === 'failed' || status === 'cancelled' || status === 'refunded') {
+    await releaseOrderFulfillmentCapacityReservation(orderId, 'released');
+  }
+}
+
 export async function transitionCheckoutOrderStatus(input: TransitionInput<CheckoutOrderStatus>) {
   assertDatabaseReady();
 
-  return prisma.$transaction(async (tx) => {
+  const updated = await prisma.$transaction(async (tx) => {
     const order = await tx.checkoutOrder.findUnique({ where: { id: input.orderId }, select: { id: true, status: true } });
     if (!order) throw new Error(`Checkout order not found: ${input.orderId}`);
 
     const from = assertCheckoutOrderStatus(order.status);
     throwIllegalTransition(canTransitionCheckoutOrderStatus(from, input.to));
 
-    const updated = from === input.to
+    const result = from === input.to
       ? order
       : await tx.checkoutOrder.update({ where: { id: order.id }, data: { status: input.to }, select: { id: true, status: true } });
 
@@ -76,8 +95,11 @@ export async function transitionCheckoutOrderStatus(input: TransitionInput<Check
       });
     }
 
-    return updated;
+    return result;
   });
+
+  await applyOrderCapacityLifecycle(updated.id, input.to);
+  return updated;
 }
 
 export async function transitionCheckoutFulfillmentStatus(input: TransitionInput<CheckoutFulfillmentStatus>) {
@@ -115,14 +137,14 @@ export async function transitionCheckoutFulfillmentStatus(input: TransitionInput
 export async function transitionCheckoutPaymentStatus(input: PaymentTransitionInput) {
   assertDatabaseReady();
 
-  return prisma.$transaction(async (tx) => {
+  const updated = await prisma.$transaction(async (tx) => {
     const payment = await tx.checkoutPaymentAttempt.findUnique({ where: { id: input.paymentAttemptId }, select: { id: true, orderId: true, status: true } });
     if (!payment) throw new Error(`Checkout payment attempt not found: ${input.paymentAttemptId}`);
 
     const from = assertCheckoutPaymentStatus(payment.status);
     throwIllegalTransition(canTransitionCheckoutPaymentStatus(from, input.to));
 
-    const updated = from === input.to
+    const result = from === input.to
       ? payment
       : await tx.checkoutPaymentAttempt.update({ where: { id: payment.id }, data: { status: input.to }, select: { id: true, orderId: true, status: true } });
 
@@ -140,6 +162,9 @@ export async function transitionCheckoutPaymentStatus(input: PaymentTransitionIn
       });
     }
 
-    return updated;
+    return result;
   });
+
+  await applyPaymentCapacityLifecycle(updated.orderId, input.to);
+  return updated;
 }
