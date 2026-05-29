@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { cookies, headers } from 'next/headers';
-import { STOREFRONT_LOCALE_COOKIE } from '@/app/locale/actions';
+import { STOREFRONT_LOCALE_COOKIE } from '@/lib/i18n/locale-cookie';
 import { DEFAULT_LOCALE, normalizeLocale, type SupportedLocale } from '@/lib/i18n/locales';
 
 function localeFromAcceptLanguage(value: string | null) {
