@@ -1,3 +1,13 @@
+export type CatalogTranslation = {
+  locale: string;
+  title: string;
+  eyebrow?: string;
+  description?: string;
+  imageAlt?: string;
+  isPublished: boolean;
+  updatedAt?: Date;
+};
+
 export type Category = {
   id?: string;
   slug: string;
@@ -13,6 +23,7 @@ export type Category = {
   sortOrder?: number;
   isActive?: boolean;
   updatedAt?: Date;
+  translations?: CatalogTranslation[];
 };
 
 export type Product = {
@@ -32,6 +43,7 @@ export type Product = {
   image: string;
   description: string;
   updatedAt?: Date;
+  translations?: CatalogTranslation[];
 };
 
 export type MediaItem = {
