@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import type { Category, HomepageContent, MediaItem, Product } from '@/lib/catalog';
+import type { Category, HomepageContent, HomepageTranslation, MediaItem, Product } from '@/lib/catalog';
 import { logoutAction } from '@/app/admin/logout/actions';
 import { AdminQuickNav } from '@/components/admin/AdminQuickNav';
 import { AdminReadinessPanel } from '@/components/admin/AdminReadinessPanel';
@@ -21,6 +21,7 @@ type AdminDashboardProps = {
   categories: Category[];
   products: Product[];
   homepage: HomepageContent;
+  homepageTranslations: HomepageTranslation[];
   media: MediaItem[];
   authEventSummary: CustomerAuthEventSummary;
   runtimeReadiness: RuntimeReadiness;
@@ -34,6 +35,7 @@ type AdminDashboardProps = {
 
 const statusLabels: Record<string, string> = {
   'homepage-updated': 'Homepage saved.',
+  'homepage-translation-updated': 'Homepage translation saved.',
   'category-created': 'Category created.',
   'category-updated': 'Category updated.',
   'category-translation-updated': 'Category translation saved.',
@@ -91,7 +93,7 @@ function StatusBanner({ status, message }: { status?: string; message?: string }
   return <section className={`rounded-[2rem] border p-5 text-sm font-semibold ${isError ? 'border-red-200 bg-red-50 text-red-800' : 'border-olive/20 bg-white text-olive'}`}>{message || statusLabels[status ?? ''] || status}</section>;
 }
 
-export function AdminDashboard({ categories, products, homepage, media, authEventSummary, runtimeReadiness, authConfigured, authenticated, notificationMode, hasProductionStorage, status, message }: AdminDashboardProps) {
+export function AdminDashboard({ categories, products, homepage, homepageTranslations, media, authEventSummary, runtimeReadiness, authConfigured, authenticated, notificationMode, hasProductionStorage, status, message }: AdminDashboardProps) {
   const databaseReady = runtimeReadiness.databaseUrlPresent;
   const disabled = !databaseReady || !authenticated;
 
@@ -161,7 +163,7 @@ export function AdminDashboard({ categories, products, homepage, media, authEven
         </form>
       </section>
 
-      {authenticated ? <AdminTranslationPanel categories={categories} products={products} disabled={disabled} /> : null}
+      {authenticated ? <AdminTranslationPanel homepage={homepage} homepageTranslations={homepageTranslations} categories={categories} products={products} disabled={disabled} /> : null}
 
       <section id="categories" className="scroll-mt-8 rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
         <div className="mb-6"><p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Categories</p><h2 className="mt-2 font-display text-4xl text-rosewood">Create category</h2></div>
