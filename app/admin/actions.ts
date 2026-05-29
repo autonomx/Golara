@@ -7,6 +7,7 @@ import { recordAdminAuditLog } from '@/lib/admin-audit-log';
 import { normalizeLocale } from '@/lib/i18n/locales';
 import { normalizeImageUrl, storeMediaUpload } from '@/lib/media/media-storage';
 import { prisma, hasDatabase } from '@/lib/prisma';
+import { seedHomepageContent } from '@/lib/seed-data';
 
 async function ensureCanWriteCms() {
   await assertAdminRole('owner');
@@ -90,6 +91,37 @@ function revalidateCatalog() {
   revalidatePath('/admin');
   revalidatePath('/categories/[slug]', 'page');
   revalidatePath('/products/[slug]', 'page');
+}
+
+function homepagePayload(formData: FormData) {
+  return {
+    eyebrow: stringField(formData, 'translationEyebrow'),
+    title: requiredString(formData, 'translationTitle'),
+    body: stringField(formData, 'translationBody'),
+    primaryCtaLabel: stringField(formData, 'translationPrimaryCtaLabel'),
+    primaryCtaHref: stringField(formData, 'translationPrimaryCtaHref'),
+    secondaryCtaLabel: stringField(formData, 'translationSecondaryCtaLabel'),
+    secondaryCtaHref: stringField(formData, 'translationSecondaryCtaHref'),
+    panelEyebrow: stringField(formData, 'translationPanelEyebrow'),
+    panelTitle: stringField(formData, 'translationPanelTitle'),
+    panelBody: stringField(formData, 'translationPanelBody')
+  };
+}
+
+async function ensureHomepageSection() {
+  return prisma.homepageSection.upsert({
+    where: { key: 'home.hero' },
+    create: {
+      key: 'home.hero',
+      title: seedHomepageContent.title,
+      subtitle: seedHomepageContent.eyebrow,
+      body: seedHomepageContent.body,
+      payload: seedHomepageContent,
+      isActive: true,
+      sortOrder: 0
+    },
+    update: {}
+  });
 }
 
 export async function createMediaFromUrlAction(formData: FormData) {
@@ -302,6 +334,38 @@ export async function upsertProductTranslationAction(productId: string, formData
 
   revalidateCatalog();
   redirect(adminPath('product-translation-updated'));
+}
+
+export async function upsertHomepageTranslationAction(formData: FormData) {
+  await ensureCanWriteCms();
+
+  const locale = normalizeLocale(requiredString(formData, 'locale'));
+  const section = await ensureHomepageSection();
+  const payload = homepagePayload(formData);
+  const translation = await prisma.homepageSectionTranslation.upsert({
+    where: { sectionId_locale: { sectionId: section.id, locale } },
+    create: {
+      sectionId: section.id,
+      locale,
+      title: payload.title,
+      subtitle: payload.eyebrow || undefined,
+      body: payload.body || undefined,
+      payload,
+      isPublished: boolField(formData, 'translationIsPublished')
+    },
+    update: {
+      title: payload.title,
+      subtitle: payload.eyebrow || undefined,
+      body: payload.body || undefined,
+      payload,
+      isPublished: boolField(formData, 'translationIsPublished')
+    }
+  });
+
+  await recordAdminAuditLog({ action: 'homepage.translation.upsert', entity: 'homepageSection', entityId: section.id, summary: `Updated ${locale} homepage translation`, metadata: { locale, translationId: translation.id, isPublished: translation.isPublished } });
+
+  revalidateCatalog();
+  redirect(adminPath('homepage-translation-updated'));
 }
 
 export async function updateHomepageAction(formData: FormData) {

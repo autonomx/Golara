@@ -7,6 +7,7 @@ import { InquiryBoard } from '@/components/admin/InquiryBoard';
 import { SiteHeader } from '@/components/SiteHeader';
 import { isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
 import { getHomepageContent, listAdminAuditLogs, listAdminCategories, listAdminProducts, listInquiryPage, listInquiryStatusCounts, listMedia } from '@/lib/cms/catalog-repository';
+import { listHomepageTranslations } from '@/lib/cms/homepage-translation-repository';
 import { listAdminCheckoutOrderPage } from '@/lib/checkout/admin-order-repository';
 import { getCustomerAuthEventSummary } from '@/lib/customers/customer-auth-event-summary';
 import { getRuntimeReadiness } from '@/lib/runtime-readiness';
@@ -38,10 +39,11 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     search: optionalParam(orderSearch)
   };
   const authenticated = await isAdminAuthenticated();
-  const [categories, products, homepage, media, inquiryPageData, inquiryCounts, auditLogs, orderPageData, authEventSummary] = await Promise.all([
+  const [categories, products, homepage, homepageTranslations, media, inquiryPageData, inquiryCounts, auditLogs, orderPageData, authEventSummary] = await Promise.all([
     listAdminCategories(),
     listAdminProducts(),
     getHomepageContent(),
+    authenticated ? listHomepageTranslations() : Promise.resolve([]),
     listMedia(),
     listInquiryPage(inquiryStatus, parsePage(inquiryPage), undefined, inquirySearch),
     listInquiryStatusCounts(inquirySearch),
@@ -82,6 +84,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             categories={categories}
             products={products}
             homepage={homepage}
+            homepageTranslations={homepageTranslations}
             media={media}
             authEventSummary={authEventSummary}
             runtimeReadiness={runtimeReadiness}

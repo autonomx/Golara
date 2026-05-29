@@ -8,6 +8,22 @@ export type CatalogTranslation = {
   updatedAt?: Date;
 };
 
+export type HomepageTranslation = {
+  locale: string;
+  eyebrow?: string;
+  title?: string;
+  body?: string;
+  primaryCtaLabel?: string;
+  primaryCtaHref?: string;
+  secondaryCtaLabel?: string;
+  secondaryCtaHref?: string;
+  panelEyebrow?: string;
+  panelTitle?: string;
+  panelBody?: string;
+  isPublished: boolean;
+  updatedAt?: Date;
+};
+
 export type Category = {
   id?: string;
   slug: string;
