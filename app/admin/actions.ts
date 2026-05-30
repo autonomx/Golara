@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
+import { cmsCategoryService } from '@/lib/cms/category-service';
 import { cmsMediaService } from '@/lib/cms/media-service';
 import { normalizeLocale } from '@/lib/i18n/locales';
 import { normalizeImageUrl } from '@/lib/media/media-storage';
@@ -156,24 +157,17 @@ export async function createCategoryAction(formData: FormData) {
   await ensureCanWriteCms();
 
   const title = requiredString(formData, 'title');
-  const slug = stringField(formData, 'slug') || slugify(title);
-  const imageUrl = resolveOptionalImageUrl(formData, 'categorySelectedMediaUrl', 'categoryImageUrl');
-
-  const category = await prisma.category.create({
-    data: {
-      title,
-      slug,
-      eyebrow: requiredString(formData, 'eyebrow'),
-      description: requiredString(formData, 'description'),
-      imageUrl,
-      parentId: parentCategoryId(formData),
-      showOnHomepage: boolField(formData, 'showOnHomepage'),
-      sortOrder: intField(formData, 'sortOrder', 100),
-      isActive: boolField(formData, 'isActive')
-    }
+  await cmsCategoryService.create({
+    title,
+    slug: stringField(formData, 'slug') || slugify(title),
+    eyebrow: requiredString(formData, 'eyebrow'),
+    description: requiredString(formData, 'description'),
+    imageUrl: resolveOptionalImageUrl(formData, 'categorySelectedMediaUrl', 'categoryImageUrl'),
+    parentId: parentCategoryId(formData),
+    showOnHomepage: boolField(formData, 'showOnHomepage'),
+    sortOrder: intField(formData, 'sortOrder', 100),
+    isActive: boolField(formData, 'isActive')
   });
-
-  await recordAdminAuditLog({ action: 'category.create', entity: 'category', entityId: category.id, summary: `Created category: ${category.title}`, metadata: { slug: category.slug, isActive: category.isActive, parentId: category.parentId, showOnHomepage: category.showOnHomepage } });
 
   revalidateCatalog();
   redirect(adminPath('category-created'));
@@ -184,25 +178,17 @@ export async function updateCategoryAction(categoryId: string, formData: FormDat
   if (!categoryId) throw new Error('categoryId is required');
 
   const title = requiredString(formData, 'title');
-  const slug = stringField(formData, 'slug') || slugify(title);
-  const imageUrl = resolveOptionalImageUrl(formData, 'categorySelectedMediaUrl', 'categoryImageUrl');
-
-  const category = await prisma.category.update({
-    where: { id: categoryId },
-    data: {
-      title,
-      slug,
-      eyebrow: requiredString(formData, 'eyebrow'),
-      description: requiredString(formData, 'description'),
-      imageUrl,
-      parentId: parentCategoryId(formData, categoryId),
-      showOnHomepage: boolField(formData, 'showOnHomepage'),
-      sortOrder: intField(formData, 'sortOrder', 100),
-      isActive: boolField(formData, 'isActive')
-    }
+  await cmsCategoryService.update(categoryId, {
+    title,
+    slug: stringField(formData, 'slug') || slugify(title),
+    eyebrow: requiredString(formData, 'eyebrow'),
+    description: requiredString(formData, 'description'),
+    imageUrl: resolveOptionalImageUrl(formData, 'categorySelectedMediaUrl', 'categoryImageUrl'),
+    parentId: parentCategoryId(formData, categoryId),
+    showOnHomepage: boolField(formData, 'showOnHomepage'),
+    sortOrder: intField(formData, 'sortOrder', 100),
+    isActive: boolField(formData, 'isActive')
   });
-
-  await recordAdminAuditLog({ action: 'category.update', entity: 'category', entityId: category.id, summary: `Updated category: ${category.title}`, metadata: { slug: category.slug, isActive: category.isActive, parentId: category.parentId, showOnHomepage: category.showOnHomepage } });
 
   revalidateCatalog();
   redirect(adminPath('category-updated'));
@@ -212,29 +198,15 @@ export async function upsertCategoryTranslationAction(categoryId: string, formDa
   await ensureCanWriteCms();
   if (!categoryId) throw new Error('categoryId is required');
 
-  const locale = normalizeLocale(requiredString(formData, 'locale'));
-  const title = requiredString(formData, 'translationTitle');
-  const translation = await prisma.categoryTranslation.upsert({
-    where: { categoryId_locale: { categoryId, locale } },
-    create: {
-      categoryId,
-      locale,
-      title,
-      eyebrow: optionalString(formData, 'translationEyebrow'),
-      description: optionalString(formData, 'translationDescription'),
-      imageAlt: optionalString(formData, 'translationImageAlt'),
-      isPublished: boolField(formData, 'translationIsPublished')
-    },
-    update: {
-      title,
-      eyebrow: optionalString(formData, 'translationEyebrow'),
-      description: optionalString(formData, 'translationDescription'),
-      imageAlt: optionalString(formData, 'translationImageAlt'),
-      isPublished: boolField(formData, 'translationIsPublished')
-    }
+  await cmsCategoryService.upsertTranslation({
+    categoryId,
+    locale: normalizeLocale(requiredString(formData, 'locale')),
+    title: requiredString(formData, 'translationTitle'),
+    eyebrow: optionalString(formData, 'translationEyebrow'),
+    description: optionalString(formData, 'translationDescription'),
+    imageAlt: optionalString(formData, 'translationImageAlt'),
+    isPublished: boolField(formData, 'translationIsPublished')
   });
-
-  await recordAdminAuditLog({ action: 'category.translation.upsert', entity: 'category', entityId: categoryId, summary: `Saved category translation: ${locale}`, metadata: { locale, translationId: translation.id, isPublished: translation.isPublished } });
 
   revalidateCatalog();
   redirect(adminPath('category-translation-updated'));
