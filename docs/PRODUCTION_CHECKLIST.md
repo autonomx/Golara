@@ -148,6 +148,14 @@ Run the production deploy guard with production-like environment variables befor
 APP_MODE="production" npm run check:deploy-readiness
 ```
 
+For Vercel, set the project build command to:
+
+```bash
+npm run build:vercel
+```
+
+`build:vercel` runs `npm run check:deploy-readiness` before `npm run build` only when `APP_MODE="production"` or `VERCEL_ENV="production"`. Preview deployments skip the production guard and still run the normal Next.js build.
+
 The deploy readiness guard blocks production mode when any required production dependency is missing or unsafe:
 
 - `DATABASE_URL` must be configured.
