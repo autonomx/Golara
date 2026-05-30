@@ -1,10 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Category } from '@/lib/catalog';
-
-function categoryImage(category: Category) {
-  return category.image || `/seed-images/category-real/${category.slug}`;
-}
+import { resolveCategoryImagePath } from '@/lib/seed-category-images';
 
 function productCountLabel(count?: number) {
   if (typeof count !== 'number') return null;
@@ -22,7 +19,7 @@ export function HomepageCategoryTileCard({ category, priority = false }: { categ
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-blush">
         <Image
-          src={categoryImage(category)}
+          src={resolveCategoryImagePath(category)}
           alt={category.title}
           fill
           priority={priority}
