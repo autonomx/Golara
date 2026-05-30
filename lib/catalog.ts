@@ -62,10 +62,16 @@ export type Product = {
   translations?: CatalogTranslation[];
 };
 
+export type MediaSourceType = 'external' | 'upload' | 'seed' | 'generated';
+
 export type MediaItem = {
   id?: string;
   url: string;
   alt: string;
+  sourceType?: string;
+  storageProvider?: string;
+  mimeType?: string;
+  sizeBytes?: number;
   productId?: string;
   createdAt?: Date;
 };
