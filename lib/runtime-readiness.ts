@@ -1,4 +1,4 @@
-import { getMediaStorageReadiness, type MediaStorageReadiness } from '@/lib/media/media-storage';
+import { getMediaStorageReadiness, type MediaStorageReadiness } from '@/lib/media/media-storage-readiness';
 import { canUseSeedFallback, getAppRuntimeMode, type AppRuntimeMode } from '@/lib/runtime-mode';
 
 export type RuntimeReadiness = {
