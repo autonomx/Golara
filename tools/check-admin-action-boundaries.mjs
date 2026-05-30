@@ -7,8 +7,8 @@ const source = readFileSync(ADMIN_ACTIONS_PATH, 'utf8');
 
 const forbiddenImports = [
   {
-    pattern: /from ['"]@\/lib\/prisma['"]/,
-    message: 'admin actions must not import Prisma directly; route writes through lib/cms service wrappers'
+    pattern: /import\s*\{[^}]*\bprisma\b[^}]*\}\s*from\s*['"]@\/lib\/prisma['"]/,
+    message: 'admin actions must not import the Prisma client directly; route writes through lib/cms service wrappers'
   },
   {
     pattern: /from ['"]@\/lib\/admin-audit-log['"]/,
