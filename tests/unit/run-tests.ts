@@ -1,6 +1,7 @@
 import { runCheckoutCapacityHoldTests } from './checkout-capacity-hold.test';
 import { runCheckoutStateMachineTests } from './checkout-state-machine.test';
 import { runCmsCategoryServiceTests } from './cms-category-service.test';
+import { runCmsHomepageServiceTests } from './cms-homepage-service.test';
 import { runCmsMediaServiceTests } from './cms-media-service.test';
 import { runCmsProductServiceTests } from './cms-product-service.test';
 import { runCustomerAuthIdentityTests } from './customer-auth-identity.test';
@@ -21,12 +22,13 @@ async function main() {
   await runCmsMediaServiceTests();
   await runCmsCategoryServiceTests();
   await runCmsProductServiceTests();
+  await runCmsHomepageServiceTests();
   await runCustomerAuthIdentityTests();
   await runOtpRateLimitTests();
   await runCheckoutStateMachineTests();
   await runCheckoutCapacityHoldTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (13 files)');
+  console.log('unit tests passed (14 files)');
 }
 
 main().catch((error) => {
