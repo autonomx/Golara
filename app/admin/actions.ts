@@ -130,9 +130,13 @@ export async function createMediaFromUrlAction(formData: FormData) {
   const url = normalizeImageUrl(requiredString(formData, 'url'));
   const alt = requiredString(formData, 'alt');
 
-  const media = await prisma.media.upsert({ where: { url }, create: { url, alt }, update: { alt } });
+  const media = await prisma.media.upsert({
+    where: { url },
+    create: { url, alt, sourceType: 'external', storageProvider: 'external' },
+    update: { alt, sourceType: 'external', storageProvider: 'external' }
+  });
 
-  await recordAdminAuditLog({ action: 'media.upsert_url', entity: 'media', entityId: media.id, summary: `Registered media URL: ${alt}`, metadata: { url } });
+  await recordAdminAuditLog({ action: 'media.upsert_url', entity: 'media', entityId: media.id, summary: `Registered media URL: ${alt}`, metadata: { url, sourceType: media.sourceType, storageProvider: media.storageProvider } });
 
   revalidateCatalog();
   redirect(adminPath('media-created'));
@@ -146,9 +150,19 @@ export async function uploadMediaAction(formData: FormData) {
 
   const alt = stringField(formData, 'alt') || file.name;
   const storedFile = await storeMediaUpload(file);
-  const media = await prisma.media.create({ data: { url: storedFile.url, alt } });
+  const media = await prisma.media.create({
+    data: {
+      url: storedFile.url,
+      alt,
+      sourceType: 'upload',
+      storageProvider: storedFile.provider,
+      mimeType: storedFile.type,
+      sizeBytes: storedFile.size,
+      metadata: { originalName: file.name }
+    }
+  });
 
-  await recordAdminAuditLog({ action: 'media.upload', entity: 'media', entityId: media.id, summary: `Uploaded media: ${alt}`, metadata: { url: storedFile.url, size: storedFile.size, type: storedFile.type, provider: storedFile.provider } });
+  await recordAdminAuditLog({ action: 'media.upload', entity: 'media', entityId: media.id, summary: `Uploaded media: ${alt}`, metadata: { url: storedFile.url, size: storedFile.size, type: storedFile.type, provider: storedFile.provider, sourceType: media.sourceType } });
 
   revalidateCatalog();
   redirect(adminPath('media-uploaded'));
