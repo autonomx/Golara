@@ -18,15 +18,19 @@ export type CmsMediaRecord = {
   storageProvider: string | null;
 };
 
+export type MediaUpsertArgs = {
+  where: { url: string };
+  create: { url: string; alt: string; sourceType: string; storageProvider: string };
+  update: { alt: string; sourceType: string; storageProvider: string };
+};
+
+export type MediaCreateArgs = {
+  data: ReturnType<typeof buildUploadedMediaRecordData>;
+};
+
 type MediaRepository = {
-  upsert(args: {
-    where: { url: string };
-    create: { url: string; alt: string; sourceType: string; storageProvider: string };
-    update: { alt: string; sourceType: string; storageProvider: string };
-  }): Promise<CmsMediaRecord>;
-  create(args: {
-    data: ReturnType<typeof buildUploadedMediaRecordData>;
-  }): Promise<CmsMediaRecord>;
+  upsert(args: MediaUpsertArgs): Promise<CmsMediaRecord>;
+  create(args: MediaCreateArgs): Promise<CmsMediaRecord>;
 };
 
 export type CmsMediaServiceDeps = {
