@@ -14,7 +14,7 @@ Required production variables:
 - `ADMIN_LABEL`: temporary display label for password-backed admin audit logs.
 - `ADMIN_EMAIL`: optional temporary admin email for audit attribution.
 - `ADMIN_ROLE`: temporary admin role metadata, currently `owner` or `staff`.
-- `MEDIA_STORAGE_PROVIDER`: `local` or `cloudinary`.
+- `MEDIA_STORAGE_PROVIDER`: production should use `cloudinary`; unset, `local`, or unsupported values fall back to local filesystem uploads.
 - `CLOUDINARY_CLOUD_NAME`: required when `MEDIA_STORAGE_PROVIDER="cloudinary"`.
 - `CLOUDINARY_UPLOAD_PRESET`: required when `MEDIA_STORAGE_PROVIDER="cloudinary"`.
 - `CLOUDINARY_UPLOAD_FOLDER`: optional Cloudinary upload folder, defaults to `golara`.
@@ -30,6 +30,7 @@ Rules:
 - Treat the password gate as temporary until user-account auth is added in Phase 4.
 - Treat webhook URLs as secrets if they include provider tokens or private routing keys.
 - Use `ADMIN_ROLE="owner"` for full CMS administration and `ADMIN_ROLE="staff"` for inquiry operations only.
+- Do not launch production with local media storage. Local uploads are not durable on serverless or multi-instance hosting.
 
 ## 2. Database setup
 
@@ -106,16 +107,29 @@ Before production launch:
 Current behavior:
 
 - External image URLs can be registered by owner role.
-- `MEDIA_STORAGE_PROVIDER="local"` writes development uploads to `public/uploads` through `lib/media/media-storage.ts`.
+- `MEDIA_STORAGE_PROVIDER="local"` or unset writes development uploads to `public/uploads` through `lib/media/media-storage.ts`.
+- Unsupported `MEDIA_STORAGE_PROVIDER` values fall back to local storage and emit a warning.
 - `MEDIA_STORAGE_PROVIDER="cloudinary"` uploads through Cloudinary unsigned upload presets.
-- URL normalization, upload validation, and provider selection are isolated from admin CMS actions.
+- Cloudinary readiness is incomplete until both `CLOUDINARY_CLOUD_NAME` and `CLOUDINARY_UPLOAD_PRESET` are configured.
+- URL normalization, upload validation, readiness checks, and provider selection are isolated from admin CMS actions.
+- Uploaded media records preserve provider, URL, MIME type, size, and original filename metadata.
 - Upload audit metadata records the selected storage provider.
 
 Production decision required:
 
 - Configure Cloudinary for production uploads, or defer a different provider such as S3/Supabase to Phase 4+.
+- Treat local uploads as development-only. They are not durable on serverless or multi-instance hosting and will be blocked by production deploy guards in a later phase.
 - Keep media records as the CMS source of truth for product image selection.
 - Wire any future production provider behind the media-storage seam instead of expanding `/admin` actions.
+
+Cloudinary production env example:
+
+```bash
+MEDIA_STORAGE_PROVIDER="cloudinary"
+CLOUDINARY_CLOUD_NAME="your-cloud-name"
+CLOUDINARY_UPLOAD_PRESET="your-unsigned-upload-preset"
+CLOUDINARY_UPLOAD_FOLDER="golara"
+```
 
 ## 6. Deployment preflight
 
@@ -124,6 +138,7 @@ Run these before merging a production release:
 ```bash
 npm run check:file-lines
 npm run typecheck
+npm run test:unit
 npm run build
 ```
 
@@ -141,6 +156,9 @@ Manual smoke test:
 - Staff role is blocked from catalog/homepage/media writes.
 - Media upload writes local/dev files to `/uploads/...` when configured for `local`.
 - Media upload returns a hosted URL when configured for `cloudinary`.
+- Admin readiness shows local media storage as a warning outside production and blocked in production.
+- Admin readiness shows incomplete Cloudinary configuration as blocked in production.
+- Admin readiness shows configured Cloudinary storage as ready.
 - Logout returns admin to read-only/login flow.
 - Signed-out admin preview does not load the audit-log panel.
 - Webhook mode sends a test inquiry to the configured endpoint or safely falls back to server logs on failure.
