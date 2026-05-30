@@ -87,6 +87,20 @@ function categoryDefaultValue(product: Product, categories: Category[]) {
   return product.categoryId ?? categories.find((category) => category.slug === product.category)?.id ?? '';
 }
 
+function formatMediaSize(sizeBytes?: number) {
+  if (!sizeBytes) return undefined;
+  if (sizeBytes < 1024) return `${sizeBytes} B`;
+  if (sizeBytes < 1024 * 1024) return `${Math.round(sizeBytes / 1024)} KB`;
+  return `${(sizeBytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function MediaMeta({ item }: { item: MediaItem }) {
+  const size = formatMediaSize(item.sizeBytes);
+  const details = [item.sourceType, item.storageProvider, item.mimeType, size].filter(Boolean);
+  if (!details.length) return null;
+  return <p className="text-xs font-semibold uppercase tracking-[0.14em] text-olive">{details.join(' · ')}</p>;
+}
+
 function StatusBanner({ status, message }: { status?: string; message?: string }) {
   if (!status && !message) return null;
   const isError = status === 'error';
@@ -119,7 +133,7 @@ export function AdminDashboard({ categories, products, homepage, homepageTransla
         <div className="mb-6">
           <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Media library</p>
           <h2 className="mt-2 font-display text-4xl text-rosewood">Images</h2>
-          <p className="mt-3 text-sm leading-6 text-stone-600">Register external image URLs or upload local/dev images into <code>public/uploads</code>. For production, this can later move to S3, Cloudinary, or another object store.</p>
+          <p className="mt-3 text-sm leading-6 text-stone-600">Register external image URLs or upload local/dev images into <code>public/uploads</code>. Media records now track source type, storage provider, MIME type, and file size for production storage migration.</p>
         </div>
         <div className="grid gap-6 lg:grid-cols-2">
           <form action={createMediaFromUrlAction} className="grid gap-4 rounded-3xl border border-rosewood/10 bg-cream p-5">
@@ -139,7 +153,7 @@ export function AdminDashboard({ categories, products, homepage, homepageTransla
           {media.map((item) => (
             <article key={item.url} className="overflow-hidden rounded-3xl border border-rosewood/10 bg-cream shadow-sm">
               <div className="relative aspect-square bg-blush"><Image src={item.url} alt={item.alt} fill className="object-cover" sizes="25vw" /></div>
-              <div className="space-y-2 p-4"><p className="text-sm font-semibold text-rosewood">{item.alt}</p><p className="break-all text-xs text-stone-500">{item.url}</p></div>
+              <div className="space-y-2 p-4"><p className="text-sm font-semibold text-rosewood">{item.alt}</p><MediaMeta item={item} /><p className="break-all text-xs text-stone-500">{item.url}</p></div>
             </article>
           ))}
         </div>
