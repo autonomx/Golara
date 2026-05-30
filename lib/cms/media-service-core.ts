@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client';
 import { buildUploadedMediaRecordData, type StoredMediaFileMetadata } from '@/lib/media/media-upload-record';
 
 type MediaAuditInput = {
@@ -5,7 +6,7 @@ type MediaAuditInput = {
   entity: string;
   entityId: string;
   summary: string;
-  metadata?: Record<string, unknown>;
+  metadata?: Prisma.InputJsonValue;
 };
 
 export type MediaAuditWriter = (input: MediaAuditInput) => Promise<unknown>;
