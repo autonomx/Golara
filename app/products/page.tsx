@@ -16,7 +16,7 @@ export default async function ProductsPage() {
         <h1 className="mt-3 font-display text-6xl text-rosewood">{getStorefrontCopy('catalog.title', locale)}</h1>
         <p className="mt-4 max-w-2xl text-stone-700">{getStorefrontCopy('catalog.body', locale)}</p>
         <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {products.map((product) => <ProductCard key={product.slug} product={product} />)}
+          {products.map((product) => <ProductCard key={product.slug} product={product} locale={locale} />)}
         </div>
       </section>
     </main>
