@@ -4,7 +4,7 @@ const timeoutMs = Number.parseInt(process.env.SMOKE_TIMEOUT_MS || '10000', 10);
 
 const routes = [
   { path: '/', expectedStatuses: [200], label: 'homepage', expectedContent: ['Golara'] },
-  { path: '/products', expectedStatuses: [200], label: 'product listing', expectedContent: ['All products'] },
+  { path: '/products', expectedStatuses: [200], label: 'product listing', expectedAnyContent: ['All products', 'همه محصولات'] },
   { path: '/cart', expectedStatuses: [200], label: 'cart', expectedContent: ['cart'] },
   { path: '/account/login', expectedStatuses: [200], label: 'account login', expectedContent: ['phone'] },
   { path: '/sitemap.xml', expectedStatuses: [200], label: 'sitemap', expectedContent: ['<urlset'] },
@@ -15,6 +15,12 @@ const routes = [
 function includesExpectedContent(body, expectedContent = []) {
   const normalizedBody = body.toLowerCase();
   return expectedContent.every((value) => normalizedBody.includes(value.toLowerCase()));
+}
+
+function includesAnyExpectedContent(body, expectedAnyContent = []) {
+  if (!expectedAnyContent.length) return true;
+  const normalizedBody = body.toLowerCase();
+  return expectedAnyContent.some((value) => normalizedBody.includes(value.toLowerCase()));
 }
 
 async function checkRoute(route) {
@@ -40,6 +46,12 @@ async function checkRoute(route) {
       }
     }
 
+    if (statusOk && route.expectedAnyContent?.length) {
+      const body = await response.text();
+      contentOk = includesAnyExpectedContent(body, route.expectedAnyContent);
+      if (!contentOk) missingContent = route.expectedAnyContent;
+    }
+
     return {
       ...route,
       ok: statusOk && contentOk,
@@ -56,7 +68,7 @@ async function checkRoute(route) {
       status: 'error',
       statusOk: false,
       contentOk: false,
-      missingContent: route.expectedContent || [],
+      missingContent: route.expectedContent || route.expectedAnyContent || [],
       url,
       error: error instanceof Error ? error.message : String(error)
     };
@@ -74,7 +86,7 @@ for (const route of routes) {
 for (const result of results) {
   const marker = result.ok ? 'PASS' : 'FAIL';
   const details = [`status ${result.status}`];
-  if (result.expectedContent?.length) {
+  if (result.expectedContent?.length || result.expectedAnyContent?.length) {
     details.push(result.contentOk ? 'content ok' : `missing content: ${result.missingContent.join(', ')}`);
   }
   if (result.error) details.push(result.error);

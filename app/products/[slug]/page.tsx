@@ -6,7 +6,8 @@ import { ProductInquiryForm } from '@/components/ProductInquiryForm';
 import { ProductDetail } from '@/components/product/ProductDetail';
 import { SiteHeader } from '@/components/SiteHeader';
 import { getCategoryBySlug, getProductBySlug, listProducts } from '@/lib/cms/catalog-repository';
-import { getStorefrontCopy } from '@/lib/localization/storefront-copy';
+import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
+import { getStorefrontCopy, getStorefrontCopyDirection } from '@/lib/localization/storefront-copy';
 import { hasDatabase } from '@/lib/prisma';
 import { buildPageMetadata } from '@/lib/site-metadata';
 import { buildProductBreadcrumbJsonLd, buildProductJsonLd, JsonLdScript } from '@/lib/structured-data';
@@ -42,21 +43,22 @@ export default async function ProductPage({
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ inquiry?: string; checkout?: string }>;
 }) {
+  const locale = await resolveStorefrontLocale();
   const [{ slug }, { inquiry, checkout }] = await Promise.all([params, searchParams]);
-  const product = await getProductBySlug(slug);
+  const product = await getProductBySlug(slug, { locale });
   if (!product) notFound();
-  const category = await getCategoryBySlug(product.category);
+  const category = await getCategoryBySlug(product.category, { locale });
   const dbReady = hasDatabase();
 
   return (
-    <main id="main-content" tabIndex={-1}>
+    <main id="main-content" tabIndex={-1} dir={getStorefrontCopyDirection(locale)}>
       <JsonLdScript data={buildProductJsonLd(product)} />
       <JsonLdScript data={buildProductBreadcrumbJsonLd(product, category)} />
-      <SiteHeader />
+      <SiteHeader returnTo={`/products/${slug}`} />
       <section className="mx-auto max-w-7xl px-5 pt-10">
-        <PathTrail items={[{ label: getStorefrontCopy('common.home'), href: '/' }, { label: category?.title || product.categoryTitle || product.category, href: `/categories/${product.category}` }, { label: product.title }]} />
+        <PathTrail items={[{ label: getStorefrontCopy('common.home', locale), href: '/' }, { label: category?.title || product.categoryTitle || product.category, href: `/categories/${product.category}` }, { label: product.title }]} />
       </section>
-      <ProductDetail product={product} category={category} dbReady={dbReady} />
+      <ProductDetail product={product} category={category} dbReady={dbReady} locale={locale} />
       <ProductCheckoutForm product={product} dbReady={dbReady} checkout={checkout} />
       <ProductInquiryForm product={product} dbReady={dbReady} inquiry={inquiry} />
     </main>
