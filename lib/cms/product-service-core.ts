@@ -1,17 +1,6 @@
-import type { Prisma } from '@prisma/client';
+import type { CmsAuditWriter, CmsIdentifiedRecord, CmsPublishedRecord } from '@/lib/cms/service-types';
 
-type ProductAuditInput = {
-  action: string;
-  entity: string;
-  entityId: string;
-  summary: string;
-  metadata?: Prisma.InputJsonValue;
-};
-
-export type ProductAuditWriter = (input: ProductAuditInput) => Promise<unknown>;
-
-export type CmsProductRecord = {
-  id: string;
+export type CmsProductRecord = CmsIdentifiedRecord & {
   title: string;
   slug: string;
   code: string;
@@ -20,10 +9,7 @@ export type CmsProductRecord = {
   isActive: boolean;
 };
 
-export type CmsProductTranslationRecord = {
-  id: string;
-  isPublished: boolean;
-};
+export type CmsProductTranslationRecord = CmsPublishedRecord;
 
 export type ProductMutationInput = {
   title: string;
@@ -70,7 +56,7 @@ type ProductTranslationRepository = {
 export type CmsProductServiceDeps = {
   productRepository: ProductRepository;
   productTranslationRepository: ProductTranslationRepository;
-  auditWriter: ProductAuditWriter;
+  auditWriter: CmsAuditWriter;
 };
 
 export function createCmsProductService(deps: CmsProductServiceDeps) {
