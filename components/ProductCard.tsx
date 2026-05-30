@@ -2,13 +2,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { addToCartAction } from '@/app/cart/actions';
 import { formatPrice, productRequiresQuote, type Product } from '@/lib/catalog';
+import type { SupportedLocale } from '@/lib/i18n/locales';
 import { getStorefrontCopy } from '@/lib/localization/storefront-copy';
 
-const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key);
-
-export function ProductCard({ product, priority = false }: { product: Product; priority?: boolean }) {
+export function ProductCard({ product, priority = false, locale }: { product: Product; priority?: boolean; locale?: SupportedLocale }) {
   const requiresQuote = productRequiresQuote(product);
   const canAddToCart = Boolean(product.id && !requiresQuote);
+  const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key, locale);
 
   return (
     <article className="group overflow-hidden rounded-3xl border border-rosewood/10 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
