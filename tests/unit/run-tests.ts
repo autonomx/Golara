@@ -1,6 +1,7 @@
 import { runCheckoutCapacityHoldTests } from './checkout-capacity-hold.test';
 import { runCheckoutStateMachineTests } from './checkout-state-machine.test';
 import { runCustomerAuthIdentityTests } from './customer-auth-identity.test';
+import { runDeployReadinessTests } from './deploy-readiness.test';
 import { runI18nLocalizationTests } from './i18n-localization.test';
 import { runMediaStorageReadinessTests } from './media-storage-readiness.test';
 import { runOtpRateLimitTests } from './otp-rate-limit.test';
@@ -13,12 +14,13 @@ async function main() {
   await runRepositoryFallbackPolicyTests();
   await runRuntimeReadinessTests();
   await runMediaStorageReadinessTests();
+  await runDeployReadinessTests();
   await runCustomerAuthIdentityTests();
   await runOtpRateLimitTests();
   await runCheckoutStateMachineTests();
   await runCheckoutCapacityHoldTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (9 files)');
+  console.log('unit tests passed (10 files)');
 }
 
 main().catch((error) => {

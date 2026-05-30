@@ -118,7 +118,7 @@ Current behavior:
 Production decision required:
 
 - Configure Cloudinary for production uploads, or defer a different provider such as S3/Supabase to Phase 4+.
-- Treat local uploads as development-only. They are not durable on serverless or multi-instance hosting and will be blocked by production deploy guards in a later phase.
+- Treat local uploads as development-only. They are not durable on serverless or multi-instance hosting and are blocked by the deploy readiness guard in production mode.
 - Keep media records as the CMS source of truth for product image selection.
 - Wire any future production provider behind the media-storage seam instead of expanding `/admin` actions.
 
@@ -141,6 +141,24 @@ npm run typecheck
 npm run test:unit
 npm run build
 ```
+
+Run the production deploy guard with production-like environment variables before promoting a real deployment:
+
+```bash
+APP_MODE="production" npm run check:deploy-readiness
+```
+
+The deploy readiness guard blocks production mode when any required production dependency is missing or unsafe:
+
+- `DATABASE_URL` must be configured.
+- `ADMIN_PASSWORD` must be configured.
+- `ADMIN_SESSION_SECRET` must be configured and at least 32 characters long.
+- `ADMIN_ROLE`, when set, must be `owner` or `staff`.
+- Media storage must be production-safe, currently configured Cloudinary.
+- `INQUIRY_NOTIFICATION_MODE="webhook"` requires `INQUIRY_NOTIFICATION_WEBHOOK_URL`.
+- Unsupported notification modes are blocked.
+
+`INQUIRY_NOTIFICATION_MODE="log"` is allowed but reported as a warning because staff must monitor the admin inbox manually.
 
 Manual smoke test:
 
