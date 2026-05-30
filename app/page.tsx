@@ -4,19 +4,20 @@ import { ProductCard } from '@/components/ProductCard';
 import { SiteHeader } from '@/components/SiteHeader';
 import { withCategoryProductCounts } from '@/lib/category-tree';
 import { getHomepageContent, listCategories, listHomepageCategories, listProducts } from '@/lib/cms/catalog-repository';
-import { getStorefrontCopy } from '@/lib/localization/storefront-copy';
+import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
+import { getStorefrontCopy, getStorefrontCopyDirection } from '@/lib/localization/storefront-copy';
 
 const primaryCtaClass = 'rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30';
 const secondaryCtaClass = 'rounded-full border border-rosewood/20 px-6 py-3 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20';
 
-const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key);
-
 export default async function HomePage() {
+  const locale = await resolveStorefrontLocale();
+  const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key, locale);
   const [homepage, categories, homepageCategories, products] = await Promise.all([
-    getHomepageContent(),
-    listCategories(),
-    listHomepageCategories(),
-    listProducts()
+    getHomepageContent({ locale }),
+    listCategories({ locale }),
+    listHomepageCategories({ locale }),
+    listProducts({ locale })
   ]);
 
   const bestSellers = products.filter((product) => product.bestSeller);
@@ -28,8 +29,8 @@ export default async function HomePage() {
   }));
 
   return (
-    <main id="main-content" tabIndex={-1}>
-      <SiteHeader />
+    <main id="main-content" tabIndex={-1} dir={getStorefrontCopyDirection(locale)}>
+      <SiteHeader returnTo="/" />
       <section className="mx-auto grid max-w-7xl gap-10 px-5 py-14 md:grid-cols-[1.1fr_0.9fr] md:py-24">
         <div className="flex flex-col justify-center">
           <p className="text-sm font-semibold uppercase tracking-[0.35em] text-olive">{homepage.eyebrow}</p>
