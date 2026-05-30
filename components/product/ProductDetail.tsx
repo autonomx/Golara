@@ -3,16 +3,17 @@ import Link from 'next/link';
 import { addToCartAction } from '@/app/cart/actions';
 import type { Category, Product } from '@/lib/catalog';
 import { formatPrice, productRequiresQuote } from '@/lib/catalog';
+import type { SupportedLocale } from '@/lib/i18n/locales';
 import { getStorefrontCopy } from '@/lib/localization/storefront-copy';
 
 const categoryLinkClass = 'rounded-full outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20';
 const whatsAppLinkClass = 'rounded-full border border-rosewood/20 px-6 py-3 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20';
 const cartButtonClass = 'rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none';
-const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key);
 
-export function ProductDetail({ product, category, dbReady = false }: { product: Product; category?: Category; dbReady?: boolean }) {
+export function ProductDetail({ product, category, dbReady = false, locale }: { product: Product; category?: Category; dbReady?: boolean; locale?: SupportedLocale }) {
   const requiresQuote = productRequiresQuote(product);
   const canAddToCart = Boolean(dbReady && product.id && !requiresQuote);
+  const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key, locale);
 
   return (
     <section className="mx-auto grid max-w-7xl gap-10 px-5 py-14 lg:grid-cols-2">
