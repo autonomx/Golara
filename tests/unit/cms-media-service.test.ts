@@ -6,7 +6,7 @@ type AuditRecord = {
   entity: string;
   entityId: string;
   summary: string;
-  metadata?: Record<string, unknown>;
+  metadata?: unknown;
 };
 
 export async function runCmsMediaServiceTests() {
