@@ -1,4 +1,5 @@
 import type { Category, HomepageContent, Product } from './catalog';
+import { getSeedCategoryImagePath } from './seed-category-images';
 import { getSeedProductImagePath } from './seed-product-images';
 
 export const seedHomepageContent: HomepageContent = {
@@ -14,68 +15,66 @@ export const seedHomepageContent: HomepageContent = {
   panelBody: 'Seed data uses public product names, codes, and prices for realistic testing while descriptions and images remain original placeholders.'
 };
 
-const categoryImage = (slug: string) => `/seed-images/category-real/${slug}`;
-
-function seedCategory(input: Omit<Category, 'image' | 'isActive' | 'showOnHomepage'> & { imageSlug?: string; isActive?: boolean; showOnHomepage?: boolean }): Category {
-  return { ...input, image: categoryImage(input.imageSlug ?? input.slug), showOnHomepage: input.showOnHomepage ?? true, isActive: input.isActive ?? true };
+function seedCategory(input: Omit<Category, 'image' | 'isActive' | 'showOnHomepage'> & { isActive?: boolean; showOnHomepage?: boolean }): Category {
+  return { ...input, image: getSeedCategoryImagePath(input.slug), showOnHomepage: input.showOnHomepage ?? true, isActive: input.isActive ?? true };
 }
 
 export const seedCategories: Category[] = [
   seedCategory({ slug: 'available-today', title: 'موجود برای امروز Available Today', eyebrow: 'Today', description: 'Today-ready Woshe-style collection for daily, cacao and rose, and VIP selections.', sortOrder: 10 }),
   seedCategory({ slug: 'daily', title: 'Daily', eyebrow: 'Ready today', description: 'Daily ready-to-order arrangements.', parentSlug: 'available-today', sortOrder: 11 }),
   seedCategory({ slug: 'cacao-roses', title: 'Cacao & Roses', eyebrow: 'Chocolate and roses', description: 'Chocolate, rose, and preserved rose gift concepts.', parentSlug: 'available-today', sortOrder: 12 }),
-  seedCategory({ slug: 'today-vip', title: 'VIP', eyebrow: 'Today VIP', description: 'Premium arrangements available through sales-assisted ordering.', parentSlug: 'available-today', sortOrder: 13, imageSlug: 'royal' }),
+  seedCategory({ slug: 'today-vip', title: 'VIP', eyebrow: 'Today VIP', description: 'Premium arrangements available through sales-assisted ordering.', parentSlug: 'available-today', sortOrder: 13 }),
 
   seedCategory({ slug: 'flower-boxes', title: 'باکس گل Flower Box', eyebrow: 'Flower boxes', description: 'Boxed floral arrangements following the public Woshe flower-box navigation.', sortOrder: 20 }),
-  seedCategory({ slug: 'vip-boxes', title: 'باکس VIP VIP Box', eyebrow: 'VIP boxes', description: 'Premium VIP flower boxes and large luxury boxed arrangements.', parentSlug: 'flower-boxes', sortOrder: 21, imageSlug: 'royal' }),
-  seedCategory({ slug: 'standard-boxes', title: 'باکس استاندارد Standard Boxes', eyebrow: 'Standard boxes', description: 'Standard boxed flower arrangements.', parentSlug: 'flower-boxes', sortOrder: 22, imageSlug: 'flower-boxes' }),
+  seedCategory({ slug: 'vip-boxes', title: 'باکس VIP VIP Box', eyebrow: 'VIP boxes', description: 'Premium VIP flower boxes and large luxury boxed arrangements.', parentSlug: 'flower-boxes', sortOrder: 21 }),
+  seedCategory({ slug: 'standard-boxes', title: 'باکس استاندارد Standard Boxes', eyebrow: 'Standard boxes', description: 'Standard boxed flower arrangements.', parentSlug: 'flower-boxes', sortOrder: 22 }),
   seedCategory({ slug: 'rose-envelope', title: 'پاکت رز Woshe Trends', eyebrow: 'Rose envelope', description: 'Rose envelope and trend-led floral gift concepts.', parentSlug: 'flower-boxes', sortOrder: 23 }),
-  seedCategory({ slug: 'kids-boxes', title: 'باکس گل کودک Kids Box', eyebrow: 'Kids boxes', description: 'Child-focused flower box and gift designs.', parentSlug: 'flower-boxes', sortOrder: 24, imageSlug: 'baby-flowers' }),
+  seedCategory({ slug: 'kids-boxes', title: 'باکس گل کودک Kids Box', eyebrow: 'Kids boxes', description: 'Child-focused flower box and gift designs.', parentSlug: 'flower-boxes', sortOrder: 24 }),
 
   seedCategory({ slug: 'bouquets', title: 'دسته گل Bouquets', eyebrow: 'Bouquets', description: 'Hand bouquets and wrapped floral gifts.', sortOrder: 30 }),
-  seedCategory({ slug: 'vip-bouquets', title: 'دسته گل VIP VIP Bouquets', eyebrow: 'VIP bouquets', description: 'Premium VIP bouquet designs.', parentSlug: 'bouquets', sortOrder: 31, imageSlug: 'royal' }),
-  seedCategory({ slug: 'standard-bouquets', title: 'دسته گل استاندارد Bouquets', eyebrow: 'Standard bouquets', description: 'Standard round and hand-tied bouquets.', parentSlug: 'bouquets', sortOrder: 32, imageSlug: 'bouquets' }),
+  seedCategory({ slug: 'vip-bouquets', title: 'دسته گل VIP VIP Bouquets', eyebrow: 'VIP bouquets', description: 'Premium VIP bouquet designs.', parentSlug: 'bouquets', sortOrder: 31 }),
+  seedCategory({ slug: 'standard-bouquets', title: 'دسته گل استاندارد Bouquets', eyebrow: 'Standard bouquets', description: 'Standard round and hand-tied bouquets.', parentSlug: 'bouquets', sortOrder: 32 }),
 
   seedCategory({ slug: 'royal', title: 'وشه رویال Woshe Royal VVIP', eyebrow: 'Royal VVIP', description: 'Royal and VVIP premium floral arrangements.', sortOrder: 40 }),
-  seedCategory({ slug: 'chocolate-eternal-rose', title: 'شکلات و رز جاودان Chocolate & Eternal Rose', eyebrow: 'Cacao and roses', description: 'Chocolate, preserved rose, and long-lasting gift concepts.', sortOrder: 45, imageSlug: 'cacao-roses' }),
+  seedCategory({ slug: 'chocolate-eternal-rose', title: 'شکلات و رز جاودان Chocolate & Eternal Rose', eyebrow: 'Cacao and roses', description: 'Chocolate, preserved rose, and long-lasting gift concepts.', sortOrder: 45 }),
   seedCategory({ slug: 'ceremony-design', title: 'طراحی مراسم Ceremony Design', eyebrow: 'Ceremony design', description: 'Event, ceremony, and venue floral design.', sortOrder: 50 }),
 
   seedCategory({ slug: 'birthday', title: 'تولد Birthday', eyebrow: 'Birthday', description: 'Birthday arrangements, packages, and surprise concepts.', sortOrder: 60 }),
-  seedCategory({ slug: 'birthday-package', title: 'پکیج تولد Birthday Package', eyebrow: 'Birthday package', description: 'Curated birthday gift packages.', parentSlug: 'birthday', sortOrder: 61, imageSlug: 'birthday' }),
-  seedCategory({ slug: 'birthday-box', title: 'باکس تولد Birthday Box', eyebrow: 'Birthday box', description: 'Birthday flower boxes and celebration gifts.', parentSlug: 'birthday', sortOrder: 62, imageSlug: 'birthday' }),
-  seedCategory({ slug: 'birthday-ceremony-design', title: 'دیزاین مراسم تولد Birthday Ceremony Design', eyebrow: 'Birthday design', description: 'Birthday event floral styling.', parentSlug: 'birthday', sortOrder: 63, imageSlug: 'ceremony-design' }),
-  seedCategory({ slug: 'surprise', title: 'سورپرایز Surprise', eyebrow: 'Surprise', description: 'Surprise flower and celebration gift concepts.', parentSlug: 'birthday', sortOrder: 64, imageSlug: 'cake-balloon' }),
+  seedCategory({ slug: 'birthday-package', title: 'پکیج تولد Birthday Package', eyebrow: 'Birthday package', description: 'Curated birthday gift packages.', parentSlug: 'birthday', sortOrder: 61 }),
+  seedCategory({ slug: 'birthday-box', title: 'باکس تولد Birthday Box', eyebrow: 'Birthday box', description: 'Birthday flower boxes and celebration gifts.', parentSlug: 'birthday', sortOrder: 62 }),
+  seedCategory({ slug: 'birthday-ceremony-design', title: 'دیزاین مراسم تولد Birthday Ceremony Design', eyebrow: 'Birthday design', description: 'Birthday event floral styling.', parentSlug: 'birthday', sortOrder: 63 }),
+  seedCategory({ slug: 'surprise', title: 'سورپرایز Surprise', eyebrow: 'Surprise', description: 'Surprise flower and celebration gift concepts.', parentSlug: 'birthday', sortOrder: 64 }),
 
   seedCategory({ slug: 'cake-balloon', title: 'کیک و بادکنک Cake & Balloon', eyebrow: 'Cake and balloon', description: 'Cake, balloon, and celebration add-on gifts.', sortOrder: 70 }),
-  seedCategory({ slug: 'cakes', title: 'کیک Cakes', eyebrow: 'Cakes', description: 'Cake category parent for birthday, wedding, kids, classic, and mini cakes.', parentSlug: 'cake-balloon', sortOrder: 71, imageSlug: 'cake-balloon' }),
-  seedCategory({ slug: 'birthday-cake', title: 'کیک تولد Birthday Cake', eyebrow: 'Birthday cake', description: 'Birthday cake designs.', parentSlug: 'cakes', sortOrder: 72, imageSlug: 'cake-balloon' }),
-  seedCategory({ slug: 'wedding-ceremony-cake', title: 'بله برون و عروسی Wedding & Ceremony Cake', eyebrow: 'Wedding cake', description: 'Wedding and ceremony cakes.', parentSlug: 'cakes', sortOrder: 73, imageSlug: 'weddings' }),
-  seedCategory({ slug: 'kids-cake', title: 'کیک کودک Kids Cake', eyebrow: 'Kids cake', description: 'Kids cake designs.', parentSlug: 'cakes', sortOrder: 74, imageSlug: 'baby-flowers' }),
-  seedCategory({ slug: 'classic-cake', title: 'کیک کلاسیک Classic Cake', eyebrow: 'Classic cake', description: 'Classic cake designs.', parentSlug: 'cakes', sortOrder: 75, imageSlug: 'cake-balloon' }),
-  seedCategory({ slug: 'mini-cake-trio', title: 'مینی کیک سه تایی Mini Cake Trio', eyebrow: 'Mini cake trio', description: 'Mini cake trio designs.', parentSlug: 'cakes', sortOrder: 76, imageSlug: 'cake-balloon' }),
-  seedCategory({ slug: 'balloons', title: 'بادکنک Balloon', eyebrow: 'Balloons', description: 'Balloon add-ons and celebration decorations.', parentSlug: 'cake-balloon', sortOrder: 77, imageSlug: 'cake-balloon' }),
+  seedCategory({ slug: 'cakes', title: 'کیک Cakes', eyebrow: 'Cakes', description: 'Cake category parent for birthday, wedding, kids, classic, and mini cakes.', parentSlug: 'cake-balloon', sortOrder: 71 }),
+  seedCategory({ slug: 'birthday-cake', title: 'کیک تولد Birthday Cake', eyebrow: 'Birthday cake', description: 'Birthday cake designs.', parentSlug: 'cakes', sortOrder: 72 }),
+  seedCategory({ slug: 'wedding-ceremony-cake', title: 'بله برون و عروسی Wedding & Ceremony Cake', eyebrow: 'Wedding cake', description: 'Wedding and ceremony cakes.', parentSlug: 'cakes', sortOrder: 73 }),
+  seedCategory({ slug: 'kids-cake', title: 'کیک کودک Kids Cake', eyebrow: 'Kids cake', description: 'Kids cake designs.', parentSlug: 'cakes', sortOrder: 74 }),
+  seedCategory({ slug: 'classic-cake', title: 'کیک کلاسیک Classic Cake', eyebrow: 'Classic cake', description: 'Classic cake designs.', parentSlug: 'cakes', sortOrder: 75 }),
+  seedCategory({ slug: 'mini-cake-trio', title: 'مینی کیک سه تایی Mini Cake Trio', eyebrow: 'Mini cake trio', description: 'Mini cake trio designs.', parentSlug: 'cakes', sortOrder: 76 }),
+  seedCategory({ slug: 'balloons', title: 'بادکنک Balloon', eyebrow: 'Balloons', description: 'Balloon add-ons and celebration decorations.', parentSlug: 'cake-balloon', sortOrder: 77 }),
 
   seedCategory({ slug: 'pots', title: 'گلدان ها Pots', eyebrow: 'Pots', description: 'Vase, pot, orchid, and basket arrangements.', sortOrder: 80 }),
-  seedCategory({ slug: 'steel-vases', title: 'گلدان های استیل Steel Vases', eyebrow: 'Steel vases', description: 'Modern steel vase arrangements.', parentSlug: 'pots', sortOrder: 81, imageSlug: 'pots' }),
-  seedCategory({ slug: 'glass-vases', title: 'گلدان های شیشه ای Glass Vases', eyebrow: 'Glass vases', description: 'Glass vase arrangements.', parentSlug: 'pots', sortOrder: 82, imageSlug: 'pots' }),
-  seedCategory({ slug: 'orchids', title: 'ارکیده Orchids', eyebrow: 'Orchids', description: 'Orchid arrangements and potted orchid gifts.', parentSlug: 'pots', sortOrder: 83, imageSlug: 'pots' }),
-  seedCategory({ slug: 'flower-baskets', title: 'سبد گل Flower Baskets', eyebrow: 'Flower baskets', description: 'Basket-style flower arrangements.', parentSlug: 'pots', sortOrder: 84, imageSlug: 'pots' }),
+  seedCategory({ slug: 'steel-vases', title: 'گلدان های استیل Steel Vases', eyebrow: 'Steel vases', description: 'Modern steel vase arrangements.', parentSlug: 'pots', sortOrder: 81 }),
+  seedCategory({ slug: 'glass-vases', title: 'گلدان های شیشه ای Glass Vases', eyebrow: 'Glass vases', description: 'Glass vase arrangements.', parentSlug: 'pots', sortOrder: 82 }),
+  seedCategory({ slug: 'orchids', title: 'ارکیده Orchids', eyebrow: 'Orchids', description: 'Orchid arrangements and potted orchid gifts.', parentSlug: 'pots', sortOrder: 83 }),
+  seedCategory({ slug: 'flower-baskets', title: 'سبد گل Flower Baskets', eyebrow: 'Flower baskets', description: 'Basket-style flower arrangements.', parentSlug: 'pots', sortOrder: 84 }),
 
   seedCategory({ slug: 'condolences', title: 'عرض تسلیت Condolences', eyebrow: 'Condolences', description: 'Sympathy and condolence flowers.', sortOrder: 90 }),
-  seedCategory({ slug: 'proposal-ceremony', title: 'بله برون و خواستگاری Proposal & Bale Boroon', eyebrow: 'Proposal', description: 'Proposal and Bale Boroon ceremony flowers.', sortOrder: 100, imageSlug: 'proposal' }),
+  seedCategory({ slug: 'proposal-ceremony', title: 'بله برون و خواستگاری Proposal & Bale Boroon', eyebrow: 'Proposal', description: 'Proposal and Bale Boroon ceremony flowers.', sortOrder: 100 }),
   seedCategory({ slug: 'proposal', title: 'خواستگاری Proposal', eyebrow: 'Proposal', description: 'Proposal-ready romantic arrangements.', parentSlug: 'proposal-ceremony', sortOrder: 101 }),
-  seedCategory({ slug: 'bale-boroon', title: 'بله برون Bale Boroon', eyebrow: 'Bale Boroon', description: 'Bale Boroon ceremony flowers.', parentSlug: 'proposal-ceremony', sortOrder: 102, imageSlug: 'proposal' }),
+  seedCategory({ slug: 'bale-boroon', title: 'بله برون Bale Boroon', eyebrow: 'Bale Boroon', description: 'Bale Boroon ceremony flowers.', parentSlug: 'proposal-ceremony', sortOrder: 102 }),
 
   seedCategory({ slug: 'baby-flowers', title: 'تعیین جنسیت و گل نوزاد Baby Flowers', eyebrow: 'Baby flowers', description: 'New baby and gender reveal flowers.', sortOrder: 110 }),
-  seedCategory({ slug: 'newborn-flowers', title: 'گل نوزاد Newborn Flowers', eyebrow: 'Newborn flowers', description: 'Newborn flower gifts.', parentSlug: 'baby-flowers', sortOrder: 111, imageSlug: 'baby-flowers' }),
-  seedCategory({ slug: 'gender-reveal', title: 'تعیین جنسیت Gender Reveal', eyebrow: 'Gender reveal', description: 'Gender reveal flower and gift concepts.', parentSlug: 'baby-flowers', sortOrder: 112, imageSlug: 'baby-flowers' }),
+  seedCategory({ slug: 'newborn-flowers', title: 'گل نوزاد Newborn Flowers', eyebrow: 'Newborn flowers', description: 'Newborn flower gifts.', parentSlug: 'baby-flowers', sortOrder: 111 }),
+  seedCategory({ slug: 'gender-reveal', title: 'تعیین جنسیت Gender Reveal', eyebrow: 'Gender reveal', description: 'Gender reveal flower and gift concepts.', parentSlug: 'baby-flowers', sortOrder: 112 }),
 
   seedCategory({ slug: 'weddings', title: 'عروسی Weddings', eyebrow: 'Weddings', description: 'Wedding flowers, bridal bouquets, car design, and groom boutonniere.', sortOrder: 120 }),
-  seedCategory({ slug: 'bridal-bouquet', title: 'دسته گل عروس Bridal Bouquet', eyebrow: 'Bridal bouquet', description: 'Bridal bouquet designs.', parentSlug: 'weddings', sortOrder: 121, imageSlug: 'weddings' }),
-  seedCategory({ slug: 'bridal-car-design', title: 'دیزاین ماشین عروس Bridal Car Design', eyebrow: 'Bridal car', description: 'Bridal car floral design.', parentSlug: 'weddings', sortOrder: 122, imageSlug: 'weddings' }),
-  seedCategory({ slug: 'groom-boutonniere', title: 'پوشت داماد Groom Boutonniere', eyebrow: 'Groom boutonniere', description: 'Groom boutonniere and pocket flower designs.', parentSlug: 'weddings', sortOrder: 123, imageSlug: 'weddings' }),
+  seedCategory({ slug: 'bridal-bouquet', title: 'دسته گل عروس Bridal Bouquet', eyebrow: 'Bridal bouquet', description: 'Bridal bouquet designs.', parentSlug: 'weddings', sortOrder: 121 }),
+  seedCategory({ slug: 'bridal-car-design', title: 'دیزاین ماشین عروس Bridal Car Design', eyebrow: 'Bridal car', description: 'Bridal car floral design.', parentSlug: 'weddings', sortOrder: 122 }),
+  seedCategory({ slug: 'groom-boutonniere', title: 'پوشت داماد Groom Boutonniere', eyebrow: 'Groom boutonniere', description: 'Groom boutonniere and pocket flower designs.', parentSlug: 'weddings', sortOrder: 123 }),
 
-  seedCategory({ slug: 'woshe-distance', title: 'WOSHE Distance | ارسال به سراسر ایران', eyebrow: 'Distance delivery', description: 'Distance ordering and delivery category inspired by the public Woshe navigation.', sortOrder: 130, showOnHomepage: false, imageSlug: 'bouquets' })
+  seedCategory({ slug: 'woshe-distance', title: 'WOSHE Distance | ارسال به سراسر ایران', eyebrow: 'Distance delivery', description: 'Distance ordering and delivery category inspired by the public Woshe navigation.', sortOrder: 130, showOnHomepage: false })
 ];
 
 const seedCurrency = 'IRR';
