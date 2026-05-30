@@ -327,7 +327,7 @@ function fallbackMedia(): MediaItem[] {
       seen.add(product.image);
       return true;
     })
-    .map((product) => ({ url: product.image, alt: product.title }));
+    .map((product) => ({ url: product.image, alt: product.title, sourceType: 'seed', storageProvider: 'seed' }));
 }
 
 function payloadObject(value: unknown): Partial<HomepageContent> {
@@ -402,7 +402,17 @@ export async function listInquiryPage(status?: string, page?: number, pageSize =
 export async function listMedia(): Promise<MediaItem[]> {
   return readWithFallback(async () => {
     const media = await prisma.media.findMany({ orderBy: { createdAt: 'desc' } });
-    return media.map((item) => ({ id: item.id, url: item.url, alt: item.alt, productId: item.productId ?? undefined, createdAt: item.createdAt }));
+    return media.map((item) => ({
+      id: item.id,
+      url: item.url,
+      alt: item.alt,
+      sourceType: item.sourceType,
+      storageProvider: item.storageProvider ?? undefined,
+      mimeType: item.mimeType ?? undefined,
+      sizeBytes: item.sizeBytes ?? undefined,
+      productId: item.productId ?? undefined,
+      createdAt: item.createdAt
+    }));
   }, fallbackMedia);
 }
 
