@@ -1,17 +1,6 @@
-import type { Prisma } from '@prisma/client';
+import type { CmsAuditWriter, CmsIdentifiedRecord, CmsPublishedRecord } from '@/lib/cms/service-types';
 
-type CategoryAuditInput = {
-  action: string;
-  entity: string;
-  entityId: string;
-  summary: string;
-  metadata?: Prisma.InputJsonValue;
-};
-
-export type CategoryAuditWriter = (input: CategoryAuditInput) => Promise<unknown>;
-
-export type CmsCategoryRecord = {
-  id: string;
+export type CmsCategoryRecord = CmsIdentifiedRecord & {
   title: string;
   slug: string;
   isActive: boolean;
@@ -19,10 +8,7 @@ export type CmsCategoryRecord = {
   showOnHomepage: boolean;
 };
 
-export type CmsCategoryTranslationRecord = {
-  id: string;
-  isPublished: boolean;
-};
+export type CmsCategoryTranslationRecord = CmsPublishedRecord;
 
 export type CategoryMutationInput = {
   title: string;
@@ -66,7 +52,7 @@ type CategoryTranslationRepository = {
 export type CmsCategoryServiceDeps = {
   categoryRepository: CategoryRepository;
   categoryTranslationRepository: CategoryTranslationRepository;
-  auditWriter: CategoryAuditWriter;
+  auditWriter: CmsAuditWriter;
 };
 
 export function createCmsCategoryService(deps: CmsCategoryServiceDeps) {
