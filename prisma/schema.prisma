@@ -91,14 +91,20 @@ model CategoryTranslation {
 }
 
 model Media {
-  id        String   @id @default(cuid())
-  url       String   @unique
-  alt       String
-  productId String?
-  product   Product? @relation(fields: [productId], references: [id])
-  createdAt DateTime @default(now())
+  id              String   @id @default(cuid())
+  url             String   @unique
+  alt             String
+  sourceType      String   @default("external")
+  storageProvider String?
+  mimeType        String?
+  sizeBytes       Int?
+  metadata        Json?
+  productId       String?
+  product         Product? @relation(fields: [productId], references: [id])
+  createdAt       DateTime @default(now())
 
   @@index([productId])
+  @@index([sourceType, storageProvider])
 }
 
 model HomepageSection {
@@ -362,16 +368,16 @@ model CheckoutPaymentEvent {
 }
 
 model FulfillmentCapacityBucket {
-  id           String                            @id @default(cuid())
-  capacityDate DateTime
-  windowKey    String
-  fulfillmentType String                         @default("delivery")
-  capacity     Int
-  reserved     Int                               @default(0)
-  metadata     Json?
-  reservations FulfillmentCapacityReservation[]
-  createdAt    DateTime                          @default(now())
-  updatedAt    DateTime                          @updatedAt
+  id              String                           @id @default(cuid())
+  capacityDate    DateTime
+  windowKey       String
+  fulfillmentType String                           @default("delivery")
+  capacity        Int
+  reserved        Int                              @default(0)
+  metadata        Json?
+  reservations    FulfillmentCapacityReservation[]
+  createdAt       DateTime                         @default(now())
+  updatedAt       DateTime                         @updatedAt
 
   @@unique([capacityDate, windowKey, fulfillmentType])
   @@index([capacityDate, fulfillmentType])
@@ -441,18 +447,18 @@ model CustomerInquiryFollowUp {
 }
 
 model AdminAuditLog {
-  id           String   @id @default(cuid())
-  action       String
-  entity       String
-  entityId     String?
-  summary      String
-  actorType    String   @default("password")
-  actorLabel   String   @default("Admin")
-  actorEmail   String?
-  actorRole    String   @default("owner")
-  actorProvider String  @default("password")
-  metadata     Json?
-  createdAt    DateTime @default(now())
+  id            String   @id @default(cuid())
+  action        String
+  entity        String
+  entityId      String?
+  summary       String
+  actorType     String   @default("password")
+  actorLabel    String   @default("Admin")
+  actorEmail    String?
+  actorRole     String   @default("owner")
+  actorProvider String   @default("password")
+  metadata      Json?
+  createdAt     DateTime @default(now())
 
   @@index([entity, entityId])
   @@index([action, createdAt])
