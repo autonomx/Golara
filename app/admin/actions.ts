@@ -4,9 +4,9 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
+import { cmsMediaService } from '@/lib/cms/media-service';
 import { normalizeLocale } from '@/lib/i18n/locales';
-import { normalizeImageUrl, storeMediaUpload } from '@/lib/media/media-storage';
-import { buildUploadedMediaRecordData } from '@/lib/media/media-upload-record';
+import { normalizeImageUrl } from '@/lib/media/media-storage';
 import { prisma, hasDatabase } from '@/lib/prisma';
 import { seedHomepageContent } from '@/lib/seed-data';
 
@@ -128,16 +128,10 @@ async function ensureHomepageSection() {
 export async function createMediaFromUrlAction(formData: FormData) {
   await ensureCanWriteCms();
 
-  const url = normalizeImageUrl(requiredString(formData, 'url'));
-  const alt = requiredString(formData, 'alt');
-
-  const media = await prisma.media.upsert({
-    where: { url },
-    create: { url, alt, sourceType: 'external', storageProvider: 'external' },
-    update: { alt, sourceType: 'external', storageProvider: 'external' }
+  await cmsMediaService.createFromUrl({
+    url: requiredString(formData, 'url'),
+    alt: requiredString(formData, 'alt')
   });
-
-  await recordAdminAuditLog({ action: 'media.upsert_url', entity: 'media', entityId: media.id, summary: `Registered media URL: ${alt}`, metadata: { url, sourceType: media.sourceType, storageProvider: media.storageProvider } });
 
   revalidateCatalog();
   redirect(adminPath('media-created'));
@@ -149,13 +143,10 @@ export async function uploadMediaAction(formData: FormData) {
   const file = formData.get('file');
   if (!(file instanceof File) || file.size === 0) throw new Error('Choose an image file to upload.');
 
-  const alt = stringField(formData, 'alt') || file.name;
-  const storedFile = await storeMediaUpload(file);
-  const media = await prisma.media.create({
-    data: buildUploadedMediaRecordData({ storedFile, alt, originalName: file.name })
+  await cmsMediaService.upload({
+    file,
+    alt: stringField(formData, 'alt') || file.name
   });
-
-  await recordAdminAuditLog({ action: 'media.upload', entity: 'media', entityId: media.id, summary: `Uploaded media: ${alt}`, metadata: { url: storedFile.url, size: storedFile.size, type: storedFile.type, provider: storedFile.provider, sourceType: media.sourceType } });
 
   revalidateCatalog();
   redirect(adminPath('media-uploaded'));
