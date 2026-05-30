@@ -4,6 +4,7 @@ import { runCmsCategoryServiceTests } from './cms-category-service.test';
 import { runCmsHomepageServiceTests } from './cms-homepage-service.test';
 import { runCmsMediaServiceTests } from './cms-media-service.test';
 import { runCmsProductServiceTests } from './cms-product-service.test';
+import { runCmsServiceTypesTests } from './cms-service-types.test';
 import { runCustomerAuthIdentityTests } from './customer-auth-identity.test';
 import { runDeployReadinessTests } from './deploy-readiness.test';
 import { runI18nLocalizationTests } from './i18n-localization.test';
@@ -19,6 +20,7 @@ async function main() {
   await runRuntimeReadinessTests();
   await runMediaStorageReadinessTests();
   await runDeployReadinessTests();
+  await runCmsServiceTypesTests();
   await runCmsMediaServiceTests();
   await runCmsCategoryServiceTests();
   await runCmsProductServiceTests();
@@ -28,7 +30,7 @@ async function main() {
   await runCheckoutStateMachineTests();
   await runCheckoutCapacityHoldTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (14 files)');
+  console.log('unit tests passed (15 files)');
 }
 
 main().catch((error) => {

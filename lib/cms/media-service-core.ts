@@ -1,18 +1,7 @@
-import type { Prisma } from '@prisma/client';
 import { buildUploadedMediaRecordData, type StoredMediaFileMetadata } from '@/lib/media/media-upload-record';
+import type { CmsAuditWriter, CmsIdentifiedRecord } from '@/lib/cms/service-types';
 
-type MediaAuditInput = {
-  action: string;
-  entity: string;
-  entityId: string;
-  summary: string;
-  metadata?: Prisma.InputJsonValue;
-};
-
-export type MediaAuditWriter = (input: MediaAuditInput) => Promise<unknown>;
-
-export type CmsMediaRecord = {
-  id: string;
+export type CmsMediaRecord = CmsIdentifiedRecord & {
   url: string;
   sourceType: string;
   storageProvider: string | null;
@@ -35,7 +24,7 @@ type MediaRepository = {
 
 export type CmsMediaServiceDeps = {
   mediaRepository: MediaRepository;
-  auditWriter: MediaAuditWriter;
+  auditWriter: CmsAuditWriter;
   normalizeUrl: (value: string) => string;
   uploadStore: (file: File) => Promise<StoredMediaFileMetadata>;
 };
