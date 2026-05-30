@@ -70,7 +70,7 @@ export default async function HomePage() {
           <h2 className="mt-2 font-display text-4xl text-rosewood">{copy('home.favoritesTitle')}</h2>
         </div>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {bestSellers.map((product, index) => <ProductCard key={product.slug} product={product} priority={index < 3} />)}
+          {bestSellers.map((product, index) => <ProductCard key={product.slug} product={product} priority={index < 3} locale={locale} />)}
         </div>
       </section>
     </main>
