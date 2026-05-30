@@ -16,8 +16,19 @@ export type StoredMediaFile = {
   provider: MediaStorageProviderName;
 };
 
+export type MediaStorageReadiness = {
+  provider: MediaStorageProviderName;
+  productionSafe: boolean;
+  configured: boolean;
+  summary: string;
+  detail: string;
+};
+
 type MediaStorageProvider = {
   name: MediaStorageProviderName;
+  productionSafe: boolean;
+  isConfigured(): boolean;
+  readiness(): MediaStorageReadiness;
   storeUpload(file: File): Promise<StoredMediaFile>;
 };
 
@@ -74,6 +85,11 @@ function cloudinaryConfig() {
   };
 }
 
+function cloudinaryConfigured() {
+  const { cloudName, uploadPreset } = cloudinaryConfig();
+  return Boolean(cloudName && uploadPreset);
+}
+
 export function assertValidImageUpload(file: File) {
   if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
     throw new Error('Upload must be a JPEG, PNG, WebP, or GIF image.');
@@ -85,6 +101,19 @@ export function assertValidImageUpload(file: File) {
 
 const localMediaStorageProvider: MediaStorageProvider = {
   name: 'local',
+  productionSafe: false,
+  isConfigured() {
+    return true;
+  },
+  readiness() {
+    return {
+      provider: 'local',
+      productionSafe: false,
+      configured: true,
+      summary: 'Local filesystem uploads are active.',
+      detail: 'Local uploads are fine for development but are not durable on serverless or multi-instance production hosting. Configure MEDIA_STORAGE_PROVIDER=cloudinary or a future object-store provider before public launch.'
+    };
+  },
   async storeUpload(file: File) {
     assertValidImageUpload(file);
 
@@ -109,6 +138,20 @@ const localMediaStorageProvider: MediaStorageProvider = {
 
 const cloudinaryMediaStorageProvider: MediaStorageProvider = {
   name: 'cloudinary',
+  productionSafe: true,
+  isConfigured: cloudinaryConfigured,
+  readiness() {
+    const configured = cloudinaryConfigured();
+    return {
+      provider: 'cloudinary',
+      productionSafe: configured,
+      configured,
+      summary: configured ? 'Cloudinary media storage is configured.' : 'Cloudinary media storage is selected but incomplete.',
+      detail: configured
+        ? 'Uploads will be stored through Cloudinary using the configured unsigned upload preset and folder.'
+        : 'Set CLOUDINARY_CLOUD_NAME and CLOUDINARY_UPLOAD_PRESET before relying on Cloudinary uploads.'
+    };
+  },
   async storeUpload(file: File) {
     assertValidImageUpload(file);
 
@@ -150,6 +193,10 @@ function getMediaStorageProvider(): MediaStorageProvider {
   const providerName = configuredMediaStorageProviderName();
   if (providerName === 'cloudinary') return cloudinaryMediaStorageProvider;
   return localMediaStorageProvider;
+}
+
+export function getMediaStorageReadiness(): MediaStorageReadiness {
+  return getMediaStorageProvider().readiness();
 }
 
 export async function storeMediaUpload(file: File): Promise<StoredMediaFile> {
