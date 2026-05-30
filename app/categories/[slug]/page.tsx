@@ -90,7 +90,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
           </div>
           {categoryProducts.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {categoryProducts.map((product) => <ProductCard key={product.slug} product={product} />)}
+              {categoryProducts.map((product) => <ProductCard key={product.slug} product={product} locale={locale} />)}
             </div>
           ) : (
             <div className="rounded-[2rem] border border-rosewood/10 bg-white p-8 text-stone-700 shadow-sm">
