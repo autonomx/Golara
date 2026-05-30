@@ -1,3 +1,4 @@
+import { getMediaStorageReadiness, type MediaStorageReadiness } from '@/lib/media/media-storage-readiness';
 import { canUseSeedFallback, getAppRuntimeMode, type AppRuntimeMode } from '@/lib/runtime-mode';
 
 export type RuntimeReadiness = {
@@ -7,6 +8,7 @@ export type RuntimeReadiness = {
   databaseUrlPresent: boolean;
   seedFallbackAllowed: boolean;
   productionSafe: boolean;
+  mediaStorage: MediaStorageReadiness;
 };
 
 function displayEnvValue(value: string | undefined) {
@@ -18,6 +20,7 @@ export function getRuntimeReadiness(): RuntimeReadiness {
   const appMode = getAppRuntimeMode();
   const databaseUrlPresent = Boolean(process.env.DATABASE_URL?.trim());
   const seedFallbackAllowed = canUseSeedFallback();
+  const mediaStorage = getMediaStorageReadiness();
 
   return {
     appMode,
@@ -25,6 +28,7 @@ export function getRuntimeReadiness(): RuntimeReadiness {
     vercelEnv: displayEnvValue(process.env.VERCEL_ENV),
     databaseUrlPresent,
     seedFallbackAllowed,
-    productionSafe: appMode !== 'production' || databaseUrlPresent
+    productionSafe: appMode !== 'production' || databaseUrlPresent,
+    mediaStorage
   };
 }

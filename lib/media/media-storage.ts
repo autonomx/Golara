@@ -2,12 +2,18 @@ import 'server-only';
 
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import {
+  configuredMediaStorageProviderName,
+  getMediaStorageReadiness,
+  isCloudinaryStorageConfigured,
+  type MediaStorageProviderName,
+  type MediaStorageReadiness
+} from '@/lib/media/media-storage-readiness';
+
+export { configuredMediaStorageProviderName, getMediaStorageReadiness, type MediaStorageProviderName, type MediaStorageReadiness } from '@/lib/media/media-storage-readiness';
 
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
-const SUPPORTED_STORAGE_PROVIDERS = new Set(['local', 'cloudinary']);
-
-export type MediaStorageProviderName = 'local' | 'cloudinary';
 
 export type StoredMediaFile = {
   url: string;
@@ -18,6 +24,9 @@ export type StoredMediaFile = {
 
 type MediaStorageProvider = {
   name: MediaStorageProviderName;
+  productionSafe: boolean;
+  isConfigured(): boolean;
+  readiness(): MediaStorageReadiness;
   storeUpload(file: File): Promise<StoredMediaFile>;
 };
 
@@ -29,14 +38,6 @@ type CloudinaryUploadResponse = {
   format?: string;
   error?: { message?: string };
 };
-
-export function configuredMediaStorageProviderName(): MediaStorageProviderName {
-  const provider = process.env.MEDIA_STORAGE_PROVIDER?.trim().toLowerCase() || 'local';
-  if (SUPPORTED_STORAGE_PROVIDERS.has(provider)) return provider as MediaStorageProviderName;
-
-  console.warn('[media-storage] unsupported MEDIA_STORAGE_PROVIDER; using local storage', { provider });
-  return 'local';
-}
 
 export function normalizeImageUrl(value: string) {
   if (value.startsWith('/uploads/')) return value;
@@ -85,6 +86,13 @@ export function assertValidImageUpload(file: File) {
 
 const localMediaStorageProvider: MediaStorageProvider = {
   name: 'local',
+  productionSafe: false,
+  isConfigured() {
+    return true;
+  },
+  readiness() {
+    return getMediaStorageReadiness();
+  },
   async storeUpload(file: File) {
     assertValidImageUpload(file);
 
@@ -109,6 +117,11 @@ const localMediaStorageProvider: MediaStorageProvider = {
 
 const cloudinaryMediaStorageProvider: MediaStorageProvider = {
   name: 'cloudinary',
+  productionSafe: true,
+  isConfigured: isCloudinaryStorageConfigured,
+  readiness() {
+    return getMediaStorageReadiness();
+  },
   async storeUpload(file: File) {
     assertValidImageUpload(file);
 

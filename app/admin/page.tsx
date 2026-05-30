@@ -55,7 +55,6 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const authConfigured = isAdminAuthConfigured();
   const runtimeReadiness = getRuntimeReadiness();
   const notificationMode = process.env.INQUIRY_NOTIFICATION_MODE?.trim() || 'log';
-  const hasProductionStorage = Boolean(process.env.MEDIA_STORAGE_PROVIDER?.trim());
 
   return (
     <main id="main-content" tabIndex={-1}>
@@ -91,7 +90,6 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             authConfigured={authConfigured}
             authenticated={authenticated}
             notificationMode={notificationMode}
-            hasProductionStorage={hasProductionStorage}
             status={status}
             message={message}
           />
