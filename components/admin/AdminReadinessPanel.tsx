@@ -14,7 +14,6 @@ type AdminReadinessPanelProps = {
   authConfigured: boolean;
   authenticated: boolean;
   notificationMode: string;
-  hasProductionStorage: boolean;
 };
 
 const statusClasses: Record<ReadinessStatus, string> = {
@@ -57,8 +56,20 @@ function notificationReadiness(mode: string): Pick<ReadinessItem, 'status' | 'su
   };
 }
 
-export function AdminReadinessPanel({ runtimeReadiness, authConfigured, authenticated, notificationMode, hasProductionStorage }: AdminReadinessPanelProps) {
+function mediaStorageReadiness(runtimeReadiness: RuntimeReadiness): Pick<ReadinessItem, 'status' | 'summary' | 'detail'> {
+  const mediaStorage = runtimeReadiness.mediaStorage;
+  if (mediaStorage.productionSafe && mediaStorage.configured) {
+    return { status: 'ready', summary: mediaStorage.summary, detail: mediaStorage.detail };
+  }
+  if (runtimeReadiness.appMode === 'production') {
+    return { status: 'blocked', summary: mediaStorage.summary, detail: mediaStorage.detail };
+  }
+  return { status: 'warning', summary: mediaStorage.summary, detail: mediaStorage.detail };
+}
+
+export function AdminReadinessPanel({ runtimeReadiness, authConfigured, authenticated, notificationMode }: AdminReadinessPanelProps) {
   const notificationStatus = notificationReadiness(notificationMode);
+  const mediaStatus = mediaStorageReadiness(runtimeReadiness);
   const databaseReady = runtimeReadiness.databaseUrlPresent;
   const items: ReadinessItem[] = [
     {
@@ -96,12 +107,8 @@ export function AdminReadinessPanel({ runtimeReadiness, authConfigured, authenti
       ...notificationStatus
     },
     {
-      label: 'Media storage',
-      status: hasProductionStorage ? 'ready' : 'warning',
-      summary: hasProductionStorage ? 'Production storage flag is configured.' : 'Local/dev uploads are still the default.',
-      detail: hasProductionStorage
-        ? 'Confirm the storage provider integration is wired before launch.'
-        : 'Move uploads to S3, Cloudinary, Supabase Storage, or another object store for serverless/multi-instance hosting.'
+      label: `Media storage (${runtimeReadiness.mediaStorage.provider})`,
+      ...mediaStatus
     }
   ];
 
