@@ -1,14 +1,5 @@
 import type { Prisma } from '@prisma/client';
-
-type HomepageAuditInput = {
-  action: string;
-  entity: string;
-  entityId: string;
-  summary: string;
-  metadata?: Prisma.InputJsonValue;
-};
-
-export type HomepageAuditWriter = (input: HomepageAuditInput) => Promise<unknown>;
+import type { CmsAuditWriter, CmsIdentifiedRecord, CmsPublishedRecord } from '@/lib/cms/service-types';
 
 export type HomepagePayload = {
   eyebrow: string;
@@ -23,15 +14,11 @@ export type HomepagePayload = {
   panelBody: string;
 };
 
-export type CmsHomepageSectionRecord = {
-  id: string;
+export type CmsHomepageSectionRecord = CmsIdentifiedRecord & {
   key: string;
 };
 
-export type CmsHomepageTranslationRecord = {
-  id: string;
-  isPublished: boolean;
-};
+export type CmsHomepageTranslationRecord = CmsPublishedRecord;
 
 export type HomepageSectionUpsertArgs = {
   where: { key: string };
@@ -78,7 +65,7 @@ type HomepageTranslationRepository = {
 export type CmsHomepageServiceDeps = {
   sectionRepository: HomepageSectionRepository;
   translationRepository: HomepageTranslationRepository;
-  auditWriter: HomepageAuditWriter;
+  auditWriter: CmsAuditWriter;
   seedHomepageContent: HomepagePayload;
 };
 
