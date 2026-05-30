@@ -5,6 +5,15 @@ export type StorefrontCopyKey =
   | 'home.collectionsTitle'
   | 'home.favoritesEyebrow'
   | 'home.favoritesTitle'
+  | 'nav.catalog'
+  | 'catalog.eyebrow'
+  | 'catalog.title'
+  | 'catalog.body'
+  | 'category.exploreEyebrow'
+  | 'category.subcategoriesTitle'
+  | 'category.productsEyebrow'
+  | 'category.allInCollection'
+  | 'category.empty'
   | 'product.bestSeller'
   | 'product.availableToday'
   | 'product.preOrderRequired'
@@ -22,6 +31,15 @@ export const storefrontCopy: StorefrontCopyRegistry = {
     'home.collectionsTitle': 'Shop by occasion',
     'home.favoritesEyebrow': 'Favorites',
     'home.favoritesTitle': 'Best sellers',
+    'nav.catalog': 'Catalog',
+    'catalog.eyebrow': 'Catalog',
+    'catalog.title': 'All products',
+    'catalog.body': 'The catalog is now wired through the CMS data layer. With DATABASE_URL configured, products are loaded from Prisma; otherwise seeded content is used for previews.',
+    'category.exploreEyebrow': 'Explore',
+    'category.subcategoriesTitle': 'Subcategories',
+    'category.productsEyebrow': 'Products',
+    'category.allInCollection': 'All in this collection',
+    'category.empty': 'No products are assigned to this category yet. Add products in the admin CMS or choose a subcategory above.',
     'product.bestSeller': 'Best seller',
     'product.availableToday': 'Available today',
     'product.preOrderRequired': 'Pre-order required',
@@ -36,6 +54,15 @@ export const storefrontCopy: StorefrontCopyRegistry = {
     'home.collectionsTitle': 'خرید بر اساس مناسبت',
     'home.favoritesEyebrow': 'محبوب‌ها',
     'home.favoritesTitle': 'پرفروش‌ها',
+    'nav.catalog': 'کاتالوگ',
+    'catalog.eyebrow': 'کاتالوگ',
+    'catalog.title': 'همه محصولات',
+    'catalog.body': 'کاتالوگ اکنون از لایه داده CMS خوانده می‌شود. با تنظیم DATABASE_URL محصولات از Prisma بارگذاری می‌شوند؛ در غیر این صورت محتوای نمونه برای پیش‌نمایش استفاده می‌شود.',
+    'category.exploreEyebrow': 'کاوش',
+    'category.subcategoriesTitle': 'زیرمجموعه‌ها',
+    'category.productsEyebrow': 'محصولات',
+    'category.allInCollection': 'همه محصولات این مجموعه',
+    'category.empty': 'هنوز محصولی به این دسته اختصاص داده نشده است. در CMS ادمین محصول اضافه کنید یا یک زیرمجموعه را انتخاب کنید.',
     'product.bestSeller': 'پرفروش',
     'product.availableToday': 'امروز موجود است',
     'product.preOrderRequired': 'نیازمند پیش‌سفارش',
