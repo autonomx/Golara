@@ -6,6 +6,7 @@ import { assertAdminRole } from '@/lib/admin-auth';
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
 import { normalizeLocale } from '@/lib/i18n/locales';
 import { normalizeImageUrl, storeMediaUpload } from '@/lib/media/media-storage';
+import { buildUploadedMediaRecordData } from '@/lib/media/media-upload-record';
 import { prisma, hasDatabase } from '@/lib/prisma';
 import { seedHomepageContent } from '@/lib/seed-data';
 
@@ -151,15 +152,7 @@ export async function uploadMediaAction(formData: FormData) {
   const alt = stringField(formData, 'alt') || file.name;
   const storedFile = await storeMediaUpload(file);
   const media = await prisma.media.create({
-    data: {
-      url: storedFile.url,
-      alt,
-      sourceType: 'upload',
-      storageProvider: storedFile.provider,
-      mimeType: storedFile.type,
-      sizeBytes: storedFile.size,
-      metadata: { originalName: file.name }
-    }
+    data: buildUploadedMediaRecordData({ storedFile, alt, originalName: file.name })
   });
 
   await recordAdminAuditLog({ action: 'media.upload', entity: 'media', entityId: media.id, summary: `Uploaded media: ${alt}`, metadata: { url: storedFile.url, size: storedFile.size, type: storedFile.type, provider: storedFile.provider, sourceType: media.sourceType } });
@@ -250,7 +243,7 @@ export async function upsertCategoryTranslationAction(categoryId: string, formDa
     }
   });
 
-  await recordAdminAuditLog({ action: 'category.translation.upsert', entity: 'category', entityId: categoryId, summary: `Updated ${locale} category translation`, metadata: { locale, translationId: translation.id, isPublished: translation.isPublished } });
+  await recordAdminAuditLog({ action: 'category.translation.upsert', entity: 'category', entityId: categoryId, summary: `Saved category translation: ${locale}`, metadata: { locale, translationId: translation.id, isPublished: translation.isPublished } });
 
   revalidateCatalog();
   redirect(adminPath('category-translation-updated'));
@@ -261,9 +254,6 @@ export async function createProductAction(formData: FormData) {
 
   const title = requiredString(formData, 'title');
   const slug = stringField(formData, 'slug') || slugify(title);
-  const imageUrl = resolveImageUrl(formData);
-  const requiresQuote = boolField(formData, 'requiresQuote');
-
   const product = await prisma.product.create({
     data: {
       title,
@@ -272,16 +262,17 @@ export async function createProductAction(formData: FormData) {
       description: requiredString(formData, 'description'),
       priceCents: priceCentsField(formData, 'price'),
       currency: stringField(formData, 'currency', 'CAD') || 'CAD',
-      imageUrl,
+      imageUrl: resolveImageUrl(formData),
       categoryId: requiredString(formData, 'categoryId'),
       availableToday: boolField(formData, 'availableToday'),
       bestSeller: boolField(formData, 'bestSeller'),
-      requiresQuote,
-      isActive: boolField(formData, 'isActive')
+      requiresQuote: boolField(formData, 'requiresQuote'),
+      isActive: boolField(formData, 'isActive'),
+      sortOrder: intField(formData, 'sortOrder', 0)
     }
   });
 
-  await recordAdminAuditLog({ action: 'product.create', entity: 'product', entityId: product.id, summary: `Created product: ${product.title}`, metadata: { slug: product.slug, code: product.code, isActive: product.isActive, requiresQuote: product.requiresQuote } });
+  await recordAdminAuditLog({ action: 'product.create', entity: 'product', entityId: product.id, summary: `Created product: ${product.title}`, metadata: { slug: product.slug, code: product.code, categoryId: product.categoryId, priceCents: product.priceCents, isActive: product.isActive } });
 
   revalidateCatalog();
   redirect(adminPath('product-created'));
@@ -293,9 +284,6 @@ export async function updateProductAction(productId: string, formData: FormData)
 
   const title = requiredString(formData, 'title');
   const slug = stringField(formData, 'slug') || slugify(title);
-  const imageUrl = resolveImageUrl(formData);
-  const requiresQuote = boolField(formData, 'requiresQuote');
-
   const product = await prisma.product.update({
     where: { id: productId },
     data: {
@@ -305,16 +293,17 @@ export async function updateProductAction(productId: string, formData: FormData)
       description: requiredString(formData, 'description'),
       priceCents: priceCentsField(formData, 'price'),
       currency: stringField(formData, 'currency', 'CAD') || 'CAD',
-      imageUrl,
+      imageUrl: resolveImageUrl(formData),
       categoryId: requiredString(formData, 'categoryId'),
       availableToday: boolField(formData, 'availableToday'),
       bestSeller: boolField(formData, 'bestSeller'),
-      requiresQuote,
-      isActive: boolField(formData, 'isActive')
+      requiresQuote: boolField(formData, 'requiresQuote'),
+      isActive: boolField(formData, 'isActive'),
+      sortOrder: intField(formData, 'sortOrder', 0)
     }
   });
 
-  await recordAdminAuditLog({ action: 'product.update', entity: 'product', entityId: product.id, summary: `Updated product: ${product.title}`, metadata: { slug: product.slug, code: product.code, isActive: product.isActive, requiresQuote: product.requiresQuote } });
+  await recordAdminAuditLog({ action: 'product.update', entity: 'product', entityId: product.id, summary: `Updated product: ${product.title}`, metadata: { slug: product.slug, code: product.code, categoryId: product.categoryId, priceCents: product.priceCents, isActive: product.isActive } });
 
   revalidateCatalog();
   redirect(adminPath('product-updated'));
@@ -344,10 +333,41 @@ export async function upsertProductTranslationAction(productId: string, formData
     }
   });
 
-  await recordAdminAuditLog({ action: 'product.translation.upsert', entity: 'product', entityId: productId, summary: `Updated ${locale} product translation`, metadata: { locale, translationId: translation.id, isPublished: translation.isPublished } });
+  await recordAdminAuditLog({ action: 'product.translation.upsert', entity: 'product', entityId: productId, summary: `Saved product translation: ${locale}`, metadata: { locale, translationId: translation.id, isPublished: translation.isPublished } });
 
   revalidateCatalog();
   redirect(adminPath('product-translation-updated'));
+}
+
+export async function updateHomepageAction(formData: FormData) {
+  await ensureCanWriteCms();
+
+  const payload = homepagePayload(formData);
+  const section = await ensureHomepageSection();
+  await prisma.homepageSectionTranslation.upsert({
+    where: { sectionId_locale: { sectionId: section.id, locale: 'fa-IR' } },
+    create: {
+      sectionId: section.id,
+      locale: 'fa-IR',
+      title: payload.title,
+      subtitle: payload.eyebrow,
+      body: payload.body,
+      payload,
+      isPublished: true
+    },
+    update: {
+      title: payload.title,
+      subtitle: payload.eyebrow,
+      body: payload.body,
+      payload,
+      isPublished: true
+    }
+  });
+
+  await recordAdminAuditLog({ action: 'homepage.update', entity: 'homepageSection', entityId: section.id, summary: 'Updated homepage hero content', metadata: { key: section.key, locale: 'fa-IR', title: payload.title } });
+
+  revalidateCatalog();
+  redirect(adminPath('homepage-updated'));
 }
 
 export async function upsertHomepageTranslationAction(formData: FormData) {
@@ -362,77 +382,22 @@ export async function upsertHomepageTranslationAction(formData: FormData) {
       sectionId: section.id,
       locale,
       title: payload.title,
-      subtitle: payload.eyebrow || undefined,
-      body: payload.body || undefined,
+      subtitle: payload.eyebrow,
+      body: payload.body,
       payload,
       isPublished: boolField(formData, 'translationIsPublished')
     },
     update: {
       title: payload.title,
-      subtitle: payload.eyebrow || undefined,
-      body: payload.body || undefined,
+      subtitle: payload.eyebrow,
+      body: payload.body,
       payload,
       isPublished: boolField(formData, 'translationIsPublished')
     }
   });
 
-  await recordAdminAuditLog({ action: 'homepage.translation.upsert', entity: 'homepageSection', entityId: section.id, summary: `Updated ${locale} homepage translation`, metadata: { locale, translationId: translation.id, isPublished: translation.isPublished } });
+  await recordAdminAuditLog({ action: 'homepage.translation.upsert', entity: 'homepageSection', entityId: section.id, summary: `Saved homepage translation: ${locale}`, metadata: { locale, translationId: translation.id, isPublished: translation.isPublished } });
 
   revalidateCatalog();
   redirect(adminPath('homepage-translation-updated'));
-}
-
-export async function updateHomepageAction(formData: FormData) {
-  await ensureCanWriteCms();
-
-  const title = requiredString(formData, 'title');
-  const eyebrow = requiredString(formData, 'eyebrow');
-  const body = requiredString(formData, 'body');
-
-  const homepage = await prisma.homepageSection.upsert({
-    where: { key: 'home.hero' },
-    create: {
-      key: 'home.hero',
-      title,
-      subtitle: eyebrow,
-      body,
-      payload: {
-        eyebrow,
-        title,
-        body,
-        primaryCtaLabel: requiredString(formData, 'primaryCtaLabel'),
-        primaryCtaHref: requiredString(formData, 'primaryCtaHref'),
-        secondaryCtaLabel: requiredString(formData, 'secondaryCtaLabel'),
-        secondaryCtaHref: requiredString(formData, 'secondaryCtaHref'),
-        panelEyebrow: requiredString(formData, 'panelEyebrow'),
-        panelTitle: requiredString(formData, 'panelTitle'),
-        panelBody: requiredString(formData, 'panelBody')
-      },
-      isActive: true,
-      sortOrder: 0
-    },
-    update: {
-      title,
-      subtitle: eyebrow,
-      body,
-      payload: {
-        eyebrow,
-        title,
-        body,
-        primaryCtaLabel: requiredString(formData, 'primaryCtaLabel'),
-        primaryCtaHref: requiredString(formData, 'primaryCtaHref'),
-        secondaryCtaLabel: requiredString(formData, 'secondaryCtaLabel'),
-        secondaryCtaHref: requiredString(formData, 'secondaryCtaHref'),
-        panelEyebrow: requiredString(formData, 'panelEyebrow'),
-        panelTitle: requiredString(formData, 'panelTitle'),
-        panelBody: requiredString(formData, 'panelBody')
-      },
-      isActive: true
-    }
-  });
-
-  await recordAdminAuditLog({ action: 'homepage.update', entity: 'homepageSection', entityId: homepage.id, summary: `Updated homepage section: ${homepage.key}`, metadata: { key: homepage.key, title: homepage.title } });
-
-  revalidateCatalog();
-  redirect(adminPath('homepage-updated'));
 }
