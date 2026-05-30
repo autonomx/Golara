@@ -3,14 +3,13 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { assertAdminRole } from '@/lib/admin-auth';
-import { recordAdminAuditLog } from '@/lib/admin-audit-log';
 import { cmsCategoryService } from '@/lib/cms/category-service';
+import { cmsHomepageService } from '@/lib/cms/homepage-service';
 import { cmsMediaService } from '@/lib/cms/media-service';
 import { cmsProductService } from '@/lib/cms/product-service';
 import { normalizeLocale } from '@/lib/i18n/locales';
 import { normalizeImageUrl } from '@/lib/media/media-storage';
-import { prisma, hasDatabase } from '@/lib/prisma';
-import { seedHomepageContent } from '@/lib/seed-data';
+import { hasDatabase } from '@/lib/prisma';
 
 async function ensureCanWriteCms() {
   await assertAdminRole('owner');
@@ -109,22 +108,6 @@ function homepagePayload(formData: FormData) {
     panelTitle: stringField(formData, 'translationPanelTitle'),
     panelBody: stringField(formData, 'translationPanelBody')
   };
-}
-
-async function ensureHomepageSection() {
-  return prisma.homepageSection.upsert({
-    where: { key: 'home.hero' },
-    create: {
-      key: 'home.hero',
-      title: seedHomepageContent.title,
-      subtitle: seedHomepageContent.eyebrow,
-      body: seedHomepageContent.body,
-      payload: seedHomepageContent,
-      isActive: true,
-      sortOrder: 0
-    },
-    update: {}
-  });
 }
 
 export async function createMediaFromUrlAction(formData: FormData) {
@@ -282,29 +265,9 @@ export async function upsertProductTranslationAction(productId: string, formData
 export async function updateHomepageAction(formData: FormData) {
   await ensureCanWriteCms();
 
-  const payload = homepagePayload(formData);
-  const section = await ensureHomepageSection();
-  await prisma.homepageSectionTranslation.upsert({
-    where: { sectionId_locale: { sectionId: section.id, locale: 'fa-IR' } },
-    create: {
-      sectionId: section.id,
-      locale: 'fa-IR',
-      title: payload.title,
-      subtitle: payload.eyebrow,
-      body: payload.body,
-      payload,
-      isPublished: true
-    },
-    update: {
-      title: payload.title,
-      subtitle: payload.eyebrow,
-      body: payload.body,
-      payload,
-      isPublished: true
-    }
+  await cmsHomepageService.updateDefault({
+    payload: homepagePayload(formData)
   });
-
-  await recordAdminAuditLog({ action: 'homepage.update', entity: 'homepageSection', entityId: section.id, summary: 'Updated homepage hero content', metadata: { key: section.key, locale: 'fa-IR', title: payload.title } });
 
   revalidateCatalog();
   redirect(adminPath('homepage-updated'));
@@ -313,30 +276,11 @@ export async function updateHomepageAction(formData: FormData) {
 export async function upsertHomepageTranslationAction(formData: FormData) {
   await ensureCanWriteCms();
 
-  const locale = normalizeLocale(requiredString(formData, 'locale'));
-  const section = await ensureHomepageSection();
-  const payload = homepagePayload(formData);
-  const translation = await prisma.homepageSectionTranslation.upsert({
-    where: { sectionId_locale: { sectionId: section.id, locale } },
-    create: {
-      sectionId: section.id,
-      locale,
-      title: payload.title,
-      subtitle: payload.eyebrow,
-      body: payload.body,
-      payload,
-      isPublished: boolField(formData, 'translationIsPublished')
-    },
-    update: {
-      title: payload.title,
-      subtitle: payload.eyebrow,
-      body: payload.body,
-      payload,
-      isPublished: boolField(formData, 'translationIsPublished')
-    }
+  await cmsHomepageService.upsertTranslation({
+    locale: normalizeLocale(requiredString(formData, 'locale')),
+    payload: homepagePayload(formData),
+    isPublished: boolField(formData, 'translationIsPublished')
   });
-
-  await recordAdminAuditLog({ action: 'homepage.translation.upsert', entity: 'homepageSection', entityId: section.id, summary: `Saved homepage translation: ${locale}`, metadata: { locale, translationId: translation.id, isPublished: translation.isPublished } });
 
   revalidateCatalog();
   redirect(adminPath('homepage-translation-updated'));
