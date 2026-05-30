@@ -6,6 +6,7 @@ import { assertAdminRole } from '@/lib/admin-auth';
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
 import { cmsCategoryService } from '@/lib/cms/category-service';
 import { cmsMediaService } from '@/lib/cms/media-service';
+import { cmsProductService } from '@/lib/cms/product-service';
 import { normalizeLocale } from '@/lib/i18n/locales';
 import { normalizeImageUrl } from '@/lib/media/media-storage';
 import { prisma, hasDatabase } from '@/lib/prisma';
@@ -216,26 +217,21 @@ export async function createProductAction(formData: FormData) {
   await ensureCanWriteCms();
 
   const title = requiredString(formData, 'title');
-  const slug = stringField(formData, 'slug') || slugify(title);
-  const product = await prisma.product.create({
-    data: {
-      title,
-      slug,
-      code: requiredString(formData, 'code'),
-      description: requiredString(formData, 'description'),
-      priceCents: priceCentsField(formData, 'price'),
-      currency: stringField(formData, 'currency', 'CAD') || 'CAD',
-      imageUrl: resolveImageUrl(formData),
-      categoryId: requiredString(formData, 'categoryId'),
-      availableToday: boolField(formData, 'availableToday'),
-      bestSeller: boolField(formData, 'bestSeller'),
-      requiresQuote: boolField(formData, 'requiresQuote'),
-      isActive: boolField(formData, 'isActive'),
-      sortOrder: intField(formData, 'sortOrder', 0)
-    }
+  await cmsProductService.create({
+    title,
+    slug: stringField(formData, 'slug') || slugify(title),
+    code: requiredString(formData, 'code'),
+    description: requiredString(formData, 'description'),
+    priceCents: priceCentsField(formData, 'price'),
+    currency: stringField(formData, 'currency', 'CAD') || 'CAD',
+    imageUrl: resolveImageUrl(formData),
+    categoryId: requiredString(formData, 'categoryId'),
+    availableToday: boolField(formData, 'availableToday'),
+    bestSeller: boolField(formData, 'bestSeller'),
+    requiresQuote: boolField(formData, 'requiresQuote'),
+    isActive: boolField(formData, 'isActive'),
+    sortOrder: intField(formData, 'sortOrder', 0)
   });
-
-  await recordAdminAuditLog({ action: 'product.create', entity: 'product', entityId: product.id, summary: `Created product: ${product.title}`, metadata: { slug: product.slug, code: product.code, categoryId: product.categoryId, priceCents: product.priceCents, isActive: product.isActive } });
 
   revalidateCatalog();
   redirect(adminPath('product-created'));
@@ -246,27 +242,21 @@ export async function updateProductAction(productId: string, formData: FormData)
   if (!productId) throw new Error('productId is required');
 
   const title = requiredString(formData, 'title');
-  const slug = stringField(formData, 'slug') || slugify(title);
-  const product = await prisma.product.update({
-    where: { id: productId },
-    data: {
-      title,
-      slug,
-      code: requiredString(formData, 'code'),
-      description: requiredString(formData, 'description'),
-      priceCents: priceCentsField(formData, 'price'),
-      currency: stringField(formData, 'currency', 'CAD') || 'CAD',
-      imageUrl: resolveImageUrl(formData),
-      categoryId: requiredString(formData, 'categoryId'),
-      availableToday: boolField(formData, 'availableToday'),
-      bestSeller: boolField(formData, 'bestSeller'),
-      requiresQuote: boolField(formData, 'requiresQuote'),
-      isActive: boolField(formData, 'isActive'),
-      sortOrder: intField(formData, 'sortOrder', 0)
-    }
+  await cmsProductService.update(productId, {
+    title,
+    slug: stringField(formData, 'slug') || slugify(title),
+    code: requiredString(formData, 'code'),
+    description: requiredString(formData, 'description'),
+    priceCents: priceCentsField(formData, 'price'),
+    currency: stringField(formData, 'currency', 'CAD') || 'CAD',
+    imageUrl: resolveImageUrl(formData),
+    categoryId: requiredString(formData, 'categoryId'),
+    availableToday: boolField(formData, 'availableToday'),
+    bestSeller: boolField(formData, 'bestSeller'),
+    requiresQuote: boolField(formData, 'requiresQuote'),
+    isActive: boolField(formData, 'isActive'),
+    sortOrder: intField(formData, 'sortOrder', 0)
   });
-
-  await recordAdminAuditLog({ action: 'product.update', entity: 'product', entityId: product.id, summary: `Updated product: ${product.title}`, metadata: { slug: product.slug, code: product.code, categoryId: product.categoryId, priceCents: product.priceCents, isActive: product.isActive } });
 
   revalidateCatalog();
   redirect(adminPath('product-updated'));
@@ -276,27 +266,14 @@ export async function upsertProductTranslationAction(productId: string, formData
   await ensureCanWriteCms();
   if (!productId) throw new Error('productId is required');
 
-  const locale = normalizeLocale(requiredString(formData, 'locale'));
-  const title = requiredString(formData, 'translationTitle');
-  const translation = await prisma.productTranslation.upsert({
-    where: { productId_locale: { productId, locale } },
-    create: {
-      productId,
-      locale,
-      title,
-      description: optionalString(formData, 'translationDescription'),
-      imageAlt: optionalString(formData, 'translationImageAlt'),
-      isPublished: boolField(formData, 'translationIsPublished')
-    },
-    update: {
-      title,
-      description: optionalString(formData, 'translationDescription'),
-      imageAlt: optionalString(formData, 'translationImageAlt'),
-      isPublished: boolField(formData, 'translationIsPublished')
-    }
+  await cmsProductService.upsertTranslation({
+    productId,
+    locale: normalizeLocale(requiredString(formData, 'locale')),
+    title: requiredString(formData, 'translationTitle'),
+    description: optionalString(formData, 'translationDescription'),
+    imageAlt: optionalString(formData, 'translationImageAlt'),
+    isPublished: boolField(formData, 'translationIsPublished')
   });
-
-  await recordAdminAuditLog({ action: 'product.translation.upsert', entity: 'product', entityId: productId, summary: `Saved product translation: ${locale}`, metadata: { locale, translationId: translation.id, isPublished: translation.isPublished } });
 
   revalidateCatalog();
   redirect(adminPath('product-translation-updated'));
