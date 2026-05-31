@@ -179,6 +179,31 @@ function InquirySearchForm({ activeStatus, search, assignmentFilter }: { activeS
   );
 }
 
+function AssignmentFilterPills({ activeStatus, search, assignmentFilter }: { activeStatus?: string; search?: string; assignmentFilter?: InquiryAssignmentQueueFilter }) {
+  const filters: Array<{ label: string; value: InquiryAssignmentQueueFilter }> = [
+    { label: 'All owners', value: 'all' },
+    { label: 'Mine', value: 'mine' },
+    { label: 'Assigned', value: 'assigned' },
+    { label: 'Unassigned', value: 'unassigned' }
+  ];
+
+  return (
+    <div className="mt-3 rounded-3xl border border-rosewood/10 bg-white p-3 text-sm text-stone-700">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-olive">Assignment filter</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {filters.map((filter) => {
+          const active = (assignmentFilter ?? 'all') === filter.value;
+          return (
+            <Link key={filter.value} href={filterHref(activeStatus, search, filter.value)} className={`${filterLinkBaseClass} ${active ? 'border-rosewood bg-rosewood text-white' : 'border-rosewood/20 bg-cream text-rosewood hover:bg-white'}`}>
+              {filter.label}
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function AssignmentExportShortcuts({ activeStatus, search }: { activeStatus?: string; search?: string }) {
   return (
     <div className="mt-3 rounded-3xl border border-rosewood/10 bg-white p-3 text-sm text-stone-700">
@@ -275,6 +300,7 @@ export function InquiryBoard({ inquiryPage, counts, activeStatus, search, assign
         <InquirySummaryCards counts={counts} activeStatus={activeStatus} search={search} assignmentFilter={assignmentFilter} />
         <InquiryWorkflowOverview counts={counts} />
         <InquirySearchForm activeStatus={activeStatus} search={search} assignmentFilter={assignmentFilter} />
+        <AssignmentFilterPills activeStatus={activeStatus} search={search} assignmentFilter={assignmentFilter} />
         <FilterPills counts={counts} activeStatus={activeStatus} search={search} assignmentFilter={assignmentFilter} />
       </div>
 
