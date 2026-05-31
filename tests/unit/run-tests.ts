@@ -25,6 +25,7 @@ import { runMediaStorageReadinessTests } from './media-storage-readiness.test';
 import { runOtpRateLimitTests } from './otp-rate-limit.test';
 import { runPaymentGatewayAdaptersTests } from './payment-gateway-adapters.test';
 import { runPaymentGatewayConfigTests } from './payment-gateway-config.test';
+import { runPaymentProviderAliasCoreTests } from './payment-provider-alias-core.test';
 import { runProductCheckoutPolicyTests } from './product-checkout-policy.test';
 import { runPublicInquiryServiceTests } from './public-inquiry-service.test';
 import { runRepositoryFallbackPolicyTests } from './repository-fallback-policy.test';
@@ -60,11 +61,12 @@ async function main() {
   await runCheckoutCapacityHoldTests();
   await runCheckoutPaymentProviderTests();
   await runCheckoutAdapterAliasAttemptTests();
+  await runPaymentProviderAliasCoreTests();
   await runPaymentGatewayConfigTests();
   await runPaymentGatewayAdaptersTests();
   await runProductCheckoutPolicyTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (32 files)');
+  console.log('unit tests passed (33 files)');
 }
 
 main().catch((error) => {
