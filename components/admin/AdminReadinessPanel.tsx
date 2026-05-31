@@ -1,19 +1,22 @@
 import type { RuntimeReadiness } from '@/lib/runtime-readiness';
+import type { InquiryNotificationReadiness } from '@/lib/notifications/inquiry-notifications-core';
 
-type ReadinessStatus = 'ready' | 'warning' | 'blocked';
+export type ReadinessStatus = 'ready' | 'warning' | 'blocked';
 
 type ReadinessItem = {
   label: string;
   status: ReadinessStatus;
   summary: string;
   detail: string;
+  extras?: string[];
 };
 
 type AdminReadinessPanelProps = {
   runtimeReadiness: RuntimeReadiness;
   authConfigured: boolean;
   authenticated: boolean;
-  notificationMode: string;
+  notificationReadiness: InquiryNotificationReadiness;
+  notificationRetryRunbook: string[];
 };
 
 const statusClasses: Record<ReadinessStatus, string> = {
@@ -32,27 +35,30 @@ function yesNo(value: boolean) {
   return value ? 'yes' : 'no';
 }
 
-function notificationReadiness(mode: string): Pick<ReadinessItem, 'status' | 'summary' | 'detail'> {
-  if (mode === 'webhook') {
+function notificationReadinessStatus(readiness: InquiryNotificationReadiness): Pick<ReadinessItem, 'status' | 'summary' | 'detail' | 'extras'> {
+  if (readiness.blockers.length > 0) {
     return {
-      status: 'ready',
-      summary: 'Webhook notification mode is configured.',
-      detail: 'New inquiries will POST a provider-agnostic JSON payload to the configured webhook URL. Verify delivery before relying on it for operations.'
+      status: 'blocked',
+      summary: readiness.blockers[0]?.summary ?? 'Inquiry notifications are blocked.',
+      detail: readiness.blockers[0]?.detail ?? 'Fix notification blockers before relying on automated alerting.',
+      extras: readiness.blockers.map((issue) => `${issue.code}: ${issue.detail}`)
     };
   }
 
-  if (mode === 'log') {
+  if (readiness.warnings.length > 0) {
     return {
       status: 'warning',
-      summary: 'Log-only notification mode.',
-      detail: 'Staff must monitor the admin inbox until webhook, email, or WhatsApp delivery is configured.'
+      summary: readiness.warnings[0]?.summary ?? 'Inquiry notifications need an operating decision.',
+      detail: readiness.warnings[0]?.detail ?? 'Confirm the manual monitoring process before launch.',
+      extras: readiness.warnings.map((issue) => `${issue.code}: ${issue.detail}`)
     };
   }
 
   return {
-    status: 'warning',
-    summary: `Unsupported notification mode: ${mode}.`,
-    detail: 'The notification layer will fall back to server logs until this mode is implemented.'
+    status: 'ready',
+    summary: 'Inquiry notification configuration is ready.',
+    detail: `Notification mode ${readiness.mode} has no readiness blockers or warnings.`,
+    extras: []
   };
 }
 
@@ -67,8 +73,28 @@ function mediaStorageReadiness(runtimeReadiness: RuntimeReadiness): Pick<Readine
   return { status: 'warning', summary: mediaStorage.summary, detail: mediaStorage.detail };
 }
 
-export function AdminReadinessPanel({ runtimeReadiness, authConfigured, authenticated, notificationMode }: AdminReadinessPanelProps) {
-  const notificationStatus = notificationReadiness(notificationMode);
+function ReadinessCard({ item }: { item: ReadinessItem }) {
+  return (
+    <article className={`rounded-3xl border p-5 ${statusClasses[item.status]}`}>
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="font-display text-2xl text-rosewood">{item.label}</h3>
+        <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em]">
+          {statusLabels[item.status]}
+        </span>
+      </div>
+      <p className="mt-3 text-sm font-semibold">{item.summary}</p>
+      <p className="mt-2 text-sm leading-6 text-stone-700">{item.detail}</p>
+      {item.extras?.length ? (
+        <ul className="mt-3 grid gap-1 text-xs leading-5 text-stone-700">
+          {item.extras.map((extra) => <li key={extra}>• {extra}</li>)}
+        </ul>
+      ) : null}
+    </article>
+  );
+}
+
+export function AdminReadinessPanel({ runtimeReadiness, authConfigured, authenticated, notificationReadiness, notificationRetryRunbook }: AdminReadinessPanelProps) {
+  const notificationStatus = notificationReadinessStatus(notificationReadiness);
   const mediaStatus = mediaStorageReadiness(runtimeReadiness);
   const databaseReady = runtimeReadiness.databaseUrlPresent;
   const items: ReadinessItem[] = [
@@ -103,7 +129,7 @@ export function AdminReadinessPanel({ runtimeReadiness, authConfigured, authenti
         : 'Set ADMIN_PASSWORD and ADMIN_SESSION_SECRET before enabling staff CMS writes.'
     },
     {
-      label: 'Inquiry notifications',
+      label: `Inquiry notifications (${notificationReadiness.mode})`,
       ...notificationStatus
     },
     {
@@ -127,18 +153,13 @@ export function AdminReadinessPanel({ runtimeReadiness, authConfigured, authenti
         </a>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
-        {items.map((item) => (
-          <article key={item.label} className={`rounded-3xl border p-5 ${statusClasses[item.status]}`}>
-            <div className="flex items-start justify-between gap-3">
-              <h3 className="font-display text-2xl text-rosewood">{item.label}</h3>
-              <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em]">
-                {statusLabels[item.status]}
-              </span>
-            </div>
-            <p className="mt-3 text-sm font-semibold">{item.summary}</p>
-            <p className="mt-2 text-sm leading-6 text-stone-700">{item.detail}</p>
-          </article>
-        ))}
+        {items.map((item) => <ReadinessCard key={item.label} item={item} />)}
+      </div>
+      <div className="mt-5 rounded-3xl border border-olive/20 bg-cream p-5 text-sm text-stone-700">
+        <p className="font-semibold text-rosewood">Inquiry notification retry runbook</p>
+        <ol className="mt-3 grid gap-2 pl-5 list-decimal leading-6">
+          {notificationRetryRunbook.map((step) => <li key={step}>{step}</li>)}
+        </ol>
       </div>
     </section>
   );
