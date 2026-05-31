@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 
 export async function runAdminActionBoundaryGuardTests() {
-  const result = spawnSync(process.execPath, ['tools/check-admin-action-boundaries.mjs'], {
+  const result = spawnSync(process.execPath, ['tools/check-action-boundaries.mjs'], {
     encoding: 'utf8'
   });
 
