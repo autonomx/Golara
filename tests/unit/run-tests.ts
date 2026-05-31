@@ -22,6 +22,7 @@ import { runInquiryWorkflowTests } from './inquiry-workflow.test';
 import { runMediaStorageReadinessTests } from './media-storage-readiness.test';
 import { runOtpRateLimitTests } from './otp-rate-limit.test';
 import { runPaymentGatewayConfigTests } from './payment-gateway-config.test';
+import { runProductCheckoutPolicyTests } from './product-checkout-policy.test';
 import { runPublicInquiryServiceTests } from './public-inquiry-service.test';
 import { runRepositoryFallbackPolicyTests } from './repository-fallback-policy.test';
 import { runRuntimeModeTests } from './runtime-mode.test';
@@ -55,8 +56,9 @@ async function main() {
   await runCheckoutStateMachineTests();
   await runCheckoutCapacityHoldTests();
   await runPaymentGatewayConfigTests();
+  await runProductCheckoutPolicyTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (28 files)');
+  console.log('unit tests passed (29 files)');
 }
 
 main().catch((error) => {
