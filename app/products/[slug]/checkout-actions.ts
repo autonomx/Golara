@@ -1,8 +1,8 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { checkoutActionNextPath } from '@/lib/checkout/checkout-action-next-path';
 import { createOrderDraft } from '@/lib/checkout/order-draft-repository';
-import { orderNextPath } from '@/lib/checkout/order-next-path';
 import { createCheckoutPaymentAttempt } from '@/lib/checkout/payment-provider';
 import { addCustomerAddress, upsertCustomerProfile } from '@/lib/customers/customer-repository';
 import { hasDatabase } from '@/lib/prisma';
@@ -70,14 +70,7 @@ export async function createCheckoutAction(productId: string | undefined, produc
       });
 
       const attempt = await createCheckoutPaymentAttempt({ orderId: order.id });
-      redirectTarget = orderNextPath({
-        orderNumber: order.orderNumber,
-        publicLookupToken: order.publicLookupToken,
-        attempt: {
-          status: attempt.status,
-          nextUrl: attempt.redirectUrl
-        }
-      });
+      redirectTarget = checkoutActionNextPath(order, attempt);
     }
   } catch (error) {
     console.warn('[checkout] failed to create order draft', error);
