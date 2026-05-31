@@ -12,7 +12,8 @@ import {
   isValidAdminSessionCookie,
   normalizeAdminIdentityProvider,
   normalizeAdminRole,
-  verifyAdminPassword
+  verifyAdminPassword,
+  type AdminRole
 } from '../../lib/admin-auth-core';
 
 export async function runAdminAuthCoreTests() {
@@ -91,10 +92,21 @@ export async function runAdminAuthCoreTests() {
     provider: 'password'
   });
 
-  assert.equal(adminRoleMeetsRequirement('owner', 'owner'), true);
-  assert.equal(adminRoleMeetsRequirement('owner', 'staff'), true);
-  assert.equal(adminRoleMeetsRequirement('staff', 'staff'), true);
-  assert.equal(adminRoleMeetsRequirement('staff', 'owner'), false);
+  const roles: AdminRole[] = ['staff', 'owner'];
+  const expectedRoleAccess: Record<AdminRole, Record<AdminRole, boolean>> = {
+    staff: { staff: true, owner: false },
+    owner: { staff: true, owner: true }
+  };
+
+  for (const actualRole of roles) {
+    for (const requiredRole of roles) {
+      assert.equal(
+        adminRoleMeetsRequirement(actualRole, requiredRole),
+        expectedRoleAccess[actualRole][requiredRole],
+        `${actualRole} requiring ${requiredRole}`
+      );
+    }
+  }
 
   console.log('admin-auth-core.test.ts passed');
 }
