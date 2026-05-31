@@ -5,6 +5,9 @@ import {
   createCmsInquiryService,
   type CmsInquiryFollowUpRecord,
   type CmsInquiryStatusRecord,
+  type CmsInquiryAssignmentRecord,
+  type InquiryAssignmentUpdateArgs,
+  type InquiryFindAssignmentArgs,
   type InquiryFindStatusArgs,
   type InquiryFollowUpCreateArgs,
   type InquiryUpdateArgs
@@ -14,10 +17,10 @@ import { prisma } from '@/lib/prisma';
 export { createCmsInquiryService, inquiryStatuses, isInquiryStatus } from '@/lib/cms/inquiry-service-core';
 
 const inquiryRepository = {
-  async findUnique(args: InquiryFindStatusArgs): Promise<CmsInquiryStatusRecord | null> {
+  async findUnique(args: InquiryFindStatusArgs | InquiryFindAssignmentArgs): Promise<CmsInquiryStatusRecord | CmsInquiryAssignmentRecord | null> {
     return prisma.customerInquiry.findUnique(args);
   },
-  async update(args: InquiryUpdateArgs): Promise<unknown> {
+  async update(args: InquiryUpdateArgs | InquiryAssignmentUpdateArgs): Promise<unknown> {
     return prisma.customerInquiry.update(args);
   }
 };
