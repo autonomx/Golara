@@ -13,7 +13,7 @@ type CreatePaymentAttemptInput = {
   provider?: PaymentProviderName;
 };
 
-type PaymentMetadata = Record<string, string | number | boolean>;
+type PaymentMetadata = Record<string, string | number | boolean | string[]>;
 
 type PaymentProviderResult = {
   provider: string;
