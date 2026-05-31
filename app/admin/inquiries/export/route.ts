@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { assertAdminAuthenticated } from '@/lib/admin-auth';
+import { assertAdminAuthenticated, getAdminIdentity } from '@/lib/admin-auth';
 import { listInquiries } from '@/lib/cms/catalog-repository';
+import { filterInquiriesByAssignmentQueue, parseInquiryAssignmentQueueFilter } from '@/lib/inquiries/inquiry-assignment-queue';
 import { createInquiryReportRows } from '@/lib/inquiries/inquiry-reporting';
 
 function csvCell(value: unknown) {
@@ -18,8 +19,10 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const status = url.searchParams.get('inquiryStatus') ?? undefined;
   const search = url.searchParams.get('inquirySearch') ?? undefined;
-  const inquiries = await listInquiries(status, search);
-  const reportRows = createInquiryReportRows(inquiries);
+  const assignmentQueue = parseInquiryAssignmentQueueFilter(url.searchParams.get('inquiryAssignment'));
+  const identity = await getAdminIdentity();
+  const inquiries = filterInquiriesByAssignmentQueue(await listInquiries(status, search), assignmentQueue, identity);
+  const reportRows = createInquiryReportRows(inquiries, identity);
 
   const header = csvRow([
     'created_at',
@@ -78,11 +81,12 @@ export async function GET(request: Request) {
   const csv = [header, ...rows].join('\n');
   const fileStatus = status ? `-${status}` : '';
   const fileSearch = search ? '-search' : '';
+  const fileAssignment = assignmentQueue !== 'all' ? `-${assignmentQueue}` : '';
 
   return new NextResponse(csv, {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': `attachment; filename="golara-inquiries${fileStatus}${fileSearch}.csv"`
+      'Content-Disposition': `attachment; filename="golara-inquiries${fileStatus}${fileSearch}${fileAssignment}.csv"`
     }
   });
 }
