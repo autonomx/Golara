@@ -4,10 +4,10 @@ import { mapCheckoutAttemptStatus } from '@/lib/checkout/checkout-attempt-status
 import { checkoutCurrency } from '@/lib/checkout/payment-attempt-core';
 import { initiatePaymentGateway } from '@/lib/checkout/payment-gateway-adapters';
 import {
-  isAdapterPaymentProviderName,
   mapAliasGatewayResultToLegacyAttempt,
   normalizeCheckoutProviderName
 } from '@/lib/checkout/payment-provider-alias-core';
+import { checkoutProviderMode } from '@/lib/checkout/payment-provider-mode';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
 export type PaymentProviderName = 'manual' | 'domestic_redirect' | 'zarinpal' | 'iranian' | 'stripe' | 'whatsapp' | 'inquiry';
@@ -264,10 +264,10 @@ export async function createCheckoutPaymentAttempt(input: CreatePaymentAttemptIn
     throw new Error('Order is not eligible for payment.');
   }
 
-  const selectedProvider = normalizeCheckoutProviderName(input.provider ?? configuredPaymentProvider());
-  const result = isAdapterPaymentProviderName(selectedProvider)
-    ? await createAdapterAliasAttempt(order, selectedProvider)
-    : await getPaymentProvider(selectedProvider).createAttempt(order);
+  const mode = checkoutProviderMode(input.provider ?? configuredPaymentProvider());
+  const result = mode.kind === 'adapter'
+    ? await createAdapterAliasAttempt(order, mode.provider)
+    : await getPaymentProvider(mode.provider).createAttempt(order);
 
   const attemptData = {
     orderId: order.id,
