@@ -1,5 +1,6 @@
 import { saveInquiryAction } from '@/app/admin/inquiry-actions';
 import type { CustomerInquiry } from '@/lib/catalog';
+import type { InquiryAssignmentQueueFilter } from '@/lib/inquiries/inquiry-assignment-queue';
 
 const nextStatusByStatus: Record<string, string[]> = {
   new: ['contacted', 'confirmed', 'cancelled'],
@@ -13,12 +14,14 @@ export function InquiryStatusShortcuts({
   inquiry,
   activeStatus,
   search,
-  page
+  page,
+  assignmentFilter
 }: {
   inquiry: CustomerInquiry;
   activeStatus?: string;
   search?: string;
   page: number;
+  assignmentFilter?: InquiryAssignmentQueueFilter;
 }) {
   const nextStatuses = nextStatusByStatus[inquiry.status] ?? [];
   if (nextStatuses.length === 0) return null;
@@ -31,6 +34,7 @@ export function InquiryStatusShortcuts({
           <input type="hidden" name="staffNotes" value={inquiry.staffNotes ?? ''} />
           {activeStatus ? <input type="hidden" name="returnInquiryStatus" value={activeStatus} /> : null}
           {search ? <input type="hidden" name="returnInquirySearch" value={search} /> : null}
+          {assignmentFilter && assignmentFilter !== 'all' ? <input type="hidden" name="returnInquiryAssignment" value={assignmentFilter} /> : null}
           <input type="hidden" name="returnInquiryPage" value={page} />
           <button className="rounded-full border border-rosewood/20 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-rosewood transition hover:bg-cream" type="submit">
             Mark {status}
