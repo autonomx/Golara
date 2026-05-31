@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {
+  checkoutProviderRoutingKind,
   isAdapterPaymentProviderName,
   isLegacyPaymentProviderName,
   mapAliasGatewayResultToLegacyAttempt,
@@ -53,6 +54,14 @@ export async function runPaymentProviderAliasCoreTests() {
   assert.equal(shouldUseDirectCheckoutProvider('stripe'), false);
   assert.equal(shouldUseDirectCheckoutProvider('whatsapp'), false);
   assert.equal(shouldUseDirectCheckoutProvider('inquiry'), false);
+
+  assert.equal(checkoutProviderRoutingKind('manual'), 'local');
+  assert.equal(checkoutProviderRoutingKind('domestic_redirect'), 'local');
+  assert.equal(checkoutProviderRoutingKind('zarinpal'), 'local');
+  assert.equal(checkoutProviderRoutingKind('iranian'), 'adapter');
+  assert.equal(checkoutProviderRoutingKind('stripe'), 'adapter');
+  assert.equal(checkoutProviderRoutingKind('whatsapp'), 'adapter');
+  assert.equal(checkoutProviderRoutingKind('inquiry'), 'adapter');
 
   assert.deepEqual(mapAliasGatewayResultToLegacyAttempt({
     order: baseOrder,
