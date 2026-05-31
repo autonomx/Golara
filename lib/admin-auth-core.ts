@@ -5,14 +5,15 @@ export const ADMIN_SESSION_PAYLOAD = 'golara-admin-v1';
 export const ADMIN_SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
 
 export type AdminRole = 'owner' | 'staff';
+export type AdminIdentityProvider = 'password';
 
 export type AdminIdentity = {
   authenticated: boolean;
-  type: 'password';
+  type: AdminIdentityProvider;
   label: string;
   email?: string;
   role: AdminRole;
-  provider: 'password';
+  provider: AdminIdentityProvider;
 };
 
 export type AdminAuthConfig = {
@@ -21,6 +22,15 @@ export type AdminAuthConfig = {
   label: string;
   email?: string;
   role: AdminRole;
+  provider: AdminIdentityProvider;
+};
+
+export type AdminIdentityInput = {
+  authenticated: boolean;
+  label: string;
+  email?: string;
+  role: AdminRole;
+  provider: AdminIdentityProvider;
 };
 
 const ROLE_RANK: Record<AdminRole, number> = {
@@ -36,13 +46,19 @@ export function normalizeAdminRole(value: string | undefined): AdminRole {
   return value?.trim().toLowerCase() === 'staff' ? 'staff' : 'owner';
 }
 
+export function normalizeAdminIdentityProvider(value: string | undefined): AdminIdentityProvider {
+  const provider = value?.trim().toLowerCase();
+  return provider === 'password' || !provider ? 'password' : 'password';
+}
+
 export function getAdminAuthConfig(env: Record<string, string | undefined>): AdminAuthConfig {
   return {
     password: envValue(env, 'ADMIN_PASSWORD'),
     sessionSecret: envValue(env, 'ADMIN_SESSION_SECRET'),
     label: envValue(env, 'ADMIN_LABEL') || 'Admin',
     email: envValue(env, 'ADMIN_EMAIL') || undefined,
-    role: normalizeAdminRole(env.ADMIN_ROLE)
+    role: normalizeAdminRole(env.ADMIN_ROLE),
+    provider: normalizeAdminIdentityProvider(env.ADMIN_IDENTITY_PROVIDER)
   };
 }
 
@@ -77,15 +93,25 @@ export function verifyAdminPassword(password: string, config: AdminAuthConfig) {
   return isAdminAuthConfigured(config) && safeAdminEqual(password, config.password);
 }
 
-export function createAdminIdentity(authenticated: boolean, config: AdminAuthConfig): AdminIdentity {
+export function createAdminIdentity(input: AdminIdentityInput): AdminIdentity {
   return {
+    authenticated: input.authenticated,
+    type: input.provider,
+    label: input.label,
+    email: input.email,
+    role: input.role,
+    provider: input.provider
+  };
+}
+
+export function createConfiguredAdminIdentity(authenticated: boolean, config: AdminAuthConfig): AdminIdentity {
+  return createAdminIdentity({
     authenticated,
-    type: 'password',
     label: config.label,
     email: config.email,
     role: config.role,
-    provider: 'password'
-  };
+    provider: config.provider
+  });
 }
 
 export function adminRoleMeetsRequirement(actualRole: AdminRole, requiredRole: AdminRole) {

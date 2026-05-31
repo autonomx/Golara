@@ -5,8 +5,8 @@ import {
   ADMIN_SESSION_COOKIE_NAME,
   ADMIN_SESSION_MAX_AGE_SECONDS,
   adminRoleMeetsRequirement,
-  createAdminIdentity,
   createAdminSessionCookieValue,
+  createConfiguredAdminIdentity,
   getAdminAuthConfig,
   isAdminAuthConfigured as isAdminAuthConfiguredCore,
   isValidAdminSessionCookie,
@@ -34,7 +34,7 @@ export async function isAdminAuthenticated() {
 }
 
 export async function getAdminIdentity(): Promise<AdminIdentity> {
-  return createAdminIdentity(await isAdminAuthenticated(), adminAuthConfig());
+  return createConfiguredAdminIdentity(await isAdminAuthenticated(), adminAuthConfig());
 }
 
 export async function assertAdminAuthenticated() {
