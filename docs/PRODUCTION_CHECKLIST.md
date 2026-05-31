@@ -20,8 +20,8 @@ Required production variables:
 - `CLOUDINARY_UPLOAD_FOLDER`: optional Cloudinary upload folder, defaults to `golara`.
 - `INQUIRY_NOTIFICATION_MODE`: `log` or `webhook`.
 - `INQUIRY_NOTIFICATION_WEBHOOK_URL`: required when `INQUIRY_NOTIFICATION_MODE="webhook"`.
-- `INQUIRY_NOTIFICATION_EMAIL`: future email destination/provider setting.
-- `INQUIRY_NOTIFICATION_WHATSAPP`: future WhatsApp provider setting.
+- `INQUIRY_NOTIFICATION_EMAIL`: placeholder for a future email provider integration; currently not used for delivery.
+- `INQUIRY_NOTIFICATION_WHATSAPP`: placeholder for a future WhatsApp provider integration; currently not used for delivery.
 
 Rules:
 
@@ -89,17 +89,62 @@ Current behavior:
 - Inquiry status changes and follow-up notes are recorded in the admin audit log.
 - Staff and owner roles can perform inquiry write actions.
 
+Log-only notification mode:
+
+```bash
+INQUIRY_NOTIFICATION_MODE="log"
+```
+
+Use log-only mode when staff will manually monitor `/admin` and server logs during early production or private launch. This mode is production-allowed, but `npm run check:deploy-readiness` reports it as a warning because no automatic external alert is delivered. Staff must have a documented operating routine for checking the admin inquiry inbox, assigning follow-up, and exporting inquiry data when needed.
+
 Webhook notification mode:
 
 ```bash
 INQUIRY_NOTIFICATION_MODE="webhook"
-INQUIRY_NOTIFICATION_WEBHOOK_URL="https://example.com/golara/inquiries"
+INQUIRY_NOTIFICATION_WEBHOOK_URL="https://example.invalid/golara/inquiries"
 ```
+
+Use webhook mode when an external automation service, internal endpoint, CRM bridge, email relay, chat workflow, or similar receiver should be notified whenever a new customer inquiry is created. Production readiness blocks webhook mode until `INQUIRY_NOTIFICATION_WEBHOOK_URL` is configured. The webhook URL should be treated as a secret when it contains tokens, signatures, or private routing identifiers.
+
+The webhook request currently posts JSON with this shape:
+
+```json
+{
+  "event": "golara.customer_inquiry.created",
+  "inquiry": {
+    "id": "inquiry-id",
+    "productTitle": "Product title",
+    "customerName": "Customer name",
+    "customerPhone": "customer phone",
+    "customerEmail": "customer email",
+    "message": "Customer inquiry message"
+  }
+}
+```
+
+Webhook failure behavior:
+
+- Missing webhook URL in webhook mode logs a warning and falls back to the server log notification path.
+- Non-2xx webhook responses log the response status and fall back to the server log notification path.
+- Network or fetch errors log the error and fall back to the server log notification path.
+- Delivery failures do not block inquiry creation; staff still need to monitor `/admin` as the source of truth.
+
+Future provider placeholders:
+
+```bash
+INQUIRY_NOTIFICATION_EMAIL="staff inbox placeholder"
+INQUIRY_NOTIFICATION_WHATSAPP="staff WhatsApp placeholder"
+```
+
+These variables are reserved for future email or WhatsApp provider implementations. Setting them today does not send email or WhatsApp messages. Do not rely on them for production alerting until a provider-specific service boundary and readiness check are implemented.
 
 Before production launch:
 
 - Decide whether staff will monitor `/admin` manually at first.
-- Configure webhook delivery or add provider-specific email/WhatsApp delivery before relying on automated alerts.
+- Use `INQUIRY_NOTIFICATION_MODE="log"` only when manual monitoring is operationally acceptable.
+- Configure webhook delivery before relying on automated alerts.
+- Send a test inquiry and verify the admin inbox receives it.
+- In webhook mode, verify the receiver accepts the test payload and returns a 2xx response.
 - Confirm inquiry CSV export does not expose data to unauthenticated users.
 
 ## 5. Media and storage
@@ -187,6 +232,7 @@ Manual smoke test:
 - Admin readiness shows configured Cloudinary storage as ready.
 - Logout returns admin to read-only/login flow.
 - Signed-out admin preview does not load the audit-log panel.
+- Log notification mode records a test inquiry to server logs and requires manual staff monitoring.
 - Webhook mode sends a test inquiry to the configured endpoint or safely falls back to server logs on failure.
 - CMS and inquiry admin writes create audit-log rows with actor metadata.
 - The admin audit-log panel shows and filters recent staff activity after writes.
