@@ -14,6 +14,7 @@ import { runCustomerAuthIdentityTests } from './customer-auth-identity.test';
 import { runDeployReadinessTests } from './deploy-readiness.test';
 import { runI18nLocalizationTests } from './i18n-localization.test';
 import { runInquiryNotificationsCoreTests } from './inquiry-notifications-core.test';
+import { runInquiryWorkflowTests } from './inquiry-workflow.test';
 import { runMediaStorageReadinessTests } from './media-storage-readiness.test';
 import { runOtpRateLimitTests } from './otp-rate-limit.test';
 import { runPublicInquiryServiceTests } from './public-inquiry-service.test';
@@ -39,12 +40,13 @@ async function main() {
   await runCmsInquiryServiceTests();
   await runPublicInquiryServiceTests();
   await runInquiryNotificationsCoreTests();
+  await runInquiryWorkflowTests();
   await runCustomerAuthIdentityTests();
   await runOtpRateLimitTests();
   await runCheckoutStateMachineTests();
   await runCheckoutCapacityHoldTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (22 files)');
+  console.log('unit tests passed (23 files)');
 }
 
 main().catch((error) => {
