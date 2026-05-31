@@ -1,7 +1,7 @@
 # Golara Production Readiness Roadmap
 
 Last updated: 2026-05-31
-Current main baseline: Phase 25.13 merged
+Current main baseline: Phase 26 merged
 Current production path: inquiry-first launch. Payment-provider implementation remains deferred until explicitly approved.
 
 ## Current readiness state
@@ -17,7 +17,7 @@ Completed foundations:
 - Staff/owner role-boundary tests are in place.
 - Inquiry-first checkout/payment decision is documented as the active production path.
 - Inquiry workflow helpers, reports, CSV exports, printable reports, follow-up context, and staff recommended actions are in place.
-- Inquiry assignment metadata, queue helpers, board filters, export/print filters, filter counts, return-state preservation, and assignment-aware empty states are in place.
+- Inquiry assignment metadata, queue helpers, board filters, export/print filters, filter counts, return-state preservation, assignment-aware empty states, and assignment actions are in place.
 
 ## Completed recent phases
 
@@ -51,52 +51,19 @@ Completed foundations:
 - Phase 25.12 — inquiry assignment counts.
 - Phase 25.13 — inquiry assignment empty state.
 
-## Remaining production readiness phases
-
-### Phase 25.14 — production roadmap checkpoint
-
-Status: planned / current.
-
-Goal: keep a single roadmap file that reflects completed production-readiness work and the remaining launch blockers.
-
-Scope:
-
-- Add or update this roadmap document.
-- List completed readiness foundations.
-- List remaining launch phases in priority order.
-- Keep this as documentation only; no runtime behavior change.
-
-Validation:
-
-- CI must still pass install, file-lines, runtime, Prisma generation, typecheck, unit tests, build, and route smoke.
-
 ### Phase 26 — inquiry assignment actions
 
-Status: next implementation phase.
+- Staff can assign inquiries to themselves.
+- Staff can assign inquiries to owner/staff role queues.
+- Staff can unassign inquiries.
+- Assignment changes create system follow-up timeline entries and audit metadata.
+- Assignment controls preserve current admin board filters, search, and page state.
 
-Goal: make ownership operational, not just visible/filterable.
-
-Scope:
-
-- Add explicit staff actions:
-  - assign to me
-  - assign to another known staff identity or role, if available
-  - unassign
-- Record assignment follow-up/system timeline entries.
-- Preserve current board filters after assignment changes.
-- Add unit coverage for assignment action payloads and return-state behavior.
-- Add role-boundary coverage: staff can manage inquiry assignments; owner-only CMS actions stay owner-only.
-
-Acceptance criteria:
-
-- Staff can take ownership of an inquiry from the admin board.
-- Staff can clear ownership when needed.
-- Assignment changes are reflected in board filters, CSV export, print view, and reporting rows.
-- Assignment actions do not break existing inquiry status/follow-up flows.
+## Remaining production readiness phases
 
 ### Phase 27 — staff account management readiness
 
-Status: planned.
+Status: current implementation phase.
 
 Goal: move from account/model groundwork to production-operable staff access.
 
@@ -200,11 +167,10 @@ Notes:
 
 Blocking before inquiry-first production launch:
 
-1. Inquiry assignment actions.
-2. Staff account management/readiness path.
-3. Inquiry notification reliability and failure visibility.
-4. Production data safety and migration/rollback runbook.
-5. Final launch audit.
+1. Staff account management/readiness path.
+2. Inquiry notification reliability and failure visibility.
+3. Production data safety and migration/rollback runbook.
+4. Final launch audit.
 
 Not blocking inquiry-first launch:
 
