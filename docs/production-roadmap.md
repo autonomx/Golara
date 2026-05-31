@@ -1,7 +1,7 @@
 # Golara Production Readiness Roadmap
 
 Last updated: 2026-05-31
-Current main baseline: Phase 27 merged
+Current main baseline: Phase 28 merged
 Current production path: inquiry-first launch. Payment-provider implementation remains deferred until explicitly approved.
 
 ## Current readiness state
@@ -19,6 +19,7 @@ Completed foundations:
 - Inquiry workflow helpers, reports, CSV exports, printable reports, follow-up context, and staff recommended actions are in place.
 - Inquiry assignment metadata, queue helpers, board filters, export/print filters, filter counts, return-state preservation, assignment-aware empty states, and assignment actions are in place.
 - Owner-facing staff account readiness, assignment identity visibility, and staff access rotation/deactivation guidance are in place.
+- Inquiry notification delivery now returns structured results, exposes readiness blockers/warnings, and includes retry runbook guidance.
 
 ## Completed recent phases
 
@@ -67,31 +68,18 @@ Completed foundations:
 - Account readiness helpers normalize staff/owner identity and assignment keys.
 - Staff access rotation/deactivation runbook is documented in the checklist and admin panel.
 
-## Remaining production readiness phases
-
 ### Phase 28 — inquiry notification reliability
 
-Status: current implementation phase.
+- Notification delivery returns structured status, mode, channel, fallback, webhook status, error code, and detail.
+- Admin readiness shows notification blockers/warnings from the real notification readiness object.
+- Admin readiness includes inquiry notification retry runbook guidance.
+- Notification tests cover log mode, webhook success, missing URL, non-2xx, network error, unsupported mode, and runbooks.
 
-Goal: make production inquiry notifications observable and recoverable.
-
-Scope:
-
-- Finalize production notification mode and provider configuration.
-- Add notification delivery audit records or structured logs.
-- Add failure visibility in admin/readiness output.
-- Add resend or retry runbook for failed inquiry notifications.
-- Add tests for notification-mode readiness and failure-safe behavior.
-
-Acceptance criteria:
-
-- New inquiries have a reliable notification path.
-- Failed notifications are visible to staff or operators.
-- Production readiness clearly reports whether inquiry notification config is launch-ready.
+## Remaining production readiness phases
 
 ### Phase 29 — production data safety and migration runbook
 
-Status: planned.
+Status: current implementation phase.
 
 Goal: make production database changes and recovery operationally safe.
 
@@ -155,9 +143,8 @@ Notes:
 
 Blocking before inquiry-first production launch:
 
-1. Inquiry notification reliability and failure visibility.
-2. Production data safety and migration/rollback runbook.
-3. Final launch audit.
+1. Production data safety and migration/rollback runbook.
+2. Final launch audit.
 
 Not blocking inquiry-first launch:
 
