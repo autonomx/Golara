@@ -16,7 +16,7 @@ type CreatePaymentAttemptInput = {
 type PaymentMetadata = Record<string, string | number | boolean>;
 
 type PaymentProviderResult = {
-  provider: LegacyPaymentProviderName;
+  provider: string;
   status: 'manual_pending' | 'created' | 'redirect_required';
   providerReference?: string;
   redirectUrl?: string;
@@ -255,7 +255,7 @@ export async function createCheckoutPaymentAttempt(input: CreatePaymentAttemptIn
   }
 
   const selected = input.provider || configuredPaymentProvider();
-  const result = isAdapterPaymentProvider(selected)
+  const result: PaymentProviderResult = isAdapterPaymentProvider(selected)
     ? await createAdapterAliasAttempt({ provider: selected, order })
     : await getPaymentProvider(selected).createAttempt(order);
 
