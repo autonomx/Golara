@@ -7,7 +7,7 @@ import { InquiryFollowUpSummary } from '@/components/admin/InquiryFollowUpSummar
 import { InquiryStatusShortcuts } from '@/components/admin/InquiryStatusShortcuts';
 import type { CustomerInquiry } from '@/lib/catalog';
 import type { InquiryPage, InquiryStatusCount } from '@/lib/cms/catalog-repository';
-import type { InquiryAssignmentQueueFilter } from '@/lib/inquiries/inquiry-assignment-queue';
+import type { InquiryAssignmentQueueFilter, InquiryAssignmentQueueSummary } from '@/lib/inquiries/inquiry-assignment-queue';
 import { getInquiryWorkflowStep, getInquiryWorkflowSummary } from '@/lib/inquiries/inquiry-workflow';
 
 const statuses = ['new', 'contacted', 'confirmed', 'fulfilled', 'cancelled'];
@@ -179,7 +179,13 @@ function InquirySearchForm({ activeStatus, search, assignmentFilter }: { activeS
   );
 }
 
-function AssignmentFilterPills({ activeStatus, search, assignmentFilter }: { activeStatus?: string; search?: string; assignmentFilter?: InquiryAssignmentQueueFilter }) {
+function AssignmentFilterPills({ activeStatus, search, assignmentFilter, assignmentSummary }: { activeStatus?: string; search?: string; assignmentFilter?: InquiryAssignmentQueueFilter; assignmentSummary: InquiryAssignmentQueueSummary }) {
+  const counts: Record<InquiryAssignmentQueueFilter, number> = {
+    all: assignmentSummary.total,
+    mine: assignmentSummary.mine,
+    assigned: assignmentSummary.assigned,
+    unassigned: assignmentSummary.unassigned
+  };
   const filters: Array<{ label: string; value: InquiryAssignmentQueueFilter }> = [
     { label: 'All owners', value: 'all' },
     { label: 'Mine', value: 'mine' },
@@ -195,7 +201,7 @@ function AssignmentFilterPills({ activeStatus, search, assignmentFilter }: { act
           const active = (assignmentFilter ?? 'all') === filter.value;
           return (
             <Link key={filter.value} href={filterHref(activeStatus, search, filter.value)} className={`${filterLinkBaseClass} ${active ? 'border-rosewood bg-rosewood text-white' : 'border-rosewood/20 bg-cream text-rosewood hover:bg-white'}`}>
-              {filter.label}
+              {filter.label} <span className="ml-1 opacity-75">{counts[filter.value]}</span>
             </Link>
           );
         })}
@@ -286,7 +292,7 @@ function PaginationControls({ inquiryPage, activeStatus, search, assignmentFilte
   );
 }
 
-export function InquiryBoard({ inquiryPage, counts, activeStatus, search, assignmentFilter }: { inquiryPage: InquiryPage; counts: InquiryStatusCount[]; activeStatus?: string; search?: string; assignmentFilter?: InquiryAssignmentQueueFilter }) {
+export function InquiryBoard({ inquiryPage, counts, assignmentSummary, activeStatus, search, assignmentFilter }: { inquiryPage: InquiryPage; counts: InquiryStatusCount[]; assignmentSummary: InquiryAssignmentQueueSummary; activeStatus?: string; search?: string; assignmentFilter?: InquiryAssignmentQueueFilter }) {
   const inquiries = inquiryPage.inquiries;
 
   return (
@@ -300,7 +306,7 @@ export function InquiryBoard({ inquiryPage, counts, activeStatus, search, assign
         <InquirySummaryCards counts={counts} activeStatus={activeStatus} search={search} assignmentFilter={assignmentFilter} />
         <InquiryWorkflowOverview counts={counts} />
         <InquirySearchForm activeStatus={activeStatus} search={search} assignmentFilter={assignmentFilter} />
-        <AssignmentFilterPills activeStatus={activeStatus} search={search} assignmentFilter={assignmentFilter} />
+        <AssignmentFilterPills activeStatus={activeStatus} search={search} assignmentFilter={assignmentFilter} assignmentSummary={assignmentSummary} />
         <FilterPills counts={counts} activeStatus={activeStatus} search={search} assignmentFilter={assignmentFilter} />
       </div>
 
