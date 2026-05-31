@@ -1,6 +1,7 @@
 import Link from 'next/link';
-import { isAdminAuthenticated } from '@/lib/admin-auth';
+import { getAdminIdentity, isAdminAuthenticated } from '@/lib/admin-auth';
 import { listInquiries } from '@/lib/cms/catalog-repository';
+import { filterInquiriesByAssignmentQueue, parseInquiryAssignmentQueueFilter } from '@/lib/inquiries/inquiry-assignment-queue';
 import { createInquiryReportRows, createInquiryReportSummary } from '@/lib/inquiries/inquiry-reporting';
 
 function formatDate(value: Date) {
@@ -15,9 +16,9 @@ function formatDateOnly(value?: Date) {
   return new Intl.DateTimeFormat('en-CA', { dateStyle: 'medium' }).format(value);
 }
 
-export default async function InquiryPrintPage({ searchParams }: { searchParams: Promise<{ inquiryStatus?: string; inquirySearch?: string }> }) {
+export default async function InquiryPrintPage({ searchParams }: { searchParams: Promise<{ inquiryStatus?: string; inquirySearch?: string; inquiryAssignment?: string }> }) {
   const authenticated = await isAdminAuthenticated();
-  const { inquiryStatus, inquirySearch } = await searchParams;
+  const { inquiryStatus, inquirySearch, inquiryAssignment } = await searchParams;
 
   if (!authenticated) {
     return (
@@ -29,9 +30,11 @@ export default async function InquiryPrintPage({ searchParams }: { searchParams:
     );
   }
 
-  const inquiries = await listInquiries(inquiryStatus, inquirySearch);
-  const reportRows = createInquiryReportRows(inquiries);
-  const summary = createInquiryReportSummary(inquiries);
+  const identity = await getAdminIdentity();
+  const assignmentQueue = parseInquiryAssignmentQueueFilter(inquiryAssignment);
+  const inquiries = filterInquiriesByAssignmentQueue(await listInquiries(inquiryStatus, inquirySearch), assignmentQueue, identity);
+  const reportRows = createInquiryReportRows(inquiries, identity);
+  const summary = createInquiryReportSummary(inquiries, identity);
 
   return (
     <main className="bg-white p-8 text-stone-950 print:p-0">
@@ -47,7 +50,7 @@ export default async function InquiryPrintPage({ searchParams }: { searchParams:
 
         <div className="mb-6 border-b pb-4">
           <h2 className="text-2xl font-semibold">Golara inquiries</h2>
-          <p className="mt-1 text-sm text-stone-600">Filter: {inquiryStatus ?? 'all'} · Search: {inquirySearch || 'none'} · Count: {reportRows.length}</p>
+          <p className="mt-1 text-sm text-stone-600">Filter: {inquiryStatus ?? 'all'} · Search: {inquirySearch || 'none'} · Assignment: {assignmentQueue} · Count: {reportRows.length}</p>
           <div className="mt-4 grid gap-2 text-sm sm:grid-cols-3">
             <p><strong>Needs first review:</strong> {summary.needsFirstReview}</p>
             <p><strong>Waiting on customer:</strong> {summary.waitingOnCustomer}</p>
