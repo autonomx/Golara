@@ -15,6 +15,7 @@ import {
   uploadMediaAction
 } from '@/app/admin/actions';
 import type { CustomerAuthEventSummary } from '@/lib/customers/customer-auth-event-summary';
+import type { InquiryNotificationReadiness } from '@/lib/notifications/inquiry-notifications-core';
 import type { RuntimeReadiness } from '@/lib/runtime-readiness';
 
 type AdminDashboardProps = {
@@ -27,7 +28,8 @@ type AdminDashboardProps = {
   runtimeReadiness: RuntimeReadiness;
   authConfigured: boolean;
   authenticated: boolean;
-  notificationMode: string;
+  notificationReadiness: InquiryNotificationReadiness;
+  notificationRetryRunbook: string[];
   status?: string;
   message?: string;
 };
@@ -106,7 +108,7 @@ function StatusBanner({ status, message }: { status?: string; message?: string }
   return <section className={`rounded-[2rem] border p-5 text-sm font-semibold ${isError ? 'border-red-200 bg-red-50 text-red-800' : 'border-olive/20 bg-white text-olive'}`}>{message || statusLabels[status ?? ''] || status}</section>;
 }
 
-export function AdminDashboard({ categories, products, homepage, homepageTranslations, media, authEventSummary, runtimeReadiness, authConfigured, authenticated, notificationMode, status, message }: AdminDashboardProps) {
+export function AdminDashboard({ categories, products, homepage, homepageTranslations, media, authEventSummary, runtimeReadiness, authConfigured, authenticated, notificationReadiness, notificationRetryRunbook, status, message }: AdminDashboardProps) {
   const databaseReady = runtimeReadiness.databaseUrlPresent;
   const disabled = !databaseReady || !authenticated;
 
@@ -114,7 +116,7 @@ export function AdminDashboard({ categories, products, homepage, homepageTransla
     <div className="space-y-12">
       <StatusBanner status={status} message={message} />
       <AdminQuickNav />
-      <AdminReadinessPanel runtimeReadiness={runtimeReadiness} authConfigured={authConfigured} authenticated={authenticated} notificationMode={notificationMode} />
+      <AdminReadinessPanel runtimeReadiness={runtimeReadiness} authConfigured={authConfigured} authenticated={authenticated} notificationReadiness={notificationReadiness} notificationRetryRunbook={notificationRetryRunbook} />
       {authenticated ? <AdminSecurityPanel summary={authEventSummary} /> : null}
 
       <section className={`rounded-[2rem] border p-6 ${databaseReady && authenticated ? 'border-olive/20 bg-white' : 'border-amber-300 bg-amber-50'}`}>
@@ -203,56 +205,22 @@ export function AdminDashboard({ categories, products, homepage, homepageTransla
   );
 }
 
-function CategoryFields({ category, categories, media, disabled }: { category?: Category; categories: Category[]; media: MediaItem[]; disabled: boolean }) {
-  const mediaUrls = new Set(media.map((item) => item.url));
-  const selectedMediaUrl = category?.image && mediaUrls.has(category.image) ? category.image : '';
-  const manualImageUrl = category?.image && !mediaUrls.has(category.image) ? category.image : '';
-  const parentOptions = categories.filter((option) => option.id && option.id !== category?.id);
-
+function MediaSelect({ label, name, media, defaultValue, disabled }: { label: string; name: string; media: MediaItem[]; defaultValue?: string; disabled: boolean }) {
   return (
-    <>
-      <div className="grid gap-4 md:grid-cols-2">
-        <Field label="Title" name="title" defaultValue={category?.title} placeholder="Flower Boxes" disabled={disabled} />
-        <Field label="Slug" name="slug" defaultValue={category?.slug} placeholder="flower-boxes" required={false} disabled={disabled} />
-        <Field label="Eyebrow" name="eyebrow" defaultValue={category?.eyebrow} placeholder="Signature gifts" disabled={disabled} />
-        <Field label="Sort order" name="sortOrder" type="number" defaultValue={category?.sortOrder ?? 100} disabled={disabled} />
-      </div>
-      <label className="grid gap-2 text-sm font-semibold text-rosewood">Parent category<select className={inputClass} name="parentId" defaultValue={category?.parentId ?? ''} disabled={disabled}><option value="">No parent category</option>{parentOptions.map((option) => <option key={option.id} value={option.id}>{option.title}</option>)}</select></label>
-      <label className="grid gap-2 text-sm font-semibold text-rosewood">Category image from media library<select className={inputClass} name="categorySelectedMediaUrl" defaultValue={selectedMediaUrl} disabled={disabled}><option value="">Use manual category image URL below</option>{media.map((item) => <option key={item.url} value={item.url}>{item.alt}</option>)}</select></label>
-      <Field label="Manual category image URL" name="categoryImageUrl" defaultValue={manualImageUrl} placeholder="/seed-images/category-real/flower-boxes or /uploads/file.webp" required={false} disabled={disabled} />
-      <TextArea label="Description" name="description" defaultValue={category?.description} disabled={disabled} />
-      <div className="grid gap-3 md:grid-cols-3">
-        <Toggle label="Visible on storefront" name="isActive" defaultChecked={category?.isActive !== false} disabled={disabled} />
-        <Toggle label="Show on homepage" name="showOnHomepage" defaultChecked={category?.showOnHomepage !== false} disabled={disabled} />
-      </div>
-    </>
+    <label className="grid gap-2 text-sm font-semibold text-rosewood">
+      {label}
+      <select className={inputClass} name={name} defaultValue={defaultValue ?? ''} disabled={disabled}>
+        <option value="">Choose from media library...</option>
+        {media.map((item) => <option key={item.url} value={item.url}>{item.alt}</option>)}
+      </select>
+    </label>
   );
 }
 
-function ProductFields({ product, categories, media, disabled }: { product?: Product; categories: Category[]; media: MediaItem[]; disabled: boolean }) {
-  const selectedCategory = product ? categoryDefaultValue(product, categories) : categories[0]?.id ?? '';
-  const mediaUrls = new Set(media.map((item) => item.url));
-  const selectedMediaUrl = product?.image && mediaUrls.has(product.image) ? product.image : '';
+function CategoryFields({ category, categories, media, disabled }: { category?: Category; categories: Category[]; media: MediaItem[]; disabled: boolean }) {
+  return <><div className="grid gap-4 md:grid-cols-2"><Field label="Title" name="title" defaultValue={category?.title} disabled={disabled} /><Field label="Slug" name="slug" defaultValue={category?.slug} disabled={disabled} /></div><TextArea label="Eyebrow" name="eyebrow" defaultValue={category?.eyebrow} disabled={disabled} /><TextArea label="Description" name="description" defaultValue={category?.description} disabled={disabled} /><MediaSelect label="Category image from media library" name="categorySelectedMediaUrl" media={media} defaultValue={category?.image} disabled={disabled} /><Field label="Manual category image URL" name="categoryImageUrl" defaultValue={category?.image} required={false} disabled={disabled} /><label className="grid gap-2 text-sm font-semibold text-rosewood">Parent category<select className={inputClass} name="parentId" defaultValue={category?.parentId ?? ''} disabled={disabled}><option value="">No parent</option>{categories.filter((candidate) => candidate.id !== category?.id).map((candidate) => <option key={candidate.id ?? candidate.slug} value={candidate.id ?? ''}>{candidate.title}</option>)}</select></label><div className="grid gap-3 md:grid-cols-3"><Field label="Sort order" name="sortOrder" type="number" defaultValue={category?.sortOrder ?? 100} disabled={disabled} /><Toggle label="Show on homepage" name="showOnHomepage" defaultChecked={category?.showOnHomepage ?? true} disabled={disabled} /><Toggle label="Active" name="isActive" defaultChecked={category?.isActive ?? true} disabled={disabled} /></div></>;
+}
 
-  return (
-    <>
-      <div className="grid gap-4 md:grid-cols-2">
-        <Field label="Title" name="title" defaultValue={product?.title} placeholder="Rose Garden Box" disabled={disabled} />
-        <Field label="Slug" name="slug" defaultValue={product?.slug} placeholder="rose-garden-box" required={false} disabled={disabled} />
-        <Field label="Product code" name="code" defaultValue={product?.code} placeholder="GL-4001" disabled={disabled} />
-        <Field label="Price" name="price" type="number" defaultValue={product?.price ?? 0} disabled={disabled} />
-        <Field label="Currency" name="currency" defaultValue={product?.currency ?? 'CAD'} disabled={disabled} />
-        <label className="grid gap-2 text-sm font-semibold text-rosewood">Category<select className={inputClass} name="categoryId" defaultValue={selectedCategory} required disabled={disabled}>{categories.map((category) => <option key={category.slug} value={category.id ?? ''}>{category.parentTitle ? `${category.parentTitle} / ${category.title}` : category.title}</option>)}</select></label>
-      </div>
-      <label className="grid gap-2 text-sm font-semibold text-rosewood">Media library image<select className={inputClass} name="selectedMediaUrl" defaultValue={selectedMediaUrl} disabled={disabled}><option value="">Use manual image URL below</option>{media.map((item) => <option key={item.url} value={item.url}>{item.alt}</option>)}</select></label>
-      <Field label="Manual image URL" name="imageUrl" defaultValue={product?.image} placeholder="https://... or /uploads/file.webp" required={false} disabled={disabled} />
-      <TextArea label="Description" name="description" defaultValue={product?.description} disabled={disabled} />
-      <div className="grid gap-3 md:grid-cols-4">
-        <Toggle label="Visible on storefront" name="isActive" defaultChecked={product?.isActive !== false} disabled={disabled} />
-        <Toggle label="Best seller" name="bestSeller" defaultChecked={Boolean(product?.bestSeller)} disabled={disabled} />
-        <Toggle label="Available today" name="availableToday" defaultChecked={Boolean(product?.availableToday)} disabled={disabled} />
-        <Toggle label="Manual purchase" name="requiresQuote" defaultChecked={Boolean(product?.requiresQuote)} disabled={disabled} />
-      </div>
-    </>
-  );
+function ProductFields({ product, categories, media, disabled }: { product?: Product; categories: Category[]; media: MediaItem[]; disabled: boolean }) {
+  return <><div className="grid gap-4 md:grid-cols-2"><Field label="Title" name="title" defaultValue={product?.title} disabled={disabled} /><Field label="Slug" name="slug" defaultValue={product?.slug} disabled={disabled} /></div><div className="grid gap-4 md:grid-cols-2"><Field label="Code" name="code" defaultValue={product?.code} disabled={disabled} /><label className="grid gap-2 text-sm font-semibold text-rosewood">Category<select className={inputClass} name="categoryId" defaultValue={categoryDefaultValue(product ?? ({ category: '' } as Product), categories)} disabled={disabled} required><option value="">Choose category</option>{categories.map((category) => <option key={category.id ?? category.slug} value={category.id ?? ''}>{category.title}</option>)}</select></label></div><TextArea label="Description" name="description" defaultValue={product?.description} disabled={disabled} /><div className="grid gap-4 md:grid-cols-2"><Field label="Price" name="price" type="number" defaultValue={product?.price ?? 0} disabled={disabled} /><Field label="Currency" name="currency" defaultValue={product?.currency ?? 'CAD'} disabled={disabled} /></div><MediaSelect label="Product image from media library" name="selectedMediaUrl" media={media} defaultValue={product?.image} disabled={disabled} /><Field label="Manual product image URL" name="imageUrl" defaultValue={product?.image} required={false} disabled={disabled} /><div className="grid gap-3 md:grid-cols-4"><Toggle label="Available today" name="availableToday" defaultChecked={product?.availableToday ?? true} disabled={disabled} /><Toggle label="Best seller" name="bestSeller" defaultChecked={product?.bestSeller ?? false} disabled={disabled} /><Toggle label="Requires quote" name="requiresQuote" defaultChecked={product?.requiresQuote ?? false} disabled={disabled} /><Toggle label="Active" name="isActive" defaultChecked={product?.isActive ?? true} disabled={disabled} /></div><Field label="Sort order" name="sortOrder" type="number" defaultValue={0} disabled={disabled} /></>;
 }
