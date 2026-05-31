@@ -1,5 +1,6 @@
 import 'server-only';
 
+import type { Prisma } from '@prisma/client';
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
 import {
   createCmsInquiryService,
@@ -18,10 +19,10 @@ export { createCmsInquiryService, inquiryStatuses, isInquiryStatus } from '@/lib
 
 const inquiryRepository = {
   async findUnique(args: InquiryFindStatusArgs | InquiryFindAssignmentArgs): Promise<CmsInquiryStatusRecord | CmsInquiryAssignmentRecord | null> {
-    return prisma.customerInquiry.findUnique(args);
+    return prisma.customerInquiry.findUnique(args as Prisma.CustomerInquiryFindUniqueArgs);
   },
   async update(args: InquiryUpdateArgs | InquiryAssignmentUpdateArgs): Promise<unknown> {
-    return prisma.customerInquiry.update(args);
+    return prisma.customerInquiry.update(args as Prisma.CustomerInquiryUpdateArgs);
   }
 };
 
