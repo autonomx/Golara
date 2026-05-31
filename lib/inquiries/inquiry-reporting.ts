@@ -9,6 +9,11 @@ export type InquiryReportRow = {
   customerName: string;
   phone: string;
   email: string;
+  assigned: boolean;
+  assigneeLabel: string;
+  assigneeEmail: string;
+  assigneeRole: string;
+  assignedAt?: Date;
   deliveryDate?: Date;
   deliveryNotes: string;
   message: string;
@@ -31,6 +36,8 @@ export function getLatestInquiryFollowUp(inquiry: CustomerInquiry): CustomerInqu
 export function createInquiryReportRow(inquiry: CustomerInquiry): InquiryReportRow {
   const workflowStep = getInquiryWorkflowStep(inquiry.status);
   const latestFollowUp = getLatestInquiryFollowUp(inquiry);
+  const assignee = inquiry.assignee;
+  const assigned = Boolean(assignee?.adminId || assignee?.label || assignee?.email || assignee?.role || assignee?.assignedAt);
 
   return {
     createdAt: inquiry.createdAt,
@@ -40,6 +47,11 @@ export function createInquiryReportRow(inquiry: CustomerInquiry): InquiryReportR
     customerName: text(inquiry.name),
     phone: text(inquiry.phone),
     email: text(inquiry.email),
+    assigned,
+    assigneeLabel: text(assignee?.label) || (assigned ? 'Assigned' : 'Unassigned'),
+    assigneeEmail: text(assignee?.email),
+    assigneeRole: text(assignee?.role),
+    assignedAt: assignee?.assignedAt,
     deliveryDate: inquiry.deliveryDate,
     deliveryNotes: text(inquiry.deliveryNotes),
     message: inquiry.message,
@@ -60,6 +72,8 @@ export function createInquiryReportSummary(inquiries: CustomerInquiry[]) {
   const rows = createInquiryReportRows(inquiries);
   return {
     total: rows.length,
+    assigned: rows.filter((row) => row.assigned).length,
+    unassigned: rows.filter((row) => !row.assigned).length,
     withFollowUps: rows.filter((row) => row.followUpCount > 0).length,
     withoutFollowUps: rows.filter((row) => row.followUpCount === 0).length,
     needsFirstReview: rows.filter((row) => row.status === 'new').length,

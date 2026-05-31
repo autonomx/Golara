@@ -13,6 +13,13 @@ function inquiry(overrides: Partial<CustomerInquiry> = {}): CustomerInquiry {
     deliveryDate: new Date('2026-06-01T10:00:00.000Z'),
     deliveryNotes: 'Morning delivery.',
     staffNotes: 'Prefers pink roses.',
+    assignee: {
+      adminId: 'staff@example.invalid',
+      label: 'Staff User',
+      email: 'staff@example.invalid',
+      role: 'staff',
+      assignedAt: new Date('2026-05-31T10:30:00.000Z')
+    },
     status: 'contacted',
     createdAt: new Date('2026-05-31T10:00:00.000Z'),
     followUps: [
@@ -40,6 +47,11 @@ export async function runInquiryReportingTests() {
     deliveryNotes: 'Morning delivery.',
     message: 'Can you prepare this arrangement?',
     staffNotes: 'Prefers pink roses.',
+    assigned: true,
+    assigneeLabel: 'Staff User',
+    assigneeEmail: 'staff@example.invalid',
+    assigneeRole: 'staff',
+    assignedAt: new Date('2026-05-31T10:30:00.000Z'),
     followUpCount: 2,
     latestFollowUpChannel: 'phone',
     latestFollowUpAt: new Date('2026-05-31T12:00:00.000Z'),
@@ -49,14 +61,18 @@ export async function runInquiryReportingTests() {
 
   const rows = createInquiryReportRows([
     baseInquiry,
-    inquiry({ id: 'inquiry-2', status: 'new', followUps: [], productTitle: undefined, name: ' ' }),
+    inquiry({ id: 'inquiry-2', status: 'new', followUps: [], productTitle: undefined, name: ' ', assignee: undefined }),
     inquiry({ id: 'inquiry-3', status: 'confirmed', followUps: [] })
   ]);
   assert.equal(rows[1]?.productTitle, 'General inquiry');
   assert.equal(rows[1]?.customerName, '');
+  assert.equal(rows[1]?.assigned, false);
+  assert.equal(rows[1]?.assigneeLabel, 'Unassigned');
 
-  assert.deepEqual(createInquiryReportSummary(rows.map((row, index) => inquiry({ id: `summary-${index}`, status: row.status, followUps: index === 0 ? baseInquiry.followUps : [] }))), {
+  assert.deepEqual(createInquiryReportSummary(rows.map((row, index) => inquiry({ id: `summary-${index}`, status: row.status, followUps: index === 0 ? baseInquiry.followUps : [], assignee: index === 1 ? undefined : baseInquiry.assignee }))), {
     total: 3,
+    assigned: 2,
+    unassigned: 1,
     withFollowUps: 1,
     withoutFollowUps: 2,
     needsFirstReview: 1,

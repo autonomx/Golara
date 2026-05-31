@@ -83,6 +83,14 @@ export type CustomerInquiryFollowUp = {
   createdAt: Date;
 };
 
+export type CustomerInquiryAssignee = {
+  adminId?: string;
+  label?: string;
+  email?: string;
+  role?: string;
+  assignedAt?: Date;
+};
+
 export type CustomerInquiry = {
   id: string;
   name?: string;
@@ -94,6 +102,7 @@ export type CustomerInquiry = {
   deliveryDate?: Date;
   deliveryNotes?: string;
   staffNotes?: string;
+  assignee?: CustomerInquiryAssignee;
   followUps?: CustomerInquiryFollowUp[];
   status: string;
   createdAt: Date;
