@@ -59,10 +59,8 @@ export type InquiryFollowUpCreateArgs = {
 };
 
 type InquiryRepository = {
-  findUnique(args: InquiryFindStatusArgs): Promise<CmsInquiryStatusRecord | null>;
-  findUnique(args: InquiryFindAssignmentArgs): Promise<CmsInquiryAssignmentRecord | null>;
-  update(args: InquiryUpdateArgs): Promise<unknown>;
-  update(args: InquiryAssignmentUpdateArgs): Promise<unknown>;
+  findUnique(args: InquiryFindStatusArgs | InquiryFindAssignmentArgs): Promise<CmsInquiryStatusRecord | CmsInquiryAssignmentRecord | null>;
+  update(args: InquiryUpdateArgs | InquiryAssignmentUpdateArgs): Promise<unknown>;
 };
 
 type InquiryFollowUpRepository = {
@@ -156,7 +154,7 @@ export function createCmsInquiryService(deps: CmsInquiryServiceDeps) {
 
       if (!currentInquiry) throw new Error('Inquiry not found.');
 
-      const previousAssignee = inquiryAssigneeFromRecord(currentInquiry);
+      const previousAssignee = inquiryAssigneeFromRecord(currentInquiry as CmsInquiryAssignmentRecord);
       const nextAssignee = input.assignee;
       const summary = describeInquiryAssignmentChange(previousAssignee, nextAssignee);
 
