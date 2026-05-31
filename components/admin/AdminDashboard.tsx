@@ -15,6 +15,7 @@ import {
   uploadMediaAction
 } from '@/app/admin/actions';
 import type { CustomerAuthEventSummary } from '@/lib/customers/customer-auth-event-summary';
+import type { PaymentGatewayReadiness } from '@/lib/checkout/payment-gateway-config';
 import type { InquiryNotificationReadiness } from '@/lib/notifications/inquiry-notifications-core';
 import type { RuntimeReadiness } from '@/lib/runtime-readiness';
 
@@ -30,6 +31,7 @@ type AdminDashboardProps = {
   authenticated: boolean;
   notificationReadiness: InquiryNotificationReadiness;
   notificationRetryRunbook: string[];
+  checkoutReadiness: PaymentGatewayReadiness;
   status?: string;
   message?: string;
 };
@@ -108,7 +110,7 @@ function StatusBanner({ status, message }: { status?: string; message?: string }
   return <section className={`rounded-[2rem] border p-5 text-sm font-semibold ${isError ? 'border-red-200 bg-red-50 text-red-800' : 'border-olive/20 bg-white text-olive'}`}>{message || statusLabels[status ?? ''] || status}</section>;
 }
 
-export function AdminDashboard({ categories, products, homepage, homepageTranslations, media, authEventSummary, runtimeReadiness, authConfigured, authenticated, notificationReadiness, notificationRetryRunbook, status, message }: AdminDashboardProps) {
+export function AdminDashboard({ categories, products, homepage, homepageTranslations, media, authEventSummary, runtimeReadiness, authConfigured, authenticated, notificationReadiness, notificationRetryRunbook, checkoutReadiness, status, message }: AdminDashboardProps) {
   const databaseReady = runtimeReadiness.databaseUrlPresent;
   const disabled = !databaseReady || !authenticated;
 
@@ -116,7 +118,7 @@ export function AdminDashboard({ categories, products, homepage, homepageTransla
     <div className="space-y-12">
       <StatusBanner status={status} message={message} />
       <AdminQuickNav />
-      <AdminReadinessPanel runtimeReadiness={runtimeReadiness} authConfigured={authConfigured} authenticated={authenticated} notificationReadiness={notificationReadiness} notificationRetryRunbook={notificationRetryRunbook} />
+      <AdminReadinessPanel runtimeReadiness={runtimeReadiness} authConfigured={authConfigured} authenticated={authenticated} notificationReadiness={notificationReadiness} notificationRetryRunbook={notificationRetryRunbook} checkoutReadiness={checkoutReadiness} />
       {authenticated ? <AdminSecurityPanel summary={authEventSummary} /> : null}
 
       <section className={`rounded-[2rem] border p-6 ${databaseReady && authenticated ? 'border-olive/20 bg-white' : 'border-amber-300 bg-amber-50'}`}>
