@@ -1,6 +1,13 @@
 import 'server-only';
 
 import { mapCheckoutAttemptStatus } from '@/lib/checkout/checkout-attempt-status';
+import { checkoutCurrency } from '@/lib/checkout/payment-attempt-core';
+import { initiatePaymentGateway } from '@/lib/checkout/payment-gateway-adapters';
+import {
+  isAdapterPaymentProviderName,
+  mapAliasGatewayResultToLegacyAttempt,
+  normalizeCheckoutProviderName
+} from '@/lib/checkout/payment-provider-alias-core';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
 export type PaymentProviderName = 'manual' | 'domestic_redirect' | 'zarinpal' | 'iranian' | 'stripe' | 'whatsapp' | 'inquiry';
@@ -11,10 +18,10 @@ type CreatePaymentAttemptInput = {
   provider?: PaymentProviderName;
 };
 
-type PaymentMetadata = Record<string, string | number | boolean>;
+type PaymentMetadata = Record<string, string | number | boolean | string[]>;
 
 type PaymentProviderResult = {
-  provider: LegacyPaymentProviderName;
+  provider: PaymentProviderName;
   status: 'manual_pending' | 'created' | 'redirect_required';
   providerReference?: string;
   redirectUrl?: string;
@@ -47,15 +54,7 @@ type ZarinpalRequestResponse = {
 
 function configuredPaymentProvider(): PaymentProviderName {
   const provider = process.env.CHECKOUT_DOMESTIC_GATEWAY_PROVIDER?.trim().toLowerCase() || 'manual';
-  if (provider === 'manual') return 'manual';
-  if (provider === 'domestic_redirect') return 'domestic_redirect';
-  if (provider === 'zarinpal') return 'zarinpal';
-  if (provider === 'iranian') return 'iranian';
-  if (provider === 'stripe') return 'stripe';
-  if (provider === 'whatsapp') return 'whatsapp';
-  if (provider === 'inquiry') return 'inquiry';
-  console.warn('[checkout] unsupported CHECKOUT_DOMESTIC_GATEWAY_PROVIDER; using manual', { provider });
-  return 'manual';
+  return normalizeCheckoutProviderName(provider);
 }
 
 function siteUrl() {
@@ -226,6 +225,23 @@ function getPaymentProvider(provider?: PaymentProviderName): PaymentProvider {
   return manualPaymentProvider;
 }
 
+async function createAdapterAliasAttempt(order: PaymentProviderOrder, provider: Extract<PaymentProviderName, 'iranian' | 'stripe' | 'whatsapp' | 'inquiry'>): Promise<PaymentProviderResult> {
+  const result = await initiatePaymentGateway({
+    provider,
+    payment: {
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      amountCents: order.totalCents,
+      currency: checkoutCurrency(order.currency),
+      returnUrl: checkoutReturnUrl(order, provider) ?? siteUrl(),
+      metadata: {
+        orderNumber: order.orderNumber
+      }
+    }
+  });
+  return mapAliasGatewayResultToLegacyAttempt({ result, order });
+}
+
 export async function createCheckoutPaymentAttempt(input: CreatePaymentAttemptInput) {
   if (!hasDatabase()) throw new Error('DATABASE_URL is required for checkout payment attempts.');
 
@@ -247,20 +263,24 @@ export async function createCheckoutPaymentAttempt(input: CreatePaymentAttemptIn
     throw new Error('Order is not eligible for payment.');
   }
 
-  const provider = getPaymentProvider(input.provider);
-  const result = await provider.createAttempt(order);
+  const selectedProvider = normalizeCheckoutProviderName(input.provider ?? configuredPaymentProvider());
+  const result = isAdapterPaymentProviderName(selectedProvider)
+    ? await createAdapterAliasAttempt(order, selectedProvider)
+    : await getPaymentProvider(selectedProvider).createAttempt(order);
+
+  const attemptData = {
+    orderId: order.id,
+    provider: result.provider,
+    status: result.status,
+    amountCents: order.totalCents,
+    currency: order.currency,
+    ...(result.providerReference ? { providerReference: result.providerReference } : {}),
+    ...(result.redirectUrl ? { redirectUrl: result.redirectUrl } : {}),
+    ...(result.metadata ? { metadata: result.metadata } : {})
+  };
 
   const attempt = await prisma.checkoutPaymentAttempt.create({
-    data: {
-      orderId: order.id,
-      provider: result.provider,
-      status: result.status,
-      amountCents: order.totalCents,
-      currency: order.currency,
-      providerReference: result.providerReference,
-      redirectUrl: result.redirectUrl,
-      metadata: result.metadata
-    }
+    data: attemptData
   });
 
   await prisma.checkoutOrder.update({
