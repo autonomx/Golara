@@ -3,10 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { assertAdminRole } from '@/lib/admin-auth';
-import { recordAdminAuditLog } from '@/lib/admin-audit-log';
-import { hasDatabase, prisma } from '@/lib/prisma';
-
-const allowedStatuses = ['new', 'contacted', 'confirmed', 'fulfilled', 'cancelled'];
+import { cmsInquiryService, isInquiryStatus } from '@/lib/cms/inquiry-service';
+import { hasDatabase } from '@/lib/prisma';
 
 function stringFormValue(formData: FormData, name: string) {
   const value = formData.get(name);
@@ -33,41 +31,9 @@ export async function saveInquiryAction(inquiryId: string, formData: FormData) {
   const status = stringFormValue(formData, 'status') || 'new';
   const staffNotes = stringFormValue(formData, 'staffNotes');
 
-  if (!allowedStatuses.includes(status)) throw new Error('Invalid inquiry status.');
+  if (!isInquiryStatus(status)) throw new Error('Invalid inquiry status.');
 
-  const currentInquiry = await prisma.customerInquiry.findUnique({
-    where: { id: inquiryId },
-    select: { status: true }
-  });
-
-  if (!currentInquiry) throw new Error('Inquiry not found.');
-
-  await prisma.customerInquiry.update({
-    where: { id: inquiryId },
-    data: { status, staffNotes }
-  });
-
-  if (currentInquiry.status !== status) {
-    await prisma.customerInquiryFollowUp.create({
-      data: {
-        inquiryId,
-        channel: 'system',
-        note: `Status changed from ${currentInquiry.status} to ${status}.`
-      }
-    });
-  }
-
-  await recordAdminAuditLog({
-    action: 'inquiry.update',
-    entity: 'customerInquiry',
-    entityId: inquiryId,
-    summary: `Updated inquiry status to ${status}`,
-    metadata: {
-      previousStatus: currentInquiry.status,
-      status,
-      staffNotesUpdated: Boolean(staffNotes)
-    }
-  });
+  await cmsInquiryService.updateInquiry({ inquiryId, status, staffNotes });
 
   revalidatePath('/admin');
   redirect(adminStatus('inquiry-updated', formData));
@@ -82,17 +48,7 @@ export async function addInquiryFollowUpAction(inquiryId: string, formData: Form
 
   if (note.length < 2) throw new Error('Follow-up note is required.');
 
-  const followUp = await prisma.customerInquiryFollowUp.create({
-    data: { inquiryId, note, channel }
-  });
-
-  await recordAdminAuditLog({
-    action: 'inquiry.follow_up.create',
-    entity: 'customerInquiry',
-    entityId: inquiryId,
-    summary: `Added ${channel} follow-up to inquiry`,
-    metadata: { followUpId: followUp.id, channel }
-  });
+  await cmsInquiryService.addFollowUp({ inquiryId, note, channel });
 
   revalidatePath('/admin');
   redirect(adminStatus('follow-up-added', formData));
