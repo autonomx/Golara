@@ -22,7 +22,7 @@ export type AdapterPaymentProviderAttempt = (provider: AdapterPaymentProviderNam
 export async function createCheckoutProviderRuntimeAttempt(input: {
   order: PaymentAttemptOrder;
   provider: string | null | undefined;
-  returnUrl?: string;
+  returnUrl: string;
   localAttempt: LocalPaymentProviderAttempt;
   adapterAttempt: AdapterPaymentProviderAttempt;
 }): Promise<CheckoutPaymentProviderResult> {
@@ -31,18 +31,16 @@ export async function createCheckoutProviderRuntimeAttempt(input: {
     return input.localAttempt(mode.provider, input.order);
   }
 
-  const payment: PaymentGatewayInitiationInput = {
+  const result = await input.adapterAttempt(mode.provider, {
     orderId: input.order.id,
     orderNumber: input.order.orderNumber,
     amountCents: input.order.totalCents,
     currency: checkoutCurrency(input.order.currency),
+    returnUrl: input.returnUrl,
     metadata: {
       orderNumber: input.order.orderNumber
     }
-  };
-  if (input.returnUrl) payment.returnUrl = input.returnUrl;
-
-  const result = await input.adapterAttempt(mode.provider, payment);
+  });
 
   return mapAliasGatewayResultToLegacyAttempt({
     result: { ...result, provider: mode.provider },
