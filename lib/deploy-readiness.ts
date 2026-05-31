@@ -1,15 +1,10 @@
+import { getDataSafetyReadiness, getDataSafetyReadinessConfig } from '@/lib/data-safety-readiness';
+import type { DeployReadinessIssue, DeployReadinessSeverity } from '@/lib/deploy-readiness-types';
 import { getMediaStorageReadiness } from '@/lib/media/media-storage-readiness';
 import { getInquiryNotificationConfig, getInquiryNotificationReadiness } from '@/lib/notifications/inquiry-notifications-core';
 import { getAppRuntimeMode, type AppRuntimeMode } from '@/lib/runtime-mode';
 
-export type DeployReadinessSeverity = 'blocker' | 'warning';
-
-export type DeployReadinessIssue = {
-  code: string;
-  severity: DeployReadinessSeverity;
-  summary: string;
-  detail: string;
-};
+export type { DeployReadinessIssue, DeployReadinessSeverity } from '@/lib/deploy-readiness-types';
 
 export type DeployReadinessReport = {
   appMode: AppRuntimeMode;
@@ -35,6 +30,11 @@ function validateNotificationReadiness(blockers: DeployReadinessIssue[], warning
   const notificationReadiness = getInquiryNotificationReadiness(getInquiryNotificationConfig(process.env));
   blockers.push(...notificationReadiness.blockers);
   warnings.push(...notificationReadiness.warnings);
+}
+
+function validateDataSafetyReadiness(blockers: DeployReadinessIssue[]) {
+  const dataSafety = getDataSafetyReadiness(getDataSafetyReadinessConfig(process.env));
+  blockers.push(...dataSafety.blockers);
 }
 
 function validateAdminReadiness(blockers: DeployReadinessIssue[]) {
@@ -113,6 +113,7 @@ export function getDeployReadiness(): DeployReadinessReport {
     validateAdminReadiness(blockers);
     validateMediaReadiness(blockers);
     validateNotificationReadiness(blockers, warnings);
+    validateDataSafetyReadiness(blockers);
   }
 
   return {

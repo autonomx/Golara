@@ -16,6 +16,9 @@ Required production variables:
 - `ADMIN_EMAIL`: optional admin email for audit attribution and inquiry assignment matching.
 - `ADMIN_ROLE`: password-backed admin role metadata, currently `owner` or `staff`.
 - `ADMIN_IDENTITY_PROVIDER`: currently normalizes to `password`; reserved for future provider-backed admin auth.
+- `PRODUCTION_MIGRATION_RUNBOOK_CONFIRMED`: set to `true` only after reviewing the migration runbook below.
+- `PRODUCTION_BACKUP_RESTORE_CONFIRMED`: set to `true` only after verifying a restorable production database backup process.
+- `PRODUCTION_ROLLBACK_PLAN_CONFIRMED`: set to `true` only after confirming the last-known-good deploy and database restore path.
 - `MEDIA_STORAGE_PROVIDER`: production should use `cloudinary`; unset, `local`, or unsupported values fall back to local filesystem uploads.
 - `CLOUDINARY_CLOUD_NAME`: required when `MEDIA_STORAGE_PROVIDER="cloudinary"`.
 - `CLOUDINARY_UPLOAD_PRESET`: required when `MEDIA_STORAGE_PROVIDER="cloudinary"`.
@@ -33,8 +36,9 @@ Rules:
 - Treat webhook URLs as secrets if they include provider tokens or private routing keys.
 - Use `ADMIN_ROLE="owner"` for full CMS administration and `ADMIN_ROLE="staff"` for inquiry operations only.
 - Do not launch production with local media storage. Local uploads are not durable on serverless or multi-instance hosting.
+- Do not set production data-safety confirmation flags to `true` until the corresponding runbook step has been reviewed and verified.
 
-## 2. Database setup
+## 2. Database setup and data safety
 
 Current production target:
 
@@ -51,10 +55,37 @@ Preflight:
 npm install
 npm run db:generate
 npm run typecheck
+npm run test:unit
 npm run build
 ```
 
-Database bootstrap:
+Production migration runbook:
+
+1. Confirm the target git SHA and deployment environment.
+2. Verify production `DATABASE_URL` points at the intended PostgreSQL database.
+3. Verify a restorable backup exists before applying schema changes.
+4. Run `npm run db:generate` after dependency install.
+5. Apply schema changes with production `DATABASE_URL` using `npm run db:push` until formal migrations replace this process.
+6. Deploy the matching git SHA.
+7. Smoke-test public product pages, inquiry creation, admin inquiry list, assignment, export, print, and notification readiness.
+8. Record the deployed SHA, schema-change time, and operator who performed the change.
+
+Backup and restore expectation:
+
+- Take or verify a provider-level PostgreSQL backup immediately before production schema changes.
+- Confirm the backup can be restored to a separate database or restore target before relying on it.
+- Keep the backup retention window long enough to cover launch verification and early customer inquiry review.
+- Treat customer inquiries, admin audit logs, assignment history, follow-ups, and uploaded media records as production data.
+
+Rollback plan:
+
+1. Stop new production writes if a deploy or schema change corrupts production behavior.
+2. Redeploy the last known-good git SHA.
+3. Restore the verified production database backup if schema/data rollback is required.
+4. Re-run `npm run check:deploy-readiness` with production-like env vars.
+5. Smoke-test inquiry creation, admin list, assignment, export, print, and notification path before reopening operations.
+
+Database bootstrap for first setup or demo reset only:
 
 ```bash
 npm run db:push
@@ -249,6 +280,9 @@ The deploy readiness guard blocks production mode when any required production d
 - `ADMIN_PASSWORD` must be configured.
 - `ADMIN_SESSION_SECRET` must be configured and at least 32 characters long.
 - `ADMIN_ROLE`, when set, must be `owner` or `staff`.
+- Production migration runbook confirmation must be set with `PRODUCTION_MIGRATION_RUNBOOK_CONFIRMED=true`.
+- Production backup/restore confirmation must be set with `PRODUCTION_BACKUP_RESTORE_CONFIRMED=true`.
+- Production rollback confirmation must be set with `PRODUCTION_ROLLBACK_PLAN_CONFIRMED=true`.
 - Media storage must be production-safe, currently configured Cloudinary.
 - `INQUIRY_NOTIFICATION_MODE="webhook"` requires `INQUIRY_NOTIFICATION_WEBHOOK_URL`.
 - Unsupported notification modes are blocked.
@@ -276,4 +310,5 @@ Manual smoke test:
 - Admin readiness shows local media storage as a warning outside production and blocked in production.
 - Admin readiness shows incomplete Cloudinary configuration as blocked in production.
 - Admin readiness shows configured Cloudinary storage as ready.
+- Production data-safety confirmations are set only after migration, backup/restore, and rollback procedures are verified.
 - Logout returns admin to read-only/login flow.
