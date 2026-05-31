@@ -22,6 +22,7 @@ import { runInquiryNotificationsCoreTests } from './inquiry-notifications-core.t
 import { runInquiryReportingTests } from './inquiry-reporting.test';
 import { runInquiryWorkflowTests } from './inquiry-workflow.test';
 import { runMediaStorageReadinessTests } from './media-storage-readiness.test';
+import { runOrderNextPathTests } from './order-next-path.test';
 import { runOtpRateLimitTests } from './otp-rate-limit.test';
 import { runPaymentGatewayAdaptersTests } from './payment-gateway-adapters.test';
 import { runPaymentGatewayConfigTests } from './payment-gateway-config.test';
@@ -64,11 +65,12 @@ async function main() {
   await runCheckoutAdapterAliasAttemptTests();
   await runPaymentProviderAliasCoreTests();
   await runPaymentProviderModeTests();
+  await runOrderNextPathTests();
   await runPaymentGatewayConfigTests();
   await runPaymentGatewayAdaptersTests();
   await runProductCheckoutPolicyTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (34 files)');
+  console.log('unit tests passed (35 files)');
 }
 
 main().catch((error) => {
