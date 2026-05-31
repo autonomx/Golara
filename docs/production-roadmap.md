@@ -1,12 +1,12 @@
 # Golara Production Readiness Roadmap
 
 Last updated: 2026-05-31
-Current main baseline: Phase 28 merged
+Current main baseline: Phase 29 merged
 Current production path: inquiry-first launch. Payment-provider implementation remains deferred until explicitly approved.
 
 ## Current readiness state
 
-Golara is past baseline deploy readiness and is in admin/inquiry operations hardening.
+Golara is at final inquiry-first launch audit.
 
 Completed foundations:
 
@@ -20,6 +20,7 @@ Completed foundations:
 - Inquiry assignment metadata, queue helpers, board filters, export/print filters, filter counts, return-state preservation, assignment-aware empty states, and assignment actions are in place.
 - Owner-facing staff account readiness, assignment identity visibility, and staff access rotation/deactivation guidance are in place.
 - Inquiry notification delivery now returns structured results, exposes readiness blockers/warnings, and includes retry runbook guidance.
+- Production data-safety deploy guard blockers, migration runbook, backup/restore expectations, and rollback plan are in place.
 
 ## Completed recent phases
 
@@ -75,31 +76,18 @@ Completed foundations:
 - Admin readiness includes inquiry notification retry runbook guidance.
 - Notification tests cover log mode, webhook success, missing URL, non-2xx, network error, unsupported mode, and runbooks.
 
-## Remaining production readiness phases
-
 ### Phase 29 — production data safety and migration runbook
 
-Status: current implementation phase.
+- Production deploy-readiness guard blocks until migration, backup/restore, and rollback confirmations are set.
+- `.env.example` documents the production data-safety confirmation flags.
+- Production checklist documents migration, backup/restore, and rollback procedures.
+- Data-safety and deploy-readiness tests cover the new blockers.
 
-Goal: make production database changes and recovery operationally safe.
-
-Scope:
-
-- Document production migration procedure.
-- Document backup/restore expectations.
-- Add launch checklist items for database URL, Prisma generation, migration application, and rollback.
-- Verify deploy-readiness guard covers the required production env vars.
-- Add tests where practical for readiness reporting.
-
-Acceptance criteria:
-
-- There is a clear migration/deploy runbook.
-- There is a clear backup/restore expectation before launch.
-- Required production env vars are documented and checked.
+## Remaining production readiness phases
 
 ### Phase 30 — final launch audit
 
-Status: planned.
+Status: current implementation phase.
 
 Goal: perform a final inquiry-first launch readiness pass.
 
@@ -112,12 +100,14 @@ Scope:
 - Verify inquiry creation, follow-up, assignment, export, print, and notification path.
 - Verify public routes and key admin routes via smoke coverage.
 - Update launch notes with known deferred items.
+- Maintain final sign-off artifact in `docs/LAUNCH_AUDIT.md`.
 
 Acceptance criteria:
 
 - All required CI gates pass.
 - Launch checklist is complete.
 - Deferred work is explicitly listed and does not block inquiry-first launch.
+- Release operator has a concrete go/no-go sign-off template.
 
 ## Deferred post-launch phases
 
@@ -143,10 +133,11 @@ Notes:
 
 Blocking before inquiry-first production launch:
 
-1. Production data safety and migration/rollback runbook.
-2. Final launch audit.
+1. Final launch audit.
 
 Not blocking inquiry-first launch:
 
 - Payment provider implementation, as long as the site remains inquiry-first.
 - Full automated checkout/order-payment lifecycle.
+- Provider-backed per-user admin auth, as long as password-gated admin access and staff procedures are controlled for the inquiry-first launch.
+- Email and WhatsApp notification providers, as long as log or webhook notification mode is operationally accepted.
