@@ -10,7 +10,7 @@ import { getHomepageContent, listAdminAuditLogs, listAdminCategories, listAdminP
 import { listHomepageTranslations } from '@/lib/cms/homepage-translation-repository';
 import { listAdminCheckoutOrderPage } from '@/lib/checkout/admin-order-repository';
 import { getCustomerAuthEventSummary } from '@/lib/customers/customer-auth-event-summary';
-import { filterInquiriesByAssignmentQueue, parseInquiryAssignmentQueueFilter } from '@/lib/inquiries/inquiry-assignment-queue';
+import { createInquiryAssignmentQueueSummary, filterInquiriesByAssignmentQueue, parseInquiryAssignmentQueueFilter } from '@/lib/inquiries/inquiry-assignment-queue';
 import { getRuntimeReadiness } from '@/lib/runtime-readiness';
 
 export const dynamic = 'force-dynamic';
@@ -42,14 +42,14 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     search: optionalParam(orderSearch)
   };
   const authenticated = await isAdminAuthenticated();
-  const [categories, products, homepage, homepageTranslations, media, inquiryPageData, allMatchingInquiries, inquiryCounts, auditLogs, orderPageData, authEventSummary, adminIdentity] = await Promise.all([
+  const [categories, products, homepage, homepageTranslations, media, inquiryPageData, assignmentSourceInquiries, inquiryCounts, auditLogs, orderPageData, authEventSummary, adminIdentity] = await Promise.all([
     listAdminCategories(),
     listAdminProducts(),
     getHomepageContent(),
     authenticated ? listHomepageTranslations() : Promise.resolve([]),
     listMedia(),
     listInquiryPage(inquiryStatus, inquiryPageNumber, undefined, inquirySearch),
-    assignmentFilter === 'all' ? Promise.resolve(undefined) : listInquiries(inquiryStatus, inquirySearch),
+    listInquiries(inquiryStatus, inquirySearch),
     listInquiryStatusCounts(inquirySearch),
     authenticated ? listAdminAuditLogs(auditFilters) : Promise.resolve([]),
     authenticated ? listAdminCheckoutOrderPage(orderFilters, parsePage(orderPage)) : Promise.resolve({ orders: [], page: 1, pageSize: 12, totalCount: 0, totalPages: 1 }),
@@ -57,9 +57,11 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     authenticated ? getAdminIdentity() : Promise.resolve(undefined)
   ]);
 
-  if (allMatchingInquiries) {
+  const assignmentSummary = createInquiryAssignmentQueueSummary(assignmentSourceInquiries, adminIdentity);
+
+  if (assignmentFilter !== 'all') {
     const pageSize = inquiryPageData.pageSize;
-    const filtered = filterInquiriesByAssignmentQueue(allMatchingInquiries, assignmentFilter, adminIdentity);
+    const filtered = filterInquiriesByAssignmentQueue(assignmentSourceInquiries, assignmentFilter, adminIdentity);
     const start = (inquiryPageNumber - 1) * pageSize;
     inquiryPageData.inquiries = filtered.slice(start, start + pageSize);
     inquiryPageData.total = filtered.length;
@@ -93,7 +95,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <AdminActionBanner status={status} message={message} />
           {authenticated ? <AdminAuditLogPanel logs={auditLogs} filters={auditFilters} /> : null}
           {authenticated ? <AdminOrderPanel orderPage={orderPageData} filters={orderFilters} /> : null}
-          <InquiryBoard inquiryPage={inquiryPageData} counts={inquiryCounts} activeStatus={inquiryStatus} search={inquirySearch} assignmentFilter={assignmentFilter} />
+          <InquiryBoard inquiryPage={inquiryPageData} counts={inquiryCounts} assignmentSummary={assignmentSummary} activeStatus={inquiryStatus} search={inquirySearch} assignmentFilter={assignmentFilter} />
           <AdminDashboard
             categories={categories}
             products={products}
