@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { mapCheckoutAttemptStatus } from '@/lib/checkout/checkout-attempt-status';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
 export type PaymentProviderName = 'manual' | 'domestic_redirect' | 'zarinpal';
@@ -87,7 +88,7 @@ const manualPaymentProvider: PaymentProvider = {
   async createAttempt(order) {
     return {
       provider: 'manual',
-      status: 'manual_pending',
+      status: mapCheckoutAttemptStatus('manual'),
       providerReference: order.orderNumber,
       metadata: {
         instruction: 'Manual staff follow-up required',
@@ -108,7 +109,7 @@ const domesticRedirectProvider: PaymentProvider = {
       };
       return {
         provider: 'domestic_redirect',
-        status: 'manual_pending',
+        status: mapCheckoutAttemptStatus('manual'),
         providerReference: order.orderNumber,
         metadata
       };
@@ -127,7 +128,7 @@ const domesticRedirectProvider: PaymentProvider = {
     };
     return {
       provider: 'domestic_redirect',
-      status: 'redirect_required',
+      status: mapCheckoutAttemptStatus('redirect'),
       providerReference: order.orderNumber,
       redirectUrl: url.toString(),
       metadata
@@ -149,7 +150,7 @@ const zarinpalPaymentProvider: PaymentProvider = {
       };
       return {
         provider: 'zarinpal',
-        status: 'manual_pending',
+        status: mapCheckoutAttemptStatus('manual'),
         providerReference: order.orderNumber,
         metadata
       };
@@ -189,7 +190,7 @@ const zarinpalPaymentProvider: PaymentProvider = {
       };
       return {
         provider: 'zarinpal',
-        status: 'manual_pending',
+        status: mapCheckoutAttemptStatus('manual'),
         providerReference: order.orderNumber,
         metadata
       };
@@ -205,7 +206,7 @@ const zarinpalPaymentProvider: PaymentProvider = {
     };
     return {
       provider: 'zarinpal',
-      status: 'redirect_required',
+      status: mapCheckoutAttemptStatus('redirect'),
       providerReference: authority,
       redirectUrl: `${zarinpalStartUrl()}/${authority}`,
       metadata
