@@ -1,6 +1,16 @@
 import assert from 'node:assert/strict';
+import type { AdminIdentity } from '../../lib/admin-auth-core';
 import type { CustomerInquiry } from '../../lib/catalog';
 import { createInquiryReportRow, createInquiryReportRows, createInquiryReportSummary, getLatestInquiryFollowUp } from '../../lib/inquiries/inquiry-reporting';
+
+const staffIdentity: AdminIdentity = {
+  authenticated: true,
+  type: 'password',
+  provider: 'password',
+  label: 'Staff User',
+  email: 'staff@example.invalid',
+  role: 'staff'
+};
 
 function inquiry(overrides: Partial<CustomerInquiry> = {}): CustomerInquiry {
   return {
@@ -35,7 +45,7 @@ export async function runInquiryReportingTests() {
   assert.equal(getLatestInquiryFollowUp(baseInquiry)?.id, 'follow-up-2');
   assert.equal(getLatestInquiryFollowUp({ ...baseInquiry, followUps: [] }), undefined);
 
-  assert.deepEqual(createInquiryReportRow(baseInquiry), {
+  assert.deepEqual(createInquiryReportRow(baseInquiry, staffIdentity), {
     createdAt: new Date('2026-05-31T10:00:00.000Z'),
     status: 'contacted',
     statusLabel: 'Contacted',
@@ -52,6 +62,8 @@ export async function runInquiryReportingTests() {
     assigneeEmail: 'staff@example.invalid',
     assigneeRole: 'staff',
     assignedAt: new Date('2026-05-31T10:30:00.000Z'),
+    assignmentQueue: 'mine',
+    assignmentQueueLabel: 'Assigned to me',
     followUpCount: 2,
     latestFollowUpChannel: 'phone',
     latestFollowUpAt: new Date('2026-05-31T12:00:00.000Z'),
@@ -62,17 +74,22 @@ export async function runInquiryReportingTests() {
   const rows = createInquiryReportRows([
     baseInquiry,
     inquiry({ id: 'inquiry-2', status: 'new', followUps: [], productTitle: undefined, name: ' ', assignee: undefined }),
-    inquiry({ id: 'inquiry-3', status: 'confirmed', followUps: [] })
-  ]);
+    inquiry({ id: 'inquiry-3', status: 'confirmed', followUps: [], assignee: { label: 'Other Staff', email: 'other@example.invalid' } })
+  ], staffIdentity);
   assert.equal(rows[1]?.productTitle, 'General inquiry');
   assert.equal(rows[1]?.customerName, '');
   assert.equal(rows[1]?.assigned, false);
   assert.equal(rows[1]?.assigneeLabel, 'Unassigned');
+  assert.equal(rows[1]?.assignmentQueue, 'unassigned');
+  assert.equal(rows[2]?.assignmentQueue, 'assigned');
+  assert.equal(rows[2]?.assignmentQueueLabel, 'Assigned to Other Staff');
 
-  assert.deepEqual(createInquiryReportSummary(rows.map((row, index) => inquiry({ id: `summary-${index}`, status: row.status, followUps: index === 0 ? baseInquiry.followUps : [], assignee: index === 1 ? undefined : baseInquiry.assignee }))), {
+  assert.deepEqual(createInquiryReportSummary(rows.map((row, index) => inquiry({ id: `summary-${index}`, status: row.status, followUps: index === 0 ? baseInquiry.followUps : [], assignee: index === 1 ? undefined : index === 2 ? { label: 'Other Staff', email: 'other@example.invalid' } : baseInquiry.assignee })), staffIdentity), {
     total: 3,
     assigned: 2,
     unassigned: 1,
+    assignedToMe: 1,
+    assignedToOthers: 1,
     withFollowUps: 1,
     withoutFollowUps: 2,
     needsFirstReview: 1,
