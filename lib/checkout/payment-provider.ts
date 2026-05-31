@@ -3,7 +3,8 @@ import 'server-only';
 import { mapCheckoutAttemptStatus } from '@/lib/checkout/checkout-attempt-status';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
-export type PaymentProviderName = 'manual' | 'domestic_redirect' | 'zarinpal';
+export type PaymentProviderName = 'manual' | 'domestic_redirect' | 'zarinpal' | 'iranian' | 'stripe' | 'whatsapp' | 'inquiry';
+type LegacyPaymentProviderName = 'manual' | 'domestic_redirect' | 'zarinpal';
 
 type CreatePaymentAttemptInput = {
   orderId: string;
@@ -13,7 +14,7 @@ type CreatePaymentAttemptInput = {
 type PaymentMetadata = Record<string, string | number | boolean>;
 
 type PaymentProviderResult = {
-  provider: PaymentProviderName;
+  provider: LegacyPaymentProviderName;
   status: 'manual_pending' | 'created' | 'redirect_required';
   providerReference?: string;
   redirectUrl?: string;
@@ -29,7 +30,7 @@ type PaymentProviderOrder = {
 };
 
 type PaymentProvider = {
-  name: PaymentProviderName;
+  name: LegacyPaymentProviderName;
   createAttempt(order: PaymentProviderOrder): Promise<PaymentProviderResult>;
 };
 
@@ -49,6 +50,10 @@ function configuredPaymentProvider(): PaymentProviderName {
   if (provider === 'manual') return 'manual';
   if (provider === 'domestic_redirect') return 'domestic_redirect';
   if (provider === 'zarinpal') return 'zarinpal';
+  if (provider === 'iranian') return 'iranian';
+  if (provider === 'stripe') return 'stripe';
+  if (provider === 'whatsapp') return 'whatsapp';
+  if (provider === 'inquiry') return 'inquiry';
   console.warn('[checkout] unsupported CHECKOUT_DOMESTIC_GATEWAY_PROVIDER; using manual', { provider });
   return 'manual';
 }
