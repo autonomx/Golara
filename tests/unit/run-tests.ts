@@ -1,6 +1,7 @@
 import { runAdminAccountCoreTests } from './admin-account-core.test';
 import { runAdminActionBoundaryGuardTests } from './admin-action-boundary-guard.test';
 import { runAdminAuthCoreTests } from './admin-auth-core.test';
+import { runAdminRoleBoundaryTests } from './admin-role-boundary.test';
 import { runCheckoutCapacityHoldTests } from './checkout-capacity-hold.test';
 import { runCheckoutStateMachineTests } from './checkout-state-machine.test';
 import { runCmsCategoryServiceTests } from './cms-category-service.test';
@@ -29,6 +30,7 @@ async function main() {
   await runAdminActionBoundaryGuardTests();
   await runAdminAuthCoreTests();
   await runAdminAccountCoreTests();
+  await runAdminRoleBoundaryTests();
   await runCmsServiceTypesTests();
   await runCmsMediaServiceTests();
   await runCmsCategoryServiceTests();
@@ -42,7 +44,7 @@ async function main() {
   await runCheckoutStateMachineTests();
   await runCheckoutCapacityHoldTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (21 files)');
+  console.log('unit tests passed (22 files)');
 }
 
 main().catch((error) => {
