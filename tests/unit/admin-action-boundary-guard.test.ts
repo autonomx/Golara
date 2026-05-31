@@ -7,7 +7,7 @@ export async function runAdminActionBoundaryGuardTests() {
   });
 
   assert.equal(result.status, 0, result.stderr || result.stdout);
-  assert.match(result.stdout, /admin action service-boundary checks passed/);
+  assert.match(result.stdout, /admin action service-boundary checks passed \(2 files\)/);
 
   console.log('admin-action-boundary-guard.test.ts passed');
 }
