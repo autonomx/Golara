@@ -1,26 +1,31 @@
 import type { PaymentGatewayAdapterProvider, PaymentGatewayInitiationResult } from '@/lib/checkout/payment-gateway-adapters';
-import { mapGatewayResultToAttempt, type PaymentAttemptOrder } from '@/lib/checkout/payment-attempt-core';
+import type { PaymentAttemptOrder } from '@/lib/checkout/payment-attempt-core';
 
 export type AdapterAliasAttempt = {
   provider: PaymentGatewayAdapterProvider;
   status: 'manual_pending' | 'created' | 'redirect_required';
   providerReference?: string;
   redirectUrl?: string;
-  metadata?: Record<string, string | number | boolean>;
+  metadata: Record<string, string>;
 };
 
+function statusFromGateway(status: PaymentGatewayInitiationResult['status']): AdapterAliasAttempt['status'] {
+  if (status === 'redirect') return 'redirect_required';
+  if (status === 'started') return 'created';
+  return 'manual_pending';
+}
+
 export function mapAdapterAliasAttempt(input: { result: PaymentGatewayInitiationResult; order: PaymentAttemptOrder }): AdapterAliasAttempt {
-  const attempt = mapGatewayResultToAttempt({ result: input.result, order: input.order, readinessBlockers: [] });
   const aliasAttempt: AdapterAliasAttempt = {
-    provider: attempt.provider,
-    status: attempt.status,
+    provider: input.result.provider,
+    status: statusFromGateway(input.result.status),
     metadata: {
-      gatewayStatus: String(attempt.metadata.gatewayStatus),
-      gatewayMessage: String(attempt.metadata.gatewayMessage),
-      orderNumber: String(attempt.metadata.orderNumber)
+      gatewayStatus: input.result.status,
+      gatewayMessage: input.result.message,
+      orderNumber: input.order.orderNumber
     }
   };
-  if (attempt.providerReference) aliasAttempt.providerReference = attempt.providerReference;
-  if (attempt.redirectUrl) aliasAttempt.redirectUrl = attempt.redirectUrl;
+  if (input.result.reference) aliasAttempt.providerReference = input.result.reference;
+  if (input.result.redirectUrl) aliasAttempt.redirectUrl = input.result.redirectUrl;
   return aliasAttempt;
 }
