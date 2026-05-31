@@ -53,6 +53,8 @@ export default async function InquiryPrintPage({ searchParams }: { searchParams:
             <p><strong>Waiting on customer:</strong> {summary.waitingOnCustomer}</p>
             <p><strong>Ready to fulfill:</strong> {summary.readyToFulfill}</p>
             <p><strong>Assigned:</strong> {summary.assigned}</p>
+            <p><strong>Assigned to me:</strong> {summary.assignedToMe}</p>
+            <p><strong>Assigned to others:</strong> {summary.assignedToOthers}</p>
             <p><strong>Unassigned:</strong> {summary.unassigned}</p>
             <p><strong>With follow-ups:</strong> {summary.withFollowUps}</p>
             <p><strong>Without follow-ups:</strong> {summary.withoutFollowUps}</p>
@@ -80,6 +82,7 @@ export default async function InquiryPrintPage({ searchParams }: { searchParams:
                 <p><strong>Email:</strong> {row.email || '—'}</p>
                 <p><strong>Delivery:</strong> {formatDateOnly(row.deliveryDate)}</p>
                 <p><strong>Assignee:</strong> {row.assigneeLabel}</p>
+                <p><strong>Assignment queue:</strong> {row.assignmentQueueLabel}</p>
                 <p><strong>Assigned at:</strong> {row.assignedAt ? formatDate(row.assignedAt) : '—'}</p>
               </div>
               <div className="mt-4 grid gap-4 md:grid-cols-2">

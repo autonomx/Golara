@@ -1,4 +1,6 @@
+import type { AdminIdentity } from '@/lib/admin-auth-core';
 import type { CustomerInquiry, CustomerInquiryFollowUp } from '@/lib/catalog';
+import { getInquiryAssignmentQueueKey, getInquiryAssignmentQueueLabel, type InquiryAssignmentQueueKey } from '@/lib/inquiries/inquiry-assignment-queue';
 import { getInquiryWorkflowStep } from '@/lib/inquiries/inquiry-workflow';
 
 export type InquiryReportRow = {
@@ -14,6 +16,8 @@ export type InquiryReportRow = {
   assigneeEmail: string;
   assigneeRole: string;
   assignedAt?: Date;
+  assignmentQueue: InquiryAssignmentQueueKey;
+  assignmentQueueLabel: string;
   deliveryDate?: Date;
   deliveryNotes: string;
   message: string;
@@ -33,7 +37,7 @@ export function getLatestInquiryFollowUp(inquiry: CustomerInquiry): CustomerInqu
   return [...(inquiry.followUps ?? [])].sort((left, right) => right.createdAt.getTime() - left.createdAt.getTime())[0];
 }
 
-export function createInquiryReportRow(inquiry: CustomerInquiry): InquiryReportRow {
+export function createInquiryReportRow(inquiry: CustomerInquiry, identity?: AdminIdentity): InquiryReportRow {
   const workflowStep = getInquiryWorkflowStep(inquiry.status);
   const latestFollowUp = getLatestInquiryFollowUp(inquiry);
   const assignee = inquiry.assignee;
@@ -52,6 +56,8 @@ export function createInquiryReportRow(inquiry: CustomerInquiry): InquiryReportR
     assigneeEmail: text(assignee?.email),
     assigneeRole: text(assignee?.role),
     assignedAt: assignee?.assignedAt,
+    assignmentQueue: getInquiryAssignmentQueueKey(inquiry, identity),
+    assignmentQueueLabel: getInquiryAssignmentQueueLabel(inquiry, identity),
     deliveryDate: inquiry.deliveryDate,
     deliveryNotes: text(inquiry.deliveryNotes),
     message: inquiry.message,
@@ -64,16 +70,18 @@ export function createInquiryReportRow(inquiry: CustomerInquiry): InquiryReportR
   };
 }
 
-export function createInquiryReportRows(inquiries: CustomerInquiry[]) {
-  return inquiries.map(createInquiryReportRow);
+export function createInquiryReportRows(inquiries: CustomerInquiry[], identity?: AdminIdentity) {
+  return inquiries.map((inquiry) => createInquiryReportRow(inquiry, identity));
 }
 
-export function createInquiryReportSummary(inquiries: CustomerInquiry[]) {
-  const rows = createInquiryReportRows(inquiries);
+export function createInquiryReportSummary(inquiries: CustomerInquiry[], identity?: AdminIdentity) {
+  const rows = createInquiryReportRows(inquiries, identity);
   return {
     total: rows.length,
     assigned: rows.filter((row) => row.assigned).length,
     unassigned: rows.filter((row) => !row.assigned).length,
+    assignedToMe: rows.filter((row) => row.assignmentQueue === 'mine').length,
+    assignedToOthers: rows.filter((row) => row.assignmentQueue === 'assigned').length,
     withFollowUps: rows.filter((row) => row.followUpCount > 0).length,
     withoutFollowUps: rows.filter((row) => row.followUpCount === 0).length,
     needsFirstReview: rows.filter((row) => row.status === 'new').length,
