@@ -7,6 +7,7 @@ import { InquiryFollowUpSummary } from '@/components/admin/InquiryFollowUpSummar
 import { InquiryStatusShortcuts } from '@/components/admin/InquiryStatusShortcuts';
 import type { CustomerInquiry } from '@/lib/catalog';
 import type { InquiryPage, InquiryStatusCount } from '@/lib/cms/catalog-repository';
+import { getInquiryWorkflowStep, getInquiryWorkflowSummary } from '@/lib/inquiries/inquiry-workflow';
 
 const statuses = ['new', 'contacted', 'confirmed', 'fulfilled', 'cancelled'];
 const channels = ['internal', 'phone', 'email', 'whatsapp'];
@@ -103,14 +104,12 @@ function ReturnStateFields({ activeStatus, search, page }: { activeStatus?: stri
 
 function InquirySummaryCards({ counts, activeStatus, search }: { counts: InquiryStatusCount[]; activeStatus?: string; search?: string }) {
   const total = counts.reduce((sum, item) => sum + item.count, 0);
-  const needsContact = countFor(counts, 'new') + countFor(counts, 'contacted');
-  const confirmed = countFor(counts, 'confirmed');
-  const closed = countFor(counts, 'fulfilled') + countFor(counts, 'cancelled');
+  const workflowSummary = getInquiryWorkflowSummary(counts);
   const cards = [
     { label: 'Total inquiries', value: total, href: filterHref(undefined, search), active: !activeStatus },
-    { label: 'Needs attention', value: needsContact, href: filterHref('new', search), active: activeStatus === 'new' || activeStatus === 'contacted' },
-    { label: 'Confirmed', value: confirmed, href: filterHref('confirmed', search), active: activeStatus === 'confirmed' },
-    { label: 'Closed', value: closed, href: filterHref('fulfilled', search), active: activeStatus === 'fulfilled' || activeStatus === 'cancelled' }
+    { label: 'Needs first review', value: workflowSummary.needsFirstReview, href: filterHref('new', search), active: activeStatus === 'new' },
+    { label: 'Ready to fulfill', value: workflowSummary.readyToFulfill, href: filterHref('confirmed', search), active: activeStatus === 'confirmed' },
+    { label: 'Closed', value: workflowSummary.closed, href: filterHref('fulfilled', search), active: activeStatus === 'fulfilled' || activeStatus === 'cancelled' }
   ];
 
   return (
@@ -120,6 +119,26 @@ function InquirySummaryCards({ counts, activeStatus, search }: { counts: Inquiry
           <p className="text-xs font-semibold uppercase tracking-[0.2em] opacity-70">{card.label}</p>
           <p className="mt-2 font-display text-4xl">{card.value}</p>
         </Link>
+      ))}
+    </div>
+  );
+}
+
+function InquiryWorkflowOverview({ counts }: { counts: InquiryStatusCount[] }) {
+  const summary = getInquiryWorkflowSummary(counts);
+  const items = [
+    { label: 'Active pipeline', value: summary.active },
+    { label: 'Waiting on customer', value: summary.waitingOnCustomer },
+    { label: 'Ready to fulfill', value: summary.readyToFulfill }
+  ];
+
+  return (
+    <div className="mt-4 grid gap-3 rounded-3xl border border-olive/20 bg-cream p-4 text-sm text-stone-700 md:grid-cols-3">
+      {items.map((item) => (
+        <div key={item.label}>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-olive">{item.label}</p>
+          <p className="mt-1 font-display text-3xl text-rosewood">{item.value}</p>
+        </div>
       ))}
     </div>
   );
@@ -217,6 +236,7 @@ export function InquiryBoard({ inquiryPage, counts, activeStatus, search }: { in
           Review incoming product requests, update their status, and keep a follow-up timeline.
         </p>
         <InquirySummaryCards counts={counts} activeStatus={activeStatus} search={search} />
+        <InquiryWorkflowOverview counts={counts} />
         <InquirySearchForm activeStatus={activeStatus} search={search} />
         <FilterPills counts={counts} activeStatus={activeStatus} search={search} />
       </div>
@@ -226,93 +246,102 @@ export function InquiryBoard({ inquiryPage, counts, activeStatus, search }: { in
       ) : (
         <>
           <div className="grid gap-4">
-            {inquiries.map((inquiry: CustomerInquiry) => (
-              <article key={inquiry.id} className="rounded-3xl border border-rosewood/10 bg-cream p-5">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h3 className="font-display text-2xl text-rosewood">{inquiry.productTitle ?? 'General inquiry'}</h3>
-                    <p className="mt-1 text-xs uppercase tracking-[0.2em] text-rosewood/50">{formatDate(inquiry.createdAt)}</p>
-                  </div>
-                  <div className="flex flex-wrap justify-end gap-2">
-                    <InquiryDeliveryBadge deliveryDate={inquiry.deliveryDate} />
-                    <span className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${statusClass(inquiry.status)}`}>
-                      {inquiry.status}
-                    </span>
-                  </div>
-                </div>
-                <div className="mt-4 grid gap-2 text-sm text-stone-700 md:grid-cols-4">
-                  <p><strong>Name:</strong> {inquiry.name ?? '—'}</p>
-                  <p><strong>Phone:</strong> {inquiry.phone ?? '—'}</p>
-                  <p><strong>Email:</strong> {inquiry.email ?? '—'}</p>
-                  <p><strong>Delivery:</strong> {formatDateOnly(inquiry.deliveryDate)}</p>
-                </div>
-                <InquiryContactActions inquiry={inquiry} />
-                <InquiryFollowUpSummary inquiry={inquiry} />
-                <InquiryStatusShortcuts inquiry={inquiry} activeStatus={activeStatus} search={search} page={inquiryPage.page} />
-                {inquiry.deliveryNotes ? (
-                  <p className="mt-3 text-sm leading-6 text-stone-700"><strong>Delivery notes:</strong> {inquiry.deliveryNotes}</p>
-                ) : null}
-                <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-stone-700">{inquiry.message}</p>
+            {inquiries.map((inquiry: CustomerInquiry) => {
+              const workflowStep = getInquiryWorkflowStep(inquiry.status);
 
-                <div className="mt-5 grid gap-4 lg:grid-cols-2">
-                  <form action={saveInquiryAction.bind(null, inquiry.id)} className="grid gap-3 rounded-2xl border border-rosewood/10 bg-white p-4">
-                    <ReturnStateFields activeStatus={activeStatus} search={search} page={inquiryPage.page} />
-                    <label className="grid gap-2 text-sm font-semibold text-rosewood">
-                      Status
-                      <select className={inputClass} name="status" defaultValue={inquiry.status}>
-                        {statuses.map((status) => (
-                          <option key={status} value={status}>{status}</option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="grid gap-2 text-sm font-semibold text-rosewood">
-                      Staff notes
-                      <textarea className={`min-h-24 ${textAreaClass}`} name="staffNotes" defaultValue={inquiry.staffNotes ?? ''} />
-                    </label>
-                    <button className={`${primaryButtonClass} shadow-lg shadow-rosewood/20`} type="submit">
-                      Save inquiry
-                    </button>
-                  </form>
-
-                  <div className="rounded-2xl border border-rosewood/10 bg-white p-4">
-                    <h4 className="font-display text-2xl text-rosewood">Follow-up history</h4>
-                    <div className="mt-3 grid gap-3">
-                      {(inquiry.followUps ?? []).length === 0 ? (
-                        <p className="text-sm text-stone-600">No follow-ups recorded yet.</p>
-                      ) : (
-                        inquiry.followUps?.map((followUp) => (
-                          <div key={followUp.id} className={`rounded-2xl border p-3 text-sm ${followUp.channel === 'system' ? 'border-stone-200 bg-stone-50 text-stone-700' : 'border-transparent bg-cream text-stone-700'}`}>
-                            <div className="flex flex-wrap items-center justify-between gap-2 text-xs uppercase tracking-[0.16em]">
-                              <span className={`rounded-full border px-2 py-1 font-semibold ${channelClass(followUp.channel)}`}>{followUp.channel}</span>
-                              <span className="text-rosewood/50">{formatDate(followUp.createdAt)}</span>
-                            </div>
-                            <p className="mt-2 whitespace-pre-wrap leading-6">{followUp.note}</p>
-                          </div>
-                        ))
-                      )}
+              return (
+                <article key={inquiry.id} className="rounded-3xl border border-rosewood/10 bg-cream p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h3 className="font-display text-2xl text-rosewood">{inquiry.productTitle ?? 'General inquiry'}</h3>
+                      <p className="mt-1 text-xs uppercase tracking-[0.2em] text-rosewood/50">{formatDate(inquiry.createdAt)}</p>
                     </div>
-                    <form action={addInquiryFollowUpAction.bind(null, inquiry.id)} className="mt-4 grid gap-3">
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <InquiryDeliveryBadge deliveryDate={inquiry.deliveryDate} />
+                      <span className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${statusClass(inquiry.status)}`}>
+                        {workflowStep.label}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-4 rounded-2xl border border-olive/20 bg-white p-4 text-sm text-stone-700">
+                    <p className="font-semibold text-rosewood">Recommended next action</p>
+                    <p className="mt-1 leading-6">{workflowStep.recommendedAction}</p>
+                    <p className="mt-2 text-xs uppercase tracking-[0.16em] text-olive">{workflowStep.description}</p>
+                  </div>
+                  <div className="mt-4 grid gap-2 text-sm text-stone-700 md:grid-cols-4">
+                    <p><strong>Name:</strong> {inquiry.name ?? '—'}</p>
+                    <p><strong>Phone:</strong> {inquiry.phone ?? '—'}</p>
+                    <p><strong>Email:</strong> {inquiry.email ?? '—'}</p>
+                    <p><strong>Delivery:</strong> {formatDateOnly(inquiry.deliveryDate)}</p>
+                  </div>
+                  <InquiryContactActions inquiry={inquiry} />
+                  <InquiryFollowUpSummary inquiry={inquiry} />
+                  <InquiryStatusShortcuts inquiry={inquiry} activeStatus={activeStatus} search={search} page={inquiryPage.page} />
+                  {inquiry.deliveryNotes ? (
+                    <p className="mt-3 text-sm leading-6 text-stone-700"><strong>Delivery notes:</strong> {inquiry.deliveryNotes}</p>
+                  ) : null}
+                  <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-stone-700">{inquiry.message}</p>
+
+                  <div className="mt-5 grid gap-4 lg:grid-cols-2">
+                    <form action={saveInquiryAction.bind(null, inquiry.id)} className="grid gap-3 rounded-2xl border border-rosewood/10 bg-white p-4">
                       <ReturnStateFields activeStatus={activeStatus} search={search} page={inquiryPage.page} />
                       <label className="grid gap-2 text-sm font-semibold text-rosewood">
-                        Channel
-                        <select className={inputClass} name="channel" defaultValue="internal">
-                          {channels.map((channel) => (
-                            <option key={channel} value={channel}>{channel}</option>
+                        Status
+                        <select className={inputClass} name="status" defaultValue={inquiry.status}>
+                          {statuses.map((status) => (
+                            <option key={status} value={status}>{getInquiryWorkflowStep(status).label}</option>
                           ))}
                         </select>
                       </label>
                       <label className="grid gap-2 text-sm font-semibold text-rosewood">
-                        Follow-up note
-                        <textarea className={`min-h-20 ${textAreaClass}`} name="note" required minLength={2} />
+                        Staff notes
+                        <textarea className={`min-h-24 ${textAreaClass}`} name="staffNotes" defaultValue={inquiry.staffNotes ?? ''} />
                       </label>
-                      <button className="rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20" type="submit">
-                        Add follow-up
+                      <button className={`${primaryButtonClass} shadow-lg shadow-rosewood/20`} type="submit">
+                        Save inquiry
                       </button>
                     </form>
+
+                    <div className="rounded-2xl border border-rosewood/10 bg-white p-4">
+                      <h4 className="font-display text-2xl text-rosewood">Follow-up history</h4>
+                      <div className="mt-3 grid gap-3">
+                        {(inquiry.followUps ?? []).length === 0 ? (
+                          <p className="text-sm text-stone-600">No follow-ups recorded yet.</p>
+                        ) : (
+                          inquiry.followUps?.map((followUp) => (
+                            <div key={followUp.id} className={`rounded-2xl border p-3 text-sm ${followUp.channel === 'system' ? 'border-stone-200 bg-stone-50 text-stone-700' : 'border-transparent bg-cream text-stone-700'}`}>
+                              <div className="flex flex-wrap items-center justify-between gap-2 text-xs uppercase tracking-[0.16em]">
+                                <span className={`rounded-full border px-2 py-1 font-semibold ${channelClass(followUp.channel)}`}>{followUp.channel}</span>
+                                <span className="text-rosewood/50">{formatDate(followUp.createdAt)}</span>
+                              </div>
+                              <p className="mt-2 whitespace-pre-wrap leading-6">{followUp.note}</p>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                      <form action={addInquiryFollowUpAction.bind(null, inquiry.id)} className="mt-4 grid gap-3">
+                        <ReturnStateFields activeStatus={activeStatus} search={search} page={inquiryPage.page} />
+                        <label className="grid gap-2 text-sm font-semibold text-rosewood">
+                          Channel
+                          <select className={inputClass} name="channel" defaultValue="internal">
+                            {channels.map((channel) => (
+                              <option key={channel} value={channel}>{channel}</option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="grid gap-2 text-sm font-semibold text-rosewood">
+                          Follow-up note
+                          <textarea className={`min-h-20 ${textAreaClass}`} name="note" required minLength={2} />
+                        </label>
+                        <button className="rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20" type="submit">
+                          Add follow-up
+                        </button>
+                      </form>
+                    </div>
                   </div>
-                </div>
-              </article>
-            ))}
+                </article>
+              );
+            })}
           </div>
           <PaginationControls inquiryPage={inquiryPage} activeStatus={activeStatus} search={search} />
         </>
