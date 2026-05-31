@@ -3,6 +3,7 @@ import { runAdminActionBoundaryGuardTests } from './admin-action-boundary-guard.
 import { runAdminAuthCoreTests } from './admin-auth-core.test';
 import { runAdminRoleBoundaryTests } from './admin-role-boundary.test';
 import { runCheckoutCapacityHoldTests } from './checkout-capacity-hold.test';
+import { runCheckoutPaymentProviderTests } from './checkout-payment-provider.test';
 import { runCheckoutStateMachineTests } from './checkout-state-machine.test';
 import { runCmsCategoryServiceTests } from './cms-category-service.test';
 import { runCmsHomepageServiceTests } from './cms-homepage-service.test';
@@ -56,11 +57,12 @@ async function main() {
   await runOtpRateLimitTests();
   await runCheckoutStateMachineTests();
   await runCheckoutCapacityHoldTests();
+  await runCheckoutPaymentProviderTests();
   await runPaymentGatewayConfigTests();
   await runPaymentGatewayAdaptersTests();
   await runProductCheckoutPolicyTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (30 files)');
+  console.log('unit tests passed (31 files)');
 }
 
 main().catch((error) => {
