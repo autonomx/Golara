@@ -13,6 +13,7 @@ import { listHomepageTranslations } from '@/lib/cms/homepage-translation-reposit
 import { listAdminCheckoutOrderPage } from '@/lib/checkout/admin-order-repository';
 import { getCustomerAuthEventSummary } from '@/lib/customers/customer-auth-event-summary';
 import { createInquiryAssignmentQueueSummary, filterInquiriesByAssignmentQueue, parseInquiryAssignmentQueueFilter } from '@/lib/inquiries/inquiry-assignment-queue';
+import { getCurrentInquiryNotificationReadiness, getCurrentInquiryNotificationRetryRunbook } from '@/lib/notifications/inquiry-notifications';
 import { getRuntimeReadiness } from '@/lib/runtime-readiness';
 
 export const dynamic = 'force-dynamic';
@@ -76,7 +77,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
   const authConfigured = isAdminAuthConfigured();
   const runtimeReadiness = getRuntimeReadiness();
-  const notificationMode = process.env.INQUIRY_NOTIFICATION_MODE?.trim() || 'log';
+  const notificationReadiness = getCurrentInquiryNotificationReadiness();
+  const notificationRetryRunbook = getCurrentInquiryNotificationRetryRunbook();
 
   return (
     <main id="main-content" tabIndex={-1}>
@@ -112,7 +114,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             runtimeReadiness={runtimeReadiness}
             authConfigured={authConfigured}
             authenticated={authenticated}
-            notificationMode={notificationMode}
+            notificationReadiness={notificationReadiness}
+            notificationRetryRunbook={notificationRetryRunbook}
             status={status}
             message={message}
           />
