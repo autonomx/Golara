@@ -8,7 +8,7 @@ export type AdapterAliasAttempt = {
   status: 'manual_pending' | 'created' | 'redirect_required';
   providerReference?: string;
   redirectUrl?: string;
-  metadata?: Record<string, string | number | boolean | string[]>;
+  metadata?: Record<string, string | number | boolean>;
 };
 
 function aliasReturnUrl(order: PaymentAttemptOrder) {
@@ -29,5 +29,16 @@ export async function createAdapterAliasAttempt(input: { provider: PaymentGatewa
       }
     }
   });
-  return mapGatewayResultToAttempt({ result, order: input.order, readinessBlockers: [] });
+  const attempt = mapGatewayResultToAttempt({ result, order: input.order, readinessBlockers: [] });
+  return {
+    provider: attempt.provider,
+    status: attempt.status,
+    providerReference: attempt.providerReference,
+    redirectUrl: attempt.redirectUrl,
+    metadata: {
+      gatewayStatus: String(attempt.metadata.gatewayStatus),
+      gatewayMessage: String(attempt.metadata.gatewayMessage),
+      orderNumber: String(attempt.metadata.orderNumber)
+    }
+  };
 }
