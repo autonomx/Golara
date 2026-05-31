@@ -1,7 +1,7 @@
 # Golara Production Readiness Roadmap
 
 Last updated: 2026-05-31
-Current main baseline: Phase 26 merged
+Current main baseline: Phase 27 merged
 Current production path: inquiry-first launch. Payment-provider implementation remains deferred until explicitly approved.
 
 ## Current readiness state
@@ -18,6 +18,7 @@ Completed foundations:
 - Inquiry-first checkout/payment decision is documented as the active production path.
 - Inquiry workflow helpers, reports, CSV exports, printable reports, follow-up context, and staff recommended actions are in place.
 - Inquiry assignment metadata, queue helpers, board filters, export/print filters, filter counts, return-state preservation, assignment-aware empty states, and assignment actions are in place.
+- Owner-facing staff account readiness, assignment identity visibility, and staff access rotation/deactivation guidance are in place.
 
 ## Completed recent phases
 
@@ -59,31 +60,18 @@ Completed foundations:
 - Assignment changes create system follow-up timeline entries and audit metadata.
 - Assignment controls preserve current admin board filters, search, and page state.
 
-## Remaining production readiness phases
-
 ### Phase 27 — staff account management readiness
 
-Status: current implementation phase.
+- Owner-only staff readiness panel is visible in `/admin`.
+- Active/inactive admin accounts, role counts, missing emails, assignment keys, source, and last-login metadata are visible.
+- Account readiness helpers normalize staff/owner identity and assignment keys.
+- Staff access rotation/deactivation runbook is documented in the checklist and admin panel.
 
-Goal: move from account/model groundwork to production-operable staff access.
-
-Scope:
-
-- Add owner-facing staff account list/readiness view.
-- Add documented path for creating or rotating staff access.
-- Add disable/deactivate semantics if supported by current auth model.
-- Confirm staff/owner labels and emails are consistently normalized for assignment matching.
-- Add tests for account normalization and role boundaries.
-
-Acceptance criteria:
-
-- Owner can understand who has admin access.
-- Staff identities used by inquiry assignment are stable and visible.
-- Disabling or rotating access has a clear runbook or UI path.
+## Remaining production readiness phases
 
 ### Phase 28 — inquiry notification reliability
 
-Status: planned.
+Status: current implementation phase.
 
 Goal: make production inquiry notifications observable and recoverable.
 
@@ -167,10 +155,9 @@ Notes:
 
 Blocking before inquiry-first production launch:
 
-1. Staff account management/readiness path.
-2. Inquiry notification reliability and failure visibility.
-3. Production data safety and migration/rollback runbook.
-4. Final launch audit.
+1. Inquiry notification reliability and failure visibility.
+2. Production data safety and migration/rollback runbook.
+3. Final launch audit.
 
 Not blocking inquiry-first launch:
 

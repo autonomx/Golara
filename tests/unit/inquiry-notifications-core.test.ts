@@ -3,6 +3,7 @@ import {
   createInquiryNotificationService,
   getInquiryNotificationConfig,
   getInquiryNotificationReadiness,
+  getInquiryNotificationRetryRunbook,
   normalizeInquiryNotificationMode,
   type InquiryNotificationPayload
 } from '../../lib/notifications/inquiry-notifications-core';
@@ -61,7 +62,8 @@ export async function runInquiryNotificationsCoreTests() {
     }
   );
 
-  assert.deepEqual(getInquiryNotificationReadiness({ mode: 'log', recipients: defaultRecipients() }), {
+  const logReadiness = getInquiryNotificationReadiness({ mode: 'log', recipients: defaultRecipients() });
+  assert.deepEqual(logReadiness, {
     mode: 'log',
     ready: true,
     blockers: [],
@@ -74,7 +76,15 @@ export async function runInquiryNotificationsCoreTests() {
       }
     ]
   });
-  assert.deepEqual(getInquiryNotificationReadiness({ mode: 'webhook', recipients: defaultRecipients() }), {
+  assert.deepEqual(getInquiryNotificationRetryRunbook(logReadiness), [
+    'Monitor the admin inquiry inbox as the source of truth for every new inquiry.',
+    'Check server logs for [notifications] new customer inquiry entries during the launch window.',
+    'Assign each new inquiry to a staff owner and add a follow-up note once staff contact the customer.',
+    'Switch to webhook mode only after the receiver URL and test inquiry delivery are verified.'
+  ]);
+
+  const missingWebhookReadiness = getInquiryNotificationReadiness({ mode: 'webhook', recipients: defaultRecipients() });
+  assert.deepEqual(missingWebhookReadiness, {
     mode: 'webhook',
     ready: false,
     blockers: [
@@ -87,6 +97,13 @@ export async function runInquiryNotificationsCoreTests() {
     ],
     warnings: []
   });
+  assert.deepEqual(getInquiryNotificationRetryRunbook(missingWebhookReadiness), [
+    'Confirm the receiver URL is configured and still accepts golara.customer_inquiry.created payloads.',
+    'Open the admin inquiry inbox and verify the customer inquiry exists before retrying any external notification.',
+    'Use the inquiry export or print view to manually resend the inquiry details to staff or the external workflow owner.',
+    'After fixing the receiver, submit a test inquiry and verify the webhook returns a 2xx response.'
+  ]);
+
   assert.deepEqual(
     getInquiryNotificationReadiness({
       mode: 'webhook',
@@ -99,7 +116,9 @@ export async function runInquiryNotificationsCoreTests() {
       warnings: []
     }
   );
-  assert.deepEqual(getInquiryNotificationReadiness({ mode: 'email', recipients: defaultRecipients() }), {
+
+  const unsupportedReadiness = getInquiryNotificationReadiness({ mode: 'email', recipients: defaultRecipients() });
+  assert.deepEqual(unsupportedReadiness, {
     mode: 'email',
     ready: false,
     blockers: [
@@ -112,6 +131,12 @@ export async function runInquiryNotificationsCoreTests() {
     ],
     warnings: []
   });
+  assert.deepEqual(getInquiryNotificationRetryRunbook(unsupportedReadiness), [
+    'Switch INQUIRY_NOTIFICATION_MODE to log or webhook before launch.',
+    'Redeploy with supported notification settings.',
+    'Create a test inquiry and verify it appears in the admin inbox.',
+    'Confirm staff have a manual monitoring process until automated delivery is verified.'
+  ]);
 
   {
     const { entries, logger } = createLogger();
@@ -120,8 +145,16 @@ export async function runInquiryNotificationsCoreTests() {
       logger
     });
 
-    await service.notifyNewInquiry(payload);
+    const result = await service.notifyNewInquiry(payload);
 
+    assert.deepEqual(result, {
+      status: 'logged',
+      mode: 'log',
+      channel: 'log',
+      inquiryId: 'inquiry-1',
+      fallbackLogged: false,
+      detail: 'Inquiry notification was written to structured logs.'
+    });
     assert.equal(entries.length, 1);
     assert.equal(entries[0]?.level, 'info');
     assert.equal(entries[0]?.args[0], '[notifications] new customer inquiry');
@@ -133,7 +166,8 @@ export async function runInquiryNotificationsCoreTests() {
       customerName: 'Mina Customer',
       customerPhone: '+1 604 555 0101',
       customerEmail: 'mina@example.test',
-      messagePreview: 'I would like a rose bouquet for a birthday.'
+      messagePreview: 'I would like a rose bouquet for a birthday.',
+      delivery: result
     });
   }
 
@@ -149,8 +183,17 @@ export async function runInquiryNotificationsCoreTests() {
       }
     });
 
-    await service.notifyNewInquiry(payload);
+    const result = await service.notifyNewInquiry(payload);
 
+    assert.deepEqual(result, {
+      status: 'delivered',
+      mode: 'webhook',
+      channel: 'webhook',
+      inquiryId: 'inquiry-1',
+      fallbackLogged: false,
+      webhookStatus: 204,
+      detail: 'Inquiry webhook returned a 2xx response.'
+    });
     assert.equal(requests.length, 1);
     assert.equal(requests[0]?.url, 'https://example.test/hook');
     assert.equal(requests[0]?.init?.method, 'POST');
@@ -168,7 +211,7 @@ export async function runInquiryNotificationsCoreTests() {
     assert.deepEqual(entries, [
       {
         level: 'info',
-        args: ['[notifications] inquiry webhook sent', { inquiryId: 'inquiry-1', status: 204 }]
+        args: ['[notifications] inquiry webhook sent', { inquiryId: 'inquiry-1', status: 204, delivery: result }]
       }
     ]);
   }
@@ -185,13 +228,22 @@ export async function runInquiryNotificationsCoreTests() {
       }
     });
 
-    await service.notifyNewInquiry(payload);
+    const result = await service.notifyNewInquiry(payload);
 
     assert.equal(fetchCalled, false);
     assert.equal(entries[0]?.level, 'warn');
     assert.equal(entries[0]?.args[0], '[notifications] webhook mode requested but INQUIRY_NOTIFICATION_WEBHOOK_URL is not configured');
+    assert.deepEqual(entries[0]?.args[1], { inquiryId: 'inquiry-1', errorCode: 'notification_webhook_url_missing' });
     assert.equal(entries[1]?.level, 'info');
     assert.equal((entries[1]?.args[1] as { mode: string }).mode, 'webhook-missing-url');
+    assert.deepEqual(result, {
+      status: 'fallback',
+      mode: 'webhook-missing-url',
+      channel: 'log',
+      inquiryId: 'inquiry-1',
+      fallbackLogged: true,
+      detail: 'Inquiry notification fell back to structured logs.'
+    });
   }
 
   {
@@ -204,11 +256,21 @@ export async function runInquiryNotificationsCoreTests() {
       }
     });
 
-    await service.notifyNewInquiry(payload);
+    const result = await service.notifyNewInquiry(payload);
 
+    assert.deepEqual(result, {
+      status: 'fallback',
+      mode: 'webhook',
+      channel: 'webhook',
+      inquiryId: 'inquiry-1',
+      fallbackLogged: true,
+      webhookStatus: 500,
+      errorCode: 'notification_webhook_non_success',
+      detail: 'Webhook returned 500 Server Error. Inquiry was also logged.'
+    });
     assert.deepEqual(entries[0], {
       level: 'warn',
-      args: ['[notifications] inquiry webhook returned non-success status', { status: 500, statusText: 'Server Error' }]
+      args: ['[notifications] inquiry webhook returned non-success status', { status: 500, statusText: 'Server Error', inquiryId: 'inquiry-1', delivery: result }]
     });
     assert.equal(entries[1]?.level, 'info');
     assert.equal((entries[1]?.args[1] as { mode: string }).mode, 'webhook-failed');
@@ -225,11 +287,20 @@ export async function runInquiryNotificationsCoreTests() {
       }
     });
 
-    await service.notifyNewInquiry(payload);
+    const result = await service.notifyNewInquiry(payload);
 
+    assert.deepEqual(result, {
+      status: 'fallback',
+      mode: 'webhook',
+      channel: 'webhook',
+      inquiryId: 'inquiry-1',
+      fallbackLogged: true,
+      errorCode: 'notification_webhook_error',
+      detail: 'network down'
+    });
     assert.deepEqual(entries[0], {
       level: 'warn',
-      args: ['[notifications] inquiry webhook failed', error]
+      args: ['[notifications] inquiry webhook failed', { inquiryId: 'inquiry-1', error, delivery: result }]
     });
     assert.equal(entries[1]?.level, 'info');
     assert.equal((entries[1]?.args[1] as { mode: string }).mode, 'webhook-error');
@@ -242,14 +313,22 @@ export async function runInquiryNotificationsCoreTests() {
       logger
     });
 
-    await service.notifyNewInquiry(payload);
+    const result = await service.notifyNewInquiry(payload);
 
     assert.deepEqual(entries[0], {
       level: 'warn',
-      args: ['[notifications] unsupported INQUIRY_NOTIFICATION_MODE; using log-only notification', { mode: 'email' }]
+      args: ['[notifications] unsupported INQUIRY_NOTIFICATION_MODE; using log-only notification', { mode: 'email', inquiryId: 'inquiry-1', errorCode: 'notification_mode_unsupported' }]
     });
     assert.equal(entries[1]?.level, 'info');
     assert.equal((entries[1]?.args[1] as { mode: string }).mode, 'unsupported-mode');
+    assert.deepEqual(result, {
+      status: 'fallback',
+      mode: 'unsupported-mode',
+      channel: 'log',
+      inquiryId: 'inquiry-1',
+      fallbackLogged: true,
+      detail: 'Inquiry notification fell back to structured logs.'
+    });
   }
 
   console.log('inquiry-notifications-core.test.ts passed');

@@ -34,6 +34,19 @@ export type InquiryNotificationReadiness = {
   warnings: InquiryNotificationReadinessIssue[];
 };
 
+export type InquiryNotificationDeliveryStatus = 'delivered' | 'logged' | 'fallback' | 'failed';
+
+export type InquiryNotificationDeliveryResult = {
+  status: InquiryNotificationDeliveryStatus;
+  mode: string;
+  channel: 'log' | 'webhook';
+  inquiryId: string;
+  fallbackLogged: boolean;
+  webhookStatus?: number;
+  errorCode?: string;
+  detail: string;
+};
+
 export type InquiryNotificationLogger = Pick<typeof console, 'info' | 'warn'>;
 
 export type InquiryNotificationServiceDependencies = {
@@ -98,8 +111,39 @@ export function getInquiryNotificationReadiness(config: InquiryNotificationConfi
   };
 }
 
+export function getInquiryNotificationRetryRunbook(readiness: InquiryNotificationReadiness): string[] {
+  if (readiness.mode === 'webhook') {
+    return [
+      'Confirm the receiver URL is configured and still accepts golara.customer_inquiry.created payloads.',
+      'Open the admin inquiry inbox and verify the customer inquiry exists before retrying any external notification.',
+      'Use the inquiry export or print view to manually resend the inquiry details to staff or the external workflow owner.',
+      'After fixing the receiver, submit a test inquiry and verify the webhook returns a 2xx response.'
+    ];
+  }
+
+  if (readiness.mode === 'log') {
+    return [
+      'Monitor the admin inquiry inbox as the source of truth for every new inquiry.',
+      'Check server logs for [notifications] new customer inquiry entries during the launch window.',
+      'Assign each new inquiry to a staff owner and add a follow-up note once staff contact the customer.',
+      'Switch to webhook mode only after the receiver URL and test inquiry delivery are verified.'
+    ];
+  }
+
+  return [
+    'Switch INQUIRY_NOTIFICATION_MODE to log or webhook before launch.',
+    'Redeploy with supported notification settings.',
+    'Create a test inquiry and verify it appears in the admin inbox.',
+    'Confirm staff have a manual monitoring process until automated delivery is verified.'
+  ];
+}
+
 function safePreview(value: string) {
   return value.slice(0, 160);
+}
+
+function createDeliveryResult(input: Omit<InquiryNotificationDeliveryResult, 'inquiryId'> & { inquiryId: string }): InquiryNotificationDeliveryResult {
+  return input;
 }
 
 function logNotification(
@@ -107,7 +151,16 @@ function logNotification(
   payload: InquiryNotificationPayload,
   recipients: NotificationRecipients,
   mode = 'log'
-) {
+): InquiryNotificationDeliveryResult {
+  const result = createDeliveryResult({
+    status: mode === 'log' ? 'logged' : 'fallback',
+    mode,
+    channel: 'log',
+    inquiryId: payload.inquiryId,
+    fallbackLogged: mode !== 'log',
+    detail: mode === 'log' ? 'Inquiry notification was written to structured logs.' : 'Inquiry notification fell back to structured logs.'
+  });
+
   logger.info('[notifications] new customer inquiry', {
     mode,
     recipientsConfigured: Boolean(recipients.email || recipients.whatsapp || recipients.webhookUrl),
@@ -116,8 +169,11 @@ function logNotification(
     customerName: payload.customerName,
     customerPhone: payload.customerPhone,
     customerEmail: payload.customerEmail,
-    messagePreview: safePreview(payload.message)
+    messagePreview: safePreview(payload.message),
+    delivery: result
   });
+
+  return result;
 }
 
 async function notifyWebhook(
@@ -125,11 +181,13 @@ async function notifyWebhook(
   recipients: NotificationRecipients,
   fetchImpl: typeof fetch,
   logger: InquiryNotificationLogger
-) {
+): Promise<InquiryNotificationDeliveryResult> {
   if (!recipients.webhookUrl) {
-    logger.warn('[notifications] webhook mode requested but INQUIRY_NOTIFICATION_WEBHOOK_URL is not configured');
-    logNotification(logger, payload, recipients, 'webhook-missing-url');
-    return;
+    logger.warn('[notifications] webhook mode requested but INQUIRY_NOTIFICATION_WEBHOOK_URL is not configured', {
+      inquiryId: payload.inquiryId,
+      errorCode: 'notification_webhook_url_missing'
+    });
+    return logNotification(logger, payload, recipients, 'webhook-missing-url');
   }
 
   try {
@@ -150,21 +208,54 @@ async function notifyWebhook(
     });
 
     if (!response.ok) {
+      const failedResult = createDeliveryResult({
+        status: 'fallback',
+        mode: 'webhook',
+        channel: 'webhook',
+        inquiryId: payload.inquiryId,
+        fallbackLogged: true,
+        webhookStatus: response.status,
+        errorCode: 'notification_webhook_non_success',
+        detail: `Webhook returned ${response.status} ${response.statusText}. Inquiry was also logged.`
+      });
       logger.warn('[notifications] inquiry webhook returned non-success status', {
         status: response.status,
-        statusText: response.statusText
+        statusText: response.statusText,
+        inquiryId: payload.inquiryId,
+        delivery: failedResult
       });
       logNotification(logger, payload, recipients, 'webhook-failed');
-      return;
+      return failedResult;
     }
 
+    const deliveredResult = createDeliveryResult({
+      status: 'delivered',
+      mode: 'webhook',
+      channel: 'webhook',
+      inquiryId: payload.inquiryId,
+      fallbackLogged: false,
+      webhookStatus: response.status,
+      detail: 'Inquiry webhook returned a 2xx response.'
+    });
     logger.info('[notifications] inquiry webhook sent', {
       inquiryId: payload.inquiryId,
-      status: response.status
+      status: response.status,
+      delivery: deliveredResult
     });
+    return deliveredResult;
   } catch (error) {
-    logger.warn('[notifications] inquiry webhook failed', error);
+    const errorResult = createDeliveryResult({
+      status: 'fallback',
+      mode: 'webhook',
+      channel: 'webhook',
+      inquiryId: payload.inquiryId,
+      fallbackLogged: true,
+      errorCode: 'notification_webhook_error',
+      detail: error instanceof Error ? error.message : 'Webhook request failed. Inquiry was also logged.'
+    });
+    logger.warn('[notifications] inquiry webhook failed', { inquiryId: payload.inquiryId, error, delivery: errorResult });
     logNotification(logger, payload, recipients, 'webhook-error');
+    return errorResult;
   }
 }
 
@@ -173,22 +264,24 @@ export function createInquiryNotificationService(dependencies: InquiryNotificati
   const fetchImpl = dependencies.fetchImpl ?? fetch;
 
   return {
-    async notifyNewInquiry(payload: InquiryNotificationPayload) {
+    async notifyNewInquiry(payload: InquiryNotificationPayload): Promise<InquiryNotificationDeliveryResult> {
       const config = dependencies.getConfig();
       const { mode, recipients } = config;
 
       if (mode === 'log') {
-        logNotification(logger, payload, recipients);
-        return;
+        return logNotification(logger, payload, recipients);
       }
 
       if (mode === 'webhook') {
-        await notifyWebhook(payload, recipients, fetchImpl, logger);
-        return;
+        return notifyWebhook(payload, recipients, fetchImpl, logger);
       }
 
-      logger.warn('[notifications] unsupported INQUIRY_NOTIFICATION_MODE; using log-only notification', { mode });
-      logNotification(logger, payload, recipients, 'unsupported-mode');
+      logger.warn('[notifications] unsupported INQUIRY_NOTIFICATION_MODE; using log-only notification', {
+        mode,
+        inquiryId: payload.inquiryId,
+        errorCode: 'notification_mode_unsupported'
+      });
+      return logNotification(logger, payload, recipients, 'unsupported-mode');
     }
   };
 }

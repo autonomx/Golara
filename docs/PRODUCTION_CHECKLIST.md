@@ -110,6 +110,7 @@ Current behavior:
 - Product detail pages create customer inquiries.
 - Admin can filter, search, paginate, print, export, update status, assign ownership, add staff notes, and append follow-ups.
 - Notifications support log-only mode and generic webhook mode.
+- Notification delivery returns structured results with status, mode, channel, inquiry ID, fallback flag, webhook status, error code, and detail.
 - Inquiry status changes, follow-up notes, and assignment changes are recorded in the admin audit log.
 - Staff and owner roles can perform inquiry write actions.
 
@@ -148,10 +149,18 @@ The webhook request currently posts JSON with this shape:
 
 Webhook failure behavior:
 
-- Missing webhook URL in webhook mode logs a warning and falls back to the server log notification path.
-- Non-2xx webhook responses log the response status and fall back to the server log notification path.
-- Network or fetch errors log the error and fall back to the server log notification path.
+- Missing webhook URL in webhook mode logs `notification_webhook_url_missing` and falls back to the structured log notification path.
+- Non-2xx webhook responses log `notification_webhook_non_success`, the response status, and fall back to the structured log notification path.
+- Network or fetch errors log `notification_webhook_error` and fall back to the structured log notification path.
+- Unsupported notification modes log `notification_mode_unsupported` and fall back to the structured log notification path.
 - Delivery failures do not block inquiry creation; staff still need to monitor `/admin` as the source of truth.
+
+Notification retry runbook:
+
+1. Confirm the admin inquiry inbox contains the customer inquiry before retrying any external delivery.
+2. Review the production readiness card for notification blockers, warnings, and the current retry runbook.
+3. Use inquiry export or print view to manually resend inquiry details to staff or the external workflow owner.
+4. Fix webhook receiver configuration or mode selection, then submit a test inquiry and verify a 2xx webhook response.
 
 Future provider placeholders:
 
@@ -254,6 +263,7 @@ Manual smoke test:
 - Inquiry form rejects invalid input.
 - Inquiry form creates a record.
 - Admin inquiry inbox shows the new record.
+- Admin readiness shows notification blockers, warnings, and retry runbook guidance.
 - Product/category/homepage edits show on public pages for owner role.
 - Media registration works for owner role.
 - Staff role can update inquiry status, assignment, and follow-up notes.
