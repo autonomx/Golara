@@ -239,7 +239,7 @@ async function createAdapterAliasAttempt(order: PaymentProviderOrder, provider: 
       }
     }
   });
-  return mapAliasGatewayResultToLegacyAttempt({ result, order });
+  return mapAliasGatewayResultToLegacyAttempt({ result: { ...result, provider }, order });
 }
 
 export async function createCheckoutPaymentAttempt(input: CreatePaymentAttemptInput) {
