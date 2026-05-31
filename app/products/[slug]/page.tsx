@@ -5,6 +5,8 @@ import { ProductCheckoutForm } from '@/components/ProductCheckoutForm';
 import { ProductInquiryForm } from '@/components/ProductInquiryForm';
 import { ProductDetail } from '@/components/product/ProductDetail';
 import { SiteHeader } from '@/components/SiteHeader';
+import { getPaymentGatewayConfig, getPaymentGatewayReadiness } from '@/lib/checkout/payment-gateway-config';
+import { getProductCheckoutPolicy } from '@/lib/checkout/product-checkout-policy';
 import { getCategoryBySlug, getProductBySlug, listProducts } from '@/lib/cms/catalog-repository';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { getStorefrontCopy, getStorefrontCopyDirection } from '@/lib/localization/storefront-copy';
@@ -49,6 +51,8 @@ export default async function ProductPage({
   if (!product) notFound();
   const category = await getCategoryBySlug(product.category, { locale });
   const dbReady = hasDatabase();
+  const checkoutReadiness = getPaymentGatewayReadiness(getPaymentGatewayConfig(process.env), process.env);
+  const checkoutPolicy = getProductCheckoutPolicy({ product, dbReady, checkoutReadiness });
 
   return (
     <main id="main-content" tabIndex={-1} dir={getStorefrontCopyDirection(locale)}>
@@ -58,9 +62,9 @@ export default async function ProductPage({
       <section className="mx-auto max-w-7xl px-5 pt-10">
         <PathTrail items={[{ label: getStorefrontCopy('common.home', locale), href: '/' }, { label: category?.title || product.categoryTitle || product.category, href: `/categories/${product.category}` }, { label: product.title }]} />
       </section>
-      <ProductDetail product={product} category={category} dbReady={dbReady} locale={locale} />
-      <ProductCheckoutForm product={product} dbReady={dbReady} checkout={checkout} />
-      <ProductInquiryForm product={product} dbReady={dbReady} inquiry={inquiry} />
+      <ProductDetail product={product} category={category} checkoutPolicy={checkoutPolicy} locale={locale} />
+      <ProductCheckoutForm product={product} dbReady={dbReady} checkout={checkout} checkoutPolicy={checkoutPolicy} />
+      {checkoutPolicy.showInquiryForm ? <ProductInquiryForm product={product} dbReady={dbReady} inquiry={inquiry} /> : null}
     </main>
   );
 }
