@@ -311,7 +311,7 @@ export function InquiryBoard({ inquiryPage, counts, assignmentSummary, activeSta
       </div>
 
       {inquiries.length === 0 ? (
-        <InquiryEmptyState activeStatus={activeStatus} search={search} />
+        <InquiryEmptyState activeStatus={activeStatus} search={search} assignmentFilter={assignmentFilter} />
       ) : (
         <>
           <div className="grid gap-4">
