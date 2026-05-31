@@ -9,6 +9,7 @@ export type LegacyPaymentProviderName = typeof LEGACY_PAYMENT_PROVIDER_NAMES[num
 export type AdapterPaymentProviderName = typeof ADAPTER_PAYMENT_PROVIDER_NAMES[number];
 export type CheckoutPaymentProviderName = LegacyPaymentProviderName | AdapterPaymentProviderName;
 export type AdapterPaymentGatewayResult = PaymentGatewayInitiationResult & { provider: AdapterPaymentProviderName };
+export type CheckoutProviderRoutingKind = 'local' | 'adapter';
 
 function normalizedProviderName(value: string) {
   return value.trim().toLowerCase();
@@ -31,6 +32,10 @@ export function normalizeCheckoutProviderName(raw: string | null | undefined): C
 
 export function shouldUseDirectCheckoutProvider(provider: CheckoutPaymentProviderName): provider is LegacyPaymentProviderName {
   return isLegacyPaymentProviderName(provider);
+}
+
+export function checkoutProviderRoutingKind(provider: CheckoutPaymentProviderName): CheckoutProviderRoutingKind {
+  return shouldUseDirectCheckoutProvider(provider) ? 'local' : 'adapter';
 }
 
 export function mapAliasGatewayResultToLegacyAttempt(input: { result: AdapterPaymentGatewayResult; order: PaymentAttemptOrder }): AdapterAliasAttempt {
