@@ -3,9 +3,11 @@ import { AdminActionBanner } from '@/components/admin/AdminActionBanner';
 import { AdminAuditLogPanel } from '@/components/admin/AdminAuditLogPanel';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { AdminOrderPanel } from '@/components/admin/AdminOrderPanel';
+import { AdminStaffReadinessPanel } from '@/components/admin/AdminStaffReadinessPanel';
 import { InquiryBoard } from '@/components/admin/InquiryBoard';
 import { SiteHeader } from '@/components/SiteHeader';
 import { getAdminIdentity, isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
+import { getAdminAccountReadinessSummary, listAdminAccountReadinessRecords } from '@/lib/admin-account-repository';
 import { getHomepageContent, listAdminAuditLogs, listAdminCategories, listAdminProducts, listInquiries, listInquiryPage, listInquiryStatusCounts, listMedia } from '@/lib/cms/catalog-repository';
 import { listHomepageTranslations } from '@/lib/cms/homepage-translation-repository';
 import { listAdminCheckoutOrderPage } from '@/lib/checkout/admin-order-repository';
@@ -42,7 +44,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     search: optionalParam(orderSearch)
   };
   const authenticated = await isAdminAuthenticated();
-  const [categories, products, homepage, homepageTranslations, media, inquiryPageData, assignmentSourceInquiries, inquiryCounts, auditLogs, orderPageData, authEventSummary, adminIdentity] = await Promise.all([
+  const adminIdentity = authenticated ? await getAdminIdentity() : undefined;
+  const canViewStaffReadiness = adminIdentity?.role === 'owner';
+  const [categories, products, homepage, homepageTranslations, media, inquiryPageData, assignmentSourceInquiries, inquiryCounts, auditLogs, orderPageData, authEventSummary, adminAccounts] = await Promise.all([
     listAdminCategories(),
     listAdminProducts(),
     getHomepageContent(),
@@ -54,10 +58,11 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     authenticated ? listAdminAuditLogs(auditFilters) : Promise.resolve([]),
     authenticated ? listAdminCheckoutOrderPage(orderFilters, parsePage(orderPage)) : Promise.resolve({ orders: [], page: 1, pageSize: 12, totalCount: 0, totalPages: 1 }),
     authenticated ? getCustomerAuthEventSummary() : getCustomerAuthEventSummary(1),
-    authenticated ? getAdminIdentity() : Promise.resolve(undefined)
+    canViewStaffReadiness ? listAdminAccountReadinessRecords() : Promise.resolve([])
   ]);
 
   const assignmentSummary = createInquiryAssignmentQueueSummary(assignmentSourceInquiries, adminIdentity);
+  const adminAccountSummary = await getAdminAccountReadinessSummary(adminAccounts);
 
   if (assignmentFilter !== 'all') {
     const pageSize = inquiryPageData.pageSize;
@@ -94,6 +99,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         <div className="mt-10 grid gap-12">
           <AdminActionBanner status={status} message={message} />
           {authenticated ? <AdminAuditLogPanel logs={auditLogs} filters={auditFilters} /> : null}
+          {authenticated ? <AdminStaffReadinessPanel accounts={adminAccounts} summary={adminAccountSummary} identity={adminIdentity} /> : null}
           {authenticated ? <AdminOrderPanel orderPage={orderPageData} filters={orderFilters} /> : null}
           <InquiryBoard inquiryPage={inquiryPageData} counts={inquiryCounts} assignmentSummary={assignmentSummary} activeStatus={inquiryStatus} search={inquirySearch} assignmentFilter={assignmentFilter} />
           <AdminDashboard
