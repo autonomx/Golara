@@ -94,6 +94,11 @@ type DbInquiry = {
   deliveryNotes: string | null;
   staffNotes: string | null;
   status: string;
+  assignedAdminId: string | null;
+  assignedAdminLabel: string | null;
+  assignedAdminEmail: string | null;
+  assignedAdminRole: string | null;
+  assignedAt: Date | null;
   createdAt: Date;
   product?: { title: string } | null;
   followUps?: DbFollowUp[];
@@ -154,6 +159,8 @@ function buildInquiryWhere(status?: string, search?: string): InquiryWhere {
       { message: { contains: normalizedSearch, mode: 'insensitive' } },
       { deliveryNotes: { contains: normalizedSearch, mode: 'insensitive' } },
       { staffNotes: { contains: normalizedSearch, mode: 'insensitive' } },
+      { assignedAdminLabel: { contains: normalizedSearch, mode: 'insensitive' } },
+      { assignedAdminEmail: { contains: normalizedSearch, mode: 'insensitive' } },
       { product: { title: { contains: normalizedSearch, mode: 'insensitive' } } }
     ];
   }
@@ -298,6 +305,13 @@ function mapInquiry(inquiry: DbInquiry): CustomerInquiry {
     deliveryDate: inquiry.deliveryDate ?? undefined,
     deliveryNotes: inquiry.deliveryNotes ?? undefined,
     staffNotes: inquiry.staffNotes ?? undefined,
+    assignee: inquiry.assignedAdminId || inquiry.assignedAdminLabel || inquiry.assignedAdminEmail || inquiry.assignedAdminRole || inquiry.assignedAt ? {
+      adminId: inquiry.assignedAdminId ?? undefined,
+      label: inquiry.assignedAdminLabel ?? undefined,
+      email: inquiry.assignedAdminEmail ?? undefined,
+      role: inquiry.assignedAdminRole ?? undefined,
+      assignedAt: inquiry.assignedAt ?? undefined
+    } : undefined,
     followUps: inquiry.followUps?.map((followUp) => ({ id: followUp.id, note: followUp.note, channel: followUp.channel, createdAt: followUp.createdAt })),
     status: inquiry.status,
     createdAt: inquiry.createdAt
