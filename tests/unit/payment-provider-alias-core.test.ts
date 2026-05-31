@@ -3,7 +3,8 @@ import {
   isAdapterPaymentProviderName,
   isLegacyPaymentProviderName,
   mapAliasGatewayResultToLegacyAttempt,
-  normalizeCheckoutProviderName
+  normalizeCheckoutProviderName,
+  shouldUseDirectCheckoutProvider
 } from '../../lib/checkout/payment-provider-alias-core';
 import type { PaymentAttemptOrder } from '../../lib/checkout/payment-attempt-core';
 
@@ -44,6 +45,14 @@ export async function runPaymentProviderAliasCoreTests() {
   assert.equal(normalizeCheckoutProviderName(''), 'manual');
   assert.equal(normalizeCheckoutProviderName(undefined), 'manual');
   assert.equal(normalizeCheckoutProviderName(null), 'manual');
+
+  assert.equal(shouldUseDirectCheckoutProvider('manual'), true);
+  assert.equal(shouldUseDirectCheckoutProvider('domestic_redirect'), true);
+  assert.equal(shouldUseDirectCheckoutProvider('zarinpal'), true);
+  assert.equal(shouldUseDirectCheckoutProvider('iranian'), false);
+  assert.equal(shouldUseDirectCheckoutProvider('stripe'), false);
+  assert.equal(shouldUseDirectCheckoutProvider('whatsapp'), false);
+  assert.equal(shouldUseDirectCheckoutProvider('inquiry'), false);
 
   assert.deepEqual(mapAliasGatewayResultToLegacyAttempt({
     order: baseOrder,

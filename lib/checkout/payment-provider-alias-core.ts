@@ -29,6 +29,10 @@ export function normalizeCheckoutProviderName(raw: string | null | undefined): C
   return 'manual';
 }
 
+export function shouldUseDirectCheckoutProvider(provider: CheckoutPaymentProviderName): provider is LegacyPaymentProviderName {
+  return isLegacyPaymentProviderName(provider);
+}
+
 export function mapAliasGatewayResultToLegacyAttempt(input: { result: AdapterPaymentGatewayResult; order: PaymentAttemptOrder }): AdapterAliasAttempt {
   return mapAdapterAliasAttempt(input);
 }
