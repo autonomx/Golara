@@ -28,7 +28,7 @@ type PaymentProviderOrder = {
   orderNumber: string;
   totalCents: number;
   currency: string;
-  status?: string;
+  status: string;
   publicLookupToken?: string | null;
 };
 
