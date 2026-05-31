@@ -1,4 +1,5 @@
 import { runAdminActionBoundaryGuardTests } from './admin-action-boundary-guard.test';
+import { runAdminAuthCoreTests } from './admin-auth-core.test';
 import { runCheckoutCapacityHoldTests } from './checkout-capacity-hold.test';
 import { runCheckoutStateMachineTests } from './checkout-state-machine.test';
 import { runCmsCategoryServiceTests } from './cms-category-service.test';
@@ -25,6 +26,7 @@ async function main() {
   await runMediaStorageReadinessTests();
   await runDeployReadinessTests();
   await runAdminActionBoundaryGuardTests();
+  await runAdminAuthCoreTests();
   await runCmsServiceTypesTests();
   await runCmsMediaServiceTests();
   await runCmsCategoryServiceTests();
@@ -38,7 +40,7 @@ async function main() {
   await runCheckoutStateMachineTests();
   await runCheckoutCapacityHoldTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (19 files)');
+  console.log('unit tests passed (20 files)');
 }
 
 main().catch((error) => {
