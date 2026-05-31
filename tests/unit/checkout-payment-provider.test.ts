@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {
   mapGatewayResultToAttempt,
   selectProviderForCheckoutAttempt
-} from '../../lib/checkout/payment-provider';
+} from '../../lib/checkout/payment-attempt-core';
 import type { PaymentGatewayConfig } from '../../lib/checkout/payment-gateway-config';
 
 const baseOrder = {
