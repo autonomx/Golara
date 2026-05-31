@@ -10,6 +10,7 @@ import { getHomepageContent, listAdminAuditLogs, listAdminCategories, listAdminP
 import { listHomepageTranslations } from '@/lib/cms/homepage-translation-repository';
 import { listAdminCheckoutOrderPage } from '@/lib/checkout/admin-order-repository';
 import { getCustomerAuthEventSummary } from '@/lib/customers/customer-auth-event-summary';
+import { parseInquiryAssignmentQueueFilter } from '@/lib/inquiries/inquiry-assignment-queue';
 import { getRuntimeReadiness } from '@/lib/runtime-readiness';
 
 export const dynamic = 'force-dynamic';
@@ -24,8 +25,9 @@ function optionalParam(value?: string) {
   return normalized || undefined;
 }
 
-export default async function AdminPage({ searchParams }: { searchParams: Promise<{ status?: string; message?: string; inquiryStatus?: string; inquiryPage?: string; inquirySearch?: string; auditAction?: string; auditEntity?: string; auditActor?: string; auditSearch?: string; orderStatus?: string; orderPaymentStatus?: string; orderFulfillmentStatus?: string; orderSearch?: string; orderPage?: string }> }) {
-  const { status, message, inquiryStatus, inquiryPage, inquirySearch, auditAction, auditEntity, auditActor, auditSearch, orderStatus, orderPaymentStatus, orderFulfillmentStatus, orderSearch, orderPage } = await searchParams;
+export default async function AdminPage({ searchParams }: { searchParams: Promise<{ status?: string; message?: string; inquiryStatus?: string; inquiryPage?: string; inquirySearch?: string; inquiryAssignment?: string; auditAction?: string; auditEntity?: string; auditActor?: string; auditSearch?: string; orderStatus?: string; orderPaymentStatus?: string; orderFulfillmentStatus?: string; orderSearch?: string; orderPage?: string }> }) {
+  const { status, message, inquiryStatus, inquiryPage, inquirySearch, inquiryAssignment, auditAction, auditEntity, auditActor, auditSearch, orderStatus, orderPaymentStatus, orderFulfillmentStatus, orderSearch, orderPage } = await searchParams;
+  const assignmentFilter = parseInquiryAssignmentQueueFilter(inquiryAssignment);
   const auditFilters = {
     action: optionalParam(auditAction),
     entity: optionalParam(auditEntity),
@@ -78,7 +80,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <AdminActionBanner status={status} message={message} />
           {authenticated ? <AdminAuditLogPanel logs={auditLogs} filters={auditFilters} /> : null}
           {authenticated ? <AdminOrderPanel orderPage={orderPageData} filters={orderFilters} /> : null}
-          <InquiryBoard inquiryPage={inquiryPageData} counts={inquiryCounts} activeStatus={inquiryStatus} search={inquirySearch} />
+          <InquiryBoard inquiryPage={inquiryPageData} counts={inquiryCounts} activeStatus={inquiryStatus} search={inquirySearch} assignmentFilter={assignmentFilter} />
           <AdminDashboard
             categories={categories}
             products={products}
