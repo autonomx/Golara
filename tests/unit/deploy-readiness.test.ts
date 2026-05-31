@@ -21,6 +21,12 @@ function issueCodes(report: ReturnType<typeof getDeployReadiness>) {
   return report.blockers.map((issue) => issue.code);
 }
 
+const dataSafetyConfirmed = {
+  PRODUCTION_MIGRATION_RUNBOOK_CONFIRMED: 'true',
+  PRODUCTION_BACKUP_RESTORE_CONFIRMED: 'true',
+  PRODUCTION_ROLLBACK_PLAN_CONFIRMED: 'true'
+};
+
 export async function runDeployReadinessTests() {
   await withEnv({ APP_MODE: 'preview', VERCEL_ENV: undefined, NODE_ENV: 'production' }, () => {
     const report = getDeployReadiness();
@@ -39,17 +45,20 @@ export async function runDeployReadinessTests() {
       'admin_password_missing',
       'admin_session_secret_missing',
       'media_storage_not_production_safe',
-      'notification_webhook_url_missing'
+      'notification_webhook_url_missing',
+      'migration_runbook_unconfirmed',
+      'backup_restore_unconfirmed',
+      'rollback_plan_unconfirmed'
     ]);
   });
 
-  await withEnv({ APP_MODE: 'production', DATABASE_URL: 'postgresql://example.invalid/db', ADMIN_PASSWORD: 'secret-password', ADMIN_SESSION_SECRET: 'short', MEDIA_STORAGE_PROVIDER: 'cloudinary', CLOUDINARY_CLOUD_NAME: 'golara-test', CLOUDINARY_UPLOAD_PRESET: 'unsigned-preset', INQUIRY_NOTIFICATION_MODE: 'unsupported' }, () => {
+  await withEnv({ APP_MODE: 'production', DATABASE_URL: 'postgresql://example.invalid/db', ADMIN_PASSWORD: 'secret-password', ADMIN_SESSION_SECRET: 'short', MEDIA_STORAGE_PROVIDER: 'cloudinary', CLOUDINARY_CLOUD_NAME: 'golara-test', CLOUDINARY_UPLOAD_PRESET: 'unsigned-preset', INQUIRY_NOTIFICATION_MODE: 'unsupported', ...dataSafetyConfirmed }, () => {
     const report = getDeployReadiness();
     assert.equal(report.ready, false);
     assert.deepEqual(issueCodes(report), ['admin_session_secret_short', 'notification_mode_unsupported']);
   });
 
-  await withEnv({ APP_MODE: 'production', DATABASE_URL: 'postgresql://example.invalid/db', ADMIN_PASSWORD: 'secret-password', ADMIN_SESSION_SECRET: '12345678901234567890123456789012', ADMIN_ROLE: 'owner', MEDIA_STORAGE_PROVIDER: 'cloudinary', CLOUDINARY_CLOUD_NAME: 'golara-test', CLOUDINARY_UPLOAD_PRESET: 'unsigned-preset', INQUIRY_NOTIFICATION_MODE: 'log', INQUIRY_NOTIFICATION_WEBHOOK_URL: undefined }, () => {
+  await withEnv({ APP_MODE: 'production', DATABASE_URL: 'postgresql://example.invalid/db', ADMIN_PASSWORD: 'secret-password', ADMIN_SESSION_SECRET: '12345678901234567890123456789012', ADMIN_ROLE: 'owner', MEDIA_STORAGE_PROVIDER: 'cloudinary', CLOUDINARY_CLOUD_NAME: 'golara-test', CLOUDINARY_UPLOAD_PRESET: 'unsigned-preset', INQUIRY_NOTIFICATION_MODE: 'log', INQUIRY_NOTIFICATION_WEBHOOK_URL: undefined, ...dataSafetyConfirmed }, () => {
     const report = getDeployReadiness();
     assert.equal(report.ready, true);
     assert.deepEqual(issueCodes(report), []);
@@ -57,7 +66,7 @@ export async function runDeployReadinessTests() {
     assert.match(formatDeployReadinessReport(report), /Deploy readiness: ready/);
   });
 
-  await withEnv({ APP_MODE: 'production', DATABASE_URL: 'postgresql://example.invalid/db', ADMIN_PASSWORD: 'secret-password', ADMIN_SESSION_SECRET: '12345678901234567890123456789012', ADMIN_ROLE: 'staff', MEDIA_STORAGE_PROVIDER: 'cloudinary', CLOUDINARY_CLOUD_NAME: 'golara-test', CLOUDINARY_UPLOAD_PRESET: 'unsigned-preset', INQUIRY_NOTIFICATION_MODE: 'webhook', INQUIRY_NOTIFICATION_WEBHOOK_URL: 'https://example.invalid/webhook' }, () => {
+  await withEnv({ APP_MODE: 'production', DATABASE_URL: 'postgresql://example.invalid/db', ADMIN_PASSWORD: 'secret-password', ADMIN_SESSION_SECRET: '12345678901234567890123456789012', ADMIN_ROLE: 'staff', MEDIA_STORAGE_PROVIDER: 'cloudinary', CLOUDINARY_CLOUD_NAME: 'golara-test', CLOUDINARY_UPLOAD_PRESET: 'unsigned-preset', INQUIRY_NOTIFICATION_MODE: 'webhook', INQUIRY_NOTIFICATION_WEBHOOK_URL: 'https://example.invalid/webhook', ...dataSafetyConfirmed }, () => {
     const report = getDeployReadiness();
     assert.equal(report.ready, true);
     assert.deepEqual(issueCodes(report), []);
