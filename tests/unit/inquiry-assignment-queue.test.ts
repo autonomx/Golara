@@ -6,7 +6,8 @@ import {
   filterInquiriesByAssignmentQueue,
   getInquiryAssignmentQueueKey,
   getInquiryAssignmentQueueLabel,
-  inquiryAssignedToIdentity
+  inquiryAssignedToIdentity,
+  parseInquiryAssignmentQueueFilter
 } from '../../lib/inquiries/inquiry-assignment-queue';
 
 const ownerIdentity: AdminIdentity = {
@@ -36,6 +37,14 @@ export async function runInquiryAssignmentQueueTests() {
   const mineByLabel = inquiry({ id: 'mine-label', assignee: { adminId: 'Owner User' } });
   const assignedToStaff = inquiry({ id: 'assigned-staff', assignee: { adminId: 'staff@example.invalid', label: 'Staff User', email: 'staff@example.invalid' } });
   const unassigned = inquiry({ id: 'unassigned' });
+
+  assert.equal(parseInquiryAssignmentQueueFilter(undefined), 'all');
+  assert.equal(parseInquiryAssignmentQueueFilter(null), 'all');
+  assert.equal(parseInquiryAssignmentQueueFilter(''), 'all');
+  assert.equal(parseInquiryAssignmentQueueFilter('mine'), 'mine');
+  assert.equal(parseInquiryAssignmentQueueFilter('assigned'), 'assigned');
+  assert.equal(parseInquiryAssignmentQueueFilter('unassigned'), 'unassigned');
+  assert.equal(parseInquiryAssignmentQueueFilter('other'), 'all');
 
   assert.equal(inquiryAssignedToIdentity(mineByEmail, ownerIdentity), true);
   assert.equal(inquiryAssignedToIdentity(mineByLabel, ownerIdentity), true);
