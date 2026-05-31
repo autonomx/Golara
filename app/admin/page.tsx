@@ -5,12 +5,12 @@ import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { AdminOrderPanel } from '@/components/admin/AdminOrderPanel';
 import { InquiryBoard } from '@/components/admin/InquiryBoard';
 import { SiteHeader } from '@/components/SiteHeader';
-import { isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
-import { getHomepageContent, listAdminAuditLogs, listAdminCategories, listAdminProducts, listInquiryPage, listInquiryStatusCounts, listMedia } from '@/lib/cms/catalog-repository';
+import { getAdminIdentity, isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
+import { getHomepageContent, listAdminAuditLogs, listAdminCategories, listAdminProducts, listInquiries, listInquiryPage, listInquiryStatusCounts, listMedia } from '@/lib/cms/catalog-repository';
 import { listHomepageTranslations } from '@/lib/cms/homepage-translation-repository';
 import { listAdminCheckoutOrderPage } from '@/lib/checkout/admin-order-repository';
 import { getCustomerAuthEventSummary } from '@/lib/customers/customer-auth-event-summary';
-import { parseInquiryAssignmentQueueFilter } from '@/lib/inquiries/inquiry-assignment-queue';
+import { filterInquiriesByAssignmentQueue, parseInquiryAssignmentQueueFilter } from '@/lib/inquiries/inquiry-assignment-queue';
 import { getRuntimeReadiness } from '@/lib/runtime-readiness';
 
 export const dynamic = 'force-dynamic';
@@ -28,6 +28,7 @@ function optionalParam(value?: string) {
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ status?: string; message?: string; inquiryStatus?: string; inquiryPage?: string; inquirySearch?: string; inquiryAssignment?: string; auditAction?: string; auditEntity?: string; auditActor?: string; auditSearch?: string; orderStatus?: string; orderPaymentStatus?: string; orderFulfillmentStatus?: string; orderSearch?: string; orderPage?: string }> }) {
   const { status, message, inquiryStatus, inquiryPage, inquirySearch, inquiryAssignment, auditAction, auditEntity, auditActor, auditSearch, orderStatus, orderPaymentStatus, orderFulfillmentStatus, orderSearch, orderPage } = await searchParams;
   const assignmentFilter = parseInquiryAssignmentQueueFilter(inquiryAssignment);
+  const inquiryPageNumber = parsePage(inquiryPage);
   const auditFilters = {
     action: optionalParam(auditAction),
     entity: optionalParam(auditEntity),
@@ -41,18 +42,30 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     search: optionalParam(orderSearch)
   };
   const authenticated = await isAdminAuthenticated();
-  const [categories, products, homepage, homepageTranslations, media, inquiryPageData, inquiryCounts, auditLogs, orderPageData, authEventSummary] = await Promise.all([
+  const [categories, products, homepage, homepageTranslations, media, inquiryPageData, allMatchingInquiries, inquiryCounts, auditLogs, orderPageData, authEventSummary, adminIdentity] = await Promise.all([
     listAdminCategories(),
     listAdminProducts(),
     getHomepageContent(),
     authenticated ? listHomepageTranslations() : Promise.resolve([]),
     listMedia(),
-    listInquiryPage(inquiryStatus, parsePage(inquiryPage), undefined, inquirySearch),
+    listInquiryPage(inquiryStatus, inquiryPageNumber, undefined, inquirySearch),
+    assignmentFilter === 'all' ? Promise.resolve(undefined) : listInquiries(inquiryStatus, inquirySearch),
     listInquiryStatusCounts(inquirySearch),
     authenticated ? listAdminAuditLogs(auditFilters) : Promise.resolve([]),
     authenticated ? listAdminCheckoutOrderPage(orderFilters, parsePage(orderPage)) : Promise.resolve({ orders: [], page: 1, pageSize: 12, totalCount: 0, totalPages: 1 }),
-    authenticated ? getCustomerAuthEventSummary() : getCustomerAuthEventSummary(1)
+    authenticated ? getCustomerAuthEventSummary() : getCustomerAuthEventSummary(1),
+    authenticated ? getAdminIdentity() : Promise.resolve(undefined)
   ]);
+
+  if (allMatchingInquiries) {
+    const pageSize = inquiryPageData.pageSize;
+    const filtered = filterInquiriesByAssignmentQueue(allMatchingInquiries, assignmentFilter, adminIdentity);
+    const start = (inquiryPageNumber - 1) * pageSize;
+    inquiryPageData.inquiries = filtered.slice(start, start + pageSize);
+    inquiryPageData.total = filtered.length;
+    inquiryPageData.page = inquiryPageNumber;
+    inquiryPageData.pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  }
 
   const authConfigured = isAdminAuthConfigured();
   const runtimeReadiness = getRuntimeReadiness();
