@@ -30,15 +30,16 @@ export async function createAdapterAliasAttempt(input: { provider: PaymentGatewa
     }
   });
   const attempt = mapGatewayResultToAttempt({ result, order: input.order, readinessBlockers: [] });
-  return {
+  const aliasAttempt: AdapterAliasAttempt = {
     provider: attempt.provider,
     status: attempt.status,
-    providerReference: attempt.providerReference,
-    redirectUrl: attempt.redirectUrl,
     metadata: {
       gatewayStatus: String(attempt.metadata.gatewayStatus),
       gatewayMessage: String(attempt.metadata.gatewayMessage),
       orderNumber: String(attempt.metadata.orderNumber)
     }
   };
+  if (attempt.providerReference) aliasAttempt.providerReference = attempt.providerReference;
+  if (attempt.redirectUrl) aliasAttempt.redirectUrl = attempt.redirectUrl;
+  return aliasAttempt;
 }
