@@ -11,6 +11,7 @@ import { getAdminAccountReadinessSummary, listAdminAccountReadinessRecords } fro
 import { getHomepageContent, listAdminAuditLogs, listAdminCategories, listAdminProducts, listInquiries, listInquiryPage, listInquiryStatusCounts, listMedia } from '@/lib/cms/catalog-repository';
 import { listHomepageTranslations } from '@/lib/cms/homepage-translation-repository';
 import { listAdminCheckoutOrderPage } from '@/lib/checkout/admin-order-repository';
+import { getPaymentGatewayConfig, getPaymentGatewayReadiness } from '@/lib/checkout/payment-gateway-config';
 import { getCustomerAuthEventSummary } from '@/lib/customers/customer-auth-event-summary';
 import { createInquiryAssignmentQueueSummary, filterInquiriesByAssignmentQueue, parseInquiryAssignmentQueueFilter } from '@/lib/inquiries/inquiry-assignment-queue';
 import { getCurrentInquiryNotificationReadiness, getCurrentInquiryNotificationRetryRunbook } from '@/lib/notifications/inquiry-notifications';
@@ -79,6 +80,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const runtimeReadiness = getRuntimeReadiness();
   const notificationReadiness = getCurrentInquiryNotificationReadiness();
   const notificationRetryRunbook = getCurrentInquiryNotificationRetryRunbook();
+  const checkoutReadiness = getPaymentGatewayReadiness(getPaymentGatewayConfig(process.env), process.env);
 
   return (
     <main id="main-content" tabIndex={-1}>
@@ -116,6 +118,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             authenticated={authenticated}
             notificationReadiness={notificationReadiness}
             notificationRetryRunbook={notificationRetryRunbook}
+            checkoutReadiness={checkoutReadiness}
             status={status}
             message={message}
           />
