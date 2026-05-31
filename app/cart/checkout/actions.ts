@@ -3,8 +3,8 @@
 import { redirect } from 'next/navigation';
 import { clearCartTokenCookie, getCartTokenCookie } from '@/lib/cart/cart-cookie';
 import { clearCart, getCartByToken } from '@/lib/cart/cart-repository';
+import { checkoutActionNextPath } from '@/lib/checkout/checkout-action-next-path';
 import { createOrderDraft } from '@/lib/checkout/order-draft-repository';
-import { orderNextPath } from '@/lib/checkout/order-next-path';
 import { createCheckoutPaymentAttempt } from '@/lib/checkout/payment-provider';
 import { addCustomerAddress, upsertCustomerProfile } from '@/lib/customers/customer-repository';
 import { hasDatabase } from '@/lib/prisma';
@@ -74,14 +74,7 @@ export async function createCartCheckoutAction(formData: FormData) {
 
       const attempt = await createCheckoutPaymentAttempt({ orderId: order.id });
       shouldClearCart = true;
-      redirectTarget = orderNextPath({
-        orderNumber: order.orderNumber,
-        publicLookupToken: order.publicLookupToken,
-        attempt: {
-          status: attempt.status,
-          nextUrl: attempt.redirectUrl
-        }
-      });
+      redirectTarget = checkoutActionNextPath(order, attempt);
     }
   } catch (error) {
     console.warn('[cart] failed to create checkout order', error);
