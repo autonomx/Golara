@@ -1,12 +1,17 @@
 # Golara Production Readiness Roadmap
 
 Last updated: 2026-05-31
-Current main baseline: Phase 29 merged
+Current main baseline: Phase 30 merged
 Current production path: inquiry-first launch. Payment-provider implementation remains deferred until explicitly approved.
 
 ## Current readiness state
 
-Golara is at final inquiry-first launch audit.
+Golara has completed the inquiry-first production-readiness roadmap through Phase 30. The codebase is ready for an operator-led production sign-off using `docs/LAUNCH_AUDIT.md`.
+
+Important distinction:
+
+- Production-readiness work is complete in the repository.
+- Actual production launch still requires environment-specific operator sign-off: secrets, database, Cloudinary, notification mode, data-safety confirmations, deploy-readiness output, and manual smoke audit.
 
 Completed foundations:
 
@@ -21,6 +26,7 @@ Completed foundations:
 - Owner-facing staff account readiness, assignment identity visibility, and staff access rotation/deactivation guidance are in place.
 - Inquiry notification delivery now returns structured results, exposes readiness blockers/warnings, and includes retry runbook guidance.
 - Production data-safety deploy guard blockers, migration runbook, backup/restore expectations, and rollback plan are in place.
+- Final launch audit sign-off artifact is in place at `docs/LAUNCH_AUDIT.md`.
 
 ## Completed recent phases
 
@@ -83,31 +89,24 @@ Completed foundations:
 - Production checklist documents migration, backup/restore, and rollback procedures.
 - Data-safety and deploy-readiness tests cover the new blockers.
 
-## Remaining production readiness phases
-
 ### Phase 30 — final launch audit
 
-Status: current implementation phase.
+- `docs/LAUNCH_AUDIT.md` provides the final inquiry-first launch sign-off artifact.
+- Production checklist links to the final launch audit.
+- Final go/no-go requirements are documented.
+- Deferred items are explicitly listed as non-blocking for inquiry-first launch.
 
-Goal: perform a final inquiry-first launch readiness pass.
+## Remaining before real production launch
 
-Scope:
+These are environment/operator tasks, not repository blockers:
 
-- Run deploy-readiness check.
-- Run Vercel build wrapper locally or in CI where applicable.
-- Verify admin login and role boundaries.
-- Verify media provider readiness.
-- Verify inquiry creation, follow-up, assignment, export, print, and notification path.
-- Verify public routes and key admin routes via smoke coverage.
-- Update launch notes with known deferred items.
-- Maintain final sign-off artifact in `docs/LAUNCH_AUDIT.md`.
-
-Acceptance criteria:
-
-- All required CI gates pass.
-- Launch checklist is complete.
-- Deferred work is explicitly listed and does not block inquiry-first launch.
-- Release operator has a concrete go/no-go sign-off template.
+1. Configure production secrets and environment variables.
+2. Configure production PostgreSQL and verify backup/restore.
+3. Configure production-safe media storage.
+4. Choose and verify inquiry notification mode.
+5. Run `APP_MODE="production" npm run check:deploy-readiness` with production-like environment variables.
+6. Complete the manual smoke audit in `docs/LAUNCH_AUDIT.md`.
+7. Record the go/no-go decision in the launch sign-off template.
 
 ## Deferred post-launch phases
 
@@ -129,11 +128,36 @@ Notes:
 - Admin order readiness exists separately from inquiry-first operations.
 - Full order lifecycle automation should follow payment-provider approval and production inquiry validation.
 
+### Provider-backed per-user admin auth
+
+Status: deferred.
+
+Notes:
+
+- Current runtime admin auth remains password-gated with environment-backed identity metadata.
+- Owner-visible account readiness inventory and staff procedure controls are sufficient for the inquiry-first launch scope only.
+- Provider-backed, per-user login should be planned before broader staff scaling.
+
+### Email and WhatsApp notification providers
+
+Status: deferred.
+
+Notes:
+
+- Current supported inquiry notification modes are log and webhook.
+- Email and WhatsApp provider delivery should be added behind the notification seam when a provider and operating model are selected.
+
 ## Current launch blocker summary
 
-Blocking before inquiry-first production launch:
+Repository blockers before inquiry-first production launch:
 
-1. Final launch audit.
+- None known after Phase 30 closeout.
+
+Environment/operator blockers before inquiry-first production launch:
+
+- Complete `docs/LAUNCH_AUDIT.md` for the target production deployment.
+- Pass production deploy-readiness with production-like environment variables.
+- Complete manual smoke audit and go/no-go sign-off.
 
 Not blocking inquiry-first launch:
 
