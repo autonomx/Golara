@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { addInquiryFollowUpAction, saveInquiryAction } from '@/app/admin/inquiry-actions';
+import { addInquiryFollowUpAction, assignInquiryAction, saveInquiryAction } from '@/app/admin/inquiry-actions';
 import { InquiryContactActions } from '@/components/admin/InquiryContactActions';
 import { InquiryDeliveryBadge } from '@/components/admin/InquiryDeliveryBadge';
 import { InquiryEmptyState } from '@/components/admin/InquiryEmptyState';
@@ -7,6 +7,7 @@ import { InquiryFollowUpSummary } from '@/components/admin/InquiryFollowUpSummar
 import { InquiryStatusShortcuts } from '@/components/admin/InquiryStatusShortcuts';
 import type { CustomerInquiry } from '@/lib/catalog';
 import type { InquiryPage, InquiryStatusCount } from '@/lib/cms/catalog-repository';
+import { getInquiryAssigneeLabel, isInquiryAssigned } from '@/lib/inquiries/inquiry-assignment';
 import type { InquiryAssignmentQueueFilter, InquiryAssignmentQueueSummary } from '@/lib/inquiries/inquiry-assignment-queue';
 import { getInquiryWorkflowStep, getInquiryWorkflowSummary } from '@/lib/inquiries/inquiry-workflow';
 
@@ -16,6 +17,11 @@ const assignmentFilters = [
   { label: 'Mine', value: 'mine' },
   { label: 'Assigned', value: 'assigned' },
   { label: 'Unassigned', value: 'unassigned' }
+] as const;
+
+const roleAssignmentTargets = [
+  { label: 'Staff queue', value: 'staff' },
+  { label: 'Owner queue', value: 'owner' }
 ] as const;
 
 type AssignmentFilterValue = (typeof assignmentFilters)[number]['value'];
@@ -292,6 +298,47 @@ function PaginationControls({ inquiryPage, activeStatus, search, assignmentFilte
   );
 }
 
+function InquiryAssignmentControls({ inquiry, activeStatus, search, page, assignmentFilter }: { inquiry: CustomerInquiry; activeStatus?: string; search?: string; page: number; assignmentFilter?: InquiryAssignmentQueueFilter }) {
+  const assigned = isInquiryAssigned(inquiry.assignee);
+
+  return (
+    <div className="mt-4 rounded-2xl border border-olive/20 bg-white p-4 text-sm text-stone-700">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-olive">Assignment</p>
+          <p className="mt-1 font-semibold text-rosewood">{getInquiryAssigneeLabel(inquiry.assignee)}</p>
+          {inquiry.assignee?.assignedAt ? <p className="mt-1 text-xs text-stone-500">Assigned {formatDate(inquiry.assignee.assignedAt)}</p> : null}
+        </div>
+        <form action={assignInquiryAction.bind(null, inquiry.id)} className="flex flex-wrap gap-2">
+          <ReturnStateFields activeStatus={activeStatus} search={search} page={page} assignmentFilter={assignmentFilter} />
+          <input type="hidden" name="assignmentAction" value="assign-to-me" />
+          <button className={primaryButtonClass} type="submit">Assign to me</button>
+        </form>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        {roleAssignmentTargets.map((target) => (
+          <form key={target.value} action={assignInquiryAction.bind(null, inquiry.id)}>
+            <ReturnStateFields activeStatus={activeStatus} search={search} page={page} assignmentFilter={assignmentFilter} />
+            <input type="hidden" name="assignmentAction" value="assign-to-role" />
+            <input type="hidden" name="assignmentRole" value={target.value} />
+            <button className="rounded-full border border-rosewood/20 bg-cream px-4 py-2 text-xs font-semibold text-rosewood outline-none transition hover:bg-white focus-visible:ring-4 focus-visible:ring-olive/20" type="submit">
+              Assign to {target.label}
+            </button>
+          </form>
+        ))}
+        <form action={assignInquiryAction.bind(null, inquiry.id)}>
+          <ReturnStateFields activeStatus={activeStatus} search={search} page={page} assignmentFilter={assignmentFilter} />
+          <input type="hidden" name="assignmentAction" value="unassign" />
+          <button disabled={!assigned} className={`rounded-full border px-4 py-2 text-xs font-semibold outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20 ${assigned ? 'border-stone-300 bg-white text-stone-700 hover:bg-cream' : 'border-stone-200 bg-stone-50 text-stone-300'}`} type="submit">
+            Unassign
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export function InquiryBoard({ inquiryPage, counts, assignmentSummary, activeStatus, search, assignmentFilter }: { inquiryPage: InquiryPage; counts: InquiryStatusCount[]; assignmentSummary: InquiryAssignmentQueueSummary; activeStatus?: string; search?: string; assignmentFilter?: InquiryAssignmentQueueFilter }) {
   const inquiries = inquiryPage.inquiries;
 
@@ -301,7 +348,7 @@ export function InquiryBoard({ inquiryPage, counts, assignmentSummary, activeSta
         <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Customer requests</p>
         <h2 className="mt-2 font-display text-4xl text-rosewood">Inquiry inbox</h2>
         <p className="mt-3 text-sm leading-6 text-stone-600">
-          Review incoming product requests, update their status, and keep a follow-up timeline.
+          Review incoming product requests, update their status, assign ownership, and keep a follow-up timeline.
         </p>
         <InquirySummaryCards counts={counts} activeStatus={activeStatus} search={search} assignmentFilter={assignmentFilter} />
         <InquiryWorkflowOverview counts={counts} />
@@ -343,6 +390,7 @@ export function InquiryBoard({ inquiryPage, counts, assignmentSummary, activeSta
                     <p><strong>Email:</strong> {inquiry.email ?? '—'}</p>
                     <p><strong>Delivery:</strong> {formatDateOnly(inquiry.deliveryDate)}</p>
                   </div>
+                  <InquiryAssignmentControls inquiry={inquiry} activeStatus={activeStatus} search={search} page={inquiryPage.page} assignmentFilter={assignmentFilter} />
                   <InquiryContactActions inquiry={inquiry} />
                   <InquiryFollowUpSummary inquiry={inquiry} />
                   <InquiryStatusShortcuts inquiry={inquiry} activeStatus={activeStatus} search={search} page={inquiryPage.page} assignmentFilter={assignmentFilter} />

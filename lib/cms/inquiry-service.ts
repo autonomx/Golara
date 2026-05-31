@@ -1,10 +1,14 @@
 import 'server-only';
 
+import type { Prisma } from '@prisma/client';
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
 import {
   createCmsInquiryService,
   type CmsInquiryFollowUpRecord,
   type CmsInquiryStatusRecord,
+  type CmsInquiryAssignmentRecord,
+  type InquiryAssignmentUpdateArgs,
+  type InquiryFindAssignmentArgs,
   type InquiryFindStatusArgs,
   type InquiryFollowUpCreateArgs,
   type InquiryUpdateArgs
@@ -14,11 +18,11 @@ import { prisma } from '@/lib/prisma';
 export { createCmsInquiryService, inquiryStatuses, isInquiryStatus } from '@/lib/cms/inquiry-service-core';
 
 const inquiryRepository = {
-  async findUnique(args: InquiryFindStatusArgs): Promise<CmsInquiryStatusRecord | null> {
-    return prisma.customerInquiry.findUnique(args);
+  async findUnique(args: InquiryFindStatusArgs | InquiryFindAssignmentArgs): Promise<CmsInquiryStatusRecord | CmsInquiryAssignmentRecord | null> {
+    return prisma.customerInquiry.findUnique(args as Prisma.CustomerInquiryFindUniqueArgs);
   },
-  async update(args: InquiryUpdateArgs): Promise<unknown> {
-    return prisma.customerInquiry.update(args);
+  async update(args: InquiryUpdateArgs | InquiryAssignmentUpdateArgs): Promise<unknown> {
+    return prisma.customerInquiry.update(args as Prisma.CustomerInquiryUpdateArgs);
   }
 };
 

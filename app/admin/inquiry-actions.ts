@@ -4,6 +4,11 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { cmsInquiryService, isInquiryStatus } from '@/lib/cms/inquiry-service';
+import {
+  createInquiryAssigneeForRole,
+  createInquiryAssigneeFromAdminIdentity,
+  parseInquiryAssignmentActionPayload
+} from '@/lib/inquiries/inquiry-assignment';
 import { parseInquiryAssignmentQueueFilter } from '@/lib/inquiries/inquiry-assignment-queue';
 import { hasDatabase } from '@/lib/prisma';
 
@@ -40,6 +45,29 @@ export async function saveInquiryAction(inquiryId: string, formData: FormData) {
 
   revalidatePath('/admin');
   redirect(adminStatus('inquiry-updated', formData));
+}
+
+export async function assignInquiryAction(inquiryId: string, formData: FormData) {
+  const identity = await assertAdminRole('staff');
+  if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
+
+  const payload = parseInquiryAssignmentActionPayload({
+    action: stringFormValue(formData, 'assignmentAction'),
+    role: stringFormValue(formData, 'assignmentRole')
+  });
+
+  const assignee = payload.type === 'unassign'
+    ? undefined
+    : payload.type === 'assign-to-role'
+      ? createInquiryAssigneeForRole(payload.role ?? 'staff')
+      : createInquiryAssigneeFromAdminIdentity(identity);
+
+  if (payload.type !== 'unassign' && !assignee) throw new Error('Unable to resolve inquiry assignee.');
+
+  await cmsInquiryService.assignInquiry({ inquiryId, assignee });
+
+  revalidatePath('/admin');
+  redirect(adminStatus(payload.type === 'unassign' ? 'inquiry-unassigned' : 'inquiry-assigned', formData));
 }
 
 export async function addInquiryFollowUpAction(inquiryId: string, formData: FormData) {
