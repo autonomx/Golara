@@ -1,10 +1,12 @@
 import 'server-only';
 
+import { createAdapterAliasAttempt } from '@/lib/checkout/checkout-adapter-alias-attempt';
 import { mapCheckoutAttemptStatus } from '@/lib/checkout/checkout-attempt-status';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
 export type PaymentProviderName = 'manual' | 'domestic_redirect' | 'zarinpal' | 'iranian' | 'stripe' | 'whatsapp' | 'inquiry';
 type LegacyPaymentProviderName = 'manual' | 'domestic_redirect' | 'zarinpal';
+type AdapterPaymentProviderName = 'iranian' | 'stripe' | 'whatsapp' | 'inquiry';
 
 type CreatePaymentAttemptInput = {
   orderId: string;
@@ -26,6 +28,7 @@ type PaymentProviderOrder = {
   orderNumber: string;
   totalCents: number;
   currency: string;
+  status?: string;
   publicLookupToken?: string | null;
 };
 
@@ -56,6 +59,10 @@ function configuredPaymentProvider(): PaymentProviderName {
   if (provider === 'inquiry') return 'inquiry';
   console.warn('[checkout] unsupported CHECKOUT_DOMESTIC_GATEWAY_PROVIDER; using manual', { provider });
   return 'manual';
+}
+
+function isAdapterPaymentProvider(provider: PaymentProviderName): provider is AdapterPaymentProviderName {
+  return provider === 'iranian' || provider === 'stripe' || provider === 'whatsapp' || provider === 'inquiry';
 }
 
 function siteUrl() {
@@ -247,8 +254,10 @@ export async function createCheckoutPaymentAttempt(input: CreatePaymentAttemptIn
     throw new Error('Order is not eligible for payment.');
   }
 
-  const provider = getPaymentProvider(input.provider);
-  const result = await provider.createAttempt(order);
+  const selected = input.provider || configuredPaymentProvider();
+  const result = isAdapterPaymentProvider(selected)
+    ? await createAdapterAliasAttempt({ provider: selected, order })
+    : await getPaymentProvider(selected).createAttempt(order);
 
   const attempt = await prisma.checkoutPaymentAttempt.create({
     data: {
