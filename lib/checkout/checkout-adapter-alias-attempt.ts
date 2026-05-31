@@ -1,7 +1,5 @@
-import 'server-only';
-
-import { initiatePaymentGateway, type PaymentGatewayAdapterProvider } from '@/lib/checkout/payment-gateway-adapters';
-import { checkoutCurrency, mapGatewayResultToAttempt, type PaymentAttemptOrder } from '@/lib/checkout/payment-attempt-core';
+import type { PaymentGatewayAdapterProvider, PaymentGatewayInitiationResult } from '@/lib/checkout/payment-gateway-adapters';
+import { mapGatewayResultToAttempt, type PaymentAttemptOrder } from '@/lib/checkout/payment-attempt-core';
 
 export type AdapterAliasAttempt = {
   provider: PaymentGatewayAdapterProvider;
@@ -11,25 +9,8 @@ export type AdapterAliasAttempt = {
   metadata?: Record<string, string | number | boolean>;
 };
 
-function aliasReturnUrl(order: PaymentAttemptOrder) {
-  return `/orders/confirmation?order=${encodeURIComponent(order.orderNumber)}`;
-}
-
-export async function createAdapterAliasAttempt(input: { provider: PaymentGatewayAdapterProvider; order: PaymentAttemptOrder }): Promise<AdapterAliasAttempt> {
-  const result = await initiatePaymentGateway({
-    provider: input.provider,
-    payment: {
-      orderId: input.order.id,
-      orderNumber: input.order.orderNumber,
-      amountCents: input.order.totalCents,
-      currency: checkoutCurrency(input.order.currency),
-      returnUrl: aliasReturnUrl(input.order),
-      metadata: {
-        routedBy: 'legacy-payment-provider-alias'
-      }
-    }
-  });
-  const attempt = mapGatewayResultToAttempt({ result, order: input.order, readinessBlockers: [] });
+export function mapAdapterAliasAttempt(input: { result: PaymentGatewayInitiationResult; order: PaymentAttemptOrder }): AdapterAliasAttempt {
+  const attempt = mapGatewayResultToAttempt({ result: input.result, order: input.order, readinessBlockers: [] });
   const aliasAttempt: AdapterAliasAttempt = {
     provider: attempt.provider,
     status: attempt.status,
