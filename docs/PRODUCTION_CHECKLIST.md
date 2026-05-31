@@ -11,9 +11,10 @@ Required production variables:
 - `DATABASE_URL`: PostgreSQL connection string used by Prisma.
 - `ADMIN_PASSWORD`: temporary password gate for the current admin CMS.
 - `ADMIN_SESSION_SECRET`: long random secret for signing admin sessions.
-- `ADMIN_LABEL`: temporary display label for password-backed admin audit logs.
-- `ADMIN_EMAIL`: optional temporary admin email for audit attribution.
-- `ADMIN_ROLE`: temporary admin role metadata, currently `owner` or `staff`.
+- `ADMIN_LABEL`: display label for password-backed admin audit logs.
+- `ADMIN_EMAIL`: optional admin email for audit attribution.
+- `ADMIN_ROLE`: password-backed admin role metadata, currently `owner` or `staff`.
+- `ADMIN_IDENTITY_PROVIDER`: currently normalizes to `password`; reserved for future provider-backed admin auth.
 - `MEDIA_STORAGE_PROVIDER`: production should use `cloudinary`; unset, `local`, or unsupported values fall back to local filesystem uploads.
 - `CLOUDINARY_CLOUD_NAME`: required when `MEDIA_STORAGE_PROVIDER="cloudinary"`.
 - `CLOUDINARY_UPLOAD_PRESET`: required when `MEDIA_STORAGE_PROVIDER="cloudinary"`.
@@ -27,7 +28,7 @@ Rules:
 
 - Never commit real `.env.local` or production secrets.
 - Generate a new `ADMIN_SESSION_SECRET` per deployed environment.
-- Treat the password gate as temporary until user-account auth is added in Phase 4.
+- Treat the password gate as temporary until account/provider auth is wired to the admin login flow.
 - Treat webhook URLs as secrets if they include provider tokens or private routing keys.
 - Use `ADMIN_ROLE="owner"` for full CMS administration and `ADMIN_ROLE="staff"` for inquiry operations only.
 - Do not launch production with local media storage. Local uploads are not durable on serverless or multi-instance hosting.
@@ -40,6 +41,7 @@ Current production target:
 - Prisma schema deployed with `npm run db:push` until migrations are formalized.
 - Seed data loaded with `npm run db:seed` only for first setup or demo resets.
 - Admin audit logs are stored in `AdminAuditLog` and require the latest Prisma schema to be pushed.
+- Admin account groundwork is stored in `AdminAccount` for future per-user admin identity.
 - Audit rows include actor label, email, role, and provider metadata from the current admin identity seam.
 
 Preflight:
@@ -72,11 +74,24 @@ Before launch, verify:
 - Audit-log filters work for action, entity, actor, and free-text search.
 - Staff role can update inquiries and follow-ups but cannot mutate catalog, homepage, or media records.
 - Owner role can perform both CMS and inquiry operations.
+- Unit tests cover the staff/owner role matrix and action-file role boundaries.
+
+Current admin-auth state:
+
+- Admin auth is still password-only at runtime.
+- Password-backed identity metadata is configured through environment variables.
+- `lib/admin-auth-core.ts` owns the pure auth config, role, session-value, and identity helpers.
+- `lib/admin-auth.ts` remains the server-only cookie/env wrapper used by admin actions.
+- `AdminAccount` exists as schema groundwork for future per-user accounts.
+- `AdminAccount` is not yet wired into login, session issuance, or role lookup.
+- `ADMIN_IDENTITY_PROVIDER` currently normalizes to `password`; external/admin account providers are not active yet.
 
 Temporary limitations:
 
-- Admin auth is password-only.
 - Password-backed role metadata is environment-wide, not per-user.
+- Account rows do not yet grant or deny admin access.
+- There is no admin account management UI yet.
+- There is no provider-backed admin login flow yet.
 - Password-backed identity metadata is configurable, not a replacement for real account/provider auth.
 
 ## 4. Inquiry operations
@@ -225,6 +240,8 @@ Manual smoke test:
 - Media registration works for owner role.
 - Staff role can update inquiry status and follow-up notes.
 - Staff role is blocked from catalog/homepage/media writes.
+- Owner role can perform catalog/homepage/media writes and inquiry writes.
+- Admin audit entries include actor label, role, email, type, and provider metadata.
 - Media upload writes local/dev files to `/uploads/...` when configured for `local`.
 - Media upload returns a hosted URL when configured for `cloudinary`.
 - Admin readiness shows local media storage as a warning outside production and blocked in production.
@@ -237,12 +254,13 @@ Manual smoke test:
 - CMS and inquiry admin writes create audit-log rows with actor metadata.
 - The admin audit-log panel shows and filters recent staff activity after writes.
 
-## 7. Deferred to Phase 4
+## 7. Deferred to future phases
 
-These are intentionally not blockers for Phase 3 foundation completion:
+These are intentionally not blockers for the current production-readiness pass:
 
+- Wire `AdminAccount` into admin login and role lookup.
 - Replace password-only admin auth with account/provider auth.
-- Add real per-user admin accounts and multi-user role management.
+- Add real per-user admin account management and multi-user role administration.
 - Add customer accounts.
 - Decide whether cart, checkout, payments, taxes, discounts, inventory, and delivery scheduling are needed for the first launch.
 - Add optional storage providers beyond Cloudinary.
