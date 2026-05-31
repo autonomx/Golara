@@ -43,7 +43,13 @@ npm run smoke:routes:local
 
 ## Non-blocking deferred work
 
-- Payment provider implementation.
-- Full automated checkout/order-payment lifecycle.
-- Provider-backed per-user admin auth.
-- Email and WhatsApp notification providers.
+See `docs/FUTURE_WORK_BACKLOG.md` for scoped post-launch hardening tracks.
+
+Current deferred tracks:
+
+- Provider-backed per-user admin access.
+- Email and chat inquiry notification providers.
+- Launch telemetry and operational reporting.
+- Formal database migrations.
+
+Payment provider implementation and full checkout payment automation remain deferred until explicitly approved and should stay outside this hardening backlog unless the launch scope changes.
