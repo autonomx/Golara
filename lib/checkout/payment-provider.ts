@@ -1,13 +1,9 @@
 import 'server-only';
 
 import { mapCheckoutAttemptStatus } from '@/lib/checkout/checkout-attempt-status';
-import { checkoutCurrency } from '@/lib/checkout/payment-attempt-core';
 import { initiatePaymentGateway } from '@/lib/checkout/payment-gateway-adapters';
-import {
-  mapAliasGatewayResultToLegacyAttempt,
-  normalizeCheckoutProviderName
-} from '@/lib/checkout/payment-provider-alias-core';
-import { checkoutProviderMode } from '@/lib/checkout/payment-provider-mode';
+import { normalizeCheckoutProviderName } from '@/lib/checkout/payment-provider-alias-core';
+import { createCheckoutProviderRuntimeAttempt } from '@/lib/checkout/payment-provider-runtime-core';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
 export type PaymentProviderName = 'manual' | 'domestic_redirect' | 'zarinpal' | 'iranian' | 'stripe' | 'whatsapp' | 'inquiry';
@@ -226,23 +222,6 @@ function getPaymentProvider(provider?: PaymentProviderName): PaymentProvider {
   return manualPaymentProvider;
 }
 
-async function createAdapterAliasAttempt(order: PaymentProviderOrder, provider: Extract<PaymentProviderName, 'iranian' | 'stripe' | 'whatsapp' | 'inquiry'>): Promise<PaymentProviderResult> {
-  const result = await initiatePaymentGateway({
-    provider,
-    payment: {
-      orderId: order.id,
-      orderNumber: order.orderNumber,
-      amountCents: order.totalCents,
-      currency: checkoutCurrency(order.currency),
-      returnUrl: checkoutReturnUrl(order, provider) ?? siteUrl(),
-      metadata: {
-        orderNumber: order.orderNumber
-      }
-    }
-  });
-  return mapAliasGatewayResultToLegacyAttempt({ result: { ...result, provider }, order });
-}
-
 export async function createCheckoutPaymentAttempt(input: CreatePaymentAttemptInput) {
   if (!hasDatabase()) throw new Error('DATABASE_URL is required for checkout payment attempts.');
 
@@ -264,10 +243,13 @@ export async function createCheckoutPaymentAttempt(input: CreatePaymentAttemptIn
     throw new Error('Order is not eligible for payment.');
   }
 
-  const mode = checkoutProviderMode(input.provider ?? configuredPaymentProvider());
-  const result = mode.kind === 'adapter'
-    ? await createAdapterAliasAttempt(order, mode.provider)
-    : await getPaymentProvider(mode.provider).createAttempt(order);
+  const result = await createCheckoutProviderRuntimeAttempt({
+    order,
+    provider: input.provider ?? configuredPaymentProvider(),
+    returnUrl: checkoutReturnUrl(order, input.provider ?? configuredPaymentProvider()) ?? siteUrl(),
+    localAttempt: async (provider, localOrder) => getPaymentProvider(provider).createAttempt(localOrder),
+    adapterAttempt: async (provider, payment) => initiatePaymentGateway({ provider, payment })
+  });
 
   const attemptData = {
     orderId: order.id,
