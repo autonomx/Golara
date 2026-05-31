@@ -63,11 +63,17 @@ function channelClass(channel: string) {
   return channelBadgeClass[channel] ?? 'border-rosewood/15 bg-white text-rosewood';
 }
 
-function adminParams(status?: string, search?: string, page?: number) {
+function queryAssignmentValue(assignmentFilter?: InquiryAssignmentQueueFilter): AssignmentFilterValue | undefined {
+  return assignmentFilter === 'mine' || assignmentFilter === 'assigned' || assignmentFilter === 'unassigned' ? assignmentFilter : undefined;
+}
+
+function adminParams(status?: string, search?: string, page?: number, assignmentFilter?: InquiryAssignmentQueueFilter) {
   const params = new URLSearchParams();
   if (status) params.set('inquiryStatus', status);
   if (search) params.set('inquirySearch', search);
   if (page && page > 1) params.set('inquiryPage', String(page));
+  const assignment = queryAssignmentValue(assignmentFilter);
+  if (assignment) params.set('inquiryAssignment', assignment);
   const query = params.toString();
   return query ? `/admin?${query}` : '/admin';
 }
@@ -81,12 +87,12 @@ function inquiryToolHref(path: string, status?: string, search?: string, assignm
   return query ? `${path}?${query}` : path;
 }
 
-function filterHref(status?: string, search?: string) {
-  return adminParams(status, search);
+function filterHref(status?: string, search?: string, assignmentFilter?: InquiryAssignmentQueueFilter) {
+  return adminParams(status, search, undefined, assignmentFilter);
 }
 
-function pageHref(page: number, status?: string, search?: string) {
-  return adminParams(status, search, page);
+function pageHref(page: number, status?: string, search?: string, assignmentFilter?: InquiryAssignmentQueueFilter) {
+  return adminParams(status, search, page, assignmentFilter);
 }
 
 function exportHref(status?: string, search?: string, assignment?: AssignmentFilterValue) {
@@ -108,14 +114,14 @@ function ReturnStateFields({ activeStatus, search, page, assignmentFilter }: { a
   );
 }
 
-function InquirySummaryCards({ counts, activeStatus, search }: { counts: InquiryStatusCount[]; activeStatus?: string; search?: string }) {
+function InquirySummaryCards({ counts, activeStatus, search, assignmentFilter }: { counts: InquiryStatusCount[]; activeStatus?: string; search?: string; assignmentFilter?: InquiryAssignmentQueueFilter }) {
   const total = counts.reduce((sum, item) => sum + item.count, 0);
   const workflowSummary = getInquiryWorkflowSummary(counts);
   const cards = [
-    { label: 'Total inquiries', value: total, href: filterHref(undefined, search), active: !activeStatus },
-    { label: 'Needs first review', value: workflowSummary.needsFirstReview, href: filterHref('new', search), active: activeStatus === 'new' },
-    { label: 'Ready to fulfill', value: workflowSummary.readyToFulfill, href: filterHref('confirmed', search), active: activeStatus === 'confirmed' },
-    { label: 'Closed', value: workflowSummary.closed, href: filterHref('fulfilled', search), active: activeStatus === 'fulfilled' || activeStatus === 'cancelled' }
+    { label: 'Total inquiries', value: total, href: filterHref(undefined, search, assignmentFilter), active: !activeStatus },
+    { label: 'Needs first review', value: workflowSummary.needsFirstReview, href: filterHref('new', search, assignmentFilter), active: activeStatus === 'new' },
+    { label: 'Ready to fulfill', value: workflowSummary.readyToFulfill, href: filterHref('confirmed', search, assignmentFilter), active: activeStatus === 'confirmed' },
+    { label: 'Closed', value: workflowSummary.closed, href: filterHref('fulfilled', search, assignmentFilter), active: activeStatus === 'fulfilled' || activeStatus === 'cancelled' }
   ];
 
   return (
@@ -150,10 +156,11 @@ function InquiryWorkflowOverview({ counts }: { counts: InquiryStatusCount[] }) {
   );
 }
 
-function InquirySearchForm({ activeStatus, search }: { activeStatus?: string; search?: string }) {
+function InquirySearchForm({ activeStatus, search, assignmentFilter }: { activeStatus?: string; search?: string; assignmentFilter?: InquiryAssignmentQueueFilter }) {
   return (
     <form action="/admin" className="mt-5 flex flex-wrap gap-2 rounded-3xl border border-rosewood/10 bg-cream p-3">
       {activeStatus ? <input type="hidden" name="inquiryStatus" value={activeStatus} /> : null}
+      {assignmentFilter && assignmentFilter !== 'all' ? <input type="hidden" name="inquiryAssignment" value={assignmentFilter} /> : null}
       <input
         className={searchInputClass}
         name="inquirySearch"
@@ -164,7 +171,7 @@ function InquirySearchForm({ activeStatus, search }: { activeStatus?: string; se
         Search
       </button>
       {search ? (
-        <Link href={filterHref(activeStatus)} className={secondaryLinkClass}>
+        <Link href={filterHref(activeStatus, undefined, assignmentFilter)} className={secondaryLinkClass}>
           Clear
         </Link>
       ) : null}
@@ -193,17 +200,17 @@ function AssignmentExportShortcuts({ activeStatus, search }: { activeStatus?: st
   );
 }
 
-function FilterPills({ counts, activeStatus, search }: { counts: InquiryStatusCount[]; activeStatus?: string; search?: string }) {
+function FilterPills({ counts, activeStatus, search, assignmentFilter }: { counts: InquiryStatusCount[]; activeStatus?: string; search?: string; assignmentFilter?: InquiryAssignmentQueueFilter }) {
   const total = counts.reduce((sum, item) => sum + item.count, 0);
 
   return (
     <>
       <div className="mt-6 flex flex-wrap items-center gap-2">
-        <Link href={filterHref(undefined, search)} className={`${filterLinkBaseClass} ${!activeStatus ? 'border-rosewood bg-rosewood text-white' : 'border-rosewood/20 bg-white text-rosewood'}`}>
+        <Link href={filterHref(undefined, search, assignmentFilter)} className={`${filterLinkBaseClass} ${!activeStatus ? 'border-rosewood bg-rosewood text-white' : 'border-rosewood/20 bg-white text-rosewood'}`}>
           All <span className="ml-1 opacity-75">{total}</span>
         </Link>
         {counts.map((item) => (
-          <Link key={item.status} href={filterHref(item.status, search)} className={`${filterLinkBaseClass} ${activeStatus === item.status ? 'border-rosewood bg-rosewood text-white' : statusClass(item.status)}`}>
+          <Link key={item.status} href={filterHref(item.status, search, assignmentFilter)} className={`${filterLinkBaseClass} ${activeStatus === item.status ? 'border-rosewood bg-rosewood text-white' : statusClass(item.status)}`}>
             {item.status} <span className="ml-1 opacity-75">{item.count}</span>
           </Link>
         ))}
@@ -221,7 +228,7 @@ function FilterPills({ counts, activeStatus, search }: { counts: InquiryStatusCo
   );
 }
 
-function PaginationControls({ inquiryPage, activeStatus, search }: { inquiryPage: InquiryPage; activeStatus?: string; search?: string }) {
+function PaginationControls({ inquiryPage, activeStatus, search, assignmentFilter }: { inquiryPage: InquiryPage; activeStatus?: string; search?: string; assignmentFilter?: InquiryAssignmentQueueFilter }) {
   if (inquiryPage.pageCount <= 1) return null;
 
   const previousPage = Math.max(1, inquiryPage.page - 1);
@@ -236,14 +243,14 @@ function PaginationControls({ inquiryPage, activeStatus, search }: { inquiryPage
       </span>
       <div className="flex gap-2">
         <Link
-          href={pageHref(previousPage, activeStatus, search)}
+          href={pageHref(previousPage, activeStatus, search, assignmentFilter)}
           aria-disabled={inquiryPage.page <= 1}
           className={`rounded-full border px-4 py-2 font-semibold outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20 ${inquiryPage.page <= 1 ? 'pointer-events-none border-stone-200 text-stone-300' : 'border-rosewood/20 text-rosewood'}`}
         >
           Previous
         </Link>
         <Link
-          href={pageHref(nextPage, activeStatus, search)}
+          href={pageHref(nextPage, activeStatus, search, assignmentFilter)}
           aria-disabled={inquiryPage.page >= inquiryPage.pageCount}
           className={`rounded-full border px-4 py-2 font-semibold outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20 ${inquiryPage.page >= inquiryPage.pageCount ? 'pointer-events-none border-stone-200 text-stone-300' : 'border-rosewood/20 text-rosewood'}`}
         >
@@ -265,10 +272,10 @@ export function InquiryBoard({ inquiryPage, counts, activeStatus, search, assign
         <p className="mt-3 text-sm leading-6 text-stone-600">
           Review incoming product requests, update their status, and keep a follow-up timeline.
         </p>
-        <InquirySummaryCards counts={counts} activeStatus={activeStatus} search={search} />
+        <InquirySummaryCards counts={counts} activeStatus={activeStatus} search={search} assignmentFilter={assignmentFilter} />
         <InquiryWorkflowOverview counts={counts} />
-        <InquirySearchForm activeStatus={activeStatus} search={search} />
-        <FilterPills counts={counts} activeStatus={activeStatus} search={search} />
+        <InquirySearchForm activeStatus={activeStatus} search={search} assignmentFilter={assignmentFilter} />
+        <FilterPills counts={counts} activeStatus={activeStatus} search={search} assignmentFilter={assignmentFilter} />
       </div>
 
       {inquiries.length === 0 ? (
@@ -373,7 +380,7 @@ export function InquiryBoard({ inquiryPage, counts, activeStatus, search, assign
               );
             })}
           </div>
-          <PaginationControls inquiryPage={inquiryPage} activeStatus={activeStatus} search={search} />
+          <PaginationControls inquiryPage={inquiryPage} activeStatus={activeStatus} search={search} assignmentFilter={assignmentFilter} />
         </>
       )}
     </section>
