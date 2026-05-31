@@ -3,6 +3,7 @@ import type { CustomerInquiry } from '@/lib/catalog';
 import { getInquiryAssigneeLabel, isInquiryAssigned } from '@/lib/inquiries/inquiry-assignment';
 
 export type InquiryAssignmentQueueKey = 'mine' | 'assigned' | 'unassigned';
+export type InquiryAssignmentQueueFilter = InquiryAssignmentQueueKey | 'all';
 
 export type InquiryAssignmentQueueItem = {
   key: InquiryAssignmentQueueKey;
@@ -21,6 +22,11 @@ export type InquiryAssignmentQueueSummary = {
 
 function normalizeIdentityValue(value: string | undefined) {
   return value?.trim().toLowerCase() || undefined;
+}
+
+export function parseInquiryAssignmentQueueFilter(value: string | undefined | null): InquiryAssignmentQueueFilter {
+  const normalized = value?.trim().toLowerCase();
+  return normalized === 'mine' || normalized === 'assigned' || normalized === 'unassigned' ? normalized : 'all';
 }
 
 export function inquiryAssignedToIdentity(inquiry: CustomerInquiry, identity: AdminIdentity | undefined) {
@@ -51,7 +57,7 @@ export function getInquiryAssignmentQueueLabel(inquiry: CustomerInquiry, identit
   return 'Unassigned';
 }
 
-export function filterInquiriesByAssignmentQueue(inquiries: CustomerInquiry[], queue: InquiryAssignmentQueueKey | 'all', identity?: AdminIdentity) {
+export function filterInquiriesByAssignmentQueue(inquiries: CustomerInquiry[], queue: InquiryAssignmentQueueFilter, identity?: AdminIdentity) {
   if (queue === 'all') return inquiries;
   return inquiries.filter((inquiry) => getInquiryAssignmentQueueKey(inquiry, identity) === queue);
 }
