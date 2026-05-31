@@ -1,86 +1,40 @@
 import 'server-only';
 
 import { cookies } from 'next/headers';
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import {
+  ADMIN_SESSION_COOKIE_NAME,
+  ADMIN_SESSION_MAX_AGE_SECONDS,
+  adminRoleMeetsRequirement,
+  createAdminIdentity,
+  createAdminSessionCookieValue,
+  getAdminAuthConfig,
+  isAdminAuthConfigured as isAdminAuthConfiguredCore,
+  isValidAdminSessionCookie,
+  verifyAdminPassword,
+  type AdminIdentity,
+  type AdminRole
+} from './admin-auth-core';
 
-const COOKIE_NAME = 'golara_admin_session';
-const SESSION_PAYLOAD = 'golara-admin-v1';
-const SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
+export type { AdminIdentity, AdminRole } from './admin-auth-core';
 
-export type AdminRole = 'owner' | 'staff';
-
-export type AdminIdentity = {
-  authenticated: boolean;
-  type: 'password';
-  label: string;
-  email?: string;
-  role: AdminRole;
-  provider: 'password';
-};
-
-const ROLE_RANK: Record<AdminRole, number> = {
-  staff: 1,
-  owner: 2
-};
-
-function configuredPassword() {
-  return process.env.ADMIN_PASSWORD?.trim() ?? '';
-}
-
-function configuredSecret() {
-  return process.env.ADMIN_SESSION_SECRET?.trim() ?? '';
-}
-
-function configuredAdminLabel() {
-  return process.env.ADMIN_LABEL?.trim() || 'Admin';
-}
-
-function configuredAdminEmail() {
-  return process.env.ADMIN_EMAIL?.trim() || undefined;
-}
-
-function configuredAdminRole(): AdminRole {
-  const role = process.env.ADMIN_ROLE?.trim().toLowerCase();
-  return role === 'staff' ? 'staff' : 'owner';
+function adminAuthConfig() {
+  return getAdminAuthConfig(process.env);
 }
 
 export function isAdminAuthConfigured() {
-  return Boolean(configuredPassword() && configuredSecret());
-}
-
-function sign(value: string) {
-  return createHmac('sha256', configuredSecret()).update(value).digest('hex');
-}
-
-function safeEqual(left: string, right: string) {
-  const leftBuffer = Buffer.from(left);
-  const rightBuffer = Buffer.from(right);
-  return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer);
+  return isAdminAuthConfiguredCore(adminAuthConfig());
 }
 
 export async function isAdminAuthenticated() {
-  if (!isAdminAuthConfigured()) return false;
+  const config = adminAuthConfig();
+  if (!isAdminAuthConfiguredCore(config)) return false;
 
   const cookieStore = await cookies();
-  const cookieValue = cookieStore.get(COOKIE_NAME)?.value;
-  if (!cookieValue) return false;
-
-  const [payload, signature] = cookieValue.split('.');
-  if (payload !== SESSION_PAYLOAD || !signature) return false;
-
-  return safeEqual(signature, sign(payload));
+  return isValidAdminSessionCookie(cookieStore.get(ADMIN_SESSION_COOKIE_NAME)?.value, config);
 }
 
 export async function getAdminIdentity(): Promise<AdminIdentity> {
-  const authenticated = await isAdminAuthenticated();
-  return {
-    authenticated,
-    type: 'password',
-    label: configuredAdminLabel(),
-    email: configuredAdminEmail(),
-    role: configuredAdminRole(),
-    provider: 'password'
-  };
+  return createAdminIdentity(await isAdminAuthenticated(), adminAuthConfig());
 }
 
 export async function assertAdminAuthenticated() {
@@ -94,28 +48,29 @@ export async function assertAdminRole(requiredRole: AdminRole) {
   if (!identity.authenticated) {
     throw new Error('Admin authentication is required for this CMS action.');
   }
-  if (ROLE_RANK[identity.role] < ROLE_RANK[requiredRole]) {
+  if (!adminRoleMeetsRequirement(identity.role, requiredRole)) {
     throw new Error(`${requiredRole} admin role is required for this CMS action.`);
   }
   return identity;
 }
 
 export async function createAdminSession(password: string) {
-  if (!isAdminAuthConfigured()) {
+  const config = adminAuthConfig();
+  if (!isAdminAuthConfiguredCore(config)) {
     return { ok: false, error: 'Admin auth is not configured.' };
   }
 
-  if (!safeEqual(password, configuredPassword())) {
+  if (!verifyAdminPassword(password, config)) {
     return { ok: false, error: 'Invalid admin password.' };
   }
 
   const cookieStore = await cookies();
-  cookieStore.set(COOKIE_NAME, `${SESSION_PAYLOAD}.${sign(SESSION_PAYLOAD)}`, {
+  cookieStore.set(ADMIN_SESSION_COOKIE_NAME, createAdminSessionCookieValue(config), {
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
     path: '/',
-    maxAge: SESSION_MAX_AGE_SECONDS
+    maxAge: ADMIN_SESSION_MAX_AGE_SECONDS
   });
 
   return { ok: true };
@@ -123,5 +78,5 @@ export async function createAdminSession(password: string) {
 
 export async function clearAdminSession() {
   const cookieStore = await cookies();
-  cookieStore.delete(COOKIE_NAME);
+  cookieStore.delete(ADMIN_SESSION_COOKIE_NAME);
 }
