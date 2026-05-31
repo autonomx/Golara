@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { isAdminAuthenticated } from '@/lib/admin-auth';
 import { listInquiries } from '@/lib/cms/catalog-repository';
+import { createInquiryReportRows, createInquiryReportSummary } from '@/lib/inquiries/inquiry-reporting';
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat('en-CA', {
@@ -29,6 +30,8 @@ export default async function InquiryPrintPage({ searchParams }: { searchParams:
   }
 
   const inquiries = await listInquiries(inquiryStatus, inquirySearch);
+  const reportRows = createInquiryReportRows(inquiries);
+  const summary = createInquiryReportSummary(inquiries);
 
   return (
     <main className="bg-white p-8 text-stone-950 print:p-0">
@@ -44,35 +47,57 @@ export default async function InquiryPrintPage({ searchParams }: { searchParams:
 
         <div className="mb-6 border-b pb-4">
           <h2 className="text-2xl font-semibold">Golara inquiries</h2>
-          <p className="mt-1 text-sm text-stone-600">Filter: {inquiryStatus ?? 'all'} · Search: {inquirySearch || 'none'} · Count: {inquiries.length}</p>
+          <p className="mt-1 text-sm text-stone-600">Filter: {inquiryStatus ?? 'all'} · Search: {inquirySearch || 'none'} · Count: {reportRows.length}</p>
+          <div className="mt-4 grid gap-2 text-sm sm:grid-cols-3">
+            <p><strong>Needs first review:</strong> {summary.needsFirstReview}</p>
+            <p><strong>Waiting on customer:</strong> {summary.waitingOnCustomer}</p>
+            <p><strong>Ready to fulfill:</strong> {summary.readyToFulfill}</p>
+            <p><strong>With follow-ups:</strong> {summary.withFollowUps}</p>
+            <p><strong>Without follow-ups:</strong> {summary.withoutFollowUps}</p>
+            <p><strong>Total:</strong> {summary.total}</p>
+          </div>
         </div>
 
         <div className="grid gap-5">
-          {inquiries.map((inquiry) => (
-            <article key={inquiry.id} className="break-inside-avoid rounded-2xl border p-5">
+          {reportRows.map((row) => (
+            <article key={`${row.createdAt.toISOString()}-${row.phone}-${row.email}`} className="break-inside-avoid rounded-2xl border p-5">
               <div className="flex flex-wrap items-start justify-between gap-3 border-b pb-3">
                 <div>
-                  <h3 className="text-2xl font-semibold">{inquiry.productTitle ?? 'General inquiry'}</h3>
-                  <p className="mt-1 text-sm text-stone-600">Created: {formatDate(inquiry.createdAt)}</p>
+                  <h3 className="text-2xl font-semibold">{row.productTitle}</h3>
+                  <p className="mt-1 text-sm text-stone-600">Created: {formatDate(row.createdAt)}</p>
                 </div>
-                <span className="rounded-full border px-3 py-1 text-sm font-semibold uppercase">{inquiry.status}</span>
+                <span className="rounded-full border px-3 py-1 text-sm font-semibold uppercase">{row.statusLabel}</span>
+              </div>
+              <div className="mt-4 rounded-xl border bg-stone-50 p-3 text-sm">
+                <h4 className="font-semibold">Recommended next action</h4>
+                <p className="mt-1 leading-6">{row.recommendedAction}</p>
               </div>
               <div className="mt-4 grid gap-2 text-sm md:grid-cols-2">
-                <p><strong>Name:</strong> {inquiry.name ?? '—'}</p>
-                <p><strong>Phone:</strong> {inquiry.phone ?? '—'}</p>
-                <p><strong>Email:</strong> {inquiry.email ?? '—'}</p>
-                <p><strong>Delivery:</strong> {formatDateOnly(inquiry.deliveryDate)}</p>
+                <p><strong>Name:</strong> {row.customerName || '—'}</p>
+                <p><strong>Phone:</strong> {row.phone || '—'}</p>
+                <p><strong>Email:</strong> {row.email || '—'}</p>
+                <p><strong>Delivery:</strong> {formatDateOnly(row.deliveryDate)}</p>
               </div>
               <div className="mt-4 grid gap-4 md:grid-cols-2">
                 <div>
                   <h4 className="font-semibold">Customer message</h4>
-                  <p className="mt-2 whitespace-pre-wrap text-sm leading-6">{inquiry.message}</p>
+                  <p className="mt-2 whitespace-pre-wrap text-sm leading-6">{row.message}</p>
                 </div>
                 <div>
                   <h4 className="font-semibold">Delivery / staff notes</h4>
-                  <p className="mt-2 whitespace-pre-wrap text-sm leading-6">{inquiry.deliveryNotes || 'No delivery notes.'}</p>
-                  <p className="mt-2 whitespace-pre-wrap text-sm leading-6">{inquiry.staffNotes || 'No staff notes.'}</p>
+                  <p className="mt-2 whitespace-pre-wrap text-sm leading-6">{row.deliveryNotes || 'No delivery notes.'}</p>
+                  <p className="mt-2 whitespace-pre-wrap text-sm leading-6">{row.staffNotes || 'No staff notes.'}</p>
                 </div>
+              </div>
+              <div className="mt-4 rounded-xl border p-3 text-sm">
+                <h4 className="font-semibold">Latest follow-up</h4>
+                {row.latestFollowUpAt ? (
+                  <p className="mt-2 leading-6">
+                    <strong>{row.latestFollowUpChannel}</strong> · {formatDate(row.latestFollowUpAt)} · {row.latestFollowUpNote}
+                  </p>
+                ) : (
+                  <p className="mt-2 leading-6">No follow-ups recorded.</p>
+                )}
               </div>
             </article>
           ))}
