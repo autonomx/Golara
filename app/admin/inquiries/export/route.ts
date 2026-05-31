@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { assertAdminAuthenticated } from '@/lib/admin-auth';
 import { listInquiries } from '@/lib/cms/catalog-repository';
+import { createInquiryReportRows } from '@/lib/inquiries/inquiry-reporting';
 
 function csvCell(value: unknown) {
   const text = value instanceof Date ? value.toISOString() : String(value ?? '');
@@ -18,10 +19,12 @@ export async function GET(request: Request) {
   const status = url.searchParams.get('inquiryStatus') ?? undefined;
   const search = url.searchParams.get('inquirySearch') ?? undefined;
   const inquiries = await listInquiries(status, search);
+  const reportRows = createInquiryReportRows(inquiries);
 
   const header = csvRow([
     'created_at',
     'status',
+    'status_label',
     'product',
     'name',
     'phone',
@@ -30,22 +33,31 @@ export async function GET(request: Request) {
     'delivery_notes',
     'message',
     'staff_notes',
-    'follow_up_count'
+    'follow_up_count',
+    'latest_follow_up_channel',
+    'latest_follow_up_at',
+    'latest_follow_up_note',
+    'recommended_action'
   ]);
 
-  const rows = inquiries.map((inquiry) =>
+  const rows = reportRows.map((row) =>
     csvRow([
-      inquiry.createdAt,
-      inquiry.status,
-      inquiry.productTitle,
-      inquiry.name,
-      inquiry.phone,
-      inquiry.email,
-      inquiry.deliveryDate,
-      inquiry.deliveryNotes,
-      inquiry.message,
-      inquiry.staffNotes,
-      inquiry.followUps?.length ?? 0
+      row.createdAt,
+      row.status,
+      row.statusLabel,
+      row.productTitle,
+      row.customerName,
+      row.phone,
+      row.email,
+      row.deliveryDate,
+      row.deliveryNotes,
+      row.message,
+      row.staffNotes,
+      row.followUpCount,
+      row.latestFollowUpChannel,
+      row.latestFollowUpAt,
+      row.latestFollowUpNote,
+      row.recommendedAction
     ])
   );
 
