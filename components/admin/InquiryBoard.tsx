@@ -7,6 +7,7 @@ import { InquiryFollowUpSummary } from '@/components/admin/InquiryFollowUpSummar
 import { InquiryStatusShortcuts } from '@/components/admin/InquiryStatusShortcuts';
 import type { CustomerInquiry } from '@/lib/catalog';
 import type { InquiryPage, InquiryStatusCount } from '@/lib/cms/catalog-repository';
+import type { InquiryAssignmentQueueFilter } from '@/lib/inquiries/inquiry-assignment-queue';
 import { getInquiryWorkflowStep, getInquiryWorkflowSummary } from '@/lib/inquiries/inquiry-workflow';
 
 const statuses = ['new', 'contacted', 'confirmed', 'fulfilled', 'cancelled'];
@@ -62,10 +63,6 @@ function channelClass(channel: string) {
   return channelBadgeClass[channel] ?? 'border-rosewood/15 bg-white text-rosewood';
 }
 
-function countFor(counts: InquiryStatusCount[], status: string) {
-  return counts.find((item) => item.status === status)?.count ?? 0;
-}
-
 function adminParams(status?: string, search?: string, page?: number) {
   const params = new URLSearchParams();
   if (status) params.set('inquiryStatus', status);
@@ -100,11 +97,12 @@ function printHref(status?: string, search?: string, assignment?: AssignmentFilt
   return inquiryToolHref('/admin/inquiries/print', status, search, assignment);
 }
 
-function ReturnStateFields({ activeStatus, search, page }: { activeStatus?: string; search?: string; page: number }) {
+function ReturnStateFields({ activeStatus, search, page, assignmentFilter }: { activeStatus?: string; search?: string; page: number; assignmentFilter?: InquiryAssignmentQueueFilter }) {
   return (
     <>
       {activeStatus ? <input type="hidden" name="returnInquiryStatus" value={activeStatus} /> : null}
       {search ? <input type="hidden" name="returnInquirySearch" value={search} /> : null}
+      {assignmentFilter && assignmentFilter !== 'all' ? <input type="hidden" name="returnInquiryAssignment" value={assignmentFilter} /> : null}
       <input type="hidden" name="returnInquiryPage" value={page} />
     </>
   );
@@ -256,7 +254,7 @@ function PaginationControls({ inquiryPage, activeStatus, search }: { inquiryPage
   );
 }
 
-export function InquiryBoard({ inquiryPage, counts, activeStatus, search }: { inquiryPage: InquiryPage; counts: InquiryStatusCount[]; activeStatus?: string; search?: string }) {
+export function InquiryBoard({ inquiryPage, counts, activeStatus, search, assignmentFilter }: { inquiryPage: InquiryPage; counts: InquiryStatusCount[]; activeStatus?: string; search?: string; assignmentFilter?: InquiryAssignmentQueueFilter }) {
   const inquiries = inquiryPage.inquiries;
 
   return (
@@ -308,7 +306,7 @@ export function InquiryBoard({ inquiryPage, counts, activeStatus, search }: { in
                   </div>
                   <InquiryContactActions inquiry={inquiry} />
                   <InquiryFollowUpSummary inquiry={inquiry} />
-                  <InquiryStatusShortcuts inquiry={inquiry} activeStatus={activeStatus} search={search} page={inquiryPage.page} />
+                  <InquiryStatusShortcuts inquiry={inquiry} activeStatus={activeStatus} search={search} page={inquiryPage.page} assignmentFilter={assignmentFilter} />
                   {inquiry.deliveryNotes ? (
                     <p className="mt-3 text-sm leading-6 text-stone-700"><strong>Delivery notes:</strong> {inquiry.deliveryNotes}</p>
                   ) : null}
@@ -316,7 +314,7 @@ export function InquiryBoard({ inquiryPage, counts, activeStatus, search }: { in
 
                   <div className="mt-5 grid gap-4 lg:grid-cols-2">
                     <form action={saveInquiryAction.bind(null, inquiry.id)} className="grid gap-3 rounded-2xl border border-rosewood/10 bg-white p-4">
-                      <ReturnStateFields activeStatus={activeStatus} search={search} page={inquiryPage.page} />
+                      <ReturnStateFields activeStatus={activeStatus} search={search} page={inquiryPage.page} assignmentFilter={assignmentFilter} />
                       <label className="grid gap-2 text-sm font-semibold text-rosewood">
                         Status
                         <select className={inputClass} name="status" defaultValue={inquiry.status}>
@@ -352,7 +350,7 @@ export function InquiryBoard({ inquiryPage, counts, activeStatus, search }: { in
                         )}
                       </div>
                       <form action={addInquiryFollowUpAction.bind(null, inquiry.id)} className="mt-4 grid gap-3">
-                        <ReturnStateFields activeStatus={activeStatus} search={search} page={inquiryPage.page} />
+                        <ReturnStateFields activeStatus={activeStatus} search={search} page={inquiryPage.page} assignmentFilter={assignmentFilter} />
                         <label className="grid gap-2 text-sm font-semibold text-rosewood">
                           Channel
                           <select className={inputClass} name="channel" defaultValue="internal">
