@@ -446,6 +446,25 @@ model CustomerInquiryFollowUp {
   @@index([inquiryId, createdAt])
 }
 
+model AdminAccount {
+  id                String    @id @default(cuid())
+  provider          String    @default("password")
+  providerAccountId String
+  label             String
+  email             String?
+  role              String    @default("staff")
+  isActive          Boolean   @default(true)
+  lastLoginAt       DateTime?
+  metadata          Json?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@unique([provider, providerAccountId])
+  @@index([email])
+  @@index([role, isActive])
+  @@index([isActive, createdAt])
+}
+
 model AdminAuditLog {
   id            String   @id @default(cuid())
   action        String
