@@ -11,6 +11,13 @@ import { getInquiryWorkflowStep, getInquiryWorkflowSummary } from '@/lib/inquiri
 
 const statuses = ['new', 'contacted', 'confirmed', 'fulfilled', 'cancelled'];
 const channels = ['internal', 'phone', 'email', 'whatsapp'];
+const assignmentFilters = [
+  { label: 'Mine', value: 'mine' },
+  { label: 'Assigned', value: 'assigned' },
+  { label: 'Unassigned', value: 'unassigned' }
+] as const;
+
+type AssignmentFilterValue = (typeof assignmentFilters)[number]['value'];
 
 const statusBadgeClass: Record<string, string> = {
   new: 'border-rosewood/20 bg-white text-rosewood',
@@ -68,10 +75,11 @@ function adminParams(status?: string, search?: string, page?: number) {
   return query ? `/admin?${query}` : '/admin';
 }
 
-function inquiryToolHref(path: string, status?: string, search?: string) {
+function inquiryToolHref(path: string, status?: string, search?: string, assignment?: AssignmentFilterValue) {
   const params = new URLSearchParams();
   if (status) params.set('inquiryStatus', status);
   if (search) params.set('inquirySearch', search);
+  if (assignment) params.set('inquiryAssignment', assignment);
   const query = params.toString();
   return query ? `${path}?${query}` : path;
 }
@@ -84,12 +92,12 @@ function pageHref(page: number, status?: string, search?: string) {
   return adminParams(status, search, page);
 }
 
-function exportHref(status?: string, search?: string) {
-  return inquiryToolHref('/admin/inquiries/export', status, search);
+function exportHref(status?: string, search?: string, assignment?: AssignmentFilterValue) {
+  return inquiryToolHref('/admin/inquiries/export', status, search, assignment);
 }
 
-function printHref(status?: string, search?: string) {
-  return inquiryToolHref('/admin/inquiries/print', status, search);
+function printHref(status?: string, search?: string, assignment?: AssignmentFilterValue) {
+  return inquiryToolHref('/admin/inquiries/print', status, search, assignment);
 }
 
 function ReturnStateFields({ activeStatus, search, page }: { activeStatus?: string; search?: string; page: number }) {
@@ -166,28 +174,52 @@ function InquirySearchForm({ activeStatus, search }: { activeStatus?: string; se
   );
 }
 
+function AssignmentExportShortcuts({ activeStatus, search }: { activeStatus?: string; search?: string }) {
+  return (
+    <div className="mt-3 rounded-3xl border border-rosewood/10 bg-white p-3 text-sm text-stone-700">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-olive">Assignment exports</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {assignmentFilters.map((assignment) => (
+          <div key={assignment.value} className="flex flex-wrap gap-2 rounded-2xl border border-rosewood/10 bg-cream p-2">
+            <span className="px-2 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-rosewood">{assignment.label}</span>
+            <Link href={printHref(activeStatus, search, assignment.value)} className="rounded-full border border-rosewood/20 bg-white px-3 py-1 text-xs font-semibold text-rosewood outline-none transition hover:bg-cream focus-visible:ring-4 focus-visible:ring-olive/20">
+              Print
+            </Link>
+            <Link href={exportHref(activeStatus, search, assignment.value)} className="rounded-full border border-olive/30 bg-white px-3 py-1 text-xs font-semibold text-olive outline-none transition hover:bg-cream focus-visible:ring-4 focus-visible:ring-olive/20">
+              CSV
+            </Link>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function FilterPills({ counts, activeStatus, search }: { counts: InquiryStatusCount[]; activeStatus?: string; search?: string }) {
   const total = counts.reduce((sum, item) => sum + item.count, 0);
 
   return (
-    <div className="mt-6 flex flex-wrap items-center gap-2">
-      <Link href={filterHref(undefined, search)} className={`${filterLinkBaseClass} ${!activeStatus ? 'border-rosewood bg-rosewood text-white' : 'border-rosewood/20 bg-white text-rosewood'}`}>
-        All <span className="ml-1 opacity-75">{total}</span>
-      </Link>
-      {counts.map((item) => (
-        <Link key={item.status} href={filterHref(item.status, search)} className={`${filterLinkBaseClass} ${activeStatus === item.status ? 'border-rosewood bg-rosewood text-white' : statusClass(item.status)}`}>
-          {item.status} <span className="ml-1 opacity-75">{item.count}</span>
+    <>
+      <div className="mt-6 flex flex-wrap items-center gap-2">
+        <Link href={filterHref(undefined, search)} className={`${filterLinkBaseClass} ${!activeStatus ? 'border-rosewood bg-rosewood text-white' : 'border-rosewood/20 bg-white text-rosewood'}`}>
+          All <span className="ml-1 opacity-75">{total}</span>
         </Link>
-      ))}
-      <div className="ml-auto flex flex-wrap gap-2">
-        <Link href={printHref(activeStatus, search)} className="rounded-full border border-rosewood/20 bg-white px-4 py-2 text-sm font-semibold text-rosewood outline-none transition hover:bg-cream focus-visible:ring-4 focus-visible:ring-olive/20">
-          Print view
-        </Link>
-        <Link href={exportHref(activeStatus, search)} className="rounded-full border border-olive/30 bg-cream px-4 py-2 text-sm font-semibold text-olive outline-none transition hover:bg-white focus-visible:ring-4 focus-visible:ring-olive/20">
-          Export CSV
-        </Link>
+        {counts.map((item) => (
+          <Link key={item.status} href={filterHref(item.status, search)} className={`${filterLinkBaseClass} ${activeStatus === item.status ? 'border-rosewood bg-rosewood text-white' : statusClass(item.status)}`}>
+            {item.status} <span className="ml-1 opacity-75">{item.count}</span>
+          </Link>
+        ))}
+        <div className="ml-auto flex flex-wrap gap-2">
+          <Link href={printHref(activeStatus, search)} className="rounded-full border border-rosewood/20 bg-white px-4 py-2 text-sm font-semibold text-rosewood outline-none transition hover:bg-cream focus-visible:ring-4 focus-visible:ring-olive/20">
+            Print view
+          </Link>
+          <Link href={exportHref(activeStatus, search)} className="rounded-full border border-olive/30 bg-cream px-4 py-2 text-sm font-semibold text-olive outline-none transition hover:bg-white focus-visible:ring-4 focus-visible:ring-olive/20">
+            Export CSV
+          </Link>
+        </div>
       </div>
-    </div>
+      <AssignmentExportShortcuts activeStatus={activeStatus} search={search} />
+    </>
   );
 }
 
