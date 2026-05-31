@@ -1,4 +1,5 @@
 import { getMediaStorageReadiness } from '@/lib/media/media-storage-readiness';
+import { getInquiryNotificationConfig, getInquiryNotificationReadiness } from '@/lib/notifications/inquiry-notifications-core';
 import { getAppRuntimeMode, type AppRuntimeMode } from '@/lib/runtime-mode';
 
 export type DeployReadinessSeverity = 'blocker' | 'warning';
@@ -30,41 +31,10 @@ function pushIssue(issues: DeployReadinessIssue[], issue: DeployReadinessIssue) 
   issues.push(issue);
 }
 
-function notificationMode() {
-  return envValue('INQUIRY_NOTIFICATION_MODE').toLowerCase() || 'log';
-}
-
 function validateNotificationReadiness(blockers: DeployReadinessIssue[], warnings: DeployReadinessIssue[]) {
-  const mode = notificationMode();
-
-  if (mode === 'webhook') {
-    if (!hasEnv('INQUIRY_NOTIFICATION_WEBHOOK_URL')) {
-      pushIssue(blockers, {
-        code: 'notification_webhook_url_missing',
-        severity: 'blocker',
-        summary: 'Webhook notifications are selected but the webhook URL is missing.',
-        detail: 'Set INQUIRY_NOTIFICATION_WEBHOOK_URL or switch INQUIRY_NOTIFICATION_MODE to log before production deploy.'
-      });
-    }
-    return;
-  }
-
-  if (mode === 'log') {
-    pushIssue(warnings, {
-      code: 'notification_log_only',
-      severity: 'warning',
-      summary: 'Inquiry notifications are log-only.',
-      detail: 'Staff must monitor the admin inbox until webhook, email, or WhatsApp delivery is configured.'
-    });
-    return;
-  }
-
-  pushIssue(blockers, {
-    code: 'notification_mode_unsupported',
-    severity: 'blocker',
-    summary: `Unsupported inquiry notification mode: ${mode}.`,
-    detail: 'Use INQUIRY_NOTIFICATION_MODE=log or INQUIRY_NOTIFICATION_MODE=webhook before production deploy.'
-  });
+  const notificationReadiness = getInquiryNotificationReadiness(getInquiryNotificationConfig(process.env));
+  blockers.push(...notificationReadiness.blockers);
+  warnings.push(...notificationReadiness.warnings);
 }
 
 function validateAdminReadiness(blockers: DeployReadinessIssue[]) {

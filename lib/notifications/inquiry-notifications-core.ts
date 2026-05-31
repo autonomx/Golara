@@ -18,6 +18,22 @@ export type InquiryNotificationConfig = {
   recipients: NotificationRecipients;
 };
 
+export type InquiryNotificationReadinessSeverity = 'blocker' | 'warning';
+
+export type InquiryNotificationReadinessIssue = {
+  code: string;
+  severity: InquiryNotificationReadinessSeverity;
+  summary: string;
+  detail: string;
+};
+
+export type InquiryNotificationReadiness = {
+  mode: string;
+  ready: boolean;
+  blockers: InquiryNotificationReadinessIssue[];
+  warnings: InquiryNotificationReadinessIssue[];
+};
+
 export type InquiryNotificationLogger = Pick<typeof console, 'info' | 'warn'>;
 
 export type InquiryNotificationServiceDependencies = {
@@ -42,6 +58,43 @@ export function getInquiryNotificationConfig(env: Record<string, string | undefi
       whatsapp: envValue(env, 'INQUIRY_NOTIFICATION_WHATSAPP'),
       webhookUrl: envValue(env, 'INQUIRY_NOTIFICATION_WEBHOOK_URL')
     }
+  };
+}
+
+export function getInquiryNotificationReadiness(config: InquiryNotificationConfig): InquiryNotificationReadiness {
+  const blockers: InquiryNotificationReadinessIssue[] = [];
+  const warnings: InquiryNotificationReadinessIssue[] = [];
+
+  if (config.mode === 'webhook') {
+    if (!config.recipients.webhookUrl) {
+      blockers.push({
+        code: 'notification_webhook_url_missing',
+        severity: 'blocker',
+        summary: 'Webhook notifications are selected but the webhook URL is missing.',
+        detail: 'Set INQUIRY_NOTIFICATION_WEBHOOK_URL or switch INQUIRY_NOTIFICATION_MODE to log before production deploy.'
+      });
+    }
+  } else if (config.mode === 'log') {
+    warnings.push({
+      code: 'notification_log_only',
+      severity: 'warning',
+      summary: 'Inquiry notifications are log-only.',
+      detail: 'Staff must monitor the admin inbox until webhook, email, or WhatsApp delivery is configured.'
+    });
+  } else {
+    blockers.push({
+      code: 'notification_mode_unsupported',
+      severity: 'blocker',
+      summary: `Unsupported inquiry notification mode: ${config.mode}.`,
+      detail: 'Use INQUIRY_NOTIFICATION_MODE=log or INQUIRY_NOTIFICATION_MODE=webhook before production deploy.'
+    });
+  }
+
+  return {
+    mode: config.mode,
+    ready: blockers.length === 0,
+    blockers,
+    warnings
   };
 }
 

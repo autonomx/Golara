@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {
   createInquiryNotificationService,
   getInquiryNotificationConfig,
+  getInquiryNotificationReadiness,
   normalizeInquiryNotificationMode,
   type InquiryNotificationPayload
 } from '../../lib/notifications/inquiry-notifications-core';
@@ -59,6 +60,58 @@ export async function runInquiryNotificationsCoreTests() {
       }
     }
   );
+
+  assert.deepEqual(getInquiryNotificationReadiness({ mode: 'log', recipients: defaultRecipients() }), {
+    mode: 'log',
+    ready: true,
+    blockers: [],
+    warnings: [
+      {
+        code: 'notification_log_only',
+        severity: 'warning',
+        summary: 'Inquiry notifications are log-only.',
+        detail: 'Staff must monitor the admin inbox until webhook, email, or WhatsApp delivery is configured.'
+      }
+    ]
+  });
+  assert.deepEqual(getInquiryNotificationReadiness({ mode: 'webhook', recipients: defaultRecipients() }), {
+    mode: 'webhook',
+    ready: false,
+    blockers: [
+      {
+        code: 'notification_webhook_url_missing',
+        severity: 'blocker',
+        summary: 'Webhook notifications are selected but the webhook URL is missing.',
+        detail: 'Set INQUIRY_NOTIFICATION_WEBHOOK_URL or switch INQUIRY_NOTIFICATION_MODE to log before production deploy.'
+      }
+    ],
+    warnings: []
+  });
+  assert.deepEqual(
+    getInquiryNotificationReadiness({
+      mode: 'webhook',
+      recipients: { ...defaultRecipients(), webhookUrl: 'https://example.test/hook' }
+    }),
+    {
+      mode: 'webhook',
+      ready: true,
+      blockers: [],
+      warnings: []
+    }
+  );
+  assert.deepEqual(getInquiryNotificationReadiness({ mode: 'email', recipients: defaultRecipients() }), {
+    mode: 'email',
+    ready: false,
+    blockers: [
+      {
+        code: 'notification_mode_unsupported',
+        severity: 'blocker',
+        summary: 'Unsupported inquiry notification mode: email.',
+        detail: 'Use INQUIRY_NOTIFICATION_MODE=log or INQUIRY_NOTIFICATION_MODE=webhook before production deploy.'
+      }
+    ],
+    warnings: []
+  });
 
   {
     const { entries, logger } = createLogger();
