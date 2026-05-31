@@ -1,4 +1,5 @@
 import type { RuntimeReadiness } from '@/lib/runtime-readiness';
+import type { PaymentGatewayReadiness } from '@/lib/checkout/payment-gateway-config';
 import type { InquiryNotificationReadiness } from '@/lib/notifications/inquiry-notifications-core';
 
 export type ReadinessStatus = 'ready' | 'warning' | 'blocked';
@@ -17,6 +18,7 @@ type AdminReadinessPanelProps = {
   authenticated: boolean;
   notificationReadiness: InquiryNotificationReadiness;
   notificationRetryRunbook: string[];
+  checkoutReadiness: PaymentGatewayReadiness;
 };
 
 const statusClasses: Record<ReadinessStatus, string> = {
@@ -35,13 +37,20 @@ function yesNo(value: boolean) {
   return value ? 'yes' : 'no';
 }
 
+function issueLines(readiness: { blockers: Array<{ code: string; detail: string }>; warnings: Array<{ code: string; detail: string }> }) {
+  return [
+    ...readiness.blockers.map((issue) => `${issue.code}: ${issue.detail}`),
+    ...readiness.warnings.map((issue) => `${issue.code}: ${issue.detail}`)
+  ];
+}
+
 function notificationReadinessStatus(readiness: InquiryNotificationReadiness): Pick<ReadinessItem, 'status' | 'summary' | 'detail' | 'extras'> {
   if (readiness.blockers.length > 0) {
     return {
       status: 'blocked',
       summary: readiness.blockers[0]?.summary ?? 'Inquiry notifications are blocked.',
       detail: readiness.blockers[0]?.detail ?? 'Fix notification blockers before relying on automated alerting.',
-      extras: readiness.blockers.map((issue) => `${issue.code}: ${issue.detail}`)
+      extras: issueLines(readiness)
     };
   }
 
@@ -50,7 +59,7 @@ function notificationReadinessStatus(readiness: InquiryNotificationReadiness): P
       status: 'warning',
       summary: readiness.warnings[0]?.summary ?? 'Inquiry notifications need an operating decision.',
       detail: readiness.warnings[0]?.detail ?? 'Confirm the manual monitoring process before launch.',
-      extras: readiness.warnings.map((issue) => `${issue.code}: ${issue.detail}`)
+      extras: issueLines(readiness)
     };
   }
 
@@ -59,6 +68,35 @@ function notificationReadinessStatus(readiness: InquiryNotificationReadiness): P
     summary: 'Inquiry notification configuration is ready.',
     detail: `Notification mode ${readiness.mode} has no readiness blockers or warnings.`,
     extras: []
+  };
+}
+
+function checkoutReadinessStatus(readiness: PaymentGatewayReadiness): Pick<ReadinessItem, 'status' | 'summary' | 'detail' | 'extras'> {
+  const providers = readiness.providers.length ? readiness.providers.join(', ') : 'none';
+
+  if (readiness.blockers.length > 0) {
+    return {
+      status: 'blocked',
+      summary: readiness.blockers[0]?.summary ?? 'Checkout readiness is blocked.',
+      detail: readiness.blockers[0]?.detail ?? 'Fix checkout configuration blockers before enabling gateway mode.',
+      extras: [`Mode: ${readiness.mode}`, `Providers: ${providers}`, ...issueLines(readiness)]
+    };
+  }
+
+  if (readiness.warnings.length > 0) {
+    return {
+      status: 'warning',
+      summary: readiness.warnings[0]?.summary ?? 'Checkout readiness needs an operating decision.',
+      detail: readiness.warnings[0]?.detail ?? 'Confirm checkout mode and fallback process before launch.',
+      extras: [`Mode: ${readiness.mode}`, `Providers: ${providers}`, ...issueLines(readiness)]
+    };
+  }
+
+  return {
+    status: 'ready',
+    summary: 'Checkout gateway configuration is ready.',
+    detail: `Checkout mode ${readiness.mode} has no readiness blockers or warnings.`,
+    extras: [`Providers: ${providers}`]
   };
 }
 
@@ -93,8 +131,9 @@ function ReadinessCard({ item }: { item: ReadinessItem }) {
   );
 }
 
-export function AdminReadinessPanel({ runtimeReadiness, authConfigured, authenticated, notificationReadiness, notificationRetryRunbook }: AdminReadinessPanelProps) {
+export function AdminReadinessPanel({ runtimeReadiness, authConfigured, authenticated, notificationReadiness, notificationRetryRunbook, checkoutReadiness }: AdminReadinessPanelProps) {
   const notificationStatus = notificationReadinessStatus(notificationReadiness);
+  const checkoutStatus = checkoutReadinessStatus(checkoutReadiness);
   const mediaStatus = mediaStorageReadiness(runtimeReadiness);
   const databaseReady = runtimeReadiness.databaseUrlPresent;
   const items: ReadinessItem[] = [
@@ -131,6 +170,10 @@ export function AdminReadinessPanel({ runtimeReadiness, authConfigured, authenti
     {
       label: `Inquiry notifications (${notificationReadiness.mode})`,
       ...notificationStatus
+    },
+    {
+      label: `Checkout (${checkoutReadiness.mode})`,
+      ...checkoutStatus
     },
     {
       label: `Media storage (${runtimeReadiness.mediaStorage.provider})`,
