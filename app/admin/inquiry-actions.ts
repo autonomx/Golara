@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { cmsInquiryService, isInquiryStatus } from '@/lib/cms/inquiry-service';
+import { parseInquiryAssignmentQueueFilter } from '@/lib/inquiries/inquiry-assignment-queue';
 import { hasDatabase } from '@/lib/prisma';
 
 function stringFormValue(formData: FormData, name: string) {
@@ -16,10 +17,12 @@ function adminStatus(status: string, formData: FormData) {
   const inquiryStatus = stringFormValue(formData, 'returnInquiryStatus');
   const inquirySearch = stringFormValue(formData, 'returnInquirySearch');
   const inquiryPage = stringFormValue(formData, 'returnInquiryPage');
+  const inquiryAssignment = parseInquiryAssignmentQueueFilter(stringFormValue(formData, 'returnInquiryAssignment'));
 
   if (inquiryStatus) params.set('inquiryStatus', inquiryStatus);
   if (inquirySearch) params.set('inquirySearch', inquirySearch);
   if (inquiryPage && inquiryPage !== '1') params.set('inquiryPage', inquiryPage);
+  if (inquiryAssignment !== 'all') params.set('inquiryAssignment', inquiryAssignment);
 
   return `/admin?${params.toString()}`;
 }
