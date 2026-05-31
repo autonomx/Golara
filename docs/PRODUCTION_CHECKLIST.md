@@ -3,6 +3,7 @@
 This checklist turns the roadmap's remaining production blockers into explicit launch decisions. Use it before deploying Golara as a real storefront.
 
 For the Phase 3 completion summary, see `docs/PHASE_3_CLOSEOUT.md`.
+For the checkout and payment decision record, see `docs/CHECKOUT_PAYMENT_DECISION.md`.
 
 ## 1. Environment and secrets
 
@@ -191,7 +192,16 @@ CLOUDINARY_UPLOAD_PRESET="your-unsigned-upload-preset"
 CLOUDINARY_UPLOAD_FOLDER="golara"
 ```
 
-## 6. Deployment preflight
+## 6. Checkout and payment direction
+
+Current decision:
+
+- Golara remains inquiry-first for the current production-readiness pass.
+- Checkout and online payment implementation are deferred until explicitly selected.
+- Existing checkout-related schema groundwork does not mean payment provider code is approved.
+- No payment provider code should be added until `docs/CHECKOUT_PAYMENT_DECISION.md` is updated with an approved provider, payment mode, and launch scope.
+
+## 7. Deployment preflight
 
 Run these before merging a production release:
 
@@ -254,7 +264,7 @@ Manual smoke test:
 - CMS and inquiry admin writes create audit-log rows with actor metadata.
 - The admin audit-log panel shows and filters recent staff activity after writes.
 
-## 7. Deferred to future phases
+## 8. Deferred to future phases
 
 These are intentionally not blockers for the current production-readiness pass:
 
@@ -262,5 +272,5 @@ These are intentionally not blockers for the current production-readiness pass:
 - Replace password-only admin auth with account/provider auth.
 - Add real per-user admin account management and multi-user role administration.
 - Add customer accounts.
-- Decide whether cart, checkout, payments, taxes, discounts, inventory, and delivery scheduling are needed for the first launch.
+- If explicitly selected, define and implement cart, checkout, payments, taxes, discounts, inventory, and delivery scheduling.
 - Add optional storage providers beyond Cloudinary.
