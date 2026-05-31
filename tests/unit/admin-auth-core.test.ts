@@ -6,9 +6,11 @@ import {
   adminRoleMeetsRequirement,
   createAdminIdentity,
   createAdminSessionCookieValue,
+  createConfiguredAdminIdentity,
   getAdminAuthConfig,
   isAdminAuthConfigured,
   isValidAdminSessionCookie,
+  normalizeAdminIdentityProvider,
   normalizeAdminRole,
   verifyAdminPassword
 } from '../../lib/admin-auth-core';
@@ -24,19 +26,26 @@ export async function runAdminAuthCoreTests() {
   assert.equal(normalizeAdminRole(' staff '), 'staff');
   assert.equal(normalizeAdminRole('unsupported'), 'owner');
 
+  assert.equal(normalizeAdminIdentityProvider(undefined), 'password');
+  assert.equal(normalizeAdminIdentityProvider(''), 'password');
+  assert.equal(normalizeAdminIdentityProvider(' PASSWORD '), 'password');
+  assert.equal(normalizeAdminIdentityProvider('oauth'), 'password');
+
   const config = getAdminAuthConfig({
     ADMIN_PASSWORD: ' password ',
     ADMIN_SESSION_SECRET: ' secret ',
     ADMIN_LABEL: ' Owner User ',
     ADMIN_EMAIL: ' owner@example.invalid ',
-    ADMIN_ROLE: ' staff '
+    ADMIN_ROLE: ' staff ',
+    ADMIN_IDENTITY_PROVIDER: ' password '
   });
   assert.deepEqual(config, {
     password: 'password',
     sessionSecret: 'secret',
     label: 'Owner User',
     email: 'owner@example.invalid',
-    role: 'staff'
+    role: 'staff',
+    provider: 'password'
   });
 
   assert.deepEqual(getAdminAuthConfig({}), {
@@ -44,7 +53,8 @@ export async function runAdminAuthCoreTests() {
     sessionSecret: '',
     label: 'Admin',
     email: undefined,
-    role: 'owner'
+    role: 'owner',
+    provider: 'password'
   });
 
   assert.equal(isAdminAuthConfigured(config), true);
@@ -63,7 +73,16 @@ export async function runAdminAuthCoreTests() {
   assert.equal(isValidAdminSessionCookie('bad-payload.bad-signature', config), false);
   assert.equal(isValidAdminSessionCookie(cookieValue, { ...config, sessionSecret: 'other-secret' }), false);
 
-  assert.deepEqual(createAdminIdentity(true, config), {
+  assert.deepEqual(createAdminIdentity({ authenticated: true, label: 'Provider User', role: 'owner', provider: 'password' }), {
+    authenticated: true,
+    type: 'password',
+    label: 'Provider User',
+    email: undefined,
+    role: 'owner',
+    provider: 'password'
+  });
+
+  assert.deepEqual(createConfiguredAdminIdentity(true, config), {
     authenticated: true,
     type: 'password',
     label: 'Owner User',
