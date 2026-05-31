@@ -2,7 +2,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { addToCartAction } from '@/app/cart/actions';
 import type { Category, Product } from '@/lib/catalog';
-import { formatPrice, productRequiresQuote } from '@/lib/catalog';
+import { formatPrice } from '@/lib/catalog';
+import type { ProductCheckoutPolicy } from '@/lib/checkout/product-checkout-policy';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 import { getStorefrontCopy } from '@/lib/localization/storefront-copy';
 
@@ -10,9 +11,8 @@ const categoryLinkClass = 'rounded-full outline-none transition focus-visible:ri
 const whatsAppLinkClass = 'rounded-full border border-rosewood/20 px-6 py-3 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20';
 const cartButtonClass = 'rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none';
 
-export function ProductDetail({ product, category, dbReady = false, locale }: { product: Product; category?: Category; dbReady?: boolean; locale?: SupportedLocale }) {
-  const requiresQuote = productRequiresQuote(product);
-  const canAddToCart = Boolean(dbReady && product.id && !requiresQuote);
+export function ProductDetail({ product, category, checkoutPolicy, locale }: { product: Product; category?: Category; checkoutPolicy: ProductCheckoutPolicy; locale?: SupportedLocale }) {
+  const canAddToCart = checkoutPolicy.canAddToCart;
   const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key, locale);
 
   return (
@@ -30,8 +30,12 @@ export function ProductDetail({ product, category, dbReady = false, locale }: { 
         <p className="mt-2 text-sm uppercase tracking-[0.25em] text-rosewood/50">{product.code}</p>
         <p className="mt-6 text-lg leading-8 text-stone-700">{product.description}</p>
         <div className="mt-8 text-3xl font-semibold text-rosewood">{formatPrice(product)}</div>
+        <div className="mt-4 rounded-2xl border border-olive/20 bg-cream p-4 text-sm text-stone-700">
+          <p className="font-semibold text-rosewood">{checkoutPolicy.summary}</p>
+          <p className="mt-1 leading-6">{checkoutPolicy.detail}</p>
+        </div>
         <div className="mt-6 flex flex-wrap gap-3">
-          {!requiresQuote ? (
+          {checkoutPolicy.canAddToCart ? (
             <form action={addToCartAction} className="flex flex-wrap items-center gap-3">
               <input type="hidden" name="productId" value={product.id ?? ''} />
               <input type="hidden" name="returnTo" value={`/products/${product.slug}`} />
@@ -50,9 +54,6 @@ export function ProductDetail({ product, category, dbReady = false, locale }: { 
             {product.availableToday ? copy('product.availableToday') : copy('product.preOrderRequired')}
           </span>
         </div>
-        {!canAddToCart && !requiresQuote ? (
-          <p className="mt-3 text-sm leading-6 text-stone-500">{copy('product.cartUnavailableNote')}</p>
-        ) : null}
       </div>
     </section>
   );

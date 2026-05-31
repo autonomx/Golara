@@ -1,10 +1,12 @@
 import type { Product } from '@/lib/catalog';
 import { createCheckoutAction } from '@/app/products/[slug]/checkout-actions';
+import type { ProductCheckoutPolicy } from '@/lib/checkout/product-checkout-policy';
 
 type ProductCheckoutFormProps = {
   product: Product;
   dbReady: boolean;
   checkout?: string;
+  checkoutPolicy: ProductCheckoutPolicy;
 };
 
 const messages: Record<string, string> = {
@@ -17,7 +19,9 @@ const messages: Record<string, string> = {
 const inputClass = 'rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100';
 const areaClass = 'min-h-24 rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100';
 
-export function ProductCheckoutForm({ product, dbReady, checkout }: ProductCheckoutFormProps) {
+export function ProductCheckoutForm({ product, dbReady, checkout, checkoutPolicy }: ProductCheckoutFormProps) {
+  if (!checkoutPolicy.showOrderDraftForm) return null;
+
   const action = createCheckoutAction.bind(null, product.id, product.slug);
   const message = checkout ? messages[checkout] : undefined;
 
@@ -26,7 +30,7 @@ export function ProductCheckoutForm({ product, dbReady, checkout }: ProductCheck
       <div className="rounded-[2rem] border border-rosewood/10 bg-cream p-6 shadow-sm">
         <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Order draft</p>
         <h2 className="mt-2 font-display text-4xl text-rosewood">Start an order</h2>
-        <p className="mt-3 text-sm leading-6 text-stone-600">Create a staff-visible order draft for this arrangement.</p>
+        <p className="mt-3 text-sm leading-6 text-stone-600">Create a staff-visible order draft for this arrangement. {checkoutPolicy.summary}</p>
 
         {message ? <div className="mt-6 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm font-semibold text-amber-900">{message}</div> : null}
 
