@@ -4,6 +4,7 @@ This checklist turns the roadmap's remaining production blockers into explicit l
 
 For the Phase 3 completion summary, see `docs/PHASE_3_CLOSEOUT.md`.
 For the checkout and payment decision record, see `docs/CHECKOUT_PAYMENT_DECISION.md`.
+For the final release sign-off artifact, see `docs/LAUNCH_AUDIT.md`.
 
 ## 1. Environment and secrets
 
@@ -172,7 +173,7 @@ The webhook request currently posts JSON with this shape:
     "productTitle": "Product title",
     "customerName": "Customer name",
     "customerPhone": "customer phone",
-    "customerEmail": "customer email",
+    "customerEmail": "Customer email",
     "message": "Customer inquiry message"
   }
 }
@@ -249,7 +250,7 @@ Current decision:
 - Existing checkout-related schema groundwork does not mean payment provider code is approved.
 - No payment provider code should be added until `docs/CHECKOUT_PAYMENT_DECISION.md` is updated with an approved provider, payment mode, and launch scope.
 
-## 7. Deployment preflight
+## 7. Deployment preflight and final launch audit
 
 Run these before merging a production release:
 
@@ -288,6 +289,12 @@ The deploy readiness guard blocks production mode when any required production d
 - Unsupported notification modes are blocked.
 
 `INQUIRY_NOTIFICATION_MODE="log"` is allowed but reported as a warning because staff must monitor the admin inbox manually.
+
+Final launch audit:
+
+- Complete `docs/LAUNCH_AUDIT.md` for the target production release.
+- Record release SHA, deployment environment, operator, CI run URL, deploy-readiness result, backup/migration/rollback checks, media readiness, notification mode, manual smoke audit result, deferred item acceptance, and go/no-go decision.
+- Do not treat payment provider work, full automated checkout payment lifecycle, provider-backed per-user admin auth, or email/WhatsApp notifications as blockers for the inquiry-first launch unless the launch scope changes.
 
 Manual smoke test:
 
