@@ -1,9 +1,9 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { publicInquiryService } from '@/lib/inquiries/public-inquiry-service';
 import { validateInquiryInput } from '@/lib/inquiries/validate-inquiry';
-import { notifyNewInquiry } from '@/lib/notifications/inquiry-notifications';
-import { hasDatabase, prisma } from '@/lib/prisma';
+import { hasDatabase } from '@/lib/prisma';
 
 function stringField(formData: FormData, name: string, fallback = '') {
   const value = formData.get(name);
@@ -33,28 +33,9 @@ export async function createInquiryAction(productId: string | undefined, product
     redirect(inquiryPath(productSlug, validation.code));
   }
 
-  const inquiry = await prisma.customerInquiry.create({
-    data: {
-      name: validation.value.name,
-      phone: validation.value.phone,
-      email: validation.value.email,
-      message: validation.value.message,
-      deliveryDate: validation.value.deliveryDate,
-      deliveryNotes: validation.value.deliveryNotes,
-      productId
-    },
-    include: {
-      product: { select: { title: true } }
-    }
-  });
-
-  await notifyNewInquiry({
-    inquiryId: inquiry.id,
-    productTitle: inquiry.product?.title,
-    customerName: validation.value.name,
-    customerPhone: validation.value.phone,
-    customerEmail: validation.value.email,
-    message: validation.value.message
+  await publicInquiryService.createInquiry({
+    productId,
+    inquiry: validation.value
   });
 
   redirect(inquiryPath(productSlug, 'sent'));
