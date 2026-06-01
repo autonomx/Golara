@@ -5,7 +5,11 @@ export type StorefrontCopyKey =
   | 'home.collectionsTitle'
   | 'home.favoritesEyebrow'
   | 'home.favoritesTitle'
+  | 'header.announcement'
   | 'nav.catalog'
+  | 'nav.occasions'
+  | 'nav.availableToday'
+  | 'nav.bestSellers'
   | 'catalog.eyebrow'
   | 'catalog.title'
   | 'catalog.body'
@@ -31,7 +35,11 @@ export const storefrontCopy: StorefrontCopyRegistry = {
     'home.collectionsTitle': 'Shop by occasion',
     'home.favoritesEyebrow': 'Customer favorites',
     'home.favoritesTitle': 'Best sellers',
+    'header.announcement': 'Same-day flowers, occasion gifts, and guided VIP arrangements',
     'nav.catalog': 'Catalog',
+    'nav.occasions': 'Occasions',
+    'nav.availableToday': 'Available today',
+    'nav.bestSellers': 'Best sellers',
     'catalog.eyebrow': 'Catalog',
     'catalog.title': 'All products',
     'catalog.body': 'The catalog is now wired through the CMS data layer. With DATABASE_URL configured, products are loaded from Prisma; otherwise seeded content is used for previews.',
@@ -54,7 +62,11 @@ export const storefrontCopy: StorefrontCopyRegistry = {
     'home.collectionsTitle': 'خرید بر اساس مناسبت',
     'home.favoritesEyebrow': 'محبوب مشتریان',
     'home.favoritesTitle': 'پرفروش‌ها',
+    'header.announcement': 'گل‌های همان‌روز، هدیه‌های مناسبتی، و راهنمایی برای سفارش‌های VIP',
     'nav.catalog': 'کاتالوگ',
+    'nav.occasions': 'مناسبت‌ها',
+    'nav.availableToday': 'آماده امروز',
+    'nav.bestSellers': 'پرفروش‌ها',
     'catalog.eyebrow': 'کاتالوگ',
     'catalog.title': 'همه محصولات',
     'catalog.body': 'کاتالوگ اکنون از لایه داده CMS خوانده می‌شود. با تنظیم DATABASE_URL محصولات از Prisma بارگذاری می‌شوند؛ در غیر این صورت محتوای نمونه برای پیش‌نمایش استفاده می‌شود.',

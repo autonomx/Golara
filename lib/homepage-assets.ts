@@ -3,9 +3,13 @@ const CATEGORY_BASE = '/homepage/categories';
 const categoryImageBySlug: Record<string, string> = {
   'available-today': 'birthday.jpg',
   daily: 'birthday.jpg',
+  'cacao-roses': 'rose-bag.jpg',
+  'today-vip': 'woshe-royal.jpg',
   'flower-boxes': 'flower-boxes.jpg',
   'standard-boxes': 'standard-flower-box.jpg',
   'vip-boxes': 'vip-flower-box.jpg',
+  'rose-envelope': 'rose-bag.jpg',
+  'kids-boxes': 'kids-flower-box.jpg',
   bouquets: 'bouquets.jpg',
   'standard-bouquets': 'standard-bouquet.jpg',
   'vip-bouquets': 'vip-bouquet.jpg',

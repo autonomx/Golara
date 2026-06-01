@@ -57,12 +57,18 @@ export function BestSellersCarousel({ products, locale }: BestSellersCarouselPro
   }
 
   return (
-    <section id="best-sellers" className="bg-[#fffaf6] py-16">
+    <section
+      id="best-sellers"
+      data-section="home-best-sellers"
+      aria-labelledby="home-best-sellers-heading"
+      className="relative overflow-hidden bg-white py-20"
+    >
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rosewood/15 to-transparent" />
       <div className="mx-auto max-w-7xl px-5">
         <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">Best seller</p>
-            <h2 className="mt-2 font-display text-4xl text-rosewood md:text-5xl">Featured picks</h2>
+            <h2 id="home-best-sellers-heading" className="mt-2 font-display text-4xl text-rosewood md:text-5xl">Featured picks</h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-stone-600 md:text-base">A curated run of customer favorites, styled with real Golara homepage photography.</p>
           </div>
           <div className="flex items-center gap-3">
@@ -89,11 +95,11 @@ export function BestSellersCarousel({ products, locale }: BestSellersCarouselPro
           <div className="flex transition-transform duration-500 ease-out will-change-transform" style={sliderStyle}>
             {products.map((product, index) => (
               <article key={product.slug} className="min-w-full max-w-full shrink-0 px-0.5 md:min-w-[50%] md:max-w-[50%] md:px-2 lg:min-w-[33.333333%] lg:max-w-[33.333333%] xl:min-w-[25%] xl:max-w-[25%] xl:px-3">
-                <div className="group overflow-hidden rounded-2xl border border-rosewood/10 bg-white shadow-[0_18px_50px_rgba(111,36,56,0.08)]">
+                <div className="group overflow-hidden rounded-lg border border-rosewood/10 bg-white shadow-[0_18px_50px_rgba(111,36,56,0.08)] transition hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(111,36,56,0.14)]">
                   <Link href={`/products/${product.slug}`} className="block outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
                   <div className="relative aspect-[4/5] overflow-hidden bg-stone-100">
                     <Image
-                      src={homepageBestSellerImage(product.slug)}
+                      src={product.image || homepageBestSellerImage(product.slug)}
                       alt={product.title}
                       fill
                       priority={index < 4}

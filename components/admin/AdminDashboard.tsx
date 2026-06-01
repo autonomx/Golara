@@ -1,7 +1,6 @@
 import Image from 'next/image';
 import type { Category, HomepageContent, HomepageTranslation, MediaItem, Product } from '@/lib/catalog';
 import { logoutAction } from '@/app/admin/logout/actions';
-import { AdminQuickNav } from '@/components/admin/AdminQuickNav';
 import { AdminReadinessPanel } from '@/components/admin/AdminReadinessPanel';
 import { AdminSecurityPanel } from '@/components/admin/AdminSecurityPanel';
 import { AdminTranslationPanel } from '@/components/admin/AdminTranslationPanel';
@@ -20,6 +19,7 @@ import type { InquiryNotificationReadiness } from '@/lib/notifications/inquiry-n
 import type { RuntimeReadiness } from '@/lib/runtime-readiness';
 
 type AdminDashboardProps = {
+  activeWorkspace: 'overview' | 'catalog' | 'content' | 'sales';
   categories: Category[];
   products: Product[];
   homepage: HomepageContent;
@@ -54,6 +54,8 @@ const textAreaClass = 'min-h-28 rounded-2xl border border-rosewood/15 bg-white p
 const toggleClass = 'flex items-center gap-3 rounded-2xl border border-rosewood/10 bg-white px-4 py-3 text-sm font-semibold text-rosewood outline-none transition focus-within:ring-4 focus-within:ring-olive/20';
 const primaryButtonClass = 'rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none';
 const secondaryButtonClass = 'rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20';
+const panelClass = 'scroll-mt-36 rounded-lg border border-rosewood/10 bg-white p-6 shadow-[0_18px_48px_rgba(111,36,56,0.07)]';
+const formCardClass = 'grid gap-4 rounded-lg border border-rosewood/10 bg-[#fffdfb] p-5 shadow-sm';
 
 function Field({ label, name, defaultValue, placeholder, type = 'text', required = true, disabled = false }: { label: string; name: string; defaultValue?: string | number; placeholder?: string; type?: string; required?: boolean; disabled?: boolean }) {
   return (
@@ -107,21 +109,51 @@ function MediaMeta({ item }: { item: MediaItem }) {
 function StatusBanner({ status, message }: { status?: string; message?: string }) {
   if (!status && !message) return null;
   const isError = status === 'error';
-  return <section className={`rounded-[2rem] border p-5 text-sm font-semibold ${isError ? 'border-red-200 bg-red-50 text-red-800' : 'border-olive/20 bg-white text-olive'}`}>{message || statusLabels[status ?? ''] || status}</section>;
+  return <section className={`rounded-lg border p-5 text-sm font-semibold ${isError ? 'border-red-200 bg-red-50 text-red-800' : 'border-olive/20 bg-white text-olive'}`}>{message || statusLabels[status ?? ''] || status}</section>;
 }
 
-export function AdminDashboard({ categories, products, homepage, homepageTranslations, media, authEventSummary, runtimeReadiness, authConfigured, authenticated, notificationReadiness, notificationRetryRunbook, checkoutReadiness, status, message }: AdminDashboardProps) {
+function workspaceHeading(workspace: AdminDashboardProps['activeWorkspace']) {
+  if (workspace === 'catalog') return { eyebrow: 'Catalog workspace', title: 'Products, categories, subcategories, and media', body: 'Create and maintain the product catalog that powers the storefront. Assign products to any category or subcategory, manage homepage visibility, and update images from the media library.' };
+  if (workspace === 'content') return { eyebrow: 'Content workspace', title: 'Homepage and translations', body: 'Edit storefront copy and localized content without touching code.' };
+  if (workspace === 'sales') return { eyebrow: 'Sales workspace', title: 'Orders and inquiries', body: 'Use the sales tab above for customer inquiries and checkout/order management.' };
+  return { eyebrow: 'Overview workspace', title: 'System readiness and access', body: 'Check database/auth readiness, security events, staff access, and audit activity before making operational changes.' };
+}
+
+function DashboardIntro({ workspace, productCount, categoryCount, mediaCount }: { workspace: AdminDashboardProps['activeWorkspace']; productCount: number; categoryCount: number; mediaCount: number }) {
+  const heading = workspaceHeading(workspace);
+  return (
+    <section className="rounded-lg border border-rosewood/10 bg-white p-6 shadow-[0_18px_48px_rgba(111,36,56,0.07)]">
+      <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">{heading.eyebrow}</p>
+          <h2 className="mt-2 font-display text-4xl text-rosewood md:text-5xl">{heading.title}</h2>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-stone-600 md:text-base">{heading.body}</p>
+        </div>
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <div className="rounded-lg border border-rosewood/10 bg-cream px-4 py-3"><div className="font-display text-3xl text-rosewood">{productCount}</div><div className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Products</div></div>
+          <div className="rounded-lg border border-rosewood/10 bg-cream px-4 py-3"><div className="font-display text-3xl text-rosewood">{categoryCount}</div><div className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Categories</div></div>
+          <div className="rounded-lg border border-rosewood/10 bg-cream px-4 py-3"><div className="font-display text-3xl text-rosewood">{mediaCount}</div><div className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Media</div></div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function AdminDashboard({ activeWorkspace, categories, products, homepage, homepageTranslations, media, authEventSummary, runtimeReadiness, authConfigured, authenticated, notificationReadiness, notificationRetryRunbook, checkoutReadiness, status, message }: AdminDashboardProps) {
   const databaseReady = runtimeReadiness.databaseUrlPresent;
   const disabled = !databaseReady || !authenticated;
+  const showOverview = activeWorkspace === 'overview';
+  const showCatalog = activeWorkspace === 'catalog';
+  const showContent = activeWorkspace === 'content';
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-8">
       <StatusBanner status={status} message={message} />
-      <AdminQuickNav />
-      <AdminReadinessPanel runtimeReadiness={runtimeReadiness} authConfigured={authConfigured} authenticated={authenticated} notificationReadiness={notificationReadiness} notificationRetryRunbook={notificationRetryRunbook} checkoutReadiness={checkoutReadiness} />
-      {authenticated ? <AdminSecurityPanel summary={authEventSummary} /> : null}
+      <DashboardIntro workspace={activeWorkspace} productCount={products.length} categoryCount={categories.length} mediaCount={media.length} />
+      {showOverview ? <AdminReadinessPanel runtimeReadiness={runtimeReadiness} authConfigured={authConfigured} authenticated={authenticated} notificationReadiness={notificationReadiness} notificationRetryRunbook={notificationRetryRunbook} checkoutReadiness={checkoutReadiness} /> : null}
+      {showOverview && authenticated ? <AdminSecurityPanel summary={authEventSummary} /> : null}
 
-      <section className={`rounded-[2rem] border p-6 ${databaseReady && authenticated ? 'border-olive/20 bg-white' : 'border-amber-300 bg-amber-50'}`}>
+      {showOverview ? <section className={`rounded-lg border p-6 ${databaseReady && authenticated ? 'border-olive/20 bg-white' : 'border-amber-300 bg-amber-50'}`}>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">CMS status</p>
@@ -130,22 +162,22 @@ export function AdminDashboard({ categories, products, homepage, homepageTransla
           </div>
           {authenticated ? <form action={logoutAction}><button className={secondaryButtonClass} type="submit">Sign out</button></form> : null}
         </div>
-      </section>
+      </section> : null}
 
-      <section id="media" className="scroll-mt-8 rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
+      {showCatalog ? <section id="media" className={panelClass}>
         <div className="mb-6">
           <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Media library</p>
           <h2 className="mt-2 font-display text-4xl text-rosewood">Images</h2>
           <p className="mt-3 text-sm leading-6 text-stone-600">Register external image URLs or upload local/dev images into <code>public/uploads</code>. Media records now track source type, storage provider, MIME type, and file size for production storage migration.</p>
         </div>
         <div className="grid gap-6 lg:grid-cols-2">
-          <form action={createMediaFromUrlAction} className="grid gap-4 rounded-3xl border border-rosewood/10 bg-cream p-5">
+          <form action={createMediaFromUrlAction} className={formCardClass}>
             <h3 className="font-display text-3xl text-rosewood">Add image URL</h3>
             <Field label="Image URL" name="url" placeholder="https://..." disabled={disabled} />
             <Field label="Alt text" name="alt" placeholder="Blush rose bouquet" disabled={disabled} />
             <SubmitButton disabled={disabled}>Add media</SubmitButton>
           </form>
-          <form action={uploadMediaAction} className="grid gap-4 rounded-3xl border border-rosewood/10 bg-cream p-5">
+          <form action={uploadMediaAction} className={formCardClass}>
             <h3 className="font-display text-3xl text-rosewood">Upload image</h3>
             <label className="grid gap-2 text-sm font-semibold text-rosewood">Image file<input className={inputClass} name="file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" required disabled={disabled} /></label>
             <Field label="Alt text" name="alt" placeholder="Optional descriptive text" required={false} disabled={disabled} />
@@ -154,15 +186,15 @@ export function AdminDashboard({ categories, products, homepage, homepageTransla
         </div>
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {media.map((item) => (
-            <article key={item.url} className="overflow-hidden rounded-3xl border border-rosewood/10 bg-cream shadow-sm">
+            <article key={item.url} className="overflow-hidden rounded-lg border border-rosewood/10 bg-cream shadow-sm">
               <div className="relative aspect-square bg-blush"><Image src={item.url} alt={item.alt} fill className="object-cover" sizes="25vw" /></div>
               <div className="space-y-2 p-4"><p className="text-sm font-semibold text-rosewood">{item.alt}</p><MediaMeta item={item} /><p className="break-all text-xs text-stone-500">{item.url}</p></div>
             </article>
           ))}
         </div>
-      </section>
+      </section> : null}
 
-      <section id="homepage" className="scroll-mt-8 rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
+      {showContent ? <section id="homepage" className={panelClass}>
         <div className="mb-6"><p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Homepage</p><h2 className="mt-2 font-display text-4xl text-rosewood">Hero content</h2></div>
         <form action={updateHomepageAction} className="grid gap-4">
           <div className="grid gap-4 md:grid-cols-2"><Field label="Eyebrow" name="eyebrow" defaultValue={homepage.eyebrow} disabled={disabled} /><Field label="Title" name="title" defaultValue={homepage.title} disabled={disabled} /></div>
@@ -178,31 +210,45 @@ export function AdminDashboard({ categories, products, homepage, homepageTransla
           <TextArea label="Panel body" name="panelBody" defaultValue={homepage.panelBody} disabled={disabled} />
           <SubmitButton disabled={disabled}>Save homepage</SubmitButton>
         </form>
-      </section>
+      </section> : null}
 
-      {authenticated ? <AdminTranslationPanel homepage={homepage} homepageTranslations={homepageTranslations} categories={categories} products={products} disabled={disabled} /> : null}
+      {showContent && authenticated ? <AdminTranslationPanel homepage={homepage} homepageTranslations={homepageTranslations} categories={categories} products={products} disabled={disabled} /> : null}
 
-      <section id="categories" className="scroll-mt-8 rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
-        <div className="mb-6"><p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Categories</p><h2 className="mt-2 font-display text-4xl text-rosewood">Create category</h2></div>
-        <form action={createCategoryAction} className="grid gap-4">
-          <CategoryFields categories={categories} media={media} disabled={disabled} />
-          <SubmitButton disabled={disabled}>Create category</SubmitButton>
-        </form>
-        <div className="mt-8 grid gap-5">
+      {showCatalog ? <section id="categories" className={panelClass}>
+        <div className="mb-6"><p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Categories</p><h2 className="mt-2 font-display text-4xl text-rosewood">Categories and subcategories</h2><p className="mt-3 max-w-3xl text-sm leading-6 text-stone-600">Use parent category to create subcategories. Products can be assigned to either top-level categories or nested subcategories.</p></div>
+        <details className="rounded-lg border border-rosewood/10 bg-cream p-5" open>
+          <summary className="cursor-pointer font-display text-3xl text-rosewood">Create category or subcategory</summary>
+          <form action={createCategoryAction} className="mt-5 grid gap-4">
+            <CategoryFields categories={categories} media={media} disabled={disabled} />
+            <SubmitButton disabled={disabled}>Create category</SubmitButton>
+          </form>
+        </details>
+        <div className="mt-8 grid gap-4">
           {categories.map((category) => (
-            <form key={category.slug} action={updateCategoryAction.bind(null, category.id ?? '')} className="grid gap-4 rounded-3xl border border-rosewood/10 bg-cream p-5">
-              <CategoryFields category={category} categories={categories} media={media} disabled={disabled || !category.id} />
-              <SubmitButton disabled={disabled || !category.id}>Update category</SubmitButton>
-            </form>
+            <details key={category.slug} className="rounded-lg border border-rosewood/10 bg-[#fffdfb] p-5 shadow-sm">
+              <summary className="cursor-pointer list-none">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div><h3 className="font-display text-2xl text-rosewood">{category.title}</h3><p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">{category.parentTitle ? `Subcategory of ${category.parentTitle}` : 'Top-level category'} · {category.productCount ?? 0} products</p></div>
+                  <span className="rounded-full border border-rosewood/15 bg-white px-3 py-1 text-xs font-semibold text-rosewood">Edit</span>
+                </div>
+              </summary>
+              <form action={updateCategoryAction.bind(null, category.id ?? '')} className="mt-5 grid gap-4">
+                <CategoryFields category={category} categories={categories} media={media} disabled={disabled || !category.id} />
+                <SubmitButton disabled={disabled || !category.id}>Update category</SubmitButton>
+              </form>
+            </details>
           ))}
         </div>
-      </section>
+      </section> : null}
 
-      <section id="products" className="scroll-mt-8 rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
-        <div className="mb-6"><p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Products</p><h2 className="mt-2 font-display text-4xl text-rosewood">Create product</h2></div>
-        <form action={createProductAction} className="grid gap-4"><ProductFields categories={categories} media={media} disabled={disabled} /><SubmitButton disabled={disabled}>Create product</SubmitButton></form>
-        <div className="mt-8 grid gap-5">{products.map((product) => <form key={product.slug} action={updateProductAction.bind(null, product.id ?? '')} className="grid gap-4 rounded-3xl border border-rosewood/10 bg-cream p-5"><ProductFields product={product} categories={categories} media={media} disabled={disabled || !product.id} /><SubmitButton disabled={disabled || !product.id}>Update product</SubmitButton></form>)}</div>
-      </section>
+      {showCatalog ? <section id="products" className={panelClass}>
+        <div className="mb-6"><p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Products</p><h2 className="mt-2 font-display text-4xl text-rosewood">Product management</h2><p className="mt-3 max-w-3xl text-sm leading-6 text-stone-600">Create products, assign them to categories or subcategories, control homepage flags, and update catalog imagery.</p></div>
+        <details className="rounded-lg border border-rosewood/10 bg-cream p-5" open>
+          <summary className="cursor-pointer font-display text-3xl text-rosewood">Create product</summary>
+          <form action={createProductAction} className="mt-5 grid gap-4"><ProductFields categories={categories} media={media} disabled={disabled} /><SubmitButton disabled={disabled}>Create product</SubmitButton></form>
+        </details>
+        <div className="mt-8 grid gap-4">{products.map((product) => <details key={product.slug} className="rounded-lg border border-rosewood/10 bg-[#fffdfb] p-5 shadow-sm"><summary className="cursor-pointer list-none"><div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-display text-2xl text-rosewood">{product.title}</h3><p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">{product.code} · {product.categoryTitle || product.category} · {product.bestSeller ? 'Best seller' : 'Standard'}</p></div><span className="rounded-full border border-rosewood/15 bg-white px-3 py-1 text-xs font-semibold text-rosewood">Edit</span></div></summary><form action={updateProductAction.bind(null, product.id ?? '')} className="mt-5 grid gap-4"><ProductFields product={product} categories={categories} media={media} disabled={disabled || !product.id} /><SubmitButton disabled={disabled || !product.id}>Update product</SubmitButton></form></details>)}</div>
+      </section> : null}
     </div>
   );
 }

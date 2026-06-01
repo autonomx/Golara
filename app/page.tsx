@@ -3,7 +3,6 @@ import { HomepageBannerSlideshow } from '@/components/HomepageBannerSlideshow';
 import { HomepageCategoryTileCard } from '@/components/HomepageCategoryTileCard';
 import { HomepageOccasionRail } from '@/components/HomepageOccasionRail';
 import { HomepageTrustStrip } from '@/components/HomepageTrustStrip';
-import { HomepageVipAssist } from '@/components/HomepageVipAssist';
 import { BestSellersCarousel } from '@/components/BestSellersCarousel';
 import { SiteHeader } from '@/components/SiteHeader';
 import { withCategoryProductCounts } from '@/lib/category-tree';
@@ -35,7 +34,13 @@ export default async function HomePage() {
   const occasionRailItems = homepageOccasionsWithCounts.slice(0, 10);
 
   return (
-    <main id="main-content" tabIndex={-1} dir={getStorefrontCopyDirection(locale)}>
+    <main
+      id="main-content"
+      tabIndex={-1}
+      dir={getStorefrontCopyDirection(locale)}
+      data-page="home"
+      className="bg-[linear-gradient(180deg,#fffdfb_0%,#ffffff_42%,#fbf8f5_100%)]"
+    >
       <SiteHeader returnTo="/" />
 
       <HomepageBannerSlideshow slides={homepageBannerSlides} />
@@ -44,25 +49,29 @@ export default async function HomePage() {
 
       <BestSellersCarousel products={bestSellers} locale={locale} />
 
-      <HomepageVipAssist />
-
-      <section id="occasions-gallery" className="bg-white/45 px-5 py-20">
+      <section
+        id="home-collections"
+        data-section="home-collections"
+        aria-labelledby="home-collections-heading"
+        className="relative overflow-hidden bg-white px-5 py-20"
+      >
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rosewood/20 to-transparent" />
         <div className="mx-auto max-w-[1520px]">
-        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">{copy('home.collectionsEyebrow')}</p>
-            <h2 className="mt-2 font-display text-4xl text-rosewood md:text-5xl">{copy('home.collectionsTitle')}</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-stone-600 md:text-base">Browse by the moment you are buying for, from birthdays and weddings to sympathy, baby flowers, and same-day gifts.</p>
+          <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">{copy('home.collectionsEyebrow')}</p>
+              <h2 id="home-collections-heading" className="mt-2 font-display text-4xl text-rosewood md:text-5xl">{copy('home.collectionsTitle')}</h2>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-stone-600 md:text-base">Browse by the moment you are buying for, from birthdays and weddings to sympathy, baby flowers, and same-day gifts.</p>
+            </div>
+            <Link href="/categories" className="inline-flex rounded-full border border-rosewood/15 bg-white px-5 py-2.5 text-sm font-semibold text-rosewood shadow-[0_12px_28px_rgba(111,36,56,0.08)] transition hover:-translate-y-0.5 hover:border-rosewood hover:bg-rosewood hover:text-white">See all occasions</Link>
           </div>
-          <Link href="/categories" className="inline-flex rounded-full border border-rosewood/15 bg-white px-5 py-2.5 text-sm font-semibold text-rosewood shadow-sm transition hover:border-rosewood hover:bg-blush">See all occasions</Link>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          {featuredOccasions.map((category, index) => <HomepageCategoryTileCard key={category.slug} category={category} priority={index < 4} />)}
-        </div>
+          <div className="grid gap-5 md:grid-cols-2">
+            {featuredOccasions.map((category, index) => <HomepageCategoryTileCard key={category.slug} category={category} priority={index < 4} />)}
+          </div>
         </div>
       </section>
 
-      <footer className="border-t border-rosewood/10 bg-white/70">
+      <footer id="home-footer" data-section="home-footer" className="border-t border-rosewood/10 bg-white">
         <div className="mx-auto grid max-w-7xl gap-8 px-5 py-10 text-sm text-stone-600 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
           <div>
             <div className="font-display text-3xl text-rosewood">Golara</div>

@@ -28,12 +28,17 @@ export function HomepageOccasionRail({ occasions }: { occasions: Category[] }) {
   }
 
   return (
-    <section id="occasions" className="relative z-10 bg-cream px-5 pb-12">
-      <div className="mx-auto -mt-16 max-w-7xl rounded-[2rem] border border-rosewood/10 bg-white/90 p-4 shadow-[0_22px_70px_rgba(111,36,56,0.12)] backdrop-blur md:p-5">
+    <section
+      id="occasions"
+      data-section="home-occasion-menu"
+      aria-labelledby="home-occasion-menu-heading"
+      className="relative z-10 bg-transparent px-5 pb-12"
+    >
+      <div className="mx-auto -mt-8 max-w-7xl rounded-lg border border-rosewood/10 bg-white/92 p-4 shadow-[0_24px_70px_rgba(111,36,56,0.12)] backdrop-blur md:p-5">
         <div className="mb-4 flex flex-col gap-2 px-1 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-olive">Occasion menu</p>
-            <h2 className="mt-1 font-display text-3xl text-rosewood">Find the right flowers faster</h2>
+            <h2 id="home-occasion-menu-heading" className="mt-1 font-display text-3xl text-rosewood">Find the right flowers faster</h2>
           </div>
           <Link href="/categories" className="inline-flex items-center gap-1 text-sm font-semibold text-rosewood outline-none transition hover:text-stone-900 focus-visible:ring-4 focus-visible:ring-olive/20">
             View all occasions
@@ -45,10 +50,10 @@ export function HomepageOccasionRail({ occasions }: { occasions: Category[] }) {
             <Link
               key={occasion.slug}
               href={`/categories/${occasion.slug}`}
-              className="group relative min-h-[155px] overflow-hidden rounded-2xl bg-stone-100 outline-none focus-visible:ring-4 focus-visible:ring-olive/30"
+              className="group relative min-h-[155px] overflow-hidden rounded-lg bg-stone-100 outline-none shadow-[0_12px_32px_rgba(43,29,32,0.08)] transition hover:-translate-y-0.5 focus-visible:ring-4 focus-visible:ring-olive/30"
             >
               <Image
-                src={homepageCategoryImage(occasion.slug)}
+                src={occasion.image || homepageCategoryImage(occasion.slug)}
                 alt={occasion.title}
                 fill
                 priority={index < 5}

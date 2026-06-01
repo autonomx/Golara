@@ -19,6 +19,15 @@ import { getRuntimeReadiness } from '@/lib/runtime-readiness';
 
 export const dynamic = 'force-dynamic';
 
+const adminTabs = [
+  { key: 'overview', label: 'Overview', description: 'Readiness, access, audit, and security.' },
+  { key: 'catalog', label: 'Catalog', description: 'Products, categories, subcategories, and media.' },
+  { key: 'content', label: 'Content', description: 'Homepage copy and translations.' },
+  { key: 'sales', label: 'Sales', description: 'Orders and customer inquiries.' }
+] as const;
+
+type AdminTab = (typeof adminTabs)[number]['key'];
+
 function parsePage(value?: string) {
   const parsed = Number.parseInt(value ?? '1', 10);
   return Number.isFinite(parsed) ? Math.max(1, parsed) : 1;
@@ -29,8 +38,40 @@ function optionalParam(value?: string) {
   return normalized || undefined;
 }
 
-export default async function AdminPage({ searchParams }: { searchParams: Promise<{ status?: string; message?: string; inquiryStatus?: string; inquiryPage?: string; inquirySearch?: string; inquiryAssignment?: string; auditAction?: string; auditEntity?: string; auditActor?: string; auditSearch?: string; orderStatus?: string; orderPaymentStatus?: string; orderFulfillmentStatus?: string; orderSearch?: string; orderPage?: string }> }) {
-  const { status, message, inquiryStatus, inquiryPage, inquirySearch, inquiryAssignment, auditAction, auditEntity, auditActor, auditSearch, orderStatus, orderPaymentStatus, orderFulfillmentStatus, orderSearch, orderPage } = await searchParams;
+function parseAdminTab(value?: string): AdminTab {
+  return adminTabs.some((tab) => tab.key === value) ? (value as AdminTab) : 'overview';
+}
+
+function tabHref(tab: AdminTab) {
+  return `/admin?tab=${tab}`;
+}
+
+function AdminTabNav({ activeTab }: { activeTab: AdminTab }) {
+  return (
+    <nav aria-label="Admin workspaces" className="sticky top-28 z-10 rounded-lg border border-rosewood/10 bg-white/95 p-2 shadow-[0_18px_50px_rgba(111,36,56,0.08)] backdrop-blur">
+      <div className="grid gap-2 md:grid-cols-4">
+        {adminTabs.map((tab) => {
+          const active = tab.key === activeTab;
+          return (
+            <Link
+              key={tab.key}
+              href={tabHref(tab.key)}
+              aria-current={active ? 'page' : undefined}
+              className={`rounded-lg border px-4 py-3 text-left transition ${active ? 'border-rosewood bg-rosewood text-white shadow-sm' : 'border-transparent bg-white text-stone-700 hover:border-rosewood/15 hover:bg-cream'}`}
+            >
+              <span className="block text-sm font-semibold">{tab.label}</span>
+              <span className={`mt-1 block text-xs leading-5 ${active ? 'text-white/75' : 'text-stone-500'}`}>{tab.description}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}
+
+export default async function AdminPage({ searchParams }: { searchParams: Promise<{ tab?: string; status?: string; message?: string; inquiryStatus?: string; inquiryPage?: string; inquirySearch?: string; inquiryAssignment?: string; auditAction?: string; auditEntity?: string; auditActor?: string; auditSearch?: string; orderStatus?: string; orderPaymentStatus?: string; orderFulfillmentStatus?: string; orderSearch?: string; orderPage?: string }> }) {
+  const { tab, status, message, inquiryStatus, inquiryPage, inquirySearch, inquiryAssignment, auditAction, auditEntity, auditActor, auditSearch, orderStatus, orderPaymentStatus, orderFulfillmentStatus, orderSearch, orderPage } = await searchParams;
+  const activeTab = parseAdminTab(tab);
   const assignmentFilter = parseInquiryAssignmentQueueFilter(inquiryAssignment);
   const inquiryPageNumber = parsePage(inquiryPage);
   const auditFilters = {
@@ -85,13 +126,13 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   return (
     <main id="main-content" tabIndex={-1}>
       <SiteHeader />
-      <section className="mx-auto max-w-7xl px-5 py-14">
+      <section className="mx-auto max-w-[1500px] px-5 py-10">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">Admin CMS</p>
-            <h1 className="mt-3 font-display text-6xl text-rosewood">Edit Golara without Joomla.</h1>
-            <p className="mt-5 max-w-3xl text-lg leading-8 text-stone-700">
-              Manage homepage content, product categories, media, customer inquiries, orders, and product cards from one place.
+            <h1 className="mt-3 font-display text-5xl text-rosewood md:text-6xl">Golara operations console</h1>
+            <p className="mt-5 max-w-3xl text-base leading-8 text-stone-700 md:text-lg">
+              Manage catalog, storefront content, orders, inquiries, media, and readiness from focused workspaces.
             </p>
           </div>
           {!authenticated ? (
@@ -100,13 +141,12 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             </Link>
           ) : null}
         </div>
-        <div className="mt-10 grid gap-12">
+        <div className="mt-8 grid gap-8">
+          <AdminTabNav activeTab={activeTab} />
           <AdminActionBanner status={status} message={message} />
-          {authenticated ? <AdminAuditLogPanel logs={auditLogs} filters={auditFilters} /> : null}
-          {authenticated ? <AdminStaffReadinessPanel accounts={adminAccounts} summary={adminAccountSummary} identity={adminIdentity} /> : null}
-          {authenticated ? <AdminOrderPanel orderPage={orderPageData} filters={orderFilters} /> : null}
-          <InquiryBoard inquiryPage={inquiryPageData} counts={inquiryCounts} assignmentSummary={assignmentSummary} activeStatus={inquiryStatus} search={inquirySearch} assignmentFilter={assignmentFilter} />
+
           <AdminDashboard
+            activeWorkspace={activeTab}
             categories={categories}
             products={products}
             homepage={homepage}
@@ -122,6 +162,12 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             status={status}
             message={message}
           />
+
+          {activeTab === 'overview' && authenticated ? <AdminStaffReadinessPanel accounts={adminAccounts} summary={adminAccountSummary} identity={adminIdentity} /> : null}
+          {activeTab === 'overview' && authenticated ? <AdminAuditLogPanel logs={auditLogs} filters={auditFilters} /> : null}
+
+          {activeTab === 'sales' && authenticated ? <AdminOrderPanel orderPage={orderPageData} filters={orderFilters} /> : null}
+          {activeTab === 'sales' ? <InquiryBoard inquiryPage={inquiryPageData} counts={inquiryCounts} assignmentSummary={assignmentSummary} activeStatus={inquiryStatus} search={inquirySearch} assignmentFilter={assignmentFilter} /> : null}
         </div>
       </section>
     </main>

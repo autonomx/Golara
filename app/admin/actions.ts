@@ -19,8 +19,14 @@ async function ensureCanWriteCms() {
   }
 }
 
+function tabForStatus(status: string) {
+  if (status.startsWith('product-') || status.startsWith('category-') || status.startsWith('media-')) return 'catalog';
+  if (status.startsWith('homepage-')) return 'content';
+  return 'overview';
+}
+
 function adminPath(status: string, message?: string) {
-  const params = new URLSearchParams({ status });
+  const params = new URLSearchParams({ tab: tabForStatus(status), status });
   if (message) params.set('message', message);
   return `/admin?${params.toString()}`;
 }
