@@ -6,6 +6,7 @@ import {
   nextCheckoutOrderStatus,
   normalizeCheckoutResultStatus,
   optionalCheckoutResultText,
+  providerVerificationResult,
   shouldUpdateCheckoutAttemptStatus
 } from '../../lib/checkout/payment-result-core';
 
@@ -42,6 +43,47 @@ export async function runPaymentResultCoreTests() {
   assert.equal(nextCheckoutOrderStatus('paid', 'failed'), 'paid');
   assert.equal(nextCheckoutOrderStatus('pending_payment', 'failed'), 'pending_payment');
   assert.equal(nextCheckoutOrderStatus('draft', 'cancelled'), 'draft');
+
+  assert.deepEqual(providerVerificationResult({
+    provider: 'manual',
+    status: 'paid',
+    providerReference: 'REF-1'
+  }), {
+    status: 'paid',
+    providerReference: 'REF-1',
+    metadata: {
+      verified: true,
+      verificationSkipped: true
+    }
+  });
+
+  assert.deepEqual(providerVerificationResult({
+    provider: 'stripe',
+    status: 'paid',
+    providerReference: 'REF-2',
+    requireVerification: true
+  }), {
+    status: 'failed',
+    providerReference: 'REF-2',
+    metadata: {
+      verified: false,
+      reason: 'provider-verification-required'
+    }
+  });
+
+  assert.deepEqual(providerVerificationResult({
+    provider: 'stripe',
+    status: 'failed',
+    providerReference: 'REF-3',
+    requireVerification: true
+  }), {
+    status: 'failed',
+    providerReference: 'REF-3',
+    metadata: {
+      verified: false,
+      verificationSkipped: true
+    }
+  });
 
   const nowMs = new Date('2026-05-31T23:00:00Z').getTime();
   assert.equal(isDuplicateCheckoutResultEvent({
