@@ -1,8 +1,16 @@
 import 'server-only';
 
+import {
+  checkoutAttemptStatusForResult,
+  checkoutResultEventTitle,
+  isDuplicateCheckoutResultEvent,
+  nextCheckoutOrderStatus,
+  normalizeCheckoutResultStatus,
+  optionalCheckoutResultText,
+  shouldUpdateCheckoutAttemptStatus,
+  type CheckoutResultStatus
+} from '@/lib/checkout/payment-result-core';
 import { hasDatabase, prisma } from '@/lib/prisma';
-
-type CheckoutResultStatus = 'paid' | 'failed' | 'cancelled';
 
 type CheckoutResultInput = {
   orderNumber: string;
@@ -32,45 +40,6 @@ type ZarinpalVerifyResponse = {
   errors?: Record<string, unknown> | string[];
 };
 
-const FINAL_ATTEMPT_STATUSES = new Set(['verified_paid', 'cancelled', 'failed']);
-
-function normalizeStatus(value: string): CheckoutResultStatus {
-  const normalized = value.trim().toLowerCase();
-  if (normalized === 'paid' || normalized === 'success' || normalized === 'ok') return 'paid';
-  if (normalized === 'cancelled' || normalized === 'canceled' || normalized === 'cancel') return 'cancelled';
-  return 'failed';
-}
-
-function optionalText(value?: string) {
-  const normalized = value?.trim();
-  return normalized || undefined;
-}
-
-function attemptStatus(status: CheckoutResultStatus) {
-  if (status === 'paid') return 'verified_paid';
-  if (status === 'cancelled') return 'cancelled';
-  return 'failed';
-}
-
-function eventTitle(status: CheckoutResultStatus) {
-  if (status === 'paid') return 'Payment verified paid';
-  if (status === 'cancelled') return 'Payment cancelled';
-  return 'Payment failed';
-}
-
-function shouldUpdateAttempt(currentStatus: string, nextStatus: string) {
-  if (currentStatus === nextStatus) return false;
-  if (currentStatus === 'verified_paid') return false;
-  if (FINAL_ATTEMPT_STATUSES.has(currentStatus) && nextStatus !== 'verified_paid') return false;
-  return true;
-}
-
-function nextOrderStatus(currentStatus: string, status: CheckoutResultStatus) {
-  if (currentStatus === 'paid') return 'paid';
-  if (status === 'paid') return 'paid';
-  return currentStatus;
-}
-
 function zarinpalMerchantId() {
   return process.env.ZARINPAL_MERCHANT_ID?.trim();
 }
@@ -85,7 +54,7 @@ function zarinpalAmount(amountCents: number) {
 }
 
 async function verifyZarinpalPayment(input: { amountCents: number; authority?: string; status: CheckoutResultStatus }) {
-  const authority = optionalText(input.authority);
+  const authority = optionalCheckoutResultText(input.authority);
   const merchantId = zarinpalMerchantId();
   if (input.status !== 'paid') {
     return {
@@ -180,10 +149,10 @@ export async function applyCheckoutResult(input: CheckoutResultInput) {
   const token = input.token.trim();
   if (!orderNumber || token.length < 16) throw new Error('Invalid order result reference.');
 
-  const requestedStatus = normalizeStatus(input.status);
-  const providerReference = optionalText(input.providerReference);
-  const provider = optionalText(input.provider);
-  const authority = optionalText(input.authority);
+  const requestedStatus = normalizeCheckoutResultStatus(input.status);
+  const providerReference = optionalCheckoutResultText(input.providerReference);
+  const provider = optionalCheckoutResultText(input.provider);
+  const authority = optionalCheckoutResultText(input.authority);
   const order = await prisma.checkoutOrder.findFirst({
     where: { orderNumber, publicLookupToken: token },
     include: {
@@ -210,10 +179,10 @@ export async function applyCheckoutResult(input: CheckoutResultInput) {
     amountCents: latestAttempt?.amountCents ?? order.totalCents
   });
   const status = verification.status;
-  const nextAttemptStatus = attemptStatus(status);
+  const nextAttemptStatus = checkoutAttemptStatusForResult(status);
   let attemptChanged = false;
 
-  if (latestAttempt && shouldUpdateAttempt(latestAttempt.status, nextAttemptStatus)) {
+  if (latestAttempt && shouldUpdateCheckoutAttemptStatus(latestAttempt.status, nextAttemptStatus)) {
     await prisma.checkoutPaymentAttempt.update({
       where: { id: latestAttempt.id },
       data: {
@@ -232,14 +201,10 @@ export async function applyCheckoutResult(input: CheckoutResultInput) {
     attemptChanged = true;
   }
 
-  const updatedOrderStatus = nextOrderStatus(order.status, status);
+  const updatedOrderStatus = nextCheckoutOrderStatus(order.status, status);
   const statusChanged = updatedOrderStatus !== order.status;
   const lastEvent = order.timelineEvents[0];
-  const duplicateLatestEvent = Boolean(
-    lastEvent &&
-      lastEvent.title === eventTitle(status) &&
-      lastEvent.createdAt.getTime() > Date.now() - 5 * 60 * 1000
-  );
+  const duplicateLatestEvent = isDuplicateCheckoutResultEvent({ lastEvent, status });
 
   if (statusChanged || attemptChanged || !duplicateLatestEvent) {
     await prisma.checkoutOrder.update({
@@ -251,7 +216,7 @@ export async function applyCheckoutResult(input: CheckoutResultInput) {
           : {
               create: {
                 type: 'payment_result',
-                title: eventTitle(status),
+                title: checkoutResultEventTitle(status),
                 metadata: {
                   requestedStatus,
                   resultStatus: status,
