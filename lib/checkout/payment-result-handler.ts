@@ -7,7 +7,9 @@ import {
   nextCheckoutOrderStatus,
   normalizeCheckoutResultStatus,
   optionalCheckoutResultText,
+  providerVerificationResult,
   shouldUpdateCheckoutAttemptStatus,
+  type CheckoutProviderVerificationResult,
   type CheckoutResultStatus
 } from '@/lib/checkout/payment-result-core';
 import { hasDatabase, prisma } from '@/lib/prisma';
@@ -19,12 +21,6 @@ type CheckoutResultInput = {
   provider?: string;
   providerReference?: string;
   authority?: string;
-};
-
-type ProviderVerificationResult = {
-  status: CheckoutResultStatus;
-  providerReference?: string;
-  metadata?: Record<string, string | number | boolean>;
 };
 
 type ZarinpalVerifyResponse = {
@@ -61,7 +57,7 @@ async function verifyZarinpalPayment(input: { amountCents: number; authority?: s
       status: input.status,
       providerReference: authority,
       metadata: { verificationSkipped: true, reason: 'provider-returned-non-paid' }
-    } satisfies ProviderVerificationResult;
+    } satisfies CheckoutProviderVerificationResult;
   }
 
   if (!merchantId || !authority) {
@@ -72,7 +68,7 @@ async function verifyZarinpalPayment(input: { amountCents: number; authority?: s
         verified: false,
         reason: !merchantId ? 'missing-merchant-id' : 'missing-authority'
       }
-    } satisfies ProviderVerificationResult;
+    } satisfies CheckoutProviderVerificationResult;
   }
 
   const response = await fetch(zarinpalVerifyUrl(), {
@@ -109,7 +105,7 @@ async function verifyZarinpalPayment(input: { amountCents: number; authority?: s
       feeType: payload?.data?.fee_type ?? '',
       httpStatus: response.status
     }
-  } satisfies ProviderVerificationResult;
+  } satisfies CheckoutProviderVerificationResult;
 }
 
 async function verifyProviderResult(input: { provider?: string; status: CheckoutResultStatus; providerReference?: string; authority?: string; amountCents: number }) {
@@ -121,25 +117,12 @@ async function verifyProviderResult(input: { provider?: string; status: Checkout
     });
   }
 
-  if (input.status === 'paid' && process.env.CHECKOUT_REQUIRE_PROVIDER_VERIFICATION === 'true') {
-    return {
-      status: 'failed',
-      providerReference: input.providerReference,
-      metadata: {
-        verified: false,
-        reason: 'provider-verification-required'
-      }
-    } satisfies ProviderVerificationResult;
-  }
-
-  return {
+  return providerVerificationResult({
+    provider: input.provider,
     status: input.status,
     providerReference: input.providerReference,
-    metadata: {
-      verified: input.status !== 'paid' ? false : input.provider === 'manual' || input.provider === 'domestic_redirect',
-      verificationSkipped: input.status !== 'paid' || input.provider !== 'zarinpal'
-    }
-  } satisfies ProviderVerificationResult;
+    requireVerification: process.env.CHECKOUT_REQUIRE_PROVIDER_VERIFICATION === 'true'
+  });
 }
 
 export async function applyCheckoutResult(input: CheckoutResultInput) {

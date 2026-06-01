@@ -1,5 +1,11 @@
 export type CheckoutResultStatus = 'paid' | 'failed' | 'cancelled';
 
+export type CheckoutProviderVerificationResult = {
+  status: CheckoutResultStatus;
+  providerReference?: string;
+  metadata?: Record<string, string | number | boolean>;
+};
+
 const FINAL_ATTEMPT_STATUSES = new Set(['verified_paid', 'cancelled', 'failed']);
 
 export function normalizeCheckoutResultStatus(value: string): CheckoutResultStatus {
@@ -48,4 +54,31 @@ export function isDuplicateCheckoutResultEvent(input: {
   if (!lastEvent) return false;
   if (lastEvent.title !== checkoutResultEventTitle(input.status)) return false;
   return lastEvent.createdAt.getTime() > (input.nowMs ?? Date.now()) - 5 * 60 * 1000;
+}
+
+export function providerVerificationResult(input: {
+  provider?: string;
+  status: CheckoutResultStatus;
+  providerReference?: string;
+  requireVerification?: boolean;
+}): CheckoutProviderVerificationResult {
+  if (input.status === 'paid' && input.requireVerification) {
+    return {
+      status: 'failed',
+      providerReference: input.providerReference,
+      metadata: {
+        verified: false,
+        reason: 'provider-verification-required'
+      }
+    };
+  }
+
+  return {
+    status: input.status,
+    providerReference: input.providerReference,
+    metadata: {
+      verified: input.status !== 'paid' ? false : input.provider === 'manual' || input.provider === 'domestic_redirect',
+      verificationSkipped: input.status !== 'paid' || input.provider !== 'zarinpal'
+    }
+  };
 }
