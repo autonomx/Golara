@@ -33,29 +33,29 @@ export const homepageBannerSlides: HomepageBannerSlide[] = [
     image: '/homepage/banners/banner1.jpeg',
     alt: 'Golara floral delivery banner',
     eyebrow: 'Same-day floral gifting',
-    title: 'Arrangements ready for the moment',
-    body: 'Layered bouquets, VIP boxes, and refined seasonal stems prepared with a premium studio finish.'
+    title: 'Flowers that arrive with feeling',
+    body: 'Shop ready-today bouquets, premium boxes, and thoughtful occasion gifts with a studio-polished finish.'
   },
   {
     image: '/homepage/banners/banner2.jpeg',
     alt: 'Golara available today banner',
     eyebrow: 'Fresh today',
-    title: 'Soft palettes with serious presence',
-    body: 'Choose romantic pinks, porcelain whites, or dramatic berry tones for gifting that feels considered.'
+    title: 'Choose by mood, moment, or color',
+    body: 'Romantic pinks, porcelain whites, dramatic berry tones, and refined greens for gifts that feel considered.'
   },
   {
     image: '/homepage/banners/banner3.jpeg',
     alt: 'Golara floral studio banner',
     eyebrow: 'Golara floral studio',
-    title: 'Designed to feel personal',
-    body: 'Premium boxes and hand bouquets made for birthdays, ceremonies, celebrations, and everyday tenderness.'
+    title: 'Designed around the occasion',
+    body: 'Birthday, proposal, wedding, baby, sympathy, and celebration flowers arranged with calm, personal guidance.'
   },
   {
     image: '/homepage/banners/banner4.jpeg',
     alt: 'Golara distance banner',
     eyebrow: 'Distance delivery',
-    title: 'Send flowers beautifully',
-    body: 'A polished storefront experience for browsing, ordering, and selecting floral gifts with confidence.'
+    title: 'Send flowers beautifully from anywhere',
+    body: 'Browse clearly, choose confidently, and let the studio coordinate the right floral gift for the delivery moment.'
   }
 ];
 

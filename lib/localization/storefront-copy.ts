@@ -27,9 +27,9 @@ type StorefrontCopyRegistry = Record<StorefrontCopyLocale, Record<StorefrontCopy
 
 export const storefrontCopy: StorefrontCopyRegistry = {
   en: {
-    'home.collectionsEyebrow': 'Collections',
+    'home.collectionsEyebrow': 'Occasions',
     'home.collectionsTitle': 'Shop by occasion',
-    'home.favoritesEyebrow': 'Favorites',
+    'home.favoritesEyebrow': 'Customer favorites',
     'home.favoritesTitle': 'Best sellers',
     'nav.catalog': 'Catalog',
     'catalog.eyebrow': 'Catalog',
@@ -50,9 +50,9 @@ export const storefrontCopy: StorefrontCopyRegistry = {
     'common.home': 'Home'
   },
   fa: {
-    'home.collectionsEyebrow': 'مجموعه‌ها',
+    'home.collectionsEyebrow': 'مناسبت‌ها',
     'home.collectionsTitle': 'خرید بر اساس مناسبت',
-    'home.favoritesEyebrow': 'محبوب‌ها',
+    'home.favoritesEyebrow': 'محبوب مشتریان',
     'home.favoritesTitle': 'پرفروش‌ها',
     'nav.catalog': 'کاتالوگ',
     'catalog.eyebrow': 'کاتالوگ',

@@ -7,7 +7,7 @@ import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { getStorefrontCopy } from '@/lib/localization/storefront-copy';
 import { hasDatabase } from '@/lib/prisma';
 
-const headerLinkClass = 'rounded-full px-3 py-2 outline-none transition hover:text-rosewood focus-visible:ring-4 focus-visible:ring-olive/20';
+const headerLinkClass = 'rounded-full px-3 py-2 outline-none transition hover:bg-white/70 hover:text-rosewood focus-visible:ring-4 focus-visible:ring-olive/20';
 const iconLinkClass = 'relative rounded-full p-2 outline-none transition hover:bg-white/70 focus-visible:ring-4 focus-visible:ring-olive/20';
 
 async function cartItemCount() {
@@ -22,14 +22,15 @@ export async function SiteHeader({ returnTo = '/' }: { returnTo?: string } = {})
   const itemCount = await cartItemCount();
 
   return (
-    <header className="sticky top-0 z-20 border-b border-rosewood/10 bg-cream/95 backdrop-blur">
-      <div className="border-b border-rosewood/10 bg-rosewood px-4 py-2 text-center text-xs font-semibold uppercase tracking-[0.28em] text-white">
-        Same-day floral orders, curated gift boxes, and premium event styling
+    <header className="sticky top-0 z-20 border-b border-rosewood/10 bg-cream/90 backdrop-blur-xl">
+      <div className="border-b border-rosewood/10 bg-rosewood px-4 py-2 text-center text-xs font-semibold uppercase tracking-[0.24em] text-white">
+        Same-day flowers, occasion gifts, and guided VIP arrangements
       </div>
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4">
         <nav className="hidden items-center gap-2 text-sm font-medium text-rosewood/80 md:flex" aria-label="Primary navigation">
           <Link href="/products" className={headerLinkClass}>{getStorefrontCopy('nav.catalog', locale)}</Link>
-          <Link href="/categories" className={headerLinkClass}>Collections</Link>
+          <Link href="/#occasions" className={headerLinkClass}>Occasions</Link>
+          <Link href="/categories/available-today" className={headerLinkClass}>Available today</Link>
           <Link href="/#best-sellers" className={headerLinkClass}>Best sellers</Link>
         </nav>
         <Link href="/" className="rounded-full font-display text-3xl tracking-tight text-rosewood outline-none focus-visible:ring-4 focus-visible:ring-olive/20">Golara</Link>

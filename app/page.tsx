@@ -1,6 +1,9 @@
 import Link from 'next/link';
 import { HomepageBannerSlideshow } from '@/components/HomepageBannerSlideshow';
 import { HomepageCategoryTileCard } from '@/components/HomepageCategoryTileCard';
+import { HomepageOccasionRail } from '@/components/HomepageOccasionRail';
+import { HomepageTrustStrip } from '@/components/HomepageTrustStrip';
+import { HomepageVipAssist } from '@/components/HomepageVipAssist';
 import { BestSellersCarousel } from '@/components/BestSellersCarousel';
 import { SiteHeader } from '@/components/SiteHeader';
 import { withCategoryProductCounts } from '@/lib/category-tree';
@@ -24,31 +27,40 @@ export default async function HomePage() {
   const bestSellers = products.filter((product) => product.bestSeller).slice(0, 24);
   const categoriesWithCounts = withCategoryProductCounts(categories, products);
   const productCountBySlug = new Map(categoriesWithCounts.map((category) => [category.slug, category.productCount]));
-  const homepageCategoriesWithCounts = homepageCategories.map((category) => ({
+  const homepageOccasionsWithCounts = homepageCategories.map((category) => ({
     ...category,
     productCount: productCountBySlug.get(category.slug) ?? 0
-  })).slice(0, 6);
+  }));
+  const featuredOccasions = homepageOccasionsWithCounts.slice(0, 6);
+  const occasionRailItems = homepageOccasionsWithCounts.slice(0, 10);
 
   return (
     <main id="main-content" tabIndex={-1} dir={getStorefrontCopyDirection(locale)}>
       <SiteHeader returnTo="/" />
 
       <HomepageBannerSlideshow slides={homepageBannerSlides} />
+      <HomepageOccasionRail occasions={occasionRailItems} />
+      <HomepageTrustStrip />
 
-      <section id="collections" className="mx-auto max-w-[1520px] px-5 py-20">
-        <div className="mb-8 flex items-end justify-between gap-4">
+      <BestSellersCarousel products={bestSellers} locale={locale} />
+
+      <HomepageVipAssist />
+
+      <section id="occasions-gallery" className="bg-white/45 px-5 py-20">
+        <div className="mx-auto max-w-[1520px]">
+        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">{copy('home.collectionsEyebrow')}</p>
             <h2 className="mt-2 font-display text-4xl text-rosewood md:text-5xl">{copy('home.collectionsTitle')}</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-stone-600 md:text-base">Browse by the moment you are buying for, from birthdays and weddings to sympathy, baby flowers, and same-day gifts.</p>
           </div>
-          <Link href="/categories" className="hidden border-b border-rosewood pb-1 text-sm font-semibold uppercase tracking-[0.16em] text-rosewood md:inline-flex">See all</Link>
+          <Link href="/categories" className="inline-flex rounded-full border border-rosewood/15 bg-white px-5 py-2.5 text-sm font-semibold text-rosewood shadow-sm transition hover:border-rosewood hover:bg-blush">See all occasions</Link>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
-          {homepageCategoriesWithCounts.map((category, index) => <HomepageCategoryTileCard key={category.slug} category={category} priority={index < 4} />)}
+          {featuredOccasions.map((category, index) => <HomepageCategoryTileCard key={category.slug} category={category} priority={index < 4} />)}
+        </div>
         </div>
       </section>
-
-      <BestSellersCarousel products={bestSellers} locale={locale} />
 
       <footer className="border-t border-rosewood/10 bg-white/70">
         <div className="mx-auto grid max-w-7xl gap-8 px-5 py-10 text-sm text-stone-600 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
@@ -60,7 +72,7 @@ export default async function HomePage() {
             <h3 className="font-semibold text-rosewood">Shop</h3>
             <div className="mt-3 grid gap-2">
               <Link href="/products" className={footerLinkClass}>All products</Link>
-              <Link href="/categories" className={footerLinkClass}>Collections</Link>
+              <Link href="/categories" className={footerLinkClass}>Occasions</Link>
               <Link href="/#best-sellers" className={footerLinkClass}>Best sellers</Link>
             </div>
           </div>

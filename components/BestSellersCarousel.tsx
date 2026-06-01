@@ -3,8 +3,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import type { Product } from '@/lib/catalog';
+import { ChevronLeft, ChevronRight, MessageCircle, ShoppingBag } from 'lucide-react';
+import { formatPrice, productRequiresQuote, type Product } from '@/lib/catalog';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 import { getStorefrontCopy } from '@/lib/localization/storefront-copy';
 import { homepageBestSellerImage } from '@/lib/homepage-assets';
@@ -50,6 +50,7 @@ export function BestSellersCarousel({ products, locale }: BestSellersCarouselPro
 
   const goPrevious = () => setActiveIndex((current) => (current <= 0 ? maxStartIndex : current - 1));
   const goNext = () => setActiveIndex((current) => (current >= maxStartIndex ? 0 : current + 1));
+  const whatsappHref = (product: Product) => `https://wa.me/?text=${encodeURIComponent(`I am interested in ${product.title} (${product.code}).`)}`;
 
   if (!products.length) {
     return null;
@@ -88,7 +89,8 @@ export function BestSellersCarousel({ products, locale }: BestSellersCarouselPro
           <div className="flex transition-transform duration-500 ease-out will-change-transform" style={sliderStyle}>
             {products.map((product, index) => (
               <article key={product.slug} className="min-w-full max-w-full shrink-0 px-0.5 md:min-w-[50%] md:max-w-[50%] md:px-2 lg:min-w-[33.333333%] lg:max-w-[33.333333%] xl:min-w-[25%] xl:max-w-[25%] xl:px-3">
-                <Link href={`/products/${product.slug}`} className="group block overflow-hidden rounded-2xl border border-rosewood/10 bg-white shadow-[0_18px_50px_rgba(111,36,56,0.08)] outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
+                <div className="group overflow-hidden rounded-2xl border border-rosewood/10 bg-white shadow-[0_18px_50px_rgba(111,36,56,0.08)]">
+                  <Link href={`/products/${product.slug}`} className="block outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
                   <div className="relative aspect-[4/5] overflow-hidden bg-stone-100">
                     <Image
                       src={homepageBestSellerImage(product.slug)}
@@ -111,12 +113,23 @@ export function BestSellersCarousel({ products, locale }: BestSellersCarouselPro
                     <div className="text-xs uppercase tracking-[0.25em] text-rosewood/50">{product.code}</div>
                     <h3 className="line-clamp-1 font-display text-2xl text-rosewood">{product.title}</h3>
                     <p className="line-clamp-2 text-sm text-stone-600">{product.description}</p>
-                    <div className="flex items-center justify-between gap-3 pt-3">
-                      <span className="text-lg font-semibold text-rosewood">{product.requiresQuote ? 'Quote required' : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'IRR', maximumFractionDigits: 0 }).format(product.price)}</span>
-                      <span className="border-b border-rosewood/40 pb-0.5 text-xs font-semibold uppercase tracking-[0.16em] text-rosewood">View</span>
-                    </div>
+                    <div className="pt-3 text-lg font-semibold text-rosewood">{productRequiresQuote(product) ? 'Contact to order' : formatPrice(product)}</div>
                   </div>
-                </Link>
+                  </Link>
+                  <div className="flex items-center gap-2 px-5 pb-5">
+                    {productRequiresQuote(product) ? (
+                      <a href={whatsappHref(product)} className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-rosewood px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-stone-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
+                        <MessageCircle aria-hidden="true" className="h-4 w-4" />
+                        Message sales
+                      </a>
+                    ) : (
+                      <Link href={`/products/${product.slug}`} className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-rosewood px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-stone-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
+                        <ShoppingBag aria-hidden="true" className="h-4 w-4" />
+                        View and order
+                      </Link>
+                    )}
+                  </div>
+                </div>
               </article>
             ))}
           </div>
