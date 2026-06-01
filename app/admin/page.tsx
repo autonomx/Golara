@@ -48,8 +48,8 @@ function tabHref(tab: AdminTab) {
 
 function AdminTabNav({ activeTab }: { activeTab: AdminTab }) {
   return (
-    <nav aria-label="Admin workspaces" className="sticky top-28 z-10 rounded-lg border border-rosewood/10 bg-white/95 p-2 shadow-[0_18px_50px_rgba(111,36,56,0.08)] backdrop-blur">
-      <div className="grid gap-2 md:grid-cols-4">
+    <nav aria-label="Admin workspaces" className="sticky top-16 z-20 rounded-lg border border-rosewood/10 bg-white/95 p-1.5 shadow-[0_12px_32px_rgba(111,36,56,0.08)] backdrop-blur">
+      <div className="flex flex-wrap items-center gap-1.5">
         {adminTabs.map((tab) => {
           const active = tab.key === activeTab;
           return (
@@ -57,10 +57,9 @@ function AdminTabNav({ activeTab }: { activeTab: AdminTab }) {
               key={tab.key}
               href={tabHref(tab.key)}
               aria-current={active ? 'page' : undefined}
-              className={`rounded-lg border px-4 py-3 text-left transition ${active ? 'border-rosewood bg-rosewood text-white shadow-sm' : 'border-transparent bg-white text-stone-700 hover:border-rosewood/15 hover:bg-cream'}`}
+              className={`rounded-md border px-3 py-2 text-left text-sm font-semibold transition ${active ? 'border-rosewood bg-rosewood text-white shadow-sm' : 'border-transparent bg-white text-stone-700 hover:border-rosewood/15 hover:bg-cream'}`}
             >
-              <span className="block text-sm font-semibold">{tab.label}</span>
-              <span className={`mt-1 block text-xs leading-5 ${active ? 'text-white/75' : 'text-stone-500'}`}>{tab.description}</span>
+              {tab.label}
             </Link>
           );
         })}
@@ -69,8 +68,8 @@ function AdminTabNav({ activeTab }: { activeTab: AdminTab }) {
   );
 }
 
-export default async function AdminPage({ searchParams }: { searchParams: Promise<{ tab?: string; status?: string; message?: string; inquiryStatus?: string; inquiryPage?: string; inquirySearch?: string; inquiryAssignment?: string; auditAction?: string; auditEntity?: string; auditActor?: string; auditSearch?: string; orderStatus?: string; orderPaymentStatus?: string; orderFulfillmentStatus?: string; orderSearch?: string; orderPage?: string }> }) {
-  const { tab, status, message, inquiryStatus, inquiryPage, inquirySearch, inquiryAssignment, auditAction, auditEntity, auditActor, auditSearch, orderStatus, orderPaymentStatus, orderFulfillmentStatus, orderSearch, orderPage } = await searchParams;
+export default async function AdminPage({ searchParams }: { searchParams: Promise<{ tab?: string; status?: string; message?: string; catalogSearch?: string; catalogCategory?: string; catalogFlag?: string; inquiryStatus?: string; inquiryPage?: string; inquirySearch?: string; inquiryAssignment?: string; auditAction?: string; auditEntity?: string; auditActor?: string; auditSearch?: string; orderStatus?: string; orderPaymentStatus?: string; orderFulfillmentStatus?: string; orderSearch?: string; orderPage?: string }> }) {
+  const { tab, status, message, catalogSearch, catalogCategory, catalogFlag, inquiryStatus, inquiryPage, inquirySearch, inquiryAssignment, auditAction, auditEntity, auditActor, auditSearch, orderStatus, orderPaymentStatus, orderFulfillmentStatus, orderSearch, orderPage } = await searchParams;
   const activeTab = parseAdminTab(tab);
   const assignmentFilter = parseInquiryAssignmentQueueFilter(inquiryAssignment);
   const inquiryPageNumber = parsePage(inquiryPage);
@@ -125,8 +124,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
   return (
     <main id="main-content" tabIndex={-1}>
-      <SiteHeader />
-      <section className="mx-auto max-w-[1500px] px-5 py-10">
+      <SiteHeader compact />
+      <section className="mx-auto max-w-[1500px] px-5 py-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">Admin CMS</p>
@@ -159,6 +158,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             notificationReadiness={notificationReadiness}
             notificationRetryRunbook={notificationRetryRunbook}
             checkoutReadiness={checkoutReadiness}
+            catalogSearch={catalogSearch}
+            catalogCategory={catalogCategory}
+            catalogFlag={catalogFlag}
             status={status}
             message={message}
           />

@@ -9,7 +9,7 @@ import { cmsMediaService } from '@/lib/cms/media-service';
 import { cmsProductService } from '@/lib/cms/product-service';
 import { normalizeLocale } from '@/lib/i18n/locales';
 import { normalizeImageUrl } from '@/lib/media/media-storage';
-import { hasDatabase } from '@/lib/prisma';
+import { hasDatabase, prisma } from '@/lib/prisma';
 
 async function ensureCanWriteCms() {
   await assertAdminRole('owner');
@@ -91,6 +91,12 @@ function parentCategoryId(formData: FormData, categoryId?: string) {
   const parentId = optionalString(formData, 'parentId');
   if (!parentId || parentId === categoryId) return null;
   return parentId;
+}
+
+function formIds(formData: FormData, name: string) {
+  return formData
+    .getAll(name)
+    .filter((value): value is string => typeof value === 'string' && Boolean(value.trim()));
 }
 
 function revalidateCatalog() {
@@ -249,6 +255,47 @@ export async function updateProductAction(productId: string, formData: FormData)
 
   revalidateCatalog();
   redirect(adminPath('product-updated'));
+}
+
+export async function bulkUpdateProductsAction(formData: FormData) {
+  await ensureCanWriteCms();
+
+  const productIds = formIds(formData, 'productId');
+  const bulkAction = stringField(formData, 'bulkAction');
+  const targetCategoryId = optionalString(formData, 'targetCategoryId');
+
+  if (productIds.length === 0) {
+    redirect(adminPath('error', 'Select at least one product.'));
+  }
+
+  const data =
+    bulkAction === 'activate'
+      ? { isActive: true }
+      : bulkAction === 'deactivate'
+        ? { isActive: false }
+        : bulkAction === 'mark-best-seller'
+          ? { bestSeller: true }
+          : bulkAction === 'unmark-best-seller'
+            ? { bestSeller: false }
+            : bulkAction === 'mark-available-today'
+              ? { availableToday: true }
+              : bulkAction === 'unmark-available-today'
+                ? { availableToday: false }
+                : bulkAction === 'move-category' && targetCategoryId
+                  ? { categoryId: targetCategoryId }
+                  : null;
+
+  if (!data) {
+    redirect(adminPath('error', 'Choose a valid bulk action.'));
+  }
+
+  const result = await prisma.product.updateMany({
+    where: { id: { in: productIds } },
+    data
+  });
+
+  revalidateCatalog();
+  redirect(adminPath('product-bulk-updated', `Updated ${result.count} products.`));
 }
 
 export async function upsertProductTranslationAction(productId: string, formData: FormData) {

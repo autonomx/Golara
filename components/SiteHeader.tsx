@@ -17,24 +17,24 @@ async function cartItemCount() {
   return cart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
 }
 
-export async function SiteHeader({ returnTo = '/' }: { returnTo?: string } = {}) {
+export async function SiteHeader({ returnTo = '/', compact = false }: { returnTo?: string; compact?: boolean } = {}) {
   const locale = await resolveStorefrontLocale();
   const itemCount = await cartItemCount();
   const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key, locale);
 
   return (
     <header className="sticky top-0 z-20 border-b border-rosewood/10 bg-cream/90 backdrop-blur-xl">
-      <div className="border-b border-rosewood/10 bg-rosewood px-4 py-2 text-center text-xs font-semibold uppercase tracking-[0.24em] text-white">
+      {!compact ? <div className="border-b border-rosewood/10 bg-rosewood px-4 py-2 text-center text-xs font-semibold uppercase tracking-[0.24em] text-white">
         {copy('header.announcement')}
-      </div>
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4">
+      </div> : null}
+      <div className={`mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 ${compact ? 'py-2' : 'py-4'}`}>
         <nav className="hidden items-center gap-2 text-sm font-medium text-rosewood/80 md:flex" aria-label="Primary navigation">
           <Link href="/products" className={headerLinkClass}>{copy('nav.catalog')}</Link>
           <Link href="/#occasions" className={headerLinkClass}>{copy('nav.occasions')}</Link>
           <Link href="/categories/available-today" className={headerLinkClass}>{copy('nav.availableToday')}</Link>
           <Link href="/#best-sellers" className={headerLinkClass}>{copy('nav.bestSellers')}</Link>
         </nav>
-        <Link href="/" className="rounded-full font-display text-3xl tracking-tight text-rosewood outline-none focus-visible:ring-4 focus-visible:ring-olive/20">Golara</Link>
+        <Link href="/" className={`rounded-full font-display tracking-tight text-rosewood outline-none focus-visible:ring-4 focus-visible:ring-olive/20 ${compact ? 'text-2xl' : 'text-3xl'}`}>Golara</Link>
         <div className="flex items-center gap-1 text-rosewood">
           <LanguageSwitcher locale={locale} returnTo={returnTo} />
           <span className="rounded-full p-2 text-rosewood/70" aria-hidden="true"><Search className="h-5 w-5" /></span>
