@@ -5,11 +5,11 @@ import { ProductCard } from '@/components/ProductCard';
 import { SiteHeader } from '@/components/SiteHeader';
 import { withCategoryProductCounts } from '@/lib/category-tree';
 import { getHomepageContent, listCategories, listHomepageCategories, listProducts } from '@/lib/cms/catalog-repository';
+import { homepageBannerSlides } from '@/lib/homepage-assets';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { getStorefrontCopy, getStorefrontCopyDirection } from '@/lib/localization/storefront-copy';
 
-const primaryCtaClass = 'rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30';
-const secondaryCtaClass = 'rounded-full border border-rosewood/20 bg-white/80 px-6 py-3 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20';
+const primaryCtaClass = 'inline-flex border-b border-stone-700 pb-1 font-display text-base uppercase tracking-[0.12em] text-stone-700 outline-none transition hover:text-rosewood focus-visible:ring-4 focus-visible:ring-olive/30';
 const footerLinkClass = 'outline-none transition hover:text-rosewood focus-visible:ring-4 focus-visible:ring-olive/20';
 
 export default async function HomePage() {
@@ -23,7 +23,6 @@ export default async function HomePage() {
   ]);
 
   const bestSellers = products.filter((product) => product.bestSeller).slice(0, 6);
-  const heroProducts = bestSellers.length >= 2 ? bestSellers.slice(0, 2) : products.slice(0, 2);
   const categoriesWithCounts = withCategoryProductCounts(categories, products);
   const productCountBySlug = new Map(categoriesWithCounts.map((category) => [category.slug, category.productCount]));
   const homepageCategoriesWithCounts = homepageCategories.map((category) => ({
@@ -35,49 +34,36 @@ export default async function HomePage() {
     <main id="main-content" tabIndex={-1} dir={getStorefrontCopyDirection(locale)}>
       <SiteHeader returnTo="/" />
 
-      <section className="border-b border-rosewood/10 bg-[linear-gradient(120deg,#fff8f1_0%,#fff4f7_52%,#efd6de_100%)]">
-        <div className="mx-auto grid max-w-7xl gap-10 px-5 py-12 md:grid-cols-[0.95fr_1.05fr] md:items-center md:py-20">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.35em] text-olive">Luxury floral studio</p>
-            <h1 className="mt-5 max-w-3xl font-display text-6xl leading-[0.92] text-rosewood md:text-8xl">Flowers for moments worth keeping.</h1>
-            <p className="mt-6 max-w-xl text-lg leading-8 text-stone-700">Shop curated bouquets, premium boxes, and event-ready floral gifts with real catalog photography.</p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/products" className={primaryCtaClass}>Shop products</Link>
-              <Link href="/#collections" className={secondaryCtaClass}>Browse collections</Link>
-            </div>
-          </div>
-          <div className="grid min-h-[520px] grid-cols-[0.9fr_1.1fr] gap-4">
-            {heroProducts[0] ? (
-              <div className="relative overflow-hidden rounded-[2rem] bg-blush shadow-2xl shadow-rosewood/10">
-                <Image src={heroProducts[0].image} alt={heroProducts[0].title} fill priority className="object-cover" sizes="(min-width: 768px) 34vw, 50vw" />
-              </div>
-            ) : null}
-            <div className="grid gap-4">
-              <div className="rounded-[2rem] bg-white/75 p-7 shadow-xl shadow-rosewood/10 backdrop-blur">
-                <p className="text-sm uppercase tracking-[0.25em] text-olive">{homepage.eyebrow}</p>
-                <h2 className="mt-3 font-display text-4xl text-rosewood">{homepage.panelTitle}</h2>
-                <p className="mt-4 text-sm leading-7 text-stone-700">{homepage.panelBody}</p>
-              </div>
-              {heroProducts[1] ? (
-                <div className="relative overflow-hidden rounded-[2rem] bg-blush shadow-xl shadow-rosewood/10">
-                  <Image src={heroProducts[1].image} alt={heroProducts[1].title} fill priority className="object-cover" sizes="(min-width: 768px) 32vw, 50vw" />
+      <section aria-label="Main slideshow" className="relative overflow-hidden bg-[#f6f6f3]">
+        <div className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {homepageBannerSlides.map((slide, index) => (
+            <article key={slide.image} className="relative h-[430px] w-full shrink-0 snap-center md:h-[610px]">
+              <Image src={slide.image} alt={slide.alt} fill priority={index === 0} className="object-cover" sizes="100vw" />
+              <div className="absolute inset-y-0 left-0 flex w-full items-center bg-gradient-to-r from-white/80 via-white/35 to-transparent px-8 md:px-40">
+                <div className="max-w-md text-stone-700">
+                  <p className="font-display text-3xl uppercase tracking-[0.2em] text-stone-500 md:text-5xl">Available for today</p>
+                  <div className="mt-5 h-px w-72 max-w-full bg-stone-500/70" />
+                  <p className="mt-5 text-xs uppercase tracking-[0.22em] text-stone-500">Golara floral studio</p>
+                  <Link href="/products" className={`${primaryCtaClass} mt-9`}>Click here</Link>
                 </div>
-              ) : null}
-            </div>
-          </div>
+              </div>
+            </article>
+          ))}
         </div>
+        <div className="absolute left-8 top-1/2 hidden -translate-y-1/2 text-4xl text-stone-400 md:block">‹</div>
+        <div className="absolute right-8 top-1/2 hidden -translate-y-1/2 text-4xl text-stone-400 md:block">›</div>
       </section>
 
-      <section id="collections" className="mx-auto max-w-7xl px-5 py-14">
+      <section id="collections" className="mx-auto max-w-[1520px] px-5 py-20">
         <div className="mb-8 flex items-end justify-between gap-4">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">{copy('home.collectionsEyebrow')}</p>
             <h2 className="mt-2 font-display text-4xl text-rosewood md:text-5xl">{copy('home.collectionsTitle')}</h2>
           </div>
-          <Link href="/categories" className="hidden rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood md:inline-flex">See all</Link>
+          <Link href="/categories" className="hidden border-b border-rosewood pb-1 text-sm font-semibold uppercase tracking-[0.16em] text-rosewood md:inline-flex">See all</Link>
         </div>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-          {homepageCategoriesWithCounts.map((category, index) => <HomepageCategoryTileCard key={category.slug} category={category} priority={index < 6} />)}
+        <div className="grid gap-4 md:grid-cols-2">
+          {homepageCategoriesWithCounts.map((category, index) => <HomepageCategoryTileCard key={category.slug} category={category} priority={index < 4} />)}
         </div>
       </section>
 

@@ -1,37 +1,29 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Category } from '@/lib/catalog';
-import { resolveCategoryImagePath } from '@/lib/seed-category-images';
-
-function productCountLabel(count?: number) {
-  if (typeof count !== 'number') return null;
-  return `${count} ${count === 1 ? 'product' : 'products'}`;
-}
+import { homepageCategoryImage } from '@/lib/homepage-assets';
 
 export function HomepageCategoryTileCard({ category, priority = false }: { category: Category; priority?: boolean }) {
-  const countLabel = productCountLabel(category.productCount);
-
   return (
     <Link
       href={`/categories/${category.slug}`}
       aria-label={`View ${category.title}`}
-      className="group overflow-hidden rounded-[2rem] border border-rosewood/10 bg-white shadow-sm outline-none transition hover:-translate-y-1 hover:shadow-xl focus-visible:ring-4 focus-visible:ring-olive/30"
+      className="group relative block min-h-[245px] overflow-hidden bg-stone-100 outline-none focus-visible:ring-4 focus-visible:ring-olive/30 md:min-h-[305px]"
     >
-      <div className="relative aspect-[4/3] overflow-hidden bg-blush">
-        <Image
-          src={resolveCategoryImagePath(category)}
-          alt={category.title}
-          fill
-          priority={priority}
-          className="object-cover transition duration-500 group-hover:scale-105"
-          sizes="(min-width: 1280px) 20vw, (min-width: 768px) 33vw, 50vw"
-        />
-        {countLabel ? <span className="absolute bottom-3 left-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-rosewood shadow-sm backdrop-blur">{countLabel}</span> : null}
-      </div>
-      <div className="p-5 text-center">
-        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-olive">{category.eyebrow}</p>
-        <h3 className="mt-2 font-display text-2xl text-rosewood">{category.title}</h3>
-        {category.parentTitle ? <p className="mt-2 text-xs text-stone-500">Under {category.parentTitle}</p> : null}
+      <Image
+        src={homepageCategoryImage(category.slug)}
+        alt={category.title}
+        fill
+        priority={priority}
+        className="object-cover transition duration-700 group-hover:scale-105"
+        sizes="(min-width: 1280px) 40vw, (min-width: 768px) 50vw, 100vw"
+      />
+      <div className="absolute inset-0 bg-gradient-to-r from-stone-200/80 via-stone-100/35 to-transparent" />
+      <div className="absolute left-8 top-1/2 max-w-[13rem] -translate-y-1/2 text-stone-700">
+        <p className="font-display text-2xl uppercase tracking-[0.08em] text-stone-600">{category.eyebrow || category.title}</p>
+        <div className="mt-3 h-px w-16 bg-stone-600/60" />
+        <h3 className="mt-4 font-display text-3xl leading-tight text-stone-700">{category.title}</h3>
+        {category.productCount ? <p className="mt-3 text-xs uppercase tracking-[0.2em] text-stone-500">{category.productCount} products</p> : null}
       </div>
     </Link>
   );
