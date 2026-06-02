@@ -4,6 +4,7 @@ import { runAdminAuthCoreTests } from './admin-auth-core.test';
 import { runAdminOrderCustomerAssignmentFlowTests } from './admin-order-customer-assignment-flow.test';
 import { runAdminOrderLineEditFlowTests } from './admin-order-line-edit-flow.test';
 import { runAdminRoleBoundaryTests } from './admin-role-boundary.test';
+import { runChannelPriceOverrideModelTests } from './channel-price-override-model.test';
 import { runChannelProductAvailabilityModelTests } from './channel-product-availability-model.test';
 import { runChannelStorefrontModelTests } from './channel-storefront-model.test';
 import { runCheckoutActionNextPathTests } from './checkout-action-next-path.test';
@@ -132,6 +133,7 @@ async function main() {
   await runPromotionSchemaParityTests();
   await runChannelStorefrontModelTests();
   await runChannelProductAvailabilityModelTests();
+  await runChannelPriceOverrideModelTests();
   await runVariantCheckoutLineModelTests();
   await runVariantStockAuditTests();
   await runVariantStockStatusTests();
@@ -142,7 +144,7 @@ async function main() {
   await runFulfillmentShipmentRecordsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (71 files)');
+  console.log('unit tests passed (72 files)');
 }
 
 main().catch((error) => {
