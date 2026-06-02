@@ -180,7 +180,7 @@ Success criteria:
 
 Goal: centralize store configuration currently spread across env/code.
 
-- Add store settings page.
+- [x] Add store settings page.
 - Add storefront navigation/menu builder.
 - Add homepage banner/media settings.
 - Add shipping/delivery settings.
