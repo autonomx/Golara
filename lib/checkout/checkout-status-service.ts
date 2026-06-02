@@ -12,6 +12,7 @@ import {
   type CheckoutPaymentStatus
 } from '@/lib/checkout/checkout-state-machine';
 import { confirmOrderFulfillmentCapacityReservation, releaseOrderFulfillmentCapacityReservation } from '@/lib/checkout/fulfillment-capacity-service';
+import { commitOrderInventoryReservations, releaseOrderInventoryReservations } from '@/lib/inventory/inventory-reservation-service';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
 type TransitionActor = {
@@ -52,18 +53,22 @@ function throwIllegalTransition(result: { ok: true } | { ok: false; reason: stri
 async function applyOrderCapacityLifecycle(orderId: string, status: CheckoutOrderStatus) {
   if (status === 'confirmed') {
     await confirmOrderFulfillmentCapacityReservation(orderId);
+    await commitOrderInventoryReservations(orderId);
   }
   if (status === 'cancelled') {
     await releaseOrderFulfillmentCapacityReservation(orderId, 'released');
+    await releaseOrderInventoryReservations(orderId);
   }
 }
 
 async function applyPaymentCapacityLifecycle(orderId: string, status: CheckoutPaymentStatus) {
   if (status === 'paid') {
     await confirmOrderFulfillmentCapacityReservation(orderId);
+    await commitOrderInventoryReservations(orderId);
   }
   if (status === 'failed' || status === 'cancelled' || status === 'refunded') {
     await releaseOrderFulfillmentCapacityReservation(orderId, 'released');
+    await releaseOrderInventoryReservations(orderId);
   }
 }
 

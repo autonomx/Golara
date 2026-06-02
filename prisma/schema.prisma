@@ -135,6 +135,7 @@ model ProductVariantLocationStock {
   quantity    Int      @default(0)
   reservedQuantity Int @default(0)
   lowStockThreshold Int?
+  reservations InventoryStockReservation[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -483,11 +484,32 @@ model CheckoutOrderItem {
   quantity       Int
   unitPriceCents Int
   lineTotalCents Int
+  stockReservations InventoryStockReservation[]
   createdAt      DateTime      @default(now())
 
   @@index([orderId])
   @@index([productId])
   @@index([variantId])
+}
+
+model InventoryStockReservation {
+  id             String        @id @default(cuid())
+  orderItemId    String
+  orderItem      CheckoutOrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  variantStockId String
+  variantStock   ProductVariantLocationStock @relation(fields: [variantStockId], references: [id], onDelete: Cascade)
+  variantId      String
+  locationId     String
+  quantity       Int
+  status         String        @default("held")
+  metadata       Json?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([orderItemId, status])
+  @@index([variantStockId, status])
+  @@index([variantId, locationId, status])
+  @@index([status, createdAt])
 }
 
 model CheckoutPaymentAttempt {

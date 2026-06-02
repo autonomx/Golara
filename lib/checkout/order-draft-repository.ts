@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { randomBytes } from 'node:crypto';
+import { reserveOrderInventory } from '@/lib/inventory/inventory-reservation-service';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
 type OrderDraftItemInput = {
@@ -125,32 +126,37 @@ export async function createOrderDraft(input: CreateOrderDraftInput) {
   const discountCents = 0;
   const totalCents = subtotalCents + deliveryCents - discountCents;
 
-  return prisma.checkoutOrder.create({
-    data: {
-      orderNumber: makeOrderNumber(),
-      publicLookupToken: makePublicLookupToken(),
-      customerId: optionalText(input.customerId),
-      addressId: optionalText(input.addressId),
-      checkoutMode: normalizeCheckoutMode(input.checkoutMode),
-      currency,
-      subtotalCents,
-      deliveryCents,
-      discountCents,
-      totalCents,
-      deliveryDate: input.deliveryDate,
-      deliveryWindow: optionalText(input.deliveryWindow),
-      recipientName: optionalText(input.recipientName),
-      recipientPhone: optionalText(input.recipientPhone),
-      customerNote: optionalText(input.customerNote),
-      items: {
-        create: orderItems
+  return prisma.$transaction(async (tx) => {
+    const order = await tx.checkoutOrder.create({
+      data: {
+        orderNumber: makeOrderNumber(),
+        publicLookupToken: makePublicLookupToken(),
+        customerId: optionalText(input.customerId),
+        addressId: optionalText(input.addressId),
+        checkoutMode: normalizeCheckoutMode(input.checkoutMode),
+        currency,
+        subtotalCents,
+        deliveryCents,
+        discountCents,
+        totalCents,
+        deliveryDate: input.deliveryDate,
+        deliveryWindow: optionalText(input.deliveryWindow),
+        recipientName: optionalText(input.recipientName),
+        recipientPhone: optionalText(input.recipientPhone),
+        customerNote: optionalText(input.customerNote),
+        items: {
+          create: orderItems
+        }
+      },
+      include: {
+        items: true,
+        customer: true,
+        address: true
       }
-    },
-    include: {
-      items: true,
-      customer: true,
-      address: true
-    }
+    });
+
+    await reserveOrderInventory(order.id, tx);
+    return order;
   });
 }
 

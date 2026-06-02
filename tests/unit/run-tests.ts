@@ -23,6 +23,7 @@ import { runInquiryAssignmentTests } from './inquiry-assignment.test';
 import { runInquiryNotificationsCoreTests } from './inquiry-notifications-core.test';
 import { runInquiryReportingTests } from './inquiry-reporting.test';
 import { runInquiryWorkflowTests } from './inquiry-workflow.test';
+import { runInventoryStockReservationModelTests } from './inventory-stock-reservation-model.test';
 import { runMediaStorageReadinessTests } from './media-storage-readiness.test';
 import { runOrderNextPathTests } from './order-next-path.test';
 import { runOrderReturnRouteCoreTests } from './order-return-route-core.test';
@@ -93,8 +94,9 @@ async function main() {
   await runVariantLocationStockModelTests();
   await runWarehouseLocationModelTests();
   await runFulfillmentMethodSettingsModelTests();
+  await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (47 files)');
+  console.log('unit tests passed (48 files)');
 }
 
 main().catch((error) => {
