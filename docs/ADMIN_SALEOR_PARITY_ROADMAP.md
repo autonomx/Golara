@@ -168,7 +168,7 @@ Goal: add controlled multi-market behavior where Golara needs it.
 - [x] Add channel-specific product availability.
 - [x] Add channel-specific price overrides.
 - [x] Add localized SEO metadata.
-- Add translation completeness dashboard per entity.
+- [x] Add translation completeness dashboard per entity.
 - Add locale-aware media alt text.
 
 Success criteria:
