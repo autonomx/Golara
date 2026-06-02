@@ -80,6 +80,7 @@ Completed inventory foundation:
 - [x] Add Prisma model fields for `ProductVariant.trackInventory` and `ProductVariant.lowStockThreshold`.
 - [x] Persist `trackInventory` and `lowStockThreshold` from admin variant create/update actions.
 - [x] Add product variant mapper foundation that preserves stock tracking fields.
+
 - [x] Add variant-aware cart and checkout order line fields before inventory reservation.
 
 Remaining before checking stock tracking toggle / low-stock threshold complete:
@@ -199,7 +200,7 @@ Success criteria:
 
 Goal: prepare for external services and future custom admin modules.
 
-- Add webhook configuration.
+- [x] Add webhook configuration.
 - Add event log for outgoing webhooks.
 - Add integration/app registry.
 - Add API token management if needed.
