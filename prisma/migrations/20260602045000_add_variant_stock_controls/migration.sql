@@ -1,0 +1,3 @@
+ALTER TABLE "ProductVariant"
+  ADD COLUMN IF NOT EXISTS "trackInventory" BOOLEAN NOT NULL DEFAULT true,
+  ADD COLUMN IF NOT EXISTS "lowStockThreshold" INTEGER;
