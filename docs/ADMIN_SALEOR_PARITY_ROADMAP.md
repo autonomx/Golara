@@ -29,7 +29,7 @@ Goal: make the admin shell feel like a durable operations console before adding 
 - [x] Add query-string-preserved filters.
 - [x] Add empty states per module.
 - [x] Add loading and error states per module.
-- Add row-level actions without secondary edit rows.
+- [x] Add row-level actions without secondary edit rows.
 
 Success criteria:
 
