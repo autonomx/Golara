@@ -674,21 +674,94 @@ model CustomerInquiryFollowUp {
 }
 
 model PromotionDiscount {
-  id           String   @id @default(cuid())
-  name         String
-  slug         String   @unique
-  discountType String
-  value        Int
-  currency     String   @default("TOMAN")
-  status       String   @default("draft")
-  description  String?
-  isActive     Boolean  @default(true)
-  metadata     Json?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                    String                     @id @default(cuid())
+  name                  String
+  slug                  String                     @unique
+  discountType          String
+  value                 Int
+  currency              String                     @default("TOMAN")
+  status                String                     @default("draft")
+  description           String?
+  isActive              Boolean                    @default(true)
+  usageCount            Int                        @default(0)
+  usageLimit            Int?
+  minimumSubtotalCents  Int?
+  startsAt              DateTime?
+  endsAt                DateTime?
+  metadata              Json?
+  vouchers              PromotionVoucher[]
+  eligibilityRules      PromotionEligibilityRule[]
+  createdAt             DateTime                   @default(now())
+  updatedAt             DateTime                   @updatedAt
 
   @@index([status, isActive])
   @@index([discountType])
+  @@index([startsAt, endsAt])
+  @@index([usageLimit, usageCount])
+  @@index([minimumSubtotalCents])
+}
+
+model PromotionVoucher {
+  id                    String                     @id @default(cuid())
+  code                  String                     @unique
+  promotionDiscountId   String
+  promotionDiscount     PromotionDiscount          @relation(fields: [promotionDiscountId], references: [id], onDelete: Cascade)
+  status                String                     @default("draft")
+  isActive              Boolean                    @default(true)
+  usageCount            Int                        @default(0)
+  usageLimit            Int?
+  minimumSubtotalCents  Int?
+  startsAt              DateTime?
+  endsAt                DateTime?
+  metadata              Json?
+  eligibilityRules      PromotionEligibilityRule[]
+  createdAt             DateTime                   @default(now())
+  updatedAt             DateTime                   @updatedAt
+
+  @@index([promotionDiscountId])
+  @@index([status, isActive])
+  @@index([code, status])
+  @@index([startsAt, endsAt])
+  @@index([usageLimit, usageCount])
+  @@index([minimumSubtotalCents])
+}
+
+model PromotionEligibilityRule {
+  id                   String             @id @default(cuid())
+  promotionDiscountId  String?
+  promotionDiscount    PromotionDiscount? @relation(fields: [promotionDiscountId], references: [id], onDelete: Cascade)
+  promotionVoucherId   String?
+  promotionVoucher     PromotionVoucher?  @relation(fields: [promotionVoucherId], references: [id], onDelete: Cascade)
+  targetType           String
+  targetId             String
+  effect               String             @default("include")
+  metadata             Json?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  @@index([promotionDiscountId, targetType, effect])
+  @@index([promotionVoucherId, targetType, effect])
+  @@index([targetType, targetId, effect])
+}
+
+model PromotionStoreCredit {
+  id                  String   @id @default(cuid())
+  code                String   @unique
+  customerId          String?
+  currency            String   @default("TOMAN")
+  initialBalanceCents Int
+  balanceCents        Int
+  status              String   @default("draft")
+  isActive            Boolean  @default(true)
+  expiresAt           DateTime?
+  metadata            Json?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([customerId])
+  @@index([status, isActive])
+  @@index([balanceCents])
+  @@index([expiresAt])
 }
 
 model AdminAccount {
