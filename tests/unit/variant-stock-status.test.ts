@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { canSellVariant, getVariantStockSummary } from '../../lib/inventory/variant-stock-status';
+import type { ProductVariant } from '../../lib/catalog';
+import { canSellProductVariant, canSellVariant, getProductVariantStockSummary, getVariantStockSummary } from '../../lib/inventory/variant-stock-status';
 
 export async function runVariantStockStatusTests() {
   const inactive = getVariantStockSummary({ isActive: false, stockQuantity: 12 });
@@ -22,6 +23,22 @@ export async function runVariantStockStatusTests() {
 
   assert.equal(getVariantStockSummary({ stockQuantity: -4 }).status, 'out_of_stock');
   assert.equal(getVariantStockSummary({ stockQuantity: 2.9, lowStockThreshold: 2.1 }).status, 'low_stock');
+
+  const variant: ProductVariant = {
+    id: 'variant-1',
+    productId: 'product-1',
+    sku: 'ROSE-BOX-RED',
+    name: 'Red rose box',
+    price: 120,
+    currency: 'CAD',
+    stockQuantity: 1,
+    trackInventory: true,
+    lowStockThreshold: 2,
+    isActive: true,
+    sortOrder: 0
+  };
+  assert.equal(getProductVariantStockSummary(variant).status, 'low_stock');
+  assert.equal(canSellProductVariant(variant), true);
 
   console.log('variant-stock-status.test.ts passed');
 }
