@@ -1,4 +1,6 @@
+import { AdminBestSellingProductsPanel } from '@/components/admin/AdminBestSellingProductsPanel';
 import { AdminInquiryOperationsSummaryPanel } from '@/components/admin/AdminInquiryOperationsSummaryPanel';
+import { bestSellingProductsService } from '@/lib/analytics/best-selling-products';
 import { inquiryOperationsSummaryService } from '@/lib/analytics/inquiry-operations-summary';
 import { formatRevenueCents, type OrderRevenueSummary } from '@/lib/analytics/order-revenue-summary';
 
@@ -14,7 +16,10 @@ function Metric({ label, value, detail }: { label: string; value: string | numbe
 
 export async function AdminOrderRevenueSummaryPanel({ summary }: { summary: OrderRevenueSummary }) {
   const primaryCurrency = summary.primaryCurrency;
-  const inquiryOperationsSummary = await inquiryOperationsSummaryService.summary();
+  const [inquiryOperationsSummary, bestSellingProductsSummary] = await Promise.all([
+    inquiryOperationsSummaryService.summary(),
+    bestSellingProductsService.summary()
+  ]);
 
   return (
     <>
@@ -67,6 +72,7 @@ export async function AdminOrderRevenueSummaryPanel({ summary }: { summary: Orde
         ) : null}
       </section>
       <AdminInquiryOperationsSummaryPanel summary={inquiryOperationsSummary} />
+      <AdminBestSellingProductsPanel summary={bestSellingProductsSummary} />
     </>
   );
 }
