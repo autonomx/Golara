@@ -65,7 +65,7 @@ function requiredString(formData: FormData, name: string) {
 }
 
 function boolField(formData: FormData, name: string) {
-  return formData.get(name) === 'on';
+  return formData.getAll(name).includes('on');
 }
 
 function boolFieldDefault(formData: FormData, name: string, fallback: boolean) {

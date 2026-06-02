@@ -33,6 +33,7 @@ import { runPaymentProviderModeTests } from './payment-provider-mode.test';
 import { runPaymentProviderRuntimeCoreTests } from './payment-provider-runtime-core.test';
 import { runPaymentResultCoreTests } from './payment-result-core.test';
 import { runProductCheckoutPolicyTests } from './product-checkout-policy.test';
+import { runProductVariantMapperTests } from './product-variant-mapper.test';
 import { runPublicInquiryServiceTests } from './public-inquiry-service.test';
 import { runRepositoryFallbackPolicyTests } from './repository-fallback-policy.test';
 import { runRuntimeModeTests } from './runtime-mode.test';
@@ -79,10 +80,11 @@ async function main() {
   await runPaymentGatewayConfigTests();
   await runPaymentGatewayAdaptersTests();
   await runProductCheckoutPolicyTests();
+  await runProductVariantMapperTests();
   await runVariantStockStatusTests();
   await runVariantStockMigrationTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (41 files)');
+  console.log('unit tests passed (42 files)');
 }
 
 main().catch((error) => {

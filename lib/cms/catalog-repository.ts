@@ -3,6 +3,7 @@ import 'server-only';
 import type { Prisma } from '@prisma/client';
 import type { AdminAuditLogEntry, CatalogTranslation, Category, Collection, CustomerInquiry, HomepageContent, MediaItem, Product, ProductAttribute, ProductAttributeValue, ProductType, ProductVariant } from '@/lib/catalog';
 import { prisma } from '@/lib/prisma';
+import { mapProductVariantForCatalog } from '@/lib/cms/product-variant-mapper';
 import { readWithSeedFallback } from '@/lib/cms/repository-fallback-policy';
 import { seedCategories, seedHomepageContent, seedProducts } from '@/lib/seed-data';
 import { localizedField, selectTranslatedContent, type TranslationLike } from '@/lib/i18n/translated-content';
@@ -146,6 +147,8 @@ type DbProductVariant = {
   currency: string;
   imageUrl: string | null;
   stockQuantity: number;
+  trackInventory?: boolean | null;
+  lowStockThreshold?: number | null;
   isActive: boolean;
   sortOrder: number;
   attributeValues?: DbProductAttributeValue[];
@@ -323,18 +326,8 @@ function mapProductTranslations(translations?: DbProductTranslation[]): CatalogT
 function mapProductVariants(variants?: DbProductVariant[]): ProductVariant[] | undefined {
   if (!variants?.length) return undefined;
   return variants.map((variant) => ({
-    id: variant.id,
-    productId: variant.productId,
-    sku: variant.sku,
-    name: variant.name,
-    price: variant.priceCents / 100,
-    currency: variant.currency,
-    image: variant.imageUrl ?? undefined,
-    stockQuantity: variant.stockQuantity,
-    isActive: variant.isActive,
-    sortOrder: variant.sortOrder,
-    attributeValues: mapProductAttributeValues(variant.attributeValues),
-    updatedAt: variant.updatedAt
+    ...mapProductVariantForCatalog(variant),
+    attributeValues: mapProductAttributeValues(variant.attributeValues)
   }));
 }
 

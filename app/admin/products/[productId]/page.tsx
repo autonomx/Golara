@@ -7,6 +7,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { assertAdminRole } from '@/lib/admin-auth';
 import type { Category, Collection, MediaItem, Product, ProductAttribute, ProductAttributeValue, ProductType, ProductVariant } from '@/lib/catalog';
 import { listAdminCategories, listAdminCollections, listAdminProductAttributes, listAdminProducts, listAdminProductTypes, listMedia } from '@/lib/cms/catalog-repository';
+import { getProductVariantStockSummary } from '@/lib/inventory/variant-stock-status';
 import { getRuntimeReadiness } from '@/lib/runtime-readiness';
 
 export const dynamic = 'force-dynamic';
@@ -62,6 +63,14 @@ function VariantFields({ media, productImage, variant, disabled }: { media: Medi
         <Field label="Price" name="price" type="number" defaultValue={variant?.price ?? 0} disabled={disabled} />
         <Field label="Currency" name="currency" defaultValue={variant?.currency ?? 'CAD'} disabled={disabled} />
         <Field label="Stock quantity" name="stockQuantity" type="number" defaultValue={variant?.stockQuantity ?? 0} disabled={disabled} />
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="flex items-center gap-3 rounded-2xl border border-rosewood/10 bg-cream px-4 py-3 text-sm font-semibold text-rosewood">
+          <input type="hidden" name="trackInventory" value="false" />
+          <input name="trackInventory" type="checkbox" defaultChecked={variant?.trackInventory ?? true} disabled={disabled} />
+          Track inventory
+        </label>
+        <Field label="Low-stock threshold" name="lowStockThreshold" type="number" defaultValue={variant?.lowStockThreshold ?? ''} required={false} disabled={disabled} />
       </div>
       <Field label="Sort order" name="sortOrder" type="number" defaultValue={variant?.sortOrder ?? 0} disabled={disabled} />
       <MediaSelectWithPreview label="Variant image from media library" name="variantSelectedMediaUrl" media={mediaForProduct(media, image)} defaultValue={image} disabled={disabled} className={inputClass} />
@@ -381,7 +390,10 @@ export default async function AdminProductDetailPage({ params, searchParams }: {
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                           <h3 className="font-display text-2xl text-rosewood">{variant.name}</h3>
-                          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">{variant.sku} / {variant.price} {variant.currency} / Stock {variant.stockQuantity} / {variant.isActive ? 'Active' : 'Inactive'}</p>
+                          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
+                            {variant.sku} / {variant.price} {variant.currency} / {getProductVariantStockSummary(variant).label} / {variant.isActive ? 'Active' : 'Inactive'}
+                          </p>
+                          {getProductVariantStockSummary(variant).detail ? <p className="mt-2 text-sm text-stone-600">{getProductVariantStockSummary(variant).detail}</p> : null}
                         </div>
                         <span className="rounded-full border border-rosewood/15 bg-white px-3 py-1 text-xs font-semibold text-rosewood">Edit</span>
                       </div>

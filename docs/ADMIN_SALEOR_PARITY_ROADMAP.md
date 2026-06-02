@@ -63,8 +63,8 @@ Success criteria:
 Goal: add operational stock and fulfillment foundations.
 
 - [x] Add inventory quantities per product variant.
-- [ ] Add stock tracking toggle for made-to-order or quote-only items.
-- [ ] Add low-stock threshold.
+- [x] Add stock tracking toggle for made-to-order or quote-only items.
+- [x] Add low-stock threshold.
 - [ ] Add stock adjustment audit log.
 - [ ] Add warehouse/location model.
 - [ ] Add multi-location stock.
@@ -83,10 +83,10 @@ Completed inventory foundation:
 
 Remaining before checking stock tracking toggle / low-stock threshold complete:
 
-- [ ] Wire the product variant mapper into `catalog-repository.ts` read paths.
-- [ ] Expose `trackInventory` and `lowStockThreshold` fields in admin variant create/edit forms.
-- [ ] Display stock status/low-stock state in admin variant summaries and relevant operations views.
-- [ ] Wire mapper unit coverage into the central unit test runner.
+- [x] Wire the product variant mapper into `catalog-repository.ts` read paths.
+- [x] Expose `trackInventory` and `lowStockThreshold` fields in admin variant create/edit forms.
+- [x] Display stock status/low-stock state in admin variant summaries and relevant operations views.
+- [x] Wire mapper unit coverage into the central unit test runner.
 
 Success criteria:
 
