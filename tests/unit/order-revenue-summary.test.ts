@@ -55,7 +55,7 @@ export async function runOrderRevenueSummaryTests() {
   assert.match(service, /prisma\.checkoutOrder\.findMany/);
   assert.match(service, /REVENUE_EXCLUDED_STATUSES/);
 
-  assert.match(panel, /export function AdminOrderRevenueSummaryPanel/);
+  assert.match(panel, /export async function AdminOrderRevenueSummaryPanel/);
   assert.match(panel, /Order count and revenue/);
   assert.match(panel, /formatRevenueCents/);
   assert.match(panel, /Recent revenue/);

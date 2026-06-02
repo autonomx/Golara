@@ -34,6 +34,7 @@ import { runImportExportJobTrackingTests } from './import-export-job-tracking.te
 import { runInquiryAssignmentQueueTests } from './inquiry-assignment-queue.test';
 import { runInquiryAssignmentTests } from './inquiry-assignment.test';
 import { runInquiryNotificationsCoreTests } from './inquiry-notifications-core.test';
+import { runInquiryOperationsSummaryTests } from './inquiry-operations-summary.test';
 import { runInquiryReportingTests } from './inquiry-reporting.test';
 import { runInquiryWorkflowTests } from './inquiry-workflow.test';
 import { runIntegrationAppRegistryTests } from './integration-app-registry.test';
@@ -115,6 +116,7 @@ async function main() {
   await runInquiryReportingTests();
   await runInquiryAssignmentTests();
   await runInquiryAssignmentQueueTests();
+  await runInquiryOperationsSummaryTests();
   await runCustomerAdminTimelineModelTests();
   await runCustomerAuthIdentityTests();
   await runCustomerPrivacyTests();
@@ -184,7 +186,7 @@ async function main() {
   await runFulfillmentShipmentRecordsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (92 files)');
+  console.log('unit tests passed (93 files)');
 }
 
 main().catch((error) => {
