@@ -1,6 +1,7 @@
 import { runAdminAccountCoreTests } from './admin-account-core.test';
 import { runAdminActionBoundaryGuardTests } from './admin-action-boundary-guard.test';
 import { runAdminAuthCoreTests } from './admin-auth-core.test';
+import { runAdminModuleAccessTests } from './admin-module-access.test';
 import { runAdminOrderCustomerAssignmentFlowTests } from './admin-order-customer-assignment-flow.test';
 import { runAdminOrderLineEditFlowTests } from './admin-order-line-edit-flow.test';
 import { runAdminRoleBoundaryTests } from './admin-role-boundary.test';
@@ -93,6 +94,7 @@ async function main() {
   await runAdminAuthCoreTests();
   await runAdminAccountCoreTests();
   await runAdminRoleBoundaryTests();
+  await runAdminModuleAccessTests();
   await runCmsServiceTypesTests();
   await runCmsMediaServiceTests();
   await runCmsCategoryServiceTests();
@@ -166,7 +168,7 @@ async function main() {
   await runFulfillmentShipmentRecordsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (83 files)');
+  console.log('unit tests passed (84 files)');
 }
 
 main().catch((error) => {
