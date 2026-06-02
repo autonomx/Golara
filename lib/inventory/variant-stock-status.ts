@@ -1,3 +1,5 @@
+import type { ProductVariant } from '@/lib/catalog';
+
 export type VariantStockStatus = 'inactive' | 'untracked' | 'out_of_stock' | 'low_stock' | 'in_stock';
 
 export type VariantStockInput = {
@@ -74,6 +76,19 @@ export function getVariantStockSummary(input: VariantStockInput): VariantStockSu
   };
 }
 
+export function getProductVariantStockSummary(variant: ProductVariant) {
+  return getVariantStockSummary({
+    isActive: variant.isActive,
+    stockQuantity: variant.stockQuantity,
+    trackInventory: variant.trackInventory,
+    lowStockThreshold: variant.lowStockThreshold
+  });
+}
+
 export function canSellVariant(input: VariantStockInput) {
   return getVariantStockSummary(input).canSell;
+}
+
+export function canSellProductVariant(variant: ProductVariant) {
+  return getProductVariantStockSummary(variant).canSell;
 }
