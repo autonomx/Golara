@@ -11,6 +11,7 @@ export const dynamic = 'force-dynamic';
 
 type AdminCheckoutOrder = NonNullable<Awaited<ReturnType<typeof getAdminCheckoutOrder>>>;
 type AdminPaymentAttempt = AdminCheckoutOrder['paymentAttempts'][number];
+type AdminOrderItem = AdminCheckoutOrder['items'][number];
 
 const fulfillmentStatuses = [...CHECKOUT_FULFILLMENT_STATUSES];
 const paymentMetadataKeys = ['verified', 'verificationSkipped', 'reason', 'providerCode', 'authority', 'refId', 'httpStatus', 'fee', 'feeType', 'instruction'];
@@ -51,6 +52,52 @@ function verificationLabel(status: string, metadata: Record<string, string | num
   if (status === 'pending') return 'Payment pending';
   if (status === 'created') return 'Payment created';
   return status;
+}
+
+function reservationTone(status: string) {
+  if (status === 'held') return 'border-blue-200 bg-blue-50 text-blue-900';
+  if (status === 'committed') return 'border-emerald-200 bg-emerald-50 text-emerald-900';
+  if (status === 'released') return 'border-amber-200 bg-amber-50 text-amber-900';
+  return 'border-rosewood/10 bg-cream text-stone-700';
+}
+
+function FulfillmentInventoryCard({ items }: { items: AdminOrderItem[] }) {
+  const reservations = items.flatMap((item) => item.stockReservations.map((reservation) => ({ item, reservation })));
+  const held = reservations.filter(({ reservation }) => reservation.status === 'held').reduce((sum, entry) => sum + entry.reservation.quantity, 0);
+  const committed = reservations.filter(({ reservation }) => reservation.status === 'committed').reduce((sum, entry) => sum + entry.reservation.quantity, 0);
+  const released = reservations.filter(({ reservation }) => reservation.status === 'released').reduce((sum, entry) => sum + entry.reservation.quantity, 0);
+
+  return (
+    <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
+      <h2 className="font-display text-3xl text-rosewood">Inventory reservations</h2>
+      <div className="mt-4 grid gap-2 text-sm text-stone-700">
+        <p><strong>Held:</strong> {held}</p>
+        <p><strong>Committed:</strong> {committed}</p>
+        <p><strong>Released:</strong> {released}</p>
+      </div>
+      {reservations.length === 0 ? (
+        <p className="mt-4 rounded-3xl border border-rosewood/10 bg-cream p-4 text-sm text-stone-700">No SKU-level stock reservations are attached to this order.</p>
+      ) : (
+        <div className="mt-4 grid gap-3">
+          {reservations.map(({ item, reservation }) => (
+            <article key={reservation.id} className={`rounded-3xl border p-4 text-sm ${reservationTone(reservation.status)}`}>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="font-semibold">{item.variantSku || item.productCode} / {item.variantName || item.productTitle}</p>
+                  <p className="mt-1 text-xs opacity-80">{reservation.variantStock.location.name} / {reservation.variantStock.location.slug}</p>
+                </div>
+                <span className="rounded-full border border-current/20 px-3 py-1 text-xs font-semibold">{reservation.status}</span>
+              </div>
+              <div className="mt-3 grid gap-1 text-xs">
+                <p><strong>Reserved:</strong> {reservation.quantity}</p>
+                <p><strong>Location available now:</strong> {Math.max(0, reservation.variantStock.quantity - reservation.variantStock.reservedQuantity)}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
 }
 
 function PaymentAttemptCard({ attempt }: { attempt: AdminPaymentAttempt }) {
@@ -139,7 +186,7 @@ export default async function AdminOrderDetailPage({ params, searchParams }: { p
                   <tbody className="divide-y divide-rosewood/10 bg-white text-stone-700">
                     {order.items.map((item) => (
                       <tr key={item.id}>
-                        <td className="px-4 py-3"><p className="font-semibold text-rosewood">{item.productTitle}</p><p className="text-xs text-stone-500">{item.productCode}</p></td>
+                        <td className="px-4 py-3"><p className="font-semibold text-rosewood">{item.productTitle}</p><p className="text-xs text-stone-500">{item.productCode}{item.variantSku ? ` / ${item.variantSku}` : ''}</p>{item.variantName ? <p className="mt-1 text-xs font-semibold text-rosewood">{item.variantName}</p> : null}</td>
                         <td className="px-4 py-3">{item.quantity}</td>
                         <td className="px-4 py-3">{formatMinorUnitAmount(item.unitPriceCents, order.currency)}</td>
                         <td className="px-4 py-3 font-semibold text-rosewood">{formatMinorUnitAmount(item.lineTotalCents, order.currency)}</td>
@@ -189,6 +236,8 @@ export default async function AdminOrderDetailPage({ params, searchParams }: { p
                 <button type="submit" className="rounded-full bg-rosewood px-5 py-2 text-sm font-semibold text-white">Save fulfillment</button>
               </form>
             </section>
+
+            <FulfillmentInventoryCard items={order.items} />
 
             <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm"><h2 className="font-display text-3xl text-rosewood">Customer</h2><div className="mt-4 grid gap-2 text-sm text-stone-700"><p><strong>Name:</strong> {order.customer?.displayName || order.recipientName || 'Guest / draft'}</p><p><strong>Phone:</strong> {order.customer?.phone || order.recipientPhone || 'Not set'}</p><p><strong>Email:</strong> {order.customer?.email || 'Not set'}</p>{order.address ? <p><strong>Address:</strong> {order.address.line1}{order.address.line2 ? `, ${order.address.line2}` : ''}</p> : null}<p><strong>Delivery:</strong> {order.deliveryDate ? formatDate(order.deliveryDate) : 'Not scheduled'} {order.deliveryWindow ? `· ${order.deliveryWindow}` : ''}</p>{order.customerNote ? <p><strong>Customer note:</strong> {order.customerNote}</p> : null}</div></section>
 

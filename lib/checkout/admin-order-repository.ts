@@ -157,7 +157,19 @@ export async function getAdminCheckoutOrder(orderId: string) {
     include: {
       customer: true,
       address: true,
-      items: { orderBy: { createdAt: 'asc' } },
+      items: {
+        orderBy: { createdAt: 'asc' },
+        include: {
+          stockReservations: {
+            orderBy: { createdAt: 'asc' },
+            include: {
+              variantStock: {
+                include: { location: true }
+              }
+            }
+          }
+        }
+      },
       paymentAttempts: { orderBy: { createdAt: 'desc' } },
       timelineEvents: { orderBy: { createdAt: 'desc' } }
     }
