@@ -1,8 +1,10 @@
 import Link from 'next/link';
-import { BarChart3, ClipboardList, FileText, Home, ImageIcon, LayoutDashboard, LogIn, Package, Settings, ShoppingBag, ShieldCheck, Users } from 'lucide-react';
+import { BadgePercent, BarChart3, ClipboardList, FileText, Home, ImageIcon, LayoutDashboard, LogIn, Package, Settings, ShoppingBag, ShieldCheck, Users } from 'lucide-react';
 import { AdminActionBanner } from '@/components/admin/AdminActionBanner';
 import { AdminAuditLogPanel } from '@/components/admin/AdminAuditLogPanel';
+import { AdminCustomerPanel } from '@/components/admin/AdminCustomerPanel';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
+import { AdminModulePlaceholder } from '@/components/admin/AdminModulePlaceholder';
 import { AdminOrderPanel } from '@/components/admin/AdminOrderPanel';
 import { AdminStaffReadinessPanel } from '@/components/admin/AdminStaffReadinessPanel';
 import { InquiryBoard } from '@/components/admin/InquiryBoard';
@@ -13,6 +15,7 @@ import { listHomepageTranslations } from '@/lib/cms/homepage-translation-reposit
 import { listAdminCheckoutOrderPage } from '@/lib/checkout/admin-order-repository';
 import { getPaymentGatewayConfig, getPaymentGatewayReadiness } from '@/lib/checkout/payment-gateway-config';
 import { getCustomerAuthEventSummary } from '@/lib/customers/customer-auth-event-summary';
+import { listAdminCustomers } from '@/lib/customers/customer-repository';
 import { createInquiryAssignmentQueueSummary, filterInquiriesByAssignmentQueue, parseInquiryAssignmentQueueFilter } from '@/lib/inquiries/inquiry-assignment-queue';
 import { getCurrentInquiryNotificationReadiness, getCurrentInquiryNotificationRetryRunbook } from '@/lib/notifications/inquiry-notifications';
 import { getRuntimeReadiness } from '@/lib/runtime-readiness';
@@ -23,10 +26,14 @@ const adminTabs = [
   { key: 'overview', label: 'Overview', description: 'Readiness, access, audit, and security.', icon: LayoutDashboard },
   { key: 'catalog', label: 'Catalog', description: 'Products, categories, subcategories, and media.', icon: Package },
   { key: 'content', label: 'Content', description: 'Homepage copy and translations.', icon: FileText },
-  { key: 'sales', label: 'Sales', description: 'Orders and customer inquiries.', icon: ShoppingBag }
+  { key: 'sales', label: 'Sales', description: 'Orders and customer inquiries.', icon: ShoppingBag },
+  { key: 'customers', label: 'Customers', description: 'Profiles, addresses, accounts, and activity.', icon: Users },
+  { key: 'discounts', label: 'Discounts', description: 'Vouchers, campaigns, and gift-card planning.', icon: BadgePercent },
+  { key: 'settings', label: 'Settings', description: 'Store configuration, staff access, and providers.', icon: Settings }
 ] as const;
 
 type AdminTab = (typeof adminTabs)[number]['key'];
+type DashboardWorkspace = 'overview' | 'catalog' | 'content' | 'sales';
 type CatalogSection = 'all' | 'media' | 'categories' | 'products';
 type SalesSection = 'all' | 'orders' | 'inquiries';
 type AdminSearchParams = { tab?: string; status?: string; message?: string; catalogSearch?: string; catalogCategory?: string; catalogFlag?: string; inquiryStatus?: string; inquiryPage?: string; inquirySearch?: string; inquiryAssignment?: string; auditAction?: string; auditEntity?: string; auditActor?: string; auditSearch?: string; orderStatus?: string; orderPaymentStatus?: string; orderFulfillmentStatus?: string; orderSearch?: string; orderPage?: string };
@@ -48,8 +55,15 @@ function parseAdminTab(value?: string): AdminTab {
 function tabHref(tab: AdminTab) {
   if (tab === 'catalog') return '/admin/products';
   if (tab === 'content') return '/admin?tab=content';
-  if (tab === 'sales') return '/admin?tab=sales';
+  if (tab === 'sales') return '/admin/orders';
+  if (tab === 'customers') return '/admin/customers';
+  if (tab === 'discounts') return '/admin/discounts';
+  if (tab === 'settings') return '/admin/settings';
   return '/admin';
+}
+
+function dashboardWorkspace(tab: AdminTab): DashboardWorkspace | undefined {
+  return tab === 'overview' || tab === 'catalog' || tab === 'content' || tab === 'sales' ? tab : undefined;
 }
 
 const sidebarSections = [
@@ -66,7 +80,9 @@ const sidebarSections = [
     label: 'Customer Ops',
     items: [
       { href: '/admin/orders', key: 'orders', tab: 'sales' as AdminTab, label: 'Orders', icon: ShoppingBag },
-      { href: '/admin/inquiries', key: 'inquiries', tab: 'sales' as AdminTab, label: 'Inquiries', icon: Users }
+      { href: '/admin/inquiries', key: 'inquiries', tab: 'sales' as AdminTab, label: 'Inquiries', icon: Users },
+      { href: '/admin/customers', key: 'customers', tab: 'customers' as AdminTab, label: 'Customers', icon: Users },
+      { href: '/admin/discounts', key: 'discounts', tab: 'discounts' as AdminTab, label: 'Discounts', icon: BadgePercent }
     ]
   },
   {
@@ -81,7 +97,8 @@ const sidebarSections = [
     items: [
       { href: '/admin?tab=overview#readiness', key: 'readiness', tab: 'overview' as AdminTab, label: 'Readiness', icon: ShieldCheck },
       { href: '/admin?tab=overview#audit-log', key: 'audit', tab: 'overview' as AdminTab, label: 'Audit log', icon: BarChart3 },
-      { href: '/admin?tab=overview#staff-readiness', key: 'staff', tab: 'overview' as AdminTab, label: 'Staff access', icon: Settings }
+      { href: '/admin?tab=overview#staff-readiness', key: 'staff', tab: 'overview' as AdminTab, label: 'Staff access', icon: Settings },
+      { href: '/admin/settings', key: 'settings', tab: 'settings' as AdminTab, label: 'Settings', icon: Settings }
     ]
   }
 ];
@@ -194,6 +211,7 @@ function AdminTopBar({ activeTab, productCount, categoryCount, mediaCount, authe
 export async function AdminConsolePage({ searchParams, forcedTab, catalogSection = 'all', salesSection = 'all', activeNavKey }: { searchParams: Promise<AdminSearchParams>; forcedTab?: AdminTab; catalogSection?: CatalogSection; salesSection?: SalesSection; activeNavKey?: string }) {
   const { tab, status, message, catalogSearch, catalogCategory, catalogFlag, inquiryStatus, inquiryPage, inquirySearch, inquiryAssignment, auditAction, auditEntity, auditActor, auditSearch, orderStatus, orderPaymentStatus, orderFulfillmentStatus, orderSearch, orderPage } = await searchParams;
   const activeTab = forcedTab ?? parseAdminTab(tab);
+  const activeWorkspace = dashboardWorkspace(activeTab);
   const resolvedActiveNavKey = activeNavKey ?? activeTab;
   const assignmentFilter = parseInquiryAssignmentQueueFilter(inquiryAssignment);
   const inquiryPageNumber = parsePage(inquiryPage);
@@ -212,7 +230,7 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
   const authenticated = await isAdminAuthenticated();
   const adminIdentity = authenticated ? await getAdminIdentity() : undefined;
   const canViewStaffReadiness = adminIdentity?.role === 'owner';
-  const [categories, products, homepage, homepageTranslations, media, inquiryPageData, assignmentSourceInquiries, inquiryCounts, auditLogs, orderPageData, authEventSummary, adminAccounts] = await Promise.all([
+  const [categories, products, homepage, homepageTranslations, media, inquiryPageData, assignmentSourceInquiries, inquiryCounts, auditLogs, orderPageData, authEventSummary, adminAccounts, adminCustomers] = await Promise.all([
     listAdminCategories(),
     listAdminProducts(),
     getHomepageContent(),
@@ -224,7 +242,8 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
     authenticated ? listAdminAuditLogs(auditFilters) : Promise.resolve([]),
     authenticated ? listAdminCheckoutOrderPage(orderFilters, parsePage(orderPage)) : Promise.resolve({ orders: [], page: 1, pageSize: 12, totalCount: 0, totalPages: 1 }),
     authenticated ? getCustomerAuthEventSummary() : getCustomerAuthEventSummary(1),
-    canViewStaffReadiness ? listAdminAccountReadinessRecords() : Promise.resolve([])
+    canViewStaffReadiness ? listAdminAccountReadinessRecords() : Promise.resolve([]),
+    authenticated ? listAdminCustomers() : Promise.resolve([])
   ]);
 
   const assignmentSummary = createInquiryAssignmentQueueSummary(assignmentSourceInquiries, adminIdentity);
@@ -256,33 +275,52 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
           <section className="grid gap-6 px-4 py-6 lg:px-6">
           <AdminActionBanner status={status} message={message} />
 
-          <AdminDashboard
-            activeWorkspace={activeTab}
-            catalogSection={catalogSection}
-            categories={categories}
-            products={products}
-            homepage={homepage}
-            homepageTranslations={homepageTranslations}
-            media={media}
-            authEventSummary={authEventSummary}
-            runtimeReadiness={runtimeReadiness}
-            authConfigured={authConfigured}
-            authenticated={authenticated}
-            notificationReadiness={notificationReadiness}
-            notificationRetryRunbook={notificationRetryRunbook}
-            checkoutReadiness={checkoutReadiness}
-            catalogSearch={catalogSearch}
-            catalogCategory={catalogCategory}
-            catalogFlag={catalogFlag}
-            status={status}
-            message={message}
-          />
+          {activeWorkspace ? (
+            <AdminDashboard
+              activeWorkspace={activeWorkspace}
+              catalogSection={catalogSection}
+              categories={categories}
+              products={products}
+              homepage={homepage}
+              homepageTranslations={homepageTranslations}
+              media={media}
+              authEventSummary={authEventSummary}
+              runtimeReadiness={runtimeReadiness}
+              authConfigured={authConfigured}
+              authenticated={authenticated}
+              notificationReadiness={notificationReadiness}
+              notificationRetryRunbook={notificationRetryRunbook}
+              checkoutReadiness={checkoutReadiness}
+              catalogSearch={catalogSearch}
+              catalogCategory={catalogCategory}
+              catalogFlag={catalogFlag}
+              status={status}
+              message={message}
+            />
+          ) : null}
 
           {activeTab === 'overview' && authenticated ? <AdminStaffReadinessPanel accounts={adminAccounts} summary={adminAccountSummary} identity={adminIdentity} /> : null}
           {activeTab === 'overview' && authenticated ? <AdminAuditLogPanel logs={auditLogs} filters={auditFilters} /> : null}
 
           {activeTab === 'sales' && authenticated && (salesSection === 'all' || salesSection === 'orders') ? <AdminOrderPanel orderPage={orderPageData} filters={orderFilters} /> : null}
           {activeTab === 'sales' && (salesSection === 'all' || salesSection === 'inquiries') ? <InquiryBoard inquiryPage={inquiryPageData} counts={inquiryCounts} assignmentSummary={assignmentSummary} activeStatus={inquiryStatus} search={inquirySearch} assignmentFilter={assignmentFilter} /> : null}
+          {activeTab === 'customers' ? <AdminCustomerPanel customers={adminCustomers} databaseReady={runtimeReadiness.databaseUrlPresent} /> : null}
+          {activeTab === 'discounts' ? (
+            <AdminModulePlaceholder
+              eyebrow="Discounts"
+              title="Promotions workspace"
+              body="Discounts are now represented in navigation so the admin shell has a stable place for voucher and campaign work."
+              items={['Voucher codes', 'Product/category eligibility', 'Usage limits and windows']}
+            />
+          ) : null}
+          {activeTab === 'settings' ? (
+            <AdminModulePlaceholder
+              eyebrow="Settings"
+              title="Store configuration"
+              body="Settings are grouped here for future store, delivery, provider, and permission controls."
+              items={['Store profile', 'Delivery and payment readiness', 'Staff roles and permissions']}
+            />
+          ) : null}
           </section>
         </div>
       </div>
