@@ -39,6 +39,7 @@ import { runRepositoryFallbackPolicyTests } from './repository-fallback-policy.t
 import { runRuntimeModeTests } from './runtime-mode.test';
 import { runRuntimeReadinessTests } from './runtime-readiness.test';
 import { runVariantStockMigrationTests } from './variant-stock-migration.test';
+import { runVariantStockAuditTests } from './variant-stock-audit.test';
 import { runVariantStockStatusTests } from './variant-stock-status.test';
 
 async function main() {
@@ -81,10 +82,11 @@ async function main() {
   await runPaymentGatewayAdaptersTests();
   await runProductCheckoutPolicyTests();
   await runProductVariantMapperTests();
+  await runVariantStockAuditTests();
   await runVariantStockStatusTests();
   await runVariantStockMigrationTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (42 files)');
+  console.log('unit tests passed (43 files)');
 }
 
 main().catch((error) => {

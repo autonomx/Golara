@@ -7,6 +7,7 @@ import { cmsCategoryService } from '@/lib/cms/category-service';
 import { cmsHomepageService } from '@/lib/cms/homepage-service';
 import { cmsMediaService } from '@/lib/cms/media-service';
 import { cmsProductService } from '@/lib/cms/product-service';
+import { variantStockAuditService } from '@/lib/inventory/variant-stock-audit-service';
 import { normalizeLocale } from '@/lib/i18n/locales';
 import { normalizeImageUrl } from '@/lib/media/media-storage';
 import { hasDatabase, prisma } from '@/lib/prisma';
@@ -395,10 +396,10 @@ export async function createProductVariantAction(productId: string, formData: Fo
   await ensureCanWriteCms();
   if (!productId) throw new Error('productId is required');
 
-  const product = await prisma.product.findUnique({ where: { id: productId }, select: { imageUrl: true } });
+  const product = await prisma.product.findUnique({ where: { id: productId }, select: { imageUrl: true, title: true, code: true } });
   if (!product) throw new Error('Product not found.');
 
-  await prisma.productVariant.create({
+  const variant = await prisma.productVariant.create({
     data: {
       productId,
       sku: requiredString(formData, 'sku'),
@@ -413,6 +414,7 @@ export async function createProductVariantAction(productId: string, formData: Fo
       sortOrder: intField(formData, 'sortOrder', 0)
     }
   });
+  await variantStockAuditService.recordChange(null, { ...variant, product });
 
   revalidateCatalog();
   revalidatePath(`/admin/products/${productId}`);
@@ -424,10 +426,23 @@ export async function updateProductVariantAction(productId: string, variantId: s
   if (!productId) throw new Error('productId is required');
   if (!variantId) throw new Error('variantId is required');
 
-  const product = await prisma.product.findUnique({ where: { id: productId }, select: { imageUrl: true } });
+  const product = await prisma.product.findUnique({ where: { id: productId }, select: { imageUrl: true, title: true, code: true } });
   if (!product) throw new Error('Product not found.');
+  const existingVariant = await prisma.productVariant.findUnique({
+    where: { id: variantId },
+    select: {
+      id: true,
+      sku: true,
+      name: true,
+      stockQuantity: true,
+      trackInventory: true,
+      lowStockThreshold: true,
+      product: { select: { title: true, code: true } }
+    }
+  });
+  if (!existingVariant) throw new Error('Variant not found.');
 
-  await prisma.productVariant.update({
+  const variant = await prisma.productVariant.update({
     where: { id: variantId },
     data: {
       sku: requiredString(formData, 'sku'),
@@ -442,6 +457,7 @@ export async function updateProductVariantAction(productId: string, variantId: s
       sortOrder: intField(formData, 'sortOrder', 0)
     }
   });
+  await variantStockAuditService.recordChange(existingVariant, { ...variant, product });
 
   revalidateCatalog();
   revalidatePath(`/admin/products/${productId}`);
