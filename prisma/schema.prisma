@@ -53,6 +53,25 @@ model ProductType {
   @@index([isActive, sortOrder])
 }
 
+model ProductAttribute {
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  name         String
+  description  String?
+  inputType    String   @default("text")
+  appliesTo    String   @default("product")
+  unit         String?
+  options      Json?
+  isFilterable Boolean  @default(false)
+  isRequired   Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([appliesTo, isActive, sortOrder])
+}
+
 model ProductVariant {
   id         String   @id @default(cuid())
   productId  String

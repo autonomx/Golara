@@ -1,12 +1,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { createProductTypeAction, createProductVariantAction, updateProductAction, updateProductTypeAction, updateProductVariantAction } from '@/app/admin/actions';
+import { createProductAttributeAction, createProductTypeAction, createProductVariantAction, updateProductAction, updateProductAttributeAction, updateProductTypeAction, updateProductVariantAction } from '@/app/admin/actions';
 import { MediaSelectWithPreview } from '@/components/admin/MediaSelectWithPreview';
 import { SiteHeader } from '@/components/SiteHeader';
 import { assertAdminRole } from '@/lib/admin-auth';
-import type { Category, MediaItem, Product, ProductType, ProductVariant } from '@/lib/catalog';
-import { listAdminCategories, listAdminProducts, listAdminProductTypes, listMedia } from '@/lib/cms/catalog-repository';
+import type { Category, MediaItem, Product, ProductAttribute, ProductType, ProductVariant } from '@/lib/catalog';
+import { listAdminCategories, listAdminProductAttributes, listAdminProducts, listAdminProductTypes, listMedia } from '@/lib/cms/catalog-repository';
 import { getRuntimeReadiness } from '@/lib/runtime-readiness';
 
 export const dynamic = 'force-dynamic';
@@ -102,6 +102,47 @@ function ProductTypeFields({ productType, disabled }: { productType?: ProductTyp
   );
 }
 
+function ProductAttributeFields({ attribute, disabled }: { attribute?: ProductAttribute; disabled: boolean }) {
+  return (
+    <>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Field label="Name" name="name" defaultValue={attribute?.name} disabled={disabled} />
+        <Field label="Slug" name="slug" defaultValue={attribute?.slug} disabled={disabled} />
+      </div>
+      <TextArea label="Description" name="description" defaultValue={attribute?.description ?? ''} required={false} disabled={disabled} />
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="grid gap-2 text-sm font-semibold text-rosewood">
+          Input type
+          <select className={inputClass} name="inputType" defaultValue={attribute?.inputType ?? 'text'} disabled={disabled}>
+            <option value="text">Text</option>
+            <option value="number">Number</option>
+            <option value="select">Select</option>
+            <option value="boolean">Boolean</option>
+          </select>
+        </label>
+        <label className="grid gap-2 text-sm font-semibold text-rosewood">
+          Applies to
+          <select className={inputClass} name="appliesTo" defaultValue={attribute?.appliesTo ?? 'product'} disabled={disabled}>
+            <option value="product">Product</option>
+            <option value="variant">Variant</option>
+            <option value="both">Product and variant</option>
+          </select>
+        </label>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Field label="Unit" name="unit" defaultValue={attribute?.unit ?? ''} required={false} disabled={disabled} />
+        <Field label="Sort order" name="sortOrder" type="number" defaultValue={attribute?.sortOrder ?? 0} disabled={disabled} />
+      </div>
+      <TextArea label="Options" name="options" defaultValue={attribute?.options?.join('\n') ?? ''} required={false} disabled={disabled} />
+      <div className="grid gap-3 md:grid-cols-3">
+        <Toggle label="Filterable" name="isFilterable" defaultChecked={attribute?.isFilterable ?? false} disabled={disabled} />
+        <Toggle label="Required" name="isRequired" defaultChecked={attribute?.isRequired ?? false} disabled={disabled} />
+        <Toggle label="Active" name="isActive" defaultChecked={attribute?.isActive ?? true} disabled={disabled} />
+      </div>
+    </>
+  );
+}
+
 function findProduct(products: Product[], productId: string) {
   return products.find((product) => product.id === productId || product.slug === productId);
 }
@@ -112,7 +153,9 @@ function StatusBanner({ status }: { status?: string }) {
     'product-variant-created': 'Variant created.',
     'product-variant-updated': 'Variant saved.',
     'product-type-created': 'Product type created.',
-    'product-type-updated': 'Product type saved.'
+    'product-type-updated': 'Product type saved.',
+    'product-attribute-created': 'Product attribute created.',
+    'product-attribute-updated': 'Product attribute saved.'
   };
   if (!status || !messages[status]) return null;
   return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">{messages[status]}</div>;
@@ -121,7 +164,7 @@ function StatusBanner({ status }: { status?: string }) {
 export default async function AdminProductDetailPage({ params, searchParams }: { params: Promise<{ productId: string }>; searchParams: Promise<{ status?: string }> }) {
   await assertAdminRole('staff');
   const [{ productId }, { status }] = await Promise.all([params, searchParams]);
-  const [products, categories, productTypes, media] = await Promise.all([listAdminProducts(), listAdminCategories(), listAdminProductTypes(), listMedia()]);
+  const [products, categories, productTypes, productAttributes, media] = await Promise.all([listAdminProducts(), listAdminCategories(), listAdminProductTypes(), listAdminProductAttributes(), listMedia()]);
   const product = findProduct(products, productId);
   if (!product) notFound();
 
@@ -252,7 +295,7 @@ export default async function AdminProductDetailPage({ params, searchParams }: {
             <section className={cardClass}>
               <h2 className="font-display text-3xl text-rosewood">Next PIM work</h2>
               <div className="mt-4 grid gap-3 text-sm text-stone-700">
-                <p>Attributes and SEO metadata will attach to this detail page in the next Phase 2 slices.</p>
+                <p>Attribute values and SEO metadata will attach to this detail page in the next Phase 2 slices.</p>
               </div>
             </section>
 
@@ -292,6 +335,49 @@ export default async function AdminProductDetailPage({ params, searchParams }: {
                         <ProductTypeFields productType={productType} disabled={disabled} />
                         <button className="w-fit rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none" type="submit" disabled={disabled}>
                           Save type
+                        </button>
+                      </form>
+                    </details>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className={`${cardClass} grid gap-5`}>
+              <div>
+                <h2 className="font-display text-3xl text-rosewood">Attributes</h2>
+                <p className="mt-2 text-sm leading-6 text-stone-600">Reusable product and variant fields for catalog details, filters, and future structured values.</p>
+              </div>
+              <details className="rounded-3xl border border-rosewood/10 bg-cream p-5">
+                <summary className="cursor-pointer font-display text-2xl text-rosewood">Create attribute</summary>
+                <form action={createProductAttributeAction} className="mt-5 grid gap-4">
+                  <input type="hidden" name="returnProductId" value={product.id ?? product.slug} />
+                  <ProductAttributeFields disabled={disabled} />
+                  <button className="w-fit rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none" type="submit" disabled={disabled}>
+                    Create attribute
+                  </button>
+                </form>
+              </details>
+              {!productAttributes.length ? (
+                <div className="rounded-3xl border border-dashed border-stone-300 bg-stone-50 p-6 text-sm text-stone-600">No reusable attributes yet.</div>
+              ) : (
+                <div className="grid gap-3">
+                  {productAttributes.map((attribute) => (
+                    <details key={attribute.id} className="rounded-3xl border border-rosewood/10 bg-cream p-5">
+                      <summary className="cursor-pointer list-none">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <h3 className="font-display text-2xl text-rosewood">{attribute.name}</h3>
+                            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">{attribute.slug} / {attribute.inputType} / {attribute.appliesTo} / {attribute.isActive ? 'Active' : 'Inactive'}</p>
+                          </div>
+                          <span className="rounded-full border border-rosewood/15 bg-white px-3 py-1 text-xs font-semibold text-rosewood">Edit</span>
+                        </div>
+                      </summary>
+                      <form action={updateProductAttributeAction.bind(null, attribute.id)} className="mt-5 grid gap-4">
+                        <input type="hidden" name="returnProductId" value={product.id ?? product.slug} />
+                        <ProductAttributeFields attribute={attribute} disabled={disabled} />
+                        <button className="w-fit rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none" type="submit" disabled={disabled}>
+                          Save attribute
                         </button>
                       </form>
                     </details>

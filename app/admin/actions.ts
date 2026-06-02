@@ -43,6 +43,11 @@ function productTypeReturnPath(formData: FormData, status: string) {
   return returnProductId ? `/admin/products/${returnProductId}?status=${status}` : adminPath(status);
 }
 
+function productDetailReturnPath(formData: FormData, status: string) {
+  const returnProductId = optionalString(formData, 'returnProductId');
+  return returnProductId ? `/admin/products/${returnProductId}?status=${status}` : adminPath(status);
+}
+
 function stringField(formData: FormData, name: string, fallback = '') {
   const value = formData.get(name);
   if (typeof value !== 'string') return fallback;
@@ -301,6 +306,16 @@ export async function updateProductAction(productId: string, formData: FormData)
   redirect(`/admin/products/${productId}?status=product-updated`);
 }
 
+function optionListField(formData: FormData, name: string) {
+  const raw = stringField(formData, name);
+  if (!raw) return undefined;
+  const options = raw
+    .split(/\r?\n|,/)
+    .map((option) => option.trim())
+    .filter(Boolean);
+  return options.length ? options : undefined;
+}
+
 export async function createProductVariantAction(productId: string, formData: FormData) {
   await ensureCanWriteCms();
   if (!productId) throw new Error('productId is required');
@@ -388,6 +403,56 @@ export async function updateProductTypeAction(productTypeId: string, formData: F
 
   revalidateCatalog();
   redirect(productTypeReturnPath(formData, 'product-type-updated'));
+}
+
+export async function createProductAttributeAction(formData: FormData) {
+  await ensureCanWriteCms();
+
+  const name = requiredString(formData, 'name');
+  await prisma.productAttribute.create({
+    data: {
+      name,
+      slug: stringField(formData, 'slug') || slugify(name),
+      description: optionalString(formData, 'description'),
+      inputType: stringField(formData, 'inputType', 'text') || 'text',
+      appliesTo: stringField(formData, 'appliesTo', 'product') || 'product',
+      unit: optionalString(formData, 'unit'),
+      options: optionListField(formData, 'options') ?? undefined,
+      isFilterable: boolField(formData, 'isFilterable'),
+      isRequired: boolField(formData, 'isRequired'),
+      isActive: boolField(formData, 'isActive'),
+      sortOrder: intField(formData, 'sortOrder', 0)
+    }
+  });
+
+  revalidateCatalog();
+  redirect(productDetailReturnPath(formData, 'product-attribute-created'));
+}
+
+export async function updateProductAttributeAction(attributeId: string, formData: FormData) {
+  await ensureCanWriteCms();
+  if (!attributeId) throw new Error('attributeId is required');
+
+  const name = requiredString(formData, 'name');
+  await prisma.productAttribute.update({
+    where: { id: attributeId },
+    data: {
+      name,
+      slug: stringField(formData, 'slug') || slugify(name),
+      description: optionalString(formData, 'description'),
+      inputType: stringField(formData, 'inputType', 'text') || 'text',
+      appliesTo: stringField(formData, 'appliesTo', 'product') || 'product',
+      unit: optionalString(formData, 'unit'),
+      options: optionListField(formData, 'options') ?? undefined,
+      isFilterable: boolField(formData, 'isFilterable'),
+      isRequired: boolField(formData, 'isRequired'),
+      isActive: boolField(formData, 'isActive'),
+      sortOrder: intField(formData, 'sortOrder', 0)
+    }
+  });
+
+  revalidateCatalog();
+  redirect(productDetailReturnPath(formData, 'product-attribute-updated'));
 }
 
 export async function bulkUpdateProductsAction(formData: FormData) {

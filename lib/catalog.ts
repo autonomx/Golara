@@ -76,6 +76,22 @@ export type ProductType = {
   updatedAt?: Date;
 };
 
+export type ProductAttribute = {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string;
+  inputType: string;
+  appliesTo: string;
+  unit?: string;
+  options?: string[];
+  isFilterable: boolean;
+  isRequired: boolean;
+  isActive: boolean;
+  sortOrder: number;
+  updatedAt?: Date;
+};
+
 export type ProductVariant = {
   id: string;
   productId: string;

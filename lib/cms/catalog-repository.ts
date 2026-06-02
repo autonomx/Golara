@@ -1,7 +1,7 @@
 import 'server-only';
 
 import type { Prisma } from '@prisma/client';
-import type { AdminAuditLogEntry, CatalogTranslation, Category, CustomerInquiry, HomepageContent, MediaItem, Product, ProductType, ProductVariant } from '@/lib/catalog';
+import type { AdminAuditLogEntry, CatalogTranslation, Category, CustomerInquiry, HomepageContent, MediaItem, Product, ProductAttribute, ProductType, ProductVariant } from '@/lib/catalog';
 import { prisma } from '@/lib/prisma';
 import { readWithSeedFallback } from '@/lib/cms/repository-fallback-policy';
 import { seedCategories, seedHomepageContent, seedProducts } from '@/lib/seed-data';
@@ -93,6 +93,22 @@ type DbProductType = {
   sortOrder: number;
   updatedAt?: Date;
   _count?: { products: number };
+};
+
+type DbProductAttribute = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  inputType: string;
+  appliesTo: string;
+  unit: string | null;
+  options: Prisma.JsonValue | null;
+  isFilterable: boolean;
+  isRequired: boolean;
+  isActive: boolean;
+  sortOrder: number;
+  updatedAt?: Date;
 };
 
 type DbProductVariant = {
@@ -302,6 +318,30 @@ function mapProductType(productType: DbProductType): ProductType {
     sortOrder: productType.sortOrder,
     productCount: productType._count?.products,
     updatedAt: productType.updatedAt
+  };
+}
+
+function stringArrayFromJson(value: Prisma.JsonValue | null | undefined) {
+  if (!Array.isArray(value)) return undefined;
+  const options = value.filter((item): item is string => typeof item === 'string' && Boolean(item.trim()));
+  return options.length ? options : undefined;
+}
+
+function mapProductAttribute(attribute: DbProductAttribute): ProductAttribute {
+  return {
+    id: attribute.id,
+    slug: attribute.slug,
+    name: attribute.name,
+    description: attribute.description ?? undefined,
+    inputType: attribute.inputType,
+    appliesTo: attribute.appliesTo,
+    unit: attribute.unit ?? undefined,
+    options: stringArrayFromJson(attribute.options),
+    isFilterable: attribute.isFilterable,
+    isRequired: attribute.isRequired,
+    isActive: attribute.isActive,
+    sortOrder: attribute.sortOrder,
+    updatedAt: attribute.updatedAt
   };
 }
 
@@ -544,6 +584,13 @@ export async function listAdminProductTypes(): Promise<ProductType[]> {
   return readWithFallback(async () => {
     const productTypes = await prisma.productType.findMany({ include: { _count: { select: { products: true } } }, orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] });
     return productTypes.map(mapProductType);
+  }, () => []);
+}
+
+export async function listAdminProductAttributes(): Promise<ProductAttribute[]> {
+  return readWithFallback(async () => {
+    const attributes = await prisma.productAttribute.findMany({ orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] });
+    return attributes.map(mapProductAttribute);
   }, () => []);
 }
 
