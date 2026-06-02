@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { apiTokenManagementService } from '@/lib/settings/api-token-management';
+import { dashboardExtensionMountPointService } from '@/lib/settings/dashboard-extension-mount-points';
 import { fulfillmentMethodSettingsService } from '@/lib/settings/fulfillment-method-settings';
 import { homepageBannerMediaSettingsService } from '@/lib/settings/homepage-banner-media-settings';
 import { integrationAppRegistryService } from '@/lib/settings/integration-app-registry';
@@ -285,6 +286,27 @@ export async function updateApiTokenManagementAction(formData: FormData) {
   revalidatePath('/admin');
   revalidatePath('/admin/settings');
   redirect('/admin/settings?status=api-token-management-updated');
+}
+
+export async function updateDashboardExtensionMountPointAction(formData: FormData) {
+  await assertAdminRole('owner');
+
+  await dashboardExtensionMountPointService.update({
+    key: requiredString(formData, 'key'),
+    label: requiredString(formData, 'label'),
+    description: stringField(formData, 'description') || null,
+    mountLocation: requiredString(formData, 'mountLocation'),
+    integrationAppKey: stringField(formData, 'integrationAppKey') || null,
+    requiredRoles: listField(formData, 'requiredRoles'),
+    requiredPermissions: listField(formData, 'requiredPermissions'),
+    isInternal: boolField(formData, 'isInternal'),
+    isActive: boolField(formData, 'isActive'),
+    sortOrder: intField(formData, 'sortOrder', 100)
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/settings');
+  redirect('/admin/settings?status=dashboard-extension-mount-point-updated');
 }
 
 export async function updateStaffPermissionGroupAction(formData: FormData) {
