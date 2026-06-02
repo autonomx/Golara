@@ -123,7 +123,7 @@ Goal: improve order operations beyond list/status management.
 - [x] Add customer/address assignment to draft orders.
 - [x] Add manual payment marking.
 - [x] Add payment attempt timeline and provider references.
-- Add refunds/voids when supported by provider.
+- [x] Add refunds/voids when supported by provider.
 - Add order discounts.
 - Add fulfillment shipment/delivery records.
 - Add order activity timeline with staff attribution.

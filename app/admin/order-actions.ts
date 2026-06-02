@@ -6,7 +6,7 @@ import { assertAdminRole } from '@/lib/admin-auth';
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
 import { assignAdminOrderCustomer } from '@/lib/checkout/admin-order-assignment-repository';
 import { addAdminOrderLineItem, parseAdminOrderLineSelection, removeAdminOrderLineItem, updateAdminOrderLineItemQuantity } from '@/lib/checkout/admin-order-line-repository';
-import { transitionCheckoutFulfillmentStatus, transitionCheckoutOrderStatus } from '@/lib/checkout/checkout-status-service';
+import { transitionCheckoutFulfillmentStatus, transitionCheckoutOrderStatus, transitionCheckoutPaymentStatus } from '@/lib/checkout/checkout-status-service';
 import { assertCheckoutFulfillmentStatus, assertCheckoutOrderStatus } from '@/lib/checkout/checkout-state-machine';
 import { markOrderManualPayment } from '@/lib/checkout/manual-payment-repository';
 import { createStaffOrderDraft } from '@/lib/checkout/order-draft-repository';
@@ -231,6 +231,51 @@ export async function markOrderManualPaymentAction(orderId: string, formData: Fo
   revalidatePath('/admin/orders');
   revalidatePath(`/admin/orders/${orderId}`);
   redirect(orderDetailPath(orderId, 'manual-payment-marked'));
+}
+
+async function transitionManualPaymentAttemptAction(orderId: string, paymentAttemptId: string, to: 'refunded' | 'cancelled', status: string, formData?: FormData) {
+  const actor = await assertAdminRole('staff');
+  if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
+
+  const attempt = await prisma.checkoutPaymentAttempt.findFirst({
+    where: { id: paymentAttemptId, orderId },
+    select: { id: true, provider: true, status: true, order: { select: { id: true, orderNumber: true } } }
+  });
+  if (!attempt) throw new Error('Payment attempt not found.');
+  if (attempt.provider !== 'manual') throw new Error('Only manual payment attempts can be adjusted from admin.');
+
+  const updated = await transitionCheckoutPaymentStatus({
+    paymentAttemptId,
+    to,
+    note: formData ? stringFormValue(formData, 'note') : undefined,
+    actorLabel: actor.label,
+    actorRole: actor.role
+  });
+
+  await recordAdminAuditLog({
+    action: to === 'refunded' ? 'order.payment.manual.refund' : 'order.payment.manual.void',
+    entity: 'checkoutOrder',
+    entityId: attempt.order.id,
+    summary: `${to === 'refunded' ? 'Refunded' : 'Voided'} manual payment attempt for order ${attempt.order.orderNumber}`,
+    metadata: {
+      paymentAttemptId: updated.id,
+      from: attempt.status,
+      to
+    }
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/orders');
+  revalidatePath(`/admin/orders/${orderId}`);
+  redirect(orderDetailPath(orderId, status));
+}
+
+export async function refundManualPaymentAttemptAction(orderId: string, paymentAttemptId: string, formData?: FormData) {
+  await transitionManualPaymentAttemptAction(orderId, paymentAttemptId, 'refunded', 'manual-payment-refunded', formData);
+}
+
+export async function voidManualPaymentAttemptAction(orderId: string, paymentAttemptId: string, formData?: FormData) {
+  await transitionManualPaymentAttemptAction(orderId, paymentAttemptId, 'cancelled', 'manual-payment-voided', formData);
 }
 
 export async function addOrderTimelineNoteAction(orderId: string, formData: FormData) {

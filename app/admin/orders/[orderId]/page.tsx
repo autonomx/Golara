@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { addOrderLineItemAction, addOrderTimelineNoteAction, markOrderManualPaymentAction, removeOrderLineItemAction, updateOrderCustomerAssignmentAction, updateOrderFulfillmentAction, updateOrderLineItemQuantityAction } from '@/app/admin/order-actions';
+import { addOrderLineItemAction, addOrderTimelineNoteAction, markOrderManualPaymentAction, refundManualPaymentAttemptAction, removeOrderLineItemAction, updateOrderCustomerAssignmentAction, updateOrderFulfillmentAction, updateOrderLineItemQuantityAction, voidManualPaymentAttemptAction } from '@/app/admin/order-actions';
 import { SiteHeader } from '@/components/SiteHeader';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { formatMinorUnitAmount } from '@/lib/catalog';
@@ -103,12 +103,14 @@ function FulfillmentInventoryCard({ items }: { items: AdminOrderItem[] }) {
   );
 }
 
-function PaymentAttemptCard({ attempt }: { attempt: AdminPaymentAttempt }) {
+function PaymentAttemptCard({ orderId, attempt }: { orderId: string; attempt: AdminPaymentAttempt }) {
   const metadata = metadataRecord(attempt.metadata);
   const visibleMetadata = paymentMetadataKeys
     .filter((key) => metadata[key] !== undefined && metadata[key] !== '')
     .map((key) => [key, metadata[key]] as const);
   const hasRedirect = Boolean(attempt.redirectUrl);
+  const canRefund = attempt.provider === 'manual' && attempt.status === 'paid';
+  const canVoid = attempt.provider === 'manual' && (attempt.status === 'created' || attempt.status === 'pending');
 
   return (
     <article className={`rounded-3xl border p-4 text-sm ${paymentTone(attempt.status, metadata)}`}>
@@ -149,6 +151,20 @@ function PaymentAttemptCard({ attempt }: { attempt: AdminPaymentAttempt }) {
           ))}
         </div>
       ) : null}
+      {canRefund || canVoid ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {canRefund ? (
+            <form action={refundManualPaymentAttemptAction.bind(null, orderId, attempt.id)}>
+              <button type="submit" className="rounded-full border border-amber-300 px-4 py-2 text-xs font-semibold text-amber-900">Refund manual payment</button>
+            </form>
+          ) : null}
+          {canVoid ? (
+            <form action={voidManualPaymentAttemptAction.bind(null, orderId, attempt.id)}>
+              <button type="submit" className="rounded-full border border-red-200 px-4 py-2 text-xs font-semibold text-red-700">Void manual payment</button>
+            </form>
+          ) : null}
+        </div>
+      ) : null}
     </article>
   );
 }
@@ -171,6 +187,12 @@ function StatusBanner({ status }: { status?: string }) {
   }
   if (status === 'manual-payment-marked') {
     return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">Manual payment marked paid.</div>;
+  }
+  if (status === 'manual-payment-refunded') {
+    return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">Manual payment refunded.</div>;
+  }
+  if (status === 'manual-payment-voided') {
+    return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">Manual payment voided.</div>;
   }
   if (status === 'order-note-added') {
     return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">Staff note added to the order timeline.</div>;
@@ -373,7 +395,7 @@ export default async function AdminOrderDetailPage({ params, searchParams }: { p
                   <button type="submit" className="rounded-full bg-rosewood px-5 py-2 text-sm font-semibold text-white">Mark manual payment paid</button>
                 </form>
               ) : null}
-              {order.paymentAttempts.length === 0 ? <p className="mt-4 rounded-3xl border border-rosewood/10 bg-cream p-4 text-sm text-stone-700">No payment attempts yet.</p> : <div className="mt-4 grid gap-3">{order.paymentAttempts.map((attempt) => <PaymentAttemptCard key={attempt.id} attempt={attempt} />)}</div>}
+              {order.paymentAttempts.length === 0 ? <p className="mt-4 rounded-3xl border border-rosewood/10 bg-cream p-4 text-sm text-stone-700">No payment attempts yet.</p> : <div className="mt-4 grid gap-3">{order.paymentAttempts.map((attempt) => <PaymentAttemptCard key={attempt.id} orderId={order.id} attempt={attempt} />)}</div>}
             </section>
           </aside>
         </div>
