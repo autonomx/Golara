@@ -6,6 +6,7 @@ import { AdminShippingDeliverySettingsPanel } from '@/components/admin/AdminShip
 import { AdminStaffPermissionSettingsPanel } from '@/components/admin/AdminStaffPermissionSettingsPanel';
 import { AdminTaxCategorySettingsPanel } from '@/components/admin/AdminTaxCategorySettingsPanel';
 import { AdminWebhookConfigurationPanel } from '@/components/admin/AdminWebhookConfigurationPanel';
+import { AdminWebhookEventLogPanel } from '@/components/admin/AdminWebhookEventLogPanel';
 import type { FulfillmentMethodSetting } from '@/lib/catalog';
 import { notificationProviderSettingsService } from '@/lib/settings/notification-provider-settings';
 import { paymentProviderSettingsService } from '@/lib/settings/payment-provider-settings';
@@ -13,6 +14,7 @@ import { shippingDeliverySettingsService } from '@/lib/settings/shipping-deliver
 import { staffPermissionSettingsService } from '@/lib/settings/staff-permission-settings';
 import { taxCategorySettingsService } from '@/lib/settings/tax-category-settings';
 import { webhookConfigurationService } from '@/lib/settings/webhook-configuration';
+import { webhookEventLogService } from '@/lib/settings/webhook-event-log';
 
 const inputClass = 'rounded-md border border-stone-200 bg-white px-3 py-2 text-sm text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100';
 
@@ -27,13 +29,14 @@ function Toggle({ label, name, defaultChecked, disabled }: { label: string; name
 }
 
 export async function AdminFulfillmentSettingsPanel({ methods, databaseReady }: { methods: FulfillmentMethodSetting[]; databaseReady: boolean }) {
-  const [shippingDeliverySetting, taxCategorySettings, paymentProviderSettings, notificationProviderSettings, staffPermissionSnapshot, webhookConfigurations] = await Promise.all([
+  const [shippingDeliverySetting, taxCategorySettings, paymentProviderSettings, notificationProviderSettings, staffPermissionSnapshot, webhookConfigurations, webhookEventLogSummary] = await Promise.all([
     shippingDeliverySettingsService.get(),
     taxCategorySettingsService.list(),
     paymentProviderSettingsService.list(),
     notificationProviderSettingsService.list(),
     staffPermissionSettingsService.snapshot(),
-    webhookConfigurationService.list()
+    webhookConfigurationService.list(),
+    webhookEventLogService.summary(10)
   ]);
 
   return (
@@ -87,6 +90,7 @@ export async function AdminFulfillmentSettingsPanel({ methods, databaseReady }: 
       <AdminPaymentProviderSettingsPanel settings={paymentProviderSettings} databaseReady={databaseReady} />
       <AdminNotificationProviderSettingsPanel settings={notificationProviderSettings} databaseReady={databaseReady} />
       <AdminWebhookConfigurationPanel settings={webhookConfigurations} databaseReady={databaseReady} />
+      <AdminWebhookEventLogPanel summary={webhookEventLogSummary} databaseReady={databaseReady} />
       <AdminStaffPermissionSettingsPanel snapshot={staffPermissionSnapshot} databaseReady={databaseReady} />
       <AdminModuleAccessSettingsPanel />
     </>
