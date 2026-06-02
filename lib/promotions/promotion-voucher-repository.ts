@@ -16,6 +16,7 @@ export type PromotionVoucherInput = {
   startsAt?: Date | string | null;
   endsAt?: Date | string | null;
   usageLimit?: number | null;
+  minimumSubtotalCents?: number | null;
 };
 
 export type PromotionVoucherRecord = {
@@ -26,6 +27,7 @@ export type PromotionVoucherRecord = {
   isActive: boolean;
   usageCount: number;
   usageLimit: number | null;
+  minimumSubtotalCents: number | null;
   startsAt: Date | null;
   endsAt: Date | null;
   createdAt: Date;
@@ -34,6 +36,7 @@ export type PromotionVoucherRecord = {
 
 export type PromotionValidityWindow = Pick<PromotionVoucherRecord, 'startsAt' | 'endsAt'>;
 export type PromotionUsageLimit = Pick<PromotionVoucherRecord, 'usageCount' | 'usageLimit'>;
+export type PromotionOrderMinimum = Pick<PromotionVoucherRecord, 'minimumSubtotalCents'>;
 
 function optionalText(value?: string | null) {
   const normalized = value?.trim();
@@ -103,6 +106,19 @@ export function isPromotionWithinUsageLimit(limit: PromotionUsageLimit) {
   return usageLimit === null || usageCount < usageLimit;
 }
 
+export function normalizePromotionMinimumSubtotalCents(value?: number | null) {
+  if (value === undefined || value === null) return null;
+  const normalized = Math.floor(value);
+  if (normalized < 0) throw new Error('Promotion minimum subtotal cannot be negative.');
+  return normalized;
+}
+
+export function isPromotionAboveOrderMinimum(promotion: PromotionOrderMinimum, subtotalCents: number) {
+  const minimum = normalizePromotionMinimumSubtotalCents(promotion.minimumSubtotalCents);
+  const subtotal = Math.max(0, Math.floor(subtotalCents));
+  return minimum === null || subtotal >= minimum;
+}
+
 export function normalizePromotionVoucherInput(input: PromotionVoucherInput) {
   const promotionDiscountId = optionalText(input.promotionDiscountId);
   if (!promotionDiscountId) throw new Error('Promotion discount id is required.');
@@ -115,7 +131,8 @@ export function normalizePromotionVoucherInput(input: PromotionVoucherInput) {
     isActive: input.isActive ?? true,
     startsAt: validity.startsAt,
     endsAt: validity.endsAt,
-    usageLimit: normalizePromotionUsageLimit(input.usageLimit)
+    usageLimit: normalizePromotionUsageLimit(input.usageLimit),
+    minimumSubtotalCents: normalizePromotionMinimumSubtotalCents(input.minimumSubtotalCents)
   };
 }
 
@@ -124,6 +141,11 @@ export function isPromotionVoucherActive(voucher: Pick<PromotionVoucherRecord, '
     && voucher.status === 'active'
     && isPromotionWithinValidityWindow(voucher, now)
     && isPromotionWithinUsageLimit(voucher);
+}
+
+export function isPromotionVoucherActiveForOrder(voucher: Pick<PromotionVoucherRecord, 'status' | 'isActive' | 'startsAt' | 'endsAt' | 'usageCount' | 'usageLimit' | 'minimumSubtotalCents'>, subtotalCents: number, now: Date = new Date()) {
+  return isPromotionVoucherActive(voucher, now)
+    && isPromotionAboveOrderMinimum(voucher, subtotalCents);
 }
 
 export async function listPromotionVouchers(): Promise<PromotionVoucherRecord[]> {
@@ -138,6 +160,7 @@ export async function listPromotionVouchers(): Promise<PromotionVoucherRecord[]>
       "isActive",
       "usageCount",
       "usageLimit",
+      "minimumSubtotalCents",
       "startsAt",
       "endsAt",
       "createdAt",
@@ -160,6 +183,7 @@ export async function findPromotionVoucherByCode(code: string): Promise<Promotio
       "isActive",
       "usageCount",
       "usageLimit",
+      "minimumSubtotalCents",
       "startsAt",
       "endsAt",
       "createdAt",
@@ -179,6 +203,7 @@ export async function createPromotionVoucher(input: PromotionVoucherInput) {
   const id = randomUUID();
   const metadata = {
     code: voucher.code,
+    minimumSubtotalCents: voucher.minimumSubtotalCents,
     source: 'admin'
   };
 
@@ -192,6 +217,7 @@ export async function createPromotionVoucher(input: PromotionVoucherInput) {
       "startsAt",
       "endsAt",
       "usageLimit",
+      "minimumSubtotalCents",
       "metadata"
     ) VALUES (
       ${id},
@@ -202,6 +228,7 @@ export async function createPromotionVoucher(input: PromotionVoucherInput) {
       ${voucher.startsAt},
       ${voucher.endsAt},
       ${voucher.usageLimit},
+      ${voucher.minimumSubtotalCents},
       ${JSON.stringify(metadata)}::jsonb
     )
     RETURNING
@@ -212,6 +239,7 @@ export async function createPromotionVoucher(input: PromotionVoucherInput) {
       "isActive",
       "usageCount",
       "usageLimit",
+      "minimumSubtotalCents",
       "startsAt",
       "endsAt",
       "createdAt",
