@@ -32,6 +32,7 @@ import { runInquiryNotificationsCoreTests } from './inquiry-notifications-core.t
 import { runInquiryReportingTests } from './inquiry-reporting.test';
 import { runInquiryWorkflowTests } from './inquiry-workflow.test';
 import { runInventoryStockReservationModelTests } from './inventory-stock-reservation-model.test';
+import { runLocalizedSeoMetadataModelTests } from './localized-seo-metadata-model.test';
 import { runManualPaymentAdjustmentFlowTests } from './manual-payment-adjustment-flow.test';
 import { runManualPaymentMarkingFlowTests } from './manual-payment-marking-flow.test';
 import { runMediaStorageReadinessTests } from './media-storage-readiness.test';
@@ -134,6 +135,7 @@ async function main() {
   await runChannelStorefrontModelTests();
   await runChannelProductAvailabilityModelTests();
   await runChannelPriceOverrideModelTests();
+  await runLocalizedSeoMetadataModelTests();
   await runVariantCheckoutLineModelTests();
   await runVariantStockAuditTests();
   await runVariantStockStatusTests();
@@ -144,7 +146,7 @@ async function main() {
   await runFulfillmentShipmentRecordsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (72 files)');
+  console.log('unit tests passed (73 files)');
 }
 
 main().catch((error) => {
