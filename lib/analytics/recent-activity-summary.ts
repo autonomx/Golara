@@ -74,7 +74,7 @@ export function buildRecentActivitySummary(rows: RecentActivitySourceRow[], now 
   const entries = rows
     .map((row) => {
       const source = normalizeSource(row.source);
-      bySource.set(source, (bySource.get(source) ?? 0) + 1;
+      bySource.set(source, (bySource.get(source) ?? 0) + 1);
       if (isStaffActivity(row)) staffActivities += 1;
       else systemActivities += 1;
       return {
