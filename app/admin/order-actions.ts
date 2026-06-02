@@ -6,6 +6,7 @@ import { assertAdminRole } from '@/lib/admin-auth';
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
 import { assignAdminOrderCustomer } from '@/lib/checkout/admin-order-assignment-repository';
 import { addAdminOrderLineItem, isAdminOrderLineEditable, parseAdminOrderLineSelection, removeAdminOrderLineItem, updateAdminOrderLineItemQuantity } from '@/lib/checkout/admin-order-line-repository';
+import { queueAdminOrderNotificationAction, recordAdminOrderNotificationAttempt } from '@/lib/checkout/admin-order-notification-repository';
 import { transitionCheckoutFulfillmentStatus, transitionCheckoutOrderStatus, transitionCheckoutPaymentStatus } from '@/lib/checkout/checkout-status-service';
 import { assertCheckoutFulfillmentStatus, assertCheckoutOrderStatus } from '@/lib/checkout/checkout-state-machine';
 import { markOrderManualPayment } from '@/lib/checkout/manual-payment-repository';
@@ -411,4 +412,67 @@ export async function updateOrderFulfillmentAction(orderId: string, formData: Fo
   revalidatePath('/admin/orders');
   revalidatePath(`/admin/orders/${orderId}`);
   redirect(orderDetailPath(orderId, 'fulfillment-updated'));
+}
+
+export async function queueOrderNotificationAction(orderId: string, formData: FormData) {
+  const actor = await assertAdminRole('staff');
+  const result = await queueAdminOrderNotificationAction(orderId, {
+    channel: stringFormValue(formData, 'channel'),
+    templateKey: stringFormValue(formData, 'templateKey'),
+    recipient: stringFormValue(formData, 'recipient'),
+    subject: stringFormValue(formData, 'subject'),
+    body: stringFormValue(formData, 'body'),
+    maxAttempts: integerFormValue(formData, 'maxAttempts', 3),
+    actorLabel: actor.label,
+    actorRole: actor.role
+  });
+
+  await recordAdminAuditLog({
+    action: 'order.notification.queue',
+    entity: 'checkoutOrder',
+    entityId: result.order.id,
+    summary: `Queued ${result.notification.channel} notification for order ${result.order.orderNumber}`,
+    metadata: {
+      notificationId: result.notification.id,
+      channel: result.notification.channel,
+      templateKey: result.notification.templateKey,
+      maxAttempts: result.notification.maxAttempts
+    }
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/orders');
+  revalidatePath(`/admin/orders/${orderId}`);
+  redirect(orderDetailPath(orderId, 'order-notification-queued'));
+}
+
+export async function recordOrderNotificationAttemptAction(orderId: string, notificationId: string, status: 'delivered' | 'failed', formData?: FormData) {
+  const actor = await assertAdminRole('staff');
+  const notification = await recordAdminOrderNotificationAttempt(notificationId, {
+    status,
+    errorCode: formData ? stringFormValue(formData, 'errorCode') : undefined,
+    errorMessage: formData ? stringFormValue(formData, 'errorMessage') : undefined,
+    retryDelayMinutes: formData ? integerFormValue(formData, 'retryDelayMinutes', 15) : 15,
+    actorLabel: actor.label,
+    actorRole: actor.role
+  });
+
+  await recordAdminAuditLog({
+    action: status === 'delivered' ? 'order.notification.deliver' : 'order.notification.fail',
+    entity: 'checkoutOrder',
+    entityId: orderId,
+    summary: `Recorded ${notification.channel} notification attempt as ${notification.status}`,
+    metadata: {
+      notificationId: notification.id,
+      channel: notification.channel,
+      status: notification.status,
+      attemptCount: notification.attemptCount,
+      nextRetryAt: notification.nextRetryAt?.toISOString() ?? null
+    }
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/orders');
+  revalidatePath(`/admin/orders/${orderId}`);
+  redirect(orderDetailPath(orderId, status === 'delivered' ? 'order-notification-delivered' : 'order-notification-failed'));
 }
