@@ -61,7 +61,8 @@ export async function runOrderRevenueSummaryTests() {
   assert.match(panel, /Recent revenue/);
 
   assert.match(consolePage, /AdminOrderRevenueSummaryPanel/);
-  assert.match(consolePage, /orderRevenueSummaryService\.summary\(\)/);
+  assert.match(consolePage, /EMPTY_ORDER_REVENUE_SUMMARY/);
+  assert.match(consolePage, /authenticated \? orderRevenueSummaryService\.summary\(\) : Promise\.resolve\(EMPTY_ORDER_REVENUE_SUMMARY\)/);
   assert.match(consolePage, /activeTab === 'overview' && authenticated \? <AdminOrderRevenueSummaryPanel/);
 
   assert.match(roadmap, /- \[x\] Add order count and revenue summaries\./);
