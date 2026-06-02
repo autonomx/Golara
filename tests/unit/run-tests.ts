@@ -30,6 +30,7 @@ import { runFulfillmentMethodSettingsModelTests } from './fulfillment-method-set
 import { runFulfillmentShipmentRecordsModelTests } from './fulfillment-shipment-records-model.test';
 import { runHomepageBannerMediaSettingsTests } from './homepage-banner-media-settings.test';
 import { runI18nLocalizationTests } from './i18n-localization.test';
+import { runImportExportJobTrackingTests } from './import-export-job-tracking.test';
 import { runInquiryAssignmentQueueTests } from './inquiry-assignment-queue.test';
 import { runInquiryAssignmentTests } from './inquiry-assignment.test';
 import { runInquiryNotificationsCoreTests } from './inquiry-notifications-core.test';
@@ -147,6 +148,7 @@ async function main() {
   await runApiTokenManagementTests();
   await runProviderDiagnosticsTests();
   await runDashboardExtensionMountPointsTests();
+  await runImportExportJobTrackingTests();
   await runStaffPermissionSettingsTests();
   await runProductCheckoutPolicyTests();
   await runProductVariantMapperTests();
@@ -180,7 +182,7 @@ async function main() {
   await runFulfillmentShipmentRecordsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (90 files)');
+  console.log('unit tests passed (91 files)');
 }
 
 main().catch((error) => {
