@@ -200,7 +200,7 @@ Success criteria:
 Goal: prepare for external services and future custom admin modules.
 
 - [x] Add webhook configuration.
-- Add event log for outgoing webhooks.
+- [x] Add event log for outgoing webhooks.
 - Add integration/app registry.
 - Add API token management if needed.
 - Add provider diagnostics pages.
