@@ -12,7 +12,7 @@ import { AdminStaffReadinessPanel } from '@/components/admin/AdminStaffReadiness
 import { AdminStorefrontNavigationPanel } from '@/components/admin/AdminStorefrontNavigationPanel';
 import { AdminStoreSettingsPanel } from '@/components/admin/AdminStoreSettingsPanel';
 import { InquiryBoard } from '@/components/admin/InquiryBoard';
-import { orderRevenueSummaryService } from '@/lib/analytics/order-revenue-summary';
+import { EMPTY_ORDER_REVENUE_SUMMARY, orderRevenueSummaryService } from '@/lib/analytics/order-revenue-summary';
 import { getAdminIdentity, isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
 import { getAdminAccountReadinessSummary, listAdminAccountReadinessRecords } from '@/lib/admin-account-repository';
 import { getHomepageContent, listAdminAuditLogs, listAdminCategories, listAdminFulfillmentMethodSettings, listAdminProducts, listAdminProductTypes, listInquiries, listInquiryPage, listInquiryStatusCounts, listMedia } from '@/lib/cms/catalog-repository';
@@ -289,7 +289,7 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
     listInquiries(inquiryStatus, inquirySearch),
     listInquiryStatusCounts(inquirySearch),
     authenticated ? listAdminAuditLogs(auditFilters) : Promise.resolve([]),
-    orderRevenueSummaryService.summary(),
+    authenticated ? orderRevenueSummaryService.summary() : Promise.resolve(EMPTY_ORDER_REVENUE_SUMMARY),
     authenticated ? listAdminCheckoutOrderPage(orderFilters, parsePage(orderPage)) : Promise.resolve({ orders: [], page: 1, pageSize: 12, totalCount: 0, totalPages: 1 }),
     authenticated ? getCustomerAuthEventSummary() : getCustomerAuthEventSummary(1),
     canViewStaffReadiness ? listAdminAccountReadinessRecords() : Promise.resolve([]),
