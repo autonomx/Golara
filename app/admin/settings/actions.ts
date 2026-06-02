@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { fulfillmentMethodSettingsService } from '@/lib/settings/fulfillment-method-settings';
 import { homepageBannerMediaSettingsService } from '@/lib/settings/homepage-banner-media-settings';
+import { integrationAppRegistryService } from '@/lib/settings/integration-app-registry';
 import { notificationProviderSettingsService } from '@/lib/settings/notification-provider-settings';
 import { paymentProviderSettingsService } from '@/lib/settings/payment-provider-settings';
 import { shippingDeliverySettingsService } from '@/lib/settings/shipping-delivery-settings';
@@ -238,6 +239,30 @@ export async function updateWebhookConfigurationAction(formData: FormData) {
   revalidatePath('/admin');
   revalidatePath('/admin/settings');
   redirect('/admin/settings?status=webhook-configuration-updated');
+}
+
+export async function updateIntegrationAppRegistryAction(formData: FormData) {
+  await assertAdminRole('owner');
+
+  await integrationAppRegistryService.update({
+    key: requiredString(formData, 'key'),
+    label: requiredString(formData, 'label'),
+    description: stringField(formData, 'description') || null,
+    category: requiredString(formData, 'category'),
+    provider: stringField(formData, 'provider') || null,
+    status: requiredString(formData, 'status'),
+    homepageUrl: stringField(formData, 'homepageUrl') || null,
+    docsUrl: stringField(formData, 'docsUrl') || null,
+    webhookConfigurationKey: stringField(formData, 'webhookConfigurationKey') || null,
+    permissions: listField(formData, 'permissions'),
+    requiredEnvVars: listField(formData, 'requiredEnvVars'),
+    isInternal: boolField(formData, 'isInternal'),
+    isActive: boolField(formData, 'isActive')
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/settings');
+  redirect('/admin/settings?status=integration-app-registry-updated');
 }
 
 export async function updateStaffPermissionGroupAction(formData: FormData) {
