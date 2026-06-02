@@ -324,15 +324,15 @@ export default async function AdminOrderDetailPage({ params, searchParams }: { p
 
             <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
               <div className="flex flex-wrap items-start justify-between gap-4">
-                <div><h2 className="font-display text-3xl text-rosewood">Timeline</h2><p className="mt-2 text-sm text-stone-600">Add internal notes and review order history.</p></div>
+                <div><h2 className="font-display text-3xl text-rosewood">Timeline</h2><p className="mt-2 text-sm text-stone-600">Add internal notes and review order history with staff attribution.</p></div>
                 <form action={noteAction} className="grid w-full gap-2 rounded-3xl border border-rosewood/10 bg-cream p-4 md:max-w-md">
                   <label className="grid gap-2 text-sm font-semibold text-rosewood">Staff timeline note<textarea name="note" minLength={2} required className="min-h-24 rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-sm text-stone-800 outline-none focus:border-rosewood" /></label>
                   <button type="submit" className="rounded-full bg-rosewood px-5 py-2 text-sm font-semibold text-white">Add note</button>
                 </form>
               </div>
-              {order.timelineEvents.length === 0 ? <p className="mt-4 rounded-3xl border border-rosewood/10 bg-cream p-5 text-sm text-stone-700">No timeline events yet.</p> : (
-                <div className="mt-5 grid gap-3">{order.timelineEvents.map((event) => (
-                  <article key={event.id} className="rounded-3xl border border-rosewood/10 bg-cream p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="font-semibold text-rosewood">{event.title}</p><p className="text-xs text-stone-500">{event.type} · {event.actorLabel || 'System'} {event.actorRole ? `· ${event.actorRole}` : ''}</p></div><time className="text-xs text-stone-500">{formatDate(event.createdAt)}</time></div>{event.note ? <p className="mt-2 text-sm text-stone-700">{event.note}</p> : null}</article>
+              {order.activityTimeline.length === 0 ? <p className="mt-4 rounded-3xl border border-rosewood/10 bg-cream p-5 text-sm text-stone-700">No timeline events yet.</p> : (
+                <div className="mt-5 grid gap-3">{order.activityTimeline.map((event) => (
+                  <article key={event.id} className="rounded-3xl border border-rosewood/10 bg-cream p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="font-semibold text-rosewood">{event.title}</p><p className="text-xs text-stone-500">{event.type} · {event.attributionLabel} · {event.source}</p></div><time className="text-xs text-stone-500">{formatDate(event.createdAt)}</time></div>{event.note ? <p className="mt-2 text-sm text-stone-700">{event.note}</p> : null}</article>
                 ))}</div>
               )}
             </section>
