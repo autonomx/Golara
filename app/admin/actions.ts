@@ -77,6 +77,13 @@ function intField(formData: FormData, name: string, fallback = 0) {
   return Number.isFinite(value) ? value : fallback;
 }
 
+function optionalIntField(formData: FormData, name: string) {
+  const raw = optionalString(formData, name);
+  if (!raw) return null;
+  const value = Number.parseInt(raw, 10);
+  return Number.isFinite(value) ? value : null;
+}
+
 function priceCentsField(formData: FormData, name: string) {
   const value = Number.parseFloat(requiredString(formData, name));
   if (!Number.isFinite(value) || value < 0) throw new Error(`${name} must be a positive number`);
@@ -400,6 +407,8 @@ export async function createProductVariantAction(productId: string, formData: Fo
       currency: stringField(formData, 'currency', 'CAD') || 'CAD',
       imageUrl: resolveOptionalImageUrl(formData, 'variantSelectedMediaUrl', 'variantImageUrl') ?? product.imageUrl,
       stockQuantity: intField(formData, 'stockQuantity', 0),
+      trackInventory: boolFieldDefault(formData, 'trackInventory', true),
+      lowStockThreshold: optionalIntField(formData, 'lowStockThreshold'),
       isActive: boolField(formData, 'isActive'),
       sortOrder: intField(formData, 'sortOrder', 0)
     }
@@ -427,6 +436,8 @@ export async function updateProductVariantAction(productId: string, variantId: s
       currency: stringField(formData, 'currency', 'CAD') || 'CAD',
       imageUrl: resolveOptionalImageUrl(formData, 'variantSelectedMediaUrl', 'variantImageUrl') ?? product.imageUrl,
       stockQuantity: intField(formData, 'stockQuantity', 0),
+      trackInventory: boolFieldDefault(formData, 'trackInventory', true),
+      lowStockThreshold: optionalIntField(formData, 'lowStockThreshold'),
       isActive: boolField(formData, 'isActive'),
       sortOrder: intField(formData, 'sortOrder', 0)
     }
