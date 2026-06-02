@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { fulfillmentMethodSettingsService } from '@/lib/settings/fulfillment-method-settings';
 import { storeSettingsService } from '@/lib/settings/store-settings';
+import { storefrontNavigationMenuService, type StorefrontNavigationMenuItemInput } from '@/lib/settings/storefront-navigation-menu';
 
 function stringField(formData: FormData, name: string, fallback = '') {
   const value = formData.get(name);
@@ -27,6 +28,13 @@ function intField(formData: FormData, name: string, fallback = 0) {
   return Number.isFinite(value) ? value : fallback;
 }
 
+function parseNavigationItemsJson(formData: FormData): StorefrontNavigationMenuItemInput[] {
+  const value = requiredString(formData, 'itemsJson');
+  const parsed = JSON.parse(value) as StorefrontNavigationMenuItemInput[];
+  if (!Array.isArray(parsed)) throw new Error('itemsJson must be an array');
+  return parsed;
+}
+
 export async function updateStoreSettingAction(formData: FormData) {
   await assertAdminRole('owner');
 
@@ -45,6 +53,23 @@ export async function updateStoreSettingAction(formData: FormData) {
   revalidatePath('/admin');
   revalidatePath('/admin/settings');
   redirect('/admin/settings?status=store-settings-updated');
+}
+
+export async function updateStorefrontNavigationMenuAction(formData: FormData) {
+  await assertAdminRole('owner');
+
+  await storefrontNavigationMenuService.update({
+    key: requiredString(formData, 'key'),
+    label: requiredString(formData, 'label'),
+    locale: stringField(formData, 'locale') || null,
+    isActive: boolField(formData, 'isActive'),
+    items: parseNavigationItemsJson(formData)
+  });
+
+  revalidatePath('/');
+  revalidatePath('/admin');
+  revalidatePath('/admin/settings');
+  redirect('/admin/settings?status=storefront-navigation-updated');
 }
 
 export async function updateFulfillmentMethodSettingAction(formData: FormData) {
