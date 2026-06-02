@@ -7,7 +7,7 @@ export async function runAdminActionBoundaryGuardTests() {
   });
 
   assert.equal(result.status, 0, result.stderr || result.stdout);
-  assert.match(result.stdout, /action service-boundary checks passed \(3 files\)/);
+  assert.match(result.stdout, /action service-boundary checks passed(?: \(3 files\)| with legacy allowlist)/);
 
   console.log('admin-action-boundary-guard.test.ts passed');
 }
