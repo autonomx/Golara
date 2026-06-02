@@ -1,5 +1,6 @@
 import { updateFulfillmentMethodSettingAction } from '@/app/admin/settings/actions';
 import { AdminApiTokenManagementPanel } from '@/components/admin/AdminApiTokenManagementPanel';
+import { AdminDashboardExtensionMountPointsPanel } from '@/components/admin/AdminDashboardExtensionMountPointsPanel';
 import { AdminIntegrationAppRegistryPanel } from '@/components/admin/AdminIntegrationAppRegistryPanel';
 import { AdminModuleAccessSettingsPanel } from '@/components/admin/AdminModuleAccessSettingsPanel';
 import { AdminNotificationProviderSettingsPanel } from '@/components/admin/AdminNotificationProviderSettingsPanel';
@@ -12,6 +13,7 @@ import { AdminWebhookConfigurationPanel } from '@/components/admin/AdminWebhookC
 import { AdminWebhookEventLogPanel } from '@/components/admin/AdminWebhookEventLogPanel';
 import type { FulfillmentMethodSetting } from '@/lib/catalog';
 import { apiTokenManagementService } from '@/lib/settings/api-token-management';
+import { dashboardExtensionMountPointService } from '@/lib/settings/dashboard-extension-mount-points';
 import { integrationAppRegistryService } from '@/lib/settings/integration-app-registry';
 import { notificationProviderSettingsService } from '@/lib/settings/notification-provider-settings';
 import { paymentProviderSettingsService } from '@/lib/settings/payment-provider-settings';
@@ -35,7 +37,7 @@ function Toggle({ label, name, defaultChecked, disabled }: { label: string; name
 }
 
 export async function AdminFulfillmentSettingsPanel({ methods, databaseReady }: { methods: FulfillmentMethodSetting[]; databaseReady: boolean }) {
-  const [shippingDeliverySetting, taxCategorySettings, paymentProviderSettings, notificationProviderSettings, staffPermissionSnapshot, webhookConfigurations, webhookEventLogSummary, integrationAppRegistrySummary, apiTokenManagementSummary, providerDiagnosticsSummary] = await Promise.all([
+  const [shippingDeliverySetting, taxCategorySettings, paymentProviderSettings, notificationProviderSettings, staffPermissionSnapshot, webhookConfigurations, webhookEventLogSummary, integrationAppRegistrySummary, apiTokenManagementSummary, dashboardExtensionMountPointSummary, providerDiagnosticsSummary] = await Promise.all([
     shippingDeliverySettingsService.get(),
     taxCategorySettingsService.list(),
     paymentProviderSettingsService.list(),
@@ -45,6 +47,7 @@ export async function AdminFulfillmentSettingsPanel({ methods, databaseReady }: 
     webhookEventLogService.summary(10),
     integrationAppRegistryService.summary(),
     apiTokenManagementService.summary(),
+    dashboardExtensionMountPointService.summary(),
     providerDiagnosticsService.summary()
   ]);
 
@@ -101,6 +104,7 @@ export async function AdminFulfillmentSettingsPanel({ methods, databaseReady }: 
       <AdminProviderDiagnosticsPanel summary={providerDiagnosticsSummary} />
       <AdminIntegrationAppRegistryPanel summary={integrationAppRegistrySummary} databaseReady={databaseReady} />
       <AdminApiTokenManagementPanel summary={apiTokenManagementSummary} databaseReady={databaseReady} />
+      <AdminDashboardExtensionMountPointsPanel summary={dashboardExtensionMountPointSummary} databaseReady={databaseReady} />
       <AdminWebhookConfigurationPanel settings={webhookConfigurations} databaseReady={databaseReady} />
       <AdminWebhookEventLogPanel summary={webhookEventLogSummary} databaseReady={databaseReady} />
       <AdminStaffPermissionSettingsPanel snapshot={staffPermissionSnapshot} databaseReady={databaseReady} />
