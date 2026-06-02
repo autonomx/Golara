@@ -8,6 +8,7 @@ import { assignAdminOrderCustomer } from '@/lib/checkout/admin-order-assignment-
 import { addAdminOrderLineItem, parseAdminOrderLineSelection, removeAdminOrderLineItem, updateAdminOrderLineItemQuantity } from '@/lib/checkout/admin-order-line-repository';
 import { transitionCheckoutFulfillmentStatus, transitionCheckoutOrderStatus } from '@/lib/checkout/checkout-status-service';
 import { assertCheckoutFulfillmentStatus, assertCheckoutOrderStatus } from '@/lib/checkout/checkout-state-machine';
+import { markOrderManualPayment } from '@/lib/checkout/manual-payment-repository';
 import { createStaffOrderDraft } from '@/lib/checkout/order-draft-repository';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
@@ -199,6 +200,37 @@ export async function updateOrderCustomerAssignmentAction(orderId: string, formD
   revalidatePath('/admin/orders');
   revalidatePath(`/admin/orders/${orderId}`);
   redirect(orderDetailPath(orderId, 'order-customer-assigned'));
+}
+
+export async function markOrderManualPaymentAction(orderId: string, formData: FormData) {
+  const actor = await assertAdminRole('staff');
+  const amountCents = integerFormValue(formData, 'amountCents', 0);
+  const providerReference = stringFormValue(formData, 'providerReference');
+  const note = stringFormValue(formData, 'note');
+  const attempt = await markOrderManualPayment(orderId, {
+    amountCents,
+    providerReference,
+    note,
+    actorLabel: actor.label,
+    actorRole: actor.role
+  });
+
+  await recordAdminAuditLog({
+    action: 'order.payment.manual.mark_paid',
+    entity: 'checkoutOrder',
+    entityId: attempt.order.id,
+    summary: `Marked manual payment paid for order ${attempt.order.orderNumber}`,
+    metadata: {
+      paymentAttemptId: attempt.id,
+      amountCents: attempt.amountCents,
+      providerReference: attempt.providerReference
+    }
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/orders');
+  revalidatePath(`/admin/orders/${orderId}`);
+  redirect(orderDetailPath(orderId, 'manual-payment-marked'));
 }
 
 export async function addOrderTimelineNoteAction(orderId: string, formData: FormData) {

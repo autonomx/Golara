@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { addOrderLineItemAction, addOrderTimelineNoteAction, removeOrderLineItemAction, updateOrderCustomerAssignmentAction, updateOrderFulfillmentAction, updateOrderLineItemQuantityAction } from '@/app/admin/order-actions';
+import { addOrderLineItemAction, addOrderTimelineNoteAction, markOrderManualPaymentAction, removeOrderLineItemAction, updateOrderCustomerAssignmentAction, updateOrderFulfillmentAction, updateOrderLineItemQuantityAction } from '@/app/admin/order-actions';
 import { SiteHeader } from '@/components/SiteHeader';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { formatMinorUnitAmount } from '@/lib/catalog';
@@ -154,6 +154,9 @@ function StatusBanner({ status }: { status?: string }) {
   if (status === 'order-customer-assigned') {
     return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">Customer assignment updated.</div>;
   }
+  if (status === 'manual-payment-marked') {
+    return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">Manual payment marked paid.</div>;
+  }
   if (status === 'order-note-added') {
     return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">Staff note added to the order timeline.</div>;
   }
@@ -173,9 +176,12 @@ export default async function AdminOrderDetailPage({ params, searchParams }: { p
   const customerAssignmentOptions = canEditLineItems ? await listAdminOrderCustomerAssignmentOptions() : [];
   const addLineAction = addOrderLineItemAction.bind(null, order.id);
   const assignCustomerAction = updateOrderCustomerAssignmentAction.bind(null, order.id);
+  const manualPaymentAction = markOrderManualPaymentAction.bind(null, order.id);
   const noteAction = addOrderTimelineNoteAction.bind(null, order.id);
   const fulfillmentAction = updateOrderFulfillmentAction.bind(null, order.id);
   const lineItemColumnCount = canEditLineItems ? 5 : 4;
+  const latestPaymentStatus = order.paymentAttempts[0]?.status;
+  const canMarkManualPayment = order.status !== 'cancelled' && latestPaymentStatus !== 'paid';
 
   return (
     <main id="main-content" tabIndex={-1}>
@@ -333,7 +339,27 @@ export default async function AdminOrderDetailPage({ params, searchParams }: { p
               ) : null}
             </section>
 
-            <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm"><h2 className="font-display text-3xl text-rosewood">Payments</h2>{order.paymentAttempts.length === 0 ? <p className="mt-4 rounded-3xl border border-rosewood/10 bg-cream p-4 text-sm text-stone-700">No payment attempts yet.</p> : <div className="mt-4 grid gap-3">{order.paymentAttempts.map((attempt) => <PaymentAttemptCard key={attempt.id} attempt={attempt} />)}</div>}</section>
+            <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
+              <h2 className="font-display text-3xl text-rosewood">Payments</h2>
+              {canMarkManualPayment ? (
+                <form action={manualPaymentAction} className="mt-5 grid gap-3 rounded-3xl border border-rosewood/10 bg-cream p-4">
+                  <label className="grid gap-2 text-sm font-semibold text-rosewood">
+                    Amount
+                    <input name="amountCents" type="number" min={0} defaultValue={order.totalCents} className={lineEditInputClass} />
+                  </label>
+                  <label className="grid gap-2 text-sm font-semibold text-rosewood">
+                    Reference
+                    <input name="providerReference" className={lineEditInputClass} placeholder="Receipt or transfer ID" />
+                  </label>
+                  <label className="grid gap-2 text-sm font-semibold text-rosewood">
+                    Note
+                    <textarea name="note" className={`${lineEditInputClass} min-h-20`} />
+                  </label>
+                  <button type="submit" className="rounded-full bg-rosewood px-5 py-2 text-sm font-semibold text-white">Mark manual payment paid</button>
+                </form>
+              ) : null}
+              {order.paymentAttempts.length === 0 ? <p className="mt-4 rounded-3xl border border-rosewood/10 bg-cream p-4 text-sm text-stone-700">No payment attempts yet.</p> : <div className="mt-4 grid gap-3">{order.paymentAttempts.map((attempt) => <PaymentAttemptCard key={attempt.id} attempt={attempt} />)}</div>}
+            </section>
           </aside>
         </div>
       </section>
