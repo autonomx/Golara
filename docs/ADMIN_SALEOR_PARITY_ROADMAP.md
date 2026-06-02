@@ -183,7 +183,7 @@ Goal: centralize store configuration currently spread across env/code.
 - [x] Add store settings page.
 - [x] Add storefront navigation/menu builder.
 - [x] Add homepage banner/media settings.
-- Add shipping/delivery settings.
+- [x] Add shipping/delivery settings.
 - Add tax category settings.
 - Add payment provider settings/readiness.
 - Add notification provider settings/readiness.
