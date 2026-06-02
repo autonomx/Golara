@@ -12,6 +12,7 @@ import { staffPermissionSettingsService } from '@/lib/settings/staff-permission-
 import { storeSettingsService } from '@/lib/settings/store-settings';
 import { storefrontNavigationMenuService, type StorefrontNavigationMenuItemInput } from '@/lib/settings/storefront-navigation-menu';
 import { taxCategorySettingsService } from '@/lib/settings/tax-category-settings';
+import { webhookConfigurationService } from '@/lib/settings/webhook-configuration';
 
 function stringField(formData: FormData, name: string, fallback = '') {
   const value = formData.get(name);
@@ -217,6 +218,26 @@ export async function updateNotificationProviderSettingAction(formData: FormData
   revalidatePath('/admin');
   revalidatePath('/admin/settings');
   redirect('/admin/settings?status=notification-provider-updated');
+}
+
+export async function updateWebhookConfigurationAction(formData: FormData) {
+  await assertAdminRole('owner');
+
+  await webhookConfigurationService.update({
+    key: requiredString(formData, 'key'),
+    label: requiredString(formData, 'label'),
+    description: stringField(formData, 'description') || null,
+    targetUrl: requiredString(formData, 'targetUrl'),
+    events: listField(formData, 'events'),
+    secretEnvVar: stringField(formData, 'secretEnvVar') || null,
+    headerNames: listField(formData, 'headerNames'),
+    isDefault: boolField(formData, 'isDefault'),
+    isActive: boolField(formData, 'isActive')
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/settings');
+  redirect('/admin/settings?status=webhook-configuration-updated');
 }
 
 export async function updateStaffPermissionGroupAction(formData: FormData) {
