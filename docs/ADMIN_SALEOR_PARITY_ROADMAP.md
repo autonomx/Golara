@@ -187,7 +187,7 @@ Goal: centralize store configuration currently spread across env/code.
 - [x] Add tax category settings.
 - [x] Add payment provider settings/readiness.
 - [x] Add notification provider settings/readiness.
-- Add staff accounts and permission groups.
+- [x] Add staff accounts and permission groups.
 - Add role-based access controls for each admin module.
 
 Success criteria:
