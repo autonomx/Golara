@@ -76,6 +76,7 @@ import { runPromotionValidityWindowsModelTests } from './promotion-validity-wind
 import { runPromotionVoucherModelTests } from './promotion-voucher-model.test';
 import { runProviderDiagnosticsTests } from './provider-diagnostics.test';
 import { runPublicInquiryServiceTests } from './public-inquiry-service.test';
+import { runRecentActivitySummaryTests } from './recent-activity-summary.test';
 import { runRepositoryFallbackPolicyTests } from './repository-fallback-policy.test';
 import { runRuntimeModeTests } from './runtime-mode.test';
 import { runRuntimeReadinessTests } from './runtime-readiness.test';
@@ -148,6 +149,7 @@ async function main() {
   await runBestSellingProductsTests();
   await runLowStockAlertsTests();
   await runFulfillmentQueueSummaryTests();
+  await runRecentActivitySummaryTests();
   await runPaymentGatewayConfigTests();
   await runPaymentGatewayAdaptersTests();
   await runPaymentProviderSettingsTests();
@@ -192,7 +194,7 @@ async function main() {
   await runFulfillmentShipmentRecordsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (96 files)');
+  console.log('unit tests passed (97 files)');
 }
 
 main().catch((error) => {
