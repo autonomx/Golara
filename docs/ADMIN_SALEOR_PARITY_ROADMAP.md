@@ -25,7 +25,7 @@ Goal: make the admin shell feel like a durable operations console before adding 
 - [x] Add separate sidebar entries for Customers, Discounts, Settings.
 - Add consistent page headers, breadcrumbs, and primary actions.
 - [x] Add pagination to product/category/media tables.
-- Add column visibility controls for dense tables.
+- [x] Add column visibility controls for dense tables.
 - [x] Add query-string-preserved filters.
 - [x] Add empty states per module.
 - [x] Add loading and error states per module.

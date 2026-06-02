@@ -49,6 +49,8 @@ type AdminDashboardProps = {
   productPage?: number;
   categoryPage?: number;
   mediaPage?: number;
+  productColumns?: string | string[];
+  mediaColumns?: string | string[];
   status?: string;
   message?: string;
 };
@@ -77,6 +79,25 @@ const panelClass = 'scroll-mt-24 rounded-lg border border-stone-200 bg-white p-5
 const formCardClass = 'grid gap-4 rounded-lg border border-rosewood/10 bg-[#fffdfb] p-5 shadow-sm';
 const scrollListClass = 'max-h-[760px] overflow-y-auto pr-2 [scrollbar-width:thin] [scrollbar-color:#6f2438_#fff8f1]';
 const catalogPageSize = 12;
+const productColumnOptions = [
+  { key: 'pick', label: 'Pick' },
+  { key: 'product', label: 'Product' },
+  { key: 'category', label: 'Category' },
+  { key: 'price', label: 'Price' },
+  { key: 'flags', label: 'Flags' },
+  { key: 'actions', label: 'Actions' }
+] as const;
+const mediaColumnOptions = [
+  { key: 'image', label: 'Image' },
+  { key: 'category', label: 'Image category' },
+  { key: 'belongsTo', label: 'Belongs to' },
+  { key: 'linkedItem', label: 'Linked item' },
+  { key: 'source', label: 'Source' },
+  { key: 'url', label: 'URL' },
+  { key: 'actions', label: 'Actions' }
+] as const;
+type ProductColumn = (typeof productColumnOptions)[number]['key'];
+type MediaColumn = (typeof mediaColumnOptions)[number]['key'];
 const mediaCategoryOptions = [
   { value: 'product', label: 'Product' },
   { value: 'category', label: 'Category' },
@@ -177,6 +198,40 @@ function paginationHref(path: string, pageParam: string, page: number, params: R
   return serialized ? `${path}?${serialized}` : path;
 }
 
+function parseColumns<T extends string>(value: string | string[] | undefined, options: readonly { key: T; label: string }[], required: T[] = []) {
+  const valid = new Set(options.map((option) => option.key));
+  const raw = Array.isArray(value) ? value : value?.split(',');
+  const selected = (raw ?? options.map((option) => option.key)).filter((item): item is T => valid.has(item as T));
+  const withRequired = new Set<T>([...required, ...selected]);
+  return options.map((option) => option.key).filter((key) => withRequired.has(key));
+}
+
+function columnParam<T extends string>(columns: T[], options: readonly { key: T; label: string }[]) {
+  const defaults = options.map((option) => option.key);
+  return columns.length === defaults.length && columns.every((column) => defaults.includes(column)) ? undefined : columns.join(',');
+}
+
+function ColumnVisibilityControls<T extends string>({ path, paramName, title, options, selected, hiddenInputs }: { path: string; paramName: string; title: string; options: readonly { key: T; label: string }[]; selected: T[]; hiddenInputs: Record<string, string | undefined> }) {
+  const selectedSet = new Set(selected);
+  return (
+    <details className="rounded-lg border border-stone-200 bg-white p-4">
+      <summary className="cursor-pointer text-sm font-bold text-stone-950">{title}</summary>
+      <form action={path} className="mt-4 grid gap-3">
+        {Object.entries(hiddenInputs).map(([name, value]) => value ? <input key={name} type="hidden" name={name} value={value} /> : null)}
+        <div className="flex flex-wrap gap-2">
+          {options.map((option) => (
+            <label key={option.key} className="inline-flex items-center gap-2 rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm font-semibold text-stone-700">
+              <input type="checkbox" name={paramName} value={option.key} defaultChecked={selectedSet.has(option.key)} />
+              {option.label}
+            </label>
+          ))}
+        </div>
+        <button type="submit" className="w-fit rounded-md bg-rosewood px-4 py-2 text-sm font-semibold text-white">Apply columns</button>
+      </form>
+    </details>
+  );
+}
+
 function PaginationControls({ path, pageParam, currentPage, pageCount, total, start, end, params }: { path: string; pageParam: string; currentPage: number; pageCount: number; total: number; start: number; end: number; params: Record<string, string | undefined> }) {
   if (total <= catalogPageSize) {
     return <p className="text-sm font-semibold text-stone-600">Showing {total} {total === 1 ? 'item' : 'items'}.</p>;
@@ -239,10 +294,11 @@ function Metric({ value, label }: { value: number; label: string }) {
   return <div className="rounded-md border border-stone-200 bg-stone-50 px-4 py-3"><div className="text-xl font-bold text-stone-950">{value}</div><div className="text-[11px] font-bold uppercase tracking-[0.14em] text-stone-500">{label}</div></div>;
 }
 
-function CatalogFilters({ categories, section, search, category, flag }: { categories: Category[]; section: CatalogSection; search?: string; category?: string; flag?: string }) {
+function CatalogFilters({ categories, section, search, category, flag, columnParams }: { categories: Category[]; section: CatalogSection; search?: string; category?: string; flag?: string; columnParams?: Record<string, string | undefined> }) {
   return (
     <form action={catalogPath(section)} className="mb-6 grid gap-3 rounded-lg border border-rosewood/10 bg-white p-4 md:grid-cols-[1.2fr_1fr_1fr_auto]">
       {section === 'all' ? <input type="hidden" name="tab" value="catalog" /> : null}
+      {Object.entries(columnParams ?? {}).map(([name, value]) => value ? <input key={name} type="hidden" name={name} value={value} /> : null)}
       <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-rosewood/70">Search<input name="catalogSearch" className={inputClass} defaultValue={search} placeholder="Title, code, slug..." /></label>
       <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-rosewood/70">Category<select name="catalogCategory" className={inputClass} defaultValue={category ?? ''}><option value="">All categories</option>{categories.map((item) => <option key={item.slug} value={item.slug}>{item.parentTitle ? `${item.parentTitle} / ${item.title}` : item.title}</option>)}</select></label>
       <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-rosewood/70">Product flag<select name="catalogFlag" className={inputClass} defaultValue={flag ?? ''}><option value="">All products</option><option value="best-seller">Best sellers</option><option value="available-today">Available today</option><option value="quote-only">Quote only</option><option value="inactive">Inactive</option><option value="missing-image">Missing image</option></select></label>
@@ -361,8 +417,9 @@ function MediaEditFields({ item, disabled }: { item: MediaItem; disabled: boolea
   );
 }
 
-function MediaTable({ media, categories, products, disabled }: { media: MediaItem[]; categories: Category[]; products: Product[]; disabled: boolean }) {
+function MediaTable({ media, categories, products, disabled, columns }: { media: MediaItem[]; categories: Category[]; products: Product[]; disabled: boolean; columns: MediaColumn[] }) {
   const usageByUrl = buildMediaUsageMap(categories, products);
+  const show = (column: MediaColumn) => columns.includes(column);
 
   if (media.length === 0) {
     return <EmptyState title="No images found" body="Add an image above, or clear filters and pagination to return to the full media library." />;
@@ -373,13 +430,13 @@ function MediaTable({ media, categories, products, disabled }: { media: MediaIte
       <table className="w-full min-w-[1180px] border-collapse text-left text-sm">
         <thead className="sticky top-0 z-[1] bg-cream text-xs font-semibold uppercase tracking-[0.16em] text-rosewood/70">
           <tr>
-            <th className="px-4 py-3">Image</th>
-            <th className="px-4 py-3">Image category</th>
-            <th className="px-4 py-3">Belongs to</th>
-            <th className="px-4 py-3">Linked item</th>
-            <th className="px-4 py-3">Source</th>
-            <th className="px-4 py-3">URL</th>
-            <th className="px-4 py-3">Actions</th>
+            {show('image') ? <th className="px-4 py-3">Image</th> : null}
+            {show('category') ? <th className="px-4 py-3">Image category</th> : null}
+            {show('belongsTo') ? <th className="px-4 py-3">Belongs to</th> : null}
+            {show('linkedItem') ? <th className="px-4 py-3">Linked item</th> : null}
+            {show('source') ? <th className="px-4 py-3">Source</th> : null}
+            {show('url') ? <th className="px-4 py-3">URL</th> : null}
+            {show('actions') ? <th className="px-4 py-3">Actions</th> : null}
           </tr>
         </thead>
         <tbody>
@@ -387,7 +444,7 @@ function MediaTable({ media, categories, products, disabled }: { media: MediaIte
             const usages = usageByUrl.get(normalizeMediaUrl(item.url) ?? '') ?? inferredMediaUsage(item);
             return (
               <tr key={item.id ?? item.url} className="border-t border-rosewood/10 align-top">
-                <td className="px-4 py-4">
+                {show('image') ? <td className="px-4 py-4">
                   <div className="flex min-w-72 gap-3">
                     <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-blush">
                       <Image src={item.url} alt={item.alt} fill className="object-cover" sizes="64px" />
@@ -397,17 +454,17 @@ function MediaTable({ media, categories, products, disabled }: { media: MediaIte
                       <div className="mt-1 text-xs text-stone-500">{item.createdAt ? item.createdAt.toLocaleDateString('en-CA') : 'Seed or static asset'}</div>
                     </div>
                   </div>
-                </td>
-                <td className="px-4 py-4 text-stone-700"><MediaCategoryInlineForm item={item} disabled={disabled} /></td>
-                <td className="px-4 py-4"><MediaUsagePills usages={usages} /></td>
-                <td className="px-4 py-4 text-stone-700">
+                </td> : null}
+                {show('category') ? <td className="px-4 py-4 text-stone-700"><MediaCategoryInlineForm item={item} disabled={disabled} /></td> : null}
+                {show('belongsTo') ? <td className="px-4 py-4"><MediaUsagePills usages={usages} /></td> : null}
+                {show('linkedItem') ? <td className="px-4 py-4 text-stone-700">
                   <div className="grid gap-1">
                     {usages.map((usage) => <span key={`${usage.type}-${usage.label}`}>{usage.label}</span>)}
                   </div>
-                </td>
-                <td className="px-4 py-4"><MediaMeta item={item} /></td>
-                <td className="px-4 py-4"><p className="max-w-sm break-all text-xs text-stone-500">{item.url}</p></td>
-                <td className="px-4 py-4">
+                </td> : null}
+                {show('source') ? <td className="px-4 py-4"><MediaMeta item={item} /></td> : null}
+                {show('url') ? <td className="px-4 py-4"><p className="max-w-sm break-all text-xs text-stone-500">{item.url}</p></td> : null}
+                {show('actions') ? <td className="px-4 py-4">
                   {item.id ? (
                     <details className="min-w-96">
                       <summary className="cursor-pointer text-xs font-semibold text-rosewood underline-offset-4 hover:underline">Edit</summary>
@@ -416,7 +473,7 @@ function MediaTable({ media, categories, products, disabled }: { media: MediaIte
                       </form>
                     </details>
                   ) : <span className="text-xs font-semibold text-stone-400">Static</span>}
-                </td>
+                </td> : null}
               </tr>
             );
           })}
@@ -426,7 +483,7 @@ function MediaTable({ media, categories, products, disabled }: { media: MediaIte
   );
 }
 
-export function AdminDashboard({ activeWorkspace, catalogSection = 'all', categories, products, homepage, homepageTranslations, media, authEventSummary, runtimeReadiness, authConfigured, authenticated, notificationReadiness, notificationRetryRunbook, checkoutReadiness, catalogSearch, catalogCategory, catalogFlag, productPage = 1, categoryPage = 1, mediaPage = 1, status, message }: AdminDashboardProps) {
+export function AdminDashboard({ activeWorkspace, catalogSection = 'all', categories, products, homepage, homepageTranslations, media, authEventSummary, runtimeReadiness, authConfigured, authenticated, notificationReadiness, notificationRetryRunbook, checkoutReadiness, catalogSearch, catalogCategory, catalogFlag, productPage = 1, categoryPage = 1, mediaPage = 1, productColumns, mediaColumns, status, message }: AdminDashboardProps) {
   const databaseReady = runtimeReadiness.databaseUrlPresent;
   const disabled = !databaseReady || !authenticated;
   const showOverview = activeWorkspace === 'overview';
@@ -446,7 +503,12 @@ export function AdminDashboard({ activeWorkspace, catalogSection = 'all', catego
     return !search || includesText(category.title, search) || includesText(category.slug, search) || includesText(category.description, search) || includesText(category.parentTitle, search);
   });
   const path = catalogPath(catalogSection);
-  const paginationParams = { catalogSearch, catalogCategory, catalogFlag };
+  const selectedProductColumns = parseColumns(productColumns, productColumnOptions, ['product', 'actions']);
+  const selectedMediaColumns = parseColumns(mediaColumns, mediaColumnOptions, ['image', 'actions']);
+  const productColumnsParam = columnParam(selectedProductColumns, productColumnOptions);
+  const mediaColumnsParam = columnParam(selectedMediaColumns, mediaColumnOptions);
+  const columnParams = { productColumns: productColumnsParam, mediaColumns: mediaColumnsParam };
+  const paginationParams = { catalogSearch, catalogCategory, catalogFlag, ...columnParams };
   const pagedProducts = pageSlice(filteredProducts, productPage);
   const pagedCategories = pageSlice(filteredCategories, categoryPage);
   const pagedMedia = pageSlice(media, mediaPage);
@@ -456,24 +518,26 @@ export function AdminDashboard({ activeWorkspace, catalogSection = 'all', catego
       <StatusBanner status={status} message={message} />
       <DashboardIntro workspace={activeWorkspace} productCount={products.length} categoryCount={categories.length} mediaCount={media.length} />
       {showCatalog && catalogSection === 'all' ? <CatalogSectionNav /> : null}
-      {showCatalog ? <CatalogFilters categories={categories} section={catalogSection} search={catalogSearch} category={catalogCategory} flag={catalogFlag} /> : null}
+      {showCatalog ? <CatalogFilters categories={categories} section={catalogSection} search={catalogSearch} category={catalogCategory} flag={catalogFlag} columnParams={columnParams} /> : null}
       {showOverview ? <AdminReadinessPanel runtimeReadiness={runtimeReadiness} authConfigured={authConfigured} authenticated={authenticated} notificationReadiness={notificationReadiness} notificationRetryRunbook={notificationRetryRunbook} checkoutReadiness={checkoutReadiness} /> : null}
       {showOverview && authenticated ? <AdminSecurityPanel summary={authEventSummary} /> : null}
       {showOverview ? <section className={`rounded-lg border p-6 ${databaseReady && authenticated ? 'border-olive/20 bg-white' : 'border-amber-300 bg-amber-50'}`}><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">CMS status</p><h2 className="mt-3 font-display text-3xl text-rosewood">{databaseReady && authenticated ? 'Editing enabled' : databaseReady ? 'Login required' : 'Seeded preview mode'}</h2><p className="mt-3 max-w-3xl text-sm leading-6 text-stone-700">{databaseReady && authenticated ? 'Admin forms are live. Changes write to Prisma, then revalidate storefront pages.' : databaseReady ? 'The database is connected, but CMS writes require admin authentication.' : 'The storefront is reading seeded fallback content. Add DATABASE_URL, run npm run db:push and npm run db:seed, then restart the app to enable editing.'}</p></div>{authenticated ? <form action={logoutAction}><button className={secondaryButtonClass} type="submit">Sign out</button></form> : null}</div></section> : null}
 
-      {showMediaSection ? <section id="media" className={panelClass}><div className="mb-6"><p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Media library</p><h2 className="mt-2 font-display text-4xl text-rosewood">Images</h2><p className="mt-3 text-sm leading-6 text-stone-600">Register external image URLs or upload local/dev images into <code>public/uploads</code>.</p></div><details className="rounded-lg border border-rosewood/10 bg-cream p-5"><summary className="cursor-pointer font-display text-3xl text-rosewood">Add image</summary><div className="mt-5 grid gap-6 lg:grid-cols-2"><form action={createMediaFromUrlAction} className={formCardClass}><h3 className="font-display text-3xl text-rosewood">Add image URL</h3><MediaCategorySelect disabled={disabled} /><Field label="Image URL" name="url" placeholder="https://..." disabled={disabled} /><Field label="Alt text" name="alt" placeholder="Blush rose bouquet" disabled={disabled} /><SubmitButton disabled={disabled}>Add media</SubmitButton></form><form action={uploadMediaAction} className={formCardClass}><h3 className="font-display text-3xl text-rosewood">Upload image</h3><MediaCategorySelect disabled={disabled} /><label className="grid gap-2 text-sm font-semibold text-rosewood">Image file<input className={inputClass} name="file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" required disabled={disabled} /></label><Field label="Alt text" name="alt" placeholder="Optional descriptive text" required={false} disabled={disabled} /><SubmitButton disabled={disabled}>Upload image</SubmitButton></form></div></details><MediaTable media={pagedMedia.items} categories={categories} products={products} disabled={disabled} /><div className="mt-4"><PaginationControls path={path} pageParam="mediaPage" currentPage={pagedMedia.currentPage} pageCount={pagedMedia.pageCount} total={media.length} start={pagedMedia.start} end={pagedMedia.end} params={paginationParams} /></div></section> : null}
+      {showMediaSection ? <section id="media" className={panelClass}><div className="mb-6"><p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Media library</p><h2 className="mt-2 font-display text-4xl text-rosewood">Images</h2><p className="mt-3 text-sm leading-6 text-stone-600">Register external image URLs or upload local/dev images into <code>public/uploads</code>.</p></div><details className="rounded-lg border border-rosewood/10 bg-cream p-5"><summary className="cursor-pointer font-display text-3xl text-rosewood">Add image</summary><div className="mt-5 grid gap-6 lg:grid-cols-2"><form action={createMediaFromUrlAction} className={formCardClass}><h3 className="font-display text-3xl text-rosewood">Add image URL</h3><MediaCategorySelect disabled={disabled} /><Field label="Image URL" name="url" placeholder="https://..." disabled={disabled} /><Field label="Alt text" name="alt" placeholder="Blush rose bouquet" disabled={disabled} /><SubmitButton disabled={disabled}>Add media</SubmitButton></form><form action={uploadMediaAction} className={formCardClass}><h3 className="font-display text-3xl text-rosewood">Upload image</h3><MediaCategorySelect disabled={disabled} /><label className="grid gap-2 text-sm font-semibold text-rosewood">Image file<input className={inputClass} name="file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" required disabled={disabled} /></label><Field label="Alt text" name="alt" placeholder="Optional descriptive text" required={false} disabled={disabled} /><SubmitButton disabled={disabled}>Upload image</SubmitButton></form></div></details><div className="mt-4"><ColumnVisibilityControls path={path} paramName="mediaColumns" title="Media columns" options={mediaColumnOptions} selected={selectedMediaColumns} hiddenInputs={{ tab: catalogSection === 'all' ? 'catalog' : undefined, catalogSearch, catalogCategory, catalogFlag, productColumns: productColumnsParam }} /></div><MediaTable media={pagedMedia.items} categories={categories} products={products} disabled={disabled} columns={selectedMediaColumns} /><div className="mt-4"><PaginationControls path={path} pageParam="mediaPage" currentPage={pagedMedia.currentPage} pageCount={pagedMedia.pageCount} total={media.length} start={pagedMedia.start} end={pagedMedia.end} params={paginationParams} /></div></section> : null}
 
       {showContent ? <section id="homepage" className={panelClass}><div className="mb-6"><p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Homepage</p><h2 className="mt-2 font-display text-4xl text-rosewood">Hero content</h2></div><form action={updateHomepageAction} className="grid gap-4"><div className="grid gap-4 md:grid-cols-2"><Field label="Eyebrow" name="eyebrow" defaultValue={homepage.eyebrow} disabled={disabled} /><Field label="Title" name="title" defaultValue={homepage.title} disabled={disabled} /></div><TextArea label="Body" name="body" defaultValue={homepage.body} disabled={disabled} /><div className="grid gap-4 md:grid-cols-2"><Field label="Primary CTA label" name="primaryCtaLabel" defaultValue={homepage.primaryCtaLabel} disabled={disabled} /><Field label="Primary CTA URL" name="primaryCtaHref" defaultValue={homepage.primaryCtaHref} disabled={disabled} /><Field label="Secondary CTA label" name="secondaryCtaLabel" defaultValue={homepage.secondaryCtaLabel} disabled={disabled} /><Field label="Secondary CTA URL" name="secondaryCtaHref" defaultValue={homepage.secondaryCtaHref} disabled={disabled} /><Field label="Panel eyebrow" name="panelEyebrow" defaultValue={homepage.panelEyebrow} disabled={disabled} /><Field label="Panel title" name="panelTitle" defaultValue={homepage.panelTitle} disabled={disabled} /></div><TextArea label="Panel body" name="panelBody" defaultValue={homepage.panelBody} disabled={disabled} /><SubmitButton disabled={disabled}>Save homepage</SubmitButton></form></section> : null}
       {showContent && authenticated ? <AdminTranslationPanel homepage={homepage} homepageTranslations={homepageTranslations} categories={categories} products={products} disabled={disabled} /> : null}
 
       {showCategorySection ? <section id="categories" className={panelClass}><div className="mb-6"><p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Categories</p><h2 className="mt-2 font-display text-4xl text-rosewood">Categories and subcategories</h2><p className="mt-3 max-w-3xl text-sm leading-6 text-stone-600">Use parent category to create subcategories. Products can be assigned to either top-level categories or nested subcategories.</p></div><details className="rounded-lg border border-rosewood/10 bg-cream p-5"><summary className="cursor-pointer font-display text-3xl text-rosewood">Create category or subcategory</summary><form action={createCategoryAction} className="mt-5 grid gap-4"><CategoryFields categories={categories} media={media} disabled={disabled} /><SubmitButton disabled={disabled}>Create category</SubmitButton></form></details><div className="mt-8 flex items-center justify-between gap-4"><PaginationControls path={path} pageParam="categoryPage" currentPage={pagedCategories.currentPage} pageCount={pagedCategories.pageCount} total={filteredCategories.length} start={pagedCategories.start} end={pagedCategories.end} params={paginationParams} />{catalogSection === 'all' ? <a href="#products" className="text-sm font-semibold text-rosewood underline-offset-4 hover:underline">Jump to products</a> : null}</div>{pagedCategories.items.length === 0 ? <EmptyState title="No categories found" body="Create a category above, or adjust the current search filter." /> : <div className={`mt-4 grid gap-4 ${scrollListClass}`}>{pagedCategories.items.map((category) => <details key={category.slug} className="rounded-lg border border-rosewood/10 bg-[#fffdfb] p-5 shadow-sm"><summary className="cursor-pointer list-none"><div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-display text-2xl text-rosewood">{category.title}</h3><p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">{category.parentTitle ? `Subcategory of ${category.parentTitle}` : 'Top-level category'} - {category.productCount ?? 0} products</p></div><span className="rounded-full border border-rosewood/15 bg-white px-3 py-1 text-xs font-semibold text-rosewood">Edit</span></div></summary><form action={updateCategoryAction.bind(null, category.id ?? '')} className="mt-5 grid gap-4"><CategoryFields category={category} categories={categories} media={media} disabled={disabled || !category.id} /><SubmitButton disabled={disabled || !category.id}>Update category</SubmitButton></form></details>)}</div>}</section> : null}
 
-      {showProductSection ? <section id="products" className={panelClass}><div className="mb-6"><p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Products</p><h2 className="mt-2 font-display text-4xl text-rosewood">Product management</h2><p className="mt-3 max-w-3xl text-sm leading-6 text-stone-600">Create products, assign them to categories or subcategories, control homepage flags, and update catalog imagery.</p></div><details className="rounded-lg border border-rosewood/10 bg-cream p-5"><summary className="cursor-pointer font-display text-3xl text-rosewood">Create product</summary><form action={createProductAction} className="mt-5 grid gap-4"><ProductFields categories={categories} media={media} disabled={disabled} /><SubmitButton disabled={disabled}>Create product</SubmitButton></form></details><div className="mt-8 flex items-center justify-between gap-4"><PaginationControls path={path} pageParam="productPage" currentPage={pagedProducts.currentPage} pageCount={pagedProducts.pageCount} total={filteredProducts.length} start={pagedProducts.start} end={pagedProducts.end} params={paginationParams} />{catalogSection === 'all' ? <a href="#categories" className="text-sm font-semibold text-rosewood underline-offset-4 hover:underline">Back to categories</a> : null}</div><ProductBulkBar categories={categories} disabled={disabled} /><ProductTable products={pagedProducts.items} categories={categories} media={media} disabled={disabled} /></section> : null}
+      {showProductSection ? <section id="products" className={panelClass}><div className="mb-6"><p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Products</p><h2 className="mt-2 font-display text-4xl text-rosewood">Product management</h2><p className="mt-3 max-w-3xl text-sm leading-6 text-stone-600">Create products, assign them to categories or subcategories, control homepage flags, and update catalog imagery.</p></div><details className="rounded-lg border border-rosewood/10 bg-cream p-5"><summary className="cursor-pointer font-display text-3xl text-rosewood">Create product</summary><form action={createProductAction} className="mt-5 grid gap-4"><ProductFields categories={categories} media={media} disabled={disabled} /><SubmitButton disabled={disabled}>Create product</SubmitButton></form></details><div className="mt-8 flex items-center justify-between gap-4"><PaginationControls path={path} pageParam="productPage" currentPage={pagedProducts.currentPage} pageCount={pagedProducts.pageCount} total={filteredProducts.length} start={pagedProducts.start} end={pagedProducts.end} params={paginationParams} />{catalogSection === 'all' ? <a href="#categories" className="text-sm font-semibold text-rosewood underline-offset-4 hover:underline">Back to categories</a> : null}</div><ProductBulkBar categories={categories} disabled={disabled} /><div className="mt-4"><ColumnVisibilityControls path={path} paramName="productColumns" title="Product columns" options={productColumnOptions} selected={selectedProductColumns} hiddenInputs={{ tab: catalogSection === 'all' ? 'catalog' : undefined, catalogSearch, catalogCategory, catalogFlag, mediaColumns: mediaColumnsParam }} /></div><ProductTable products={pagedProducts.items} categories={categories} media={media} disabled={disabled} columns={selectedProductColumns} /></section> : null}
     </div>
   );
 }
 
-function ProductTable({ products, categories, media, disabled }: { products: Product[]; categories: Category[]; media: MediaItem[]; disabled: boolean }) {
+function ProductTable({ products, categories, media, disabled, columns }: { products: Product[]; categories: Category[]; media: MediaItem[]; disabled: boolean; columns: ProductColumn[] }) {
+  const show = (column: ProductColumn) => columns.includes(column);
+
   if (products.length === 0) {
     return <EmptyState title="No products found" body="Create a product above, or adjust the current search, category, and product flag filters." />;
   }
@@ -483,21 +547,21 @@ function ProductTable({ products, categories, media, disabled }: { products: Pro
       <table className="w-full min-w-[1180px] border-collapse text-left text-sm">
         <thead className="sticky top-0 z-[1] bg-cream text-xs font-semibold uppercase tracking-[0.16em] text-rosewood/70">
           <tr>
-            <th className="w-12 px-4 py-3">Pick</th>
-            <th className="px-4 py-3">Product</th>
-            <th className="px-4 py-3">Category</th>
-            <th className="px-4 py-3">Price</th>
-            <th className="px-4 py-3">Flags</th>
-            <th className="px-4 py-3">Actions</th>
+            {show('pick') ? <th className="w-12 px-4 py-3">Pick</th> : null}
+            {show('product') ? <th className="px-4 py-3">Product</th> : null}
+            {show('category') ? <th className="px-4 py-3">Category</th> : null}
+            {show('price') ? <th className="px-4 py-3">Price</th> : null}
+            {show('flags') ? <th className="px-4 py-3">Flags</th> : null}
+            {show('actions') ? <th className="px-4 py-3">Actions</th> : null}
           </tr>
         </thead>
         <tbody>
           {products.map((product) => (
             <tr key={product.slug} className="border-t border-rosewood/10 align-top">
-              <td className="px-4 py-4">
+              {show('pick') ? <td className="px-4 py-4">
                 <input form="bulk-products-form" type="checkbox" name="productId" value={product.id ?? ''} disabled={disabled || !product.id} />
-              </td>
-              <td className="px-4 py-4">
+              </td> : null}
+              {show('product') ? <td className="px-4 py-4">
                 <div className="flex gap-3">
                   <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-blush">
                     {product.image ? <Image src={product.image} alt={product.title} fill className="object-cover" sizes="56px" /> : null}
@@ -507,18 +571,18 @@ function ProductTable({ products, categories, media, disabled }: { products: Pro
                     <div className="mt-1 text-xs text-stone-500">{product.code} - {product.slug}</div>
                   </div>
                 </div>
-              </td>
-              <td className="px-4 py-4 text-stone-700">{product.categoryTitle || product.category}</td>
-              <td className="px-4 py-4 text-stone-700">{product.price} {product.currency}</td>
-              <td className="px-4 py-4">
+              </td> : null}
+              {show('category') ? <td className="px-4 py-4 text-stone-700">{product.categoryTitle || product.category}</td> : null}
+              {show('price') ? <td className="px-4 py-4 text-stone-700">{product.price} {product.currency}</td> : null}
+              {show('flags') ? <td className="px-4 py-4">
                 <div className="flex flex-wrap gap-2">
                   {product.bestSeller ? <span className="rounded-full bg-rosewood px-2 py-1 text-xs font-semibold text-white">Best</span> : null}
                   {product.availableToday ? <span className="rounded-full bg-olive px-2 py-1 text-xs font-semibold text-white">Today</span> : null}
                   {product.requiresQuote || product.price <= 0 ? <span className="rounded-full bg-stone-800 px-2 py-1 text-xs font-semibold text-white">Quote</span> : null}
                   {product.isActive === false ? <span className="rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-700">Inactive</span> : null}
                 </div>
-              </td>
-              <td className="px-4 py-4">
+              </td> : null}
+              {show('actions') ? <td className="px-4 py-4">
                 <div className="grid min-w-[32rem] gap-3">
                   <a href={`/products/${product.slug}`} className="text-xs font-semibold text-rosewood underline-offset-4 hover:underline" target="_blank">View</a>
                   <details>
@@ -529,7 +593,7 @@ function ProductTable({ products, categories, media, disabled }: { products: Pro
                     </form>
                   </details>
                 </div>
-              </td>
+              </td> : null}
             </tr>
           ))}
         </tbody>
