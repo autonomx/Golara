@@ -211,7 +211,7 @@ Goal: make the overview page useful for daily commerce operations, not only read
 - [x] Add order count and revenue summaries.
 - [x] Add inquiry conversion summary.
 - [x] Add best-selling products.
-- Add low-stock alerts.
+- [x] Add low-stock alerts.
 - Add fulfillment queue summary.
 - Add recent activity timeline.
 - Add failed payment/notification alerts.
