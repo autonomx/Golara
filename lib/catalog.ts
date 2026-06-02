@@ -62,6 +62,7 @@ export type Product = {
   description: string;
   updatedAt?: Date;
   translations?: CatalogTranslation[];
+  attributeValues?: ProductAttributeValue[];
   variants?: ProductVariant[];
 };
 
@@ -92,6 +93,15 @@ export type ProductAttribute = {
   updatedAt?: Date;
 };
 
+export type ProductAttributeValue = {
+  id: string;
+  attributeId: string;
+  productId?: string;
+  variantId?: string;
+  value: string;
+  updatedAt?: Date;
+};
+
 export type ProductVariant = {
   id: string;
   productId: string;
@@ -102,6 +112,7 @@ export type ProductVariant = {
   image?: string;
   isActive: boolean;
   sortOrder: number;
+  attributeValues?: ProductAttributeValue[];
   updatedAt?: Date;
 };
 

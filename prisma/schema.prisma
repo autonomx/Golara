@@ -31,6 +31,7 @@ model Product {
   cartItems      CartItem[]
   translations   ProductTranslation[]
   variants       ProductVariant[]
+  attributeValues ProductAttributeValue[]
   createdAt      DateTime             @default(now())
   updatedAt      DateTime             @updatedAt
 
@@ -66,6 +67,7 @@ model ProductAttribute {
   isRequired   Boolean  @default(false)
   isActive     Boolean  @default(true)
   sortOrder    Int      @default(0)
+  values       ProductAttributeValue[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -83,11 +85,30 @@ model ProductVariant {
   imageUrl   String?
   isActive   Boolean  @default(true)
   sortOrder  Int      @default(0)
+  attributeValues ProductAttributeValue[]
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   @@index([productId, isActive])
   @@index([sku])
+}
+
+model ProductAttributeValue {
+  id          String           @id @default(cuid())
+  attributeId String
+  attribute   ProductAttribute @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  productId   String?
+  product     Product?         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantId   String?
+  variant     ProductVariant?  @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  value       String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@unique([attributeId, productId])
+  @@unique([attributeId, variantId])
+  @@index([productId])
+  @@index([variantId])
 }
 
 model ProductTranslation {

@@ -1,7 +1,7 @@
 import 'server-only';
 
 import type { Prisma } from '@prisma/client';
-import type { AdminAuditLogEntry, CatalogTranslation, Category, CustomerInquiry, HomepageContent, MediaItem, Product, ProductAttribute, ProductType, ProductVariant } from '@/lib/catalog';
+import type { AdminAuditLogEntry, CatalogTranslation, Category, CustomerInquiry, HomepageContent, MediaItem, Product, ProductAttribute, ProductAttributeValue, ProductType, ProductVariant } from '@/lib/catalog';
 import { prisma } from '@/lib/prisma';
 import { readWithSeedFallback } from '@/lib/cms/repository-fallback-policy';
 import { seedCategories, seedHomepageContent, seedProducts } from '@/lib/seed-data';
@@ -81,6 +81,7 @@ type DbProduct = {
   productType?: DbProductType | null;
   images?: { url: string; alt: string }[];
   variants?: DbProductVariant[];
+  attributeValues?: DbProductAttributeValue[];
   translations?: DbProductTranslation[];
 };
 
@@ -111,6 +112,15 @@ type DbProductAttribute = {
   updatedAt?: Date;
 };
 
+type DbProductAttributeValue = {
+  id: string;
+  attributeId: string;
+  productId: string | null;
+  variantId: string | null;
+  value: string;
+  updatedAt?: Date;
+};
+
 type DbProductVariant = {
   id: string;
   productId: string;
@@ -121,6 +131,7 @@ type DbProductVariant = {
   imageUrl: string | null;
   isActive: boolean;
   sortOrder: number;
+  attributeValues?: DbProductAttributeValue[];
   updatedAt?: Date;
 };
 
@@ -164,7 +175,7 @@ type InquiryWhere = Prisma.CustomerInquiryWhereInput;
 type AuditLogWhere = Prisma.AdminAuditLogWhereInput;
 
 const categoryInclude = { parent: { select: { slug: true, title: true, translations: true } }, translations: true } satisfies Prisma.CategoryInclude;
-const productInclude = { category: { include: categoryInclude }, productType: true, images: true, variants: { orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] }, translations: true } satisfies Prisma.ProductInclude;
+const productInclude = { category: { include: categoryInclude }, productType: true, images: true, attributeValues: true, variants: { include: { attributeValues: true }, orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] }, translations: true } satisfies Prisma.ProductInclude;
 
 function bySortThenTitle(a: Category, b: Category) {
   return (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.title.localeCompare(b.title);
@@ -304,7 +315,20 @@ function mapProductVariants(variants?: DbProductVariant[]): ProductVariant[] | u
     image: variant.imageUrl ?? undefined,
     isActive: variant.isActive,
     sortOrder: variant.sortOrder,
+    attributeValues: mapProductAttributeValues(variant.attributeValues),
     updatedAt: variant.updatedAt
+  }));
+}
+
+function mapProductAttributeValues(values?: DbProductAttributeValue[]): ProductAttributeValue[] | undefined {
+  if (!values?.length) return undefined;
+  return values.map((value) => ({
+    id: value.id,
+    attributeId: value.attributeId,
+    productId: value.productId ?? undefined,
+    variantId: value.variantId ?? undefined,
+    value: value.value,
+    updatedAt: value.updatedAt
   }));
 }
 
@@ -388,6 +412,7 @@ function mapProduct(product: DbProduct, options: CatalogReadOptions = {}): Produ
     image,
     description: localized.description,
     translations: options.includeTranslations ? mapProductTranslations(product.translations) : undefined,
+    attributeValues: mapProductAttributeValues(product.attributeValues),
     variants: mapProductVariants(product.variants)
   };
 }

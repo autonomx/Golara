@@ -316,6 +316,13 @@ function optionListField(formData: FormData, name: string) {
   return options.length ? options : undefined;
 }
 
+function attributeValueEntries(formData: FormData) {
+  return formData
+    .getAll('attributeId')
+    .filter((value): value is string => typeof value === 'string' && Boolean(value.trim()))
+    .map((attributeId) => ({ attributeId, value: stringField(formData, `attributeValue:${attributeId}`) }));
+}
+
 export async function createProductVariantAction(productId: string, formData: FormData) {
   await ensureCanWriteCms();
   if (!productId) throw new Error('productId is required');
@@ -453,6 +460,39 @@ export async function updateProductAttributeAction(attributeId: string, formData
 
   revalidateCatalog();
   redirect(productDetailReturnPath(formData, 'product-attribute-updated'));
+}
+
+export async function updateProductAttributeValuesAction(productId: string, target: 'product' | 'variant', targetId: string, formData: FormData) {
+  await ensureCanWriteCms();
+  if (!productId) throw new Error('productId is required');
+  if (!targetId) throw new Error('targetId is required');
+
+  const entries = attributeValueEntries(formData);
+  await prisma.$transaction(
+    entries.map(({ attributeId, value }) => {
+      const where =
+        target === 'variant'
+          ? { attributeId_variantId: { attributeId, variantId: targetId } }
+          : { attributeId_productId: { attributeId, productId: targetId } };
+      const owner = target === 'variant' ? { variantId: targetId } : { productId: targetId };
+
+      if (!value) {
+        return prisma.productAttributeValue.deleteMany({
+          where: { attributeId, ...(target === 'variant' ? { variantId: targetId } : { productId: targetId }) }
+        });
+      }
+
+      return prisma.productAttributeValue.upsert({
+        where,
+        create: { attributeId, value, ...owner },
+        update: { value }
+      });
+    })
+  );
+
+  revalidateCatalog();
+  revalidatePath(`/admin/products/${productId}`);
+  redirect(`/admin/products/${productId}?status=product-attribute-values-updated`);
 }
 
 export async function bulkUpdateProductsAction(formData: FormData) {

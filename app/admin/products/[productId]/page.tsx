@@ -1,11 +1,11 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { createProductAttributeAction, createProductTypeAction, createProductVariantAction, updateProductAction, updateProductAttributeAction, updateProductTypeAction, updateProductVariantAction } from '@/app/admin/actions';
+import { createProductAttributeAction, createProductTypeAction, createProductVariantAction, updateProductAction, updateProductAttributeAction, updateProductAttributeValuesAction, updateProductTypeAction, updateProductVariantAction } from '@/app/admin/actions';
 import { MediaSelectWithPreview } from '@/components/admin/MediaSelectWithPreview';
 import { SiteHeader } from '@/components/SiteHeader';
 import { assertAdminRole } from '@/lib/admin-auth';
-import type { Category, MediaItem, Product, ProductAttribute, ProductType, ProductVariant } from '@/lib/catalog';
+import type { Category, MediaItem, Product, ProductAttribute, ProductAttributeValue, ProductType, ProductVariant } from '@/lib/catalog';
 import { listAdminCategories, listAdminProductAttributes, listAdminProducts, listAdminProductTypes, listMedia } from '@/lib/cms/catalog-repository';
 import { getRuntimeReadiness } from '@/lib/runtime-readiness';
 
@@ -143,6 +143,54 @@ function ProductAttributeFields({ attribute, disabled }: { attribute?: ProductAt
   );
 }
 
+function attributesForTarget(attributes: ProductAttribute[], target: 'product' | 'variant') {
+  return attributes.filter((attribute) => attribute.isActive && (attribute.appliesTo === target || attribute.appliesTo === 'both'));
+}
+
+function valueForAttribute(values: ProductAttributeValue[] | undefined, attributeId: string) {
+  return values?.find((value) => value.attributeId === attributeId)?.value ?? '';
+}
+
+function AttributeValueInput({ attribute, defaultValue, disabled }: { attribute: ProductAttribute; defaultValue: string; disabled: boolean }) {
+  const name = `attributeValue:${attribute.id}`;
+  if (attribute.inputType === 'boolean') {
+    return (
+      <select className={inputClass} name={name} defaultValue={defaultValue} disabled={disabled}>
+        <option value="">Unset</option>
+        <option value="true">Yes</option>
+        <option value="false">No</option>
+      </select>
+    );
+  }
+  if (attribute.inputType === 'select') {
+    return (
+      <select className={inputClass} name={name} defaultValue={defaultValue} disabled={disabled}>
+        <option value="">Unset</option>
+        {(attribute.options ?? []).map((option) => <option key={option} value={option}>{option}</option>)}
+      </select>
+    );
+  }
+  return <input className={inputClass} name={name} type={attribute.inputType === 'number' ? 'number' : 'text'} defaultValue={defaultValue} disabled={disabled} />;
+}
+
+function AttributeValueFields({ attributes, values, disabled }: { attributes: ProductAttribute[]; values?: ProductAttributeValue[]; disabled: boolean }) {
+  if (!attributes.length) {
+    return <div className="rounded-3xl border border-dashed border-stone-300 bg-stone-50 p-6 text-sm text-stone-600">No active attributes apply here yet.</div>;
+  }
+
+  return (
+    <div className="grid gap-4">
+      {attributes.map((attribute) => (
+        <label key={attribute.id} className="grid gap-2 text-sm font-semibold text-rosewood">
+          <input type="hidden" name="attributeId" value={attribute.id} />
+          <span>{attribute.name}{attribute.unit ? ` (${attribute.unit})` : ''}</span>
+          <AttributeValueInput attribute={attribute} defaultValue={valueForAttribute(values, attribute.id)} disabled={disabled} />
+        </label>
+      ))}
+    </div>
+  );
+}
+
 function findProduct(products: Product[], productId: string) {
   return products.find((product) => product.id === productId || product.slug === productId);
 }
@@ -155,7 +203,8 @@ function StatusBanner({ status }: { status?: string }) {
     'product-type-created': 'Product type created.',
     'product-type-updated': 'Product type saved.',
     'product-attribute-created': 'Product attribute created.',
-    'product-attribute-updated': 'Product attribute saved.'
+    'product-attribute-updated': 'Product attribute saved.',
+    'product-attribute-values-updated': 'Attribute values saved.'
   };
   if (!status || !messages[status]) return null;
   return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">{messages[status]}</div>;
@@ -173,6 +222,8 @@ export default async function AdminProductDetailPage({ params, searchParams }: {
   const updateAction = updateProductAction.bind(null, product.id ?? '');
   const createVariantAction = createProductVariantAction.bind(null, product.id ?? '');
   const currentProductType = productTypes.find((productType) => productType.id === product.productTypeId);
+  const productValueAttributes = attributesForTarget(productAttributes, 'product');
+  const variantValueAttributes = attributesForTarget(productAttributes, 'variant');
 
   return (
     <main id="main-content" tabIndex={-1}>
@@ -238,6 +289,19 @@ export default async function AdminProductDetailPage({ params, searchParams }: {
 
           <section className={`${cardClass} grid gap-5`}>
             <div>
+              <h2 className="font-display text-3xl text-rosewood">Product attribute values</h2>
+              <p className="mt-2 text-sm leading-6 text-stone-600">Set structured catalog details that apply to this product.</p>
+            </div>
+            <form action={updateProductAttributeValuesAction.bind(null, product.id ?? '', 'product', product.id ?? '')} className="grid gap-4">
+              <AttributeValueFields attributes={productValueAttributes} values={product.attributeValues} disabled={disabled} />
+              <button className="w-fit rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none" type="submit" disabled={disabled || !productValueAttributes.length}>
+                Save product values
+              </button>
+            </form>
+          </section>
+
+          <section className={`${cardClass} grid gap-5`}>
+            <div>
               <h2 className="font-display text-3xl text-rosewood">Variants and SKUs</h2>
               <p className="mt-2 text-sm leading-6 text-stone-600">Add purchasable variants with their own SKU, price, image, and active state.</p>
             </div>
@@ -269,6 +333,13 @@ export default async function AdminProductDetailPage({ params, searchParams }: {
                       <VariantFields media={media} productImage={product.image} variant={variant} disabled={disabled} />
                       <button className="w-fit rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none" type="submit" disabled={disabled}>
                         Save variant
+                      </button>
+                    </form>
+                    <form action={updateProductAttributeValuesAction.bind(null, product.id ?? '', 'variant', variant.id)} className="mt-5 grid gap-4 rounded-3xl border border-rosewood/10 bg-white p-5">
+                      <h4 className="font-display text-2xl text-rosewood">Variant attribute values</h4>
+                      <AttributeValueFields attributes={variantValueAttributes} values={variant.attributeValues} disabled={disabled} />
+                      <button className="w-fit rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none" type="submit" disabled={disabled || !variantValueAttributes.length}>
+                        Save variant values
                       </button>
                     </form>
                   </details>
