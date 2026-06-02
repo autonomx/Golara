@@ -36,7 +36,7 @@ type AdminTab = (typeof adminTabs)[number]['key'];
 type DashboardWorkspace = 'overview' | 'catalog' | 'content' | 'sales';
 type CatalogSection = 'all' | 'media' | 'categories' | 'products';
 type SalesSection = 'all' | 'orders' | 'inquiries';
-type AdminSearchParams = { tab?: string; status?: string; message?: string; catalogSearch?: string; catalogCategory?: string; catalogFlag?: string; inquiryStatus?: string; inquiryPage?: string; inquirySearch?: string; inquiryAssignment?: string; auditAction?: string; auditEntity?: string; auditActor?: string; auditSearch?: string; orderStatus?: string; orderPaymentStatus?: string; orderFulfillmentStatus?: string; orderSearch?: string; orderPage?: string };
+type AdminSearchParams = { tab?: string; status?: string; message?: string; catalogSearch?: string; catalogCategory?: string; catalogFlag?: string; productPage?: string; categoryPage?: string; mediaPage?: string; inquiryStatus?: string; inquiryPage?: string; inquirySearch?: string; inquiryAssignment?: string; auditAction?: string; auditEntity?: string; auditActor?: string; auditSearch?: string; orderStatus?: string; orderPaymentStatus?: string; orderFulfillmentStatus?: string; orderSearch?: string; orderPage?: string };
 
 function parsePage(value?: string) {
   const parsed = Number.parseInt(value ?? '1', 10);
@@ -209,7 +209,7 @@ function AdminTopBar({ activeTab, productCount, categoryCount, mediaCount, authe
 }
 
 export async function AdminConsolePage({ searchParams, forcedTab, catalogSection = 'all', salesSection = 'all', activeNavKey }: { searchParams: Promise<AdminSearchParams>; forcedTab?: AdminTab; catalogSection?: CatalogSection; salesSection?: SalesSection; activeNavKey?: string }) {
-  const { tab, status, message, catalogSearch, catalogCategory, catalogFlag, inquiryStatus, inquiryPage, inquirySearch, inquiryAssignment, auditAction, auditEntity, auditActor, auditSearch, orderStatus, orderPaymentStatus, orderFulfillmentStatus, orderSearch, orderPage } = await searchParams;
+  const { tab, status, message, catalogSearch, catalogCategory, catalogFlag, productPage, categoryPage, mediaPage, inquiryStatus, inquiryPage, inquirySearch, inquiryAssignment, auditAction, auditEntity, auditActor, auditSearch, orderStatus, orderPaymentStatus, orderFulfillmentStatus, orderSearch, orderPage } = await searchParams;
   const activeTab = forcedTab ?? parseAdminTab(tab);
   const activeWorkspace = dashboardWorkspace(activeTab);
   const resolvedActiveNavKey = activeNavKey ?? activeTab;
@@ -294,6 +294,9 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
               catalogSearch={catalogSearch}
               catalogCategory={catalogCategory}
               catalogFlag={catalogFlag}
+              productPage={parsePage(productPage)}
+              categoryPage={parsePage(categoryPage)}
+              mediaPage={parsePage(mediaPage)}
               status={status}
               message={message}
             />

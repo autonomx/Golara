@@ -24,10 +24,11 @@ Goal: make the admin shell feel like a durable operations console before adding 
 - [x] Add separate sidebar entries/pages for Orders and Inquiries.
 - [x] Add separate sidebar entries for Customers, Discounts, Settings.
 - Add consistent page headers, breadcrumbs, and primary actions.
-- Add pagination to product/category/media tables.
+- [x] Add pagination to product/category/media tables.
 - Add column visibility controls for dense tables.
-- Add saved filters or at least query-string-preserved filters.
-- Add empty/loading/error states per module.
+- [x] Add query-string-preserved filters.
+- [x] Add empty states per module.
+- Add loading and error states per module.
 - Add row-level actions without secondary edit rows.
 
 Success criteria:

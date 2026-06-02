@@ -81,7 +81,7 @@ function adminParams(status?: string, search?: string, page?: number, assignment
   const assignment = queryAssignmentValue(assignmentFilter);
   if (assignment) params.set('inquiryAssignment', assignment);
   const query = params.toString();
-  return query ? `/admin?${query}` : '/admin';
+  return query ? `/admin/inquiries?${query}` : '/admin/inquiries';
 }
 
 function inquiryToolHref(path: string, status?: string, search?: string, assignment?: AssignmentFilterValue) {
@@ -164,7 +164,7 @@ function InquiryWorkflowOverview({ counts }: { counts: InquiryStatusCount[] }) {
 
 function InquirySearchForm({ activeStatus, search, assignmentFilter }: { activeStatus?: string; search?: string; assignmentFilter?: InquiryAssignmentQueueFilter }) {
   return (
-    <form action="/admin" className="mt-5 flex flex-wrap gap-2 rounded-3xl border border-rosewood/10 bg-cream p-3">
+    <form action="/admin/inquiries" className="mt-5 flex flex-wrap gap-2 rounded-3xl border border-rosewood/10 bg-cream p-3">
       {activeStatus ? <input type="hidden" name="inquiryStatus" value={activeStatus} /> : null}
       {assignmentFilter && assignmentFilter !== 'all' ? <input type="hidden" name="inquiryAssignment" value={assignmentFilter} /> : null}
       <input

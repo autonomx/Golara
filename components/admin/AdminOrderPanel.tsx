@@ -29,7 +29,7 @@ function orderQuery(filters: AdminOrderFilters, page?: number) {
   if (filters.search) params.set('orderSearch', filters.search);
   if (page && page > 1) params.set('orderPage', String(page));
   const query = params.toString();
-  return query ? `/admin?${query}#orders` : '/admin#orders';
+  return query ? `/admin/orders?${query}` : '/admin/orders';
 }
 
 function orderExportQuery(filters: AdminOrderFilters, format: 'csv' | 'print') {
@@ -98,14 +98,14 @@ export function AdminOrderPanel({ orderPage, filters }: { orderPage: AdminOrderP
         </p>
       </div>
 
-      <form className="mb-6 grid gap-4 rounded-3xl border border-rosewood/10 bg-cream p-5 md:grid-cols-4" action="/admin#orders">
+      <form className="mb-6 grid gap-4 rounded-3xl border border-rosewood/10 bg-cream p-5 md:grid-cols-4" action="/admin/orders">
         <FilterSelect label="Order status" name="orderStatus" defaultValue={filters.status} values={orderStatuses} />
         <FilterSelect label="Payment status" name="orderPaymentStatus" defaultValue={filters.paymentStatus} values={paymentStatuses} />
         <FilterSelect label="Fulfillment status" name="orderFulfillmentStatus" defaultValue={filters.fulfillmentStatus} values={fulfillmentStatuses} />
         <FilterInput label="Search" name="orderSearch" defaultValue={filters.search} placeholder="Order, phone, name, product" />
         <div className="flex flex-wrap gap-3 md:col-span-4">
           <button className={primaryButtonClass} type="submit">Filter orders</button>
-          {hasFilters ? <a className={secondaryLinkClass} href="/admin#orders">Clear filters</a> : null}
+          {hasFilters ? <a className={secondaryLinkClass} href="/admin/orders">Clear filters</a> : null}
           <a className={secondaryLinkClass} href={orderExportQuery(filters, 'csv')}>Export CSV</a>
           <a className={secondaryLinkClass} href={orderExportQuery(filters, 'print')}>Print view</a>
         </div>
