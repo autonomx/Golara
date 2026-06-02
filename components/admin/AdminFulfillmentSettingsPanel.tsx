@@ -1,7 +1,9 @@
 import { updateFulfillmentMethodSettingAction } from '@/app/admin/settings/actions';
 import { AdminShippingDeliverySettingsPanel } from '@/components/admin/AdminShippingDeliverySettingsPanel';
+import { AdminTaxCategorySettingsPanel } from '@/components/admin/AdminTaxCategorySettingsPanel';
 import type { FulfillmentMethodSetting } from '@/lib/catalog';
 import { shippingDeliverySettingsService } from '@/lib/settings/shipping-delivery-settings';
+import { taxCategorySettingsService } from '@/lib/settings/tax-category-settings';
 
 const inputClass = 'rounded-md border border-stone-200 bg-white px-3 py-2 text-sm text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100';
 
@@ -16,7 +18,10 @@ function Toggle({ label, name, defaultChecked, disabled }: { label: string; name
 }
 
 export async function AdminFulfillmentSettingsPanel({ methods, databaseReady }: { methods: FulfillmentMethodSetting[]; databaseReady: boolean }) {
-  const shippingDeliverySetting = await shippingDeliverySettingsService.get();
+  const [shippingDeliverySetting, taxCategorySettings] = await Promise.all([
+    shippingDeliverySettingsService.get(),
+    taxCategorySettingsService.list()
+  ]);
 
   return (
     <>
@@ -65,6 +70,7 @@ export async function AdminFulfillmentSettingsPanel({ methods, databaseReady }: 
         </div>
       </section>
       <AdminShippingDeliverySettingsPanel setting={shippingDeliverySetting} databaseReady={databaseReady} />
+      <AdminTaxCategorySettingsPanel categories={taxCategorySettings} databaseReady={databaseReady} />
     </>
   );
 }
