@@ -1,4 +1,5 @@
 import { updateFulfillmentMethodSettingAction } from '@/app/admin/settings/actions';
+import { AdminIntegrationAppRegistryPanel } from '@/components/admin/AdminIntegrationAppRegistryPanel';
 import { AdminModuleAccessSettingsPanel } from '@/components/admin/AdminModuleAccessSettingsPanel';
 import { AdminNotificationProviderSettingsPanel } from '@/components/admin/AdminNotificationProviderSettingsPanel';
 import { AdminPaymentProviderSettingsPanel } from '@/components/admin/AdminPaymentProviderSettingsPanel';
@@ -8,6 +9,7 @@ import { AdminTaxCategorySettingsPanel } from '@/components/admin/AdminTaxCatego
 import { AdminWebhookConfigurationPanel } from '@/components/admin/AdminWebhookConfigurationPanel';
 import { AdminWebhookEventLogPanel } from '@/components/admin/AdminWebhookEventLogPanel';
 import type { FulfillmentMethodSetting } from '@/lib/catalog';
+import { integrationAppRegistryService } from '@/lib/settings/integration-app-registry';
 import { notificationProviderSettingsService } from '@/lib/settings/notification-provider-settings';
 import { paymentProviderSettingsService } from '@/lib/settings/payment-provider-settings';
 import { shippingDeliverySettingsService } from '@/lib/settings/shipping-delivery-settings';
@@ -29,14 +31,15 @@ function Toggle({ label, name, defaultChecked, disabled }: { label: string; name
 }
 
 export async function AdminFulfillmentSettingsPanel({ methods, databaseReady }: { methods: FulfillmentMethodSetting[]; databaseReady: boolean }) {
-  const [shippingDeliverySetting, taxCategorySettings, paymentProviderSettings, notificationProviderSettings, staffPermissionSnapshot, webhookConfigurations, webhookEventLogSummary] = await Promise.all([
+  const [shippingDeliverySetting, taxCategorySettings, paymentProviderSettings, notificationProviderSettings, staffPermissionSnapshot, webhookConfigurations, webhookEventLogSummary, integrationAppRegistrySummary] = await Promise.all([
     shippingDeliverySettingsService.get(),
     taxCategorySettingsService.list(),
     paymentProviderSettingsService.list(),
     notificationProviderSettingsService.list(),
     staffPermissionSettingsService.snapshot(),
     webhookConfigurationService.list(),
-    webhookEventLogService.summary(10)
+    webhookEventLogService.summary(10),
+    integrationAppRegistryService.summary()
   ]);
 
   return (
@@ -89,6 +92,7 @@ export async function AdminFulfillmentSettingsPanel({ methods, databaseReady }: 
       <AdminTaxCategorySettingsPanel categories={taxCategorySettings} databaseReady={databaseReady} />
       <AdminPaymentProviderSettingsPanel settings={paymentProviderSettings} databaseReady={databaseReady} />
       <AdminNotificationProviderSettingsPanel settings={notificationProviderSettings} databaseReady={databaseReady} />
+      <AdminIntegrationAppRegistryPanel summary={integrationAppRegistrySummary} databaseReady={databaseReady} />
       <AdminWebhookConfigurationPanel settings={webhookConfigurations} databaseReady={databaseReady} />
       <AdminWebhookEventLogPanel summary={webhookEventLogSummary} databaseReady={databaseReady} />
       <AdminStaffPermissionSettingsPanel snapshot={staffPermissionSnapshot} databaseReady={databaseReady} />
