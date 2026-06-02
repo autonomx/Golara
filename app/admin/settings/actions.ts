@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { assertAdminRole } from '@/lib/admin-auth';
+import { apiTokenManagementService } from '@/lib/settings/api-token-management';
 import { fulfillmentMethodSettingsService } from '@/lib/settings/fulfillment-method-settings';
 import { homepageBannerMediaSettingsService } from '@/lib/settings/homepage-banner-media-settings';
 import { integrationAppRegistryService } from '@/lib/settings/integration-app-registry';
@@ -263,6 +264,27 @@ export async function updateIntegrationAppRegistryAction(formData: FormData) {
   revalidatePath('/admin');
   revalidatePath('/admin/settings');
   redirect('/admin/settings?status=integration-app-registry-updated');
+}
+
+export async function updateApiTokenManagementAction(formData: FormData) {
+  await assertAdminRole('owner');
+
+  await apiTokenManagementService.update({
+    key: requiredString(formData, 'key'),
+    label: requiredString(formData, 'label'),
+    description: stringField(formData, 'description') || null,
+    tokenValue: stringField(formData, 'tokenValue') || null,
+    tokenPrefix: stringField(formData, 'tokenPrefix') || null,
+    scopes: listField(formData, 'scopes'),
+    integrationAppKey: stringField(formData, 'integrationAppKey') || null,
+    expiresAt: stringField(formData, 'expiresAt') || null,
+    isRevoked: boolField(formData, 'isRevoked'),
+    isActive: boolField(formData, 'isActive')
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/settings');
+  redirect('/admin/settings?status=api-token-management-updated');
 }
 
 export async function updateStaffPermissionGroupAction(formData: FormData) {
