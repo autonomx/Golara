@@ -66,7 +66,7 @@ Goal: add operational stock and fulfillment foundations.
 - [x] Add stock tracking toggle for made-to-order or quote-only items.
 - [x] Add low-stock threshold.
 - [x] Add stock adjustment audit log.
-- [ ] Add warehouse/location model.
+- [x] Add warehouse/location model.
 - [ ] Add multi-location stock.
 - [ ] Add fulfillment method settings: delivery, pickup, courier/manual.
 - [ ] Connect inventory reservation to checkout/order lifecycle.

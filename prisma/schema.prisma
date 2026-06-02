@@ -101,6 +101,27 @@ model ProductVariant {
   @@index([sku])
 }
 
+model WarehouseLocation {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String?
+  addressLine1 String?
+  addressLine2 String?
+  city        String?
+  region      String?
+  countryCode String   @default("CA")
+  postalCode  String?
+  phone       String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+  @@index([countryCode, city])
+}
+
 model ProductAttributeValue {
   id          String           @id @default(cuid())
   attributeId String

@@ -41,6 +41,7 @@ import { runRuntimeReadinessTests } from './runtime-readiness.test';
 import { runVariantStockMigrationTests } from './variant-stock-migration.test';
 import { runVariantStockAuditTests } from './variant-stock-audit.test';
 import { runVariantStockStatusTests } from './variant-stock-status.test';
+import { runWarehouseLocationModelTests } from './warehouse-location-model.test';
 
 async function main() {
   await runRuntimeModeTests();
@@ -85,8 +86,9 @@ async function main() {
   await runVariantStockAuditTests();
   await runVariantStockStatusTests();
   await runVariantStockMigrationTests();
+  await runWarehouseLocationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (43 files)');
+  console.log('unit tests passed (44 files)');
 }
 
 main().catch((error) => {
