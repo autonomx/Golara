@@ -203,7 +203,7 @@ Goal: prepare for external services and future custom admin modules.
 - [x] Add event log for outgoing webhooks.
 - [x] Add integration/app registry.
 - [x] Add API token management if needed.
-- Add provider diagnostics pages.
+- [x] Add provider diagnostics pages.
 - Add dashboard extension mount points for internal tools.
 - Add import/export job tracking.
 
