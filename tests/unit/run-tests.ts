@@ -5,6 +5,7 @@ import { runAdminModuleAccessTests } from './admin-module-access.test';
 import { runAdminOrderCustomerAssignmentFlowTests } from './admin-order-customer-assignment-flow.test';
 import { runAdminOrderLineEditFlowTests } from './admin-order-line-edit-flow.test';
 import { runAdminRoleBoundaryTests } from './admin-role-boundary.test';
+import { runApiTokenManagementTests } from './api-token-management.test';
 import { runChannelPriceOverrideModelTests } from './channel-price-override-model.test';
 import { runChannelProductAvailabilityModelTests } from './channel-product-availability-model.test';
 import { runChannelStorefrontModelTests } from './channel-storefront-model.test';
@@ -141,6 +142,7 @@ async function main() {
   await runWebhookConfigurationTests();
   await runWebhookEventLogTests();
   await runIntegrationAppRegistryTests();
+  await runApiTokenManagementTests();
   await runStaffPermissionSettingsTests();
   await runProductCheckoutPolicyTests();
   await runProductVariantMapperTests();
@@ -174,7 +176,7 @@ async function main() {
   await runFulfillmentShipmentRecordsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (87 files)');
+  console.log('unit tests passed (88 files)');
 }
 
 main().catch((error) => {
