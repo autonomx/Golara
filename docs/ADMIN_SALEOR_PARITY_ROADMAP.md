@@ -63,14 +63,30 @@ Success criteria:
 Goal: add operational stock and fulfillment foundations.
 
 - [x] Add inventory quantities per product variant.
-- Add stock tracking toggle for made-to-order or quote-only items.
-- Add low-stock threshold.
-- Add stock adjustment audit log.
-- Add warehouse/location model.
-- Add multi-location stock.
-- Add fulfillment method settings: delivery, pickup, courier/manual.
-- Connect inventory reservation to checkout/order lifecycle.
-- Add fulfillment cards on order detail pages.
+- [ ] Add stock tracking toggle for made-to-order or quote-only items.
+- [ ] Add low-stock threshold.
+- [ ] Add stock adjustment audit log.
+- [ ] Add warehouse/location model.
+- [ ] Add multi-location stock.
+- [ ] Add fulfillment method settings: delivery, pickup, courier/manual.
+- [ ] Connect inventory reservation to checkout/order lifecycle.
+- [ ] Add fulfillment cards on order detail pages.
+
+Completed inventory foundation:
+
+- [x] Add reusable variant stock-status policy helpers for inactive, untracked, out-of-stock, low-stock, and in-stock states.
+- [x] Add shared `ProductVariant` contract fields for `trackInventory` and `lowStockThreshold`.
+- [x] Add database migration for `ProductVariant.trackInventory` and `ProductVariant.lowStockThreshold`.
+- [x] Add Prisma model fields for `ProductVariant.trackInventory` and `ProductVariant.lowStockThreshold`.
+- [x] Persist `trackInventory` and `lowStockThreshold` from admin variant create/update actions.
+- [x] Add product variant mapper foundation that preserves stock tracking fields.
+
+Remaining before checking stock tracking toggle / low-stock threshold complete:
+
+- [ ] Wire the product variant mapper into `catalog-repository.ts` read paths.
+- [ ] Expose `trackInventory` and `lowStockThreshold` fields in admin variant create/edit forms.
+- [ ] Display stock status/low-stock state in admin variant summaries and relevant operations views.
+- [ ] Wire mapper unit coverage into the central unit test runner.
 
 Success criteria:
 
