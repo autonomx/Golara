@@ -208,7 +208,7 @@ Success criteria:
 
 Goal: make the overview page useful for daily commerce operations, not only readiness.
 
-- Add order count and revenue summaries.
+- [x] Add order count and revenue summaries.
 - Add inquiry conversion summary.
 - Add best-selling products.
 - Add low-stock alerts.
