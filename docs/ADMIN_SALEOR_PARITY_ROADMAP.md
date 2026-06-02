@@ -219,3 +219,30 @@ Goal: make the overview page useful for daily commerce operations, not only read
 - Add launch/readiness health cards.
 
 Success criteria:
+
+- Staff can start the day from the overview page and know what needs attention.
+- Owners can see operational trends without querying the database.
+
+## Suggested Build Order
+
+1. Admin navigation and list UX.
+2. Product detail pages and variants.
+3. Inventory basics.
+4. Customer admin.
+5. Draft orders and order detail parity.
+6. Discounts/vouchers.
+7. Settings and permissions.
+8. Channel/localization depth.
+9. Integrations.
+10. Analytics home.
+
+This order prioritizes the parts that compound: better navigation and detail pages make every later module easier to build, and variants/inventory/order detail unlock most serious commerce workflows.
+
+## Open Decisions
+
+- Whether Golara needs full Saleor-style channels or only locale/currency settings.
+- Whether products should always have variants, even if there is only one default variant.
+- Whether inventory should track floral components, finished products, or both.
+- Whether discounts should apply to quote-only/custom-order flows.
+- Which provider integrations should be configurable by admin versus environment variables.
+- Which modules staff can edit versus owner-only controls.
