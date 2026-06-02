@@ -184,7 +184,7 @@ Goal: centralize store configuration currently spread across env/code.
 - [x] Add storefront navigation/menu builder.
 - [x] Add homepage banner/media settings.
 - [x] Add shipping/delivery settings.
-- Add tax category settings.
+- [x] Add tax category settings.
 - Add payment provider settings/readiness.
 - Add notification provider settings/readiness.
 - Add staff accounts and permission groups.
