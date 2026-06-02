@@ -673,6 +673,24 @@ model CustomerInquiryFollowUp {
   @@index([inquiryId, createdAt])
 }
 
+model PromotionDiscount {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  discountType String
+  value        Int
+  currency     String   @default("TOMAN")
+  status       String   @default("draft")
+  description  String?
+  isActive     Boolean  @default(true)
+  metadata     Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([status, isActive])
+  @@index([discountType])
+}
+
 model AdminAccount {
   id                String    @id @default(cuid())
   provider          String    @default("password")
