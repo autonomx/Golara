@@ -60,6 +60,10 @@ export type Product = {
   requiresQuote?: boolean;
   image: string;
   description: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  canonicalPath?: string;
+  seoIndex?: boolean;
   updatedAt?: Date;
   translations?: CatalogTranslation[];
   attributeValues?: ProductAttributeValue[];

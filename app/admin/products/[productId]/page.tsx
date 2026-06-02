@@ -269,6 +269,15 @@ export default async function AdminProductDetailPage({ params, searchParams }: {
               <ProductTypeSelect product={product} productTypes={productTypes} disabled={disabled} />
             </div>
             <TextArea label="Description" name="description" defaultValue={product.description} disabled={disabled} />
+            <div className="rounded-3xl border border-rosewood/10 bg-cream p-5">
+              <h3 className="font-display text-2xl text-rosewood">SEO</h3>
+              <div className="mt-4 grid gap-4">
+                <Field label="SEO title" name="seoTitle" defaultValue={product.seoTitle ?? ''} required={false} disabled={disabled} />
+                <TextArea label="SEO description" name="seoDescription" defaultValue={product.seoDescription ?? ''} required={false} disabled={disabled} />
+                <Field label="Canonical path" name="canonicalPath" defaultValue={product.canonicalPath ?? ''} required={false} disabled={disabled} />
+                <Toggle label="Search index" name="seoIndex" defaultChecked={product.seoIndex ?? true} disabled={disabled} />
+              </div>
+            </div>
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="Price" name="price" type="number" defaultValue={product.price} disabled={disabled} />
               <Field label="Currency" name="currency" defaultValue={product.currency} disabled={disabled} />

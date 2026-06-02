@@ -31,9 +31,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 
   return buildPageMetadata({
-    title: `${product.title} | Golara`,
-    description: product.description,
-    path: `/products/${product.slug}`,
+    title: product.seoTitle || `${product.title} | Golara`,
+    description: product.seoDescription || product.description,
+    path: product.canonicalPath || `/products/${product.slug}`,
+    index: product.seoIndex !== false,
     image: product.image
   });
 }

@@ -68,6 +68,10 @@ type DbProduct = {
   code: string;
   title: string;
   description: string;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  canonicalPath: string | null;
+  seoIndex: boolean;
   priceCents: number;
   currency: string;
   availableToday: boolean;
@@ -411,6 +415,10 @@ function mapProduct(product: DbProduct, options: CatalogReadOptions = {}): Produ
     isActive: product.isActive,
     image,
     description: localized.description,
+    seoTitle: product.seoTitle ?? undefined,
+    seoDescription: product.seoDescription ?? undefined,
+    canonicalPath: product.canonicalPath ?? undefined,
+    seoIndex: product.seoIndex,
     translations: options.includeTranslations ? mapProductTranslations(product.translations) : undefined,
     attributeValues: mapProductAttributeValues(product.attributeValues),
     variants: mapProductVariants(product.variants)

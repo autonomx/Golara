@@ -14,15 +14,17 @@ export function absoluteSiteUrl(path = '/') {
   return `${baseUrl}${normalizedPath}`;
 }
 
-export function buildPageMetadata(input: { title?: string; description?: string; path?: string; image?: string } = {}): Metadata {
+export function buildPageMetadata(input: { title?: string; description?: string; path?: string; image?: string; index?: boolean } = {}): Metadata {
   const title = input.title || siteMetadata.title;
   const description = input.description || siteMetadata.description;
   const path = input.path || '/';
   const image = input.image || siteMetadata.image;
+  const shouldIndex = input.index ?? true;
 
   return {
     title,
     description,
+    robots: shouldIndex ? undefined : { index: false, follow: false },
     metadataBase: new URL(siteMetadata.url),
     alternates: {
       canonical: path

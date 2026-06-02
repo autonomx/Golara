@@ -6,6 +6,10 @@ export type CmsProductRecord = CmsIdentifiedRecord & {
   code: string;
   categoryId: string;
   productTypeId?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  canonicalPath?: string | null;
+  seoIndex?: boolean;
   priceCents: number;
   isActive: boolean;
 };
@@ -17,6 +21,10 @@ export type ProductMutationInput = {
   slug: string;
   code: string;
   description: string;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  canonicalPath?: string | null;
+  seoIndex?: boolean;
   priceCents: number;
   currency: string;
   imageUrl: string;

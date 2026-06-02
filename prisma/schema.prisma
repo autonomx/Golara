@@ -13,6 +13,10 @@ model Product {
   code           String               @unique
   title          String
   description    String
+  seoTitle       String?
+  seoDescription String?
+  canonicalPath String?
+  seoIndex       Boolean              @default(true)
   priceCents     Int
   currency       String               @default("CAD")
   imageUrl       String

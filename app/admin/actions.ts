@@ -68,6 +68,10 @@ function boolField(formData: FormData, name: string) {
   return formData.get(name) === 'on';
 }
 
+function boolFieldDefault(formData: FormData, name: string, fallback: boolean) {
+  return formData.has(name) ? boolField(formData, name) : fallback;
+}
+
 function intField(formData: FormData, name: string, fallback = 0) {
   const value = Number.parseInt(stringField(formData, name, String(fallback)), 10);
   return Number.isFinite(value) ? value : fallback;
@@ -264,6 +268,10 @@ export async function createProductAction(formData: FormData) {
     slug: stringField(formData, 'slug') || slugify(title),
     code: requiredString(formData, 'code'),
     description: requiredString(formData, 'description'),
+    seoTitle: optionalString(formData, 'seoTitle') ?? null,
+    seoDescription: optionalString(formData, 'seoDescription') ?? null,
+    canonicalPath: optionalString(formData, 'canonicalPath') ?? null,
+    seoIndex: boolFieldDefault(formData, 'seoIndex', true),
     priceCents: priceCentsField(formData, 'price'),
     currency: stringField(formData, 'currency', 'CAD') || 'CAD',
     imageUrl: resolveImageUrl(formData),
@@ -290,6 +298,10 @@ export async function updateProductAction(productId: string, formData: FormData)
     slug: stringField(formData, 'slug') || slugify(title),
     code: requiredString(formData, 'code'),
     description: requiredString(formData, 'description'),
+    seoTitle: optionalString(formData, 'seoTitle') ?? null,
+    seoDescription: optionalString(formData, 'seoDescription') ?? null,
+    canonicalPath: optionalString(formData, 'canonicalPath') ?? null,
+    seoIndex: boolFieldDefault(formData, 'seoIndex', true),
     priceCents: priceCentsField(formData, 'price'),
     currency: stringField(formData, 'currency', 'CAD') || 'CAD',
     imageUrl: resolveImageUrl(formData),
