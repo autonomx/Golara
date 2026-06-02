@@ -163,7 +163,7 @@ Completion checkpoint:
 
 Goal: add controlled multi-market behavior where Golara needs it.
 
-- Add channel/storefront model if business needs multiple storefront contexts.
+- [x] Add channel/storefront model if business needs multiple storefront contexts.
 - Add channel currency and locale defaults.
 - Add channel-specific product availability.
 - Add channel-specific price overrides.
