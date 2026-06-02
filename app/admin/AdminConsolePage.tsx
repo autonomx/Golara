@@ -7,10 +7,12 @@ import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { AdminFulfillmentSettingsPanel } from '@/components/admin/AdminFulfillmentSettingsPanel';
 import { AdminModulePlaceholder } from '@/components/admin/AdminModulePlaceholder';
 import { AdminOrderPanel } from '@/components/admin/AdminOrderPanel';
+import { AdminOrderRevenueSummaryPanel } from '@/components/admin/AdminOrderRevenueSummaryPanel';
 import { AdminStaffReadinessPanel } from '@/components/admin/AdminStaffReadinessPanel';
 import { AdminStorefrontNavigationPanel } from '@/components/admin/AdminStorefrontNavigationPanel';
 import { AdminStoreSettingsPanel } from '@/components/admin/AdminStoreSettingsPanel';
 import { InquiryBoard } from '@/components/admin/InquiryBoard';
+import { orderRevenueSummaryService } from '@/lib/analytics/order-revenue-summary';
 import { getAdminIdentity, isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
 import { getAdminAccountReadinessSummary, listAdminAccountReadinessRecords } from '@/lib/admin-account-repository';
 import { getHomepageContent, listAdminAuditLogs, listAdminCategories, listAdminFulfillmentMethodSettings, listAdminProducts, listAdminProductTypes, listInquiries, listInquiryPage, listInquiryStatusCounts, listMedia } from '@/lib/cms/catalog-repository';
@@ -276,7 +278,7 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
   const authenticated = await isAdminAuthenticated();
   const adminIdentity = authenticated ? await getAdminIdentity() : undefined;
   const canViewStaffReadiness = adminIdentity?.role === 'owner';
-  const [categories, products, productTypes, homepage, homepageTranslations, media, inquiryPageData, assignmentSourceInquiries, inquiryCounts, auditLogs, orderPageData, authEventSummary, adminAccounts, adminCustomers, fulfillmentMethods, storeSetting, storefrontNavigationMenu] = await Promise.all([
+  const [categories, products, productTypes, homepage, homepageTranslations, media, inquiryPageData, assignmentSourceInquiries, inquiryCounts, auditLogs, orderRevenueSummary, orderPageData, authEventSummary, adminAccounts, adminCustomers, fulfillmentMethods, storeSetting, storefrontNavigationMenu] = await Promise.all([
     listAdminCategories(),
     listAdminProducts(),
     listAdminProductTypes(),
@@ -287,6 +289,7 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
     listInquiries(inquiryStatus, inquirySearch),
     listInquiryStatusCounts(inquirySearch),
     authenticated ? listAdminAuditLogs(auditFilters) : Promise.resolve([]),
+    orderRevenueSummaryService.summary(),
     authenticated ? listAdminCheckoutOrderPage(orderFilters, parsePage(orderPage)) : Promise.resolve({ orders: [], page: 1, pageSize: 12, totalCount: 0, totalPages: 1 }),
     authenticated ? getCustomerAuthEventSummary() : getCustomerAuthEventSummary(1),
     canViewStaffReadiness ? listAdminAccountReadinessRecords() : Promise.resolve([]),
@@ -356,6 +359,7 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
             />
           ) : null}
 
+          {activeTab === 'overview' && authenticated ? <AdminOrderRevenueSummaryPanel summary={orderRevenueSummary} /> : null}
           {activeTab === 'overview' && authenticated ? <AdminStaffReadinessPanel accounts={adminAccounts} summary={adminAccountSummary} identity={adminIdentity} /> : null}
           {activeTab === 'overview' && authenticated ? <AdminAuditLogPanel logs={auditLogs} filters={auditFilters} /> : null}
 
