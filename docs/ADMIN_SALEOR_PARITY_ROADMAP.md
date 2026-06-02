@@ -105,7 +105,7 @@ Goal: make customer support possible from the admin panel.
 - [x] Show customer order history.
 - [x] Show inquiry history.
 - [x] Show saved addresses.
-- [ ] Allow staff to update safe profile fields.
+- [x] Allow staff to update safe profile fields.
 - [ ] Add admin notes or customer timeline.
 - [ ] Add privacy/safety controls for sensitive fields.
 

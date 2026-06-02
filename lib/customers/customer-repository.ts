@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { recordAdminAuditLog } from '@/lib/admin-audit-log';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
 export type CustomerAddressInput = {
@@ -144,6 +145,24 @@ export async function updateCustomerProfile(customerId: string, input: CustomerP
       locale: optionalText(input.locale) || 'fa-IR'
     }
   });
+}
+
+export async function updateAdminCustomerProfile(customerId: string, input: CustomerProfileUpdateInput) {
+  const customer = await updateCustomerProfile(customerId, input);
+
+  await recordAdminAuditLog({
+    action: 'customer.profile.update',
+    entity: 'customerProfile',
+    entityId: customer.id,
+    summary: `Updated customer profile: ${customer.phone}`,
+    metadata: {
+      displayNameUpdated: input.displayName !== undefined,
+      emailUpdated: input.email !== undefined,
+      locale: customer.locale
+    }
+  });
+
+  return customer;
 }
 
 export async function addCustomerAddress(customerId: string, input: CustomerAddressInput) {
