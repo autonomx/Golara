@@ -8,6 +8,7 @@ import { AdminFulfillmentSettingsPanel } from '@/components/admin/AdminFulfillme
 import { AdminModulePlaceholder } from '@/components/admin/AdminModulePlaceholder';
 import { AdminOrderPanel } from '@/components/admin/AdminOrderPanel';
 import { AdminStaffReadinessPanel } from '@/components/admin/AdminStaffReadinessPanel';
+import { AdminStoreSettingsPanel } from '@/components/admin/AdminStoreSettingsPanel';
 import { InquiryBoard } from '@/components/admin/InquiryBoard';
 import { getAdminIdentity, isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
 import { getAdminAccountReadinessSummary, listAdminAccountReadinessRecords } from '@/lib/admin-account-repository';
@@ -20,6 +21,7 @@ import { listAdminCustomers } from '@/lib/customers/customer-repository';
 import { createInquiryAssignmentQueueSummary, filterInquiriesByAssignmentQueue, parseInquiryAssignmentQueueFilter } from '@/lib/inquiries/inquiry-assignment-queue';
 import { getCurrentInquiryNotificationReadiness, getCurrentInquiryNotificationRetryRunbook } from '@/lib/notifications/inquiry-notifications';
 import { getRuntimeReadiness } from '@/lib/runtime-readiness';
+import { storeSettingsService } from '@/lib/settings/store-settings';
 
 export const dynamic = 'force-dynamic';
 
@@ -272,7 +274,7 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
   const authenticated = await isAdminAuthenticated();
   const adminIdentity = authenticated ? await getAdminIdentity() : undefined;
   const canViewStaffReadiness = adminIdentity?.role === 'owner';
-  const [categories, products, productTypes, homepage, homepageTranslations, media, inquiryPageData, assignmentSourceInquiries, inquiryCounts, auditLogs, orderPageData, authEventSummary, adminAccounts, adminCustomers, fulfillmentMethods] = await Promise.all([
+  const [categories, products, productTypes, homepage, homepageTranslations, media, inquiryPageData, assignmentSourceInquiries, inquiryCounts, auditLogs, orderPageData, authEventSummary, adminAccounts, adminCustomers, fulfillmentMethods, storeSetting] = await Promise.all([
     listAdminCategories(),
     listAdminProducts(),
     listAdminProductTypes(),
@@ -287,7 +289,8 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
     authenticated ? getCustomerAuthEventSummary() : getCustomerAuthEventSummary(1),
     canViewStaffReadiness ? listAdminAccountReadinessRecords() : Promise.resolve([]),
     authenticated ? listAdminCustomers() : Promise.resolve([]),
-    authenticated ? listAdminFulfillmentMethodSettings() : Promise.resolve([])
+    authenticated ? listAdminFulfillmentMethodSettings() : Promise.resolve([]),
+    storeSettingsService.get()
   ]);
 
   const assignmentSummary = createInquiryAssignmentQueueSummary(assignmentSourceInquiries, adminIdentity);
@@ -365,7 +368,10 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
             />
           ) : null}
           {activeTab === 'settings' ? (
-            <AdminFulfillmentSettingsPanel methods={fulfillmentMethods} databaseReady={runtimeReadiness.databaseUrlPresent} />
+            <div className="grid gap-6">
+              <AdminStoreSettingsPanel setting={storeSetting} databaseReady={runtimeReadiness.databaseUrlPresent} />
+              <AdminFulfillmentSettingsPanel methods={fulfillmentMethods} databaseReady={runtimeReadiness.databaseUrlPresent} />
+            </div>
           ) : null}
           </section>
         </div>
@@ -373,4 +379,3 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
     </main>
   );
 }
-
