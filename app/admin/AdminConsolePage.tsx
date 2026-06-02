@@ -8,6 +8,7 @@ import { AdminFulfillmentSettingsPanel } from '@/components/admin/AdminFulfillme
 import { AdminModulePlaceholder } from '@/components/admin/AdminModulePlaceholder';
 import { AdminOrderPanel } from '@/components/admin/AdminOrderPanel';
 import { AdminStaffReadinessPanel } from '@/components/admin/AdminStaffReadinessPanel';
+import { AdminStorefrontNavigationPanel } from '@/components/admin/AdminStorefrontNavigationPanel';
 import { AdminStoreSettingsPanel } from '@/components/admin/AdminStoreSettingsPanel';
 import { InquiryBoard } from '@/components/admin/InquiryBoard';
 import { getAdminIdentity, isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
@@ -22,6 +23,7 @@ import { createInquiryAssignmentQueueSummary, filterInquiriesByAssignmentQueue, 
 import { getCurrentInquiryNotificationReadiness, getCurrentInquiryNotificationRetryRunbook } from '@/lib/notifications/inquiry-notifications';
 import { getRuntimeReadiness } from '@/lib/runtime-readiness';
 import { storeSettingsService } from '@/lib/settings/store-settings';
+import { storefrontNavigationMenuService } from '@/lib/settings/storefront-navigation-menu';
 
 export const dynamic = 'force-dynamic';
 
@@ -274,7 +276,7 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
   const authenticated = await isAdminAuthenticated();
   const adminIdentity = authenticated ? await getAdminIdentity() : undefined;
   const canViewStaffReadiness = adminIdentity?.role === 'owner';
-  const [categories, products, productTypes, homepage, homepageTranslations, media, inquiryPageData, assignmentSourceInquiries, inquiryCounts, auditLogs, orderPageData, authEventSummary, adminAccounts, adminCustomers, fulfillmentMethods, storeSetting] = await Promise.all([
+  const [categories, products, productTypes, homepage, homepageTranslations, media, inquiryPageData, assignmentSourceInquiries, inquiryCounts, auditLogs, orderPageData, authEventSummary, adminAccounts, adminCustomers, fulfillmentMethods, storeSetting, storefrontNavigationMenu] = await Promise.all([
     listAdminCategories(),
     listAdminProducts(),
     listAdminProductTypes(),
@@ -290,7 +292,8 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
     canViewStaffReadiness ? listAdminAccountReadinessRecords() : Promise.resolve([]),
     authenticated ? listAdminCustomers() : Promise.resolve([]),
     authenticated ? listAdminFulfillmentMethodSettings() : Promise.resolve([]),
-    storeSettingsService.get()
+    storeSettingsService.get(),
+    storefrontNavigationMenuService.get()
   ]);
 
   const assignmentSummary = createInquiryAssignmentQueueSummary(assignmentSourceInquiries, adminIdentity);
@@ -370,6 +373,7 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
           {activeTab === 'settings' ? (
             <div className="grid gap-6">
               <AdminStoreSettingsPanel setting={storeSetting} databaseReady={runtimeReadiness.databaseUrlPresent} />
+              <AdminStorefrontNavigationPanel menu={storefrontNavigationMenu} databaseReady={runtimeReadiness.databaseUrlPresent} />
               <AdminFulfillmentSettingsPanel methods={fulfillmentMethods} databaseReady={runtimeReadiness.databaseUrlPresent} />
             </div>
           ) : null}
