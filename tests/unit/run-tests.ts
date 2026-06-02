@@ -49,6 +49,7 @@ import { runOrderNextPathTests } from './order-next-path.test';
 import { runOrderDiscountFlowTests } from './order-discount-flow.test';
 import { runOrderNotificationActionsFlowTests } from './order-notification-actions-flow.test';
 import { runOrderReturnRouteCoreTests } from './order-return-route-core.test';
+import { runOrderRevenueSummaryTests } from './order-revenue-summary.test';
 import { runOtpRateLimitTests } from './otp-rate-limit.test';
 import { runPaymentGatewayAdaptersTests } from './payment-gateway-adapters.test';
 import { runPaymentGatewayConfigTests } from './payment-gateway-config.test';
@@ -138,6 +139,7 @@ async function main() {
   await runOrderDiscountFlowTests();
   await runOrderActivityTimelineAttributionTests();
   await runOrderNotificationActionsFlowTests();
+  await runOrderRevenueSummaryTests();
   await runPaymentGatewayConfigTests();
   await runPaymentGatewayAdaptersTests();
   await runPaymentProviderSettingsTests();
@@ -154,7 +156,7 @@ async function main() {
   await runProductVariantMapperTests();
   await runPromotionDiscountModelTests();
   await runPromotionVoucherModelTests();
-  await runPromotionValidityWindowsModelTests();
+  await runPromotionValidityWindowsTests();
   await runPromotionUsageLimitsModelTests();
   await runPromotionEligibilityRulesModelTests();
   await runPromotionOrderMinimumsModelTests();
@@ -182,7 +184,7 @@ async function main() {
   await runFulfillmentShipmentRecordsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (91 files)');
+  console.log('unit tests passed (92 files)');
 }
 
 main().catch((error) => {
