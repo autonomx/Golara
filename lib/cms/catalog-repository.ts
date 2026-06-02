@@ -1,7 +1,7 @@
 import 'server-only';
 
 import type { Prisma } from '@prisma/client';
-import type { AdminAuditLogEntry, CatalogTranslation, Category, CustomerInquiry, HomepageContent, MediaItem, Product, ProductVariant } from '@/lib/catalog';
+import type { AdminAuditLogEntry, CatalogTranslation, Category, CustomerInquiry, HomepageContent, MediaItem, Product, ProductType, ProductVariant } from '@/lib/catalog';
 import { prisma } from '@/lib/prisma';
 import { readWithSeedFallback } from '@/lib/cms/repository-fallback-policy';
 import { seedCategories, seedHomepageContent, seedProducts } from '@/lib/seed-data';
@@ -76,10 +76,23 @@ type DbProduct = {
   isActive: boolean;
   categoryId: string;
   imageUrl: string;
+  productTypeId: string | null;
   category?: DbCategory;
+  productType?: DbProductType | null;
   images?: { url: string; alt: string }[];
   variants?: DbProductVariant[];
   translations?: DbProductTranslation[];
+};
+
+type DbProductType = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  isActive: boolean;
+  sortOrder: number;
+  updatedAt?: Date;
+  _count?: { products: number };
 };
 
 type DbProductVariant = {
@@ -135,7 +148,7 @@ type InquiryWhere = Prisma.CustomerInquiryWhereInput;
 type AuditLogWhere = Prisma.AdminAuditLogWhereInput;
 
 const categoryInclude = { parent: { select: { slug: true, title: true, translations: true } }, translations: true } satisfies Prisma.CategoryInclude;
-const productInclude = { category: { include: categoryInclude }, images: true, variants: { orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] }, translations: true } satisfies Prisma.ProductInclude;
+const productInclude = { category: { include: categoryInclude }, productType: true, images: true, variants: { orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] }, translations: true } satisfies Prisma.ProductInclude;
 
 function bySortThenTitle(a: Category, b: Category) {
   return (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.title.localeCompare(b.title);
@@ -279,6 +292,19 @@ function mapProductVariants(variants?: DbProductVariant[]): ProductVariant[] | u
   }));
 }
 
+function mapProductType(productType: DbProductType): ProductType {
+  return {
+    id: productType.id,
+    slug: productType.slug,
+    name: productType.name,
+    description: productType.description ?? undefined,
+    isActive: productType.isActive,
+    sortOrder: productType.sortOrder,
+    productCount: productType._count?.products,
+    updatedAt: productType.updatedAt
+  };
+}
+
 function mapCategory(category: DbCategory, options: CatalogReadOptions = {}): Category {
   const localized = localizeCategory(category, options);
   return {
@@ -311,6 +337,8 @@ function mapProduct(product: DbProduct, options: CatalogReadOptions = {}): Produ
     category: product.category?.slug ?? '',
     categoryId: product.categoryId,
     categoryTitle: localizedCategory?.title,
+    productTypeId: product.productTypeId ?? undefined,
+    productTypeName: product.productType?.name,
     price: product.priceCents / 100,
     currency: product.currency,
     availableToday: product.availableToday,
@@ -510,6 +538,13 @@ export async function listAdminProducts(): Promise<Product[]> {
     const products = await prisma.product.findMany({ include: productInclude, orderBy: [{ title: 'asc' }] });
     return products.map((product) => mapProduct(product, { includeTranslations: true }));
   }, () => seedProducts);
+}
+
+export async function listAdminProductTypes(): Promise<ProductType[]> {
+  return readWithFallback(async () => {
+    const productTypes = await prisma.productType.findMany({ include: { _count: { select: { products: true } } }, orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] });
+    return productTypes.map(mapProductType);
+  }, () => []);
 }
 
 export async function getProductBySlug(slug: string, options: CatalogReadOptions = {}): Promise<Product | undefined> {

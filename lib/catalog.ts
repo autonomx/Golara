@@ -50,6 +50,8 @@ export type Product = {
   category: string;
   categoryId?: string;
   categoryTitle?: string;
+  productTypeId?: string;
+  productTypeName?: string;
   price: number;
   currency: string;
   availableToday: boolean;
@@ -61,6 +63,17 @@ export type Product = {
   updatedAt?: Date;
   translations?: CatalogTranslation[];
   variants?: ProductVariant[];
+};
+
+export type ProductType = {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+  sortOrder: number;
+  productCount?: number;
+  updatedAt?: Date;
 };
 
 export type ProductVariant = {

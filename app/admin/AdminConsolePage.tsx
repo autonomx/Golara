@@ -10,7 +10,7 @@ import { AdminStaffReadinessPanel } from '@/components/admin/AdminStaffReadiness
 import { InquiryBoard } from '@/components/admin/InquiryBoard';
 import { getAdminIdentity, isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
 import { getAdminAccountReadinessSummary, listAdminAccountReadinessRecords } from '@/lib/admin-account-repository';
-import { getHomepageContent, listAdminAuditLogs, listAdminCategories, listAdminProducts, listInquiries, listInquiryPage, listInquiryStatusCounts, listMedia } from '@/lib/cms/catalog-repository';
+import { getHomepageContent, listAdminAuditLogs, listAdminCategories, listAdminProducts, listAdminProductTypes, listInquiries, listInquiryPage, listInquiryStatusCounts, listMedia } from '@/lib/cms/catalog-repository';
 import { listHomepageTranslations } from '@/lib/cms/homepage-translation-repository';
 import { listAdminCheckoutOrderPage } from '@/lib/checkout/admin-order-repository';
 import { getPaymentGatewayConfig, getPaymentGatewayReadiness } from '@/lib/checkout/payment-gateway-config';
@@ -271,9 +271,10 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
   const authenticated = await isAdminAuthenticated();
   const adminIdentity = authenticated ? await getAdminIdentity() : undefined;
   const canViewStaffReadiness = adminIdentity?.role === 'owner';
-  const [categories, products, homepage, homepageTranslations, media, inquiryPageData, assignmentSourceInquiries, inquiryCounts, auditLogs, orderPageData, authEventSummary, adminAccounts, adminCustomers] = await Promise.all([
+  const [categories, products, productTypes, homepage, homepageTranslations, media, inquiryPageData, assignmentSourceInquiries, inquiryCounts, auditLogs, orderPageData, authEventSummary, adminAccounts, adminCustomers] = await Promise.all([
     listAdminCategories(),
     listAdminProducts(),
+    listAdminProductTypes(),
     getHomepageContent(),
     authenticated ? listHomepageTranslations() : Promise.resolve([]),
     listMedia(),
@@ -323,6 +324,7 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
               catalogSection={catalogSection}
               categories={categories}
               products={products}
+              productTypes={productTypes}
               homepage={homepage}
               homepageTranslations={homepageTranslations}
               media={media}

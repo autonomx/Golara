@@ -1,12 +1,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { createProductVariantAction, updateProductAction, updateProductVariantAction } from '@/app/admin/actions';
+import { createProductTypeAction, createProductVariantAction, updateProductAction, updateProductTypeAction, updateProductVariantAction } from '@/app/admin/actions';
 import { MediaSelectWithPreview } from '@/components/admin/MediaSelectWithPreview';
 import { SiteHeader } from '@/components/SiteHeader';
 import { assertAdminRole } from '@/lib/admin-auth';
-import type { Category, MediaItem, Product, ProductVariant } from '@/lib/catalog';
-import { listAdminCategories, listAdminProducts, listMedia } from '@/lib/cms/catalog-repository';
+import type { Category, MediaItem, Product, ProductType, ProductVariant } from '@/lib/catalog';
+import { listAdminCategories, listAdminProducts, listAdminProductTypes, listMedia } from '@/lib/cms/catalog-repository';
 import { getRuntimeReadiness } from '@/lib/runtime-readiness';
 
 export const dynamic = 'force-dynamic';
@@ -24,11 +24,11 @@ function Field({ label, name, defaultValue, type = 'text', required = true, disa
   );
 }
 
-function TextArea({ label, name, defaultValue, disabled = false }: { label: string; name: string; defaultValue?: string; disabled?: boolean }) {
+function TextArea({ label, name, defaultValue, required = true, disabled = false }: { label: string; name: string; defaultValue?: string; required?: boolean; disabled?: boolean }) {
   return (
     <label className="grid gap-2 text-sm font-semibold text-rosewood">
       {label}
-      <textarea className={textAreaClass} name={name} defaultValue={defaultValue} required disabled={disabled} />
+      <textarea className={textAreaClass} name={name} defaultValue={defaultValue} required={required} disabled={disabled} />
     </label>
   );
 }
@@ -70,6 +70,38 @@ function VariantFields({ media, productImage, variant, disabled }: { media: Medi
   );
 }
 
+function ProductTypeSelect({ product, productTypes, disabled }: { product: Product; productTypes: ProductType[]; disabled: boolean }) {
+  return (
+    <label className="grid gap-2 text-sm font-semibold text-rosewood">
+      Product type
+      <select className={inputClass} name="productTypeId" defaultValue={product.productTypeId ?? ''} disabled={disabled}>
+        <option value="">No product type</option>
+        {productTypes.map((productType) => (
+          <option key={productType.id} value={productType.id}>
+            {productType.name}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function ProductTypeFields({ productType, disabled }: { productType?: ProductType; disabled: boolean }) {
+  return (
+    <>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Field label="Name" name="name" defaultValue={productType?.name} disabled={disabled} />
+        <Field label="Slug" name="slug" defaultValue={productType?.slug} disabled={disabled} />
+      </div>
+      <TextArea label="Description" name="description" defaultValue={productType?.description ?? ''} required={false} disabled={disabled} />
+      <div className="grid gap-4 md:grid-cols-2">
+        <Field label="Sort order" name="sortOrder" type="number" defaultValue={productType?.sortOrder ?? 0} disabled={disabled} />
+        <Toggle label="Active" name="isActive" defaultChecked={productType?.isActive ?? true} disabled={disabled} />
+      </div>
+    </>
+  );
+}
+
 function findProduct(products: Product[], productId: string) {
   return products.find((product) => product.id === productId || product.slug === productId);
 }
@@ -78,7 +110,9 @@ function StatusBanner({ status }: { status?: string }) {
   const messages: Record<string, string> = {
     'product-updated': 'Product saved.',
     'product-variant-created': 'Variant created.',
-    'product-variant-updated': 'Variant saved.'
+    'product-variant-updated': 'Variant saved.',
+    'product-type-created': 'Product type created.',
+    'product-type-updated': 'Product type saved.'
   };
   if (!status || !messages[status]) return null;
   return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">{messages[status]}</div>;
@@ -87,7 +121,7 @@ function StatusBanner({ status }: { status?: string }) {
 export default async function AdminProductDetailPage({ params, searchParams }: { params: Promise<{ productId: string }>; searchParams: Promise<{ status?: string }> }) {
   await assertAdminRole('staff');
   const [{ productId }, { status }] = await Promise.all([params, searchParams]);
-  const [products, categories, media] = await Promise.all([listAdminProducts(), listAdminCategories(), listMedia()]);
+  const [products, categories, productTypes, media] = await Promise.all([listAdminProducts(), listAdminCategories(), listAdminProductTypes(), listMedia()]);
   const product = findProduct(products, productId);
   if (!product) notFound();
 
@@ -95,6 +129,7 @@ export default async function AdminProductDetailPage({ params, searchParams }: {
   const disabled = !runtimeReadiness.databaseUrlPresent || !product.id;
   const updateAction = updateProductAction.bind(null, product.id ?? '');
   const createVariantAction = createProductVariantAction.bind(null, product.id ?? '');
+  const currentProductType = productTypes.find((productType) => productType.id === product.productTypeId);
 
   return (
     <main id="main-content" tabIndex={-1}>
@@ -128,7 +163,7 @@ export default async function AdminProductDetailPage({ params, searchParams }: {
               <Field label="Title" name="title" defaultValue={product.title} disabled={disabled} />
               <Field label="Slug" name="slug" defaultValue={product.slug} disabled={disabled} />
             </div>
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-3">
               <Field label="Code" name="code" defaultValue={product.code} disabled={disabled} />
               <label className="grid gap-2 text-sm font-semibold text-rosewood">
                 Category or subcategory
@@ -137,6 +172,7 @@ export default async function AdminProductDetailPage({ params, searchParams }: {
                   {categories.map((category) => <option key={category.id ?? category.slug} value={category.id ?? ''}>{category.parentTitle ? `${category.parentTitle} / ${category.title}` : category.title}</option>)}
                 </select>
               </label>
+              <ProductTypeSelect product={product} productTypes={productTypes} disabled={disabled} />
             </div>
             <TextArea label="Description" name="description" defaultValue={product.description} disabled={disabled} />
             <div className="grid gap-4 md:grid-cols-2">
@@ -216,8 +252,52 @@ export default async function AdminProductDetailPage({ params, searchParams }: {
             <section className={cardClass}>
               <h2 className="font-display text-3xl text-rosewood">Next PIM work</h2>
               <div className="mt-4 grid gap-3 text-sm text-stone-700">
-                <p>Product types, attributes, and SEO metadata will attach to this detail page in the next Phase 2 slices.</p>
+                <p>Attributes and SEO metadata will attach to this detail page in the next Phase 2 slices.</p>
               </div>
+            </section>
+
+            <section className={`${cardClass} grid gap-5`}>
+              <div>
+                <h2 className="font-display text-3xl text-rosewood">Product types</h2>
+                <p className="mt-2 text-sm leading-6 text-stone-600">Group products by shared catalog structure before adding reusable attributes.</p>
+                <p className="mt-2 text-sm font-semibold text-stone-700">Current: {currentProductType?.name ?? 'No product type'}</p>
+              </div>
+              <details className="rounded-3xl border border-rosewood/10 bg-cream p-5">
+                <summary className="cursor-pointer font-display text-2xl text-rosewood">Create product type</summary>
+                <form action={createProductTypeAction} className="mt-5 grid gap-4">
+                  <input type="hidden" name="returnProductId" value={product.id ?? product.slug} />
+                  <ProductTypeFields disabled={disabled} />
+                  <button className="w-fit rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none" type="submit" disabled={disabled}>
+                    Create type
+                  </button>
+                </form>
+              </details>
+              {!productTypes.length ? (
+                <div className="rounded-3xl border border-dashed border-stone-300 bg-stone-50 p-6 text-sm text-stone-600">No product types yet.</div>
+              ) : (
+                <div className="grid gap-3">
+                  {productTypes.map((productType) => (
+                    <details key={productType.id} className="rounded-3xl border border-rosewood/10 bg-cream p-5">
+                      <summary className="cursor-pointer list-none">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <h3 className="font-display text-2xl text-rosewood">{productType.name}</h3>
+                            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">{productType.slug} / {productType.productCount ?? 0} products / {productType.isActive ? 'Active' : 'Inactive'}</p>
+                          </div>
+                          <span className="rounded-full border border-rosewood/15 bg-white px-3 py-1 text-xs font-semibold text-rosewood">Edit</span>
+                        </div>
+                      </summary>
+                      <form action={updateProductTypeAction.bind(null, productType.id)} className="mt-5 grid gap-4">
+                        <input type="hidden" name="returnProductId" value={product.id ?? product.slug} />
+                        <ProductTypeFields productType={productType} disabled={disabled} />
+                        <button className="w-fit rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none" type="submit" disabled={disabled}>
+                          Save type
+                        </button>
+                      </form>
+                    </details>
+                  ))}
+                </div>
+              )}
             </section>
           </aside>
         </div>

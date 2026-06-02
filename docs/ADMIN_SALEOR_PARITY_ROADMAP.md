@@ -44,7 +44,7 @@ Goal: move from simple product records toward Saleor-style catalog modeling.
 - [x] Add product detail pages instead of large inline edit forms.
 - [x] Add product variants/SKUs.
 - [x] Add variant price, SKU/code, active state, and image fields.
-- Add product types.
+- [x] Add product types.
 - Add reusable product attributes.
 - Add product and variant attribute values.
 - Add product SEO fields: title, description, canonical path, index controls.

@@ -5,6 +5,7 @@ export type CmsProductRecord = CmsIdentifiedRecord & {
   slug: string;
   code: string;
   categoryId: string;
+  productTypeId?: string | null;
   priceCents: number;
   isActive: boolean;
 };
@@ -20,6 +21,7 @@ export type ProductMutationInput = {
   currency: string;
   imageUrl: string;
   categoryId: string;
+  productTypeId?: string | null;
   availableToday: boolean;
   bestSeller: boolean;
   requiresQuote: boolean;
