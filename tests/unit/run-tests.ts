@@ -67,6 +67,7 @@ import { runPromotionStoreCreditFoundationModelTests } from './promotion-store-c
 import { runPromotionUsageLimitsModelTests } from './promotion-usage-limits-model.test';
 import { runPromotionValidityWindowsModelTests } from './promotion-validity-windows-model.test';
 import { runPromotionVoucherModelTests } from './promotion-voucher-model.test';
+import { runProviderDiagnosticsTests } from './provider-diagnostics.test';
 import { runPublicInquiryServiceTests } from './public-inquiry-service.test';
 import { runRepositoryFallbackPolicyTests } from './repository-fallback-policy.test';
 import { runRuntimeModeTests } from './runtime-mode.test';
@@ -143,6 +144,7 @@ async function main() {
   await runWebhookEventLogTests();
   await runIntegrationAppRegistryTests();
   await runApiTokenManagementTests();
+  await runProviderDiagnosticsTests();
   await runStaffPermissionSettingsTests();
   await runProductCheckoutPolicyTests();
   await runProductVariantMapperTests();
@@ -176,7 +178,7 @@ async function main() {
   await runFulfillmentShipmentRecordsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (88 files)');
+  console.log('unit tests passed (89 files)');
 }
 
 main().catch((error) => {
