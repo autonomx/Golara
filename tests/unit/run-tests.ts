@@ -70,6 +70,7 @@ import { runShippingDeliverySettingsTests } from './shipping-delivery-settings.t
 import { runStaffOrderDraftFlowTests } from './staff-order-draft-flow.test';
 import { runStorefrontNavigationMenuBuilderTests } from './storefront-navigation-menu-builder.test';
 import { runStoreSettingsPageTests } from './store-settings-page.test';
+import { runTaxCategorySettingsTests } from './tax-category-settings.test';
 import { runTranslationCompletenessDashboardTests } from './translation-completeness-dashboard.test';
 import { runVariantCheckoutLineModelTests } from './variant-checkout-line-model.test';
 import { runVariantLocationStockModelTests } from './variant-location-stock-model.test';
@@ -148,6 +149,7 @@ async function main() {
   await runStorefrontNavigationMenuBuilderTests();
   await runHomepageBannerMediaSettingsTests();
   await runShippingDeliverySettingsTests();
+  await runTaxCategorySettingsTests();
   await runVariantCheckoutLineModelTests();
   await runVariantStockAuditTests();
   await runVariantStockStatusTests();
@@ -158,7 +160,7 @@ async function main() {
   await runFulfillmentShipmentRecordsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (79 files)');
+  console.log('unit tests passed (80 files)');
 }
 
 main().catch((error) => {
