@@ -152,6 +152,13 @@ Success criteria:
 - Owner can run basic campaigns from admin.
 - Discounts apply predictably at cart/checkout and are visible on orders.
 
+Completion checkpoint:
+
+- Phase 6 roadmap checklist is fully checked as of `ac12cae6b9f1d831d77f4539e9112a053f5fad00`.
+- Promotion Prisma schema parity cleanup is included at that checkpoint with the promotion schema parity guard wired into the unit runner.
+- Unit runner count is 69 files at the Phase 6 checkpoint.
+- Verification remains pending until `npm run typecheck`, `npm run test:unit`, `npx prisma generate`, and `npx prisma migrate status` are run in an environment with project dependencies.
+
 ## Phase 7: Channels, Localization, And Pricing
 
 Goal: add controlled multi-market behavior where Golara needs it.
