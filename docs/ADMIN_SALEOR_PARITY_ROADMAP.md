@@ -99,15 +99,15 @@ Success criteria:
 
 Goal: make customer support possible from the admin panel.
 
-- Add customer list page.
-- Add customer detail page.
-- Show customer profile, phone/email, locale, account providers.
-- Show customer order history.
-- Show inquiry history.
-- Show saved addresses.
-- Allow staff to update safe profile fields.
-- Add admin notes or customer timeline.
-- Add privacy/safety controls for sensitive fields.
+- [x] Add customer list page.
+- [x] Add customer detail page.
+- [x] Show customer profile, phone/email, locale, account providers.
+- [x] Show customer order history.
+- [x] Show inquiry history.
+- [x] Show saved addresses.
+- [ ] Allow staff to update safe profile fields.
+- [ ] Add admin notes or customer timeline.
+- [ ] Add privacy/safety controls for sensitive fields.
 
 Success criteria:
 

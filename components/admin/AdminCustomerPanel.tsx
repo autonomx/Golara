@@ -1,4 +1,5 @@
 import type { AdminCustomerListItem } from '@/lib/customers/customer-repository';
+import Link from 'next/link';
 
 function formatDate(value?: Date | null) {
   if (!value) return 'Never';
@@ -47,7 +48,9 @@ export function AdminCustomerPanel({ customers, databaseReady }: { customers: Ad
               {customers.map((customer) => (
                 <tr key={customer.id} className="border-t border-stone-200 align-top">
                   <td className="px-4 py-4">
-                    <div className="font-semibold text-stone-950">{customer.displayName || 'Unnamed customer'}</div>
+                    <Link href={`/admin/customers/${customer.id}`} className="font-semibold text-stone-950 underline-offset-4 hover:underline">
+                      {customer.displayName || 'Unnamed customer'}
+                    </Link>
                     <div className="mt-1 text-xs text-stone-500">{customer.email || 'No email'}</div>
                   </td>
                   <td className="px-4 py-4 text-stone-700">{customer.phone}</td>

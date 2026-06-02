@@ -40,6 +40,51 @@ export type AdminCustomerListItem = {
   lastLoginAt?: Date | null;
 };
 
+export type AdminCustomerDetail = AdminCustomerListItem & {
+  accounts: {
+    id: string;
+    provider: string;
+    providerAccountId: string;
+    email?: string | null;
+    phone?: string | null;
+    emailVerifiedAt?: Date | null;
+    phoneVerifiedAt?: Date | null;
+    lastLoginAt?: Date | null;
+    createdAt: Date;
+  }[];
+  addresses: {
+    id: string;
+    label: string;
+    recipient?: string | null;
+    phone?: string | null;
+    city?: string | null;
+    line1: string;
+    line2?: string | null;
+    notes?: string | null;
+    isDefault: boolean;
+    updatedAt: Date;
+  }[];
+  orders: {
+    id: string;
+    orderNumber: string;
+    status: string;
+    fulfillmentStatus: string;
+    paymentStatus?: string;
+    totalCents: number;
+    currency: string;
+    itemCount: number;
+    createdAt: Date;
+  }[];
+  inquiries: {
+    id: string;
+    productTitle?: string | null;
+    status: string;
+    message: string;
+    deliveryDate?: Date | null;
+    createdAt: Date;
+  }[];
+};
+
 export function normalizeCustomerPhone(phone: string) {
   const trimmed = phone.trim();
   if (!trimmed) throw new Error('Customer phone is required.');
@@ -209,4 +254,93 @@ export async function listAdminCustomers(): Promise<AdminCustomerListItem[]> {
     orderCount: customer._count.orders,
     lastLoginAt: customer.accounts[0]?.lastLoginAt
   }));
+}
+
+export async function getAdminCustomerDetail(customerId: string): Promise<AdminCustomerDetail | null> {
+  if (!hasDatabase()) return null;
+
+  const customer = await prisma.customerProfile.findUnique({
+    where: { id: customerId },
+    include: {
+      _count: { select: { accounts: true, addresses: true, orders: true } },
+      accounts: { orderBy: [{ lastLoginAt: 'desc' }, { createdAt: 'desc' }] },
+      addresses: { orderBy: [{ isDefault: 'desc' }, { updatedAt: 'desc' }] },
+      orders: {
+        orderBy: { createdAt: 'desc' },
+        include: {
+          items: { select: { id: true } },
+          paymentAttempts: { select: { status: true }, orderBy: { createdAt: 'desc' }, take: 1 }
+        },
+        take: 25
+      }
+    }
+  });
+  if (!customer) return null;
+
+  const inquiryMatches = [
+    { phone: customer.phone },
+    ...(customer.email ? [{ email: customer.email }] : [])
+  ];
+  const inquiries = await prisma.customerInquiry.findMany({
+    where: { OR: inquiryMatches },
+    include: { product: { select: { title: true } } },
+    orderBy: { createdAt: 'desc' },
+    take: 25
+  });
+
+  return {
+    id: customer.id,
+    phone: customer.phone,
+    displayName: customer.displayName,
+    email: customer.email,
+    locale: customer.locale,
+    createdAt: customer.createdAt,
+    updatedAt: customer.updatedAt,
+    accountCount: customer._count.accounts,
+    addressCount: customer._count.addresses,
+    orderCount: customer._count.orders,
+    lastLoginAt: customer.accounts[0]?.lastLoginAt,
+    accounts: customer.accounts.map((account) => ({
+      id: account.id,
+      provider: account.provider,
+      providerAccountId: account.providerAccountId,
+      email: account.email,
+      phone: account.phone,
+      emailVerifiedAt: account.emailVerifiedAt,
+      phoneVerifiedAt: account.phoneVerifiedAt,
+      lastLoginAt: account.lastLoginAt,
+      createdAt: account.createdAt
+    })),
+    addresses: customer.addresses.map((address) => ({
+      id: address.id,
+      label: address.label,
+      recipient: address.recipient,
+      phone: address.phone,
+      city: address.city,
+      line1: address.line1,
+      line2: address.line2,
+      notes: address.notes,
+      isDefault: address.isDefault,
+      updatedAt: address.updatedAt
+    })),
+    orders: customer.orders.map((order) => ({
+      id: order.id,
+      orderNumber: order.orderNumber,
+      status: order.status,
+      fulfillmentStatus: order.fulfillmentStatus,
+      paymentStatus: order.paymentAttempts[0]?.status,
+      totalCents: order.totalCents,
+      currency: order.currency,
+      itemCount: order.items.length,
+      createdAt: order.createdAt
+    })),
+    inquiries: inquiries.map((inquiry) => ({
+      id: inquiry.id,
+      productTitle: inquiry.product?.title,
+      status: inquiry.status,
+      message: inquiry.message,
+      deliveryDate: inquiry.deliveryDate,
+      createdAt: inquiry.createdAt
+    }))
+  };
 }
