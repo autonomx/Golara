@@ -335,6 +335,55 @@ function attributeValueEntries(formData: FormData) {
     .map((attributeId) => ({ attributeId, value: stringField(formData, `attributeValue:${attributeId}`) }));
 }
 
+function parseCsv(text: string) {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cell = '';
+  let quoted = false;
+
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    const next = text[index + 1];
+    if (quoted && char === '"' && next === '"') {
+      cell += '"';
+      index += 1;
+    } else if (char === '"') {
+      quoted = !quoted;
+    } else if (!quoted && char === ',') {
+      row.push(cell.trim());
+      cell = '';
+    } else if (!quoted && (char === '\n' || char === '\r')) {
+      if (char === '\r' && next === '\n') index += 1;
+      row.push(cell.trim());
+      if (row.some(Boolean)) rows.push(row);
+      row = [];
+      cell = '';
+    } else {
+      cell += char;
+    }
+  }
+
+  row.push(cell.trim());
+  if (row.some(Boolean)) rows.push(row);
+  return rows;
+}
+
+function csvRecords(text: string) {
+  const [header, ...rows] = parseCsv(text);
+  if (!header?.length) return [];
+  return rows.map((row) => Object.fromEntries(header.map((key, index) => [key, row[index] ?? ''])));
+}
+
+function csvBool(value: string | undefined, fallback = false) {
+  if (!value) return fallback;
+  return ['true', '1', 'yes', 'on'].includes(value.trim().toLowerCase());
+}
+
+function csvPriceCents(value: string | undefined) {
+  const parsed = Number.parseFloat(value ?? '0');
+  return Number.isFinite(parsed) ? Math.max(0, Math.round(parsed * 100)) : 0;
+}
+
 export async function createProductVariantAction(productId: string, formData: FormData) {
   await ensureCanWriteCms();
   if (!productId) throw new Error('productId is required');
@@ -599,6 +648,79 @@ export async function bulkUpdateProductsAction(formData: FormData) {
 
   revalidateCatalog();
   redirect(adminPath('product-bulk-updated', `Updated ${result.count} products.`));
+}
+
+export async function importProductsCsvAction(formData: FormData) {
+  await ensureCanWriteCms();
+
+  const file = formData.get('file');
+  if (!(file instanceof File) || file.size === 0) {
+    redirect(adminPath('error', 'Choose a product CSV file.'));
+  }
+
+  const records = csvRecords(await file.text());
+  if (records.length === 0) {
+    redirect(adminPath('error', 'Product CSV has no rows.'));
+  }
+
+  const [categories, productTypes, existingProducts] = await Promise.all([
+    prisma.category.findMany({ select: { id: true, slug: true } }),
+    prisma.productType.findMany({ select: { id: true, slug: true, name: true } }),
+    prisma.product.findMany({ select: { id: true, code: true, slug: true } })
+  ]);
+  const categoriesById = new Map(categories.map((category) => [category.id, category]));
+  const categoriesBySlug = new Map(categories.map((category) => [category.slug, category]));
+  const productTypesById = new Map(productTypes.map((productType) => [productType.id, productType]));
+  const productTypesBySlug = new Map(productTypes.map((productType) => [productType.slug, productType]));
+  const productsByCode = new Map(existingProducts.map((product) => [product.code, product]));
+  const productsBySlug = new Map(existingProducts.map((product) => [product.slug, product]));
+
+  let created = 0;
+  let updated = 0;
+
+  for (const record of records) {
+    const title = record.title?.trim();
+    const slug = record.slug?.trim() || (title ? slugify(title) : '');
+    const code = record.code?.trim();
+    const category = categoriesById.get(record.categoryId?.trim() ?? '') ?? categoriesBySlug.get(record.categorySlug?.trim() ?? '');
+    if (!title || !slug || !code || !category) continue;
+
+    const productType = productTypesById.get(record.productTypeId?.trim() ?? '') ?? productTypesBySlug.get(record.productTypeSlug?.trim() ?? '');
+    const existing = productsByCode.get(code) ?? productsBySlug.get(slug);
+    const data = {
+      title,
+      slug,
+      code,
+      description: record.description?.trim() || title,
+      seoTitle: record.seoTitle?.trim() || null,
+      seoDescription: record.seoDescription?.trim() || null,
+      canonicalPath: record.canonicalPath?.trim() || null,
+      seoIndex: csvBool(record.seoIndex, true),
+      priceCents: csvPriceCents(record.price),
+      currency: record.currency?.trim() || 'CAD',
+      imageUrl: record.imageUrl?.trim() || record.image?.trim() || 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1200&q=80',
+      categoryId: category.id,
+      productTypeId: productType?.id ?? null,
+      availableToday: csvBool(record.availableToday),
+      bestSeller: csvBool(record.bestSeller),
+      requiresQuote: csvBool(record.requiresQuote),
+      isActive: csvBool(record.isActive, true),
+      sortOrder: Number.parseInt(record.sortOrder ?? '0', 10) || 0
+    };
+
+    if (existing) {
+      await prisma.product.update({ where: { id: existing.id }, data });
+      updated += 1;
+    } else {
+      const product = await prisma.product.create({ data });
+      productsByCode.set(product.code, product);
+      productsBySlug.set(product.slug, product);
+      created += 1;
+    }
+  }
+
+  revalidateCatalog();
+  redirect(adminPath('product-imported', `Imported ${created} new and updated ${updated} products.`));
 }
 
 export async function upsertProductTranslationAction(productId: string, formData: FormData) {

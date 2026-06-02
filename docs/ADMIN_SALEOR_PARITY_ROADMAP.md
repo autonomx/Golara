@@ -49,7 +49,7 @@ Goal: move from simple product records toward Saleor-style catalog modeling.
 - [x] Add product and variant attribute values.
 - [x] Add product SEO fields: title, description, canonical path, index controls.
 - [x] Add collection support separate from categories.
-- Add bulk product import/export.
+- [x] Add bulk product import/export.
 - Add spreadsheet-friendly bulk editing for common fields.
 
 Success criteria:
