@@ -2,6 +2,7 @@ import 'server-only';
 
 import type { Prisma } from '@prisma/client';
 import type { CheckoutOrderSummary } from '@/lib/catalog';
+import { mapAdminOrderActivityTimeline } from '@/lib/checkout/admin-order-activity-timeline';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
 export type AdminOrderFilters = {
@@ -152,7 +153,7 @@ export async function listAdminCheckoutOrdersForExport(filters: AdminOrderFilter
 export async function getAdminCheckoutOrder(orderId: string) {
   if (!hasDatabase()) return null;
 
-  return prisma.checkoutOrder.findUnique({
+  const order = await prisma.checkoutOrder.findUnique({
     where: { id: orderId },
     include: {
       customer: true,
@@ -177,4 +178,11 @@ export async function getAdminCheckoutOrder(orderId: string) {
       timelineEvents: { orderBy: { createdAt: 'desc' } }
     }
   });
+
+  if (!order) return null;
+
+  return {
+    ...order,
+    activityTimeline: mapAdminOrderActivityTimeline(order.timelineEvents)
+  };
 }
