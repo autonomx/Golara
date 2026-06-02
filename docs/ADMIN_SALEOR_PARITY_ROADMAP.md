@@ -197,7 +197,7 @@ Goal: prepare for external services and future custom admin modules.
 - [x] Add API token management if needed.
 - [x] Add provider diagnostics pages.
 - [x] Add dashboard extension mount points for internal tools.
-- Add import/export job tracking.
+- [x] Add import/export job tracking.
 
 Success criteria:
 
