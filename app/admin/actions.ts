@@ -20,14 +20,21 @@ async function ensureCanWriteCms() {
 }
 
 function tabForStatus(status: string) {
-  if (status.startsWith('product-') || status.startsWith('category-') || status.startsWith('media-')) return 'catalog';
+  if (status.startsWith('product-')) return 'products';
+  if (status.startsWith('category-')) return 'categories';
+  if (status.startsWith('media-')) return 'media';
   if (status.startsWith('homepage-')) return 'content';
   return 'overview';
 }
 
 function adminPath(status: string, message?: string) {
-  const params = new URLSearchParams({ tab: tabForStatus(status), status });
+  const tab = tabForStatus(status);
+  const params = new URLSearchParams({ status });
   if (message) params.set('message', message);
+  if (tab === 'products') return `/admin/products?${params.toString()}`;
+  if (tab === 'categories') return `/admin/categories?${params.toString()}`;
+  if (tab === 'media') return `/admin/media?${params.toString()}`;
+  params.set('tab', tab);
   return `/admin?${params.toString()}`;
 }
 
