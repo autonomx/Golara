@@ -127,7 +127,8 @@ export async function createMediaFromUrlAction(formData: FormData) {
 
   await cmsMediaService.createFromUrl({
     url: requiredString(formData, 'url'),
-    alt: requiredString(formData, 'alt')
+    alt: requiredString(formData, 'alt'),
+    mediaCategory: requiredString(formData, 'mediaCategory')
   });
 
   revalidateCatalog();
@@ -142,11 +143,40 @@ export async function uploadMediaAction(formData: FormData) {
 
   await cmsMediaService.upload({
     file,
-    alt: stringField(formData, 'alt') || file.name
+    alt: stringField(formData, 'alt') || file.name,
+    mediaCategory: requiredString(formData, 'mediaCategory')
   });
 
   revalidateCatalog();
   redirect(adminPath('media-uploaded'));
+}
+
+export async function updateMediaAction(mediaId: string, formData: FormData) {
+  await ensureCanWriteCms();
+  if (!mediaId) throw new Error('mediaId is required');
+
+  await cmsMediaService.update({
+    id: mediaId,
+    url: requiredString(formData, 'url'),
+    alt: requiredString(formData, 'alt'),
+    mediaCategory: requiredString(formData, 'mediaCategory')
+  });
+
+  revalidateCatalog();
+  redirect(adminPath('media-saved'));
+}
+
+export async function updateMediaCategoryAction(mediaId: string, formData: FormData) {
+  await ensureCanWriteCms();
+  if (!mediaId) throw new Error('mediaId is required');
+
+  await cmsMediaService.updateCategory({
+    id: mediaId,
+    mediaCategory: requiredString(formData, 'mediaCategory')
+  });
+
+  revalidateCatalog();
+  redirect(adminPath('media-saved'));
 }
 
 export async function createCategoryAction(formData: FormData) {

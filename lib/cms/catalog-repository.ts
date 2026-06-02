@@ -333,6 +333,16 @@ function mapAuditLog(log: DbAuditLog): AdminAuditLogEntry {
   };
 }
 
+function metadataObject(value: Prisma.JsonValue | null | undefined): Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return value as Record<string, unknown>;
+}
+
+function mediaCategoryFromMetadata(value: Prisma.JsonValue | null | undefined) {
+  const mediaCategory = metadataObject(value).mediaCategory;
+  return typeof mediaCategory === 'string' ? mediaCategory : 'general';
+}
+
 function fallbackMedia(): MediaItem[] {
   const seen = new Set<string>();
   return seedProducts
@@ -341,7 +351,7 @@ function fallbackMedia(): MediaItem[] {
       seen.add(product.image);
       return true;
     })
-    .map((product) => ({ url: product.image, alt: product.title, sourceType: 'seed', storageProvider: 'seed' }));
+    .map((product) => ({ url: product.image, alt: product.title, mediaCategory: 'product', sourceType: 'seed', storageProvider: 'seed' }));
 }
 
 function payloadObject(value: unknown): Partial<HomepageContent> {
@@ -420,6 +430,7 @@ export async function listMedia(): Promise<MediaItem[]> {
       id: item.id,
       url: item.url,
       alt: item.alt,
+      mediaCategory: mediaCategoryFromMetadata(item.metadata),
       sourceType: item.sourceType,
       storageProvider: item.storageProvider ?? undefined,
       mimeType: item.mimeType ?? undefined,

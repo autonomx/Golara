@@ -7,7 +7,7 @@ export type StoredMediaFileMetadata = {
   provider: MediaStorageProviderName;
 };
 
-export function buildUploadedMediaRecordData(input: { storedFile: StoredMediaFileMetadata; alt: string; originalName: string }) {
+export function buildUploadedMediaRecordData(input: { storedFile: StoredMediaFileMetadata; alt: string; originalName: string; mediaCategory: string }) {
   return {
     url: input.storedFile.url,
     alt: input.alt,
@@ -15,6 +15,6 @@ export function buildUploadedMediaRecordData(input: { storedFile: StoredMediaFil
     storageProvider: input.storedFile.provider,
     mimeType: input.storedFile.type,
     sizeBytes: input.storedFile.size,
-    metadata: { originalName: input.originalName }
+    metadata: { originalName: input.originalName, mediaCategory: input.mediaCategory }
   };
 }

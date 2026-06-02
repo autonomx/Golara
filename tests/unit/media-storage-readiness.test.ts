@@ -66,7 +66,8 @@ export async function runMediaStorageReadinessTests() {
         provider: 'cloudinary'
       },
       alt: 'Rose arrangement',
-      originalName: 'rose.webp'
+      originalName: 'rose.webp',
+      mediaCategory: 'product'
     }),
     {
       url: 'https://cdn.example.test/rose.webp',
@@ -75,7 +76,7 @@ export async function runMediaStorageReadinessTests() {
       storageProvider: 'cloudinary',
       mimeType: 'image/webp',
       sizeBytes: 12345,
-      metadata: { originalName: 'rose.webp' }
+      metadata: { originalName: 'rose.webp', mediaCategory: 'product' }
     }
   );
 

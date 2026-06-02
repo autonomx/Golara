@@ -68,6 +68,7 @@ export type MediaItem = {
   id?: string;
   url: string;
   alt: string;
+  mediaCategory?: string;
   sourceType?: string;
   storageProvider?: string;
   mimeType?: string;
