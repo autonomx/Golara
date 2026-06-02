@@ -26,6 +26,20 @@ export type CustomerProfileUpdateInput = {
   locale?: string;
 };
 
+export type AdminCustomerListItem = {
+  id: string;
+  phone: string;
+  displayName?: string | null;
+  email?: string | null;
+  locale: string;
+  createdAt: Date;
+  updatedAt: Date;
+  accountCount: number;
+  addressCount: number;
+  orderCount: number;
+  lastLoginAt?: Date | null;
+};
+
 export function normalizeCustomerPhone(phone: string) {
   const trimmed = phone.trim();
   if (!trimmed) throw new Error('Customer phone is required.');
@@ -168,4 +182,31 @@ export async function listCustomerAddresses(customerId: string) {
     where: { customerId },
     orderBy: [{ isDefault: 'desc' }, { updatedAt: 'desc' }]
   });
+}
+
+export async function listAdminCustomers(): Promise<AdminCustomerListItem[]> {
+  if (!hasDatabase()) return [];
+
+  const customers = await prisma.customerProfile.findMany({
+    include: {
+      _count: { select: { accounts: true, addresses: true, orders: true } },
+      accounts: { select: { lastLoginAt: true }, orderBy: { lastLoginAt: 'desc' }, take: 1 }
+    },
+    orderBy: { updatedAt: 'desc' },
+    take: 100
+  });
+
+  return customers.map((customer) => ({
+    id: customer.id,
+    phone: customer.phone,
+    displayName: customer.displayName,
+    email: customer.email,
+    locale: customer.locale,
+    createdAt: customer.createdAt,
+    updatedAt: customer.updatedAt,
+    accountCount: customer._count.accounts,
+    addressCount: customer._count.addresses,
+    orderCount: customer._count.orders,
+    lastLoginAt: customer.accounts[0]?.lastLoginAt
+  }));
 }

@@ -28,6 +28,7 @@ const adminTabs = [
 
 type AdminTab = (typeof adminTabs)[number]['key'];
 type CatalogSection = 'all' | 'media' | 'categories' | 'products';
+type SalesSection = 'all' | 'orders' | 'inquiries';
 type AdminSearchParams = { tab?: string; status?: string; message?: string; catalogSearch?: string; catalogCategory?: string; catalogFlag?: string; inquiryStatus?: string; inquiryPage?: string; inquirySearch?: string; inquiryAssignment?: string; auditAction?: string; auditEntity?: string; auditActor?: string; auditSearch?: string; orderStatus?: string; orderPaymentStatus?: string; orderFulfillmentStatus?: string; orderSearch?: string; orderPage?: string };
 
 function parsePage(value?: string) {
@@ -64,8 +65,8 @@ const sidebarSections = [
   {
     label: 'Customer Ops',
     items: [
-      { href: '/admin?tab=sales#orders', key: 'orders', tab: 'sales' as AdminTab, label: 'Orders', icon: ShoppingBag },
-      { href: '/admin?tab=sales#inquiries', key: 'inquiries', tab: 'sales' as AdminTab, label: 'Inquiries', icon: Users }
+      { href: '/admin/orders', key: 'orders', tab: 'sales' as AdminTab, label: 'Orders', icon: ShoppingBag },
+      { href: '/admin/inquiries', key: 'inquiries', tab: 'sales' as AdminTab, label: 'Inquiries', icon: Users }
     ]
   },
   {
@@ -190,7 +191,7 @@ function AdminTopBar({ activeTab, productCount, categoryCount, mediaCount, authe
   );
 }
 
-export async function AdminConsolePage({ searchParams, forcedTab, catalogSection = 'all', activeNavKey }: { searchParams: Promise<AdminSearchParams>; forcedTab?: AdminTab; catalogSection?: CatalogSection; activeNavKey?: string }) {
+export async function AdminConsolePage({ searchParams, forcedTab, catalogSection = 'all', salesSection = 'all', activeNavKey }: { searchParams: Promise<AdminSearchParams>; forcedTab?: AdminTab; catalogSection?: CatalogSection; salesSection?: SalesSection; activeNavKey?: string }) {
   const { tab, status, message, catalogSearch, catalogCategory, catalogFlag, inquiryStatus, inquiryPage, inquirySearch, inquiryAssignment, auditAction, auditEntity, auditActor, auditSearch, orderStatus, orderPaymentStatus, orderFulfillmentStatus, orderSearch, orderPage } = await searchParams;
   const activeTab = forcedTab ?? parseAdminTab(tab);
   const resolvedActiveNavKey = activeNavKey ?? activeTab;
@@ -280,8 +281,8 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
           {activeTab === 'overview' && authenticated ? <AdminStaffReadinessPanel accounts={adminAccounts} summary={adminAccountSummary} identity={adminIdentity} /> : null}
           {activeTab === 'overview' && authenticated ? <AdminAuditLogPanel logs={auditLogs} filters={auditFilters} /> : null}
 
-          {activeTab === 'sales' && authenticated ? <AdminOrderPanel orderPage={orderPageData} filters={orderFilters} /> : null}
-          {activeTab === 'sales' ? <InquiryBoard inquiryPage={inquiryPageData} counts={inquiryCounts} assignmentSummary={assignmentSummary} activeStatus={inquiryStatus} search={inquirySearch} assignmentFilter={assignmentFilter} /> : null}
+          {activeTab === 'sales' && authenticated && (salesSection === 'all' || salesSection === 'orders') ? <AdminOrderPanel orderPage={orderPageData} filters={orderFilters} /> : null}
+          {activeTab === 'sales' && (salesSection === 'all' || salesSection === 'inquiries') ? <InquiryBoard inquiryPage={inquiryPageData} counts={inquiryCounts} assignmentSummary={assignmentSummary} activeStatus={inquiryStatus} search={inquirySearch} assignmentFilter={assignmentFilter} /> : null}
           </section>
         </div>
       </div>
@@ -289,6 +290,3 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
   );
 }
 
-export default async function AdminPage({ searchParams }: { searchParams: Promise<AdminSearchParams> }) {
-  return <AdminConsolePage searchParams={searchParams} activeNavKey="overview" />;
-}

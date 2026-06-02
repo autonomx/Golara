@@ -20,8 +20,9 @@ The biggest gaps versus Saleor are product variants/PIM depth, inventory, custom
 
 Goal: make the admin shell feel like a durable operations console before adding deeper data models.
 
-- Keep Products, Categories, and Media as separate pages.
-- Add separate sidebar entries for Orders, Inquiries, Customers, Discounts, Settings.
+- [x] Keep Products, Categories, and Media as separate pages.
+- [x] Add separate sidebar entries/pages for Orders and Inquiries.
+- [ ] Add separate sidebar entries for Customers, Discounts, Settings.
 - Add consistent page headers, breadcrumbs, and primary actions.
 - Add pagination to product/category/media tables.
 - Add column visibility controls for dense tables.

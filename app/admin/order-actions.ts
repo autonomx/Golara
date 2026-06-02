@@ -15,7 +15,7 @@ function stringFormValue(formData: FormData, name: string) {
 
 function adminPath(status: string) {
   const params = new URLSearchParams({ status });
-  return `/admin?${params.toString()}#orders`;
+  return `/admin/orders?${params.toString()}`;
 }
 
 function orderDetailPath(orderId: string, status: string) {
@@ -60,6 +60,7 @@ export async function updateOrderStatusAction(orderId: string, formData: FormDat
   });
 
   revalidatePath('/admin');
+  revalidatePath('/admin/orders');
   redirect(adminPath('order-updated'));
 }
 
@@ -95,6 +96,7 @@ export async function addOrderTimelineNoteAction(orderId: string, formData: Form
   });
 
   revalidatePath('/admin');
+  revalidatePath('/admin/orders');
   revalidatePath(`/admin/orders/${orderId}`);
   redirect(orderDetailPath(orderId, 'order-note-added'));
 }
@@ -143,6 +145,7 @@ export async function updateOrderFulfillmentAction(orderId: string, formData: Fo
   });
 
   revalidatePath('/admin');
+  revalidatePath('/admin/orders');
   revalidatePath(`/admin/orders/${orderId}`);
   redirect(orderDetailPath(orderId, 'fulfillment-updated'));
 }

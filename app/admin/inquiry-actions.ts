@@ -29,7 +29,7 @@ function adminStatus(status: string, formData: FormData) {
   if (inquiryPage && inquiryPage !== '1') params.set('inquiryPage', inquiryPage);
   if (inquiryAssignment !== 'all') params.set('inquiryAssignment', inquiryAssignment);
 
-  return `/admin?${params.toString()}`;
+  return `/admin/inquiries?${params.toString()}`;
 }
 
 export async function saveInquiryAction(inquiryId: string, formData: FormData) {
@@ -44,6 +44,7 @@ export async function saveInquiryAction(inquiryId: string, formData: FormData) {
   await cmsInquiryService.updateInquiry({ inquiryId, status, staffNotes });
 
   revalidatePath('/admin');
+  revalidatePath('/admin/inquiries');
   redirect(adminStatus('inquiry-updated', formData));
 }
 
@@ -67,6 +68,7 @@ export async function assignInquiryAction(inquiryId: string, formData: FormData)
   await cmsInquiryService.assignInquiry({ inquiryId, assignee });
 
   revalidatePath('/admin');
+  revalidatePath('/admin/inquiries');
   redirect(adminStatus(payload.type === 'unassign' ? 'inquiry-unassigned' : 'inquiry-assigned', formData));
 }
 
@@ -82,5 +84,6 @@ export async function addInquiryFollowUpAction(inquiryId: string, formData: Form
   await cmsInquiryService.addFollowUp({ inquiryId, note, channel });
 
   revalidatePath('/admin');
+  revalidatePath('/admin/inquiries');
   redirect(adminStatus('follow-up-added', formData));
 }
