@@ -4,6 +4,7 @@ import { AdminIntegrationAppRegistryPanel } from '@/components/admin/AdminIntegr
 import { AdminModuleAccessSettingsPanel } from '@/components/admin/AdminModuleAccessSettingsPanel';
 import { AdminNotificationProviderSettingsPanel } from '@/components/admin/AdminNotificationProviderSettingsPanel';
 import { AdminPaymentProviderSettingsPanel } from '@/components/admin/AdminPaymentProviderSettingsPanel';
+import { AdminProviderDiagnosticsPanel } from '@/components/admin/AdminProviderDiagnosticsPanel';
 import { AdminShippingDeliverySettingsPanel } from '@/components/admin/AdminShippingDeliverySettingsPanel';
 import { AdminStaffPermissionSettingsPanel } from '@/components/admin/AdminStaffPermissionSettingsPanel';
 import { AdminTaxCategorySettingsPanel } from '@/components/admin/AdminTaxCategorySettingsPanel';
@@ -14,6 +15,7 @@ import { apiTokenManagementService } from '@/lib/settings/api-token-management';
 import { integrationAppRegistryService } from '@/lib/settings/integration-app-registry';
 import { notificationProviderSettingsService } from '@/lib/settings/notification-provider-settings';
 import { paymentProviderSettingsService } from '@/lib/settings/payment-provider-settings';
+import { providerDiagnosticsService } from '@/lib/settings/provider-diagnostics';
 import { shippingDeliverySettingsService } from '@/lib/settings/shipping-delivery-settings';
 import { staffPermissionSettingsService } from '@/lib/settings/staff-permission-settings';
 import { taxCategorySettingsService } from '@/lib/settings/tax-category-settings';
@@ -33,7 +35,7 @@ function Toggle({ label, name, defaultChecked, disabled }: { label: string; name
 }
 
 export async function AdminFulfillmentSettingsPanel({ methods, databaseReady }: { methods: FulfillmentMethodSetting[]; databaseReady: boolean }) {
-  const [shippingDeliverySetting, taxCategorySettings, paymentProviderSettings, notificationProviderSettings, staffPermissionSnapshot, webhookConfigurations, webhookEventLogSummary, integrationAppRegistrySummary, apiTokenManagementSummary] = await Promise.all([
+  const [shippingDeliverySetting, taxCategorySettings, paymentProviderSettings, notificationProviderSettings, staffPermissionSnapshot, webhookConfigurations, webhookEventLogSummary, integrationAppRegistrySummary, apiTokenManagementSummary, providerDiagnosticsSummary] = await Promise.all([
     shippingDeliverySettingsService.get(),
     taxCategorySettingsService.list(),
     paymentProviderSettingsService.list(),
@@ -42,7 +44,8 @@ export async function AdminFulfillmentSettingsPanel({ methods, databaseReady }: 
     webhookConfigurationService.list(),
     webhookEventLogService.summary(10),
     integrationAppRegistryService.summary(),
-    apiTokenManagementService.summary()
+    apiTokenManagementService.summary(),
+    providerDiagnosticsService.summary()
   ]);
 
   return (
@@ -95,6 +98,7 @@ export async function AdminFulfillmentSettingsPanel({ methods, databaseReady }: 
       <AdminTaxCategorySettingsPanel categories={taxCategorySettings} databaseReady={databaseReady} />
       <AdminPaymentProviderSettingsPanel settings={paymentProviderSettings} databaseReady={databaseReady} />
       <AdminNotificationProviderSettingsPanel settings={notificationProviderSettings} databaseReady={databaseReady} />
+      <AdminProviderDiagnosticsPanel summary={providerDiagnosticsSummary} />
       <AdminIntegrationAppRegistryPanel summary={integrationAppRegistrySummary} databaseReady={databaseReady} />
       <AdminApiTokenManagementPanel summary={apiTokenManagementSummary} databaseReady={databaseReady} />
       <AdminWebhookConfigurationPanel settings={webhookConfigurations} databaseReady={databaseReady} />
