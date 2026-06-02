@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { addOrderLineItemAction, addOrderTimelineNoteAction, markOrderManualPaymentAction, refundManualPaymentAttemptAction, removeOrderLineItemAction, updateOrderCustomerAssignmentAction, updateOrderFulfillmentAction, updateOrderLineItemQuantityAction, voidManualPaymentAttemptAction } from '@/app/admin/order-actions';
+import { addOrderLineItemAction, addOrderTimelineNoteAction, markOrderManualPaymentAction, refundManualPaymentAttemptAction, removeOrderLineItemAction, updateOrderCustomerAssignmentAction, updateOrderDiscountAction, updateOrderFulfillmentAction, updateOrderLineItemQuantityAction, voidManualPaymentAttemptAction } from '@/app/admin/order-actions';
 import { SiteHeader } from '@/components/SiteHeader';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { formatMinorUnitAmount } from '@/lib/catalog';
@@ -185,6 +185,9 @@ function StatusBanner({ status }: { status?: string }) {
   if (status === 'order-customer-assigned') {
     return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">Customer assignment updated.</div>;
   }
+  if (status === 'order-discount-updated') {
+    return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">Order discount updated.</div>;
+  }
   if (status === 'manual-payment-marked') {
     return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">Manual payment marked paid.</div>;
   }
@@ -213,6 +216,7 @@ export default async function AdminOrderDetailPage({ params, searchParams }: { p
   const customerAssignmentOptions = canEditLineItems ? await listAdminOrderCustomerAssignmentOptions() : [];
   const addLineAction = addOrderLineItemAction.bind(null, order.id);
   const assignCustomerAction = updateOrderCustomerAssignmentAction.bind(null, order.id);
+  const discountAction = updateOrderDiscountAction.bind(null, order.id);
   const manualPaymentAction = markOrderManualPaymentAction.bind(null, order.id);
   const noteAction = addOrderTimelineNoteAction.bind(null, order.id);
   const fulfillmentAction = updateOrderFulfillmentAction.bind(null, order.id);
@@ -303,6 +307,19 @@ export default async function AdminOrderDetailPage({ params, searchParams }: { p
                 <div className="flex justify-between"><span>Discount</span><strong>{formatMinorUnitAmount(order.discountCents, order.currency)}</strong></div>
                 <div className="flex justify-between border-t border-rosewood/10 pt-2 text-lg text-rosewood"><span>Total</span><strong>{formatMinorUnitAmount(order.totalCents, order.currency)}</strong></div>
               </div>
+              {canEditLineItems ? (
+                <form action={discountAction} className="mt-5 grid gap-3 rounded-3xl border border-rosewood/10 bg-cream p-4 sm:ml-auto sm:max-w-sm">
+                  <label className="grid gap-2 text-sm font-semibold text-rosewood">
+                    Discount
+                    <input name="discountCents" type="number" min={0} defaultValue={order.discountCents} className={lineEditInputClass} />
+                  </label>
+                  <label className="grid gap-2 text-sm font-semibold text-rosewood">
+                    Note
+                    <input name="discountNote" className={lineEditInputClass} placeholder="Reason" />
+                  </label>
+                  <button type="submit" className="rounded-full bg-rosewood px-5 py-2 text-sm font-semibold text-white">Save discount</button>
+                </form>
+              ) : null}
             </section>
 
             <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">

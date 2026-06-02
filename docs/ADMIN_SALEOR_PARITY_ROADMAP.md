@@ -124,7 +124,7 @@ Goal: improve order operations beyond list/status management.
 - [x] Add manual payment marking.
 - [x] Add payment attempt timeline and provider references.
 - [x] Add refunds/voids when supported by provider.
-- Add order discounts.
+- [x] Add order discounts.
 - Add fulfillment shipment/delivery records.
 - Add order activity timeline with staff attribution.
 - Add email/SMS notification actions with retry state.

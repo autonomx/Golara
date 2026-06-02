@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
 import { assignAdminOrderCustomer } from '@/lib/checkout/admin-order-assignment-repository';
-import { addAdminOrderLineItem, parseAdminOrderLineSelection, removeAdminOrderLineItem, updateAdminOrderLineItemQuantity } from '@/lib/checkout/admin-order-line-repository';
+import { addAdminOrderLineItem, isAdminOrderLineEditable, parseAdminOrderLineSelection, removeAdminOrderLineItem, updateAdminOrderLineItemQuantity } from '@/lib/checkout/admin-order-line-repository';
 import { transitionCheckoutFulfillmentStatus, transitionCheckoutOrderStatus, transitionCheckoutPaymentStatus } from '@/lib/checkout/checkout-status-service';
 import { assertCheckoutFulfillmentStatus, assertCheckoutOrderStatus } from '@/lib/checkout/checkout-state-machine';
 import { markOrderManualPayment } from '@/lib/checkout/manual-payment-repository';
@@ -172,6 +172,55 @@ export async function removeOrderLineItemAction(orderId: string, itemId: string,
   revalidatePath('/admin/orders');
   revalidatePath(`/admin/orders/${orderId}`);
   redirect(orderDetailPath(orderId, 'order-line-removed'));
+}
+
+export async function updateOrderDiscountAction(orderId: string, formData: FormData) {
+  const actor = await assertAdminRole('staff');
+  if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
+
+  const requestedDiscountCents = Math.max(0, integerFormValue(formData, 'discountCents', 0));
+  const note = stringFormValue(formData, 'discountNote');
+  const existing = await prisma.checkoutOrder.findUnique({
+    where: { id: orderId },
+    select: { id: true, orderNumber: true, status: true, subtotalCents: true, deliveryCents: true, discountCents: true }
+  });
+  if (!existing) throw new Error('Order not found.');
+  if (!isAdminOrderLineEditable(existing.status)) throw new Error('Order discounts can only be edited before confirmation.');
+
+  const maxDiscountCents = existing.subtotalCents + existing.deliveryCents;
+  const discountCents = Math.min(requestedDiscountCents, maxDiscountCents);
+  const totalCents = existing.subtotalCents + existing.deliveryCents - discountCents;
+  const order = await prisma.checkoutOrder.update({
+    where: { id: orderId },
+    data: {
+      discountCents,
+      totalCents,
+      timelineEvents: {
+        create: {
+          type: 'order_discount_updated',
+          title: `Order discount updated from ${existing.discountCents} to ${discountCents}`,
+          note: note || undefined,
+          actorLabel: actor.label,
+          actorRole: actor.role,
+          metadata: { fromDiscountCents: existing.discountCents, toDiscountCents: discountCents }
+        }
+      }
+    },
+    select: { id: true, orderNumber: true }
+  });
+
+  await recordAdminAuditLog({
+    action: 'order.discount.update',
+    entity: 'checkoutOrder',
+    entityId: order.id,
+    summary: `Updated discount for order ${order.orderNumber}`,
+    metadata: { fromDiscountCents: existing.discountCents, toDiscountCents: discountCents, clamped: discountCents !== requestedDiscountCents }
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/orders');
+  revalidatePath(`/admin/orders/${orderId}`);
+  redirect(orderDetailPath(orderId, 'order-discount-updated'));
 }
 
 export async function updateOrderCustomerAssignmentAction(orderId: string, formData: FormData) {
