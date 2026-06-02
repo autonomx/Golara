@@ -127,6 +127,8 @@ export type ProductVariant = {
   currency: string;
   image?: string;
   stockQuantity: number;
+  trackInventory?: boolean;
+  lowStockThreshold?: number;
   isActive: boolean;
   sortOrder: number;
   attributeValues?: ProductAttributeValue[];
