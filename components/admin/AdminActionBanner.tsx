@@ -4,7 +4,8 @@ const statusMessages: Record<string, string> = {
   'homepage-updated': 'Homepage content updated successfully.',
   'category-saved': 'Category saved successfully.',
   'product-saved': 'Product saved successfully.',
-  'media-saved': 'Media item saved successfully.'
+  'media-saved': 'Media item saved successfully.',
+  'fulfillment-method-updated': 'Fulfillment method saved successfully.'
 };
 
 export function AdminActionBanner({ status, message }: { status?: string; message?: string }) {

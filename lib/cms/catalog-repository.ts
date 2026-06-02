@@ -1,11 +1,12 @@
 import 'server-only';
 
 import type { Prisma } from '@prisma/client';
-import type { AdminAuditLogEntry, CatalogTranslation, Category, Collection, CustomerInquiry, HomepageContent, MediaItem, Product, ProductAttribute, ProductAttributeValue, ProductType, ProductVariant, ProductVariantLocationStock, WarehouseLocation } from '@/lib/catalog';
+import type { AdminAuditLogEntry, CatalogTranslation, Category, Collection, CustomerInquiry, FulfillmentMethodSetting, HomepageContent, MediaItem, Product, ProductAttribute, ProductAttributeValue, ProductType, ProductVariant, ProductVariantLocationStock, WarehouseLocation } from '@/lib/catalog';
 import { prisma } from '@/lib/prisma';
 import { mapProductVariantForCatalog } from '@/lib/cms/product-variant-mapper';
 import { readWithSeedFallback } from '@/lib/cms/repository-fallback-policy';
 import { seedCategories, seedHomepageContent, seedProducts } from '@/lib/seed-data';
+import { DEFAULT_FULFILLMENT_METHOD_SETTINGS } from '@/lib/settings/fulfillment-method-settings';
 import { localizedField, selectTranslatedContent, type TranslationLike } from '@/lib/i18n/translated-content';
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1200&q=80';
@@ -218,6 +219,19 @@ type DbAuditLog = {
   actorRole: string;
   actorProvider: string;
   createdAt: Date;
+};
+
+type DbFulfillmentMethodSetting = {
+  id: string;
+  key: string;
+  label: string;
+  description: string | null;
+  isActive: boolean;
+  isDefault: boolean;
+  requiresAddress: boolean;
+  requiresScheduling: boolean;
+  sortOrder: number;
+  updatedAt?: Date;
 };
 
 type InquiryWhere = Prisma.CustomerInquiryWhereInput;
@@ -553,6 +567,21 @@ function mapAuditLog(log: DbAuditLog): AdminAuditLogEntry {
   };
 }
 
+function mapFulfillmentMethodSetting(method: DbFulfillmentMethodSetting): FulfillmentMethodSetting {
+  return {
+    id: method.id,
+    key: method.key,
+    label: method.label,
+    description: method.description ?? undefined,
+    isActive: method.isActive,
+    isDefault: method.isDefault,
+    requiresAddress: method.requiresAddress,
+    requiresScheduling: method.requiresScheduling,
+    sortOrder: method.sortOrder,
+    updatedAt: method.updatedAt
+  };
+}
+
 function metadataObject(value: Prisma.JsonValue | null | undefined): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
   return value as Record<string, unknown>;
@@ -727,6 +756,13 @@ export async function listAdminWarehouseLocations(): Promise<WarehouseLocation[]
     const locations = await prisma.warehouseLocation.findMany({ orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] });
     return locations.map(mapWarehouseLocation);
   }, () => []);
+}
+
+export async function listAdminFulfillmentMethodSettings(): Promise<FulfillmentMethodSetting[]> {
+  return readWithFallback(async () => {
+    const methods = await prisma.fulfillmentMethodSetting.findMany({ orderBy: [{ sortOrder: 'asc' }, { label: 'asc' }] });
+    return methods.map(mapFulfillmentMethodSetting);
+  }, () => DEFAULT_FULFILLMENT_METHOD_SETTINGS);
 }
 
 export async function getProductBySlug(slug: string, options: CatalogReadOptions = {}): Promise<Product | undefined> {

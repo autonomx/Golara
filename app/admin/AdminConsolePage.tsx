@@ -4,13 +4,14 @@ import { AdminActionBanner } from '@/components/admin/AdminActionBanner';
 import { AdminAuditLogPanel } from '@/components/admin/AdminAuditLogPanel';
 import { AdminCustomerPanel } from '@/components/admin/AdminCustomerPanel';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
+import { AdminFulfillmentSettingsPanel } from '@/components/admin/AdminFulfillmentSettingsPanel';
 import { AdminModulePlaceholder } from '@/components/admin/AdminModulePlaceholder';
 import { AdminOrderPanel } from '@/components/admin/AdminOrderPanel';
 import { AdminStaffReadinessPanel } from '@/components/admin/AdminStaffReadinessPanel';
 import { InquiryBoard } from '@/components/admin/InquiryBoard';
 import { getAdminIdentity, isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
 import { getAdminAccountReadinessSummary, listAdminAccountReadinessRecords } from '@/lib/admin-account-repository';
-import { getHomepageContent, listAdminAuditLogs, listAdminCategories, listAdminProducts, listAdminProductTypes, listInquiries, listInquiryPage, listInquiryStatusCounts, listMedia } from '@/lib/cms/catalog-repository';
+import { getHomepageContent, listAdminAuditLogs, listAdminCategories, listAdminFulfillmentMethodSettings, listAdminProducts, listAdminProductTypes, listInquiries, listInquiryPage, listInquiryStatusCounts, listMedia } from '@/lib/cms/catalog-repository';
 import { listHomepageTranslations } from '@/lib/cms/homepage-translation-repository';
 import { listAdminCheckoutOrderPage } from '@/lib/checkout/admin-order-repository';
 import { getPaymentGatewayConfig, getPaymentGatewayReadiness } from '@/lib/checkout/payment-gateway-config';
@@ -271,7 +272,7 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
   const authenticated = await isAdminAuthenticated();
   const adminIdentity = authenticated ? await getAdminIdentity() : undefined;
   const canViewStaffReadiness = adminIdentity?.role === 'owner';
-  const [categories, products, productTypes, homepage, homepageTranslations, media, inquiryPageData, assignmentSourceInquiries, inquiryCounts, auditLogs, orderPageData, authEventSummary, adminAccounts, adminCustomers] = await Promise.all([
+  const [categories, products, productTypes, homepage, homepageTranslations, media, inquiryPageData, assignmentSourceInquiries, inquiryCounts, auditLogs, orderPageData, authEventSummary, adminAccounts, adminCustomers, fulfillmentMethods] = await Promise.all([
     listAdminCategories(),
     listAdminProducts(),
     listAdminProductTypes(),
@@ -285,7 +286,8 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
     authenticated ? listAdminCheckoutOrderPage(orderFilters, parsePage(orderPage)) : Promise.resolve({ orders: [], page: 1, pageSize: 12, totalCount: 0, totalPages: 1 }),
     authenticated ? getCustomerAuthEventSummary() : getCustomerAuthEventSummary(1),
     canViewStaffReadiness ? listAdminAccountReadinessRecords() : Promise.resolve([]),
-    authenticated ? listAdminCustomers() : Promise.resolve([])
+    authenticated ? listAdminCustomers() : Promise.resolve([]),
+    authenticated ? listAdminFulfillmentMethodSettings() : Promise.resolve([])
   ]);
 
   const assignmentSummary = createInquiryAssignmentQueueSummary(assignmentSourceInquiries, adminIdentity);
@@ -363,12 +365,7 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
             />
           ) : null}
           {activeTab === 'settings' ? (
-            <AdminModulePlaceholder
-              eyebrow="Settings"
-              title="Store configuration"
-              body="Settings are grouped here for future store, delivery, provider, and permission controls."
-              items={['Store profile', 'Delivery and payment readiness', 'Staff roles and permissions']}
-            />
+            <AdminFulfillmentSettingsPanel methods={fulfillmentMethods} databaseReady={runtimeReadiness.databaseUrlPresent} />
           ) : null}
           </section>
         </div>

@@ -166,6 +166,19 @@ export type ProductVariant = {
   updatedAt?: Date;
 };
 
+export type FulfillmentMethodSetting = {
+  id: string;
+  key: string;
+  label: string;
+  description?: string;
+  isActive: boolean;
+  isDefault: boolean;
+  requiresAddress: boolean;
+  requiresScheduling: boolean;
+  sortOrder: number;
+  updatedAt?: Date;
+};
+
 export type MediaSourceType = 'external' | 'upload' | 'seed' | 'generated';
 
 export type MediaItem = {

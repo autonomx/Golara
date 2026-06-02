@@ -548,6 +548,23 @@ model FulfillmentCapacityReservation {
   @@index([status, expiresAt])
 }
 
+model FulfillmentMethodSetting {
+  id                 String   @id @default(cuid())
+  key                String   @unique
+  label              String
+  description        String?
+  isActive           Boolean  @default(true)
+  isDefault          Boolean  @default(false)
+  requiresAddress    Boolean  @default(false)
+  requiresScheduling Boolean  @default(false)
+  sortOrder          Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+  @@index([isDefault])
+}
+
 model CheckoutOrderTimelineEvent {
   id           String        @id @default(cuid())
   orderId      String
