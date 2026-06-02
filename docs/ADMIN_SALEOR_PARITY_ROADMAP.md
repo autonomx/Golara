@@ -144,7 +144,7 @@ Goal: support merchandising campaigns without code changes.
 - [x] Add usage limits.
 - [x] Add product/category/customer eligibility.
 - [x] Add order minimums.
-- Add gift card or store-credit foundation if needed.
+- [x] Add gift card or store-credit foundation if needed.
 - Add promotion audit logs.
 
 Success criteria:
