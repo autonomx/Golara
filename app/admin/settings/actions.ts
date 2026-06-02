@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { fulfillmentMethodSettingsService } from '@/lib/settings/fulfillment-method-settings';
+import { homepageBannerMediaSettingsService } from '@/lib/settings/homepage-banner-media-settings';
 import { storeSettingsService } from '@/lib/settings/store-settings';
 import { storefrontNavigationMenuService, type StorefrontNavigationMenuItemInput } from '@/lib/settings/storefront-navigation-menu';
 
@@ -70,6 +71,30 @@ export async function updateStorefrontNavigationMenuAction(formData: FormData) {
   revalidatePath('/admin');
   revalidatePath('/admin/settings');
   redirect('/admin/settings?status=storefront-navigation-updated');
+}
+
+export async function updateHomepageBannerMediaSettingAction(formData: FormData) {
+  await assertAdminRole('owner');
+
+  await homepageBannerMediaSettingsService.update({
+    key: requiredString(formData, 'key'),
+    locale: stringField(formData, 'locale') || null,
+    eyebrow: stringField(formData, 'eyebrow') || null,
+    title: requiredString(formData, 'title'),
+    subtitle: stringField(formData, 'subtitle') || null,
+    mediaId: stringField(formData, 'mediaId') || null,
+    imageUrl: stringField(formData, 'imageUrl') || null,
+    imageAlt: stringField(formData, 'imageAlt') || null,
+    ctaLabel: stringField(formData, 'ctaLabel') || null,
+    ctaHref: stringField(formData, 'ctaHref') || null,
+    isActive: boolField(formData, 'isActive'),
+    sortOrder: intField(formData, 'sortOrder', 10)
+  });
+
+  revalidatePath('/');
+  revalidatePath('/admin');
+  revalidatePath('/admin/settings');
+  redirect('/admin/settings?status=homepage-banner-media-updated');
 }
 
 export async function updateFulfillmentMethodSettingAction(formData: FormData) {
