@@ -1,4 +1,5 @@
 import { updateFulfillmentMethodSettingAction } from '@/app/admin/settings/actions';
+import { AdminModuleAccessSettingsPanel } from '@/components/admin/AdminModuleAccessSettingsPanel';
 import { AdminNotificationProviderSettingsPanel } from '@/components/admin/AdminNotificationProviderSettingsPanel';
 import { AdminPaymentProviderSettingsPanel } from '@/components/admin/AdminPaymentProviderSettingsPanel';
 import { AdminShippingDeliverySettingsPanel } from '@/components/admin/AdminShippingDeliverySettingsPanel';
@@ -83,6 +84,7 @@ export async function AdminFulfillmentSettingsPanel({ methods, databaseReady }: 
       <AdminPaymentProviderSettingsPanel settings={paymentProviderSettings} databaseReady={databaseReady} />
       <AdminNotificationProviderSettingsPanel settings={notificationProviderSettings} databaseReady={databaseReady} />
       <AdminStaffPermissionSettingsPanel snapshot={staffPermissionSnapshot} databaseReady={databaseReady} />
+      <AdminModuleAccessSettingsPanel />
     </>
   );
 }
