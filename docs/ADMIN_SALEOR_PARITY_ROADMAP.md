@@ -166,7 +166,7 @@ Goal: add controlled multi-market behavior where Golara needs it.
 - [x] Add channel/storefront model if business needs multiple storefront contexts.
 - [x] Add channel currency and locale defaults.
 - [x] Add channel-specific product availability.
-- Add channel-specific price overrides.
+- [x] Add channel-specific price overrides.
 - Add localized SEO metadata.
 - Add translation completeness dashboard per entity.
 - Add locale-aware media alt text.
