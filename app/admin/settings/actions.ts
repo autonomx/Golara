@@ -8,6 +8,7 @@ import { homepageBannerMediaSettingsService } from '@/lib/settings/homepage-bann
 import { shippingDeliverySettingsService } from '@/lib/settings/shipping-delivery-settings';
 import { storeSettingsService } from '@/lib/settings/store-settings';
 import { storefrontNavigationMenuService, type StorefrontNavigationMenuItemInput } from '@/lib/settings/storefront-navigation-menu';
+import { taxCategorySettingsService } from '@/lib/settings/tax-category-settings';
 
 function stringField(formData: FormData, name: string, fallback = '') {
   const value = formData.get(name);
@@ -42,6 +43,12 @@ function optionalMoneyField(formData: FormData, name: string) {
   if (!value) return null;
   const parsed = Number.parseFloat(value.replace(/[$,]/g, ''));
   return Number.isFinite(parsed) ? Math.max(0, Math.round(parsed * 100)) : null;
+}
+
+function basisPointsField(formData: FormData, name: string) {
+  const value = stringField(formData, name);
+  const parsed = Number.parseFloat(value.replace(/[%]/g, ''));
+  return Number.isFinite(parsed) ? Math.max(0, Math.min(10000, Math.round(parsed * 100))) : 0;
 }
 
 function parseNavigationItemsJson(formData: FormData): StorefrontNavigationMenuItemInput[] {
@@ -134,6 +141,26 @@ export async function updateShippingDeliverySettingAction(formData: FormData) {
   revalidatePath('/admin');
   revalidatePath('/admin/settings');
   redirect('/admin/settings?status=shipping-delivery-updated');
+}
+
+export async function updateTaxCategorySettingAction(formData: FormData) {
+  await assertAdminRole('owner');
+
+  await taxCategorySettingsService.update({
+    key: requiredString(formData, 'key'),
+    label: requiredString(formData, 'label'),
+    description: stringField(formData, 'description') || null,
+    taxRateBasisPoints: basisPointsField(formData, 'taxRatePercent'),
+    countryCode: requiredString(formData, 'countryCode'),
+    regionCode: stringField(formData, 'regionCode') || null,
+    appliesToShipping: boolField(formData, 'appliesToShipping'),
+    isDefault: boolField(formData, 'isDefault'),
+    isActive: boolField(formData, 'isActive')
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/settings');
+  redirect('/admin/settings?status=tax-category-updated');
 }
 
 export async function updateFulfillmentMethodSettingAction(formData: FormData) {
