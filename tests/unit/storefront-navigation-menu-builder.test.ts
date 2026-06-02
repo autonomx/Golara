@@ -89,7 +89,9 @@ export async function runStorefrontNavigationMenuBuilderTests() {
 
   assert.deepEqual(visible.map((item) => item.label), ['Global', 'English']);
 
-  assert.match(panel, /export function AdminStorefrontNavigationPanel/);
+  assert.match(panel, /export async function AdminStorefrontNavigationPanel/);
+  assert.match(panel, /homepageBannerMediaSettingsService/);
+  assert.match(panel, /AdminHomepageBannerMediaSettingsPanel/);
   assert.match(panel, /updateStorefrontNavigationMenuAction/);
   assert.match(panel, /Storefront navigation/);
   assert.match(panel, /name="itemsJson"/);
