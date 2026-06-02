@@ -723,6 +723,35 @@ export async function importProductsCsvAction(formData: FormData) {
   redirect(adminPath('product-imported', `Imported ${created} new and updated ${updated} products.`));
 }
 
+export async function quickEditProductsAction(formData: FormData) {
+  await ensureCanWriteCms();
+
+  const productIds = formIds(formData, 'productId');
+  if (productIds.length === 0) {
+    redirect(adminPath('error', 'No products were submitted for quick edit.'));
+  }
+
+  await prisma.$transaction(
+    productIds.map((productId) =>
+      prisma.product.update({
+        where: { id: productId },
+        data: {
+          categoryId: requiredString(formData, `categoryId:${productId}`),
+          priceCents: priceCentsField(formData, `price:${productId}`),
+          sortOrder: intField(formData, `sortOrder:${productId}`, 0),
+          availableToday: boolField(formData, `availableToday:${productId}`),
+          bestSeller: boolField(formData, `bestSeller:${productId}`),
+          requiresQuote: boolField(formData, `requiresQuote:${productId}`),
+          isActive: boolField(formData, `isActive:${productId}`)
+        }
+      })
+    )
+  );
+
+  revalidateCatalog();
+  redirect(adminPath('product-quick-edited', `Updated ${productIds.length} products.`));
+}
+
 export async function upsertProductTranslationAction(productId: string, formData: FormData) {
   await ensureCanWriteCms();
   if (!productId) throw new Error('productId is required');

@@ -13,6 +13,7 @@ import {
   createMediaFromUrlAction,
   createProductAction,
   importProductsCsvAction,
+  quickEditProductsAction,
   updateMediaAction,
   updateMediaCategoryAction,
   updateCategoryAction,
@@ -66,6 +67,7 @@ const statusLabels: Record<string, string> = {
   'product-updated': 'Product updated.',
   'product-bulk-updated': 'Products updated.',
   'product-imported': 'Products imported.',
+  'product-quick-edited': 'Product quick edit saved.',
   'product-translation-updated': 'Product translation saved.',
   'media-created': 'Media URL added.',
   'media-uploaded': 'Image uploaded.',
@@ -339,6 +341,37 @@ function ProductBulkBar({ categories, disabled }: { categories: Category[]; disa
   );
 }
 
+function ProductQuickEditPanel({ products, categories, disabled }: { products: Product[]; categories: Category[]; disabled: boolean }) {
+  if (products.length === 0) return null;
+
+  return (
+    <details className="mt-4 rounded-lg border border-rosewood/10 bg-white p-5">
+      <summary className="cursor-pointer font-display text-3xl text-rosewood">Quick edit visible products</summary>
+      <form action={quickEditProductsAction} className="mt-5 grid gap-4">
+        <div className="overflow-auto rounded-lg border border-rosewood/10">
+          <table className="w-full min-w-[980px] border-collapse text-left text-sm">
+            <thead className="bg-cream text-xs font-semibold uppercase tracking-[0.16em] text-rosewood/70">
+              <tr><th className="px-3 py-3">Product</th><th className="px-3 py-3">Category</th><th className="px-3 py-3">Price</th><th className="px-3 py-3">Sort</th><th className="px-3 py-3">Flags</th></tr>
+            </thead>
+            <tbody>
+              {products.map((product) => (
+                <tr key={product.id ?? product.slug} className="border-t border-rosewood/10">
+                  <td className="px-3 py-3 font-semibold text-rosewood"><input type="hidden" name="productId" value={product.id ?? ''} />{product.title}<div className="mt-1 text-xs font-normal text-stone-500">{product.code}</div></td>
+                  <td className="px-3 py-3"><select className={`${inputClass} min-w-56`} name={`categoryId:${product.id}`} defaultValue={categoryDefaultValue(product, categories)} disabled={disabled || !product.id} required>{categories.map((category) => <option key={category.id ?? category.slug} value={category.id ?? ''}>{category.parentTitle ? `${category.parentTitle} / ${category.title}` : category.title}</option>)}</select></td>
+                  <td className="px-3 py-3"><input className={`${inputClass} w-28`} name={`price:${product.id}`} type="number" defaultValue={product.price} disabled={disabled || !product.id} required /></td>
+                  <td className="px-3 py-3"><input className={`${inputClass} w-24`} name={`sortOrder:${product.id}`} type="number" defaultValue={0} disabled={disabled || !product.id} required /></td>
+                  <td className="px-3 py-3"><div className="grid gap-2 text-xs font-semibold text-rosewood"><label className="inline-flex items-center gap-2"><input name={`availableToday:${product.id}`} type="checkbox" defaultChecked={product.availableToday} disabled={disabled || !product.id} />Today</label><label className="inline-flex items-center gap-2"><input name={`bestSeller:${product.id}`} type="checkbox" defaultChecked={product.bestSeller ?? false} disabled={disabled || !product.id} />Best</label><label className="inline-flex items-center gap-2"><input name={`requiresQuote:${product.id}`} type="checkbox" defaultChecked={product.requiresQuote ?? false} disabled={disabled || !product.id} />Quote</label><label className="inline-flex items-center gap-2"><input name={`isActive:${product.id}`} type="checkbox" defaultChecked={product.isActive ?? true} disabled={disabled || !product.id} />Active</label></div></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <SubmitButton disabled={disabled}>Save visible products</SubmitButton>
+      </form>
+    </details>
+  );
+}
+
 function MediaMeta({ item }: { item: MediaItem }) {
   const details = [item.sourceType, item.storageProvider, item.mimeType].filter(Boolean);
   if (!details.length) return null;
@@ -532,7 +565,7 @@ export function AdminDashboard({ activeWorkspace, catalogSection = 'all', catego
 
       {showCategorySection ? <section id="categories" className={panelClass}><div className="mb-6"><p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Categories</p><h2 className="mt-2 font-display text-4xl text-rosewood">Categories and subcategories</h2><p className="mt-3 max-w-3xl text-sm leading-6 text-stone-600">Use parent category to create subcategories. Products can be assigned to either top-level categories or nested subcategories.</p></div><details className="rounded-lg border border-rosewood/10 bg-cream p-5"><summary className="cursor-pointer font-display text-3xl text-rosewood">Create category or subcategory</summary><form action={createCategoryAction} className="mt-5 grid gap-4"><CategoryFields categories={categories} media={media} disabled={disabled} /><SubmitButton disabled={disabled}>Create category</SubmitButton></form></details><div className="mt-8 flex items-center justify-between gap-4"><PaginationControls path={path} pageParam="categoryPage" currentPage={pagedCategories.currentPage} pageCount={pagedCategories.pageCount} total={filteredCategories.length} start={pagedCategories.start} end={pagedCategories.end} params={paginationParams} />{catalogSection === 'all' ? <a href="#products" className="text-sm font-semibold text-rosewood underline-offset-4 hover:underline">Jump to products</a> : null}</div>{pagedCategories.items.length === 0 ? <EmptyState title="No categories found" body="Create a category above, or adjust the current search filter." /> : <div className={`mt-4 grid gap-4 ${scrollListClass}`}>{pagedCategories.items.map((category) => <details key={category.slug} className="rounded-lg border border-rosewood/10 bg-[#fffdfb] p-5 shadow-sm"><summary className="cursor-pointer list-none"><div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-display text-2xl text-rosewood">{category.title}</h3><p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">{category.parentTitle ? `Subcategory of ${category.parentTitle}` : 'Top-level category'} - {category.productCount ?? 0} products</p></div><span className="rounded-full border border-rosewood/15 bg-white px-3 py-1 text-xs font-semibold text-rosewood">Edit</span></div></summary><form action={updateCategoryAction.bind(null, category.id ?? '')} className="mt-5 grid gap-4"><CategoryFields category={category} categories={categories} media={media} disabled={disabled || !category.id} /><SubmitButton disabled={disabled || !category.id}>Update category</SubmitButton></form></details>)}</div>}</section> : null}
 
-      {showProductSection ? <section id="products" className={panelClass}><div className="mb-6"><p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Products</p><h2 className="mt-2 font-display text-4xl text-rosewood">Product management</h2><p className="mt-3 max-w-3xl text-sm leading-6 text-stone-600">Create products, assign them to categories or subcategories, control homepage flags, and update catalog imagery.</p></div><details className="rounded-lg border border-rosewood/10 bg-cream p-5"><summary className="cursor-pointer font-display text-3xl text-rosewood">Create product</summary><form action={createProductAction} className="mt-5 grid gap-4"><ProductFields categories={categories} productTypes={productTypes} media={media} disabled={disabled} /><SubmitButton disabled={disabled}>Create product</SubmitButton></form></details><div className="mt-4 grid gap-4 rounded-lg border border-rosewood/10 bg-white p-5 md:grid-cols-[1fr_auto] md:items-start"><details><summary className="cursor-pointer font-display text-3xl text-rosewood">Import products</summary><form action={importProductsCsvAction} className="mt-5 grid gap-4"><label className="grid gap-2 text-sm font-semibold text-rosewood">CSV file<input className={inputClass} name="file" type="file" accept=".csv,text/csv" required disabled={disabled} /></label><p className="text-sm leading-6 text-stone-600">Use the export file as the template. Imports update existing products by code or slug and create new rows when no match exists.</p><SubmitButton disabled={disabled}>Import CSV</SubmitButton></form></details><a href="/admin/products/export" className={secondaryButtonClass}>Export CSV</a></div><div className="mt-8 flex items-center justify-between gap-4"><PaginationControls path={path} pageParam="productPage" currentPage={pagedProducts.currentPage} pageCount={pagedProducts.pageCount} total={filteredProducts.length} start={pagedProducts.start} end={pagedProducts.end} params={paginationParams} />{catalogSection === 'all' ? <a href="#categories" className="text-sm font-semibold text-rosewood underline-offset-4 hover:underline">Back to categories</a> : null}</div><ProductBulkBar categories={categories} disabled={disabled} /><div className="mt-4"><ColumnVisibilityControls path={path} paramName="productColumns" title="Product columns" options={productColumnOptions} selected={selectedProductColumns} hiddenInputs={{ tab: catalogSection === 'all' ? 'catalog' : undefined, catalogSearch, catalogCategory, catalogFlag, mediaColumns: mediaColumnsParam }} /></div><ProductTable products={pagedProducts.items} disabled={disabled} columns={selectedProductColumns} /></section> : null}
+      {showProductSection ? <section id="products" className={panelClass}><div className="mb-6"><p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Products</p><h2 className="mt-2 font-display text-4xl text-rosewood">Product management</h2><p className="mt-3 max-w-3xl text-sm leading-6 text-stone-600">Create products, assign them to categories or subcategories, control homepage flags, and update catalog imagery.</p></div><details className="rounded-lg border border-rosewood/10 bg-cream p-5"><summary className="cursor-pointer font-display text-3xl text-rosewood">Create product</summary><form action={createProductAction} className="mt-5 grid gap-4"><ProductFields categories={categories} productTypes={productTypes} media={media} disabled={disabled} /><SubmitButton disabled={disabled}>Create product</SubmitButton></form></details><div className="mt-4 grid gap-4 rounded-lg border border-rosewood/10 bg-white p-5 md:grid-cols-[1fr_auto] md:items-start"><details><summary className="cursor-pointer font-display text-3xl text-rosewood">Import products</summary><form action={importProductsCsvAction} className="mt-5 grid gap-4"><label className="grid gap-2 text-sm font-semibold text-rosewood">CSV file<input className={inputClass} name="file" type="file" accept=".csv,text/csv" required disabled={disabled} /></label><p className="text-sm leading-6 text-stone-600">Use the export file as the template. Imports update existing products by code or slug and create new rows when no match exists.</p><SubmitButton disabled={disabled}>Import CSV</SubmitButton></form></details><a href="/admin/products/export" className={secondaryButtonClass}>Export CSV</a></div><div className="mt-8 flex items-center justify-between gap-4"><PaginationControls path={path} pageParam="productPage" currentPage={pagedProducts.currentPage} pageCount={pagedProducts.pageCount} total={filteredProducts.length} start={pagedProducts.start} end={pagedProducts.end} params={paginationParams} />{catalogSection === 'all' ? <a href="#categories" className="text-sm font-semibold text-rosewood underline-offset-4 hover:underline">Back to categories</a> : null}</div><ProductBulkBar categories={categories} disabled={disabled} /><ProductQuickEditPanel products={pagedProducts.items} categories={categories} disabled={disabled} /><div className="mt-4"><ColumnVisibilityControls path={path} paramName="productColumns" title="Product columns" options={productColumnOptions} selected={selectedProductColumns} hiddenInputs={{ tab: catalogSection === 'all' ? 'catalog' : undefined, catalogSearch, catalogCategory, catalogFlag, mediaColumns: mediaColumnsParam }} /></div><ProductTable products={pagedProducts.items} disabled={disabled} columns={selectedProductColumns} /></section> : null}
     </div>
   );
 }
