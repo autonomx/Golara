@@ -107,6 +107,36 @@ export type ProductAttributeValue = {
   updatedAt?: Date;
 };
 
+export type WarehouseLocation = {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  region?: string;
+  countryCode: string;
+  postalCode?: string;
+  phone?: string;
+  isActive: boolean;
+  sortOrder: number;
+  updatedAt?: Date;
+};
+
+export type ProductVariantLocationStock = {
+  id: string;
+  variantId: string;
+  locationId: string;
+  locationSlug?: string;
+  locationName?: string;
+  quantity: number;
+  reservedQuantity: number;
+  availableQuantity: number;
+  lowStockThreshold?: number;
+  updatedAt?: Date;
+};
+
 export type Collection = {
   id: string;
   slug: string;
@@ -132,6 +162,7 @@ export type ProductVariant = {
   isActive: boolean;
   sortOrder: number;
   attributeValues?: ProductAttributeValue[];
+  locationStocks?: ProductVariantLocationStock[];
   updatedAt?: Date;
 };
 

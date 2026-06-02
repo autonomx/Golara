@@ -1,7 +1,7 @@
 import 'server-only';
 
 import type { Prisma } from '@prisma/client';
-import type { AdminAuditLogEntry, CatalogTranslation, Category, Collection, CustomerInquiry, HomepageContent, MediaItem, Product, ProductAttribute, ProductAttributeValue, ProductType, ProductVariant } from '@/lib/catalog';
+import type { AdminAuditLogEntry, CatalogTranslation, Category, Collection, CustomerInquiry, HomepageContent, MediaItem, Product, ProductAttribute, ProductAttributeValue, ProductType, ProductVariant, ProductVariantLocationStock, WarehouseLocation } from '@/lib/catalog';
 import { prisma } from '@/lib/prisma';
 import { mapProductVariantForCatalog } from '@/lib/cms/product-variant-mapper';
 import { readWithSeedFallback } from '@/lib/cms/repository-fallback-policy';
@@ -152,6 +152,35 @@ type DbProductVariant = {
   isActive: boolean;
   sortOrder: number;
   attributeValues?: DbProductAttributeValue[];
+  locationStocks?: DbProductVariantLocationStock[];
+  updatedAt?: Date;
+};
+
+type DbWarehouseLocation = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  addressLine1: string | null;
+  addressLine2: string | null;
+  city: string | null;
+  region: string | null;
+  countryCode: string;
+  postalCode: string | null;
+  phone: string | null;
+  isActive: boolean;
+  sortOrder: number;
+  updatedAt?: Date;
+};
+
+type DbProductVariantLocationStock = {
+  id: string;
+  variantId: string;
+  locationId: string;
+  quantity: number;
+  reservedQuantity: number;
+  lowStockThreshold: number | null;
+  location?: DbWarehouseLocation;
   updatedAt?: Date;
 };
 
@@ -195,7 +224,7 @@ type InquiryWhere = Prisma.CustomerInquiryWhereInput;
 type AuditLogWhere = Prisma.AdminAuditLogWhereInput;
 
 const categoryInclude = { parent: { select: { slug: true, title: true, translations: true } }, translations: true } satisfies Prisma.CategoryInclude;
-const productInclude = { category: { include: categoryInclude }, productType: true, images: true, attributeValues: true, collections: { include: { collection: true } }, variants: { include: { attributeValues: true }, orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] }, translations: true } satisfies Prisma.ProductInclude;
+const productInclude = { category: { include: categoryInclude }, productType: true, images: true, attributeValues: true, collections: { include: { collection: true } }, variants: { include: { attributeValues: true, locationStocks: { include: { location: true }, orderBy: [{ locationId: 'asc' }] } }, orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] }, translations: true } satisfies Prisma.ProductInclude;
 
 function bySortThenTitle(a: Category, b: Category) {
   return (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.title.localeCompare(b.title);
@@ -327,8 +356,27 @@ function mapProductVariants(variants?: DbProductVariant[]): ProductVariant[] | u
   if (!variants?.length) return undefined;
   return variants.map((variant) => ({
     ...mapProductVariantForCatalog(variant),
-    attributeValues: mapProductAttributeValues(variant.attributeValues)
+    attributeValues: mapProductAttributeValues(variant.attributeValues),
+    locationStocks: mapProductVariantLocationStocks(variant.locationStocks)
   }));
+}
+
+function mapProductVariantLocationStocks(stocks?: DbProductVariantLocationStock[]): ProductVariantLocationStock[] | undefined {
+  if (!stocks?.length) return undefined;
+  return stocks
+    .map((stock) => ({
+      id: stock.id,
+      variantId: stock.variantId,
+      locationId: stock.locationId,
+      locationSlug: stock.location?.slug,
+      locationName: stock.location?.name,
+      quantity: stock.quantity,
+      reservedQuantity: stock.reservedQuantity,
+      availableQuantity: Math.max(0, stock.quantity - stock.reservedQuantity),
+      lowStockThreshold: stock.lowStockThreshold ?? undefined,
+      updatedAt: stock.updatedAt
+    }))
+    .sort((a, b) => (a.locationName ?? '').localeCompare(b.locationName ?? '') || a.locationId.localeCompare(b.locationId));
 }
 
 function mapProductAttributeValues(values?: DbProductAttributeValue[]): ProductAttributeValue[] | undefined {
@@ -390,6 +438,25 @@ function mapCollection(collection: DbCollection): Collection {
     sortOrder: collection.sortOrder,
     productCount: collection._count?.products,
     updatedAt: collection.updatedAt
+  };
+}
+
+function mapWarehouseLocation(location: DbWarehouseLocation): WarehouseLocation {
+  return {
+    id: location.id,
+    slug: location.slug,
+    name: location.name,
+    description: location.description ?? undefined,
+    addressLine1: location.addressLine1 ?? undefined,
+    addressLine2: location.addressLine2 ?? undefined,
+    city: location.city ?? undefined,
+    region: location.region ?? undefined,
+    countryCode: location.countryCode,
+    postalCode: location.postalCode ?? undefined,
+    phone: location.phone ?? undefined,
+    isActive: location.isActive,
+    sortOrder: location.sortOrder,
+    updatedAt: location.updatedAt
   };
 }
 
@@ -652,6 +719,13 @@ export async function listAdminCollections(): Promise<Collection[]> {
   return readWithFallback(async () => {
     const collections = await prisma.collection.findMany({ include: { _count: { select: { products: true } } }, orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }] });
     return collections.map(mapCollection);
+  }, () => []);
+}
+
+export async function listAdminWarehouseLocations(): Promise<WarehouseLocation[]> {
+  return readWithFallback(async () => {
+    const locations = await prisma.warehouseLocation.findMany({ orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] });
+    return locations.map(mapWarehouseLocation);
   }, () => []);
 }
 

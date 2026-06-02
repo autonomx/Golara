@@ -464,6 +464,60 @@ export async function updateProductVariantAction(productId: string, variantId: s
   redirect(`/admin/products/${productId}?status=product-variant-updated`);
 }
 
+export async function updateVariantLocationStockAction(productId: string, variantId: string, formData: FormData) {
+  await ensureCanWriteCms();
+  if (!productId) throw new Error('productId is required');
+  if (!variantId) throw new Error('variantId is required');
+
+  const locationId = requiredString(formData, 'locationId');
+  const quantity = Math.max(0, intField(formData, 'quantity', 0));
+  const reservedQuantity = Math.max(0, intField(formData, 'reservedQuantity', 0));
+  const lowStockThreshold = optionalIntField(formData, 'lowStockThreshold');
+
+  const [variant, location, existingStock] = await Promise.all([
+    prisma.productVariant.findUnique({
+      where: { id: variantId },
+      select: { id: true, sku: true, name: true, product: { select: { title: true, code: true } } }
+    }),
+    prisma.warehouseLocation.findUnique({ where: { id: locationId }, select: { id: true, slug: true, name: true } }),
+    prisma.productVariantLocationStock.findUnique({
+      where: { variantId_locationId: { variantId, locationId } },
+      include: {
+        variant: { select: { sku: true, name: true, product: { select: { title: true, code: true } } } },
+        location: { select: { slug: true, name: true } }
+      }
+    })
+  ]);
+
+  if (!variant) throw new Error('Variant not found.');
+  if (!location) throw new Error('Warehouse location not found.');
+
+  const stock = await prisma.productVariantLocationStock.upsert({
+    where: { variantId_locationId: { variantId, locationId } },
+    create: { variantId, locationId, quantity, reservedQuantity, lowStockThreshold },
+    update: { quantity, reservedQuantity, lowStockThreshold },
+    include: {
+      variant: { select: { sku: true, name: true, product: { select: { title: true, code: true } } } },
+      location: { select: { slug: true, name: true } }
+    }
+  });
+
+  const aggregate = await prisma.productVariantLocationStock.aggregate({
+    where: { variantId },
+    _sum: { quantity: true }
+  });
+  await prisma.productVariant.update({
+    where: { id: variantId },
+    data: { stockQuantity: aggregate._sum.quantity ?? 0 }
+  });
+
+  await variantStockAuditService.recordLocationChange(existingStock, stock);
+
+  revalidateCatalog();
+  revalidatePath(`/admin/products/${productId}`);
+  redirect(`/admin/products/${productId}?status=variant-location-stock-updated`);
+}
+
 export async function createProductTypeAction(formData: FormData) {
   await ensureCanWriteCms();
 

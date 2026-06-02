@@ -1,12 +1,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { createCollectionAction, createProductAttributeAction, createProductTypeAction, createProductVariantAction, updateCollectionAction, updateProductAction, updateProductAttributeAction, updateProductAttributeValuesAction, updateProductCollectionsAction, updateProductTypeAction, updateProductVariantAction } from '@/app/admin/actions';
+import { createCollectionAction, createProductAttributeAction, createProductTypeAction, createProductVariantAction, updateCollectionAction, updateProductAction, updateProductAttributeAction, updateProductAttributeValuesAction, updateProductCollectionsAction, updateProductTypeAction, updateProductVariantAction, updateVariantLocationStockAction } from '@/app/admin/actions';
 import { MediaSelectWithPreview } from '@/components/admin/MediaSelectWithPreview';
 import { SiteHeader } from '@/components/SiteHeader';
 import { assertAdminRole } from '@/lib/admin-auth';
-import type { Category, Collection, MediaItem, Product, ProductAttribute, ProductAttributeValue, ProductType, ProductVariant } from '@/lib/catalog';
-import { listAdminCategories, listAdminCollections, listAdminProductAttributes, listAdminProducts, listAdminProductTypes, listMedia } from '@/lib/cms/catalog-repository';
+import type { Category, Collection, MediaItem, Product, ProductAttribute, ProductAttributeValue, ProductType, ProductVariant, WarehouseLocation } from '@/lib/catalog';
+import { listAdminCategories, listAdminCollections, listAdminProductAttributes, listAdminProducts, listAdminProductTypes, listAdminWarehouseLocations, listMedia } from '@/lib/cms/catalog-repository';
 import { getProductVariantStockSummary } from '@/lib/inventory/variant-stock-status';
 import { getRuntimeReadiness } from '@/lib/runtime-readiness';
 
@@ -217,6 +217,43 @@ function AttributeValueFields({ attributes, values, disabled }: { attributes: Pr
   );
 }
 
+function stockForLocation(variant: ProductVariant, locationId: string) {
+  return variant.locationStocks?.find((stock) => stock.locationId === locationId);
+}
+
+function VariantLocationStockFields({ product, variant, locations, disabled }: { product: Product; variant: ProductVariant; locations: WarehouseLocation[]; disabled: boolean }) {
+  if (!locations.length) {
+    return <div className="rounded-3xl border border-dashed border-stone-300 bg-stone-50 p-6 text-sm text-stone-600">No warehouse locations yet.</div>;
+  }
+
+  return (
+    <div className="grid gap-3">
+      {locations.map((location) => {
+        const stock = stockForLocation(variant, location.id);
+        return (
+          <form key={location.id} action={updateVariantLocationStockAction.bind(null, product.id ?? '', variant.id)} className="grid gap-3 rounded-3xl border border-rosewood/10 bg-white p-4">
+            <input type="hidden" name="locationId" value={location.id} />
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h5 className="font-display text-xl text-rosewood">{location.name}</h5>
+                <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">{location.slug} / Available {stock?.availableQuantity ?? 0}</p>
+              </div>
+              <button className="rounded-full bg-rosewood px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-rosewood/20 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none" type="submit" disabled={disabled}>
+                Save stock
+              </button>
+            </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              <Field label="Quantity" name="quantity" type="number" defaultValue={stock?.quantity ?? 0} disabled={disabled} />
+              <Field label="Reserved" name="reservedQuantity" type="number" defaultValue={stock?.reservedQuantity ?? 0} disabled={disabled} />
+              <Field label="Low-stock threshold" name="lowStockThreshold" type="number" defaultValue={stock?.lowStockThreshold ?? ''} required={false} disabled={disabled} />
+            </div>
+          </form>
+        );
+      })}
+    </div>
+  );
+}
+
 function findProduct(products: Product[], productId: string) {
   return products.find((product) => product.id === productId || product.slug === productId);
 }
@@ -233,7 +270,8 @@ function StatusBanner({ status }: { status?: string }) {
     'product-attribute-values-updated': 'Attribute values saved.',
     'product-collection-created': 'Collection created.',
     'product-collection-updated': 'Collection saved.',
-    'product-collections-updated': 'Product collections saved.'
+    'product-collections-updated': 'Product collections saved.',
+    'variant-location-stock-updated': 'Location stock saved.'
   };
   if (!status || !messages[status]) return null;
   return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">{messages[status]}</div>;
@@ -242,7 +280,7 @@ function StatusBanner({ status }: { status?: string }) {
 export default async function AdminProductDetailPage({ params, searchParams }: { params: Promise<{ productId: string }>; searchParams: Promise<{ status?: string }> }) {
   await assertAdminRole('staff');
   const [{ productId }, { status }] = await Promise.all([params, searchParams]);
-  const [products, categories, productTypes, productAttributes, collections, media] = await Promise.all([listAdminProducts(), listAdminCategories(), listAdminProductTypes(), listAdminProductAttributes(), listAdminCollections(), listMedia()]);
+  const [products, categories, productTypes, productAttributes, collections, media, warehouseLocations] = await Promise.all([listAdminProducts(), listAdminCategories(), listAdminProductTypes(), listAdminProductAttributes(), listAdminCollections(), listMedia(), listAdminWarehouseLocations()]);
   const product = findProduct(products, productId);
   if (!product) notFound();
 
@@ -411,6 +449,13 @@ export default async function AdminProductDetailPage({ params, searchParams }: {
                         Save variant values
                       </button>
                     </form>
+                    <section className="mt-5 grid gap-4 rounded-3xl border border-rosewood/10 bg-white p-5">
+                      <div>
+                        <h4 className="font-display text-2xl text-rosewood">Location stock</h4>
+                        <p className="mt-2 text-sm leading-6 text-stone-600">Track this SKU by warehouse, pickup point, or fulfillment location.</p>
+                      </div>
+                      <VariantLocationStockFields product={product} variant={variant} locations={warehouseLocations} disabled={disabled} />
+                    </section>
                   </details>
                 ))}
               </div>
