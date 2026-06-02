@@ -1,7 +1,9 @@
 import { AdminBestSellingProductsPanel } from '@/components/admin/AdminBestSellingProductsPanel';
 import { AdminInquiryOperationsSummaryPanel } from '@/components/admin/AdminInquiryOperationsSummaryPanel';
+import { AdminLowStockAlertsPanel } from '@/components/admin/AdminLowStockAlertsPanel';
 import { bestSellingProductsService } from '@/lib/analytics/best-selling-products';
 import { inquiryOperationsSummaryService } from '@/lib/analytics/inquiry-operations-summary';
+import { lowStockAlertsService } from '@/lib/analytics/low-stock-alerts';
 import { formatRevenueCents, type OrderRevenueSummary } from '@/lib/analytics/order-revenue-summary';
 
 function Metric({ label, value, detail }: { label: string; value: string | number; detail?: string }) {
@@ -16,9 +18,10 @@ function Metric({ label, value, detail }: { label: string; value: string | numbe
 
 export async function AdminOrderRevenueSummaryPanel({ summary }: { summary: OrderRevenueSummary }) {
   const primaryCurrency = summary.primaryCurrency;
-  const [inquiryOperationsSummary, bestSellingProductsSummary] = await Promise.all([
+  const [inquiryOperationsSummary, bestSellingProductsSummary, lowStockAlertsSummary] = await Promise.all([
     inquiryOperationsSummaryService.summary(),
-    bestSellingProductsService.summary()
+    bestSellingProductsService.summary(),
+    lowStockAlertsService.summary()
   ]);
 
   return (
@@ -73,6 +76,7 @@ export async function AdminOrderRevenueSummaryPanel({ summary }: { summary: Orde
       </section>
       <AdminInquiryOperationsSummaryPanel summary={inquiryOperationsSummary} />
       <AdminBestSellingProductsPanel summary={bestSellingProductsSummary} />
+      <AdminLowStockAlertsPanel summary={lowStockAlertsSummary} />
     </>
   );
 }
