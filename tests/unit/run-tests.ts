@@ -82,6 +82,7 @@ import { runVariantStockMigrationTests } from './variant-stock-migration.test';
 import { runVariantStockAuditTests } from './variant-stock-audit.test';
 import { runVariantStockStatusTests } from './variant-stock-status.test';
 import { runWarehouseLocationModelTests } from './warehouse-location-model.test';
+import { runWebhookConfigurationTests } from './webhook-configuration.test';
 
 async function main() {
   await runRuntimeModeTests();
@@ -135,6 +136,7 @@ async function main() {
   await runPaymentGatewayAdaptersTests();
   await runPaymentProviderSettingsTests();
   await runNotificationProviderSettingsTests();
+  await runWebhookConfigurationTests();
   await runStaffPermissionSettingsTests();
   await runProductCheckoutPolicyTests();
   await runProductVariantMapperTests();
@@ -168,7 +170,7 @@ async function main() {
   await runFulfillmentShipmentRecordsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (84 files)');
+  console.log('unit tests passed (85 files)');
 }
 
 main().catch((error) => {
