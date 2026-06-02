@@ -120,7 +120,7 @@ Goal: improve order operations beyond list/status management.
 
 - [x] Add draft orders created by staff.
 - [x] Add editable order line items before confirmation.
-- Add customer/address assignment to draft orders.
+- [x] Add customer/address assignment to draft orders.
 - Add manual payment marking.
 - Add payment attempt timeline and provider references.
 - Add refunds/voids when supported by provider.

@@ -1,9 +1,10 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { addOrderLineItemAction, addOrderTimelineNoteAction, removeOrderLineItemAction, updateOrderFulfillmentAction, updateOrderLineItemQuantityAction } from '@/app/admin/order-actions';
+import { addOrderLineItemAction, addOrderTimelineNoteAction, removeOrderLineItemAction, updateOrderCustomerAssignmentAction, updateOrderFulfillmentAction, updateOrderLineItemQuantityAction } from '@/app/admin/order-actions';
 import { SiteHeader } from '@/components/SiteHeader';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { formatMinorUnitAmount } from '@/lib/catalog';
+import { listAdminOrderCustomerAssignmentOptions } from '@/lib/checkout/admin-order-assignment-repository';
 import { isAdminOrderLineEditable, listAdminOrderLineProductOptions } from '@/lib/checkout/admin-order-line-repository';
 import { getAdminCheckoutOrder } from '@/lib/checkout/admin-order-repository';
 import { CHECKOUT_FULFILLMENT_STATUSES } from '@/lib/checkout/checkout-state-machine';
@@ -150,6 +151,9 @@ function StatusBanner({ status }: { status?: string }) {
   if (status === 'order-line-removed') {
     return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">Line item removed.</div>;
   }
+  if (status === 'order-customer-assigned') {
+    return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">Customer assignment updated.</div>;
+  }
   if (status === 'order-note-added') {
     return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">Staff note added to the order timeline.</div>;
   }
@@ -166,7 +170,9 @@ export default async function AdminOrderDetailPage({ params, searchParams }: { p
   if (!order) notFound();
   const canEditLineItems = isAdminOrderLineEditable(order.status);
   const lineOptions = canEditLineItems ? await listAdminOrderLineProductOptions() : [];
+  const customerAssignmentOptions = canEditLineItems ? await listAdminOrderCustomerAssignmentOptions() : [];
   const addLineAction = addOrderLineItemAction.bind(null, order.id);
+  const assignCustomerAction = updateOrderCustomerAssignmentAction.bind(null, order.id);
   const noteAction = addOrderTimelineNoteAction.bind(null, order.id);
   const fulfillmentAction = updateOrderFulfillmentAction.bind(null, order.id);
   const lineItemColumnCount = canEditLineItems ? 5 : 4;
@@ -292,7 +298,40 @@ export default async function AdminOrderDetailPage({ params, searchParams }: { p
 
             <FulfillmentInventoryCard items={order.items} />
 
-            <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm"><h2 className="font-display text-3xl text-rosewood">Customer</h2><div className="mt-4 grid gap-2 text-sm text-stone-700"><p><strong>Name:</strong> {order.customer?.displayName || order.recipientName || 'Guest / draft'}</p><p><strong>Phone:</strong> {order.customer?.phone || order.recipientPhone || 'Not set'}</p><p><strong>Email:</strong> {order.customer?.email || 'Not set'}</p>{order.address ? <p><strong>Address:</strong> {order.address.line1}{order.address.line2 ? `, ${order.address.line2}` : ''}</p> : null}<p><strong>Delivery:</strong> {order.deliveryDate ? formatDate(order.deliveryDate) : 'Not scheduled'} {order.deliveryWindow ? `· ${order.deliveryWindow}` : ''}</p>{order.customerNote ? <p><strong>Customer note:</strong> {order.customerNote}</p> : null}</div></section>
+            <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
+              <h2 className="font-display text-3xl text-rosewood">Customer</h2>
+              <div className="mt-4 grid gap-2 text-sm text-stone-700">
+                <p><strong>Name:</strong> {order.customer?.displayName || order.recipientName || 'Guest / draft'}</p>
+                <p><strong>Phone:</strong> {order.customer?.phone || order.recipientPhone || 'Not set'}</p>
+                <p><strong>Email:</strong> {order.customer?.email || 'Not set'}</p>
+                {order.address ? <p><strong>Address:</strong> {order.address.line1}{order.address.line2 ? `, ${order.address.line2}` : ''}</p> : null}
+                <p><strong>Delivery:</strong> {order.deliveryDate ? formatDate(order.deliveryDate) : 'Not scheduled'} {order.deliveryWindow ? `· ${order.deliveryWindow}` : ''}</p>
+                {order.customerNote ? <p><strong>Customer note:</strong> {order.customerNote}</p> : null}
+              </div>
+              {canEditLineItems ? (
+                <form action={assignCustomerAction} className="mt-5 grid gap-3 rounded-3xl border border-rosewood/10 bg-cream p-4">
+                  <label className="grid gap-2 text-sm font-semibold text-rosewood">
+                    Customer
+                    <select name="customerId" defaultValue={order.customerId ?? ''} className={lineEditInputClass}>
+                      <option value="">Guest / draft</option>
+                      {customerAssignmentOptions.map((customer) => <option key={customer.id} value={customer.id}>{customer.label} / {customer.phone}</option>)}
+                    </select>
+                  </label>
+                  <label className="grid gap-2 text-sm font-semibold text-rosewood">
+                    Address
+                    <select name="addressId" defaultValue={order.addressId ?? ''} className={lineEditInputClass}>
+                      <option value="">No saved address</option>
+                      {customerAssignmentOptions.map((customer) => (
+                        <optgroup key={customer.id} label={customer.label}>
+                          {customer.addresses.map((address) => <option key={address.id} value={address.id}>{address.label}{address.isDefault ? ' / Default' : ''} / {address.summary}</option>)}
+                        </optgroup>
+                      ))}
+                    </select>
+                  </label>
+                  <button type="submit" className="rounded-full bg-rosewood px-5 py-2 text-sm font-semibold text-white">Save customer</button>
+                </form>
+              ) : null}
+            </section>
 
             <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm"><h2 className="font-display text-3xl text-rosewood">Payments</h2>{order.paymentAttempts.length === 0 ? <p className="mt-4 rounded-3xl border border-rosewood/10 bg-cream p-4 text-sm text-stone-700">No payment attempts yet.</p> : <div className="mt-4 grid gap-3">{order.paymentAttempts.map((attempt) => <PaymentAttemptCard key={attempt.id} attempt={attempt} />)}</div>}</section>
           </aside>

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
+import { assignAdminOrderCustomer } from '@/lib/checkout/admin-order-assignment-repository';
 import { addAdminOrderLineItem, parseAdminOrderLineSelection, removeAdminOrderLineItem, updateAdminOrderLineItemQuantity } from '@/lib/checkout/admin-order-line-repository';
 import { transitionCheckoutFulfillmentStatus, transitionCheckoutOrderStatus } from '@/lib/checkout/checkout-status-service';
 import { assertCheckoutFulfillmentStatus, assertCheckoutOrderStatus } from '@/lib/checkout/checkout-state-machine';
@@ -170,6 +171,34 @@ export async function removeOrderLineItemAction(orderId: string, itemId: string,
   revalidatePath('/admin/orders');
   revalidatePath(`/admin/orders/${orderId}`);
   redirect(orderDetailPath(orderId, 'order-line-removed'));
+}
+
+export async function updateOrderCustomerAssignmentAction(orderId: string, formData: FormData) {
+  const actor = await assertAdminRole('staff');
+  const customerId = stringFormValue(formData, 'customerId');
+  const addressId = stringFormValue(formData, 'addressId');
+  const order = await assignAdminOrderCustomer(orderId, {
+    customerId,
+    addressId,
+    actorLabel: actor.label,
+    actorRole: actor.role
+  });
+
+  await recordAdminAuditLog({
+    action: 'order.customer.assign',
+    entity: 'checkoutOrder',
+    entityId: order.id,
+    summary: `Updated customer assignment for order ${order.orderNumber}`,
+    metadata: {
+      customerId: order.customerId,
+      addressId: order.addressId
+    }
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/orders');
+  revalidatePath(`/admin/orders/${orderId}`);
+  redirect(orderDetailPath(orderId, 'order-customer-assigned'));
 }
 
 export async function addOrderTimelineNoteAction(orderId: string, formData: FormData) {
