@@ -21,6 +21,7 @@ export type PromotionDiscountInput = {
   isActive?: boolean;
   startsAt?: Date | string | null;
   endsAt?: Date | string | null;
+  usageLimit?: number | null;
 };
 
 export type PromotionDiscountRecord = {
@@ -33,6 +34,8 @@ export type PromotionDiscountRecord = {
   status: PromotionDiscountStatus;
   description: string | null;
   isActive: boolean;
+  usageCount: number;
+  usageLimit: number | null;
   startsAt: Date | null;
   endsAt: Date | null;
   createdAt: Date;
@@ -47,6 +50,7 @@ export type PromotionDiscountCalculation = {
 };
 
 export type PromotionValidityWindow = Pick<PromotionDiscountRecord, 'startsAt' | 'endsAt'>;
+export type PromotionUsageLimit = Pick<PromotionDiscountRecord, 'usageCount' | 'usageLimit'>;
 
 function optionalText(value?: string | null) {
   const normalized = value?.trim();
@@ -103,6 +107,23 @@ export function isPromotionWithinValidityWindow(window: PromotionValidityWindow,
   return (!window.startsAt || window.startsAt.getTime() <= nowTime) && (!window.endsAt || window.endsAt.getTime() >= nowTime);
 }
 
+export function normalizePromotionUsageLimit(value?: number | null) {
+  if (value === undefined || value === null) return null;
+  const normalized = Math.floor(value);
+  if (normalized < 1) throw new Error('Promotion usage limit must be at least 1.');
+  return normalized;
+}
+
+export function normalizePromotionUsageCount(value?: number | null) {
+  return Math.max(0, Math.floor(value ?? 0));
+}
+
+export function isPromotionWithinUsageLimit(limit: PromotionUsageLimit) {
+  const usageCount = normalizePromotionUsageCount(limit.usageCount);
+  const usageLimit = normalizePromotionUsageLimit(limit.usageLimit);
+  return usageLimit === null || usageCount < usageLimit;
+}
+
 export function normalizePromotionDiscountValue(discountType: PromotionDiscountType, value: number) {
   const normalized = Math.max(0, Math.floor(value));
   if (discountType === 'percentage') return Math.min(100, normalized);
@@ -125,8 +146,16 @@ export function normalizePromotionDiscountInput(input: PromotionDiscountInput) {
     description: optionalText(input.description),
     isActive: input.isActive ?? true,
     startsAt: validity.startsAt,
-    endsAt: validity.endsAt
+    endsAt: validity.endsAt,
+    usageLimit: normalizePromotionUsageLimit(input.usageLimit)
   };
+}
+
+export function isPromotionDiscountUsable(discount: Pick<PromotionDiscountRecord, 'isActive' | 'status' | 'startsAt' | 'endsAt' | 'usageCount' | 'usageLimit'>, now: Date = new Date()) {
+  return discount.isActive
+    && discount.status === 'active'
+    && isPromotionWithinValidityWindow(discount, now)
+    && isPromotionWithinUsageLimit(discount);
 }
 
 export function calculatePromotionDiscountAmount(subtotalCents: number, discountType: PromotionDiscountType, value: number): PromotionDiscountCalculation {
@@ -159,6 +188,8 @@ export async function listPromotionDiscounts(): Promise<PromotionDiscountRecord[
       "status",
       "description",
       "isActive",
+      "usageCount",
+      "usageLimit",
       "startsAt",
       "endsAt",
       "createdAt",
@@ -192,6 +223,7 @@ export async function createPromotionDiscount(input: PromotionDiscountInput) {
       "isActive",
       "startsAt",
       "endsAt",
+      "usageLimit",
       "metadata"
     ) VALUES (
       ${id},
@@ -205,6 +237,7 @@ export async function createPromotionDiscount(input: PromotionDiscountInput) {
       ${discount.isActive},
       ${discount.startsAt},
       ${discount.endsAt},
+      ${discount.usageLimit},
       ${JSON.stringify(metadata)}::jsonb
     )
     RETURNING
@@ -217,6 +250,8 @@ export async function createPromotionDiscount(input: PromotionDiscountInput) {
       "status",
       "description",
       "isActive",
+      "usageCount",
+      "usageLimit",
       "startsAt",
       "endsAt",
       "createdAt",
