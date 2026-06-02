@@ -16,6 +16,7 @@ export async function runHomepageBannerMediaSettingsTests() {
   const migration = source('prisma/migrations/20260603020000_add_homepage_banner_media_settings/migration.sql');
   const service = source('lib/settings/homepage-banner-media-settings.ts');
   const panel = source('components/admin/AdminHomepageBannerMediaSettingsPanel.tsx');
+  const settingsPanel = source('components/admin/AdminStorefrontNavigationPanel.tsx');
   const actions = source('app/admin/settings/actions.ts');
   const roadmap = source('docs/ADMIN_SALEOR_PARITY_ROADMAP.md');
 
@@ -87,12 +88,16 @@ export async function runHomepageBannerMediaSettingsTests() {
   assert.match(panel, /name="imageAlt"/);
   assert.match(panel, /Save homepage banner\/media/);
 
+  assert.match(settingsPanel, /homepageBannerMediaSettingsService\.get\(\)/);
+  assert.match(settingsPanel, /<AdminHomepageBannerMediaSettingsPanel setting=\{homepageBannerMediaSetting\} databaseReady=\{databaseReady\} \/>/);
+
   assert.match(actions, /updateHomepageBannerMediaSettingAction/);
   assert.match(actions, /homepageBannerMediaSettingsService\.update/);
   assert.match(actions, /revalidatePath\('\/'\)/);
   assert.match(actions, /homepage-banner-media-updated/);
 
   assert.match(roadmap, /- \[x\] Add homepage banner\/media settings\./);
+  assert.match(roadmap, /- \[x\] Add variant-aware cart and checkout order line fields before inventory reservation\./);
 
   console.log('homepage-banner-media-settings.test.ts passed');
 }
