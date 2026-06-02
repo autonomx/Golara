@@ -2,11 +2,13 @@ import { updateFulfillmentMethodSettingAction } from '@/app/admin/settings/actio
 import { AdminNotificationProviderSettingsPanel } from '@/components/admin/AdminNotificationProviderSettingsPanel';
 import { AdminPaymentProviderSettingsPanel } from '@/components/admin/AdminPaymentProviderSettingsPanel';
 import { AdminShippingDeliverySettingsPanel } from '@/components/admin/AdminShippingDeliverySettingsPanel';
+import { AdminStaffPermissionSettingsPanel } from '@/components/admin/AdminStaffPermissionSettingsPanel';
 import { AdminTaxCategorySettingsPanel } from '@/components/admin/AdminTaxCategorySettingsPanel';
 import type { FulfillmentMethodSetting } from '@/lib/catalog';
 import { notificationProviderSettingsService } from '@/lib/settings/notification-provider-settings';
 import { paymentProviderSettingsService } from '@/lib/settings/payment-provider-settings';
 import { shippingDeliverySettingsService } from '@/lib/settings/shipping-delivery-settings';
+import { staffPermissionSettingsService } from '@/lib/settings/staff-permission-settings';
 import { taxCategorySettingsService } from '@/lib/settings/tax-category-settings';
 
 const inputClass = 'rounded-md border border-stone-200 bg-white px-3 py-2 text-sm text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100';
@@ -22,11 +24,12 @@ function Toggle({ label, name, defaultChecked, disabled }: { label: string; name
 }
 
 export async function AdminFulfillmentSettingsPanel({ methods, databaseReady }: { methods: FulfillmentMethodSetting[]; databaseReady: boolean }) {
-  const [shippingDeliverySetting, taxCategorySettings, paymentProviderSettings, notificationProviderSettings] = await Promise.all([
+  const [shippingDeliverySetting, taxCategorySettings, paymentProviderSettings, notificationProviderSettings, staffPermissionSnapshot] = await Promise.all([
     shippingDeliverySettingsService.get(),
     taxCategorySettingsService.list(),
     paymentProviderSettingsService.list(),
-    notificationProviderSettingsService.list()
+    notificationProviderSettingsService.list(),
+    staffPermissionSettingsService.snapshot()
   ]);
 
   return (
@@ -79,6 +82,7 @@ export async function AdminFulfillmentSettingsPanel({ methods, databaseReady }: 
       <AdminTaxCategorySettingsPanel categories={taxCategorySettings} databaseReady={databaseReady} />
       <AdminPaymentProviderSettingsPanel settings={paymentProviderSettings} databaseReady={databaseReady} />
       <AdminNotificationProviderSettingsPanel settings={notificationProviderSettings} databaseReady={databaseReady} />
+      <AdminStaffPermissionSettingsPanel snapshot={staffPermissionSnapshot} databaseReady={databaseReady} />
     </>
   );
 }
