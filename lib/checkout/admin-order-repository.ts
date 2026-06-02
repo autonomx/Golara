@@ -170,7 +170,10 @@ export async function getAdminCheckoutOrder(orderId: string) {
           }
         }
       },
-      paymentAttempts: { orderBy: { createdAt: 'desc' } },
+      paymentAttempts: {
+        orderBy: { createdAt: 'desc' },
+        include: { events: { orderBy: { createdAt: 'desc' } } }
+      },
       timelineEvents: { orderBy: { createdAt: 'desc' } }
     }
   });

@@ -35,6 +35,7 @@ import { runOrderReturnRouteCoreTests } from './order-return-route-core.test';
 import { runOtpRateLimitTests } from './otp-rate-limit.test';
 import { runPaymentGatewayAdaptersTests } from './payment-gateway-adapters.test';
 import { runPaymentGatewayConfigTests } from './payment-gateway-config.test';
+import { runPaymentAttemptTimelineFlowTests } from './payment-attempt-timeline-flow.test';
 import { runPaymentProviderAliasCoreTests } from './payment-provider-alias-core.test';
 import { runPaymentProviderModeTests } from './payment-provider-mode.test';
 import { runPaymentProviderRuntimeCoreTests } from './payment-provider-runtime-core.test';
@@ -95,6 +96,7 @@ async function main() {
   await runAdminOrderLineEditFlowTests();
   await runAdminOrderCustomerAssignmentFlowTests();
   await runManualPaymentMarkingFlowTests();
+  await runPaymentAttemptTimelineFlowTests();
   await runPaymentGatewayConfigTests();
   await runPaymentGatewayAdaptersTests();
   await runProductCheckoutPolicyTests();
@@ -108,7 +110,7 @@ async function main() {
   await runFulfillmentMethodSettingsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (54 files)');
+  console.log('unit tests passed (55 files)');
 }
 
 main().catch((error) => {

@@ -121,7 +121,7 @@ function PaymentAttemptCard({ attempt }: { attempt: AdminPaymentAttempt }) {
       </div>
       <div className="mt-3 grid gap-1 text-xs">
         <p><strong>Amount:</strong> {formatMinorUnitAmount(attempt.amountCents, attempt.currency)}</p>
-        {attempt.providerReference ? <p className="break-all"><strong>Reference:</strong> {attempt.providerReference}</p> : null}
+        {attempt.providerReference ? <p className="break-all"><strong>Provider reference:</strong> {attempt.providerReference}</p> : null}
         {hasRedirect ? <p className="break-all"><strong>Redirect:</strong> configured</p> : null}
       </div>
       {visibleMetadata.length > 0 ? (
@@ -133,6 +133,21 @@ function PaymentAttemptCard({ attempt }: { attempt: AdminPaymentAttempt }) {
             </div>
           ))}
         </dl>
+      ) : null}
+      {attempt.events.length > 0 ? (
+        <div className="mt-3 grid gap-2 rounded-2xl border border-current/10 bg-white/50 p-3 text-xs">
+          <p className="font-semibold uppercase tracking-[0.14em] opacity-70">Payment events</p>
+          {attempt.events.map((event) => (
+            <article key={event.id} className="grid gap-1 border-t border-current/10 pt-2 first:border-t-0 first:pt-0">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <p className="font-semibold">{event.eventType}{event.status ? ` / ${event.status}` : ''}</p>
+                <time className="opacity-70">{formatDate(event.createdAt)}</time>
+              </div>
+              <p className="break-all opacity-80">{event.provider} / {event.idempotencyKey}</p>
+              {event.processedAt ? <p className="opacity-80">Processed {formatDate(event.processedAt)}</p> : null}
+            </article>
+          ))}
+        </div>
       ) : null}
     </article>
   );
