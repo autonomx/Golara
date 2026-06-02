@@ -188,7 +188,7 @@ Goal: centralize store configuration currently spread across env/code.
 - [x] Add payment provider settings/readiness.
 - [x] Add notification provider settings/readiness.
 - [x] Add staff accounts and permission groups.
-- Add role-based access controls for each admin module.
+- [x] Add role-based access controls for each admin module.
 
 Success criteria:
 
