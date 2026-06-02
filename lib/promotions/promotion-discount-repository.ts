@@ -22,6 +22,7 @@ export type PromotionDiscountInput = {
   startsAt?: Date | string | null;
   endsAt?: Date | string | null;
   usageLimit?: number | null;
+  minimumSubtotalCents?: number | null;
 };
 
 export type PromotionDiscountRecord = {
@@ -36,6 +37,7 @@ export type PromotionDiscountRecord = {
   isActive: boolean;
   usageCount: number;
   usageLimit: number | null;
+  minimumSubtotalCents: number | null;
   startsAt: Date | null;
   endsAt: Date | null;
   createdAt: Date;
@@ -51,6 +53,7 @@ export type PromotionDiscountCalculation = {
 
 export type PromotionValidityWindow = Pick<PromotionDiscountRecord, 'startsAt' | 'endsAt'>;
 export type PromotionUsageLimit = Pick<PromotionDiscountRecord, 'usageCount' | 'usageLimit'>;
+export type PromotionOrderMinimum = Pick<PromotionDiscountRecord, 'minimumSubtotalCents'>;
 
 function optionalText(value?: string | null) {
   const normalized = value?.trim();
@@ -124,6 +127,19 @@ export function isPromotionWithinUsageLimit(limit: PromotionUsageLimit) {
   return usageLimit === null || usageCount < usageLimit;
 }
 
+export function normalizePromotionMinimumSubtotalCents(value?: number | null) {
+  if (value === undefined || value === null) return null;
+  const normalized = Math.floor(value);
+  if (normalized < 0) throw new Error('Promotion minimum subtotal cannot be negative.');
+  return normalized;
+}
+
+export function isPromotionAboveOrderMinimum(promotion: PromotionOrderMinimum, subtotalCents: number) {
+  const minimum = normalizePromotionMinimumSubtotalCents(promotion.minimumSubtotalCents);
+  const subtotal = Math.max(0, Math.floor(subtotalCents));
+  return minimum === null || subtotal >= minimum;
+}
+
 export function normalizePromotionDiscountValue(discountType: PromotionDiscountType, value: number) {
   const normalized = Math.max(0, Math.floor(value));
   if (discountType === 'percentage') return Math.min(100, normalized);
@@ -147,7 +163,8 @@ export function normalizePromotionDiscountInput(input: PromotionDiscountInput) {
     isActive: input.isActive ?? true,
     startsAt: validity.startsAt,
     endsAt: validity.endsAt,
-    usageLimit: normalizePromotionUsageLimit(input.usageLimit)
+    usageLimit: normalizePromotionUsageLimit(input.usageLimit),
+    minimumSubtotalCents: normalizePromotionMinimumSubtotalCents(input.minimumSubtotalCents)
   };
 }
 
@@ -156,6 +173,11 @@ export function isPromotionDiscountUsable(discount: Pick<PromotionDiscountRecord
     && discount.status === 'active'
     && isPromotionWithinValidityWindow(discount, now)
     && isPromotionWithinUsageLimit(discount);
+}
+
+export function isPromotionDiscountUsableForOrder(discount: Pick<PromotionDiscountRecord, 'isActive' | 'status' | 'startsAt' | 'endsAt' | 'usageCount' | 'usageLimit' | 'minimumSubtotalCents'>, subtotalCents: number, now: Date = new Date()) {
+  return isPromotionDiscountUsable(discount, now)
+    && isPromotionAboveOrderMinimum(discount, subtotalCents);
 }
 
 export function calculatePromotionDiscountAmount(subtotalCents: number, discountType: PromotionDiscountType, value: number): PromotionDiscountCalculation {
@@ -190,6 +212,7 @@ export async function listPromotionDiscounts(): Promise<PromotionDiscountRecord[
       "isActive",
       "usageCount",
       "usageLimit",
+      "minimumSubtotalCents",
       "startsAt",
       "endsAt",
       "createdAt",
@@ -207,6 +230,7 @@ export async function createPromotionDiscount(input: PromotionDiscountInput) {
   const metadata = {
     discountType: discount.discountType,
     normalizedValue: discount.value,
+    minimumSubtotalCents: discount.minimumSubtotalCents,
     source: 'admin'
   };
 
@@ -224,6 +248,7 @@ export async function createPromotionDiscount(input: PromotionDiscountInput) {
       "startsAt",
       "endsAt",
       "usageLimit",
+      "minimumSubtotalCents",
       "metadata"
     ) VALUES (
       ${id},
@@ -238,6 +263,7 @@ export async function createPromotionDiscount(input: PromotionDiscountInput) {
       ${discount.startsAt},
       ${discount.endsAt},
       ${discount.usageLimit},
+      ${discount.minimumSubtotalCents},
       ${JSON.stringify(metadata)}::jsonb
     )
     RETURNING
@@ -252,6 +278,7 @@ export async function createPromotionDiscount(input: PromotionDiscountInput) {
       "isActive",
       "usageCount",
       "usageLimit",
+      "minimumSubtotalCents",
       "startsAt",
       "endsAt",
       "createdAt",
