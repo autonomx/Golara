@@ -48,6 +48,7 @@ import { runPaymentResultCoreTests } from './payment-result-core.test';
 import { runProductCheckoutPolicyTests } from './product-checkout-policy.test';
 import { runProductVariantMapperTests } from './product-variant-mapper.test';
 import { runPromotionDiscountModelTests } from './promotion-discount-model.test';
+import { runPromotionUsageLimitsModelTests } from './promotion-usage-limits-model.test';
 import { runPromotionValidityWindowsModelTests } from './promotion-validity-windows-model.test';
 import { runPromotionVoucherModelTests } from './promotion-voucher-model.test';
 import { runPublicInquiryServiceTests } from './public-inquiry-service.test';
@@ -116,6 +117,7 @@ async function main() {
   await runPromotionDiscountModelTests();
   await runPromotionVoucherModelTests();
   await runPromotionValidityWindowsModelTests();
+  await runPromotionUsageLimitsModelTests();
   await runVariantCheckoutLineModelTests();
   await runVariantStockAuditTests();
   await runVariantStockStatusTests();
@@ -126,7 +128,7 @@ async function main() {
   await runFulfillmentShipmentRecordsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (63 files)');
+  console.log('unit tests passed (64 files)');
 }
 
 main().catch((error) => {
