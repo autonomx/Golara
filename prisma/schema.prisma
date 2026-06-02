@@ -89,6 +89,8 @@ model ProductVariant {
   currency   String   @default("CAD")
   imageUrl   String?
   stockQuantity Int    @default(0)
+  trackInventory Boolean @default(true)
+  lowStockThreshold Int?
   isActive   Boolean  @default(true)
   sortOrder  Int      @default(0)
   attributeValues ProductAttributeValue[]
