@@ -28,7 +28,7 @@ Goal: make the admin shell feel like a durable operations console before adding 
 - Add column visibility controls for dense tables.
 - [x] Add query-string-preserved filters.
 - [x] Add empty states per module.
-- Add loading and error states per module.
+- [x] Add loading and error states per module.
 - Add row-level actions without secondary edit rows.
 
 Success criteria:
