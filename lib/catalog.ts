@@ -166,6 +166,21 @@ export type ProductVariant = {
   updatedAt?: Date;
 };
 
+export type StoreSetting = {
+  id: string;
+  key: string;
+  storeName: string;
+  legalName?: string;
+  supportEmail?: string;
+  supportPhone?: string;
+  defaultLocale: string;
+  defaultCurrency: string;
+  timezone: string;
+  storefrontBaseUrl?: string;
+  isMaintenanceMode: boolean;
+  updatedAt?: Date;
+};
+
 export type FulfillmentMethodSetting = {
   id: string;
   key: string;
