@@ -2,6 +2,7 @@ import 'server-only';
 
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
 import type { AdminIdentity } from '@/lib/admin-auth';
+import { maskSensitiveEmail, maskSensitiveIdentifier, maskSensitiveNote, maskSensitivePhone } from '@/lib/customers/customer-privacy';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
 export type CustomerAddressInput = {
@@ -43,6 +44,7 @@ export type AdminCustomerListItem = {
 };
 
 export type AdminCustomerDetail = AdminCustomerListItem & {
+  sensitiveFieldsMasked: boolean;
   accounts: {
     id: string;
     provider: string;
@@ -95,6 +97,10 @@ export type AdminCustomerDetail = AdminCustomerListItem & {
     actorRole: string;
     createdAt: Date;
   }[];
+};
+
+export type AdminCustomerDetailOptions = {
+  revealSensitive?: boolean;
 };
 
 export function normalizeCustomerPhone(phone: string) {
@@ -217,6 +223,28 @@ export async function addAdminCustomerTimelineNote(customerId: string, noteInput
   return event;
 }
 
+export async function recordAdminCustomerSensitiveAccess(customerId: string, actor: AdminIdentity) {
+  if (!hasDatabase()) return;
+
+  const customer = await prisma.customerProfile.findUnique({
+    where: { id: customerId },
+    select: { id: true, phone: true }
+  });
+  if (!customer) return;
+
+  await recordAdminAuditLog({
+    action: 'customer.sensitive.view',
+    entity: 'customerProfile',
+    entityId: customer.id,
+    summary: `Viewed sensitive customer fields: ${customer.phone}`,
+    metadata: {
+      actorLabel: actor.label,
+      actorEmail: actor.email,
+      actorRole: actor.role
+    }
+  });
+}
+
 export async function addCustomerAddress(customerId: string, input: CustomerAddressInput) {
   if (!hasDatabase()) throw new Error('DATABASE_URL is required for customer addresses.');
   if (!input.line1.trim()) throw new Error('Address line1 is required.');
@@ -327,8 +355,9 @@ export async function listAdminCustomers(): Promise<AdminCustomerListItem[]> {
   }));
 }
 
-export async function getAdminCustomerDetail(customerId: string): Promise<AdminCustomerDetail | null> {
+export async function getAdminCustomerDetail(customerId: string, options: AdminCustomerDetailOptions = {}): Promise<AdminCustomerDetail | null> {
   if (!hasDatabase()) return null;
+  const revealSensitive = Boolean(options.revealSensitive);
 
   const customer = await prisma.customerProfile.findUnique({
     where: { id: customerId },
@@ -372,12 +401,13 @@ export async function getAdminCustomerDetail(customerId: string): Promise<AdminC
     addressCount: customer._count.addresses,
     orderCount: customer._count.orders,
     lastLoginAt: customer.accounts[0]?.lastLoginAt,
+    sensitiveFieldsMasked: !revealSensitive,
     accounts: customer.accounts.map((account) => ({
       id: account.id,
       provider: account.provider,
-      providerAccountId: account.providerAccountId,
-      email: account.email,
-      phone: account.phone,
+      providerAccountId: revealSensitive ? account.providerAccountId : maskSensitiveIdentifier(account.providerAccountId) ?? '',
+      email: revealSensitive ? account.email : maskSensitiveEmail(account.email),
+      phone: revealSensitive ? account.phone : maskSensitivePhone(account.phone),
       emailVerifiedAt: account.emailVerifiedAt,
       phoneVerifiedAt: account.phoneVerifiedAt,
       lastLoginAt: account.lastLoginAt,
@@ -391,7 +421,7 @@ export async function getAdminCustomerDetail(customerId: string): Promise<AdminC
       city: address.city,
       line1: address.line1,
       line2: address.line2,
-      notes: address.notes,
+      notes: revealSensitive ? address.notes : maskSensitiveNote(address.notes),
       isDefault: address.isDefault,
       updatedAt: address.updatedAt
     })),

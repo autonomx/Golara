@@ -4,7 +4,8 @@ import { addAdminCustomerTimelineNoteAction, updateAdminCustomerProfileAction } 
 import { SiteHeader } from '@/components/SiteHeader';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { formatMinorUnitAmount } from '@/lib/catalog';
-import { getAdminCustomerDetail } from '@/lib/customers/customer-repository';
+import { createCustomerSensitiveFieldPolicy } from '@/lib/customers/customer-privacy';
+import { getAdminCustomerDetail, recordAdminCustomerSensitiveAccess } from '@/lib/customers/customer-repository';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,13 +30,18 @@ function StatusBanner({ status }: { status?: string }) {
 
 const inputClass = 'rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20';
 
-export default async function AdminCustomerDetailPage({ params, searchParams }: { params: Promise<{ customerId: string }>; searchParams: Promise<{ status?: string }> }) {
-  await assertAdminRole('staff');
-  const [{ customerId }, { status }] = await Promise.all([params, searchParams]);
-  const customer = await getAdminCustomerDetail(customerId);
+export default async function AdminCustomerDetailPage({ params, searchParams }: { params: Promise<{ customerId: string }>; searchParams: Promise<{ status?: string; sensitive?: string }> }) {
+  const identity = await assertAdminRole('staff');
+  const [{ customerId }, { status, sensitive }] = await Promise.all([params, searchParams]);
+  const privacyPolicy = createCustomerSensitiveFieldPolicy(identity.role, sensitive === 'reveal');
+  const customer = await getAdminCustomerDetail(customerId, { revealSensitive: privacyPolicy.revealSensitive });
   if (!customer) notFound();
+  if (privacyPolicy.revealSensitive) {
+    await recordAdminCustomerSensitiveAccess(customer.id, identity);
+  }
   const updateProfileAction = updateAdminCustomerProfileAction.bind(null, customer.id);
   const addTimelineNoteAction = addAdminCustomerTimelineNoteAction.bind(null, customer.id);
+  const privacyHref = privacyPolicy.revealSensitive ? `/admin/customers/${customer.id}` : `/admin/customers/${customer.id}?sensitive=reveal`;
 
   return (
     <main id="main-content" tabIndex={-1}>
@@ -111,6 +117,20 @@ export default async function AdminCustomerDetailPage({ params, searchParams }: 
           </div>
 
           <aside className="grid content-start gap-6">
+            <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
+              <h2 className="font-display text-3xl text-rosewood">Privacy</h2>
+              <p className="mt-3 text-sm font-semibold text-stone-700">
+                Sensitive fields: {customer.sensitiveFieldsMasked ? 'Masked' : 'Visible'}
+              </p>
+              {privacyPolicy.canRevealSensitive ? (
+                <Link href={privacyHref} className="mt-4 inline-flex rounded-full border border-rosewood/15 bg-cream px-5 py-2 text-sm font-semibold text-rosewood">
+                  {privacyPolicy.revealSensitive ? 'Mask sensitive fields' : 'Show sensitive fields'}
+                </Link>
+              ) : (
+                <p className="mt-4 rounded-3xl border border-rosewood/10 bg-cream p-4 text-sm text-stone-700">Owner role required for full sensitive fields.</p>
+              )}
+            </section>
+
             <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
               <h2 className="font-display text-3xl text-rosewood">Timeline</h2>
               <form action={addTimelineNoteAction} className="mt-5 grid gap-3">

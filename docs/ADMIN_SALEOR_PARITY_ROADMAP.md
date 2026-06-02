@@ -107,7 +107,7 @@ Goal: make customer support possible from the admin panel.
 - [x] Show saved addresses.
 - [x] Allow staff to update safe profile fields.
 - [x] Add admin notes or customer timeline.
-- [ ] Add privacy/safety controls for sensitive fields.
+- [x] Add privacy/safety controls for sensitive fields.
 
 Success criteria:
 
