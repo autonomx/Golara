@@ -15,12 +15,12 @@ export type VariantStockSummary = {
 };
 
 function nonNegativeInteger(value: number | null | undefined, fallback = 0) {
-  if (!Number.isFinite(value)) return fallback;
-  return Math.max(0, Math.floor(value ?? fallback));
+  if (typeof value !== 'number' || !Number.isFinite(value)) return fallback;
+  return Math.max(0, Math.floor(value));
 }
 
 function optionalNonNegativeInteger(value: number | null | undefined) {
-  if (value === null || value === undefined || !Number.isFinite(value)) return undefined;
+  if (typeof value !== 'number' || !Number.isFinite(value)) return undefined;
   return Math.max(0, Math.floor(value));
 }
 
