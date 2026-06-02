@@ -1,7 +1,7 @@
 import 'server-only';
 
 import type { Prisma } from '@prisma/client';
-import type { AdminAuditLogEntry, CatalogTranslation, Category, CustomerInquiry, HomepageContent, MediaItem, Product, ProductAttribute, ProductAttributeValue, ProductType, ProductVariant } from '@/lib/catalog';
+import type { AdminAuditLogEntry, CatalogTranslation, Category, Collection, CustomerInquiry, HomepageContent, MediaItem, Product, ProductAttribute, ProductAttributeValue, ProductType, ProductVariant } from '@/lib/catalog';
 import { prisma } from '@/lib/prisma';
 import { readWithSeedFallback } from '@/lib/cms/repository-fallback-policy';
 import { seedCategories, seedHomepageContent, seedProducts } from '@/lib/seed-data';
@@ -86,6 +86,7 @@ type DbProduct = {
   images?: { url: string; alt: string }[];
   variants?: DbProductVariant[];
   attributeValues?: DbProductAttributeValue[];
+  collections?: { collection: DbCollection }[];
   translations?: DbProductTranslation[];
 };
 
@@ -123,6 +124,17 @@ type DbProductAttributeValue = {
   variantId: string | null;
   value: string;
   updatedAt?: Date;
+};
+
+type DbCollection = {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  isActive: boolean;
+  sortOrder: number;
+  updatedAt?: Date;
+  _count?: { products: number };
 };
 
 type DbProductVariant = {
@@ -179,7 +191,7 @@ type InquiryWhere = Prisma.CustomerInquiryWhereInput;
 type AuditLogWhere = Prisma.AdminAuditLogWhereInput;
 
 const categoryInclude = { parent: { select: { slug: true, title: true, translations: true } }, translations: true } satisfies Prisma.CategoryInclude;
-const productInclude = { category: { include: categoryInclude }, productType: true, images: true, attributeValues: true, variants: { include: { attributeValues: true }, orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] }, translations: true } satisfies Prisma.ProductInclude;
+const productInclude = { category: { include: categoryInclude }, productType: true, images: true, attributeValues: true, collections: { include: { collection: true } }, variants: { include: { attributeValues: true }, orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] }, translations: true } satisfies Prisma.ProductInclude;
 
 function bySortThenTitle(a: Category, b: Category) {
   return (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.title.localeCompare(b.title);
@@ -373,6 +385,19 @@ function mapProductAttribute(attribute: DbProductAttribute): ProductAttribute {
   };
 }
 
+function mapCollection(collection: DbCollection): Collection {
+  return {
+    id: collection.id,
+    slug: collection.slug,
+    title: collection.title,
+    description: collection.description ?? undefined,
+    isActive: collection.isActive,
+    sortOrder: collection.sortOrder,
+    productCount: collection._count?.products,
+    updatedAt: collection.updatedAt
+  };
+}
+
 function mapCategory(category: DbCategory, options: CatalogReadOptions = {}): Category {
   const localized = localizeCategory(category, options);
   return {
@@ -419,6 +444,7 @@ function mapProduct(product: DbProduct, options: CatalogReadOptions = {}): Produ
     seoDescription: product.seoDescription ?? undefined,
     canonicalPath: product.canonicalPath ?? undefined,
     seoIndex: product.seoIndex,
+    collections: product.collections?.map((membership) => mapCollection(membership.collection)),
     translations: options.includeTranslations ? mapProductTranslations(product.translations) : undefined,
     attributeValues: mapProductAttributeValues(product.attributeValues),
     variants: mapProductVariants(product.variants)
@@ -624,6 +650,13 @@ export async function listAdminProductAttributes(): Promise<ProductAttribute[]> 
   return readWithFallback(async () => {
     const attributes = await prisma.productAttribute.findMany({ orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] });
     return attributes.map(mapProductAttribute);
+  }, () => []);
+}
+
+export async function listAdminCollections(): Promise<Collection[]> {
+  return readWithFallback(async () => {
+    const collections = await prisma.collection.findMany({ include: { _count: { select: { products: true } } }, orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }] });
+    return collections.map(mapCollection);
   }, () => []);
 }
 

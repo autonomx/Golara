@@ -507,6 +507,59 @@ export async function updateProductAttributeValuesAction(productId: string, targ
   redirect(`/admin/products/${productId}?status=product-attribute-values-updated`);
 }
 
+export async function createCollectionAction(formData: FormData) {
+  await ensureCanWriteCms();
+
+  const title = requiredString(formData, 'title');
+  await prisma.collection.create({
+    data: {
+      title,
+      slug: stringField(formData, 'slug') || slugify(title),
+      description: optionalString(formData, 'description'),
+      isActive: boolField(formData, 'isActive'),
+      sortOrder: intField(formData, 'sortOrder', 0)
+    }
+  });
+
+  revalidateCatalog();
+  redirect(productDetailReturnPath(formData, 'product-collection-created'));
+}
+
+export async function updateCollectionAction(collectionId: string, formData: FormData) {
+  await ensureCanWriteCms();
+  if (!collectionId) throw new Error('collectionId is required');
+
+  const title = requiredString(formData, 'title');
+  await prisma.collection.update({
+    where: { id: collectionId },
+    data: {
+      title,
+      slug: stringField(formData, 'slug') || slugify(title),
+      description: optionalString(formData, 'description'),
+      isActive: boolField(formData, 'isActive'),
+      sortOrder: intField(formData, 'sortOrder', 0)
+    }
+  });
+
+  revalidateCatalog();
+  redirect(productDetailReturnPath(formData, 'product-collection-updated'));
+}
+
+export async function updateProductCollectionsAction(productId: string, formData: FormData) {
+  await ensureCanWriteCms();
+  if (!productId) throw new Error('productId is required');
+
+  const collectionIds = formIds(formData, 'collectionId');
+  await prisma.$transaction([
+    prisma.productCollection.deleteMany({ where: { productId } }),
+    ...collectionIds.map((collectionId) => prisma.productCollection.create({ data: { productId, collectionId } }))
+  ]);
+
+  revalidateCatalog();
+  revalidatePath(`/admin/products/${productId}`);
+  redirect(`/admin/products/${productId}?status=product-collections-updated`);
+}
+
 export async function bulkUpdateProductsAction(formData: FormData) {
   await ensureCanWriteCms();
 

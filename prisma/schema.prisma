@@ -36,6 +36,7 @@ model Product {
   translations   ProductTranslation[]
   variants       ProductVariant[]
   attributeValues ProductAttributeValue[]
+  collections    ProductCollection[]
   createdAt      DateTime             @default(now())
   updatedAt      DateTime             @updatedAt
 
@@ -113,6 +114,31 @@ model ProductAttributeValue {
   @@unique([attributeId, variantId])
   @@index([productId])
   @@index([variantId])
+}
+
+model Collection {
+  id          String              @id @default(cuid())
+  slug        String              @unique
+  title       String
+  description String?
+  isActive    Boolean             @default(true)
+  sortOrder   Int                 @default(0)
+  products    ProductCollection[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+model ProductCollection {
+  productId    String
+  collectionId String
+  product      Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@id([productId, collectionId])
+  @@index([collectionId])
 }
 
 model ProductTranslation {

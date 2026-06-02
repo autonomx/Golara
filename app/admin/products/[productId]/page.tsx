@@ -1,12 +1,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { createProductAttributeAction, createProductTypeAction, createProductVariantAction, updateProductAction, updateProductAttributeAction, updateProductAttributeValuesAction, updateProductTypeAction, updateProductVariantAction } from '@/app/admin/actions';
+import { createCollectionAction, createProductAttributeAction, createProductTypeAction, createProductVariantAction, updateCollectionAction, updateProductAction, updateProductAttributeAction, updateProductAttributeValuesAction, updateProductCollectionsAction, updateProductTypeAction, updateProductVariantAction } from '@/app/admin/actions';
 import { MediaSelectWithPreview } from '@/components/admin/MediaSelectWithPreview';
 import { SiteHeader } from '@/components/SiteHeader';
 import { assertAdminRole } from '@/lib/admin-auth';
-import type { Category, MediaItem, Product, ProductAttribute, ProductAttributeValue, ProductType, ProductVariant } from '@/lib/catalog';
-import { listAdminCategories, listAdminProductAttributes, listAdminProducts, listAdminProductTypes, listMedia } from '@/lib/cms/catalog-repository';
+import type { Category, Collection, MediaItem, Product, ProductAttribute, ProductAttributeValue, ProductType, ProductVariant } from '@/lib/catalog';
+import { listAdminCategories, listAdminCollections, listAdminProductAttributes, listAdminProducts, listAdminProductTypes, listMedia } from '@/lib/cms/catalog-repository';
 import { getRuntimeReadiness } from '@/lib/runtime-readiness';
 
 export const dynamic = 'force-dynamic';
@@ -143,6 +143,22 @@ function ProductAttributeFields({ attribute, disabled }: { attribute?: ProductAt
   );
 }
 
+function CollectionFields({ collection, disabled }: { collection?: Collection; disabled: boolean }) {
+  return (
+    <>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Field label="Title" name="title" defaultValue={collection?.title} disabled={disabled} />
+        <Field label="Slug" name="slug" defaultValue={collection?.slug} disabled={disabled} />
+      </div>
+      <TextArea label="Description" name="description" defaultValue={collection?.description ?? ''} required={false} disabled={disabled} />
+      <div className="grid gap-4 md:grid-cols-2">
+        <Field label="Sort order" name="sortOrder" type="number" defaultValue={collection?.sortOrder ?? 0} disabled={disabled} />
+        <Toggle label="Active" name="isActive" defaultChecked={collection?.isActive ?? true} disabled={disabled} />
+      </div>
+    </>
+  );
+}
+
 function attributesForTarget(attributes: ProductAttribute[], target: 'product' | 'variant') {
   return attributes.filter((attribute) => attribute.isActive && (attribute.appliesTo === target || attribute.appliesTo === 'both'));
 }
@@ -204,7 +220,10 @@ function StatusBanner({ status }: { status?: string }) {
     'product-type-updated': 'Product type saved.',
     'product-attribute-created': 'Product attribute created.',
     'product-attribute-updated': 'Product attribute saved.',
-    'product-attribute-values-updated': 'Attribute values saved.'
+    'product-attribute-values-updated': 'Attribute values saved.',
+    'product-collection-created': 'Collection created.',
+    'product-collection-updated': 'Collection saved.',
+    'product-collections-updated': 'Product collections saved.'
   };
   if (!status || !messages[status]) return null;
   return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">{messages[status]}</div>;
@@ -213,7 +232,7 @@ function StatusBanner({ status }: { status?: string }) {
 export default async function AdminProductDetailPage({ params, searchParams }: { params: Promise<{ productId: string }>; searchParams: Promise<{ status?: string }> }) {
   await assertAdminRole('staff');
   const [{ productId }, { status }] = await Promise.all([params, searchParams]);
-  const [products, categories, productTypes, productAttributes, media] = await Promise.all([listAdminProducts(), listAdminCategories(), listAdminProductTypes(), listAdminProductAttributes(), listMedia()]);
+  const [products, categories, productTypes, productAttributes, collections, media] = await Promise.all([listAdminProducts(), listAdminCategories(), listAdminProductTypes(), listAdminProductAttributes(), listAdminCollections(), listMedia()]);
   const product = findProduct(products, productId);
   if (!product) notFound();
 
@@ -224,6 +243,7 @@ export default async function AdminProductDetailPage({ params, searchParams }: {
   const currentProductType = productTypes.find((productType) => productType.id === product.productTypeId);
   const productValueAttributes = attributesForTarget(productAttributes, 'product');
   const variantValueAttributes = attributesForTarget(productAttributes, 'variant');
+  const productCollectionIds = new Set(product.collections?.map((collection) => collection.id) ?? []);
 
   return (
     <main id="main-content" tabIndex={-1}>
@@ -305,6 +325,33 @@ export default async function AdminProductDetailPage({ params, searchParams }: {
               <AttributeValueFields attributes={productValueAttributes} values={product.attributeValues} disabled={disabled} />
               <button className="w-fit rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none" type="submit" disabled={disabled || !productValueAttributes.length}>
                 Save product values
+              </button>
+            </form>
+          </section>
+
+          <section className={`${cardClass} grid gap-5`}>
+            <div>
+              <h2 className="font-display text-3xl text-rosewood">Collections</h2>
+              <p className="mt-2 text-sm leading-6 text-stone-600">Assign this product to merchandising collections separate from category navigation.</p>
+            </div>
+            <form action={updateProductCollectionsAction.bind(null, product.id ?? '')} className="grid gap-4">
+              {!collections.length ? (
+                <div className="rounded-3xl border border-dashed border-stone-300 bg-stone-50 p-6 text-sm text-stone-600">No collections yet.</div>
+              ) : (
+                <div className="grid gap-3 md:grid-cols-2">
+                  {collections.map((collection) => (
+                    <label key={collection.id} className="flex items-start gap-3 rounded-2xl border border-rosewood/10 bg-cream p-4 text-sm font-semibold text-rosewood">
+                      <input name="collectionId" type="checkbox" value={collection.id} defaultChecked={productCollectionIds.has(collection.id)} disabled={disabled} />
+                      <span>
+                        <span className="block">{collection.title}</span>
+                        <span className="mt-1 block text-xs font-medium text-stone-500">{collection.slug} / {collection.productCount ?? 0} products</span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
+              <button className="w-fit rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none" type="submit" disabled={disabled}>
+                Save collections
               </button>
             </form>
           </section>
@@ -415,6 +462,49 @@ export default async function AdminProductDetailPage({ params, searchParams }: {
                         <ProductTypeFields productType={productType} disabled={disabled} />
                         <button className="w-fit rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none" type="submit" disabled={disabled}>
                           Save type
+                        </button>
+                      </form>
+                    </details>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className={`${cardClass} grid gap-5`}>
+              <div>
+                <h2 className="font-display text-3xl text-rosewood">Collection library</h2>
+                <p className="mt-2 text-sm leading-6 text-stone-600">Create and edit merchandising collections that can group products across categories.</p>
+              </div>
+              <details className="rounded-3xl border border-rosewood/10 bg-cream p-5">
+                <summary className="cursor-pointer font-display text-2xl text-rosewood">Create collection</summary>
+                <form action={createCollectionAction} className="mt-5 grid gap-4">
+                  <input type="hidden" name="returnProductId" value={product.id ?? product.slug} />
+                  <CollectionFields disabled={disabled} />
+                  <button className="w-fit rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none" type="submit" disabled={disabled}>
+                    Create collection
+                  </button>
+                </form>
+              </details>
+              {!collections.length ? (
+                <div className="rounded-3xl border border-dashed border-stone-300 bg-stone-50 p-6 text-sm text-stone-600">No collections yet.</div>
+              ) : (
+                <div className="grid gap-3">
+                  {collections.map((collection) => (
+                    <details key={collection.id} className="rounded-3xl border border-rosewood/10 bg-cream p-5">
+                      <summary className="cursor-pointer list-none">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <h3 className="font-display text-2xl text-rosewood">{collection.title}</h3>
+                            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">{collection.slug} / {collection.productCount ?? 0} products / {collection.isActive ? 'Active' : 'Inactive'}</p>
+                          </div>
+                          <span className="rounded-full border border-rosewood/15 bg-white px-3 py-1 text-xs font-semibold text-rosewood">Edit</span>
+                        </div>
+                      </summary>
+                      <form action={updateCollectionAction.bind(null, collection.id)} className="mt-5 grid gap-4">
+                        <input type="hidden" name="returnProductId" value={product.id ?? product.slug} />
+                        <CollectionFields collection={collection} disabled={disabled} />
+                        <button className="w-fit rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none" type="submit" disabled={disabled}>
+                          Save collection
                         </button>
                       </form>
                     </details>

@@ -64,6 +64,7 @@ export type Product = {
   seoDescription?: string;
   canonicalPath?: string;
   seoIndex?: boolean;
+  collections?: Collection[];
   updatedAt?: Date;
   translations?: CatalogTranslation[];
   attributeValues?: ProductAttributeValue[];
@@ -103,6 +104,17 @@ export type ProductAttributeValue = {
   productId?: string;
   variantId?: string;
   value: string;
+  updatedAt?: Date;
+};
+
+export type Collection = {
+  id: string;
+  slug: string;
+  title: string;
+  description?: string;
+  isActive: boolean;
+  sortOrder: number;
+  productCount?: number;
   updatedAt?: Date;
 };
 
