@@ -1,9 +1,10 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { addOrderTimelineNoteAction, updateOrderFulfillmentAction } from '@/app/admin/order-actions';
+import { addOrderLineItemAction, addOrderTimelineNoteAction, removeOrderLineItemAction, updateOrderFulfillmentAction, updateOrderLineItemQuantityAction } from '@/app/admin/order-actions';
 import { SiteHeader } from '@/components/SiteHeader';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { formatMinorUnitAmount } from '@/lib/catalog';
+import { isAdminOrderLineEditable, listAdminOrderLineProductOptions } from '@/lib/checkout/admin-order-line-repository';
 import { getAdminCheckoutOrder } from '@/lib/checkout/admin-order-repository';
 import { CHECKOUT_FULFILLMENT_STATUSES } from '@/lib/checkout/checkout-state-machine';
 
@@ -15,6 +16,7 @@ type AdminOrderItem = AdminCheckoutOrder['items'][number];
 
 const fulfillmentStatuses = [...CHECKOUT_FULFILLMENT_STATUSES];
 const paymentMetadataKeys = ['verified', 'verificationSkipped', 'reason', 'providerCode', 'authority', 'refId', 'httpStatus', 'fee', 'feeType', 'instruction'];
+const lineEditInputClass = 'rounded-2xl border border-rosewood/15 bg-white px-3 py-2 text-sm text-stone-800 outline-none focus:border-rosewood';
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat('en-CA', {
@@ -139,6 +141,15 @@ function StatusBanner({ status }: { status?: string }) {
   if (status === 'staff-draft-created') {
     return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">Staff draft order created.</div>;
   }
+  if (status === 'order-line-added') {
+    return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">Line item added.</div>;
+  }
+  if (status === 'order-line-updated') {
+    return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">Line item updated.</div>;
+  }
+  if (status === 'order-line-removed') {
+    return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">Line item removed.</div>;
+  }
   if (status === 'order-note-added') {
     return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">Staff note added to the order timeline.</div>;
   }
@@ -153,8 +164,12 @@ export default async function AdminOrderDetailPage({ params, searchParams }: { p
   const [{ orderId }, { status }] = await Promise.all([params, searchParams]);
   const order = await getAdminCheckoutOrder(orderId);
   if (!order) notFound();
+  const canEditLineItems = isAdminOrderLineEditable(order.status);
+  const lineOptions = canEditLineItems ? await listAdminOrderLineProductOptions() : [];
+  const addLineAction = addOrderLineItemAction.bind(null, order.id);
   const noteAction = addOrderTimelineNoteAction.bind(null, order.id);
   const fulfillmentAction = updateOrderFulfillmentAction.bind(null, order.id);
+  const lineItemColumnCount = canEditLineItems ? 5 : 4;
 
   return (
     <main id="main-content" tabIndex={-1}>
@@ -181,15 +196,33 @@ export default async function AdminOrderDetailPage({ params, searchParams }: { p
           <div className="grid gap-6">
             <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
               <h2 className="font-display text-3xl text-rosewood">Line items</h2>
+              {canEditLineItems ? (
+                <form action={addLineAction} className="mt-5 grid gap-3 rounded-3xl border border-rosewood/10 bg-cream p-4 md:grid-cols-[1fr_7rem_auto]">
+                  <label className="grid gap-2 text-sm font-semibold text-rosewood">
+                    Product
+                    <select name="lineOption" required className={lineEditInputClass}>
+                      <option value="">Select product</option>
+                      {lineOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                    </select>
+                  </label>
+                  <label className="grid gap-2 text-sm font-semibold text-rosewood">
+                    Qty
+                    <input name="quantity" type="number" min={1} max={99} defaultValue={1} className={lineEditInputClass} />
+                  </label>
+                  <div className="flex items-end">
+                    <button type="submit" className="rounded-full bg-rosewood px-5 py-2 text-sm font-semibold text-white">Add line</button>
+                  </div>
+                </form>
+              ) : null}
               <div className="mt-5 overflow-hidden rounded-3xl border border-rosewood/10">
                 <table className="min-w-full divide-y divide-rosewood/10 text-left text-sm">
                   <thead className="bg-cream text-xs uppercase tracking-[0.18em] text-rosewood/60">
-                    <tr><th className="px-4 py-3">Product</th><th className="px-4 py-3">Qty</th><th className="px-4 py-3">Unit</th><th className="px-4 py-3">Line total</th></tr>
+                    <tr><th className="px-4 py-3">Product</th><th className="px-4 py-3">Qty</th><th className="px-4 py-3">Unit</th><th className="px-4 py-3">Line total</th>{canEditLineItems ? <th className="px-4 py-3">Edit</th> : null}</tr>
                   </thead>
                   <tbody className="divide-y divide-rosewood/10 bg-white text-stone-700">
                     {order.items.length === 0 ? (
                       <tr>
-                        <td className="px-4 py-6 text-sm text-stone-600" colSpan={4}>No line items yet.</td>
+                        <td className="px-4 py-6 text-sm text-stone-600" colSpan={lineItemColumnCount}>No line items yet.</td>
                       </tr>
                     ) : order.items.map((item) => (
                       <tr key={item.id}>
@@ -197,6 +230,19 @@ export default async function AdminOrderDetailPage({ params, searchParams }: { p
                         <td className="px-4 py-3">{item.quantity}</td>
                         <td className="px-4 py-3">{formatMinorUnitAmount(item.unitPriceCents, order.currency)}</td>
                         <td className="px-4 py-3 font-semibold text-rosewood">{formatMinorUnitAmount(item.lineTotalCents, order.currency)}</td>
+                        {canEditLineItems ? (
+                          <td className="px-4 py-3">
+                            <div className="grid gap-2">
+                              <form action={updateOrderLineItemQuantityAction.bind(null, order.id, item.id)} className="flex flex-wrap items-center gap-2">
+                                <input name="quantity" type="number" min={1} max={99} defaultValue={item.quantity} className={`${lineEditInputClass} w-20`} />
+                                <button type="submit" className="rounded-full border border-rosewood/20 px-4 py-2 text-xs font-semibold text-rosewood">Update</button>
+                              </form>
+                              <form action={removeOrderLineItemAction.bind(null, order.id, item.id)}>
+                                <button type="submit" className="rounded-full border border-red-200 px-4 py-2 text-xs font-semibold text-red-700">Remove</button>
+                              </form>
+                            </div>
+                          </td>
+                        ) : null}
                       </tr>
                     ))}
                   </tbody>

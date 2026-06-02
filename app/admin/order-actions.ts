@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
+import { addAdminOrderLineItem, parseAdminOrderLineSelection, removeAdminOrderLineItem, updateAdminOrderLineItemQuantity } from '@/lib/checkout/admin-order-line-repository';
 import { transitionCheckoutFulfillmentStatus, transitionCheckoutOrderStatus } from '@/lib/checkout/checkout-status-service';
 import { assertCheckoutFulfillmentStatus, assertCheckoutOrderStatus } from '@/lib/checkout/checkout-state-machine';
 import { createStaffOrderDraft } from '@/lib/checkout/order-draft-repository';
@@ -12,6 +13,11 @@ import { hasDatabase, prisma } from '@/lib/prisma';
 function stringFormValue(formData: FormData, name: string) {
   const value = formData.get(name);
   return typeof value === 'string' ? value.trim() : '';
+}
+
+function integerFormValue(formData: FormData, name: string, fallback = 1) {
+  const parsed = Number.parseInt(stringFormValue(formData, name), 10);
+  return Number.isFinite(parsed) ? parsed : fallback;
 }
 
 function adminPath(status: string) {
@@ -92,6 +98,78 @@ export async function updateOrderStatusAction(orderId: string, formData: FormDat
   revalidatePath('/admin');
   revalidatePath('/admin/orders');
   redirect(adminPath('order-updated'));
+}
+
+export async function addOrderLineItemAction(orderId: string, formData: FormData) {
+  const actor = await assertAdminRole('staff');
+  const selection = parseAdminOrderLineSelection(stringFormValue(formData, 'lineOption'));
+  const order = await addAdminOrderLineItem(orderId, {
+    ...selection,
+    quantity: integerFormValue(formData, 'quantity'),
+    actorLabel: actor.label,
+    actorRole: actor.role
+  });
+
+  await recordAdminAuditLog({
+    action: 'order.line_item.add',
+    entity: 'checkoutOrder',
+    entityId: order.id,
+    summary: `Added line item to order ${order.orderNumber}`,
+    metadata: {
+      productId: selection.productId,
+      variantId: selection.variantId ?? null,
+      quantity: integerFormValue(formData, 'quantity')
+    }
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/orders');
+  revalidatePath(`/admin/orders/${orderId}`);
+  redirect(orderDetailPath(orderId, 'order-line-added'));
+}
+
+export async function updateOrderLineItemQuantityAction(orderId: string, itemId: string, formData: FormData) {
+  const actor = await assertAdminRole('staff');
+  const quantity = integerFormValue(formData, 'quantity');
+  const order = await updateAdminOrderLineItemQuantity(orderId, itemId, {
+    quantity,
+    actorLabel: actor.label,
+    actorRole: actor.role
+  });
+
+  await recordAdminAuditLog({
+    action: 'order.line_item.update',
+    entity: 'checkoutOrder',
+    entityId: order.id,
+    summary: `Updated line item quantity on order ${order.orderNumber}`,
+    metadata: { itemId, quantity }
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/orders');
+  revalidatePath(`/admin/orders/${orderId}`);
+  redirect(orderDetailPath(orderId, 'order-line-updated'));
+}
+
+export async function removeOrderLineItemAction(orderId: string, itemId: string, _formData?: FormData) {
+  const actor = await assertAdminRole('staff');
+  const order = await removeAdminOrderLineItem(orderId, itemId, {
+    actorLabel: actor.label,
+    actorRole: actor.role
+  });
+
+  await recordAdminAuditLog({
+    action: 'order.line_item.remove',
+    entity: 'checkoutOrder',
+    entityId: order.id,
+    summary: `Removed line item from order ${order.orderNumber}`,
+    metadata: { itemId }
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/orders');
+  revalidatePath(`/admin/orders/${orderId}`);
+  redirect(orderDetailPath(orderId, 'order-line-removed'));
 }
 
 export async function addOrderTimelineNoteAction(orderId: string, formData: FormData) {

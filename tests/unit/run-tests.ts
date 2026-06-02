@@ -1,6 +1,7 @@
 import { runAdminAccountCoreTests } from './admin-account-core.test';
 import { runAdminActionBoundaryGuardTests } from './admin-action-boundary-guard.test';
 import { runAdminAuthCoreTests } from './admin-auth-core.test';
+import { runAdminOrderLineEditFlowTests } from './admin-order-line-edit-flow.test';
 import { runAdminRoleBoundaryTests } from './admin-role-boundary.test';
 import { runCheckoutActionNextPathTests } from './checkout-action-next-path.test';
 import { runCheckoutAdapterAliasAttemptTests } from './checkout-adapter-alias-attempt.test';
@@ -89,6 +90,7 @@ async function main() {
   await runOrderReturnRouteCoreTests();
   await runCheckoutActionNextPathTests();
   await runStaffOrderDraftFlowTests();
+  await runAdminOrderLineEditFlowTests();
   await runPaymentGatewayConfigTests();
   await runPaymentGatewayAdaptersTests();
   await runProductCheckoutPolicyTests();
@@ -102,7 +104,7 @@ async function main() {
   await runFulfillmentMethodSettingsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (51 files)');
+  console.log('unit tests passed (52 files)');
 }
 
 main().catch((error) => {

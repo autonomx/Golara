@@ -88,24 +88,31 @@ export async function commitOrderInventoryReservations(orderId: string) {
   });
 }
 
-export async function releaseOrderInventoryReservations(orderId: string) {
+async function releaseOrderInventoryReservationsWithTx(orderId: string, tx: InventoryTx) {
+  const reservations = await tx.inventoryStockReservation.findMany({
+    where: { orderItem: { orderId }, status: 'held' },
+    include: { variantStock: true }
+  });
+
+  for (const reservation of reservations) {
+    await tx.productVariantLocationStock.update({
+      where: { id: reservation.variantStockId },
+      data: { reservedQuantity: Math.max(0, reservation.variantStock.reservedQuantity - reservation.quantity) }
+    });
+    await tx.inventoryStockReservation.update({
+      where: { id: reservation.id },
+      data: { status: 'released' }
+    });
+  }
+}
+
+export async function releaseOrderInventoryReservations(orderId: string, tx?: InventoryTx) {
   assertDatabaseReady();
 
-  await prisma.$transaction(async (tx) => {
-    const reservations = await tx.inventoryStockReservation.findMany({
-      where: { orderItem: { orderId }, status: 'held' },
-      include: { variantStock: true }
-    });
+  if (tx) {
+    await releaseOrderInventoryReservationsWithTx(orderId, tx);
+    return;
+  }
 
-    for (const reservation of reservations) {
-      await tx.productVariantLocationStock.update({
-        where: { id: reservation.variantStockId },
-        data: { reservedQuantity: Math.max(0, reservation.variantStock.reservedQuantity - reservation.quantity) }
-      });
-      await tx.inventoryStockReservation.update({
-        where: { id: reservation.id },
-        data: { status: 'released' }
-      });
-    }
-  });
+  await prisma.$transaction((transaction) => releaseOrderInventoryReservationsWithTx(orderId, transaction));
 }

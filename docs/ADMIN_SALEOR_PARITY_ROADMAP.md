@@ -119,7 +119,7 @@ Success criteria:
 Goal: improve order operations beyond list/status management.
 
 - [x] Add draft orders created by staff.
-- Add editable order line items before confirmation.
+- [x] Add editable order line items before confirmation.
 - Add customer/address assignment to draft orders.
 - Add manual payment marking.
 - Add payment attempt timeline and provider references.
