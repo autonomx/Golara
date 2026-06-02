@@ -13,6 +13,8 @@ export type PromotionVoucherInput = {
   promotionDiscountId: string;
   status?: string;
   isActive?: boolean;
+  startsAt?: Date | string | null;
+  endsAt?: Date | string | null;
 };
 
 export type PromotionVoucherRecord = {
@@ -22,9 +24,13 @@ export type PromotionVoucherRecord = {
   status: PromotionVoucherStatus;
   isActive: boolean;
   usageCount: number;
+  startsAt: Date | null;
+  endsAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };
+
+export type PromotionValidityWindow = Pick<PromotionVoucherRecord, 'startsAt' | 'endsAt'>;
 
 function optionalText(value?: string | null) {
   const normalized = value?.trim();
@@ -53,20 +59,47 @@ export function assertPromotionVoucherStatus(value?: string | null): PromotionVo
   throw new Error(`Unsupported promotion voucher status: ${value}`);
 }
 
+export function normalizePromotionWindowDate(value?: Date | string | null) {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) throw new Error(`Invalid promotion validity date: ${value}`);
+  return date;
+}
+
+export function assertPromotionValidityWindow(startsAt?: Date | string | null, endsAt?: Date | string | null) {
+  const normalizedStartsAt = normalizePromotionWindowDate(startsAt);
+  const normalizedEndsAt = normalizePromotionWindowDate(endsAt);
+  if (normalizedStartsAt && normalizedEndsAt && normalizedStartsAt.getTime() > normalizedEndsAt.getTime()) {
+    throw new Error('Promotion validity startsAt must be before endsAt.');
+  }
+  return {
+    startsAt: normalizedStartsAt,
+    endsAt: normalizedEndsAt
+  };
+}
+
+export function isPromotionWithinValidityWindow(window: PromotionValidityWindow, now: Date = new Date()) {
+  const nowTime = now.getTime();
+  return (!window.startsAt || window.startsAt.getTime() <= nowTime) && (!window.endsAt || window.endsAt.getTime() >= nowTime);
+}
+
 export function normalizePromotionVoucherInput(input: PromotionVoucherInput) {
   const promotionDiscountId = optionalText(input.promotionDiscountId);
   if (!promotionDiscountId) throw new Error('Promotion discount id is required.');
+  const validity = assertPromotionValidityWindow(input.startsAt, input.endsAt);
 
   return {
     code: assertPromotionVoucherCode(input.code),
     promotionDiscountId,
     status: assertPromotionVoucherStatus(input.status),
-    isActive: input.isActive ?? true
+    isActive: input.isActive ?? true,
+    startsAt: validity.startsAt,
+    endsAt: validity.endsAt
   };
 }
 
-export function isPromotionVoucherActive(voucher: Pick<PromotionVoucherRecord, 'status' | 'isActive'>) {
-  return voucher.isActive && voucher.status === 'active';
+export function isPromotionVoucherActive(voucher: Pick<PromotionVoucherRecord, 'status' | 'isActive' | 'startsAt' | 'endsAt'>, now: Date = new Date()) {
+  return voucher.isActive && voucher.status === 'active' && isPromotionWithinValidityWindow(voucher, now);
 }
 
 export async function listPromotionVouchers(): Promise<PromotionVoucherRecord[]> {
@@ -80,6 +113,8 @@ export async function listPromotionVouchers(): Promise<PromotionVoucherRecord[]>
       "status",
       "isActive",
       "usageCount",
+      "startsAt",
+      "endsAt",
       "createdAt",
       "updatedAt"
     FROM "PromotionVoucher"
@@ -99,6 +134,8 @@ export async function findPromotionVoucherByCode(code: string): Promise<Promotio
       "status",
       "isActive",
       "usageCount",
+      "startsAt",
+      "endsAt",
       "createdAt",
       "updatedAt"
     FROM "PromotionVoucher"
@@ -126,6 +163,8 @@ export async function createPromotionVoucher(input: PromotionVoucherInput) {
       "promotionDiscountId",
       "status",
       "isActive",
+      "startsAt",
+      "endsAt",
       "metadata"
     ) VALUES (
       ${id},
@@ -133,6 +172,8 @@ export async function createPromotionVoucher(input: PromotionVoucherInput) {
       ${voucher.promotionDiscountId},
       ${voucher.status},
       ${voucher.isActive},
+      ${voucher.startsAt},
+      ${voucher.endsAt},
       ${JSON.stringify(metadata)}::jsonb
     )
     RETURNING
@@ -142,6 +183,8 @@ export async function createPromotionVoucher(input: PromotionVoucherInput) {
       "status",
       "isActive",
       "usageCount",
+      "startsAt",
+      "endsAt",
       "createdAt",
       "updatedAt"
   `;
