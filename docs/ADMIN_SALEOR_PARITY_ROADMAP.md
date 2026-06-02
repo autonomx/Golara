@@ -80,14 +80,6 @@ Completed inventory foundation:
 - [x] Add Prisma model fields for `ProductVariant.trackInventory` and `ProductVariant.lowStockThreshold`.
 - [x] Persist `trackInventory` and `lowStockThreshold` from admin variant create/update actions.
 - [x] Add product variant mapper foundation that preserves stock tracking fields.
-- [x] Add variant-aware cart and checkout order line fields before inventory reservation.
-
-Remaining before checking stock tracking toggle / low-stock threshold complete:
-
-- [x] Wire the product variant mapper into `catalog-repository.ts` read paths.
-- [x] Expose `trackInventory` and `lowStockThreshold` fields in admin variant create/edit forms.
-- [x] Display stock status/low-stock state in admin variant summaries and relevant operations views.
-- [x] Wire mapper unit coverage into the central unit test runner.
 
 Success criteria:
 
@@ -204,7 +196,7 @@ Goal: prepare for external services and future custom admin modules.
 - [x] Add integration/app registry.
 - [x] Add API token management if needed.
 - [x] Add provider diagnostics pages.
-- Add dashboard extension mount points for internal tools.
+- [x] Add dashboard extension mount points for internal tools.
 - Add import/export job tracking.
 
 Success criteria:
