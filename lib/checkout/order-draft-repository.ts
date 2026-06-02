@@ -23,6 +23,15 @@ export type CreateOrderDraftInput = {
   items: OrderDraftItemInput[];
 };
 
+export type CreateStaffOrderDraftInput = {
+  currency?: string;
+  recipientName?: string;
+  recipientPhone?: string;
+  staffNotes?: string;
+  actorLabel: string;
+  actorRole: string;
+};
+
 function optionalText(value?: string) {
   const normalized = value?.trim();
   return normalized || undefined;
@@ -157,6 +166,38 @@ export async function createOrderDraft(input: CreateOrderDraftInput) {
 
     await reserveOrderInventory(order.id, tx);
     return order;
+  });
+}
+
+export async function createStaffOrderDraft(input: CreateStaffOrderDraftInput) {
+  if (!hasDatabase()) throw new Error('DATABASE_URL is required for checkout order drafts.');
+
+  const staffNotes = optionalText(input.staffNotes);
+  return prisma.checkoutOrder.create({
+    data: {
+      orderNumber: makeOrderNumber(),
+      publicLookupToken: makePublicLookupToken(),
+      checkoutMode: 'assisted',
+      currency: normalizeCurrency(input.currency),
+      recipientName: optionalText(input.recipientName),
+      recipientPhone: optionalText(input.recipientPhone),
+      staffNotes,
+      timelineEvents: {
+        create: {
+          type: 'staff_draft_created',
+          title: 'Staff draft created',
+          note: staffNotes,
+          actorLabel: input.actorLabel,
+          actorRole: input.actorRole
+        }
+      }
+    },
+    include: {
+      items: true,
+      customer: true,
+      address: true,
+      timelineEvents: true
+    }
   });
 }
 

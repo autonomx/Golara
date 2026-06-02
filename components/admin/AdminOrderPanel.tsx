@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { updateOrderStatusAction } from '@/app/admin/order-actions';
+import { createStaffDraftOrderAction, updateOrderStatusAction } from '@/app/admin/order-actions';
 import type { CheckoutOrderSummary } from '@/lib/catalog';
 import { formatMinorUnitAmount } from '@/lib/catalog';
 import type { AdminOrderFilters, AdminOrderPage } from '@/lib/checkout/admin-order-repository';
@@ -97,6 +97,22 @@ export function AdminOrderPanel({ orderPage, filters }: { orderPage: AdminOrderP
           Review checkout orders, page through filtered queues, export or print the current view, update status, and keep staff-only notes.
         </p>
       </div>
+
+      <form action={createStaffDraftOrderAction} className="mb-6 grid gap-4 rounded-3xl border border-rosewood/10 bg-cream p-5 md:grid-cols-[1fr_1fr_8rem]">
+        <FilterInput label="Recipient" name="recipientName" placeholder="Customer name" />
+        <FilterInput label="Phone" name="recipientPhone" placeholder="+1..." />
+        <label className="grid gap-2 text-sm font-semibold text-rosewood">
+          Currency
+          <input className={filterInputClass} name="currency" defaultValue="TOMAN" />
+        </label>
+        <label className="grid gap-2 text-sm font-semibold text-rosewood md:col-span-3">
+          Staff note
+          <input className={filterInputClass} name="staffNotes" placeholder="Internal context" />
+        </label>
+        <div className="md:col-span-3">
+          <button className={primaryButtonClass} type="submit">Create draft order</button>
+        </div>
+      </form>
 
       <form className="mb-6 grid gap-4 rounded-3xl border border-rosewood/10 bg-cream p-5 md:grid-cols-4" action="/admin/orders">
         <FilterSelect label="Order status" name="orderStatus" defaultValue={filters.status} values={orderStatuses} />

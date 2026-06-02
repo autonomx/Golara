@@ -6,6 +6,7 @@ import { assertAdminRole } from '@/lib/admin-auth';
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
 import { transitionCheckoutFulfillmentStatus, transitionCheckoutOrderStatus } from '@/lib/checkout/checkout-status-service';
 import { assertCheckoutFulfillmentStatus, assertCheckoutOrderStatus } from '@/lib/checkout/checkout-state-machine';
+import { createStaffOrderDraft } from '@/lib/checkout/order-draft-repository';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
 function stringFormValue(formData: FormData, name: string) {
@@ -21,6 +22,35 @@ function adminPath(status: string) {
 function orderDetailPath(orderId: string, status: string) {
   const params = new URLSearchParams({ status });
   return `/admin/orders/${orderId}?${params.toString()}`;
+}
+
+export async function createStaffDraftOrderAction(formData: FormData) {
+  const actor = await assertAdminRole('staff');
+
+  const order = await createStaffOrderDraft({
+    currency: stringFormValue(formData, 'currency') || 'TOMAN',
+    recipientName: stringFormValue(formData, 'recipientName'),
+    recipientPhone: stringFormValue(formData, 'recipientPhone'),
+    staffNotes: stringFormValue(formData, 'staffNotes'),
+    actorLabel: actor.label,
+    actorRole: actor.role
+  });
+
+  await recordAdminAuditLog({
+    action: 'order.staff_draft.create',
+    entity: 'checkoutOrder',
+    entityId: order.id,
+    summary: `Created staff draft order ${order.orderNumber}`,
+    metadata: {
+      checkoutMode: order.checkoutMode,
+      recipientAdded: Boolean(order.recipientName || order.recipientPhone),
+      staffNotesAdded: Boolean(order.staffNotes)
+    }
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/orders');
+  redirect(orderDetailPath(order.id, 'staff-draft-created'));
 }
 
 export async function updateOrderStatusAction(orderId: string, formData: FormData) {

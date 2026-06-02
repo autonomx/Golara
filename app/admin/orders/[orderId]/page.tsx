@@ -136,6 +136,9 @@ function PaymentAttemptCard({ attempt }: { attempt: AdminPaymentAttempt }) {
 }
 
 function StatusBanner({ status }: { status?: string }) {
+  if (status === 'staff-draft-created') {
+    return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">Staff draft order created.</div>;
+  }
   if (status === 'order-note-added') {
     return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">Staff note added to the order timeline.</div>;
   }
@@ -184,7 +187,11 @@ export default async function AdminOrderDetailPage({ params, searchParams }: { p
                     <tr><th className="px-4 py-3">Product</th><th className="px-4 py-3">Qty</th><th className="px-4 py-3">Unit</th><th className="px-4 py-3">Line total</th></tr>
                   </thead>
                   <tbody className="divide-y divide-rosewood/10 bg-white text-stone-700">
-                    {order.items.map((item) => (
+                    {order.items.length === 0 ? (
+                      <tr>
+                        <td className="px-4 py-6 text-sm text-stone-600" colSpan={4}>No line items yet.</td>
+                      </tr>
+                    ) : order.items.map((item) => (
                       <tr key={item.id}>
                         <td className="px-4 py-3"><p className="font-semibold text-rosewood">{item.productTitle}</p><p className="text-xs text-stone-500">{item.productCode}{item.variantSku ? ` / ${item.variantSku}` : ''}</p>{item.variantName ? <p className="mt-1 text-xs font-semibold text-rosewood">{item.variantName}</p> : null}</td>
                         <td className="px-4 py-3">{item.quantity}</td>
