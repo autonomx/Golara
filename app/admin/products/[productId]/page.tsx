@@ -61,8 +61,9 @@ function VariantFields({ media, productImage, variant, disabled }: { media: Medi
       <div className="grid gap-4 md:grid-cols-3">
         <Field label="Price" name="price" type="number" defaultValue={variant?.price ?? 0} disabled={disabled} />
         <Field label="Currency" name="currency" defaultValue={variant?.currency ?? 'CAD'} disabled={disabled} />
-        <Field label="Sort order" name="sortOrder" type="number" defaultValue={variant?.sortOrder ?? 0} disabled={disabled} />
+        <Field label="Stock quantity" name="stockQuantity" type="number" defaultValue={variant?.stockQuantity ?? 0} disabled={disabled} />
       </div>
+      <Field label="Sort order" name="sortOrder" type="number" defaultValue={variant?.sortOrder ?? 0} disabled={disabled} />
       <MediaSelectWithPreview label="Variant image from media library" name="variantSelectedMediaUrl" media={mediaForProduct(media, image)} defaultValue={image} disabled={disabled} className={inputClass} />
       <Field label="Manual variant image URL" name="variantImageUrl" defaultValue={image} required={false} disabled={disabled} />
       <Toggle label="Active" name="isActive" defaultChecked={variant?.isActive ?? true} disabled={disabled} />
@@ -380,7 +381,7 @@ export default async function AdminProductDetailPage({ params, searchParams }: {
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                           <h3 className="font-display text-2xl text-rosewood">{variant.name}</h3>
-                          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">{variant.sku} / {variant.price} {variant.currency} / {variant.isActive ? 'Active' : 'Inactive'}</p>
+                          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">{variant.sku} / {variant.price} {variant.currency} / Stock {variant.stockQuantity} / {variant.isActive ? 'Active' : 'Inactive'}</p>
                         </div>
                         <span className="rounded-full border border-rosewood/15 bg-white px-3 py-1 text-xs font-semibold text-rosewood">Edit</span>
                       </div>

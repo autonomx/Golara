@@ -145,6 +145,7 @@ type DbProductVariant = {
   priceCents: number;
   currency: string;
   imageUrl: string | null;
+  stockQuantity: number;
   isActive: boolean;
   sortOrder: number;
   attributeValues?: DbProductAttributeValue[];
@@ -329,6 +330,7 @@ function mapProductVariants(variants?: DbProductVariant[]): ProductVariant[] | u
     price: variant.priceCents / 100,
     currency: variant.currency,
     image: variant.imageUrl ?? undefined,
+    stockQuantity: variant.stockQuantity,
     isActive: variant.isActive,
     sortOrder: variant.sortOrder,
     attributeValues: mapProductAttributeValues(variant.attributeValues),

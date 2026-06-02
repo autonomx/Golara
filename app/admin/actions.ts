@@ -399,6 +399,7 @@ export async function createProductVariantAction(productId: string, formData: Fo
       priceCents: priceCentsField(formData, 'price'),
       currency: stringField(formData, 'currency', 'CAD') || 'CAD',
       imageUrl: resolveOptionalImageUrl(formData, 'variantSelectedMediaUrl', 'variantImageUrl') ?? product.imageUrl,
+      stockQuantity: intField(formData, 'stockQuantity', 0),
       isActive: boolField(formData, 'isActive'),
       sortOrder: intField(formData, 'sortOrder', 0)
     }
@@ -425,6 +426,7 @@ export async function updateProductVariantAction(productId: string, variantId: s
       priceCents: priceCentsField(formData, 'price'),
       currency: stringField(formData, 'currency', 'CAD') || 'CAD',
       imageUrl: resolveOptionalImageUrl(formData, 'variantSelectedMediaUrl', 'variantImageUrl') ?? product.imageUrl,
+      stockQuantity: intField(formData, 'stockQuantity', 0),
       isActive: boolField(formData, 'isActive'),
       sortOrder: intField(formData, 'sortOrder', 0)
     }

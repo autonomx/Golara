@@ -62,7 +62,7 @@ Success criteria:
 
 Goal: add operational stock and fulfillment foundations.
 
-- Add inventory quantities per product variant.
+- [x] Add inventory quantities per product variant.
 - Add stock tracking toggle for made-to-order or quote-only items.
 - Add low-stock threshold.
 - Add stock adjustment audit log.
