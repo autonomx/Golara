@@ -7,6 +7,7 @@ import { apiTokenManagementService } from '@/lib/settings/api-token-management';
 import { dashboardExtensionMountPointService } from '@/lib/settings/dashboard-extension-mount-points';
 import { fulfillmentMethodSettingsService } from '@/lib/settings/fulfillment-method-settings';
 import { homepageBannerMediaSettingsService } from '@/lib/settings/homepage-banner-media-settings';
+import { importExportJobTrackingService } from '@/lib/settings/import-export-job-tracking';
 import { integrationAppRegistryService } from '@/lib/settings/integration-app-registry';
 import { notificationProviderSettingsService } from '@/lib/settings/notification-provider-settings';
 import { paymentProviderSettingsService } from '@/lib/settings/payment-provider-settings';
@@ -307,6 +308,32 @@ export async function updateDashboardExtensionMountPointAction(formData: FormDat
   revalidatePath('/admin');
   revalidatePath('/admin/settings');
   redirect('/admin/settings?status=dashboard-extension-mount-point-updated');
+}
+
+export async function updateImportExportJobTrackingAction(formData: FormData) {
+  await assertAdminRole('owner');
+
+  await importExportJobTrackingService.upsert({
+    key: requiredString(formData, 'key'),
+    label: requiredString(formData, 'label'),
+    description: stringField(formData, 'description') || null,
+    kind: requiredString(formData, 'kind'),
+    target: requiredString(formData, 'target'),
+    status: requiredString(formData, 'status'),
+    requestedBy: stringField(formData, 'requestedBy') || null,
+    sourceFilename: stringField(formData, 'sourceFilename') || null,
+    sourceMimeType: stringField(formData, 'sourceMimeType') || null,
+    inputValue: stringField(formData, 'inputValue') || null,
+    outputUrl: stringField(formData, 'outputUrl') || null,
+    totalRows: intField(formData, 'totalRows', 0),
+    processedRows: intField(formData, 'processedRows', 0),
+    failedRows: intField(formData, 'failedRows', 0),
+    errorMessage: stringField(formData, 'errorMessage') || null
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/settings');
+  redirect('/admin/settings?status=import-export-job-tracking-updated');
 }
 
 export async function updateStaffPermissionGroupAction(formData: FormData) {
