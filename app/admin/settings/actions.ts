@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { fulfillmentMethodSettingsService } from '@/lib/settings/fulfillment-method-settings';
 import { homepageBannerMediaSettingsService } from '@/lib/settings/homepage-banner-media-settings';
+import { notificationProviderSettingsService } from '@/lib/settings/notification-provider-settings';
 import { paymentProviderSettingsService } from '@/lib/settings/payment-provider-settings';
 import { shippingDeliverySettingsService } from '@/lib/settings/shipping-delivery-settings';
 import { storeSettingsService } from '@/lib/settings/store-settings';
@@ -186,6 +187,31 @@ export async function updatePaymentProviderSettingAction(formData: FormData) {
   revalidatePath('/admin');
   revalidatePath('/admin/settings');
   redirect('/admin/settings?status=payment-provider-updated');
+}
+
+export async function updateNotificationProviderSettingAction(formData: FormData) {
+  await assertAdminRole('owner');
+
+  await notificationProviderSettingsService.update({
+    key: requiredString(formData, 'key'),
+    label: requiredString(formData, 'label'),
+    description: stringField(formData, 'description') || null,
+    emailProvider: requiredString(formData, 'emailProvider'),
+    smsProvider: requiredString(formData, 'smsProvider'),
+    defaultFromEmail: stringField(formData, 'defaultFromEmail') || null,
+    defaultFromPhone: stringField(formData, 'defaultFromPhone') || null,
+    replyToEmail: stringField(formData, 'replyToEmail') || null,
+    enableOrderEmail: boolField(formData, 'enableOrderEmail'),
+    enableOrderSms: boolField(formData, 'enableOrderSms'),
+    requireEmailProviderEnv: boolField(formData, 'requireEmailProviderEnv'),
+    requireSmsProviderEnv: boolField(formData, 'requireSmsProviderEnv'),
+    isDefault: boolField(formData, 'isDefault'),
+    isActive: boolField(formData, 'isActive')
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/settings');
+  redirect('/admin/settings?status=notification-provider-updated');
 }
 
 export async function updateFulfillmentMethodSettingAction(formData: FormData) {
