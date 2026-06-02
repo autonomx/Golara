@@ -80,7 +80,6 @@ Completed inventory foundation:
 - [x] Add Prisma model fields for `ProductVariant.trackInventory` and `ProductVariant.lowStockThreshold`.
 - [x] Persist `trackInventory` and `lowStockThreshold` from admin variant create/update actions.
 - [x] Add product variant mapper foundation that preserves stock tracking fields.
-- [x] Add variant-aware cart and checkout order line fields before inventory reservation.
 
 Remaining before checking stock tracking toggle / low-stock threshold complete:
 
@@ -182,7 +181,7 @@ Goal: centralize store configuration currently spread across env/code.
 
 - [x] Add store settings page.
 - [x] Add storefront navigation/menu builder.
-- Add homepage banner/media settings.
+- [x] Add homepage banner/media settings.
 - Add shipping/delivery settings.
 - Add tax category settings.
 - Add payment provider settings/readiness.
