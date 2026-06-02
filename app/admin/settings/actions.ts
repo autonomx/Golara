@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { fulfillmentMethodSettingsService } from '@/lib/settings/fulfillment-method-settings';
+import { storeSettingsService } from '@/lib/settings/store-settings';
 
 function stringField(formData: FormData, name: string, fallback = '') {
   const value = formData.get(name);
@@ -24,6 +25,26 @@ function boolField(formData: FormData, name: string) {
 function intField(formData: FormData, name: string, fallback = 0) {
   const value = Number.parseInt(stringField(formData, name, String(fallback)), 10);
   return Number.isFinite(value) ? value : fallback;
+}
+
+export async function updateStoreSettingAction(formData: FormData) {
+  await assertAdminRole('owner');
+
+  await storeSettingsService.update({
+    storeName: requiredString(formData, 'storeName'),
+    legalName: stringField(formData, 'legalName') || null,
+    supportEmail: stringField(formData, 'supportEmail') || null,
+    supportPhone: stringField(formData, 'supportPhone') || null,
+    defaultLocale: requiredString(formData, 'defaultLocale'),
+    defaultCurrency: requiredString(formData, 'defaultCurrency'),
+    timezone: requiredString(formData, 'timezone'),
+    storefrontBaseUrl: stringField(formData, 'storefrontBaseUrl') || null,
+    isMaintenanceMode: boolField(formData, 'isMaintenanceMode')
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/settings');
+  redirect('/admin/settings?status=store-settings-updated');
 }
 
 export async function updateFulfillmentMethodSettingAction(formData: FormData) {
