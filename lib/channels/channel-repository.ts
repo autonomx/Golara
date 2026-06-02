@@ -29,6 +29,14 @@ export type StorefrontChannelRecord = {
   updatedAt: Date;
 };
 
+export type StorefrontChannelDefaults = {
+  currency: string;
+  locale: string;
+  source: 'channel' | 'fallback';
+  channelId: string | null;
+  channelSlug: string | null;
+};
+
 function optionalText(value?: string | null) {
   const normalized = value?.trim();
   return normalized || null;
@@ -91,6 +99,32 @@ export function selectDefaultStorefrontChannel(channels: StorefrontChannelRecord
     ?? null;
 }
 
+export function buildFallbackStorefrontChannelDefaults(): StorefrontChannelDefaults {
+  return {
+    currency: DEFAULT_STOREFRONT_CHANNEL_CURRENCY,
+    locale: DEFAULT_STOREFRONT_CHANNEL_LOCALE,
+    source: 'fallback',
+    channelId: null,
+    channelSlug: null
+  };
+}
+
+export function buildStorefrontChannelDefaults(channel?: Pick<StorefrontChannelRecord, 'id' | 'slug' | 'currency' | 'locale'> | null): StorefrontChannelDefaults {
+  if (!channel) return buildFallbackStorefrontChannelDefaults();
+
+  return {
+    currency: normalizeStorefrontChannelCurrency(channel.currency),
+    locale: normalizeStorefrontChannelLocale(channel.locale),
+    source: 'channel',
+    channelId: channel.id,
+    channelSlug: channel.slug
+  };
+}
+
+export function resolveStorefrontChannelDefaults(channels: StorefrontChannelRecord[]): StorefrontChannelDefaults {
+  return buildStorefrontChannelDefaults(selectDefaultStorefrontChannel(channels));
+}
+
 export async function listStorefrontChannels(): Promise<StorefrontChannelRecord[]> {
   if (!hasDatabase()) return [];
 
@@ -151,4 +185,9 @@ export async function createStorefrontChannel(input: StorefrontChannelInput) {
   `;
 
   return inserted[0];
+}
+
+export async function getDefaultStorefrontChannelDefaults() {
+  const channels = await listStorefrontChannels();
+  return resolveStorefrontChannelDefaults(channels);
 }
