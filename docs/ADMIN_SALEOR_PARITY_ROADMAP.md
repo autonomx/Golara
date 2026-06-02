@@ -138,7 +138,7 @@ Success criteria:
 
 Goal: support merchandising campaigns without code changes.
 
-- Add discount model: percentage/fixed amount.
+- [x] Add discount model: percentage/fixed amount.
 - Add voucher/coupon codes.
 - Add validity windows.
 - Add usage limits.
