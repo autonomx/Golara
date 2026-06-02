@@ -8,6 +8,7 @@ import { homepageBannerMediaSettingsService } from '@/lib/settings/homepage-bann
 import { notificationProviderSettingsService } from '@/lib/settings/notification-provider-settings';
 import { paymentProviderSettingsService } from '@/lib/settings/payment-provider-settings';
 import { shippingDeliverySettingsService } from '@/lib/settings/shipping-delivery-settings';
+import { staffPermissionSettingsService } from '@/lib/settings/staff-permission-settings';
 import { storeSettingsService } from '@/lib/settings/store-settings';
 import { storefrontNavigationMenuService, type StorefrontNavigationMenuItemInput } from '@/lib/settings/storefront-navigation-menu';
 import { taxCategorySettingsService } from '@/lib/settings/tax-category-settings';
@@ -58,6 +59,10 @@ function parseNavigationItemsJson(formData: FormData): StorefrontNavigationMenuI
   const parsed = JSON.parse(value) as StorefrontNavigationMenuItemInput[];
   if (!Array.isArray(parsed)) throw new Error('itemsJson must be an array');
   return parsed;
+}
+
+function listField(formData: FormData, name: string) {
+  return stringField(formData, name).split(/[\n,]+/g).map((value) => value.trim()).filter(Boolean);
 }
 
 export async function updateStoreSettingAction(formData: FormData) {
@@ -212,6 +217,42 @@ export async function updateNotificationProviderSettingAction(formData: FormData
   revalidatePath('/admin');
   revalidatePath('/admin/settings');
   redirect('/admin/settings?status=notification-provider-updated');
+}
+
+export async function updateStaffPermissionGroupAction(formData: FormData) {
+  await assertAdminRole('owner');
+
+  await staffPermissionSettingsService.updateGroup({
+    key: requiredString(formData, 'key'),
+    label: requiredString(formData, 'label'),
+    description: stringField(formData, 'description') || null,
+    role: requiredString(formData, 'role'),
+    permissions: listField(formData, 'permissions'),
+    isDefault: boolField(formData, 'isDefault'),
+    isActive: boolField(formData, 'isActive')
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/settings');
+  redirect('/admin/settings?status=staff-permission-group-updated');
+}
+
+export async function updateStaffAccountAction(formData: FormData) {
+  await assertAdminRole('owner');
+
+  await staffPermissionSettingsService.updateAccount({
+    provider: stringField(formData, 'provider') || 'password',
+    providerAccountId: requiredString(formData, 'providerAccountId'),
+    label: requiredString(formData, 'label'),
+    email: stringField(formData, 'email') || null,
+    role: requiredString(formData, 'role'),
+    permissionGroupKey: stringField(formData, 'permissionGroupKey') || null,
+    isActive: boolField(formData, 'isActive')
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/settings');
+  redirect('/admin/settings?status=staff-account-updated');
 }
 
 export async function updateFulfillmentMethodSettingAction(formData: FormData) {
