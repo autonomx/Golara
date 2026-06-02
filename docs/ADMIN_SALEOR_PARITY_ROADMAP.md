@@ -127,7 +127,7 @@ Goal: improve order operations beyond list/status management.
 - [x] Add order discounts.
 - [x] Add fulfillment shipment/delivery records.
 - [x] Add order activity timeline with staff attribution.
-- Add email/SMS notification actions with retry state.
+- [x] Add email/SMS notification actions with retry state.
 
 Success criteria:
 
