@@ -32,6 +32,7 @@ import { runInventoryStockReservationModelTests } from './inventory-stock-reserv
 import { runManualPaymentAdjustmentFlowTests } from './manual-payment-adjustment-flow.test';
 import { runManualPaymentMarkingFlowTests } from './manual-payment-marking-flow.test';
 import { runMediaStorageReadinessTests } from './media-storage-readiness.test';
+import { runOrderActivityTimelineAttributionTests } from './order-activity-timeline-attribution.test';
 import { runOrderNextPathTests } from './order-next-path.test';
 import { runOrderDiscountFlowTests } from './order-discount-flow.test';
 import { runOrderReturnRouteCoreTests } from './order-return-route-core.test';
@@ -102,6 +103,7 @@ async function main() {
   await runManualPaymentAdjustmentFlowTests();
   await runPaymentAttemptTimelineFlowTests();
   await runOrderDiscountFlowTests();
+  await runOrderActivityTimelineAttributionTests();
   await runPaymentGatewayConfigTests();
   await runPaymentGatewayAdaptersTests();
   await runProductCheckoutPolicyTests();
@@ -116,7 +118,7 @@ async function main() {
   await runFulfillmentShipmentRecordsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (58 files)');
+  console.log('unit tests passed (59 files)');
 }
 
 main().catch((error) => {
