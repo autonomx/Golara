@@ -60,6 +60,20 @@ export type Product = {
   description: string;
   updatedAt?: Date;
   translations?: CatalogTranslation[];
+  variants?: ProductVariant[];
+};
+
+export type ProductVariant = {
+  id: string;
+  productId: string;
+  sku: string;
+  name: string;
+  price: number;
+  currency: string;
+  image?: string;
+  isActive: boolean;
+  sortOrder: number;
+  updatedAt?: Date;
 };
 
 export type MediaSourceType = 'external' | 'upload' | 'seed' | 'generated';

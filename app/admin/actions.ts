@@ -294,6 +294,57 @@ export async function updateProductAction(productId: string, formData: FormData)
   redirect(`/admin/products/${productId}?status=product-updated`);
 }
 
+export async function createProductVariantAction(productId: string, formData: FormData) {
+  await ensureCanWriteCms();
+  if (!productId) throw new Error('productId is required');
+
+  const product = await prisma.product.findUnique({ where: { id: productId }, select: { imageUrl: true } });
+  if (!product) throw new Error('Product not found.');
+
+  await prisma.productVariant.create({
+    data: {
+      productId,
+      sku: requiredString(formData, 'sku'),
+      name: requiredString(formData, 'name'),
+      priceCents: priceCentsField(formData, 'price'),
+      currency: stringField(formData, 'currency', 'CAD') || 'CAD',
+      imageUrl: resolveOptionalImageUrl(formData, 'variantSelectedMediaUrl', 'variantImageUrl') ?? product.imageUrl,
+      isActive: boolField(formData, 'isActive'),
+      sortOrder: intField(formData, 'sortOrder', 0)
+    }
+  });
+
+  revalidateCatalog();
+  revalidatePath(`/admin/products/${productId}`);
+  redirect(`/admin/products/${productId}?status=product-variant-created`);
+}
+
+export async function updateProductVariantAction(productId: string, variantId: string, formData: FormData) {
+  await ensureCanWriteCms();
+  if (!productId) throw new Error('productId is required');
+  if (!variantId) throw new Error('variantId is required');
+
+  const product = await prisma.product.findUnique({ where: { id: productId }, select: { imageUrl: true } });
+  if (!product) throw new Error('Product not found.');
+
+  await prisma.productVariant.update({
+    where: { id: variantId },
+    data: {
+      sku: requiredString(formData, 'sku'),
+      name: requiredString(formData, 'name'),
+      priceCents: priceCentsField(formData, 'price'),
+      currency: stringField(formData, 'currency', 'CAD') || 'CAD',
+      imageUrl: resolveOptionalImageUrl(formData, 'variantSelectedMediaUrl', 'variantImageUrl') ?? product.imageUrl,
+      isActive: boolField(formData, 'isActive'),
+      sortOrder: intField(formData, 'sortOrder', 0)
+    }
+  });
+
+  revalidateCatalog();
+  revalidatePath(`/admin/products/${productId}`);
+  redirect(`/admin/products/${productId}?status=product-variant-updated`);
+}
+
 export async function bulkUpdateProductsAction(formData: FormData) {
   await ensureCanWriteCms();
 

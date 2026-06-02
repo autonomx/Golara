@@ -1,11 +1,11 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { updateProductAction } from '@/app/admin/actions';
+import { createProductVariantAction, updateProductAction, updateProductVariantAction } from '@/app/admin/actions';
 import { MediaSelectWithPreview } from '@/components/admin/MediaSelectWithPreview';
 import { SiteHeader } from '@/components/SiteHeader';
 import { assertAdminRole } from '@/lib/admin-auth';
-import type { Category, MediaItem, Product } from '@/lib/catalog';
+import type { Category, MediaItem, Product, ProductVariant } from '@/lib/catalog';
 import { listAdminCategories, listAdminProducts, listMedia } from '@/lib/cms/catalog-repository';
 import { getRuntimeReadiness } from '@/lib/runtime-readiness';
 
@@ -50,13 +50,38 @@ function mediaForProduct(media: MediaItem[], defaultValue?: string) {
   return media.filter((item) => item.mediaCategory === 'product' || item.url === defaultValue);
 }
 
+function VariantFields({ media, productImage, variant, disabled }: { media: MediaItem[]; productImage: string; variant?: ProductVariant; disabled: boolean }) {
+  const image = variant?.image ?? productImage;
+  return (
+    <>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Field label="Variant name" name="name" defaultValue={variant?.name} disabled={disabled} />
+        <Field label="SKU" name="sku" defaultValue={variant?.sku} disabled={disabled} />
+      </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        <Field label="Price" name="price" type="number" defaultValue={variant?.price ?? 0} disabled={disabled} />
+        <Field label="Currency" name="currency" defaultValue={variant?.currency ?? 'CAD'} disabled={disabled} />
+        <Field label="Sort order" name="sortOrder" type="number" defaultValue={variant?.sortOrder ?? 0} disabled={disabled} />
+      </div>
+      <MediaSelectWithPreview label="Variant image from media library" name="variantSelectedMediaUrl" media={mediaForProduct(media, image)} defaultValue={image} disabled={disabled} className={inputClass} />
+      <Field label="Manual variant image URL" name="variantImageUrl" defaultValue={image} required={false} disabled={disabled} />
+      <Toggle label="Active" name="isActive" defaultChecked={variant?.isActive ?? true} disabled={disabled} />
+    </>
+  );
+}
+
 function findProduct(products: Product[], productId: string) {
   return products.find((product) => product.id === productId || product.slug === productId);
 }
 
 function StatusBanner({ status }: { status?: string }) {
-  if (status !== 'product-updated') return null;
-  return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">Product saved.</div>;
+  const messages: Record<string, string> = {
+    'product-updated': 'Product saved.',
+    'product-variant-created': 'Variant created.',
+    'product-variant-updated': 'Variant saved.'
+  };
+  if (!status || !messages[status]) return null;
+  return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">{messages[status]}</div>;
 }
 
 export default async function AdminProductDetailPage({ params, searchParams }: { params: Promise<{ productId: string }>; searchParams: Promise<{ status?: string }> }) {
@@ -69,6 +94,7 @@ export default async function AdminProductDetailPage({ params, searchParams }: {
   const runtimeReadiness = getRuntimeReadiness();
   const disabled = !runtimeReadiness.databaseUrlPresent || !product.id;
   const updateAction = updateProductAction.bind(null, product.id ?? '');
+  const createVariantAction = createProductVariantAction.bind(null, product.id ?? '');
 
   return (
     <main id="main-content" tabIndex={-1}>
@@ -92,6 +118,7 @@ export default async function AdminProductDetailPage({ params, searchParams }: {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1.4fr_0.8fr]">
+          <div className="grid gap-6">
           <form action={updateAction} className={`${cardClass} grid gap-5`}>
             <div>
               <h2 className="font-display text-3xl text-rosewood">Product details</h2>
@@ -130,6 +157,49 @@ export default async function AdminProductDetailPage({ params, searchParams }: {
             </button>
           </form>
 
+          <section className={`${cardClass} grid gap-5`}>
+            <div>
+              <h2 className="font-display text-3xl text-rosewood">Variants and SKUs</h2>
+              <p className="mt-2 text-sm leading-6 text-stone-600">Add purchasable variants with their own SKU, price, image, and active state.</p>
+            </div>
+            <details className="rounded-3xl border border-rosewood/10 bg-cream p-5">
+              <summary className="cursor-pointer font-display text-2xl text-rosewood">Create variant</summary>
+              <form action={createVariantAction} className="mt-5 grid gap-4">
+                <VariantFields media={media} productImage={product.image} disabled={disabled} />
+                <button className="w-fit rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none" type="submit" disabled={disabled}>
+                  Create variant
+                </button>
+              </form>
+            </details>
+            {!product.variants?.length ? (
+              <div className="rounded-3xl border border-dashed border-stone-300 bg-stone-50 p-6 text-sm text-stone-600">No variants yet.</div>
+            ) : (
+              <div className="grid gap-4">
+                {product.variants.map((variant) => (
+                  <details key={variant.id} className="rounded-3xl border border-rosewood/10 bg-cream p-5">
+                    <summary className="cursor-pointer list-none">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <h3 className="font-display text-2xl text-rosewood">{variant.name}</h3>
+                          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">{variant.sku} / {variant.price} {variant.currency} / {variant.isActive ? 'Active' : 'Inactive'}</p>
+                        </div>
+                        <span className="rounded-full border border-rosewood/15 bg-white px-3 py-1 text-xs font-semibold text-rosewood">Edit</span>
+                      </div>
+                    </summary>
+                    <form action={updateProductVariantAction.bind(null, product.id ?? '', variant.id)} className="mt-5 grid gap-4">
+                      <VariantFields media={media} productImage={product.image} variant={variant} disabled={disabled} />
+                      <button className="w-fit rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none" type="submit" disabled={disabled}>
+                        Save variant
+                      </button>
+                    </form>
+                  </details>
+                ))}
+              </div>
+            )}
+          </section>
+
+          </div>
+
           <aside className="grid content-start gap-6">
             <section className={cardClass}>
               <h2 className="font-display text-3xl text-rosewood">Preview</h2>
@@ -146,7 +216,7 @@ export default async function AdminProductDetailPage({ params, searchParams }: {
             <section className={cardClass}>
               <h2 className="font-display text-3xl text-rosewood">Next PIM work</h2>
               <div className="mt-4 grid gap-3 text-sm text-stone-700">
-                <p>Variants, product types, attributes, and SEO metadata will attach to this detail page in the next Phase 2 slices.</p>
+                <p>Product types, attributes, and SEO metadata will attach to this detail page in the next Phase 2 slices.</p>
               </div>
             </section>
           </aside>

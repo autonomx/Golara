@@ -1,7 +1,7 @@
 import 'server-only';
 
 import type { Prisma } from '@prisma/client';
-import type { AdminAuditLogEntry, CatalogTranslation, Category, CustomerInquiry, HomepageContent, MediaItem, Product } from '@/lib/catalog';
+import type { AdminAuditLogEntry, CatalogTranslation, Category, CustomerInquiry, HomepageContent, MediaItem, Product, ProductVariant } from '@/lib/catalog';
 import { prisma } from '@/lib/prisma';
 import { readWithSeedFallback } from '@/lib/cms/repository-fallback-policy';
 import { seedCategories, seedHomepageContent, seedProducts } from '@/lib/seed-data';
@@ -78,7 +78,21 @@ type DbProduct = {
   imageUrl: string;
   category?: DbCategory;
   images?: { url: string; alt: string }[];
+  variants?: DbProductVariant[];
   translations?: DbProductTranslation[];
+};
+
+type DbProductVariant = {
+  id: string;
+  productId: string;
+  sku: string;
+  name: string;
+  priceCents: number;
+  currency: string;
+  imageUrl: string | null;
+  isActive: boolean;
+  sortOrder: number;
+  updatedAt?: Date;
 };
 
 type DbFollowUp = { id: string; note: string; channel: string; createdAt: Date };
@@ -121,7 +135,7 @@ type InquiryWhere = Prisma.CustomerInquiryWhereInput;
 type AuditLogWhere = Prisma.AdminAuditLogWhereInput;
 
 const categoryInclude = { parent: { select: { slug: true, title: true, translations: true } }, translations: true } satisfies Prisma.CategoryInclude;
-const productInclude = { category: { include: categoryInclude }, images: true, translations: true } satisfies Prisma.ProductInclude;
+const productInclude = { category: { include: categoryInclude }, images: true, variants: { orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] }, translations: true } satisfies Prisma.ProductInclude;
 
 function bySortThenTitle(a: Category, b: Category) {
   return (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.title.localeCompare(b.title);
@@ -249,6 +263,22 @@ function mapProductTranslations(translations?: DbProductTranslation[]): CatalogT
   }));
 }
 
+function mapProductVariants(variants?: DbProductVariant[]): ProductVariant[] | undefined {
+  if (!variants?.length) return undefined;
+  return variants.map((variant) => ({
+    id: variant.id,
+    productId: variant.productId,
+    sku: variant.sku,
+    name: variant.name,
+    price: variant.priceCents / 100,
+    currency: variant.currency,
+    image: variant.imageUrl ?? undefined,
+    isActive: variant.isActive,
+    sortOrder: variant.sortOrder,
+    updatedAt: variant.updatedAt
+  }));
+}
+
 function mapCategory(category: DbCategory, options: CatalogReadOptions = {}): Category {
   const localized = localizeCategory(category, options);
   return {
@@ -289,7 +319,8 @@ function mapProduct(product: DbProduct, options: CatalogReadOptions = {}): Produ
     isActive: product.isActive,
     image,
     description: localized.description,
-    translations: options.includeTranslations ? mapProductTranslations(product.translations) : undefined
+    translations: options.includeTranslations ? mapProductTranslations(product.translations) : undefined,
+    variants: mapProductVariants(product.variants)
   };
 }
 

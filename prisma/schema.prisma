@@ -28,11 +28,30 @@ model Product {
   orderItems     CheckoutOrderItem[]
   cartItems      CartItem[]
   translations   ProductTranslation[]
+  variants       ProductVariant[]
   createdAt      DateTime             @default(now())
   updatedAt      DateTime             @updatedAt
 
   @@index([categoryId])
   @@index([isActive, bestSeller])
+}
+
+model ProductVariant {
+  id         String   @id @default(cuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku        String   @unique
+  name       String
+  priceCents Int
+  currency   String   @default("CAD")
+  imageUrl   String?
+  isActive   Boolean  @default(true)
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([productId, isActive])
+  @@index([sku])
 }
 
 model ProductTranslation {
