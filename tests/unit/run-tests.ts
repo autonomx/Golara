@@ -38,6 +38,7 @@ import { runLocalizedSeoMetadataModelTests } from './localized-seo-metadata-mode
 import { runManualPaymentAdjustmentFlowTests } from './manual-payment-adjustment-flow.test';
 import { runManualPaymentMarkingFlowTests } from './manual-payment-marking-flow.test';
 import { runMediaStorageReadinessTests } from './media-storage-readiness.test';
+import { runNotificationProviderSettingsTests } from './notification-provider-settings.test';
 import { runOrderActivityTimelineAttributionTests } from './order-activity-timeline-attribution.test';
 import { runOrderNextPathTests } from './order-next-path.test';
 import { runOrderDiscountFlowTests } from './order-discount-flow.test';
@@ -130,6 +131,7 @@ async function main() {
   await runPaymentGatewayConfigTests();
   await runPaymentGatewayAdaptersTests();
   await runPaymentProviderSettingsTests();
+  await runNotificationProviderSettingsTests();
   await runProductCheckoutPolicyTests();
   await runProductVariantMapperTests();
   await runPromotionDiscountModelTests();
@@ -162,7 +164,7 @@ async function main() {
   await runFulfillmentShipmentRecordsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (81 files)');
+  console.log('unit tests passed (82 files)');
 }
 
 main().catch((error) => {
