@@ -291,7 +291,7 @@ export async function updateProductAction(productId: string, formData: FormData)
   });
 
   revalidateCatalog();
-  redirect(adminPath('product-updated'));
+  redirect(`/admin/products/${productId}?status=product-updated`);
 }
 
 export async function bulkUpdateProductsAction(formData: FormData) {

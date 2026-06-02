@@ -41,7 +41,7 @@ Success criteria:
 
 Goal: move from simple product records toward Saleor-style catalog modeling.
 
-- Add product detail pages instead of large inline edit forms.
+- [x] Add product detail pages instead of large inline edit forms.
 - Add product variants/SKUs.
 - Add variant price, SKU/code, active state, and image fields.
 - Add product types.
