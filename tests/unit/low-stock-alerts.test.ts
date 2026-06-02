@@ -56,14 +56,15 @@ export async function runLowStockAlertsTests() {
   const summary = buildLowStockAlertsSummary(products, new Date('2026-06-02T12:00:00Z'));
 
   assert.equal(summary.trackedVariants, 3);
-  assert.equal(summary.outOfStockVariants, 2);
+  assert.equal(summary.outOfStockVariants, 1);
   assert.equal(summary.lowStockVariants, 1);
   assert.equal(summary.untrackedVariants, 1);
   assert.equal(summary.inactiveVariants, 1);
-  assert.equal(summary.alerts.length, 3);
+  assert.equal(summary.alerts.length, 2);
   assert.equal(summary.alerts[0].status, 'out_of_stock');
   assert.equal(summary.alerts[0].canSell, false);
   assert.equal(summary.alerts.find((row) => row.variantId === 'v2')?.status, 'low_stock');
+  assert.equal(summary.alerts.find((row) => row.variantId === 'v5'), undefined);
 
   assert.match(service, /export type LowStockAlertsSummary/);
   assert.match(service, /buildLowStockAlertsSummary/);
