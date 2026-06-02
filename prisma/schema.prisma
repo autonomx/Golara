@@ -95,6 +95,8 @@ model ProductVariant {
   sortOrder  Int      @default(0)
   attributeValues ProductAttributeValue[]
   locationStocks ProductVariantLocationStock[]
+  cartItems CartItem[]
+  orderItems CheckoutOrderItem[]
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -414,13 +416,17 @@ model CartItem {
   cart      CartSession @relation(fields: [cartId], references: [id], onDelete: Cascade)
   productId String
   product   Product     @relation(fields: [productId], references: [id])
+  variantId String?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
+  lineKey   String
   quantity  Int
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
 
-  @@unique([cartId, productId])
+  @@unique([cartId, lineKey])
   @@index([cartId])
   @@index([productId])
+  @@index([variantId])
 }
 
 model CheckoutOrder {
@@ -468,6 +474,10 @@ model CheckoutOrderItem {
   order          CheckoutOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId      String
   product        Product       @relation(fields: [productId], references: [id])
+  variantId      String?
+  variant        ProductVariant? @relation(fields: [variantId], references: [id])
+  variantSku     String?
+  variantName    String?
   productTitle   String
   productCode    String
   quantity       Int
@@ -477,6 +487,7 @@ model CheckoutOrderItem {
 
   @@index([orderId])
   @@index([productId])
+  @@index([variantId])
 }
 
 model CheckoutPaymentAttempt {

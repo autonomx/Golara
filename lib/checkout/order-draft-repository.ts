@@ -5,6 +5,7 @@ import { hasDatabase, prisma } from '@/lib/prisma';
 
 type OrderDraftItemInput = {
   productId: string;
+  variantId?: string;
   quantity: number;
 };
 
@@ -52,13 +53,20 @@ function makePublicLookupToken() {
 }
 
 function normalizeItems(items: OrderDraftItemInput[]) {
-  const quantities = new Map<string, number>();
+  const quantities = new Map<string, OrderDraftItemInput>();
   for (const item of items) {
     const productId = optionalText(item.productId);
     if (!productId) continue;
-    quantities.set(productId, (quantities.get(productId) ?? 0) + normalizeQuantity(item.quantity));
+    const variantId = optionalText(item.variantId);
+    const lineKey = variantId ?? productId;
+    const existing = quantities.get(lineKey);
+    quantities.set(lineKey, {
+      productId,
+      variantId,
+      quantity: (existing?.quantity ?? 0) + normalizeQuantity(item.quantity)
+    });
   }
-  return [...quantities.entries()].map(([productId, quantity]) => ({ productId, quantity: Math.min(99, quantity) }));
+  return [...quantities.values()].map((item) => ({ ...item, quantity: Math.min(99, item.quantity) }));
 }
 
 export async function createOrderDraft(input: CreateOrderDraftInput) {
@@ -78,7 +86,12 @@ export async function createOrderDraft(input: CreateOrderDraftInput) {
       title: true,
       code: true,
       priceCents: true,
-      currency: true
+      currency: true,
+      variants: {
+        where: { isActive: true },
+        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+        select: { id: true, sku: true, name: true, priceCents: true, currency: true }
+      }
     }
   });
   const productsById = new Map(products.map((product) => [product.id, product]));
@@ -91,13 +104,19 @@ export async function createOrderDraft(input: CreateOrderDraftInput) {
   const orderItems = items.map((item) => {
     const product = productsById.get(item.productId);
     if (!product) throw new Error('Product is unavailable for checkout.');
-    const lineTotalCents = product.priceCents * item.quantity;
+    const variant = item.variantId ? product.variants.find((candidate) => candidate.id === item.variantId) : product.variants[0];
+    if (item.variantId && !variant) throw new Error('Product variant is unavailable for checkout.');
+    const unitPriceCents = variant?.priceCents ?? product.priceCents;
+    const lineTotalCents = unitPriceCents * item.quantity;
     return {
       productId: product.id,
+      variantId: variant?.id,
+      variantSku: variant?.sku,
+      variantName: variant?.name,
       productTitle: product.title,
       productCode: product.code,
       quantity: item.quantity,
-      unitPriceCents: product.priceCents,
+      unitPriceCents,
       lineTotalCents
     };
   });

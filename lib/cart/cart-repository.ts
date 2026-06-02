@@ -16,6 +16,7 @@ type CreateCartInput = {
 type AddCartItemInput = {
   token?: string;
   productId: string;
+  variantId?: string;
   quantity?: number;
   locale?: string;
   currency?: CartCurrency;
@@ -23,7 +24,7 @@ type AddCartItemInput = {
 
 type UpdateCartItemInput = {
   token: string;
-  productId: string;
+  lineKey: string;
   quantity: number;
 };
 
@@ -76,7 +77,8 @@ async function findActiveCart(token?: string) {
         include: {
           product: {
             include: { category: true }
-          }
+          },
+          variant: true
         }
       }
     }
@@ -98,7 +100,8 @@ async function createCart(input: CreateCartInput = {}) {
         include: {
           product: {
             include: { category: true }
-          }
+          },
+          variant: true
         }
       }
     }
@@ -113,7 +116,7 @@ export async function getCartByToken(token?: string) {
   const cart = await findActiveCart(token);
   if (!cart) return null;
 
-  const activeItems = cart.items.filter((item) => item.product.isActive && item.product.category.isActive);
+  const activeItems = cart.items.filter((item) => item.product.isActive && item.product.category.isActive && (!item.variantId || item.variant?.isActive));
   if (activeItems.length === cart.items.length) return cart;
 
   await prisma.cartItem.deleteMany({
@@ -141,15 +144,30 @@ export async function addCartItem(input: AddCartItemInput) {
       isActive: true,
       category: { isActive: true }
     },
-    select: { id: true, priceCents: true, requiresQuote: true }
+    select: {
+      id: true,
+      priceCents: true,
+      requiresQuote: true,
+      variants: {
+        where: { isActive: true },
+        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+        select: { id: true }
+      }
+    }
   });
   if (!product) throw new Error('Product is unavailable.');
   if (product.requiresQuote || product.priceCents <= 0) throw new Error('Product is custom order only.');
 
+  const requestedVariantId = optionalText(input.variantId);
+  const variantId = requestedVariantId
+    ? product.variants.find((variant) => variant.id === requestedVariantId)?.id
+    : product.variants[0]?.id;
+  if (requestedVariantId && !variantId) throw new Error('Variant is unavailable.');
+  const lineKey = variantId ?? product.id;
   const cart = await getOrCreateCart(input);
   const quantity = normalizeQuantity(input.quantity);
   const existing = await prisma.cartItem.findUnique({
-    where: { cartId_productId: { cartId: cart.id, productId } }
+    where: { cartId_lineKey: { cartId: cart.id, lineKey } }
   });
 
   if (existing) {
@@ -159,7 +177,7 @@ export async function addCartItem(input: AddCartItemInput) {
     });
   } else {
     await prisma.cartItem.create({
-      data: { cartId: cart.id, productId, quantity }
+      data: { cartId: cart.id, productId, variantId, lineKey, quantity }
     });
   }
 
@@ -175,14 +193,14 @@ export async function updateCartItem(input: UpdateCartItemInput) {
   if (!hasDatabase()) throw new Error('DATABASE_URL is required for cart sessions.');
   const cart = await findActiveCart(input.token);
   if (!cart) throw new Error('Cart was not found.');
-  const productId = optionalText(input.productId);
-  if (!productId) throw new Error('Product is required.');
+  const lineKey = optionalText(input.lineKey);
+  if (!lineKey) throw new Error('Cart line is required.');
 
   if (input.quantity <= 0) {
-    await prisma.cartItem.deleteMany({ where: { cartId: cart.id, productId } });
+    await prisma.cartItem.deleteMany({ where: { cartId: cart.id, lineKey } });
   } else {
     await prisma.cartItem.update({
-      where: { cartId_productId: { cartId: cart.id, productId } },
+      where: { cartId_lineKey: { cartId: cart.id, lineKey } },
       data: { quantity: normalizeQuantity(input.quantity) }
     });
   }
@@ -195,8 +213,8 @@ export async function updateCartItem(input: UpdateCartItemInput) {
   return getCartByToken(cart.token);
 }
 
-export async function removeCartItem(token: string, productId: string) {
-  return updateCartItem({ token, productId, quantity: 0 });
+export async function removeCartItem(token: string, lineKey: string) {
+  return updateCartItem({ token, lineKey, quantity: 0 });
 }
 
 export async function clearCart(token: string) {

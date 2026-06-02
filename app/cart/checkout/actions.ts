@@ -69,7 +69,7 @@ export async function createCartCheckoutAction(formData: FormData) {
         recipientName: name,
         recipientPhone: phone,
         customerNote: stringField(formData, 'customerNote'),
-        items: items.map((item) => ({ productId: item.productId, quantity: item.quantity }))
+        items: items.map((item) => ({ productId: item.productId, variantId: item.variantId ?? undefined, quantity: item.quantity }))
       });
 
       const attempt = await createCheckoutPaymentAttempt({ orderId: order.id });

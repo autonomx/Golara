@@ -34,6 +34,7 @@ export async function createCheckoutAction(productId: string | undefined, produc
     const email = stringField(formData, 'email');
     const line1 = stringField(formData, 'addressLine1');
     const quantity = intField(formData, 'quantity', 1);
+    const variantId = stringField(formData, 'variantId') || undefined;
 
     if (name.length < 2) {
       redirectTarget = checkoutPath(productSlug, 'name-required');
@@ -66,7 +67,7 @@ export async function createCheckoutAction(productId: string | undefined, produc
         recipientName: name,
         recipientPhone: phone,
         customerNote: stringField(formData, 'customerNote'),
-        items: [{ productId, quantity }]
+        items: [{ productId, variantId, quantity }]
       });
 
       const attempt = await createCheckoutPaymentAttempt({ orderId: order.id });

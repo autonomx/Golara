@@ -33,7 +33,7 @@ export default async function CartPage({ searchParams }: { searchParams: Promise
   const message = statusMessage(cartStatus);
   const cart = hasDatabase() ? await getCartByToken(token) : null;
   const items = cart?.items ?? [];
-  const subtotalCents = items.reduce((sum, item) => sum + item.product.priceCents * item.quantity, 0);
+  const subtotalCents = items.reduce((sum, item) => sum + (item.variant?.priceCents ?? item.product.priceCents) * item.quantity, 0);
   const currency = cart?.currency || items[0]?.product.currency || process.env.CHECKOUT_DOMESTIC_CURRENCY || 'TOMAN';
 
   return (
@@ -80,7 +80,8 @@ export default async function CartPage({ searchParams }: { searchParams: Promise
           <div className="mt-8 grid gap-6 lg:grid-cols-[2fr_1fr]">
             <div className="grid gap-4">
               {items.map((item) => {
-                const lineTotal = item.product.priceCents * item.quantity;
+                const unitPriceCents = item.variant?.priceCents ?? item.product.priceCents;
+                const lineTotal = unitPriceCents * item.quantity;
                 return (
                   <article key={item.id} className="grid gap-4 rounded-[2rem] border border-rosewood/10 bg-white p-5 shadow-sm md:grid-cols-[140px_1fr]">
                     <div className="relative aspect-square overflow-hidden rounded-3xl bg-blush">
@@ -93,13 +94,14 @@ export default async function CartPage({ searchParams }: { searchParams: Promise
                             {item.product.title}
                           </Link>
                           <p className="mt-1 text-xs uppercase tracking-[0.2em] text-rosewood/50">{item.product.code}</p>
-                          <p className="mt-2 text-sm text-stone-600">{formatMinorUnitAmount(item.product.priceCents, item.product.currency)} {copy('cart.each')}</p>
+                          {item.variant ? <p className="mt-1 text-sm font-semibold text-rosewood">{item.variant.name} / {item.variant.sku}</p> : null}
+                          <p className="mt-2 text-sm text-stone-600">{formatMinorUnitAmount(unitPriceCents, item.variant?.currency ?? item.product.currency)} {copy('cart.each')}</p>
                         </div>
                         <p className="font-display text-3xl text-rosewood">{formatMinorUnitAmount(lineTotal, item.product.currency)}</p>
                       </div>
                       <div className="flex flex-wrap gap-3">
                         <form action={updateCartItemAction} className="flex flex-wrap items-end gap-2 rounded-3xl border border-rosewood/10 bg-cream p-3">
-                          <input type="hidden" name="productId" value={item.productId} />
+                          <input type="hidden" name="lineKey" value={item.lineKey} />
                           <input type="hidden" name="returnTo" value="/cart" />
                           <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.16em] text-rosewood/60">
                             {copy('cart.quantity')}
@@ -110,7 +112,7 @@ export default async function CartPage({ searchParams }: { searchParams: Promise
                           <button type="submit" className="rounded-full bg-rosewood px-4 py-2 text-xs font-semibold text-white outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30">{copy('cart.update')}</button>
                         </form>
                         <form action={removeCartItemAction}>
-                          <input type="hidden" name="productId" value={item.productId} />
+                          <input type="hidden" name="lineKey" value={item.lineKey} />
                           <input type="hidden" name="returnTo" value="/cart" />
                           <button type="submit" className="rounded-full border border-rosewood/20 bg-white px-4 py-2 text-xs font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20">{copy('cart.remove')}</button>
                         </form>

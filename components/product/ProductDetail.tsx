@@ -14,6 +14,7 @@ const cartButtonClass = 'rounded-full bg-rosewood px-6 py-3 text-sm font-semibol
 export function ProductDetail({ product, category, checkoutPolicy, locale }: { product: Product; category?: Category; checkoutPolicy: ProductCheckoutPolicy; locale?: SupportedLocale }) {
   const canAddToCart = checkoutPolicy.canAddToCart;
   const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key, locale);
+  const purchasableVariants = product.variants?.filter((variant) => variant.isActive) ?? [];
 
   return (
     <section className="mx-auto grid max-w-7xl gap-10 px-5 py-14 lg:grid-cols-2">
@@ -40,6 +41,14 @@ export function ProductDetail({ product, category, checkoutPolicy, locale }: { p
               <input type="hidden" name="productId" value={product.id ?? ''} />
               <input type="hidden" name="returnTo" value={`/products/${product.slug}`} />
               <input type="hidden" name="currency" value={product.currency} />
+              {purchasableVariants.length > 1 ? (
+                <>
+                  <label className="sr-only" htmlFor={`variant-${product.slug}`}>Variant</label>
+                  <select id={`variant-${product.slug}`} name="variantId" defaultValue={purchasableVariants[0]?.id} disabled={!canAddToCart} className="rounded-full border border-rosewood/15 bg-white px-4 py-3 text-sm font-semibold text-rosewood outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100 disabled:text-stone-400">
+                    {purchasableVariants.map((variant) => <option key={variant.id} value={variant.id}>{variant.name} / {variant.sku}</option>)}
+                  </select>
+                </>
+              ) : <input type="hidden" name="variantId" value={purchasableVariants[0]?.id ?? ''} />}
               <label className="sr-only" htmlFor={`quantity-${product.slug}`}>{copy('product.quantity')}</label>
               <select id={`quantity-${product.slug}`} name="quantity" defaultValue="1" disabled={!canAddToCart} className="rounded-full border border-rosewood/15 bg-white px-4 py-3 text-sm font-semibold text-rosewood outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100 disabled:text-stone-400">
                 {[1, 2, 3, 4, 5].map((quantity) => <option key={quantity} value={quantity}>{quantity}</option>)}

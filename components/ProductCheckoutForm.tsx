@@ -24,6 +24,7 @@ export function ProductCheckoutForm({ product, dbReady, checkout, checkoutPolicy
 
   const action = createCheckoutAction.bind(null, product.id, product.slug);
   const message = checkout ? messages[checkout] : undefined;
+  const purchasableVariants = product.variants?.filter((variant) => variant.isActive) ?? [];
 
   return (
     <section className="mx-auto max-w-3xl px-5 pb-10">
@@ -39,6 +40,14 @@ export function ProductCheckoutForm({ product, dbReady, checkout, checkoutPolicy
             <label className="grid gap-2 text-sm font-semibold text-rosewood">Name<input className={inputClass} name="name" required minLength={2} disabled={!dbReady} /></label>
             <label className="grid gap-2 text-sm font-semibold text-rosewood">Phone<input className={inputClass} name="phone" required inputMode="tel" disabled={!dbReady} /></label>
             <label className="grid gap-2 text-sm font-semibold text-rosewood">Email optional<input className={inputClass} name="email" type="email" disabled={!dbReady} /></label>
+            {purchasableVariants.length > 1 ? (
+              <label className="grid gap-2 text-sm font-semibold text-rosewood">
+                Variant
+                <select className={inputClass} name="variantId" defaultValue={purchasableVariants[0]?.id} disabled={!dbReady}>
+                  {purchasableVariants.map((variant) => <option key={variant.id} value={variant.id}>{variant.name} / {variant.sku}</option>)}
+                </select>
+              </label>
+            ) : <input type="hidden" name="variantId" value={purchasableVariants[0]?.id ?? ''} />}
             <label className="grid gap-2 text-sm font-semibold text-rosewood">Quantity<input className={inputClass} name="quantity" type="number" min="1" max="99" defaultValue="1" disabled={!dbReady} /></label>
             <label className="grid gap-2 text-sm font-semibold text-rosewood">Delivery date optional<input className={inputClass} name="deliveryDate" type="date" disabled={!dbReady} /></label>
             <label className="grid gap-2 text-sm font-semibold text-rosewood">Delivery window optional<input className={inputClass} name="deliveryWindow" disabled={!dbReady} /></label>

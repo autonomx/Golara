@@ -43,6 +43,7 @@ export function ProductCard({ product, priority = false, locale }: { product: Pr
       ) : (
         <form action={addToCartAction} className="flex items-center gap-2 px-5 pb-5">
           <input type="hidden" name="productId" value={product.id ?? ''} />
+          <input type="hidden" name="variantId" value={product.variants?.[0]?.id ?? ''} />
           <input type="hidden" name="returnTo" value={`/products/${product.slug}`} />
           <input type="hidden" name="currency" value={product.currency} />
           <input type="hidden" name="quantity" value="1" />

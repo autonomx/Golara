@@ -39,6 +39,7 @@ import { runPublicInquiryServiceTests } from './public-inquiry-service.test';
 import { runRepositoryFallbackPolicyTests } from './repository-fallback-policy.test';
 import { runRuntimeModeTests } from './runtime-mode.test';
 import { runRuntimeReadinessTests } from './runtime-readiness.test';
+import { runVariantCheckoutLineModelTests } from './variant-checkout-line-model.test';
 import { runVariantLocationStockModelTests } from './variant-location-stock-model.test';
 import { runVariantStockMigrationTests } from './variant-stock-migration.test';
 import { runVariantStockAuditTests } from './variant-stock-audit.test';
@@ -85,6 +86,7 @@ async function main() {
   await runPaymentGatewayAdaptersTests();
   await runProductCheckoutPolicyTests();
   await runProductVariantMapperTests();
+  await runVariantCheckoutLineModelTests();
   await runVariantStockAuditTests();
   await runVariantStockStatusTests();
   await runVariantStockMigrationTests();
@@ -92,7 +94,7 @@ async function main() {
   await runWarehouseLocationModelTests();
   await runFulfillmentMethodSettingsModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (46 files)');
+  console.log('unit tests passed (47 files)');
 }
 
 main().catch((error) => {

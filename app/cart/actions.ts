@@ -46,6 +46,7 @@ export async function addToCartAction(formData: FormData) {
     const cart = await addCartItem({
       token: await getCartTokenCookie(),
       productId: stringField(formData, 'productId'),
+      variantId: stringField(formData, 'variantId'),
       quantity: intField(formData, 'quantity', 1),
       locale: stringField(formData, 'locale', 'fa-IR'),
       currency: stringField(formData, 'currency')
@@ -67,7 +68,7 @@ export async function updateCartItemAction(formData: FormData) {
   try {
     await updateCartItem({
       token,
-      productId: stringField(formData, 'productId'),
+      lineKey: stringField(formData, 'lineKey'),
       quantity: intField(formData, 'quantity', 1)
     });
     revalidateCartSurfaces(returnTo);
@@ -84,7 +85,7 @@ export async function removeCartItemAction(formData: FormData) {
   if (!hasDatabase() || !token) redirect(statusPath(returnTo, 'missing'));
 
   try {
-    await removeCartItem(token, stringField(formData, 'productId'));
+    await removeCartItem(token, stringField(formData, 'lineKey'));
     revalidateCartSurfaces(returnTo);
     redirect(statusPath(returnTo, 'removed'));
   } catch (error) {
