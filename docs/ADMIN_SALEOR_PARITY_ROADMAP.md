@@ -141,7 +141,7 @@ Goal: support merchandising campaigns without code changes.
 - [x] Add discount model: percentage/fixed amount.
 - [x] Add voucher/coupon codes.
 - [x] Add validity windows.
-- Add usage limits.
+- [x] Add usage limits.
 - Add product/category/customer eligibility.
 - Add order minimums.
 - Add gift card or store-credit foundation if needed.
