@@ -4,6 +4,7 @@ import { hasDatabase, prisma } from '@/lib/prisma';
 
 export type BestSellingProductSourceRow = {
   id: string;
+  orderId: string;
   productId: string | null;
   variantId?: string | null;
   productTitle: string;
@@ -110,7 +111,7 @@ export function buildBestSellingProductsSummary(rows: BestSellingProductSourceRo
 
     existing.quantitySold += quantity;
     existing.revenueCents += revenueCents;
-    existing.orderIds.add(row.id);
+    existing.orderIds.add(row.orderId);
     if (row.variantName?.trim()) existing.variants.add(row.variantName.trim());
     if (row.order.createdAt >= cutoff || row.createdAt >= cutoff) {
       existing.recentQuantitySold += quantity;
@@ -147,6 +148,7 @@ export const bestSellingProductsService = {
       take: 1000,
       select: {
         id: true,
+        orderId: true,
         productId: true,
         variantId: true,
         productTitle: true,
