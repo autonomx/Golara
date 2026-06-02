@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { fulfillmentMethodSettingsService } from '@/lib/settings/fulfillment-method-settings';
 import { homepageBannerMediaSettingsService } from '@/lib/settings/homepage-banner-media-settings';
+import { paymentProviderSettingsService } from '@/lib/settings/payment-provider-settings';
 import { shippingDeliverySettingsService } from '@/lib/settings/shipping-delivery-settings';
 import { storeSettingsService } from '@/lib/settings/store-settings';
 import { storefrontNavigationMenuService, type StorefrontNavigationMenuItemInput } from '@/lib/settings/storefront-navigation-menu';
@@ -161,6 +162,30 @@ export async function updateTaxCategorySettingAction(formData: FormData) {
   revalidatePath('/admin');
   revalidatePath('/admin/settings');
   redirect('/admin/settings?status=tax-category-updated');
+}
+
+export async function updatePaymentProviderSettingAction(formData: FormData) {
+  await assertAdminRole('owner');
+
+  await paymentProviderSettingsService.update({
+    key: requiredString(formData, 'key'),
+    label: requiredString(formData, 'label'),
+    description: stringField(formData, 'description') || null,
+    checkoutMode: requiredString(formData, 'checkoutMode'),
+    domesticProvider: requiredString(formData, 'domesticProvider'),
+    overseasProvider: stringField(formData, 'overseasProvider') || null,
+    domesticCurrency: requiredString(formData, 'domesticCurrency'),
+    overseasCurrency: requiredString(formData, 'overseasCurrency'),
+    overseasFallback: requiredString(formData, 'overseasFallback'),
+    requireIranianGatewayMerchantId: boolField(formData, 'requireIranianGatewayMerchantId'),
+    requireStripeSecretKey: boolField(formData, 'requireStripeSecretKey'),
+    isDefault: boolField(formData, 'isDefault'),
+    isActive: boolField(formData, 'isActive')
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/settings');
+  redirect('/admin/settings?status=payment-provider-updated');
 }
 
 export async function updateFulfillmentMethodSettingAction(formData: FormData) {
