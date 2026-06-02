@@ -23,7 +23,7 @@ Goal: make the admin shell feel like a durable operations console before adding 
 - [x] Keep Products, Categories, and Media as separate pages.
 - [x] Add separate sidebar entries/pages for Orders and Inquiries.
 - [x] Add separate sidebar entries for Customers, Discounts, Settings.
-- Add consistent page headers, breadcrumbs, and primary actions.
+- [x] Add consistent page headers, breadcrumbs, and primary actions.
 - [x] Add pagination to product/category/media tables.
 - [x] Add column visibility controls for dense tables.
 - [x] Add query-string-preserved filters.

@@ -37,6 +37,7 @@ type DashboardWorkspace = 'overview' | 'catalog' | 'content' | 'sales';
 type CatalogSection = 'all' | 'media' | 'categories' | 'products';
 type SalesSection = 'all' | 'orders' | 'inquiries';
 type AdminSearchParams = { tab?: string; status?: string; message?: string; catalogSearch?: string; catalogCategory?: string; catalogFlag?: string; productPage?: string; categoryPage?: string; mediaPage?: string; productColumns?: string | string[]; mediaColumns?: string | string[]; inquiryStatus?: string; inquiryPage?: string; inquirySearch?: string; inquiryAssignment?: string; auditAction?: string; auditEntity?: string; auditActor?: string; auditSearch?: string; orderStatus?: string; orderPaymentStatus?: string; orderFulfillmentStatus?: string; orderSearch?: string; orderPage?: string };
+type AdminModuleHeader = { eyebrow: string; title: string; description: string; action?: { href: string; label: string } };
 
 function parsePage(value?: string) {
   const parsed = Number.parseInt(value ?? '1', 10);
@@ -64,6 +65,45 @@ function tabHref(tab: AdminTab) {
 
 function dashboardWorkspace(tab: AdminTab): DashboardWorkspace | undefined {
   return tab === 'overview' || tab === 'catalog' || tab === 'content' || tab === 'sales' ? tab : undefined;
+}
+
+function moduleHeader(activeTab: AdminTab, activeNavKey: string): AdminModuleHeader {
+  const headers: Record<string, AdminModuleHeader> = {
+    overview: { eyebrow: 'Admin / Overview', title: 'Operations overview', description: 'Readiness, audit activity, security posture, and staff access.' },
+    products: { eyebrow: 'Admin / Catalog', title: 'Products', description: 'Manage product records, merchandising flags, pricing, and images.', action: { href: '#products', label: 'Create product' } },
+    categories: { eyebrow: 'Admin / Catalog', title: 'Categories', description: 'Manage storefront categories and subcategories.', action: { href: '#categories', label: 'Create category' } },
+    media: { eyebrow: 'Admin / Catalog', title: 'Media library', description: 'Manage image uploads, URL media, category tags, and usage.', action: { href: '#media', label: 'Add image' } },
+    catalog: { eyebrow: 'Admin / Catalog', title: 'Catalog', description: 'Manage products, categories, subcategories, and media.', action: { href: '#products', label: 'Create product' } },
+    content: { eyebrow: 'Admin / Content', title: 'Homepage content', description: 'Manage homepage copy and translations.', action: { href: '#homepage', label: 'Edit homepage' } },
+    homepage: { eyebrow: 'Admin / Content', title: 'Homepage content', description: 'Manage homepage copy and translations.', action: { href: '#homepage', label: 'Edit homepage' } },
+    translations: { eyebrow: 'Admin / Content', title: 'Translations', description: 'Manage localized storefront content.' },
+    sales: { eyebrow: 'Admin / Sales', title: 'Sales operations', description: 'Review orders and customer inquiries.' },
+    orders: { eyebrow: 'Admin / Sales', title: 'Orders', description: 'Review checkout orders, fulfillment, payment status, and exports.', action: { href: '/admin/orders/print', label: 'Print orders' } },
+    inquiries: { eyebrow: 'Admin / Sales', title: 'Inquiries', description: 'Review customer requests, assignments, follow-ups, and exports.', action: { href: '/admin/inquiries/print', label: 'Print inquiries' } },
+    customers: { eyebrow: 'Admin / Customer Ops', title: 'Customers', description: 'Review customer profiles, addresses, accounts, and order counts.' },
+    discounts: { eyebrow: 'Admin / Customer Ops', title: 'Discounts', description: 'Plan voucher, campaign, and gift-card workflows.' },
+    settings: { eyebrow: 'Admin / System', title: 'Settings', description: 'Group store, provider, delivery, and staff configuration.' }
+  };
+  return headers[activeNavKey] ?? headers[activeTab] ?? headers.overview;
+}
+
+function AdminModuleHeader({ header }: { header: AdminModuleHeader }) {
+  return (
+    <section className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">{header.eyebrow}</p>
+          <h2 className="mt-1 text-2xl font-bold text-stone-950">{header.title}</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">{header.description}</p>
+        </div>
+        {header.action ? (
+          <Link href={header.action.href} className="rounded-md bg-rosewood px-4 py-2 text-sm font-semibold text-white">
+            {header.action.label}
+          </Link>
+        ) : null}
+      </div>
+    </section>
+  );
 }
 
 const sidebarSections = [
@@ -213,6 +253,7 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
   const activeTab = forcedTab ?? parseAdminTab(tab);
   const activeWorkspace = dashboardWorkspace(activeTab);
   const resolvedActiveNavKey = activeNavKey ?? activeTab;
+  const header = moduleHeader(activeTab, resolvedActiveNavKey);
   const assignmentFilter = parseInquiryAssignmentQueueFilter(inquiryAssignment);
   const inquiryPageNumber = parsePage(inquiryPage);
   const auditFilters = {
@@ -274,6 +315,7 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
           <AdminTopBar activeTab={activeTab} productCount={products.length} categoryCount={categories.length} mediaCount={media.length} authenticated={authenticated} authConfigured={authConfigured} />
           <section className="grid gap-6 px-4 py-6 lg:px-6">
           <AdminActionBanner status={status} message={message} />
+          <AdminModuleHeader header={header} />
 
           {activeWorkspace ? (
             <AdminDashboard
