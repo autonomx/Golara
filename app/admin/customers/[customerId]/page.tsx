@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { updateAdminCustomerProfileAction } from '@/app/admin/customers/[customerId]/actions';
+import { addAdminCustomerTimelineNoteAction, updateAdminCustomerProfileAction } from '@/app/admin/customers/[customerId]/actions';
 import { SiteHeader } from '@/components/SiteHeader';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { formatMinorUnitAmount } from '@/lib/catalog';
@@ -21,6 +21,9 @@ function StatusBanner({ status }: { status?: string }) {
   if (status === 'customer-profile-updated') {
     return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">Customer profile saved.</div>;
   }
+  if (status === 'customer-note-added') {
+    return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">Customer note added.</div>;
+  }
   return null;
 }
 
@@ -32,6 +35,7 @@ export default async function AdminCustomerDetailPage({ params, searchParams }: 
   const customer = await getAdminCustomerDetail(customerId);
   if (!customer) notFound();
   const updateProfileAction = updateAdminCustomerProfileAction.bind(null, customer.id);
+  const addTimelineNoteAction = addAdminCustomerTimelineNoteAction.bind(null, customer.id);
 
   return (
     <main id="main-content" tabIndex={-1}>
@@ -107,6 +111,31 @@ export default async function AdminCustomerDetailPage({ params, searchParams }: 
           </div>
 
           <aside className="grid content-start gap-6">
+            <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
+              <h2 className="font-display text-3xl text-rosewood">Timeline</h2>
+              <form action={addTimelineNoteAction} className="mt-5 grid gap-3">
+                <label className="grid gap-2 text-sm font-semibold text-rosewood">
+                  Add staff note
+                  <textarea className={`${inputClass} min-h-32 resize-y`} name="note" maxLength={2000} required />
+                </label>
+                <button type="submit" className="w-fit rounded-full bg-rosewood px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-rosewood/20">Add note</button>
+              </form>
+              {!customer.timelineEvents.length ? <p className="mt-4 rounded-3xl border border-rosewood/10 bg-cream p-4 text-sm text-stone-700">No timeline events yet.</p> : (
+                <div className="mt-5 grid gap-3">
+                  {customer.timelineEvents.map((event) => (
+                    <article key={event.id} className="rounded-3xl border border-rosewood/10 bg-cream p-4 text-sm text-stone-700">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <p className="font-semibold text-rosewood">{event.title}</p>
+                        <span className="text-xs uppercase tracking-[0.18em] text-olive">{event.actorRole}</span>
+                      </div>
+                      {event.note ? <p className="mt-2 whitespace-pre-wrap">{event.note}</p> : null}
+                      <p className="mt-2 text-xs text-stone-500">{event.actorLabel}{event.actorEmail ? ` / ${event.actorEmail}` : ''} / {formatDate(event.createdAt)}</p>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
+
             <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
               <h2 className="font-display text-3xl text-rosewood">Accounts</h2>
               {!customer.accounts.length ? <p className="mt-4 rounded-3xl border border-rosewood/10 bg-cream p-4 text-sm text-stone-700">No linked accounts.</p> : (

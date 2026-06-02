@@ -13,6 +13,7 @@ import { runCmsInquiryServiceTests } from './cms-inquiry-service.test';
 import { runCmsMediaServiceTests } from './cms-media-service.test';
 import { runCmsProductServiceTests } from './cms-product-service.test';
 import { runCmsServiceTypesTests } from './cms-service-types.test';
+import { runCustomerAdminTimelineModelTests } from './customer-admin-timeline-model.test';
 import { runCustomerAuthIdentityTests } from './customer-auth-identity.test';
 import { runDataSafetyReadinessTests } from './data-safety-readiness.test';
 import { runDeployReadinessTests } from './deploy-readiness.test';
@@ -70,6 +71,7 @@ async function main() {
   await runInquiryReportingTests();
   await runInquiryAssignmentTests();
   await runInquiryAssignmentQueueTests();
+  await runCustomerAdminTimelineModelTests();
   await runCustomerAuthIdentityTests();
   await runOtpRateLimitTests();
   await runCheckoutStateMachineTests();
@@ -96,7 +98,7 @@ async function main() {
   await runFulfillmentMethodSettingsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (48 files)');
+  console.log('unit tests passed (49 files)');
 }
 
 main().catch((error) => {

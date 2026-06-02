@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
+import type { AdminIdentity } from '@/lib/admin-auth';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
 export type CustomerAddressInput = {
@@ -84,6 +85,16 @@ export type AdminCustomerDetail = AdminCustomerListItem & {
     deliveryDate?: Date | null;
     createdAt: Date;
   }[];
+  timelineEvents: {
+    id: string;
+    type: string;
+    title: string;
+    note?: string | null;
+    actorLabel: string;
+    actorEmail?: string | null;
+    actorRole: string;
+    createdAt: Date;
+  }[];
 };
 
 export function normalizeCustomerPhone(phone: string) {
@@ -163,6 +174,47 @@ export async function updateAdminCustomerProfile(customerId: string, input: Cust
   });
 
   return customer;
+}
+
+export async function addAdminCustomerTimelineNote(customerId: string, noteInput: string, actor: AdminIdentity) {
+  if (!hasDatabase()) throw new Error('DATABASE_URL is required for customer timeline notes.');
+
+  const note = optionalText(noteInput);
+  if (!note) throw new Error('Customer note is required.');
+  if (note.length > 2000) throw new Error('Customer note must be 2000 characters or fewer.');
+
+  const customer = await prisma.customerProfile.findUnique({
+    where: { id: customerId },
+    select: { id: true, phone: true }
+  });
+  if (!customer) throw new Error('Customer was not found.');
+
+  const event = await prisma.customerAdminTimelineEvent.create({
+    data: {
+      customerId,
+      type: 'staff_note',
+      title: 'Staff note',
+      note,
+      actorType: actor.type,
+      actorLabel: actor.label,
+      actorEmail: actor.email,
+      actorRole: actor.role,
+      actorProvider: actor.provider
+    }
+  });
+
+  await recordAdminAuditLog({
+    action: 'customer.timeline.note.create',
+    entity: 'customerProfile',
+    entityId: customer.id,
+    summary: `Added customer timeline note: ${customer.phone}`,
+    metadata: {
+      timelineEventId: event.id,
+      type: event.type
+    }
+  });
+
+  return event;
 }
 
 export async function addCustomerAddress(customerId: string, input: CustomerAddressInput) {
@@ -284,6 +336,7 @@ export async function getAdminCustomerDetail(customerId: string): Promise<AdminC
       _count: { select: { accounts: true, addresses: true, orders: true } },
       accounts: { orderBy: [{ lastLoginAt: 'desc' }, { createdAt: 'desc' }] },
       addresses: { orderBy: [{ isDefault: 'desc' }, { updatedAt: 'desc' }] },
+      timelineEvents: { orderBy: { createdAt: 'desc' }, take: 25 },
       orders: {
         orderBy: { createdAt: 'desc' },
         include: {
@@ -360,6 +413,16 @@ export async function getAdminCustomerDetail(customerId: string): Promise<AdminC
       message: inquiry.message,
       deliveryDate: inquiry.deliveryDate,
       createdAt: inquiry.createdAt
+    })),
+    timelineEvents: customer.timelineEvents.map((event) => ({
+      id: event.id,
+      type: event.type,
+      title: event.title,
+      note: event.note,
+      actorLabel: event.actorLabel,
+      actorEmail: event.actorEmail,
+      actorRole: event.actorRole,
+      createdAt: event.createdAt
     }))
   };
 }

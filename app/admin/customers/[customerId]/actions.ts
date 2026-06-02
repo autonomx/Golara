@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { assertAdminRole } from '@/lib/admin-auth';
-import { updateAdminCustomerProfile } from '@/lib/customers/customer-repository';
+import { addAdminCustomerTimelineNote, updateAdminCustomerProfile } from '@/lib/customers/customer-repository';
 
 function stringField(formData: FormData, name: string, fallback = '') {
   const value = formData.get(name);
@@ -27,4 +27,13 @@ export async function updateAdminCustomerProfileAction(customerId: string, formD
   revalidatePath('/admin/customers');
   revalidatePath(`/admin/customers/${customerId}`);
   redirect(customerPath(customerId, 'customer-profile-updated'));
+}
+
+export async function addAdminCustomerTimelineNoteAction(customerId: string, formData: FormData) {
+  const actor = await assertAdminRole('staff');
+  await addAdminCustomerTimelineNote(customerId, stringField(formData, 'note'), actor);
+
+  revalidatePath('/admin/customers');
+  revalidatePath(`/admin/customers/${customerId}`);
+  redirect(customerPath(customerId, 'customer-note-added'));
 }

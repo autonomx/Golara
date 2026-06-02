@@ -298,6 +298,7 @@ model CustomerProfile {
   accounts    CustomerAccount[]
   sessions    CustomerSession[]
   addresses   CustomerAddress[]
+  timelineEvents CustomerAdminTimelineEvent[]
   orders      CheckoutOrder[]
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
@@ -395,6 +396,26 @@ model CustomerAddress {
   orders      CheckoutOrder[]
 
   @@index([customerId, isDefault])
+}
+
+model CustomerAdminTimelineEvent {
+  id            String          @id @default(cuid())
+  customerId    String
+  customer      CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  type          String          @default("staff_note")
+  title         String
+  note          String?
+  actorType     String          @default("password")
+  actorLabel    String          @default("Admin")
+  actorEmail    String?
+  actorRole     String          @default("owner")
+  actorProvider String          @default("password")
+  metadata      Json?
+  createdAt     DateTime        @default(now())
+
+  @@index([customerId, createdAt])
+  @@index([type, createdAt])
+  @@index([actorEmail, createdAt])
 }
 
 model CartSession {
