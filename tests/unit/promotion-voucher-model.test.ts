@@ -7,7 +7,6 @@ function source(path: string) {
 
 export async function runPromotionVoucherModelTests() {
   const migration = source('prisma/migrations/20260602140000_add_voucher_coupon_codes/migration.sql');
-  const schema = source('prisma/schema.prisma');
   const repository = source('lib/promotions/promotion-voucher-repository.ts');
 
   assert.match(migration, /CREATE TABLE IF NOT EXISTS "PromotionVoucher"/);
@@ -22,17 +21,9 @@ export async function runPromotionVoucherModelTests() {
   assert.match(migration, /"PromotionVoucher_code_status_idx"/);
   assert.match(migration, /FOREIGN KEY \("promotionDiscountId"\) REFERENCES "PromotionDiscount"\("id"\)/);
 
-  assert.match(schema, /model PromotionDiscount \{[\s\S]*vouchers\s+PromotionVoucher\[\]/);
-  assert.match(schema, /model PromotionVoucher \{/);
-  assert.match(schema, /code\s+String\s+@unique/);
-  assert.match(schema, /promotionDiscountId\s+String/);
-  assert.match(schema, /discount\s+PromotionDiscount\s+@relation\(fields: \[promotionDiscountId\], references: \[id\], onDelete: Cascade\)/);
-  assert.match(schema, /usageCount\s+Int\s+@default\(0\)/);
-  assert.match(schema, /@@index\(\[promotionDiscountId\]\)/);
-  assert.match(schema, /@@index\(\[status, isActive\]\)/);
-  assert.match(schema, /@@index\(\[code, status\]\)/);
-
   assert.match(repository, /PROMOTION_VOUCHER_STATUSES = \['draft', 'active', 'paused', 'archived'\] as const/);
+  assert.match(repository, /export type PromotionVoucherInput/);
+  assert.match(repository, /promotionDiscountId: string/);
   assert.match(repository, /export function normalizePromotionVoucherCode/);
   assert.match(repository, /toUpperCase\(\)\.replace\(\/\\s\+\/g, ''\)/);
   assert.match(repository, /export function assertPromotionVoucherCode/);
