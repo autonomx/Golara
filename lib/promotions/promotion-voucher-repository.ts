@@ -15,6 +15,7 @@ export type PromotionVoucherInput = {
   isActive?: boolean;
   startsAt?: Date | string | null;
   endsAt?: Date | string | null;
+  usageLimit?: number | null;
 };
 
 export type PromotionVoucherRecord = {
@@ -24,6 +25,7 @@ export type PromotionVoucherRecord = {
   status: PromotionVoucherStatus;
   isActive: boolean;
   usageCount: number;
+  usageLimit: number | null;
   startsAt: Date | null;
   endsAt: Date | null;
   createdAt: Date;
@@ -31,6 +33,7 @@ export type PromotionVoucherRecord = {
 };
 
 export type PromotionValidityWindow = Pick<PromotionVoucherRecord, 'startsAt' | 'endsAt'>;
+export type PromotionUsageLimit = Pick<PromotionVoucherRecord, 'usageCount' | 'usageLimit'>;
 
 function optionalText(value?: string | null) {
   const normalized = value?.trim();
@@ -83,6 +86,23 @@ export function isPromotionWithinValidityWindow(window: PromotionValidityWindow,
   return (!window.startsAt || window.startsAt.getTime() <= nowTime) && (!window.endsAt || window.endsAt.getTime() >= nowTime);
 }
 
+export function normalizePromotionUsageLimit(value?: number | null) {
+  if (value === undefined || value === null) return null;
+  const normalized = Math.floor(value);
+  if (normalized < 1) throw new Error('Promotion usage limit must be at least 1.');
+  return normalized;
+}
+
+export function normalizePromotionUsageCount(value?: number | null) {
+  return Math.max(0, Math.floor(value ?? 0));
+}
+
+export function isPromotionWithinUsageLimit(limit: PromotionUsageLimit) {
+  const usageCount = normalizePromotionUsageCount(limit.usageCount);
+  const usageLimit = normalizePromotionUsageLimit(limit.usageLimit);
+  return usageLimit === null || usageCount < usageLimit;
+}
+
 export function normalizePromotionVoucherInput(input: PromotionVoucherInput) {
   const promotionDiscountId = optionalText(input.promotionDiscountId);
   if (!promotionDiscountId) throw new Error('Promotion discount id is required.');
@@ -94,12 +114,16 @@ export function normalizePromotionVoucherInput(input: PromotionVoucherInput) {
     status: assertPromotionVoucherStatus(input.status),
     isActive: input.isActive ?? true,
     startsAt: validity.startsAt,
-    endsAt: validity.endsAt
+    endsAt: validity.endsAt,
+    usageLimit: normalizePromotionUsageLimit(input.usageLimit)
   };
 }
 
-export function isPromotionVoucherActive(voucher: Pick<PromotionVoucherRecord, 'status' | 'isActive' | 'startsAt' | 'endsAt'>, now: Date = new Date()) {
-  return voucher.isActive && voucher.status === 'active' && isPromotionWithinValidityWindow(voucher, now);
+export function isPromotionVoucherActive(voucher: Pick<PromotionVoucherRecord, 'status' | 'isActive' | 'startsAt' | 'endsAt' | 'usageCount' | 'usageLimit'>, now: Date = new Date()) {
+  return voucher.isActive
+    && voucher.status === 'active'
+    && isPromotionWithinValidityWindow(voucher, now)
+    && isPromotionWithinUsageLimit(voucher);
 }
 
 export async function listPromotionVouchers(): Promise<PromotionVoucherRecord[]> {
@@ -113,6 +137,7 @@ export async function listPromotionVouchers(): Promise<PromotionVoucherRecord[]>
       "status",
       "isActive",
       "usageCount",
+      "usageLimit",
       "startsAt",
       "endsAt",
       "createdAt",
@@ -134,6 +159,7 @@ export async function findPromotionVoucherByCode(code: string): Promise<Promotio
       "status",
       "isActive",
       "usageCount",
+      "usageLimit",
       "startsAt",
       "endsAt",
       "createdAt",
@@ -165,6 +191,7 @@ export async function createPromotionVoucher(input: PromotionVoucherInput) {
       "isActive",
       "startsAt",
       "endsAt",
+      "usageLimit",
       "metadata"
     ) VALUES (
       ${id},
@@ -174,6 +201,7 @@ export async function createPromotionVoucher(input: PromotionVoucherInput) {
       ${voucher.isActive},
       ${voucher.startsAt},
       ${voucher.endsAt},
+      ${voucher.usageLimit},
       ${JSON.stringify(metadata)}::jsonb
     )
     RETURNING
@@ -183,6 +211,7 @@ export async function createPromotionVoucher(input: PromotionVoucherInput) {
       "status",
       "isActive",
       "usageCount",
+      "usageLimit",
       "startsAt",
       "endsAt",
       "createdAt",
