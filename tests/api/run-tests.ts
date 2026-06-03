@@ -40,7 +40,7 @@ function runServerActionBoundaryTests() {
   const actionFiles = walk('app').filter((file) => /actions?\.ts$/.test(file));
   const expectedFiles = [
     'app/admin/order-actions.ts',
-    'app/admin/settings-actions.ts',
+    'app/admin/settings/actions.ts',
     'app/checkout/actions.ts'
   ];
   for (const file of expectedFiles) assert.ok(actionFiles.includes(file), `${file} should be covered as a server action module`);
@@ -65,7 +65,7 @@ function runPublicApiFallbackContractTests() {
 
 function runApiSuiteScriptTests() {
   const pkg = source('package.json');
-  assert.match(pkg, /"test:api":\s*"tsx tests\/api\/run-tests\.ts"/);
+  assert.match(pkg, /"test:api":\s*"node --require \.\/tests\/setup\/server-only-register\.cjs --import tsx tests\/api\/run-tests\.ts"/);
   assert.match(pkg, /"test:all"/);
 }
 
