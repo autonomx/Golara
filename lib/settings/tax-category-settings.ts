@@ -47,6 +47,11 @@ function optionalText(value?: string | null) {
   return normalized || null;
 }
 
+function isMissingTaxCategorySettingTable(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes('TaxCategorySetting') && (message.includes('does not exist') || message.includes('42P01'));
+}
+
 export function normalizeTaxCategoryKey(value?: string | null) {
   const normalized = optionalText(value)?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   return normalized || DEFAULT_TAX_CATEGORY_SETTING.key;
@@ -108,60 +113,72 @@ export const taxCategorySettingsService = {
   async list(): Promise<TaxCategorySetting[]> {
     if (!hasDatabase()) return [DEFAULT_TAX_CATEGORY_SETTING];
 
-    const rows = await prisma.$queryRaw<TaxCategorySetting[]>`
-      SELECT "id", "key", "label", "description", "taxRateBasisPoints", "countryCode", "regionCode", "appliesToShipping", "isDefault", "isActive", "updatedAt"
-      FROM "TaxCategorySetting"
-      ORDER BY "isDefault" DESC, "countryCode" ASC, "regionCode" ASC NULLS FIRST, "label" ASC
-    `;
+    try {
+      const rows = await prisma.$queryRaw<TaxCategorySetting[]>`
+        SELECT "id", "key", "label", "description", "taxRateBasisPoints", "countryCode", "regionCode", "appliesToShipping", "isDefault", "isActive", "updatedAt"
+        FROM "TaxCategorySetting"
+        ORDER BY "isDefault" DESC, "countryCode" ASC, "regionCode" ASC NULLS FIRST, "label" ASC
+      `;
 
-    return rows.length ? rows.map(mapTaxCategorySetting) : [DEFAULT_TAX_CATEGORY_SETTING];
+      return rows.length ? rows.map(mapTaxCategorySetting) : [DEFAULT_TAX_CATEGORY_SETTING];
+    } catch (error) {
+      if (isMissingTaxCategorySettingTable(error)) return [DEFAULT_TAX_CATEGORY_SETTING];
+      throw error;
+    }
   },
 
   async update(input: TaxCategorySettingInput): Promise<TaxCategorySetting> {
     if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
 
     const normalized = normalizeTaxCategorySettingInput(input);
-    if (normalized.isDefault) {
-      await prisma.$executeRaw`
-        UPDATE "TaxCategorySetting"
-        SET "isDefault" = false, "updatedAt" = CURRENT_TIMESTAMP
-        WHERE "key" <> ${normalized.key}
-      `;
-    }
-
-    const rows = await prisma.$queryRaw<TaxCategorySetting[]>`
-      INSERT INTO "TaxCategorySetting" ("key", "label", "description", "taxRateBasisPoints", "countryCode", "regionCode", "appliesToShipping", "isDefault", "isActive")
-      VALUES (${normalized.key}, ${normalized.label}, ${normalized.description}, ${normalized.taxRateBasisPoints}, ${normalized.countryCode}, ${normalized.regionCode}, ${normalized.appliesToShipping}, ${normalized.isDefault}, ${normalized.isActive})
-      ON CONFLICT ("key") DO UPDATE SET
-        "label" = EXCLUDED."label",
-        "description" = EXCLUDED."description",
-        "taxRateBasisPoints" = EXCLUDED."taxRateBasisPoints",
-        "countryCode" = EXCLUDED."countryCode",
-        "regionCode" = EXCLUDED."regionCode",
-        "appliesToShipping" = EXCLUDED."appliesToShipping",
-        "isDefault" = EXCLUDED."isDefault",
-        "isActive" = EXCLUDED."isActive",
-        "updatedAt" = CURRENT_TIMESTAMP
-      RETURNING "id", "key", "label", "description", "taxRateBasisPoints", "countryCode", "regionCode", "appliesToShipping", "isDefault", "isActive", "updatedAt"
-    `;
-    const setting = mapTaxCategorySetting(rows[0]);
-
-    await recordAdminAuditLog({
-      action: 'settings.tax_category.update',
-      entity: 'taxCategorySetting',
-      entityId: setting.id,
-      summary: `Updated tax category: ${setting.label}`,
-      metadata: {
-        key: setting.key,
-        countryCode: setting.countryCode,
-        regionCode: setting.regionCode,
-        taxRateBasisPoints: setting.taxRateBasisPoints,
-        appliesToShipping: setting.appliesToShipping,
-        isDefault: setting.isDefault,
-        isActive: setting.isActive
+    try {
+      if (normalized.isDefault) {
+        await prisma.$executeRaw`
+          UPDATE "TaxCategorySetting"
+          SET "isDefault" = false, "updatedAt" = CURRENT_TIMESTAMP
+          WHERE "key" <> ${normalized.key}
+        `;
       }
-    });
 
-    return setting;
+      const rows = await prisma.$queryRaw<TaxCategorySetting[]>`
+        INSERT INTO "TaxCategorySetting" ("key", "label", "description", "taxRateBasisPoints", "countryCode", "regionCode", "appliesToShipping", "isDefault", "isActive")
+        VALUES (${normalized.key}, ${normalized.label}, ${normalized.description}, ${normalized.taxRateBasisPoints}, ${normalized.countryCode}, ${normalized.regionCode}, ${normalized.appliesToShipping}, ${normalized.isDefault}, ${normalized.isActive})
+        ON CONFLICT ("key") DO UPDATE SET
+          "label" = EXCLUDED."label",
+          "description" = EXCLUDED."description",
+          "taxRateBasisPoints" = EXCLUDED."taxRateBasisPoints",
+          "countryCode" = EXCLUDED."countryCode",
+          "regionCode" = EXCLUDED."regionCode",
+          "appliesToShipping" = EXCLUDED."appliesToShipping",
+          "isDefault" = EXCLUDED."isDefault",
+          "isActive" = EXCLUDED."isActive",
+          "updatedAt" = CURRENT_TIMESTAMP
+        RETURNING "id", "key", "label", "description", "taxRateBasisPoints", "countryCode", "regionCode", "appliesToShipping", "isDefault", "isActive", "updatedAt"
+      `;
+      const setting = mapTaxCategorySetting(rows[0]);
+
+      await recordAdminAuditLog({
+        action: 'settings.tax_category.update',
+        entity: 'taxCategorySetting',
+        entityId: setting.id,
+        summary: `Updated tax category: ${setting.label}`,
+        metadata: {
+          key: setting.key,
+          countryCode: setting.countryCode,
+          regionCode: setting.regionCode,
+          taxRateBasisPoints: setting.taxRateBasisPoints,
+          appliesToShipping: setting.appliesToShipping,
+          isDefault: setting.isDefault,
+          isActive: setting.isActive
+        }
+      });
+
+      return setting;
+    } catch (error) {
+      if (isMissingTaxCategorySettingTable(error)) {
+        throw new Error('Tax category settings are not available until the TaxCategorySetting table exists. Run the latest database schema setup before saving tax settings.');
+      }
+      throw error;
+    }
   }
 };
