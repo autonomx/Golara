@@ -1,9 +1,6 @@
-'use client';
-
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, MessageCircle, Sparkles, Truck } from 'lucide-react';
+import { MessageCircle, Sparkles, Truck } from 'lucide-react';
 import type { HomepageBannerSlide } from '@/lib/homepage-assets';
 
 interface HomepageBannerSlideshowProps {
@@ -11,28 +8,9 @@ interface HomepageBannerSlideshowProps {
 }
 
 export function HomepageBannerSlideshow({ slides }: HomepageBannerSlideshowProps) {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const slideCount = slides.length;
+  const heroSlide = slides[0];
 
-  useEffect(() => {
-    if (slideCount <= 1) {
-      return;
-    }
-
-    const timer = window.setInterval(() => {
-      setActiveIndex((current) => (current + 1) % slideCount);
-    }, 8000);
-
-    return () => window.clearInterval(timer);
-  }, [slideCount]);
-
-  const activeSlide = useMemo(() => slides[activeIndex], [slides, activeIndex]);
-
-  const goTo = (index: number) => {
-    setActiveIndex((index + slideCount) % slideCount);
-  };
-
-  if (!slideCount) {
+  if (!heroSlide) {
     return null;
   }
 
@@ -41,35 +19,57 @@ export function HomepageBannerSlideshow({ slides }: HomepageBannerSlideshowProps
       id="home-hero"
       data-section="home-hero"
       aria-labelledby="home-hero-heading"
-      className="relative overflow-hidden bg-[#fffdfb] px-4 pb-12 pt-5 md:px-8 md:pb-16"
+      className="relative overflow-hidden bg-[#fff7f1] px-4 py-5 md:px-8 md:py-8"
     >
-      <div className="mx-auto grid max-w-[1480px] gap-6 lg:grid-cols-[0.92fr_1.08fr] lg:items-stretch">
-        <div className="relative z-10 flex min-h-[420px] items-center rounded-lg border border-rosewood/10 bg-white/90 px-6 py-10 shadow-[0_18px_44px_rgba(111,36,56,0.08)] md:min-h-[470px] md:px-10 lg:min-h-[520px]">
-          <div className="max-w-xl text-stone-800">
-            <p className="inline-flex rounded-full border border-rosewood/10 bg-[#fff8f1] px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-olive shadow-sm">{activeSlide.eyebrow}</p>
-            <h1 id="home-hero-heading" className="mt-6 max-w-2xl font-display text-4xl leading-[1.02] text-rosewood md:text-6xl">{activeSlide.title}</h1>
-            <p className="mt-5 max-w-lg text-base leading-8 text-stone-700">{activeSlide.body}</p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link href="/categories/available-today" className="inline-flex rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(111,36,56,0.14)] transition hover:-translate-y-0.5 hover:bg-stone-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
+      <div className="relative mx-auto min-h-[600px] max-w-[1520px] overflow-hidden rounded-[2rem] border border-rosewood/10 bg-stone-900 shadow-[0_26px_70px_rgba(111,36,56,0.14)] md:min-h-[680px]">
+        <Image
+          src={heroSlide.image}
+          alt={heroSlide.alt}
+          fill
+          priority
+          className="object-cover"
+          sizes="100vw"
+        />
+
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,248,241,0.96)_0%,rgba(255,248,241,0.88)_34%,rgba(255,248,241,0.42)_58%,rgba(43,29,32,0.12)_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_28%,rgba(255,255,255,0.9)_0%,rgba(255,255,255,0.18)_34%,rgba(255,255,255,0)_62%)]" />
+
+        <div className="relative z-10 flex min-h-[600px] items-center px-6 py-12 md:min-h-[680px] md:px-12 lg:px-16">
+          <div className="max-w-2xl text-stone-800">
+            <p className="inline-flex rounded-full border border-rosewood/10 bg-white/72 px-5 py-2 text-xs font-semibold uppercase tracking-[0.32em] text-olive shadow-sm">
+              {heroSlide.eyebrow}
+            </p>
+
+            <h1 id="home-hero-heading" className="mt-8 max-w-2xl font-display text-5xl leading-[0.95] text-rosewood md:text-7xl lg:text-8xl">
+              {heroSlide.title}
+            </h1>
+
+            <p className="mt-6 max-w-xl text-base leading-8 text-stone-700 md:text-lg md:leading-9">
+              {heroSlide.body}
+            </p>
+
+            <div className="mt-9 flex flex-wrap items-center gap-3">
+              <Link href="/categories/available-today" className="inline-flex rounded-full bg-rosewood px-7 py-3.5 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(111,36,56,0.18)] transition hover:-translate-y-0.5 hover:bg-stone-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
                 Shop available today
               </Link>
-              <Link href="/products" className="inline-flex rounded-full border border-rosewood/20 bg-white px-6 py-3 text-sm font-semibold text-rosewood shadow-sm transition hover:-translate-y-0.5 hover:border-rosewood focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
+              <Link href="/products" className="inline-flex rounded-full border border-rosewood/20 bg-white/78 px-7 py-3.5 text-sm font-semibold text-rosewood shadow-sm transition hover:-translate-y-0.5 hover:border-rosewood focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
                 All products
               </Link>
-              <Link href="/#best-sellers" className="inline-flex rounded-full border border-rosewood/20 bg-white px-6 py-3 text-sm font-semibold text-rosewood shadow-sm transition hover:-translate-y-0.5 hover:border-rosewood focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
+              <Link href="/#best-sellers" className="inline-flex rounded-full border border-rosewood/15 bg-white/58 px-7 py-3.5 text-sm font-semibold text-rosewood shadow-sm transition hover:-translate-y-0.5 hover:border-rosewood focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
                 Best sellers
               </Link>
             </div>
-            <div className="mt-8 grid max-w-xl gap-3 text-sm font-medium text-stone-700 sm:grid-cols-3">
-              <div className="flex items-center gap-2 rounded-lg border border-rosewood/10 bg-white px-4 py-3 shadow-sm">
+
+            <div className="mt-10 flex flex-wrap gap-3 text-sm font-semibold text-stone-700">
+              <div className="inline-flex items-center gap-2 rounded-full border border-rosewood/10 bg-white/72 px-4 py-2 shadow-sm">
                 <Truck aria-hidden="true" className="h-4 w-4 text-rosewood" />
                 Same-day options
               </div>
-              <div className="flex items-center gap-2 rounded-lg border border-rosewood/10 bg-white px-4 py-3 shadow-sm">
+              <div className="inline-flex items-center gap-2 rounded-full border border-rosewood/10 bg-white/72 px-4 py-2 shadow-sm">
                 <Sparkles aria-hidden="true" className="h-4 w-4 text-rosewood" />
                 Premium finish
               </div>
-              <div className="flex items-center gap-2 rounded-lg border border-rosewood/10 bg-white px-4 py-3 shadow-sm">
+              <div className="inline-flex items-center gap-2 rounded-full border border-rosewood/10 bg-white/72 px-4 py-2 shadow-sm">
                 <MessageCircle aria-hidden="true" className="h-4 w-4 text-rosewood" />
                 Sales guidance
               </div>
@@ -77,52 +77,9 @@ export function HomepageBannerSlideshow({ slides }: HomepageBannerSlideshowProps
           </div>
         </div>
 
-        <div className="relative min-h-[360px] w-full overflow-hidden rounded-lg border border-rosewood/10 bg-stone-100 shadow-[0_18px_48px_rgba(111,36,56,0.10)] md:min-h-[470px] lg:min-h-[520px]">
-          {slides.map((slide, slideIndex) => (
-            <Image
-              key={slide.image}
-              src={slide.image}
-              alt={slide.alt}
-              fill
-              priority={slideIndex === 0}
-              className={`object-cover transition-opacity duration-500 ${slideIndex === activeIndex ? 'opacity-100' : 'opacity-0'}`}
-              sizes="(min-width: 1024px) 54vw, 100vw"
-            />
-          ))}
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(43,29,32,0.08)_0%,rgba(43,29,32,0)_40%,rgba(43,29,32,0.42)_100%)]" />
-          <div className="absolute bottom-5 left-5 rounded-full border border-white/30 bg-white/90 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-rosewood shadow-sm">
-            Golara studio selection
-          </div>
+        <div className="absolute bottom-6 right-6 hidden rounded-full border border-white/35 bg-white/72 px-5 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-rosewood shadow-sm md:block">
+          Golara studio selection
         </div>
-      </div>
-
-      <button
-        type="button"
-        onClick={() => goTo(activeIndex - 1)}
-        aria-label="Previous banner"
-        className="absolute right-24 top-[calc(100%-5.2rem)] hidden h-11 w-11 items-center justify-center rounded-full border border-rosewood/15 bg-white text-rosewood shadow-sm transition hover:bg-rosewood hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30 md:inline-flex lg:right-[7.5rem]"
-      >
-        <ChevronLeft aria-hidden="true" className="h-5 w-5" />
-      </button>
-      <button
-        type="button"
-        onClick={() => goTo(activeIndex + 1)}
-        aria-label="Next banner"
-        className="absolute right-10 top-[calc(100%-5.2rem)] hidden h-11 w-11 items-center justify-center rounded-full border border-rosewood/15 bg-white text-rosewood shadow-sm transition hover:bg-rosewood hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30 md:inline-flex lg:right-14"
-      >
-        <ChevronRight aria-hidden="true" className="h-5 w-5" />
-      </button>
-
-      <div className="absolute inset-x-0 bottom-6 flex justify-center gap-2">
-        {slides.map((slide, slideIndex) => (
-          <button
-            key={slideIndex}
-            type="button"
-            onClick={() => goTo(slideIndex)}
-            aria-label={`Show ${slide.eyebrow}`}
-            className={`h-1.5 rounded-full transition-all ${slideIndex === activeIndex ? 'w-10 bg-rosewood' : 'w-3 bg-rosewood/25 hover:bg-rosewood/50'}`}
-          />
-        ))}
       </div>
     </section>
   );
