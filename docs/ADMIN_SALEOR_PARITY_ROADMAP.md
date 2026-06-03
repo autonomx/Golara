@@ -214,7 +214,7 @@ Goal: make the overview page useful for daily commerce operations, not only read
 - [x] Add low-stock alerts.
 - [x] Add fulfillment queue summary.
 - [x] Add recent activity timeline.
-- Add failed payment/notification alerts.
+- [x] Add failed payment/notification alerts.
 - Add launch/readiness health cards.
 
 Success criteria:
