@@ -31,7 +31,8 @@ async function main() {
         showOnHomepage: category.showOnHomepage !== false,
         sortOrder: category.sortOrder ?? 0,
         isActive: category.isActive !== false
-      }
+      },
+      select: { id: true }
     });
 
     categoryBySlug.set(category.slug, savedCategory);
@@ -41,7 +42,8 @@ async function main() {
     const parentId = category.parentSlug ? categoryBySlug.get(category.parentSlug)?.id : null;
     await prisma.category.update({
       where: { slug: category.slug },
-      data: { parentId }
+      data: { parentId },
+      select: { id: true }
     });
   }
 
@@ -78,7 +80,8 @@ async function main() {
         requiresQuote,
         isActive: product.isActive !== false,
         categoryId: category.id
-      }
+      },
+      select: { id: true }
     });
 
     await prisma.media.upsert({
@@ -97,7 +100,8 @@ async function main() {
         storageProvider: seedProductMediaProvider(product.image),
         metadata: { mediaCategory: 'product', seedProductSlug: product.slug, productCode: product.code },
         productId: savedProduct.id
-      }
+      },
+      select: { id: true }
     });
   }
 
@@ -118,7 +122,8 @@ async function main() {
       body: seedHomepageContent.body,
       payload: seedHomepageContent,
       isActive: true
-    }
+    },
+    select: { id: true }
   });
 }
 
