@@ -28,7 +28,7 @@ function runE2eSmokeRouteCoverageTests() {
 function runE2eLocalHarnessTests() {
   const localHarness = source('tools/run-smoke-routes-local.mjs');
   assert.match(localHarness, /npm.*run.*dev|next dev|spawn/);
-  assert.match(localHarness, /smoke-routes\.mjs/);
+  assert.match(localHarness, /npm run smoke:routes/);
   assert.match(localHarness, /SMOKE_BASE_URL/);
 }
 
@@ -60,7 +60,7 @@ function runE2eCriticalPathCoverageTests() {
 
 function runE2eScriptContractTests() {
   const pkg = source('package.json');
-  assert.match(pkg, /"test:e2e":\s*"tsx tests\/e2e\/run-tests\.ts"/);
+  assert.match(pkg, /"test:e2e":\s*"node --require \.\/tests\/setup\/server-only-register\.cjs --import tsx tests\/e2e\/run-tests\.ts"/);
   assert.match(pkg, /"test:e2e:routes":\s*"npm run smoke:routes:local"/);
   assert.match(pkg, /"test:all"/);
   assert.equal(existsSync('tests/e2e/run-tests.ts'), true);
