@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { HomepageBannerSlideshow } from '@/components/HomepageBannerSlideshow';
 import { HomepageCategoryTileCard } from '@/components/HomepageCategoryTileCard';
 import { HomepageOccasionRail } from '@/components/HomepageOccasionRail';
-import { HomepageTrustStrip } from '@/components/HomepageTrustStrip';
 import { BestSellersCarousel } from '@/components/BestSellersCarousel';
 import { SiteHeader } from '@/components/SiteHeader';
 import { withCategoryProductCounts } from '@/lib/category-tree';
@@ -45,7 +44,6 @@ export default async function HomePage() {
 
       <HomepageBannerSlideshow slides={homepageBannerSlides} />
       <HomepageOccasionRail occasions={occasionRailItems} />
-      <HomepageTrustStrip />
 
       <BestSellersCarousel products={bestSellers} locale={locale} />
 
