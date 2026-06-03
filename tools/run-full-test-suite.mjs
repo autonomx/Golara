@@ -5,6 +5,7 @@ const commands = [
   ['unit', 'npm run test:unit'],
   ['functional', 'npm run test:functional'],
   ['api', 'npm run test:api'],
+  ['non-browser', 'npm run test:nonbrowser'],
   ['e2e-smoke-contract', 'npm run test:e2e']
 ];
 
