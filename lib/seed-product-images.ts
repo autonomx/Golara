@@ -28,6 +28,21 @@ const photoStyleSlugs = new Set([
   'imperium-pink'
 ]);
 
+const generatedRealImageSlugs = new Set([
+  'teddy-bouquet',
+  'steel-bloom-wild-1001110',
+  'autumn-design-2',
+  'dark-blue-design',
+  'pastel-green-design',
+  'yellow-pink-design',
+  'woshe-round-hand-bouquet-red',
+  'woshe-round-hand-bouquet-pink',
+  'cream-pink-design',
+  'light-green-design',
+  'pink-roses-pink-belle',
+  'maroon-belle'
+]);
+
 const descriptors: Record<string, SeedImageDescriptor> = {
   'vip-box-blue': { slug: 'vip-box-blue', code: '1004488', kind: 'box', dark: '#1f4f7a', main: '#3c7fb1', light: '#d7ecff', background: '#f5f9ff' },
   'signiture-round-baby-pink': { slug: 'signiture-round-baby-pink', code: '1001519', kind: 'box', dark: '#d77b9f', main: '#f2b6cc', light: '#fde9f1', background: '#fff7fa' },
@@ -56,6 +71,7 @@ const descriptors: Record<string, SeedImageDescriptor> = {
 };
 
 export function getSeedProductImagePath(slug: string): string {
+  if (generatedRealImageSlugs.has(slug)) return `/real-images/${slug}.png`;
   return `${photoStyleSlugs.has(slug) ? photoImagePrefix : catalogImagePrefix}/${slug}`;
 }
 
