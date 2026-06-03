@@ -17,23 +17,32 @@ const oddInputs = [
   '///relative/path///'
 ];
 
+const nonBlankInputs = oddInputs.filter((input) => input.trim().length > 0);
+
 function runStableStringNormalizers() {
   for (const input of oddInputs) {
     assert.doesNotThrow(() => normalizeIntegrationAppKey(input));
-    assert.doesNotThrow(() => normalizePromotionVoucherCode(input));
     assert.doesNotThrow(() => normalizeWebhookKey(input));
     assert.doesNotThrow(() => normalizeStorefrontChannelCurrency(input));
     assert.doesNotThrow(() => normalizeImportExportJobTarget(input));
+  }
+
+  assert.throws(() => normalizePromotionVoucherCode(''), /required/);
+  assert.throws(() => normalizePromotionVoucherCode('   '), /required/);
+  for (const input of nonBlankInputs) {
+    assert.doesNotThrow(() => normalizePromotionVoucherCode(input));
   }
 }
 
 function runDeterministicNormalizerTests() {
   for (const input of oddInputs) {
     assert.equal(normalizeIntegrationAppKey(input), normalizeIntegrationAppKey(input));
-    assert.equal(normalizePromotionVoucherCode(input), normalizePromotionVoucherCode(input));
     assert.equal(normalizeWebhookKey(input), normalizeWebhookKey(input));
     assert.equal(normalizeStorefrontChannelCurrency(input), normalizeStorefrontChannelCurrency(input));
     assert.equal(normalizeImportExportJobTarget(input), normalizeImportExportJobTarget(input));
+  }
+  for (const input of nonBlankInputs) {
+    assert.equal(normalizePromotionVoucherCode(input), normalizePromotionVoucherCode(input));
   }
 }
 
