@@ -8,14 +8,14 @@ export function HomepageCategoryTileCard({ category, priority = false }: { categ
     <Link
       href={`/categories/${category.slug}`}
       aria-label={`View ${category.title}`}
-      className="group relative block min-h-[270px] overflow-hidden rounded-lg bg-stone-100 shadow-[0_20px_60px_rgba(111,36,56,0.08)] outline-none transition hover:-translate-y-1 hover:shadow-[0_28px_80px_rgba(111,36,56,0.14)] focus-visible:ring-4 focus-visible:ring-olive/30 md:min-h-[340px]"
+      className="group relative block min-h-[270px] overflow-hidden rounded-lg bg-stone-100 shadow-[0_14px_36px_rgba(111,36,56,0.07)] outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30 md:min-h-[340px]"
     >
       <Image
         src={category.image || homepageCategoryImage(category.slug)}
         alt={category.title}
         fill
         priority={priority}
-        className="object-cover transition duration-700 group-hover:scale-105"
+        className="object-cover"
         sizes="(min-width: 1280px) 40vw, (min-width: 768px) 50vw, 100vw"
       />
       <div className="absolute inset-0 bg-gradient-to-r from-white/92 via-white/52 to-transparent" />
