@@ -35,6 +35,12 @@ function optionalText(value?: string | null) {
   return normalized || null;
 }
 
+function isMissingStoreSettingTableError(error: unknown) {
+  const code = typeof error === 'object' && error !== null && 'code' in error ? String((error as { code?: unknown }).code) : '';
+  const message = error instanceof Error ? error.message : String(error);
+  return code === 'P2010' && /StoreSetting|42P01|does not exist/i.test(message);
+}
+
 export function normalizeStoreSettingInput(input: StoreSettingInput): StoreSettingInput {
   const storeName = optionalText(input.storeName) ?? DEFAULT_STORE_SETTING.storeName;
   const defaultLocale = optionalText(input.defaultLocale)?.replace('_', '-') ?? DEFAULT_STORE_SETTING.defaultLocale;
@@ -75,26 +81,31 @@ export const storeSettingsService = {
   async get(): Promise<StoreSetting> {
     if (!hasDatabase()) return DEFAULT_STORE_SETTING;
 
-    const rows = await prisma.$queryRaw<StoreSetting[]>`
-      SELECT
-        "id",
-        "key",
-        "storeName",
-        "legalName",
-        "supportEmail",
-        "supportPhone",
-        "defaultLocale",
-        "defaultCurrency",
-        "timezone",
-        "storefrontBaseUrl",
-        "isMaintenanceMode",
-        "updatedAt"
-      FROM "StoreSetting"
-      WHERE "key" = 'primary'
-      LIMIT 1
-    `;
+    try {
+      const rows = await prisma.$queryRaw<StoreSetting[]>`
+        SELECT
+          "id",
+          "key",
+          "storeName",
+          "legalName",
+          "supportEmail",
+          "supportPhone",
+          "defaultLocale",
+          "defaultCurrency",
+          "timezone",
+          "storefrontBaseUrl",
+          "isMaintenanceMode",
+          "updatedAt"
+        FROM "StoreSetting"
+        WHERE "key" = 'primary'
+        LIMIT 1
+      `;
 
-    return rows[0] ? mapStoreSetting(rows[0]) : DEFAULT_STORE_SETTING;
+      return rows[0] ? mapStoreSetting(rows[0]) : DEFAULT_STORE_SETTING;
+    } catch (error) {
+      if (isMissingStoreSettingTableError(error)) return DEFAULT_STORE_SETTING;
+      throw error;
+    }
   },
 
   async update(input: StoreSettingInput): Promise<StoreSetting> {
