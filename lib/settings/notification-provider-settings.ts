@@ -101,6 +101,11 @@ function hasEnv(env: Record<string, string | undefined>, name: string) {
   return Boolean(env[name]?.trim());
 }
 
+function isMissingNotificationProviderSettingTable(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes('NotificationProviderSetting') && (message.includes('does not exist') || message.includes('42P01'));
+}
+
 export function normalizeNotificationProviderSettingInput(input: NotificationProviderSettingInput): NotificationProviderSettingInput {
   return {
     key: normalizeSlug(input.key),
@@ -235,66 +240,78 @@ export const notificationProviderSettingsService = {
   async list(): Promise<NotificationProviderSetting[]> {
     if (!hasDatabase()) return [DEFAULT_NOTIFICATION_PROVIDER_SETTING];
 
-    const rows = await prisma.$queryRaw<NotificationProviderSetting[]>`
-      SELECT "id", "key", "label", "description", "emailProvider", "smsProvider", "defaultFromEmail", "defaultFromPhone", "replyToEmail", "enableOrderEmail", "enableOrderSms", "requireEmailProviderEnv", "requireSmsProviderEnv", "isDefault", "isActive", "updatedAt"
-      FROM "NotificationProviderSetting"
-      ORDER BY "isDefault" DESC, "label" ASC
-    `;
+    try {
+      const rows = await prisma.$queryRaw<NotificationProviderSetting[]>`
+        SELECT "id", "key", "label", "description", "emailProvider", "smsProvider", "defaultFromEmail", "defaultFromPhone", "replyToEmail", "enableOrderEmail", "enableOrderSms", "requireEmailProviderEnv", "requireSmsProviderEnv", "isDefault", "isActive", "updatedAt"
+        FROM "NotificationProviderSetting"
+        ORDER BY "isDefault" DESC, "label" ASC
+      `;
 
-    return rows.length ? rows.map(mapNotificationProviderSetting) : [DEFAULT_NOTIFICATION_PROVIDER_SETTING];
+      return rows.length ? rows.map(mapNotificationProviderSetting) : [DEFAULT_NOTIFICATION_PROVIDER_SETTING];
+    } catch (error) {
+      if (isMissingNotificationProviderSettingTable(error)) return [DEFAULT_NOTIFICATION_PROVIDER_SETTING];
+      throw error;
+    }
   },
 
   async update(input: NotificationProviderSettingInput): Promise<NotificationProviderSetting> {
     if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
 
     const normalized = normalizeNotificationProviderSettingInput(input);
-    if (normalized.isDefault) {
-      await prisma.$executeRaw`
-        UPDATE "NotificationProviderSetting"
-        SET "isDefault" = false, "updatedAt" = CURRENT_TIMESTAMP
-        WHERE "key" <> ${normalized.key}
-      `;
-    }
-
-    const rows = await prisma.$queryRaw<NotificationProviderSetting[]>`
-      INSERT INTO "NotificationProviderSetting" ("key", "label", "description", "emailProvider", "smsProvider", "defaultFromEmail", "defaultFromPhone", "replyToEmail", "enableOrderEmail", "enableOrderSms", "requireEmailProviderEnv", "requireSmsProviderEnv", "isDefault", "isActive")
-      VALUES (${normalized.key}, ${normalized.label}, ${normalized.description}, ${normalized.emailProvider}, ${normalized.smsProvider}, ${normalized.defaultFromEmail}, ${normalized.defaultFromPhone}, ${normalized.replyToEmail}, ${normalized.enableOrderEmail}, ${normalized.enableOrderSms}, ${normalized.requireEmailProviderEnv}, ${normalized.requireSmsProviderEnv}, ${normalized.isDefault}, ${normalized.isActive})
-      ON CONFLICT ("key") DO UPDATE SET
-        "label" = EXCLUDED."label",
-        "description" = EXCLUDED."description",
-        "emailProvider" = EXCLUDED."emailProvider",
-        "smsProvider" = EXCLUDED."smsProvider",
-        "defaultFromEmail" = EXCLUDED."defaultFromEmail",
-        "defaultFromPhone" = EXCLUDED."defaultFromPhone",
-        "replyToEmail" = EXCLUDED."replyToEmail",
-        "enableOrderEmail" = EXCLUDED."enableOrderEmail",
-        "enableOrderSms" = EXCLUDED."enableOrderSms",
-        "requireEmailProviderEnv" = EXCLUDED."requireEmailProviderEnv",
-        "requireSmsProviderEnv" = EXCLUDED."requireSmsProviderEnv",
-        "isDefault" = EXCLUDED."isDefault",
-        "isActive" = EXCLUDED."isActive",
-        "updatedAt" = CURRENT_TIMESTAMP
-      RETURNING "id", "key", "label", "description", "emailProvider", "smsProvider", "defaultFromEmail", "defaultFromPhone", "replyToEmail", "enableOrderEmail", "enableOrderSms", "requireEmailProviderEnv", "requireSmsProviderEnv", "isDefault", "isActive", "updatedAt"
-    `;
-    const setting = mapNotificationProviderSetting(rows[0]);
-
-    await recordAdminAuditLog({
-      action: 'settings.notification_provider.update',
-      entity: 'notificationProviderSetting',
-      entityId: setting.id,
-      summary: `Updated notification provider setting: ${setting.label}`,
-      metadata: {
-        key: setting.key,
-        emailProvider: setting.emailProvider,
-        smsProvider: setting.smsProvider,
-        enableOrderEmail: setting.enableOrderEmail,
-        enableOrderSms: setting.enableOrderSms,
-        requiredEnvironmentVariables: listRequiredNotificationProviderEnvironmentVariables(setting),
-        isDefault: setting.isDefault,
-        isActive: setting.isActive
+    try {
+      if (normalized.isDefault) {
+        await prisma.$executeRaw`
+          UPDATE "NotificationProviderSetting"
+          SET "isDefault" = false, "updatedAt" = CURRENT_TIMESTAMP
+          WHERE "key" <> ${normalized.key}
+        `;
       }
-    });
 
-    return setting;
+      const rows = await prisma.$queryRaw<NotificationProviderSetting[]>`
+        INSERT INTO "NotificationProviderSetting" ("key", "label", "description", "emailProvider", "smsProvider", "defaultFromEmail", "defaultFromPhone", "replyToEmail", "enableOrderEmail", "enableOrderSms", "requireEmailProviderEnv", "requireSmsProviderEnv", "isDefault", "isActive")
+        VALUES (${normalized.key}, ${normalized.label}, ${normalized.description}, ${normalized.emailProvider}, ${normalized.smsProvider}, ${normalized.defaultFromEmail}, ${normalized.defaultFromPhone}, ${normalized.replyToEmail}, ${normalized.enableOrderEmail}, ${normalized.enableOrderSms}, ${normalized.requireEmailProviderEnv}, ${normalized.requireSmsProviderEnv}, ${normalized.isDefault}, ${normalized.isActive})
+        ON CONFLICT ("key") DO UPDATE SET
+          "label" = EXCLUDED."label",
+          "description" = EXCLUDED."description",
+          "emailProvider" = EXCLUDED."emailProvider",
+          "smsProvider" = EXCLUDED."smsProvider",
+          "defaultFromEmail" = EXCLUDED."defaultFromEmail",
+          "defaultFromPhone" = EXCLUDED."defaultFromPhone",
+          "replyToEmail" = EXCLUDED."replyToEmail",
+          "enableOrderEmail" = EXCLUDED."enableOrderEmail",
+          "enableOrderSms" = EXCLUDED."enableOrderSms",
+          "requireEmailProviderEnv" = EXCLUDED."requireEmailProviderEnv",
+          "requireSmsProviderEnv" = EXCLUDED."requireSmsProviderEnv",
+          "isDefault" = EXCLUDED."isDefault",
+          "isActive" = EXCLUDED."isActive",
+          "updatedAt" = CURRENT_TIMESTAMP
+        RETURNING "id", "key", "label", "description", "emailProvider", "smsProvider", "defaultFromEmail", "defaultFromPhone", "replyToEmail", "enableOrderEmail", "enableOrderSms", "requireEmailProviderEnv", "requireSmsProviderEnv", "isDefault", "isActive", "updatedAt"
+      `;
+      const setting = mapNotificationProviderSetting(rows[0]);
+
+      await recordAdminAuditLog({
+        action: 'settings.notification_provider.update',
+        entity: 'notificationProviderSetting',
+        entityId: setting.id,
+        summary: `Updated notification provider setting: ${setting.label}`,
+        metadata: {
+          key: setting.key,
+          emailProvider: setting.emailProvider,
+          smsProvider: setting.smsProvider,
+          enableOrderEmail: setting.enableOrderEmail,
+          enableOrderSms: setting.enableOrderSms,
+          requiredEnvironmentVariables: listRequiredNotificationProviderEnvironmentVariables(setting),
+          isDefault: setting.isDefault,
+          isActive: setting.isActive
+        }
+      });
+
+      return setting;
+    } catch (error) {
+      if (isMissingNotificationProviderSettingTable(error)) {
+        throw new Error('Notification provider settings are not available until the NotificationProviderSetting table exists. Run the latest database schema setup before saving notification settings.');
+      }
+      throw error;
+    }
   }
 };
