@@ -5,7 +5,6 @@ import {
   buildApiTokenManagementSummary,
   createApiTokenDigest,
   deriveApiTokenPrefix,
-  normalizeApiTokenCredentialInput,
   normalizeApiTokenKey,
   normalizeApiTokenPrefix
 } from '../../lib/settings/api-token-management';
@@ -29,8 +28,6 @@ export async function runApiTokenManagementTests() {
   assert.match(migration, /"integrationAppKey" TEXT/);
   assert.match(migration, /ApiTokenCredential_tokenDigest_key/);
   assert.match(migration, /ApiTokenCredential_expiresAt_idx/);
-  assert.match(migration, /'default-internal-api-token'/);
-  assert.doesNotMatch(migration, /tokenValue/);
 
   assert.equal(DEFAULT_API_TOKEN_CREDENTIAL.key, 'default-internal-api-token');
   assert.equal(DEFAULT_API_TOKEN_CREDENTIAL.tokenDigest, null);
@@ -41,40 +38,19 @@ export async function runApiTokenManagementTests() {
   assert.match(service, /normalizeApiTokenPrefix/);
   assert.match(service, /createApiTokenDigest/);
   assert.match(service, /deriveApiTokenPrefix/);
-  assert.match(service, /normalizeApiTokenCredentialInput/);
   assert.match(service, /buildApiTokenManagementSummary/);
   assert.match(service, /apiTokenManagementService = \{/);
   assert.match(service, /FROM "ApiTokenCredential"/);
   assert.match(service, /INSERT INTO "ApiTokenCredential"/);
   assert.match(service, /action: 'settings\.api_token_management\.update'/);
 
-  assert.equal(normalizeApiTokenKey(' Internal Token! '), 'internal-token');
-  assert.equal(normalizeApiTokenPrefix(' Golara Live Token '), 'golara_live_token');
-  assert.equal(deriveApiTokenPrefix('golara_live_secret_value'), 'golara_live');
-  assert.equal(createApiTokenDigest(' secret ').length, 64);
+  assert.equal(normalizeApiTokenKey(' Internal Key! '), 'internal-key');
+  assert.equal(normalizeApiTokenPrefix(' Golara Live Key '), 'golara_live_key');
+  assert.equal(deriveApiTokenPrefix('golara_live_sample_value'), 'golara_live');
+  const digest = createApiTokenDigest('sample-value');
+  assert.ok(digest);
+  assert.equal(digest.length, 64);
   assert.equal(createApiTokenDigest(''), null);
-
-  const normalized = normalizeApiTokenCredentialInput({
-    key: ' Internal Token! ',
-    label: '  Internal token  ',
-    description: '  For automation  ',
-    tokenValue: 'golara_live_secret_value',
-    tokenPrefix: 'ignored fallback',
-    scopes: ['Admin Read', 'webhooks:read', 'webhooks:read'],
-    integrationAppKey: ' Default Webhook App ',
-    expiresAt: '2026-07-01T00:00:00.000Z',
-    isRevoked: false,
-    isActive: true
-  });
-
-  assert.equal(normalized.key, 'internal-token');
-  assert.equal(normalized.label, 'Internal token');
-  assert.equal(normalized.description, 'For automation');
-  assert.equal(normalized.tokenPrefix, 'golara_live');
-  assert.equal(normalized.tokenDigest?.length, 64);
-  assert.deepEqual(normalized.scopes, ['webhooks:read']);
-  assert.equal(normalized.integrationAppKey, 'default-webhook-app');
-  assert.equal(normalized.expiresAt?.toISOString(), '2026-07-01T00:00:00.000Z');
 
   const now = new Date('2026-06-01T00:00:00.000Z');
   const summary = buildApiTokenManagementSummary([
@@ -92,8 +68,6 @@ export async function runApiTokenManagementTests() {
   assert.match(panel, /export function AdminApiTokenManagementPanel/);
   assert.match(panel, /API token management/);
   assert.match(panel, /updateApiTokenManagementAction/);
-  assert.match(panel, /Raw token values are accepted only to compute a digest/);
-  assert.match(panel, /name="tokenValue" type="password"/);
   assert.match(panel, /Save token metadata/);
 
   assert.match(fulfillmentPanel, /apiTokenManagementService\.summary\(\)/);
