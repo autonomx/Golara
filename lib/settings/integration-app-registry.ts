@@ -101,7 +101,9 @@ function normalizeUrl(value?: string | null) {
 }
 
 export function normalizeIntegrationPermission(value: string) {
-  const normalized = value.trim().toLowerCase().replace(/[^a-z0-9:_-]+/g, ':').replace(/:+/g, ':').replace(/^:|:$/g, '');
+  const raw = value.trim().toLowerCase();
+  if (!raw.includes(':')) return null;
+  const normalized = raw.replace(/[^a-z0-9:_-]+/g, ':').replace(/:+/g, ':').replace(/^:|:$/g, '');
   if (!normalized.includes(':')) return null;
   return normalized;
 }
@@ -142,50 +144,34 @@ export function normalizeIntegrationAppRegistryInput(input: IntegrationAppRegist
   };
 }
 
-function parseStringArray(value: unknown): string[] {
-  if (Array.isArray(value)) return value.map(String);
-  if (typeof value === 'string') {
-    try {
-      const parsed = JSON.parse(value) as unknown;
-      if (Array.isArray(parsed)) return parsed.map(String);
-    } catch {
-      return value.split(/[\n,]+/g);
-    }
-  }
-  return [];
-}
-
-function mapIntegrationAppRegistryEntry(row: Omit<IntegrationAppRegistryEntry, 'permissions' | 'requiredEnvVars'> & { permissions: unknown; requiredEnvVars: unknown }): IntegrationAppRegistryEntry {
-  return {
-    id: row.id,
-    key: row.key,
-    label: row.label,
-    description: row.description ?? null,
-    category: normalizeIntegrationAppCategory(row.category),
-    provider: row.provider ?? null,
-    status: normalizeIntegrationAppStatus(row.status),
-    homepageUrl: row.homepageUrl ?? null,
-    docsUrl: row.docsUrl ?? null,
-    webhookConfigurationKey: row.webhookConfigurationKey ?? null,
-    permissions: normalizeIntegrationPermissionList(parseStringArray(row.permissions)),
-    requiredEnvVars: normalizeRequiredEnvVars(parseStringArray(row.requiredEnvVars)),
-    isInternal: row.isInternal,
-    isActive: row.isActive,
-    updatedAt: row.updatedAt
-  };
-}
-
 export function buildIntegrationAppRegistrySummary(entries: IntegrationAppRegistryEntry[]): IntegrationAppRegistrySummary {
   const byCategory = Object.fromEntries(INTEGRATION_APP_CATEGORIES.map((category) => [category, 0])) as Record<IntegrationAppCategory, number>;
-  for (const entry of entries) byCategory[entry.category] += 1;
+  let active = 0;
+  let internal = 0;
+  let needsAttention = 0;
+
+  for (const entry of entries) {
+    byCategory[entry.category] += 1;
+    if (entry.isActive && entry.status === 'active') active += 1;
+    if (entry.isInternal) internal += 1;
+    if (entry.status === 'needs_attention') needsAttention += 1;
+  }
 
   return {
     total: entries.length,
-    active: entries.filter((entry) => entry.isActive || entry.status === 'active').length,
-    internal: entries.filter((entry) => entry.isInternal).length,
-    needsAttention: entries.filter((entry) => entry.status === 'needs_attention').length,
+    active,
+    internal,
+    needsAttention,
     byCategory,
-    entries
+    entries: entries.slice().sort((a, b) => a.label.localeCompare(b.label))
+  };
+}
+
+function mapIntegrationAppRegistryEntry(row: IntegrationAppRegistryEntry): IntegrationAppRegistryEntry {
+  return {
+    ...row,
+    permissions: Array.isArray(row.permissions) ? row.permissions : [],
+    requiredEnvVars: Array.isArray(row.requiredEnvVars) ? row.requiredEnvVars : []
   };
 }
 
@@ -193,10 +179,25 @@ export const integrationAppRegistryService = {
   async list(): Promise<IntegrationAppRegistryEntry[]> {
     if (!hasDatabase()) return [DEFAULT_INTEGRATION_APP_REGISTRY_ENTRY];
 
-    const rows = await prisma.$queryRaw<(Omit<IntegrationAppRegistryEntry, 'permissions' | 'requiredEnvVars'> & { permissions: unknown; requiredEnvVars: unknown })[]>`
-      SELECT "id", "key", "label", "description", "category", "provider", "status", "homepageUrl", "docsUrl", "webhookConfigurationKey", "permissions", "requiredEnvVars", "isInternal", "isActive", "updatedAt"
+    const rows = await prisma.$queryRaw<IntegrationAppRegistryEntry[]>`
+      SELECT
+        "id",
+        "key",
+        "label",
+        "description",
+        "category",
+        "provider",
+        "status",
+        "homepageUrl",
+        "docsUrl",
+        "webhookConfigurationKey",
+        "permissions",
+        "requiredEnvVars",
+        "isInternal",
+        "isActive",
+        "updatedAt"
       FROM "IntegrationAppRegistry"
-      ORDER BY "isActive" DESC, "category" ASC, "label" ASC
+      ORDER BY "label" ASC
     `;
 
     return rows.length ? rows.map(mapIntegrationAppRegistryEntry) : [DEFAULT_INTEGRATION_APP_REGISTRY_ENTRY];
@@ -208,11 +209,14 @@ export const integrationAppRegistryService = {
 
   async update(input: IntegrationAppRegistryInput): Promise<IntegrationAppRegistryEntry> {
     if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
-
     const normalized = normalizeIntegrationAppRegistryInput(input);
-    const rows = await prisma.$queryRaw<(Omit<IntegrationAppRegistryEntry, 'permissions' | 'requiredEnvVars'> & { permissions: unknown; requiredEnvVars: unknown })[]>`
-      INSERT INTO "IntegrationAppRegistry" ("key", "label", "description", "category", "provider", "status", "homepageUrl", "docsUrl", "webhookConfigurationKey", "permissions", "requiredEnvVars", "isInternal", "isActive")
-      VALUES (${normalized.key}, ${normalized.label}, ${normalized.description}, ${normalized.category}, ${normalized.provider}, ${normalized.status}, ${normalized.homepageUrl}, ${normalized.docsUrl}, ${normalized.webhookConfigurationKey}, ${JSON.stringify(normalized.permissions)}::jsonb, ${JSON.stringify(normalized.requiredEnvVars)}::jsonb, ${normalized.isInternal}, ${normalized.isActive})
+
+    const rows = await prisma.$queryRaw<IntegrationAppRegistryEntry[]>`
+      INSERT INTO "IntegrationAppRegistry" (
+        "key", "label", "description", "category", "provider", "status", "homepageUrl", "docsUrl", "webhookConfigurationKey", "permissions", "requiredEnvVars", "isInternal", "isActive"
+      ) VALUES (
+        ${normalized.key}, ${normalized.label}, ${normalized.description}, ${normalized.category}, ${normalized.provider}, ${normalized.status}, ${normalized.homepageUrl}, ${normalized.docsUrl}, ${normalized.webhookConfigurationKey}, ${normalized.permissions}, ${normalized.requiredEnvVars}, ${normalized.isInternal}, ${normalized.isActive}
+      )
       ON CONFLICT ("key") DO UPDATE SET
         "label" = EXCLUDED."label",
         "description" = EXCLUDED."description",
@@ -235,16 +239,11 @@ export const integrationAppRegistryService = {
       action: 'settings.integration_app_registry.update',
       entity: 'integrationAppRegistry',
       entityId: entry.id,
-      summary: `Updated integration app registry entry: ${entry.label}`,
+      summary: `Updated integration app: ${entry.label}`,
       metadata: {
         key: entry.key,
         category: entry.category,
-        provider: entry.provider,
         status: entry.status,
-        webhookConfigurationKey: entry.webhookConfigurationKey,
-        permissions: entry.permissions,
-        requiredEnvVars: entry.requiredEnvVars,
-        isInternal: entry.isInternal,
         isActive: entry.isActive
       }
     });
