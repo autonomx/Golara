@@ -2,12 +2,14 @@ import { AdminBestSellingProductsPanel } from '@/components/admin/AdminBestSelli
 import { AdminFailedPaymentNotificationAlertsPanel } from '@/components/admin/AdminFailedPaymentNotificationAlertsPanel';
 import { AdminFulfillmentQueueSummaryPanel } from '@/components/admin/AdminFulfillmentQueueSummaryPanel';
 import { AdminInquiryOperationsSummaryPanel } from '@/components/admin/AdminInquiryOperationsSummaryPanel';
+import { AdminLaunchReadinessHealthPanel } from '@/components/admin/AdminLaunchReadinessHealthPanel';
 import { AdminLowStockAlertsPanel } from '@/components/admin/AdminLowStockAlertsPanel';
 import { AdminRecentActivitySummaryPanel } from '@/components/admin/AdminRecentActivitySummaryPanel';
 import { bestSellingProductsService } from '@/lib/analytics/best-selling-products';
 import { failedPaymentNotificationAlertsService } from '@/lib/analytics/failed-payment-notification-alerts';
 import { fulfillmentQueueSummaryService } from '@/lib/analytics/fulfillment-queue-summary';
 import { inquiryOperationsSummaryService } from '@/lib/analytics/inquiry-operations-summary';
+import { launchReadinessHealthService } from '@/lib/analytics/launch-readiness-health';
 import { lowStockAlertsService } from '@/lib/analytics/low-stock-alerts';
 import { formatRevenueCents, type OrderRevenueSummary } from '@/lib/analytics/order-revenue-summary';
 import { recentActivitySummaryService } from '@/lib/analytics/recent-activity-summary';
@@ -24,13 +26,14 @@ function Metric({ label, value, detail }: { label: string; value: string | numbe
 
 export async function AdminOrderRevenueSummaryPanel({ summary }: { summary: OrderRevenueSummary }) {
   const primaryCurrency = summary.primaryCurrency;
-  const [inquiryOperationsSummary, bestSellingProductsSummary, lowStockAlertsSummary, fulfillmentQueueSummary, recentActivitySummary, failedPaymentNotificationAlertsSummary] = await Promise.all([
+  const [inquiryOperationsSummary, bestSellingProductsSummary, lowStockAlertsSummary, fulfillmentQueueSummary, recentActivitySummary, failedPaymentNotificationAlertsSummary, launchReadinessHealthSummary] = await Promise.all([
     inquiryOperationsSummaryService.summary(),
     bestSellingProductsService.summary(),
     lowStockAlertsService.summary(),
     fulfillmentQueueSummaryService.summary(),
     recentActivitySummaryService.summary(),
-    failedPaymentNotificationAlertsService.summary()
+    failedPaymentNotificationAlertsService.summary(),
+    Promise.resolve(launchReadinessHealthService.summary())
   ]);
 
   return (
@@ -89,6 +92,7 @@ export async function AdminOrderRevenueSummaryPanel({ summary }: { summary: Orde
       <AdminFulfillmentQueueSummaryPanel summary={fulfillmentQueueSummary} />
       <AdminRecentActivitySummaryPanel summary={recentActivitySummary} />
       <AdminFailedPaymentNotificationAlertsPanel summary={failedPaymentNotificationAlertsSummary} />
+      <AdminLaunchReadinessHealthPanel summary={launchReadinessHealthSummary} />
     </>
   );
 }
