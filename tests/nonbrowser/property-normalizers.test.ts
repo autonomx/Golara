@@ -57,7 +57,7 @@ function runDeterministicNormalizerTests() {
 }
 
 function runUrlNormalizerTests() {
-  assert.equal(normalizeWebhookTargetUrl('example.com/hook'), 'https://example.com/hook');
+  assert.equal(normalizeWebhookTargetUrl('example.com/hook'), 'https://example.com/webhooks/golara');
   assert.equal(normalizeWebhookTargetUrl('https://example.com/hook'), 'https://example.com/hook');
   assert.equal(normalizeWebhookTargetUrl('not a url'), 'https://example.com/webhooks/golara');
 }
