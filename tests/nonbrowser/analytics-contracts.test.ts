@@ -31,9 +31,24 @@ export async function runAnalyticsContractTests() {
   assert.equal(launchSummary.launchBlocked, false);
 
   const lowStock = buildLowStockAlertsSummary([
-    { id: 'v1', productTitle: 'A', variantName: 'Small', sku: 'A-S', stockQuantity: 2, lowStockThreshold: 5, trackInventory: true, isActive: true }
+    {
+      id: 'p1',
+      slug: 'a',
+      code: 'A',
+      title: 'A',
+      category: 'flowers',
+      price: 10,
+      currency: 'CAD',
+      availableToday: true,
+      image: '/a.jpg',
+      description: 'A',
+      variants: [
+        { id: 'v1', productId: 'p1', sku: 'A-S', name: 'Small', price: 10, currency: 'CAD', stockQuantity: 2, lowStockThreshold: 5, trackInventory: true, isActive: true, sortOrder: 1 }
+      ]
+    }
   ]);
-  assert.equal(lowStock.totalAlerts, 1);
+  assert.equal(lowStock.alerts.length, 1);
+  assert.equal(lowStock.lowStockVariants, 1);
   assert.equal(lowStock.alerts[0]?.sku, 'A-S');
 
   console.log('analytics-contracts.test.ts passed');
