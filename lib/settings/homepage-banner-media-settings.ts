@@ -56,6 +56,13 @@ function optionalText(value?: string | null) {
   return normalized || null;
 }
 
+function isMissingHomepageBannerMediaTableError(error: unknown) {
+  if (!error || typeof error !== 'object') return false;
+  const meta = 'meta' in error ? (error as { meta?: { code?: string; message?: string } }).meta : undefined;
+  const message = 'message' in error ? String((error as { message?: unknown }).message ?? '') : '';
+  return meta?.code === '42P01' || meta?.message?.includes('HomepageBannerMediaSetting') || message.includes('HomepageBannerMediaSetting');
+}
+
 export function normalizeHomepageBannerLocale(value?: string | null) {
   return optionalText(value)?.replace('_', '-') ?? null;
 }
@@ -129,47 +136,57 @@ export const homepageBannerMediaSettingsService = {
   async get(key = 'primary', locale?: string | null): Promise<HomepageBannerMediaSetting> {
     if (!hasDatabase()) return DEFAULT_HOMEPAGE_BANNER_MEDIA_SETTING;
 
-    const rows = await fetchHomepageBannerRows(key, locale);
-    return rows[0] ? mapHomepageBannerMediaSetting(rows[0]) : DEFAULT_HOMEPAGE_BANNER_MEDIA_SETTING;
+    try {
+      const rows = await fetchHomepageBannerRows(key, locale);
+      return rows[0] ? mapHomepageBannerMediaSetting(rows[0]) : DEFAULT_HOMEPAGE_BANNER_MEDIA_SETTING;
+    } catch (error) {
+      if (isMissingHomepageBannerMediaTableError(error)) return DEFAULT_HOMEPAGE_BANNER_MEDIA_SETTING;
+      throw error;
+    }
   },
 
   async update(input: HomepageBannerMediaSettingInput): Promise<HomepageBannerMediaSetting> {
     if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
 
     const normalized = normalizeHomepageBannerMediaSettingInput(input);
-    const rows = await prisma.$queryRaw<HomepageBannerMediaSetting[]>`
-      INSERT INTO "HomepageBannerMediaSetting" ("key", "locale", "eyebrow", "title", "subtitle", "mediaId", "imageUrl", "imageAlt", "ctaLabel", "ctaHref", "isActive", "sortOrder")
-      VALUES (${normalized.key}, ${normalized.locale}, ${normalized.eyebrow}, ${normalized.title}, ${normalized.subtitle}, ${normalized.mediaId}, ${normalized.imageUrl}, ${normalized.imageAlt}, ${normalized.ctaLabel}, ${normalized.ctaHref}, ${normalized.isActive}, ${normalized.sortOrder})
-      ON CONFLICT ("key", COALESCE("locale", '')) DO UPDATE SET
-        "eyebrow" = EXCLUDED."eyebrow",
-        "title" = EXCLUDED."title",
-        "subtitle" = EXCLUDED."subtitle",
-        "mediaId" = EXCLUDED."mediaId",
-        "imageUrl" = EXCLUDED."imageUrl",
-        "imageAlt" = EXCLUDED."imageAlt",
-        "ctaLabel" = EXCLUDED."ctaLabel",
-        "ctaHref" = EXCLUDED."ctaHref",
-        "isActive" = EXCLUDED."isActive",
-        "sortOrder" = EXCLUDED."sortOrder",
-        "updatedAt" = CURRENT_TIMESTAMP
-      RETURNING "id", "key", "locale", "eyebrow", "title", "subtitle", "mediaId", "imageUrl", "imageAlt", "ctaLabel", "ctaHref", "isActive", "sortOrder", "updatedAt"
-    `;
-    const setting = mapHomepageBannerMediaSetting(rows[0]);
+    try {
+      const rows = await prisma.$queryRaw<HomepageBannerMediaSetting[]>`
+        INSERT INTO "HomepageBannerMediaSetting" ("key", "locale", "eyebrow", "title", "subtitle", "mediaId", "imageUrl", "imageAlt", "ctaLabel", "ctaHref", "isActive", "sortOrder")
+        VALUES (${normalized.key}, ${normalized.locale}, ${normalized.eyebrow}, ${normalized.title}, ${normalized.subtitle}, ${normalized.mediaId}, ${normalized.imageUrl}, ${normalized.imageAlt}, ${normalized.ctaLabel}, ${normalized.ctaHref}, ${normalized.isActive}, ${normalized.sortOrder})
+        ON CONFLICT ("key", COALESCE("locale", '')) DO UPDATE SET
+          "eyebrow" = EXCLUDED."eyebrow",
+          "title" = EXCLUDED."title",
+          "subtitle" = EXCLUDED."subtitle",
+          "mediaId" = EXCLUDED."mediaId",
+          "imageUrl" = EXCLUDED."imageUrl",
+          "imageAlt" = EXCLUDED."imageAlt",
+          "ctaLabel" = EXCLUDED."ctaLabel",
+          "ctaHref" = EXCLUDED."ctaHref",
+          "isActive" = EXCLUDED."isActive",
+          "sortOrder" = EXCLUDED."sortOrder",
+          "updatedAt" = CURRENT_TIMESTAMP
+        RETURNING "id", "key", "locale", "eyebrow", "title", "subtitle", "mediaId", "imageUrl", "imageAlt", "ctaLabel", "ctaHref", "isActive", "sortOrder", "updatedAt"
+      `;
+      const setting = mapHomepageBannerMediaSetting(rows[0]);
 
-    await recordAdminAuditLog({
-      action: 'settings.homepage_banner_media.update',
-      entity: 'homepageBannerMediaSetting',
-      entityId: setting.id,
-      summary: `Updated homepage banner/media settings: ${setting.title}`,
-      metadata: {
-        key: setting.key,
-        locale: setting.locale,
-        mediaId: setting.mediaId,
-        imageUrl: setting.imageUrl,
-        isActive: setting.isActive
-      }
-    });
+      await recordAdminAuditLog({
+        action: 'settings.homepage_banner_media.update',
+        entity: 'homepageBannerMediaSetting',
+        entityId: setting.id,
+        summary: `Updated homepage banner/media settings: ${setting.title}`,
+        metadata: {
+          key: setting.key,
+          locale: setting.locale,
+          mediaId: setting.mediaId,
+          imageUrl: setting.imageUrl,
+          isActive: setting.isActive
+        }
+      });
 
-    return setting;
+      return setting;
+    } catch (error) {
+      if (isMissingHomepageBannerMediaTableError(error)) throw new Error('Homepage banner media settings table is not available in this database.');
+      throw error;
+    }
   }
 };
