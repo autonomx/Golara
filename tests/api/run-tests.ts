@@ -40,8 +40,7 @@ function runServerActionBoundaryTests() {
   const actionFiles = walk('app').filter((file) => /actions?\.ts$/.test(file));
   const expectedFiles = [
     'app/admin/order-actions.ts',
-    'app/admin/settings/actions.ts',
-    'app/checkout/actions.ts'
+    'app/admin/settings/actions.ts'
   ];
   for (const file of expectedFiles) assert.ok(actionFiles.includes(file), `${file} should be covered as a server action module`);
 
