@@ -76,7 +76,7 @@ export function BestSellersCarousel({ products, locale }: BestSellersCarouselPro
               type="button"
               onClick={goPrevious}
               aria-label="Previous best seller"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-rosewood/15 bg-white text-rosewood shadow-sm transition hover:-translate-y-0.5 hover:border-rosewood hover:bg-rosewood hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/25"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-rosewood/15 bg-white text-rosewood shadow-sm transition hover:border-rosewood hover:bg-rosewood hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/25"
             >
               <ChevronLeft aria-hidden="true" className="h-5 w-5" />
             </button>
@@ -84,7 +84,7 @@ export function BestSellersCarousel({ products, locale }: BestSellersCarouselPro
               type="button"
               onClick={goNext}
               aria-label="Next best seller"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-rosewood/15 bg-white text-rosewood shadow-sm transition hover:-translate-y-0.5 hover:border-rosewood hover:bg-rosewood hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/25"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-rosewood/15 bg-white text-rosewood shadow-sm transition hover:border-rosewood hover:bg-rosewood hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/25"
             >
               <ChevronRight aria-hidden="true" className="h-5 w-5" />
             </button>
@@ -92,19 +92,19 @@ export function BestSellersCarousel({ products, locale }: BestSellersCarouselPro
         </div>
 
         <div className="overflow-hidden">
-          <div className="flex transition-transform duration-500 ease-out will-change-transform" style={sliderStyle}>
+          <div className="flex transition-transform duration-300 ease-out will-change-transform" style={sliderStyle}>
             {products.map((product, index) => (
               <article key={product.slug} className="min-w-full max-w-full shrink-0 px-0.5 md:min-w-[50%] md:max-w-[50%] md:px-2 lg:min-w-[33.333333%] lg:max-w-[33.333333%] xl:min-w-[25%] xl:max-w-[25%] xl:px-3">
-                <div className="group overflow-hidden rounded-lg border border-rosewood/10 bg-white shadow-[0_18px_50px_rgba(111,36,56,0.08)] transition hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(111,36,56,0.14)]">
+                <div className="group overflow-hidden rounded-lg border border-rosewood/10 bg-white shadow-[0_12px_32px_rgba(111,36,56,0.07)]">
                   <Link href={`/products/${product.slug}`} className="block outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
                   <div className="relative aspect-[4/5] overflow-hidden bg-stone-100">
                     <Image
                       src={product.image || homepageBestSellerImage(product.slug)}
                       alt={product.title}
                       fill
-                      priority={index < 4}
-                      className="object-cover transition duration-700 group-hover:scale-105"
-                      sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 100vw"
+                      priority={index === 0}
+                      className="object-cover"
+                      sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
                     />
                     <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 to-transparent" />
                     <div className="absolute left-4 top-4 flex flex-wrap gap-2 text-xs font-semibold">
