@@ -32,3 +32,23 @@ textarea,
 select {
   font: inherit;
 }
+
+#media td:last-child details {
+  min-width: 16rem;
+  max-width: min(24rem, calc(100vw - 4rem));
+}
+
+#media td:last-child details form {
+  max-width: 100%;
+}
+
+#media td:last-child details form > div {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+#media td:last-child details input,
+#media td:last-child details select,
+#media td:last-child details textarea {
+  min-width: 0;
+  width: 100%;
+}
