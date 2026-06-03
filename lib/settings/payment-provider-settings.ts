@@ -93,6 +93,11 @@ function normalizeOptionalProvider(value?: string | null) {
   return PAYMENT_GATEWAY_PROVIDERS.find((provider) => provider === normalized) ?? null;
 }
 
+function isMissingPaymentProviderSettingTable(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes('PaymentProviderSetting') && (message.includes('does not exist') || message.includes('42P01'));
+}
+
 export function normalizePaymentProviderSettingInput(input: PaymentProviderSettingInput): PaymentProviderSettingInput {
   return {
     key: normalizeSlug(input.key),
@@ -169,67 +174,79 @@ export const paymentProviderSettingsService = {
   async list(): Promise<PaymentProviderSetting[]> {
     if (!hasDatabase()) return [DEFAULT_PAYMENT_PROVIDER_SETTING];
 
-    const rows = await prisma.$queryRaw<PaymentProviderSetting[]>`
-      SELECT "id", "key", "label", "description", "checkoutMode", "domesticProvider", "overseasProvider", "domesticCurrency", "overseasCurrency", "overseasFallback", "requireIranianGatewayMerchantId", "requireStripeSecretKey", "isDefault", "isActive", "updatedAt"
-      FROM "PaymentProviderSetting"
-      ORDER BY "isDefault" DESC, "label" ASC
-    `;
+    try {
+      const rows = await prisma.$queryRaw<PaymentProviderSetting[]>`
+        SELECT "id", "key", "label", "description", "checkoutMode", "domesticProvider", "overseasProvider", "domesticCurrency", "overseasCurrency", "overseasFallback", "requireIranianGatewayMerchantId", "requireStripeSecretKey", "isDefault", "isActive", "updatedAt"
+        FROM "PaymentProviderSetting"
+        ORDER BY "isDefault" DESC, "label" ASC
+      `;
 
-    return rows.length ? rows.map(mapPaymentProviderSetting) : [DEFAULT_PAYMENT_PROVIDER_SETTING];
+      return rows.length ? rows.map(mapPaymentProviderSetting) : [DEFAULT_PAYMENT_PROVIDER_SETTING];
+    } catch (error) {
+      if (isMissingPaymentProviderSettingTable(error)) return [DEFAULT_PAYMENT_PROVIDER_SETTING];
+      throw error;
+    }
   },
 
   async update(input: PaymentProviderSettingInput): Promise<PaymentProviderSetting> {
     if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
 
     const normalized = normalizePaymentProviderSettingInput(input);
-    if (normalized.isDefault) {
-      await prisma.$executeRaw`
-        UPDATE "PaymentProviderSetting"
-        SET "isDefault" = false, "updatedAt" = CURRENT_TIMESTAMP
-        WHERE "key" <> ${normalized.key}
-      `;
-    }
-
-    const rows = await prisma.$queryRaw<PaymentProviderSetting[]>`
-      INSERT INTO "PaymentProviderSetting" ("key", "label", "description", "checkoutMode", "domesticProvider", "overseasProvider", "domesticCurrency", "overseasCurrency", "overseasFallback", "requireIranianGatewayMerchantId", "requireStripeSecretKey", "isDefault", "isActive")
-      VALUES (${normalized.key}, ${normalized.label}, ${normalized.description}, ${normalized.checkoutMode}, ${normalized.domesticProvider}, ${normalized.overseasProvider}, ${normalized.domesticCurrency}, ${normalized.overseasCurrency}, ${normalized.overseasFallback}, ${normalized.requireIranianGatewayMerchantId}, ${normalized.requireStripeSecretKey}, ${normalized.isDefault}, ${normalized.isActive})
-      ON CONFLICT ("key") DO UPDATE SET
-        "label" = EXCLUDED."label",
-        "description" = EXCLUDED."description",
-        "checkoutMode" = EXCLUDED."checkoutMode",
-        "domesticProvider" = EXCLUDED."domesticProvider",
-        "overseasProvider" = EXCLUDED."overseasProvider",
-        "domesticCurrency" = EXCLUDED."domesticCurrency",
-        "overseasCurrency" = EXCLUDED."overseasCurrency",
-        "overseasFallback" = EXCLUDED."overseasFallback",
-        "requireIranianGatewayMerchantId" = EXCLUDED."requireIranianGatewayMerchantId",
-        "requireStripeSecretKey" = EXCLUDED."requireStripeSecretKey",
-        "isDefault" = EXCLUDED."isDefault",
-        "isActive" = EXCLUDED."isActive",
-        "updatedAt" = CURRENT_TIMESTAMP
-      RETURNING "id", "key", "label", "description", "checkoutMode", "domesticProvider", "overseasProvider", "domesticCurrency", "overseasCurrency", "overseasFallback", "requireIranianGatewayMerchantId", "requireStripeSecretKey", "isDefault", "isActive", "updatedAt"
-    `;
-    const setting = mapPaymentProviderSetting(rows[0]);
-
-    await recordAdminAuditLog({
-      action: 'settings.payment_provider.update',
-      entity: 'paymentProviderSetting',
-      entityId: setting.id,
-      summary: `Updated payment provider setting: ${setting.label}`,
-      metadata: {
-        key: setting.key,
-        checkoutMode: setting.checkoutMode,
-        domesticProvider: setting.domesticProvider,
-        overseasProvider: setting.overseasProvider,
-        domesticCurrency: setting.domesticCurrency,
-        overseasCurrency: setting.overseasCurrency,
-        overseasFallback: setting.overseasFallback,
-        requiredEnvironmentVariables: listRequiredPaymentProviderEnvironmentVariables(setting),
-        isDefault: setting.isDefault,
-        isActive: setting.isActive
+    try {
+      if (normalized.isDefault) {
+        await prisma.$executeRaw`
+          UPDATE "PaymentProviderSetting"
+          SET "isDefault" = false, "updatedAt" = CURRENT_TIMESTAMP
+          WHERE "key" <> ${normalized.key}
+        `;
       }
-    });
 
-    return setting;
+      const rows = await prisma.$queryRaw<PaymentProviderSetting[]>`
+        INSERT INTO "PaymentProviderSetting" ("key", "label", "description", "checkoutMode", "domesticProvider", "overseasProvider", "domesticCurrency", "overseasCurrency", "overseasFallback", "requireIranianGatewayMerchantId", "requireStripeSecretKey", "isDefault", "isActive")
+        VALUES (${normalized.key}, ${normalized.label}, ${normalized.description}, ${normalized.checkoutMode}, ${normalized.domesticProvider}, ${normalized.overseasProvider}, ${normalized.domesticCurrency}, ${normalized.overseasCurrency}, ${normalized.overseasFallback}, ${normalized.requireIranianGatewayMerchantId}, ${normalized.requireStripeSecretKey}, ${normalized.isDefault}, ${normalized.isActive})
+        ON CONFLICT ("key") DO UPDATE SET
+          "label" = EXCLUDED."label",
+          "description" = EXCLUDED."description",
+          "checkoutMode" = EXCLUDED."checkoutMode",
+          "domesticProvider" = EXCLUDED."domesticProvider",
+          "overseasProvider" = EXCLUDED."overseasProvider",
+          "domesticCurrency" = EXCLUDED."domesticCurrency",
+          "overseasCurrency" = EXCLUDED."overseasCurrency",
+          "overseasFallback" = EXCLUDED."overseasFallback",
+          "requireIranianGatewayMerchantId" = EXCLUDED."requireIranianGatewayMerchantId",
+          "requireStripeSecretKey" = EXCLUDED."requireStripeSecretKey",
+          "isDefault" = EXCLUDED."isDefault",
+          "isActive" = EXCLUDED."isActive",
+          "updatedAt" = CURRENT_TIMESTAMP
+        RETURNING "id", "key", "label", "description", "checkoutMode", "domesticProvider", "overseasProvider", "domesticCurrency", "overseasCurrency", "overseasFallback", "requireIranianGatewayMerchantId", "requireStripeSecretKey", "isDefault", "isActive", "updatedAt"
+      `;
+      const setting = mapPaymentProviderSetting(rows[0]);
+
+      await recordAdminAuditLog({
+        action: 'settings.payment_provider.update',
+        entity: 'paymentProviderSetting',
+        entityId: setting.id,
+        summary: `Updated payment provider setting: ${setting.label}`,
+        metadata: {
+          key: setting.key,
+          checkoutMode: setting.checkoutMode,
+          domesticProvider: setting.domesticProvider,
+          overseasProvider: setting.overseasProvider,
+          domesticCurrency: setting.domesticCurrency,
+          overseasCurrency: setting.overseasCurrency,
+          overseasFallback: setting.overseasFallback,
+          requiredEnvironmentVariables: listRequiredPaymentProviderEnvironmentVariables(setting),
+          isDefault: setting.isDefault,
+          isActive: setting.isActive
+        }
+      });
+
+      return setting;
+    } catch (error) {
+      if (isMissingPaymentProviderSettingTable(error)) {
+        throw new Error('Payment provider settings are not available until the PaymentProviderSetting table exists. Run the latest database schema setup before saving payment settings.');
+      }
+      throw error;
+    }
   }
 };
