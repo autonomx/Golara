@@ -34,7 +34,7 @@ export type HomepageBannerSlide = {
 
 export const homepageBannerSlides: HomepageBannerSlide[] = [
   {
-    image: '/homepage/banners/banner1.jpeg',
+    image: '/homepage/banners/golara_luxury_floral_hero_banner.jpg',
     alt: 'Golara floral delivery banner',
     eyebrow: 'Same-day floral gifting',
     title: 'Flowers that arrive with feeling',
