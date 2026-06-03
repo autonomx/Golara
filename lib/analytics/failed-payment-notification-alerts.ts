@@ -85,6 +85,13 @@ function normalizeCents(value?: number | null) {
   return Math.max(0, Math.trunc(value ?? 0));
 }
 
+function isMissingNotificationActionTableError(error: unknown) {
+  if (!error || typeof error !== 'object') return false;
+  const meta = 'meta' in error ? (error as { meta?: { code?: string; message?: string } }).meta : undefined;
+  const message = 'message' in error ? String((error as { message?: unknown }).message ?? '') : '';
+  return meta?.code === '42P01' || meta?.message?.includes('CheckoutOrderNotificationAction') || message.includes('CheckoutOrderNotificationAction');
+}
+
 export function formatFailureAlertAmount(value: number, currency: string) {
   return new Intl.NumberFormat('en-CA', { style: 'currency', currency: normalizeCurrency(currency) }).format(normalizeCents(value) / 100);
 }
@@ -172,6 +179,36 @@ export function buildFailedPaymentNotificationAlertsSummary(
   };
 }
 
+async function listFailedNotificationRows() {
+  try {
+    return await prisma.$queryRaw<FailedNotificationAlertSourceRow[]>`
+      SELECT
+        n."id",
+        n."orderId",
+        o."orderNumber",
+        n."channel",
+        n."templateKey",
+        n."recipient",
+        n."status",
+        n."attemptCount",
+        n."maxAttempts",
+        n."nextRetryAt",
+        n."failedAt",
+        n."errorCode",
+        n."errorMessage",
+        n."updatedAt"
+      FROM "CheckoutOrderNotificationAction" n
+      INNER JOIN "CheckoutOrder" o ON o."id" = n."orderId"
+      WHERE n."status" IN ('failed', 'retry_scheduled')
+      ORDER BY n."updatedAt" DESC
+      LIMIT 50
+    `;
+  } catch (error) {
+    if (isMissingNotificationActionTableError(error)) return [];
+    throw error;
+  }
+}
+
 export const failedPaymentNotificationAlertsService = {
   async summary(): Promise<FailedPaymentNotificationAlertsSummary> {
     if (!hasDatabase()) return { ...EMPTY_FAILED_PAYMENT_NOTIFICATION_ALERTS_SUMMARY, generatedAt: new Date() };
@@ -194,28 +231,7 @@ export const failedPaymentNotificationAlertsService = {
           order: { select: { orderNumber: true } }
         }
       }),
-      prisma.$queryRaw<FailedNotificationAlertSourceRow[]>`
-        SELECT
-          n."id",
-          n."orderId",
-          o."orderNumber",
-          n."channel",
-          n."templateKey",
-          n."recipient",
-          n."status",
-          n."attemptCount",
-          n."maxAttempts",
-          n."nextRetryAt",
-          n."failedAt",
-          n."errorCode",
-          n."errorMessage",
-          n."updatedAt"
-        FROM "CheckoutOrderNotificationAction" n
-        INNER JOIN "CheckoutOrder" o ON o."id" = n."orderId"
-        WHERE n."status" IN ('failed', 'retry_scheduled')
-        ORDER BY n."updatedAt" DESC
-        LIMIT 50
-      `
+      listFailedNotificationRows()
     ]);
 
     return buildFailedPaymentNotificationAlertsSummary(
