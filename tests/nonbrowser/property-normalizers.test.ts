@@ -18,13 +18,21 @@ const oddInputs = [
 ];
 
 const nonBlankInputs = oddInputs.filter((input) => input.trim().length > 0);
+const currencyInputs = ['', '   ', 'cad', 'CAD', 'toman', 'USD'];
+const invalidCurrencyInputs = ['Hello World', 'symbols!@#$%^&*()', 'fa_IR'];
 
 function runStableStringNormalizers() {
   for (const input of oddInputs) {
     assert.doesNotThrow(() => normalizeIntegrationAppKey(input));
     assert.doesNotThrow(() => normalizeWebhookKey(input));
-    assert.doesNotThrow(() => normalizeStorefrontChannelCurrency(input));
     assert.doesNotThrow(() => normalizeImportExportJobTarget(input));
+  }
+
+  for (const input of currencyInputs) {
+    assert.doesNotThrow(() => normalizeStorefrontChannelCurrency(input));
+  }
+  for (const input of invalidCurrencyInputs) {
+    assert.throws(() => normalizeStorefrontChannelCurrency(input), /Unsupported storefront channel currency/);
   }
 
   assert.throws(() => normalizePromotionVoucherCode(''), /required/);
@@ -38,8 +46,10 @@ function runDeterministicNormalizerTests() {
   for (const input of oddInputs) {
     assert.equal(normalizeIntegrationAppKey(input), normalizeIntegrationAppKey(input));
     assert.equal(normalizeWebhookKey(input), normalizeWebhookKey(input));
-    assert.equal(normalizeStorefrontChannelCurrency(input), normalizeStorefrontChannelCurrency(input));
     assert.equal(normalizeImportExportJobTarget(input), normalizeImportExportJobTarget(input));
+  }
+  for (const input of currencyInputs) {
+    assert.equal(normalizeStorefrontChannelCurrency(input), normalizeStorefrontChannelCurrency(input));
   }
   for (const input of nonBlankInputs) {
     assert.equal(normalizePromotionVoucherCode(input), normalizePromotionVoucherCode(input));
