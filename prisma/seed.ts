@@ -3,6 +3,10 @@ import { seedCategories, seedHomepageContent, seedProducts } from '../lib/seed-d
 
 const prisma = new PrismaClient();
 
+function seedProductMediaProvider(url: string) {
+  return url.includes('/seed-images/real-photo/') ? 'photo-real' : 'seed';
+}
+
 async function main() {
   const categoryBySlug = new Map<string, { id: string }>();
 
@@ -46,13 +50,7 @@ async function main() {
     if (!category) throw new Error(`Missing category for product ${product.slug}`);
     const requiresQuote = Boolean(product.requiresQuote || product.price <= 0);
 
-    await prisma.media.upsert({
-      where: { url: product.image },
-      create: { url: product.image, alt: product.title },
-      update: { alt: product.title }
-    });
-
-    await prisma.product.upsert({
+    const savedProduct = await prisma.product.upsert({
       where: { slug: product.slug },
       create: {
         slug: product.slug,
@@ -80,6 +78,25 @@ async function main() {
         requiresQuote,
         isActive: product.isActive !== false,
         categoryId: category.id
+      }
+    });
+
+    await prisma.media.upsert({
+      where: { url: product.image },
+      create: {
+        url: product.image,
+        alt: product.title,
+        sourceType: 'seed',
+        storageProvider: seedProductMediaProvider(product.image),
+        metadata: { mediaCategory: 'product', seedProductSlug: product.slug, productCode: product.code },
+        productId: savedProduct.id
+      },
+      update: {
+        alt: product.title,
+        sourceType: 'seed',
+        storageProvider: seedProductMediaProvider(product.image),
+        metadata: { mediaCategory: 'product', seedProductSlug: product.slug, productCode: product.code },
+        productId: savedProduct.id
       }
     });
   }
