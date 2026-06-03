@@ -34,7 +34,7 @@ export function HomepageOccasionRail({ occasions }: { occasions: Category[] }) {
       aria-labelledby="home-occasion-menu-heading"
       className="relative z-10 bg-transparent px-5 pb-12"
     >
-      <div className="mx-auto -mt-8 max-w-7xl rounded-lg border border-rosewood/10 bg-white/92 p-4 shadow-[0_24px_70px_rgba(111,36,56,0.12)] backdrop-blur md:p-5">
+      <div className="mx-auto -mt-8 max-w-7xl rounded-lg border border-rosewood/10 bg-white/95 p-4 shadow-[0_16px_42px_rgba(111,36,56,0.08)] md:p-5">
         <div className="mb-4 flex flex-col gap-2 px-1 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-olive">Occasion menu</p>
@@ -50,14 +50,14 @@ export function HomepageOccasionRail({ occasions }: { occasions: Category[] }) {
             <Link
               key={occasion.slug}
               href={`/categories/${occasion.slug}`}
-              className="group relative min-h-[155px] overflow-hidden rounded-lg bg-stone-100 outline-none shadow-[0_12px_32px_rgba(43,29,32,0.08)] transition hover:-translate-y-0.5 focus-visible:ring-4 focus-visible:ring-olive/30"
+              className="group relative min-h-[155px] overflow-hidden rounded-lg bg-stone-100 outline-none shadow-[0_8px_22px_rgba(43,29,32,0.06)] transition focus-visible:ring-4 focus-visible:ring-olive/30"
             >
               <Image
                 src={occasion.image || homepageCategoryImage(occasion.slug)}
                 alt={occasion.title}
                 fill
-                priority={index < 5}
-                className="object-cover transition duration-700 group-hover:scale-105"
+                priority={index < 2}
+                className="object-cover"
                 sizes="(min-width: 1024px) 18vw, (min-width: 640px) 30vw, 50vw"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-rosewood/75 via-rosewood/20 to-transparent" />
