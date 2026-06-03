@@ -20,7 +20,7 @@ import { DEFAULT_INTEGRATION_APP_REGISTRY_ENTRY, buildIntegrationAppRegistrySumm
 import { notificationProviderSettingsService } from '@/lib/settings/notification-provider-settings';
 import { paymentProviderSettingsService } from '@/lib/settings/payment-provider-settings';
 import { buildProviderDiagnosticsSummary, providerDiagnosticsService } from '@/lib/settings/provider-diagnostics';
-import { shippingDeliverySettingsService } from '@/lib/settings/shipping-delivery-settings';
+import { DEFAULT_SHIPPING_DELIVERY_SETTING, shippingDeliverySettingsService } from '@/lib/settings/shipping-delivery-settings';
 import { DEFAULT_STAFF_PERMISSION_GROUP, buildStaffPermissionSettingsSnapshot, staffPermissionSettingsService } from '@/lib/settings/staff-permission-settings';
 import { taxCategorySettingsService } from '@/lib/settings/tax-category-settings';
 import { DEFAULT_WEBHOOK_CONFIGURATION, webhookConfigurationService } from '@/lib/settings/webhook-configuration';
@@ -62,7 +62,7 @@ export async function AdminFulfillmentSettingsPanel({ methods, databaseReady }: 
   const fallbackProviderDiagnostics = buildProviderDiagnosticsSummary([]);
 
   const [shippingDeliverySetting, taxCategorySettings, paymentProviderSettings, notificationProviderSettings, staffPermissionSnapshot, webhookConfigurations, webhookEventLogSummary, integrationAppRegistrySummary, apiTokenManagementSummary, dashboardExtensionMountPointSummary, importExportJobSummary, providerDiagnosticsSummary] = await Promise.all([
-    withSettingsFallback(shippingDeliverySettingsService.get(), await shippingDeliverySettingsService.get().catch(() => shippingDeliverySettingsService.get())),
+    withSettingsFallback(shippingDeliverySettingsService.get(), DEFAULT_SHIPPING_DELIVERY_SETTING),
     taxCategorySettingsService.list(),
     paymentProviderSettingsService.list(),
     notificationProviderSettingsService.list(),
