@@ -70,6 +70,13 @@ function optionalPositiveInt(value: number | null | undefined) {
   return rounded > 0 ? rounded : null;
 }
 
+function isMissingShippingDeliveryTableError(error: unknown) {
+  if (!error || typeof error !== 'object') return false;
+  const meta = 'meta' in error ? (error as { meta?: { code?: string; message?: string } }).meta : undefined;
+  const message = 'message' in error ? String((error as { message?: unknown }).message ?? '') : '';
+  return meta?.code === '42P01' || meta?.message?.includes('ShippingDeliverySetting') || message.includes('ShippingDeliverySetting');
+}
+
 export function parseDeliveryPostalCodes(value?: string[] | string | null) {
   const raw = Array.isArray(value) ? value : String(value ?? '').split(/[\n,]/);
   return Array.from(
@@ -131,55 +138,65 @@ export const shippingDeliverySettingsService = {
   async get(key = 'primary'): Promise<ShippingDeliverySetting> {
     if (!hasDatabase()) return DEFAULT_SHIPPING_DELIVERY_SETTING;
 
-    const rows = await prisma.$queryRaw<ShippingDeliverySetting[]>`
-      SELECT "id", "key", "label", "description", "deliveryFeeCents", "freeDeliveryMinimumCents", "minimumOrderCents", "deliveryRadiusKm", "deliveryPostalCodes", "pickupAddress", "deliveryInstructions", "sameDayCutoffMinutes", "timezone", "isActive", "updatedAt"
-      FROM "ShippingDeliverySetting"
-      WHERE "key" = ${key}
-      LIMIT 1
-    `;
+    try {
+      const rows = await prisma.$queryRaw<ShippingDeliverySetting[]>`
+        SELECT "id", "key", "label", "description", "deliveryFeeCents", "freeDeliveryMinimumCents", "minimumOrderCents", "deliveryRadiusKm", "deliveryPostalCodes", "pickupAddress", "deliveryInstructions", "sameDayCutoffMinutes", "timezone", "isActive", "updatedAt"
+        FROM "ShippingDeliverySetting"
+        WHERE "key" = ${key}
+        LIMIT 1
+      `;
 
-    return rows[0] ? mapShippingDeliverySetting(rows[0]) : DEFAULT_SHIPPING_DELIVERY_SETTING;
+      return rows[0] ? mapShippingDeliverySetting(rows[0]) : DEFAULT_SHIPPING_DELIVERY_SETTING;
+    } catch (error) {
+      if (isMissingShippingDeliveryTableError(error)) return DEFAULT_SHIPPING_DELIVERY_SETTING;
+      throw error;
+    }
   },
 
   async update(input: ShippingDeliverySettingInput): Promise<ShippingDeliverySetting> {
     if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
 
     const normalized = normalizeShippingDeliverySettingInput(input);
-    const rows = await prisma.$queryRaw<ShippingDeliverySetting[]>`
-      INSERT INTO "ShippingDeliverySetting" ("key", "label", "description", "deliveryFeeCents", "freeDeliveryMinimumCents", "minimumOrderCents", "deliveryRadiusKm", "deliveryPostalCodes", "pickupAddress", "deliveryInstructions", "sameDayCutoffMinutes", "timezone", "isActive")
-      VALUES (${normalized.key}, ${normalized.label}, ${normalized.description}, ${normalized.deliveryFeeCents}, ${normalized.freeDeliveryMinimumCents}, ${normalized.minimumOrderCents}, ${normalized.deliveryRadiusKm}, ${normalized.deliveryPostalCodes}, ${normalized.pickupAddress}, ${normalized.deliveryInstructions}, ${normalized.sameDayCutoffMinutes}, ${normalized.timezone}, ${normalized.isActive})
-      ON CONFLICT ("key") DO UPDATE SET
-        "label" = EXCLUDED."label",
-        "description" = EXCLUDED."description",
-        "deliveryFeeCents" = EXCLUDED."deliveryFeeCents",
-        "freeDeliveryMinimumCents" = EXCLUDED."freeDeliveryMinimumCents",
-        "minimumOrderCents" = EXCLUDED."minimumOrderCents",
-        "deliveryRadiusKm" = EXCLUDED."deliveryRadiusKm",
-        "deliveryPostalCodes" = EXCLUDED."deliveryPostalCodes",
-        "pickupAddress" = EXCLUDED."pickupAddress",
-        "deliveryInstructions" = EXCLUDED."deliveryInstructions",
-        "sameDayCutoffMinutes" = EXCLUDED."sameDayCutoffMinutes",
-        "timezone" = EXCLUDED."timezone",
-        "isActive" = EXCLUDED."isActive",
-        "updatedAt" = CURRENT_TIMESTAMP
-      RETURNING "id", "key", "label", "description", "deliveryFeeCents", "freeDeliveryMinimumCents", "minimumOrderCents", "deliveryRadiusKm", "deliveryPostalCodes", "pickupAddress", "deliveryInstructions", "sameDayCutoffMinutes", "timezone", "isActive", "updatedAt"
-    `;
-    const setting = mapShippingDeliverySetting(rows[0]);
+    try {
+      const rows = await prisma.$queryRaw<ShippingDeliverySetting[]>`
+        INSERT INTO "ShippingDeliverySetting" ("key", "label", "description", "deliveryFeeCents", "freeDeliveryMinimumCents", "minimumOrderCents", "deliveryRadiusKm", "deliveryPostalCodes", "pickupAddress", "deliveryInstructions", "sameDayCutoffMinutes", "timezone", "isActive")
+        VALUES (${normalized.key}, ${normalized.label}, ${normalized.description}, ${normalized.deliveryFeeCents}, ${normalized.freeDeliveryMinimumCents}, ${normalized.minimumOrderCents}, ${normalized.deliveryRadiusKm}, ${normalized.deliveryPostalCodes}, ${normalized.pickupAddress}, ${normalized.deliveryInstructions}, ${normalized.sameDayCutoffMinutes}, ${normalized.timezone}, ${normalized.isActive})
+        ON CONFLICT ("key") DO UPDATE SET
+          "label" = EXCLUDED."label",
+          "description" = EXCLUDED."description",
+          "deliveryFeeCents" = EXCLUDED."deliveryFeeCents",
+          "freeDeliveryMinimumCents" = EXCLUDED."freeDeliveryMinimumCents",
+          "minimumOrderCents" = EXCLUDED."minimumOrderCents",
+          "deliveryRadiusKm" = EXCLUDED."deliveryRadiusKm",
+          "deliveryPostalCodes" = EXCLUDED."deliveryPostalCodes",
+          "pickupAddress" = EXCLUDED."pickupAddress",
+          "deliveryInstructions" = EXCLUDED."deliveryInstructions",
+          "sameDayCutoffMinutes" = EXCLUDED."sameDayCutoffMinutes",
+          "timezone" = EXCLUDED."timezone",
+          "isActive" = EXCLUDED."isActive",
+          "updatedAt" = CURRENT_TIMESTAMP
+        RETURNING "id", "key", "label", "description", "deliveryFeeCents", "freeDeliveryMinimumCents", "minimumOrderCents", "deliveryRadiusKm", "deliveryPostalCodes", "pickupAddress", "deliveryInstructions", "sameDayCutoffMinutes", "timezone", "isActive", "updatedAt"
+      `;
+      const setting = mapShippingDeliverySetting(rows[0]);
 
-    await recordAdminAuditLog({
-      action: 'settings.shipping_delivery.update',
-      entity: 'shippingDeliverySetting',
-      entityId: setting.id,
-      summary: `Updated shipping/delivery settings: ${setting.label}`,
-      metadata: {
-        key: setting.key,
-        deliveryFeeCents: setting.deliveryFeeCents,
-        deliveryRadiusKm: setting.deliveryRadiusKm,
-        sameDayCutoffMinutes: setting.sameDayCutoffMinutes,
-        isActive: setting.isActive
-      }
-    });
+      await recordAdminAuditLog({
+        action: 'settings.shipping_delivery.update',
+        entity: 'shippingDeliverySetting',
+        entityId: setting.id,
+        summary: `Updated shipping/delivery settings: ${setting.label}`,
+        metadata: {
+          key: setting.key,
+          deliveryFeeCents: setting.deliveryFeeCents,
+          deliveryRadiusKm: setting.deliveryRadiusKm,
+          sameDayCutoffMinutes: setting.sameDayCutoffMinutes,
+          isActive: setting.isActive
+        }
+      });
 
-    return setting;
+      return setting;
+    } catch (error) {
+      if (isMissingShippingDeliveryTableError(error)) throw new Error('Shipping delivery settings table is not available in this database.');
+      throw error;
+    }
   }
 };
