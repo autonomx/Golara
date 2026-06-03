@@ -35,10 +35,10 @@ export async function runServerActionContractTests() {
   assert.match(orderActions, /recordAdminAuditLog/);
 
   const settingsActions = source('app/admin/settings/actions.ts');
-  assert.match(settingsActions, /updateStoreSettingsAction/);
-  assert.match(settingsActions, /updatePaymentProviderSettingsAction/);
-  assert.match(settingsActions, /updateNotificationProviderSettingsAction/);
-  assert.match(settingsActions, /recordAdminAuditLog|Service\.update/);
+  assert.match(settingsActions, /updateStoreSettingAction/);
+  assert.match(settingsActions, /updatePaymentProviderSettingAction/);
+  assert.match(settingsActions, /updateNotificationProviderSettingAction/);
+  assert.match(settingsActions, /assertAdminRole\('owner'\)/);
 
   console.log('server-action-contracts.test.ts passed');
 }
