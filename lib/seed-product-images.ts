@@ -11,7 +11,7 @@ type SeedImageDescriptor = {
 };
 
 const catalogImagePrefix = '/seed-images/catalog';
-const photoImagePrefix = '/seed-images/photo-catalog';
+const photoImagePrefix = '/seed-images/real-photo';
 
 const photoStyleSlugs = new Set([
   'vip-box-blue',
