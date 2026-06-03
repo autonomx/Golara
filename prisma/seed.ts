@@ -1,10 +1,104 @@
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { seedCategories, seedHomepageContent, seedProducts } from '../lib/seed-data';
 
 const prisma = new PrismaClient();
 
 function seedProductMediaProvider(url: string) {
   return url.includes('/seed-images/real-photo/') ? 'photo-real' : 'seed';
+}
+
+async function upsertSeedProduct(input: {
+  slug: string;
+  code: string;
+  title: string;
+  description: string;
+  priceCents: number;
+  currency: string;
+  imageUrl: string;
+  availableToday: boolean;
+  bestSeller: boolean;
+  requiresQuote: boolean;
+  isActive: boolean;
+  categoryId: string;
+}) {
+  const rows = await prisma.$queryRaw<{ id: string }[]>`
+    INSERT INTO "Product" (
+      "slug",
+      "code",
+      "title",
+      "description",
+      "priceCents",
+      "currency",
+      "imageUrl",
+      "availableToday",
+      "bestSeller",
+      "requiresQuote",
+      "isActive",
+      "categoryId"
+    ) VALUES (
+      ${input.slug},
+      ${input.code},
+      ${input.title},
+      ${input.description},
+      ${input.priceCents},
+      ${input.currency},
+      ${input.imageUrl},
+      ${input.availableToday},
+      ${input.bestSeller},
+      ${input.requiresQuote},
+      ${input.isActive},
+      ${input.categoryId}
+    )
+    ON CONFLICT ("slug") DO UPDATE SET
+      "code" = EXCLUDED."code",
+      "title" = EXCLUDED."title",
+      "description" = EXCLUDED."description",
+      "priceCents" = EXCLUDED."priceCents",
+      "currency" = EXCLUDED."currency",
+      "imageUrl" = EXCLUDED."imageUrl",
+      "availableToday" = EXCLUDED."availableToday",
+      "bestSeller" = EXCLUDED."bestSeller",
+      "requiresQuote" = EXCLUDED."requiresQuote",
+      "isActive" = EXCLUDED."isActive",
+      "categoryId" = EXCLUDED."categoryId"
+    RETURNING "id"
+  `;
+
+  const savedProduct = rows[0];
+  if (!savedProduct) throw new Error(`Unable to save seed product ${input.slug}`);
+  return savedProduct;
+}
+
+async function upsertSeedProductMedia(input: {
+  url: string;
+  alt: string;
+  storageProvider: string;
+  productId: string;
+  metadata: Prisma.InputJsonObject;
+}) {
+  await prisma.$executeRaw`
+    INSERT INTO "Media" (
+      "url",
+      "alt",
+      "sourceType",
+      "storageProvider",
+      "metadata",
+      "productId"
+    ) VALUES (
+      ${input.url},
+      ${input.alt},
+      'seed',
+      ${input.storageProvider},
+      ${input.metadata},
+      ${input.productId}
+    )
+    ON CONFLICT ("url") DO UPDATE SET
+      "alt" = EXCLUDED."alt",
+      "sourceType" = EXCLUDED."sourceType",
+      "storageProvider" = EXCLUDED."storageProvider",
+      "metadata" = EXCLUDED."metadata",
+      "productId" = EXCLUDED."productId"
+  `;
 }
 
 async function main() {
@@ -52,56 +146,27 @@ async function main() {
     if (!category) throw new Error(`Missing category for product ${product.slug}`);
     const requiresQuote = Boolean(product.requiresQuote || product.price <= 0);
 
-    const savedProduct = await prisma.product.upsert({
-      where: { slug: product.slug },
-      create: {
-        slug: product.slug,
-        code: product.code,
-        title: product.title,
-        description: product.description,
-        priceCents: Math.round(product.price),
-        currency: product.currency,
-        imageUrl: product.image,
-        availableToday: product.availableToday,
-        bestSeller: Boolean(product.bestSeller),
-        requiresQuote,
-        isActive: product.isActive !== false,
-        categoryId: category.id
-      },
-      update: {
-        code: product.code,
-        title: product.title,
-        description: product.description,
-        priceCents: Math.round(product.price),
-        currency: product.currency,
-        imageUrl: product.image,
-        availableToday: product.availableToday,
-        bestSeller: Boolean(product.bestSeller),
-        requiresQuote,
-        isActive: product.isActive !== false,
-        categoryId: category.id
-      },
-      select: { id: true }
+    const savedProduct = await upsertSeedProduct({
+      slug: product.slug,
+      code: product.code,
+      title: product.title,
+      description: product.description,
+      priceCents: Math.round(product.price),
+      currency: product.currency,
+      imageUrl: product.image,
+      availableToday: product.availableToday,
+      bestSeller: Boolean(product.bestSeller),
+      requiresQuote,
+      isActive: product.isActive !== false,
+      categoryId: category.id
     });
 
-    await prisma.media.upsert({
-      where: { url: product.image },
-      create: {
-        url: product.image,
-        alt: product.title,
-        sourceType: 'seed',
-        storageProvider: seedProductMediaProvider(product.image),
-        metadata: { mediaCategory: 'product', seedProductSlug: product.slug, productCode: product.code },
-        productId: savedProduct.id
-      },
-      update: {
-        alt: product.title,
-        sourceType: 'seed',
-        storageProvider: seedProductMediaProvider(product.image),
-        metadata: { mediaCategory: 'product', seedProductSlug: product.slug, productCode: product.code },
-        productId: savedProduct.id
-      },
-      select: { id: true }
+    await upsertSeedProductMedia({
+      url: product.image,
+      alt: product.title,
+      storageProvider: seedProductMediaProvider(product.image),
+      metadata: { mediaCategory: 'product', seedProductSlug: product.slug, productCode: product.code },
+      productId: savedProduct.id
     });
   }
 
