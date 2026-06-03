@@ -64,6 +64,12 @@ function optionalText(value?: string | null) {
   return normalized || null;
 }
 
+function isMissingStorefrontNavigationTableError(error: unknown) {
+  const code = typeof error === 'object' && error !== null && 'code' in error ? String((error as { code?: unknown }).code) : '';
+  const message = error instanceof Error ? error.message : String(error);
+  return code === 'P2010' && /StorefrontNavigationMenu|StorefrontNavigationMenuItem|42P01|does not exist/i.test(message);
+}
+
 export function normalizeStorefrontNavigationLocale(value?: string | null) {
   return optionalText(value)?.replace('_', '-') ?? null;
 }
@@ -128,14 +134,19 @@ export const storefrontNavigationMenuService = {
   async get(key = 'primary', locale?: string | null): Promise<StorefrontNavigationMenu> {
     if (!hasDatabase()) return DEFAULT_STOREFRONT_NAVIGATION_MENU;
 
-    const menus = await fetchMenuRows(key, locale);
-    const menu = menus[0];
-    if (!menu) return DEFAULT_STOREFRONT_NAVIGATION_MENU;
+    try {
+      const menus = await fetchMenuRows(key, locale);
+      const menu = menus[0];
+      if (!menu) return DEFAULT_STOREFRONT_NAVIGATION_MENU;
 
-    return {
-      ...menu,
-      items: await fetchMenuItems(menu.id)
-    };
+      return {
+        ...menu,
+        items: await fetchMenuItems(menu.id)
+      };
+    } catch (error) {
+      if (isMissingStorefrontNavigationTableError(error)) return DEFAULT_STOREFRONT_NAVIGATION_MENU;
+      throw error;
+    }
   },
 
   async update(input: StorefrontNavigationMenuInput): Promise<StorefrontNavigationMenu> {
