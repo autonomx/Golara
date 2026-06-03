@@ -77,20 +77,23 @@ const statusLabels: Record<string, string> = {
 const inputClass = 'rounded-lg border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100';
 const textAreaClass = 'min-h-28 rounded-lg border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100';
 const toggleClass = 'flex items-center gap-3 rounded-lg border border-rosewood/10 bg-white px-4 py-3 text-sm font-semibold text-rosewood outline-none transition focus-within:ring-4 focus-within:ring-olive/20';
-const primaryButtonClass = 'rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none';
-const secondaryButtonClass = 'rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20';
-const panelClass = 'scroll-mt-24 rounded-lg border border-stone-200 bg-white p-5 shadow-sm';
-const formCardClass = 'grid gap-4 rounded-lg border border-rosewood/10 bg-[#fffdfb] p-5 shadow-sm';
-const scrollListClass = 'max-h-[760px] overflow-y-auto pr-2 [scrollbar-width:thin] [scrollbar-color:#6f2438_#fff8f1]';
+const primaryButtonClass = 'w-fit rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none';
+const secondaryButtonClass = 'rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood outline-none transition hover:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20';
+const panelClass = 'scroll-mt-24 rounded-lg border border-rosewood/10 bg-white p-6 shadow-sm';
+const scrollListClass = 'max-h-[760px] overflow-auto pr-2 [scrollbar-width:thin] [scrollbar-color:#6f2438_#fff8f1]';
 const catalogPageSize = 12;
+
 const productColumnOptions = [
-  { key: 'pick', label: 'Pick' },
+  { key: 'pick', label: 'Bulk pick' },
   { key: 'product', label: 'Product' },
   { key: 'category', label: 'Category' },
   { key: 'price', label: 'Price' },
   { key: 'flags', label: 'Flags' },
   { key: 'actions', label: 'Actions' }
 ] as const;
+
+type ProductColumn = (typeof productColumnOptions)[number]['key'];
+
 const mediaColumnOptions = [
   { key: 'image', label: 'Image' },
   { key: 'category', label: 'Image category' },
@@ -100,23 +103,26 @@ const mediaColumnOptions = [
   { key: 'url', label: 'URL' },
   { key: 'actions', label: 'Actions' }
 ] as const;
-type ProductColumn = (typeof productColumnOptions)[number]['key'];
+
 type MediaColumn = (typeof mediaColumnOptions)[number]['key'];
+
 const mediaCategoryOptions = [
   { value: 'product', label: 'Product' },
   { value: 'category', label: 'Category' },
-  { value: 'homepage-banner', label: 'Home page banner' },
-  { value: 'homepage-category', label: 'Home page category' },
-  { value: 'homepage-best-seller', label: 'Home page best seller' },
+  { value: 'homepageHero', label: 'Homepage hero' },
+  { value: 'homepageBestSeller', label: 'Homepage best seller' },
+  { value: 'homepageCategory', label: 'Homepage category' },
   { value: 'general', label: 'General / other' }
 ];
 
-function Field({ label, name, defaultValue, placeholder, type = 'text', required = true, disabled = false }: { label: string; name: string; defaultValue?: string | number; placeholder?: string; type?: string; required?: boolean; disabled?: boolean }) {
-  return <label className="grid gap-2 text-sm font-semibold text-rosewood">{label}<input className={inputClass} name={name} type={type} defaultValue={defaultValue} placeholder={placeholder} required={required} disabled={disabled} /></label>;
+type MediaUsage = { type: string; label: string };
+
+function Field({ label, name, defaultValue, placeholder, type = 'text', disabled = false, required = true }: { label: string; name: string; defaultValue?: string | number; placeholder?: string; type?: string; disabled?: boolean; required?: boolean }) {
+  return <label className="grid gap-2 text-sm font-semibold text-rosewood">{label}<input className={inputClass} name={name} type={type} defaultValue={defaultValue} placeholder={placeholder} disabled={disabled} required={required} /></label>;
 }
 
 function TextArea({ label, name, defaultValue, disabled = false }: { label: string; name: string; defaultValue?: string; disabled?: boolean }) {
-  return <label className="grid gap-2 text-sm font-semibold text-rosewood">{label}<textarea className={textAreaClass} name={name} defaultValue={defaultValue} required disabled={disabled} /></label>;
+  return <label className="grid gap-2 text-sm font-semibold text-rosewood">{label}<textarea className={textAreaClass} name={name} defaultValue={defaultValue} disabled={disabled} required /></label>;
 }
 
 function Toggle({ label, name, defaultChecked = true, disabled = false }: { label: string; name: string; defaultChecked?: boolean; disabled?: boolean }) {
@@ -131,6 +137,37 @@ function MediaCategorySelect({ defaultValue = 'product', disabled = false }: { d
         {mediaCategoryOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
       </select>
     </label>
+  );
+}
+
+function mediaUrlLabel(url: string) {
+  try {
+    const parsed = new URL(url);
+    return parsed.pathname.split('/').filter(Boolean).at(-1) ?? parsed.hostname;
+  } catch {
+    return url.split('/').filter(Boolean).at(-1) ?? url;
+  }
+}
+
+function mediaUrlFolder(url: string) {
+  try {
+    const parsed = new URL(url);
+    const parts = parsed.pathname.split('/').filter(Boolean);
+    return parts.length > 1 ? `/${parts.slice(0, -1).join('/')}` : parsed.hostname;
+  } catch {
+    const parts = url.split('/').filter(Boolean);
+    return parts.length > 1 ? `/${parts.slice(0, -1).join('/')}` : 'local asset';
+  }
+}
+
+function MediaUrlCell({ url }: { url: string }) {
+  return (
+    <div className="max-w-56" title={url}>
+      <span className="inline-flex max-w-full rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1 font-mono text-[11px] font-semibold text-stone-700">
+        <span className="truncate">{mediaUrlLabel(url)}</span>
+      </span>
+      <div className="mt-1 max-w-full truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-olive">{mediaUrlFolder(url)}</div>
+    </div>
   );
 }
 
@@ -342,89 +379,64 @@ function ProductBulkBar({ categories, disabled }: { categories: Category[]; disa
 }
 
 function ProductQuickEditPanel({ products, categories, disabled }: { products: Product[]; categories: Category[]; disabled: boolean }) {
-  if (products.length === 0) return null;
-
   return (
-    <details className="mt-4 rounded-lg border border-rosewood/10 bg-white p-5">
+    <details className="mt-4 rounded-lg border border-rosewood/10 bg-cream p-5">
       <summary className="cursor-pointer font-display text-3xl text-rosewood">Quick edit visible products</summary>
       <form action={quickEditProductsAction} className="mt-5 grid gap-4">
-        <div className="overflow-auto rounded-lg border border-rosewood/10">
-          <table className="w-full min-w-[980px] border-collapse text-left text-sm">
-            <thead className="bg-cream text-xs font-semibold uppercase tracking-[0.16em] text-rosewood/70">
-              <tr><th className="px-3 py-3">Product</th><th className="px-3 py-3">Category</th><th className="px-3 py-3">Price</th><th className="px-3 py-3">Sort</th><th className="px-3 py-3">Flags</th></tr>
-            </thead>
-            <tbody>
-              {products.map((product) => (
-                <tr key={product.id ?? product.slug} className="border-t border-rosewood/10">
-                  <td className="px-3 py-3 font-semibold text-rosewood"><input type="hidden" name="productId" value={product.id ?? ''} />{product.title}<div className="mt-1 text-xs font-normal text-stone-500">{product.code}</div></td>
-                  <td className="px-3 py-3"><select className={`${inputClass} min-w-56`} name={`categoryId:${product.id}`} defaultValue={categoryDefaultValue(product, categories)} disabled={disabled || !product.id} required>{categories.map((category) => <option key={category.id ?? category.slug} value={category.id ?? ''}>{category.parentTitle ? `${category.parentTitle} / ${category.title}` : category.title}</option>)}</select></td>
-                  <td className="px-3 py-3"><input className={`${inputClass} w-28`} name={`price:${product.id}`} type="number" defaultValue={product.price} disabled={disabled || !product.id} required /></td>
-                  <td className="px-3 py-3"><input className={`${inputClass} w-24`} name={`sortOrder:${product.id}`} type="number" defaultValue={0} disabled={disabled || !product.id} required /></td>
-                  <td className="px-3 py-3"><div className="grid gap-2 text-xs font-semibold text-rosewood"><label className="inline-flex items-center gap-2"><input name={`availableToday:${product.id}`} type="checkbox" defaultChecked={product.availableToday} disabled={disabled || !product.id} />Today</label><label className="inline-flex items-center gap-2"><input name={`bestSeller:${product.id}`} type="checkbox" defaultChecked={product.bestSeller ?? false} disabled={disabled || !product.id} />Best</label><label className="inline-flex items-center gap-2"><input name={`requiresQuote:${product.id}`} type="checkbox" defaultChecked={product.requiresQuote ?? false} disabled={disabled || !product.id} />Quote</label><label className="inline-flex items-center gap-2"><input name={`isActive:${product.id}`} type="checkbox" defaultChecked={product.isActive ?? true} disabled={disabled || !product.id} />Active</label></div></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <SubmitButton disabled={disabled}>Save visible products</SubmitButton>
+        {products.map((product) => (
+          <div key={product.id ?? product.slug} className="grid gap-3 rounded-lg border border-rosewood/10 bg-white p-4 lg:grid-cols-[1.2fr_1fr_0.8fr_auto] lg:items-end">
+            <input type="hidden" name="productId" value={product.id ?? ''} />
+            <Field label="Title" name={`title:${product.id}`} defaultValue={product.title} disabled={disabled || !product.id} />
+            <label className="grid gap-2 text-sm font-semibold text-rosewood">Category<select name={`categoryId:${product.id}`} className={inputClass} defaultValue={categoryDefaultValue(product, categories)} disabled={disabled || !product.id} required><option value="">Choose category</option>{categories.map((category) => <option key={category.id ?? category.slug} value={category.id ?? ''}>{category.parentTitle ? `${category.parentTitle} / ${category.title}` : category.title}</option>)}</select></label>
+            <Field label="Price" name={`price:${product.id}`} type="number" defaultValue={product.price} disabled={disabled || !product.id} />
+            <div className="grid gap-2"><Toggle label="Best" name={`bestSeller:${product.id}`} defaultChecked={product.bestSeller} disabled={disabled || !product.id} /><Toggle label="Today" name={`availableToday:${product.id}`} defaultChecked={product.availableToday} disabled={disabled || !product.id} /></div>
+          </div>
+        ))}
+        <SubmitButton disabled={disabled}>Save quick edits</SubmitButton>
       </form>
     </details>
   );
 }
 
-function MediaMeta({ item }: { item: MediaItem }) {
-  const details = [item.sourceType, item.storageProvider, item.mimeType].filter(Boolean);
-  if (!details.length) return null;
-  return <p className="text-xs font-semibold uppercase tracking-[0.14em] text-olive">{details.join(' / ')}</p>;
+function normalizeMediaUrl(url?: string | null) {
+  return url?.trim() || null;
 }
 
-type MediaUsage = {
-  type: 'Product' | 'Category' | 'Home page banner' | 'Home page category' | 'Home page best seller' | 'Unassigned';
-  label: string;
-};
-
-function normalizeMediaUrl(url?: string) {
-  return url?.trim().toLowerCase();
-}
-
-function addMediaUsage(usageByUrl: Map<string, MediaUsage[]>, url: string | undefined, usage: MediaUsage) {
-  const key = normalizeMediaUrl(url);
-  if (!key) return;
-  const usages = usageByUrl.get(key) ?? [];
-  if (!usages.some((item) => item.type === usage.type && item.label === usage.label)) usages.push(usage);
-  usageByUrl.set(key, usages);
+function addMediaUsage(map: Map<string, MediaUsage[]>, url: string | undefined, usage: MediaUsage) {
+  const normalized = normalizeMediaUrl(url);
+  if (!normalized) return;
+  const existing = map.get(normalized) ?? [];
+  if (!existing.some((item) => item.type === usage.type && item.label === usage.label)) existing.push(usage);
+  map.set(normalized, existing);
 }
 
 function buildMediaUsageMap(categories: Category[], products: Product[]) {
-  const usageByUrl = new Map<string, MediaUsage[]>();
-
-  categories.forEach((category) => {
-    addMediaUsage(usageByUrl, category.image, { type: 'Category', label: category.parentTitle ? `${category.parentTitle} / ${category.title}` : category.title });
-    if (category.showOnHomepage !== false) {
-      addMediaUsage(usageByUrl, category.image || homepageCategoryImage(category.slug), { type: 'Home page category', label: category.title });
-    }
-  });
-
-  products.forEach((product) => {
-    addMediaUsage(usageByUrl, product.image, { type: 'Product', label: product.title });
-    if (product.bestSeller) {
-      addMediaUsage(usageByUrl, product.image || homepageBestSellerImage(product.slug), { type: 'Home page best seller', label: product.title });
-    }
-  });
-
-  homepageBannerSlides.forEach((slide) => {
-    addMediaUsage(usageByUrl, slide.image, { type: 'Home page banner', label: slide.eyebrow });
-  });
-
-  return usageByUrl;
+  const map = new Map<string, MediaUsage[]>();
+  for (const category of categories) {
+    addMediaUsage(map, category.image, { type: 'Category', label: category.title });
+    if (category.showOnHomepage) addMediaUsage(map, category.image, { type: 'Homepage category', label: category.title });
+  }
+  for (const product of products) {
+    addMediaUsage(map, product.image, { type: 'Product', label: product.title });
+    if (product.bestSeller) addMediaUsage(map, product.image, { type: 'Homepage best seller', label: product.title });
+  }
+  for (const slide of homepageBannerSlides) addMediaUsage(map, slide.image, { type: 'Homepage hero', label: slide.title });
+  addMediaUsage(map, homepageBestSellerImage, { type: 'Homepage best seller', label: 'Featured collection' });
+  ['available-today', 'birthday', 'weddings', 'condolences'].forEach((slug) => addMediaUsage(map, homepageCategoryImage(slug), { type: 'Homepage category', label: slug }));
+  return map;
 }
 
 function inferredMediaUsage(item: MediaItem): MediaUsage[] {
-  if (item.url.includes('/homepage/banners/')) return [{ type: 'Home page banner', label: item.alt }];
-  if (item.url.includes('/homepage/categories/')) return [{ type: 'Home page category', label: item.alt }];
-  if (item.url.includes('/homepage/best-seller/')) return [{ type: 'Home page best seller', label: item.alt }];
-  if (item.productId) return [{ type: 'Product', label: item.alt }];
-  return [{ type: 'Unassigned', label: 'Not linked in catalog' }];
+  if (item.mediaCategory === 'homepageHero') return [{ type: 'Homepage hero', label: item.alt }];
+  if (item.mediaCategory === 'homepageBestSeller') return [{ type: 'Homepage best seller', label: item.alt }];
+  if (item.mediaCategory === 'homepageCategory') return [{ type: 'Homepage category', label: item.alt }];
+  if (item.mediaCategory === 'category') return [{ type: 'Category', label: item.alt }];
+  if (item.mediaCategory === 'product') return [{ type: 'Product', label: item.alt }];
+  return [{ type: 'Unassigned', label: item.alt }];
+}
+
+function MediaMeta({ item }: { item: MediaItem }) {
+  return <div className="grid gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-olive"><span>{item.source ?? 'static'}</span>{item.storageKey ? <span className="text-stone-400">{item.storageKey}</span> : null}</div>;
 }
 
 function MediaUsagePills({ usages }: { usages: MediaUsage[] }) {
@@ -498,7 +510,7 @@ function MediaTable({ media, categories, products, disabled, columns }: { media:
                   </div>
                 </td> : null}
                 {show('source') ? <td className="px-4 py-4"><MediaMeta item={item} /></td> : null}
-                {show('url') ? <td className="px-4 py-4"><p className="max-w-sm break-all text-xs text-stone-500">{item.url}</p></td> : null}
+                {show('url') ? <td className="px-4 py-4"><MediaUrlCell url={item.url} /></td> : null}
                 {show('actions') ? <td className="px-4 py-4">
                   {item.id ? (
                     <details className="min-w-96">
@@ -531,7 +543,7 @@ export function AdminDashboard({ activeWorkspace, catalogSection = 'all', catego
     const search = catalogSearch?.trim();
     const matchesSearch = !search || includesText(product.title, search) || includesText(product.code, search) || includesText(product.slug, search) || includesText(product.description, search);
     const matchesCategory = !catalogCategory || product.category === catalogCategory;
-    return matchesSearch && matchesCategory && productMatchesFlag(product, catalogFlag);
+    return matchesSearch && productMatchesFlag(product, catalogFlag) && matchesCategory;
   });
   const filteredCategories = categories.filter((category) => {
     const search = catalogSearch?.trim();
