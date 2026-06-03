@@ -13,18 +13,18 @@ import { AdminTaxCategorySettingsPanel } from '@/components/admin/AdminTaxCatego
 import { AdminWebhookConfigurationPanel } from '@/components/admin/AdminWebhookConfigurationPanel';
 import { AdminWebhookEventLogPanel } from '@/components/admin/AdminWebhookEventLogPanel';
 import type { FulfillmentMethodSetting } from '@/lib/catalog';
-import { apiTokenManagementService } from '@/lib/settings/api-token-management';
-import { dashboardExtensionMountPointService } from '@/lib/settings/dashboard-extension-mount-points';
-import { importExportJobTrackingService } from '@/lib/settings/import-export-job-tracking';
-import { integrationAppRegistryService } from '@/lib/settings/integration-app-registry';
+import { DEFAULT_API_TOKEN_CREDENTIAL, apiTokenManagementService, buildApiTokenManagementSummary } from '@/lib/settings/api-token-management';
+import { DEFAULT_DASHBOARD_EXTENSION_MOUNT_POINT, buildDashboardExtensionMountPointSummary, dashboardExtensionMountPointService } from '@/lib/settings/dashboard-extension-mount-points';
+import { DEFAULT_IMPORT_EXPORT_JOB, buildImportExportJobSummary, importExportJobTrackingService } from '@/lib/settings/import-export-job-tracking';
+import { DEFAULT_INTEGRATION_APP_REGISTRY_ENTRY, buildIntegrationAppRegistrySummary, integrationAppRegistryService } from '@/lib/settings/integration-app-registry';
 import { notificationProviderSettingsService } from '@/lib/settings/notification-provider-settings';
 import { paymentProviderSettingsService } from '@/lib/settings/payment-provider-settings';
-import { providerDiagnosticsService } from '@/lib/settings/provider-diagnostics';
+import { buildProviderDiagnosticsSummary, providerDiagnosticsService } from '@/lib/settings/provider-diagnostics';
 import { shippingDeliverySettingsService } from '@/lib/settings/shipping-delivery-settings';
-import { staffPermissionSettingsService } from '@/lib/settings/staff-permission-settings';
+import { DEFAULT_STAFF_PERMISSION_GROUP, buildStaffPermissionSettingsSnapshot, staffPermissionSettingsService } from '@/lib/settings/staff-permission-settings';
 import { taxCategorySettingsService } from '@/lib/settings/tax-category-settings';
-import { webhookConfigurationService } from '@/lib/settings/webhook-configuration';
-import { webhookEventLogService } from '@/lib/settings/webhook-event-log';
+import { DEFAULT_WEBHOOK_CONFIGURATION, webhookConfigurationService } from '@/lib/settings/webhook-configuration';
+import { buildWebhookEventLogSummary, webhookEventLogService } from '@/lib/settings/webhook-event-log';
 
 const inputClass = 'rounded-md border border-stone-200 bg-white px-3 py-2 text-sm text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100';
 
@@ -38,20 +38,42 @@ function Toggle({ label, name, defaultChecked, disabled }: { label: string; name
   );
 }
 
+function isMissingSettingsTable(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes('42P01') || message.includes('does not exist');
+}
+
+async function withSettingsFallback<T>(operation: Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await operation;
+  } catch (error) {
+    if (isMissingSettingsTable(error)) return fallback;
+    throw error;
+  }
+}
+
 export async function AdminFulfillmentSettingsPanel({ methods, databaseReady }: { methods: FulfillmentMethodSetting[]; databaseReady: boolean }) {
+  const fallbackStaffPermissions = buildStaffPermissionSettingsSnapshot([DEFAULT_STAFF_PERMISSION_GROUP], []);
+  const fallbackWebhookEventLog = buildWebhookEventLogSummary([]);
+  const fallbackIntegrationRegistry = buildIntegrationAppRegistrySummary([DEFAULT_INTEGRATION_APP_REGISTRY_ENTRY]);
+  const fallbackApiTokens = buildApiTokenManagementSummary([DEFAULT_API_TOKEN_CREDENTIAL]);
+  const fallbackDashboardExtensions = buildDashboardExtensionMountPointSummary([DEFAULT_DASHBOARD_EXTENSION_MOUNT_POINT]);
+  const fallbackImportExportJobs = buildImportExportJobSummary([DEFAULT_IMPORT_EXPORT_JOB]);
+  const fallbackProviderDiagnostics = buildProviderDiagnosticsSummary([]);
+
   const [shippingDeliverySetting, taxCategorySettings, paymentProviderSettings, notificationProviderSettings, staffPermissionSnapshot, webhookConfigurations, webhookEventLogSummary, integrationAppRegistrySummary, apiTokenManagementSummary, dashboardExtensionMountPointSummary, importExportJobSummary, providerDiagnosticsSummary] = await Promise.all([
-    shippingDeliverySettingsService.get(),
+    withSettingsFallback(shippingDeliverySettingsService.get(), await shippingDeliverySettingsService.get().catch(() => shippingDeliverySettingsService.get())),
     taxCategorySettingsService.list(),
     paymentProviderSettingsService.list(),
     notificationProviderSettingsService.list(),
-    staffPermissionSettingsService.snapshot(),
-    webhookConfigurationService.list(),
-    webhookEventLogService.summary(10),
-    integrationAppRegistryService.summary(),
-    apiTokenManagementService.summary(),
-    dashboardExtensionMountPointService.summary(),
-    importExportJobTrackingService.summary(10),
-    providerDiagnosticsService.summary()
+    withSettingsFallback(staffPermissionSettingsService.snapshot(), fallbackStaffPermissions),
+    withSettingsFallback(webhookConfigurationService.list(), [DEFAULT_WEBHOOK_CONFIGURATION]),
+    withSettingsFallback(webhookEventLogService.summary(10), fallbackWebhookEventLog),
+    withSettingsFallback(integrationAppRegistryService.summary(), fallbackIntegrationRegistry),
+    withSettingsFallback(apiTokenManagementService.summary(), fallbackApiTokens),
+    withSettingsFallback(dashboardExtensionMountPointService.summary(), fallbackDashboardExtensions),
+    withSettingsFallback(importExportJobTrackingService.summary(10), fallbackImportExportJobs),
+    withSettingsFallback(providerDiagnosticsService.summary(), fallbackProviderDiagnostics)
   ]);
 
   return (
