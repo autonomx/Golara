@@ -134,6 +134,8 @@ export function buildTranslationCompletenessRow(
   };
 }
 
+export const buildTranslationCompletenessDashboardRow = buildTranslationCompletenessRow;
+
 export function buildTranslationCompletenessDashboardRows(
   entities: TranslationCompletenessEntity[],
   locales?: Array<string | null | undefined> | null,

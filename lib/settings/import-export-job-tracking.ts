@@ -114,7 +114,17 @@ export function normalizeImportExportJobKind(value?: string | null): ImportExpor
 }
 
 export function normalizeImportExportJobTarget(value?: string | null): ImportExportJobTarget {
-  return normalizeEnum(value, IMPORT_EXPORT_JOB_TARGETS, DEFAULT_IMPORT_EXPORT_JOB.target);
+  const normalized = optionalText(value)?.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+  if (!normalized) return DEFAULT_IMPORT_EXPORT_JOB.target;
+  if (IMPORT_EXPORT_JOB_TARGETS.includes(normalized as ImportExportJobTarget)) return normalized as ImportExportJobTarget;
+
+  const tokens = normalized.split('_').filter(Boolean);
+  const matchedTarget = IMPORT_EXPORT_JOB_TARGETS.find((target) => {
+    if (tokens.includes(target)) return true;
+    return tokens.some((token) => target.startsWith(token) || token.startsWith(target));
+  });
+
+  return matchedTarget ?? DEFAULT_IMPORT_EXPORT_JOB.target;
 }
 
 export function normalizeImportExportJobStatus(value?: string | null): ImportExportJobStatus {

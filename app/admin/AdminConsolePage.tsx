@@ -278,7 +278,7 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
   const authenticated = await isAdminAuthenticated();
   const adminIdentity = authenticated ? await getAdminIdentity() : undefined;
   const canViewStaffReadiness = adminIdentity?.role === 'owner';
-  const [categories, products, productTypes, homepage, homepageTranslations, media, inquiryPageData, assignmentSourceInquiries, inquiryCounts, auditLogs, orderRevenueSummary, orderPageData, authEventSummary, adminAccounts, adminCustomers, fulfillmentMethods, storeSetting, storefrontNavigationMenu] = await Promise.all([
+  const [categories, products, productTypes, homepage, homepageTranslations, media, inquiryPageData, assignmentSourceInquiries, inquiryCounts, auditLogs, orderRevenueSummary, orderPageData, authEventSummary, adminAccounts, adminCustomers, fulfillmentMethods] = await Promise.all([
     listAdminCategories(),
     listAdminProducts(),
     listAdminProductTypes(),
@@ -294,9 +294,15 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
     authenticated ? getCustomerAuthEventSummary() : getCustomerAuthEventSummary(1),
     canViewStaffReadiness ? listAdminAccountReadinessRecords() : Promise.resolve([]),
     authenticated ? listAdminCustomers() : Promise.resolve([]),
-    authenticated ? listAdminFulfillmentMethodSettings() : Promise.resolve([]),
-    storeSettingsService.get(),
+    authenticated ? listAdminFulfillmentMethodSettings() : Promise.resolve([])
+  ]);
+
+  const [storefrontNavigationMenu] = await Promise.all([
     storefrontNavigationMenuService.get()
+  ]);
+
+  const [storeSetting] = await Promise.all([
+    storeSettingsService.get()
   ]);
 
   const assignmentSummary = createInquiryAssignmentQueueSummary(assignmentSourceInquiries, adminIdentity);

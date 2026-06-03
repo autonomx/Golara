@@ -69,6 +69,7 @@ Goal: add operational stock and fulfillment foundations.
 - [x] Add warehouse/location model.
 - [x] Add multi-location stock.
 - [x] Add fulfillment method settings: delivery, pickup, courier/manual.
+- [x] Add variant-aware cart and checkout order line fields before inventory reservation.
 - [x] Connect inventory reservation to checkout/order lifecycle.
 - [x] Add fulfillment cards on order detail pages.
 

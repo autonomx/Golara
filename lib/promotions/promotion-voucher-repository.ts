@@ -136,16 +136,14 @@ export function normalizePromotionVoucherInput(input: PromotionVoucherInput) {
   };
 }
 
-export function isPromotionVoucherActive(voucher: Pick<PromotionVoucherRecord, 'status' | 'isActive' | 'startsAt' | 'endsAt' | 'usageCount' | 'usageLimit'>, now: Date = new Date()) {
-  return voucher.isActive
-    && voucher.status === 'active'
-    && isPromotionWithinValidityWindow(voucher, now)
-    && isPromotionWithinUsageLimit(voucher);
+export function isPromotionVoucherActive(voucher: Pick<PromotionVoucherRecord, 'status' | 'isActive' | 'startsAt' | 'endsAt'>, now: Date = new Date()) {
+  return voucher.isActive && voucher.status === 'active' && isPromotionWithinValidityWindow(voucher, now);
 }
 
 export function isPromotionVoucherActiveForOrder(voucher: Pick<PromotionVoucherRecord, 'status' | 'isActive' | 'startsAt' | 'endsAt' | 'usageCount' | 'usageLimit' | 'minimumSubtotalCents'>, subtotalCents: number, now: Date = new Date()) {
   return isPromotionVoucherActive(voucher, now)
-    && isPromotionAboveOrderMinimum(voucher, subtotalCents);
+    && isPromotionAboveOrderMinimum(voucher, subtotalCents)
+    && isPromotionWithinUsageLimit(voucher);
 }
 
 export async function listPromotionVouchers(): Promise<PromotionVoucherRecord[]> {

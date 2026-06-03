@@ -53,13 +53,15 @@ export function buildPaymentProviderDiagnosticCard(readiness: PaymentProviderRea
 }
 
 export function buildNotificationProviderDiagnosticCard(readiness: NotificationProviderReadinessSummary): ProviderDiagnosticCard {
+  const blockers = readiness.blockers.length;
+  const warnings = readiness.warnings.length;
   return {
     key: `notification:${readiness.settingKey}`,
     label: 'Notification providers',
     category: 'notification',
-    status: statusFromReadiness(readiness.ready, readiness.active, readiness.blockers.length, readiness.warnings.length),
-    blockers: readiness.blockers.length,
-    warnings: readiness.warnings.length,
+    status: blockers > 0 || warnings > 0 ? 'needs_attention' : statusFromReadiness(readiness.ready, readiness.active, blockers, warnings),
+    blockers,
+    warnings,
     requiredEnvironmentVariables: readiness.requiredEnvironmentVariables,
     summary: readiness.ready ? 'Notification provider configuration is ready.' : 'Notification provider configuration needs attention.'
   };
