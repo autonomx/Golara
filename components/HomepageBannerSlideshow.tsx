@@ -19,9 +19,9 @@ export function HomepageBannerSlideshow({ slides }: HomepageBannerSlideshowProps
       id="home-hero"
       data-section="home-hero"
       aria-labelledby="home-hero-heading"
-      className="relative overflow-hidden bg-[#fff7f1] px-4 py-5 md:px-8 md:py-8"
+      className="relative overflow-hidden bg-[#fff7f1] px-4 pb-10 pt-5 md:px-8 md:pb-14 md:pt-7"
     >
-      <div className="relative mx-auto min-h-[600px] max-w-[1520px] overflow-hidden rounded-[2rem] border border-rosewood/10 bg-stone-900 shadow-[0_26px_70px_rgba(111,36,56,0.14)] md:min-h-[680px]">
+      <div className="relative mx-auto min-h-[460px] max-w-[1520px] overflow-hidden rounded-[1.75rem] border border-rosewood/10 bg-stone-900 shadow-[0_22px_56px_rgba(111,36,56,0.12)] md:min-h-[520px] xl:min-h-[560px]">
         <Image
           src={heroSlide.image}
           alt={heroSlide.alt}
@@ -31,24 +31,24 @@ export function HomepageBannerSlideshow({ slides }: HomepageBannerSlideshowProps
           sizes="100vw"
         />
 
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,248,241,0.96)_0%,rgba(255,248,241,0.88)_34%,rgba(255,248,241,0.42)_58%,rgba(43,29,32,0.12)_100%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_28%,rgba(255,255,255,0.9)_0%,rgba(255,255,255,0.18)_34%,rgba(255,255,255,0)_62%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,248,241,0.97)_0%,rgba(255,248,241,0.9)_32%,rgba(255,248,241,0.44)_56%,rgba(43,29,32,0.12)_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_28%,rgba(255,255,255,0.82)_0%,rgba(255,255,255,0.16)_34%,rgba(255,255,255,0)_62%)]" />
 
-        <div className="relative z-10 flex min-h-[600px] items-center px-6 py-12 md:min-h-[680px] md:px-12 lg:px-16">
-          <div className="max-w-2xl text-stone-800">
+        <div className="relative z-10 flex min-h-[460px] items-center px-6 py-10 md:min-h-[520px] md:px-12 md:py-12 lg:px-16 xl:min-h-[560px]">
+          <div className="max-w-xl text-stone-800 lg:max-w-2xl">
             <p className="inline-flex rounded-full border border-rosewood/10 bg-white/72 px-5 py-2 text-xs font-semibold uppercase tracking-[0.32em] text-olive shadow-sm">
               {heroSlide.eyebrow}
             </p>
 
-            <h1 id="home-hero-heading" className="mt-8 max-w-2xl font-display text-5xl leading-[0.95] text-rosewood md:text-7xl lg:text-8xl">
+            <h1 id="home-hero-heading" className="mt-6 max-w-2xl font-display text-4xl leading-[0.98] text-rosewood md:text-6xl lg:text-7xl">
               {heroSlide.title}
             </h1>
 
-            <p className="mt-6 max-w-xl text-base leading-8 text-stone-700 md:text-lg md:leading-9">
+            <p className="mt-5 max-w-xl text-base leading-7 text-stone-700 md:text-lg md:leading-8">
               {heroSlide.body}
             </p>
 
-            <div className="mt-9 flex flex-wrap items-center gap-3">
+            <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link href="/categories/available-today" className="inline-flex rounded-full bg-rosewood px-7 py-3.5 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(111,36,56,0.18)] transition hover:-translate-y-0.5 hover:bg-stone-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
                 Shop available today
               </Link>
@@ -60,7 +60,7 @@ export function HomepageBannerSlideshow({ slides }: HomepageBannerSlideshowProps
               </Link>
             </div>
 
-            <div className="mt-10 flex flex-wrap gap-3 text-sm font-semibold text-stone-700">
+            <div className="mt-8 flex flex-wrap gap-3 text-sm font-semibold text-stone-700">
               <div className="inline-flex items-center gap-2 rounded-full border border-rosewood/10 bg-white/72 px-4 py-2 shadow-sm">
                 <Truck aria-hidden="true" className="h-4 w-4 text-rosewood" />
                 Same-day options
