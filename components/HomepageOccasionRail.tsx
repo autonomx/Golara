@@ -32,9 +32,9 @@ export function HomepageOccasionRail({ occasions }: { occasions: Category[] }) {
       id="occasions"
       data-section="home-occasion-menu"
       aria-labelledby="home-occasion-menu-heading"
-      className="relative z-10 bg-transparent px-5 pb-12"
+      className="relative z-10 bg-[#fffdfb] px-5 pb-14 pt-2"
     >
-      <div className="mx-auto -mt-8 max-w-7xl rounded-lg border border-rosewood/10 bg-white/95 p-4 shadow-[0_16px_42px_rgba(111,36,56,0.08)] md:p-5">
+      <div className="mx-auto max-w-7xl rounded-lg border border-rosewood/10 bg-white p-4 shadow-[0_14px_34px_rgba(111,36,56,0.07)] md:p-5">
         <div className="mb-4 flex flex-col gap-2 px-1 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-olive">Occasion menu</p>
