@@ -38,8 +38,8 @@ function statusFromReadiness(ready: boolean, active: boolean, blockers: number, 
 }
 
 export function buildPaymentProviderDiagnosticCard(readiness: PaymentProviderReadinessSummary): ProviderDiagnosticCard {
-  const blockers = readiness.issues.filter((issue) => issue.severity === 'blocker').length;
-  const warnings = readiness.issues.filter((issue) => issue.severity === 'warning').length;
+  const blockers = readiness.blockers.length;
+  const warnings = readiness.warnings.length;
   return {
     key: `payment:${readiness.settingKey}`,
     label: 'Payment providers',
