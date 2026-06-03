@@ -99,7 +99,7 @@ export function isProductChannelPriceOverrideActive(override?: ProductChannelPri
 
 export function applyProductChannelPriceOverride(basePriceCents: number, override?: ProductChannelPriceOverrideState & Pick<ProductChannelPriceOverrideRecord, 'priceCents'> | null, now: Date = new Date()) {
   const normalizedBasePriceCents = normalizeProductChannelPriceCents(basePriceCents);
-  if (!isProductChannelPriceOverrideActive(override, now)) return normalizedBasePriceCents;
+  if (!override || !isProductChannelPriceOverrideActive(override, now)) return normalizedBasePriceCents;
   return normalizeProductChannelPriceCents(override.priceCents);
 }
 
@@ -186,7 +186,9 @@ export async function createProductChannelPriceOverride(input: ProductChannelPri
       "isActive",
       "startsAt",
       "endsAt",
-      "metadata"
+      "metadata",
+      "createdAt",
+      "updatedAt"
     ) VALUES (
       ${id},
       ${override.channelId},
@@ -197,21 +199,11 @@ export async function createProductChannelPriceOverride(input: ProductChannelPri
       ${override.isActive},
       ${override.startsAt},
       ${override.endsAt},
-      ${JSON.stringify(override.metadata)}::jsonb
+      ${override.metadata},
+      NOW(),
+      NOW()
     )
-    RETURNING
-      "id",
-      "channelId",
-      "productId",
-      "variantId",
-      "priceCents",
-      "currency",
-      "isActive",
-      "startsAt",
-      "endsAt",
-      "metadata",
-      "createdAt",
-      "updatedAt"
+    RETURNING "id", "channelId", "productId", "variantId", "priceCents", "currency", "isActive", "startsAt", "endsAt", "metadata", "createdAt", "updatedAt"
   `;
 
   return inserted[0];
