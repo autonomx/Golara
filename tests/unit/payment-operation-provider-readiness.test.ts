@@ -11,12 +11,29 @@ function source(path: string) {
   return readFileSync(path, 'utf8');
 }
 
+function assertNoExecutionSurface(pageSource: string) {
+  assert.equal(pageSource.includes('fetch('), false);
+  assert.equal(pageSource.includes('@prisma/client'), false);
+  assert.equal(pageSource.includes('prisma.'), false);
+  assert.equal(pageSource.includes('executePaymentOperationAdapter'), false);
+  assert.equal(pageSource.includes('createStripePaymentOperationHttpAdapter'), false);
+  assert.equal(pageSource.includes('createZarinPalPaymentOperationHttpAdapter'), false);
+  assert.equal(pageSource.includes('https://api.stripe.com'), false);
+  assert.equal(pageSource.includes('https://www.zarinpal.com'), false);
+  assert.equal(pageSource.includes('onClick='), false);
+  assert.equal(pageSource.includes('<button'), false);
+  assert.equal(pageSource.includes('CheckoutOrder" SET'), false);
+  assert.equal(pageSource.includes('CheckoutPaymentAttempt" SET'), false);
+}
+
 export async function runPaymentOperationProviderReadinessTests() {
   const readinessSource = source('lib/checkout/payment-operation-provider-readiness.ts');
   const readinessRouteCore = source('lib/checkout/payment-operation-provider-readiness-route-core.ts');
   const readinessPanel = source('components/admin/AdminPaymentOperationProviderReadinessPanel.tsx');
   const readinessPage = source('app/admin/payments/operations/providers/page.tsx');
   const operationsPage = source('app/admin/payments/operations/page.tsx');
+  const previewPage = source('app/admin/payments/operations/preview/page.tsx');
+  const historyPage = source('app/admin/payments/operations/history/page.tsx');
   const settlementPage = source('app/admin/payments/settlement/page.tsx');
   const phase33Docs = source('docs/production-roadmap-phase33-payment-operations.md');
 
@@ -101,106 +118,59 @@ export async function runPaymentOperationProviderReadinessTests() {
   assert.ok(readinessSource.includes('provider_credentials_missing'));
   assert.ok(readinessSource.includes('manual_provider_requires_operator_review'));
   assert.ok(readinessSource.includes('normalizePaymentOperationAdapterProvider'));
-  assert.equal(readinessSource.includes('fetch('), false);
-  assert.equal(readinessSource.includes('@prisma/client'), false);
-  assert.equal(readinessSource.includes('prisma.'), false);
-  assert.equal(readinessSource.includes('CheckoutOrder" SET'), false);
-  assert.equal(readinessSource.includes('CheckoutPaymentAttempt" SET'), false);
-  assert.equal(readinessSource.includes('executePaymentOperationAdapter'), false);
-  assert.equal(readinessSource.includes('createStripePaymentOperationHttpAdapter'), false);
-  assert.equal(readinessSource.includes('createZarinPalPaymentOperationHttpAdapter'), false);
-  assert.equal(readinessSource.includes('https://api.stripe.com'), false);
-  assert.equal(readinessSource.includes('https://www.zarinpal.com'), false);
+  assertNoExecutionSurface(readinessSource);
 
   assert.ok(readinessRouteCore.includes('buildPaymentOperationProviderReadinessRouteResult'));
   assert.ok(readinessRouteCore.includes('buildPaymentOperationProviderReadinessSummary'));
   assert.ok(readinessRouteCore.includes('executionEnabled: false'));
   assert.ok(readinessRouteCore.includes("['stripe', 'zarinpal', 'manual']"));
-  assert.equal(readinessRouteCore.includes('fetch('), false);
-  assert.equal(readinessRouteCore.includes('@prisma/client'), false);
-  assert.equal(readinessRouteCore.includes('prisma.'), false);
-  assert.equal(readinessRouteCore.includes('executePaymentOperationAdapter'), false);
-  assert.equal(readinessRouteCore.includes('createStripePaymentOperationHttpAdapter'), false);
-  assert.equal(readinessRouteCore.includes('createZarinPalPaymentOperationHttpAdapter'), false);
-  assert.equal(readinessRouteCore.includes('CheckoutOrder" SET'), false);
-  assert.equal(readinessRouteCore.includes('CheckoutPaymentAttempt" SET'), false);
-  assert.equal(readinessRouteCore.includes('onClick='), false);
-  assert.equal(readinessRouteCore.includes('<button'), false);
+  assertNoExecutionSurface(readinessRouteCore);
 
   assert.ok(readinessPanel.includes('AdminPaymentOperationProviderReadinessPanel'));
   assert.ok(readinessPanel.includes('PaymentOperationProviderReadinessSummary'));
   assert.ok(readinessPanel.includes('Read-only diagnostics'));
   assert.ok(readinessPanel.includes('without secrets, provider calls, or execution controls'));
   assert.ok(readinessPanel.includes('Execution:</span> disabled'));
-  assert.equal(readinessPanel.includes('fetch('), false);
-  assert.equal(readinessPanel.includes('@prisma/client'), false);
-  assert.equal(readinessPanel.includes('prisma.'), false);
-  assert.equal(readinessPanel.includes('executePaymentOperationAdapter'), false);
-  assert.equal(readinessPanel.includes('createStripePaymentOperationHttpAdapter'), false);
-  assert.equal(readinessPanel.includes('createZarinPalPaymentOperationHttpAdapter'), false);
-  assert.equal(readinessPanel.includes('onClick='), false);
-  assert.equal(readinessPanel.includes('<button'), false);
-  assert.equal(readinessPanel.includes('CheckoutOrder" SET'), false);
-  assert.equal(readinessPanel.includes('CheckoutPaymentAttempt" SET'), false);
+  assertNoExecutionSurface(readinessPanel);
 
   assert.ok(readinessPage.includes('AdminPaymentOperationProviderReadinessPanel'));
   assert.ok(readinessPage.includes('buildPaymentOperationProviderReadinessRouteResult'));
   assert.ok(readinessPage.includes('readinessResult.body.summary'));
+  assert.ok(readinessPage.includes('/admin/payments/operations'));
   assert.ok(readinessPage.includes('Execution remains disabled'));
   assert.ok(readinessPage.includes('informational only'));
-  assert.equal(readinessPage.includes('fetch('), false);
-  assert.equal(readinessPage.includes('@prisma/client'), false);
-  assert.equal(readinessPage.includes('prisma.'), false);
-  assert.equal(readinessPage.includes('executePaymentOperationAdapter'), false);
-  assert.equal(readinessPage.includes('createStripePaymentOperationHttpAdapter'), false);
-  assert.equal(readinessPage.includes('createZarinPalPaymentOperationHttpAdapter'), false);
-  assert.equal(readinessPage.includes('https://api.stripe.com'), false);
-  assert.equal(readinessPage.includes('https://www.zarinpal.com'), false);
-  assert.equal(readinessPage.includes('onClick='), false);
-  assert.equal(readinessPage.includes('<button'), false);
-  assert.equal(readinessPage.includes('CheckoutOrder" SET'), false);
-  assert.equal(readinessPage.includes('CheckoutPaymentAttempt" SET'), false);
+  assertNoExecutionSurface(readinessPage);
 
   assert.ok(operationsPage.includes('/admin/payments/operations/providers'));
   assert.ok(operationsPage.includes('/admin/payments/operations/history'));
   assert.ok(operationsPage.includes('/admin/payments/operations/preview'));
   assert.ok(operationsPage.includes('Execution remains disabled'));
   assert.ok(operationsPage.includes('navigation-only'));
-  assert.equal(operationsPage.includes('fetch('), false);
-  assert.equal(operationsPage.includes('@prisma/client'), false);
-  assert.equal(operationsPage.includes('prisma.'), false);
-  assert.equal(operationsPage.includes('executePaymentOperationAdapter'), false);
-  assert.equal(operationsPage.includes('createStripePaymentOperationHttpAdapter'), false);
-  assert.equal(operationsPage.includes('createZarinPalPaymentOperationHttpAdapter'), false);
-  assert.equal(operationsPage.includes('https://api.stripe.com'), false);
-  assert.equal(operationsPage.includes('https://www.zarinpal.com'), false);
-  assert.equal(operationsPage.includes('onClick='), false);
-  assert.equal(operationsPage.includes('<button'), false);
-  assert.equal(operationsPage.includes('CheckoutOrder" SET'), false);
-  assert.equal(operationsPage.includes('CheckoutPaymentAttempt" SET'), false);
+  assertNoExecutionSurface(operationsPage);
+
+  assert.ok(previewPage.includes('/admin/payments/operations'));
+  assert.ok(previewPage.includes('/admin/payments/settlement'));
+  assert.ok(previewPage.includes('Read-only Phase 33 preview entry point'));
+  assertNoExecutionSurface(previewPage);
+
+  assert.ok(historyPage.includes('/admin/payments/operations'));
+  assert.ok(historyPage.includes('/admin/payments/operations/preview'));
+  assert.ok(historyPage.includes('/admin/payments/settlement'));
+  assert.ok(historyPage.includes('Read-only Phase 33 operation history'));
+  assertNoExecutionSurface(historyPage);
 
   assert.ok(settlementPage.includes('/admin/payments/operations/providers'));
   assert.ok(settlementPage.includes('/admin/payments/operations/history'));
   assert.ok(settlementPage.includes('/admin/payments/operations/preview'));
   assert.ok(settlementPage.includes('read-only Phase 33 diagnostics'));
   assert.ok(settlementPage.includes('do not execute provider adapters'));
-  assert.equal(settlementPage.includes('fetch('), false);
-  assert.equal(settlementPage.includes('@prisma/client'), false);
-  assert.equal(settlementPage.includes('prisma.'), false);
-  assert.equal(settlementPage.includes('executePaymentOperationAdapter'), false);
-  assert.equal(settlementPage.includes('createStripePaymentOperationHttpAdapter'), false);
-  assert.equal(settlementPage.includes('createZarinPalPaymentOperationHttpAdapter'), false);
-  assert.equal(settlementPage.includes('https://api.stripe.com'), false);
-  assert.equal(settlementPage.includes('https://www.zarinpal.com'), false);
-  assert.equal(settlementPage.includes('onClick='), false);
-  assert.equal(settlementPage.includes('<button'), false);
-  assert.equal(settlementPage.includes('CheckoutOrder" SET'), false);
-  assert.equal(settlementPage.includes('CheckoutPaymentAttempt" SET'), false);
+  assertNoExecutionSurface(settlementPage);
 
   assert.ok(phase33Docs.includes('read-only provider-operation readiness diagnostics'));
   assert.ok(phase33Docs.includes('/admin/payments/operations/providers'));
   assert.ok(phase33Docs.includes('/admin/payments/operations`'));
   assert.ok(phase33Docs.includes('payment settlement admin page'));
+  assert.ok(phase33Docs.includes('navigation consistency'));
 
   console.log('payment-operation-provider-readiness.test.ts passed');
 }
