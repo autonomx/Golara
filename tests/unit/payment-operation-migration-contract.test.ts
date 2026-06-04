@@ -14,6 +14,7 @@ export async function runPaymentOperationMigrationContractTests() {
   const repository = source('lib/checkout/payment-operation-record-repository.ts');
   const service = source('lib/checkout/payment-operation-record-service.ts');
   const historyView = source('lib/checkout/payment-operation-history-view.ts');
+  const historyRouteCore = source('lib/checkout/payment-operation-history-route-core.ts');
   const historyPanel = source('components/admin/AdminPaymentOperationHistoryPanel.tsx');
   const audit = source('lib/checkout/payment-operation-audit.ts');
   const schema = source('prisma/schema.prisma');
@@ -125,6 +126,22 @@ export async function runPaymentOperationMigrationContractTests() {
   assert.equal(historyView.includes('prisma.'), false);
   assert.equal(historyView.includes('CheckoutOrder" SET'), false);
   assert.equal(historyView.includes('CheckoutPaymentAttempt" SET'), false);
+
+  assert.ok(historyRouteCore.includes('buildPaymentOperationHistoryRouteResult'));
+  assert.ok(historyRouteCore.includes('listPaymentOperationRecordsForOrderIfConfirmed'));
+  assert.ok(historyRouteCore.includes('buildPaymentOperationHistoryView(serviceResult.records)'));
+  assert.ok(historyRouteCore.includes('payment_operation_records_migration_unconfirmed'));
+  assert.ok(historyRouteCore.includes('Limit must be a positive integer.'));
+  assert.ok(historyRouteCore.includes('Order ID is required to read payment operation history.'));
+  assert.equal(historyRouteCore.includes('executePaymentOperationRecordIfConfirmed'), false);
+  assert.equal(historyRouteCore.includes('createPendingPaymentOperationRecordIfConfirmed'), false);
+  assert.equal(historyRouteCore.includes('fetch('), false);
+  assert.equal(historyRouteCore.includes('@prisma/client'), false);
+  assert.equal(historyRouteCore.includes('prisma.'), false);
+  assert.equal(historyRouteCore.includes('CheckoutOrder" SET'), false);
+  assert.equal(historyRouteCore.includes('CheckoutPaymentAttempt" SET'), false);
+  assert.equal(historyRouteCore.includes('onClick='), false);
+  assert.equal(historyRouteCore.includes('<button'), false);
 
   assert.ok(historyPanel.includes('AdminPaymentOperationHistoryPanel'));
   assert.ok(historyPanel.includes('PaymentOperationHistoryView'));
