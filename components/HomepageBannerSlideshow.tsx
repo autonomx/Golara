@@ -1,18 +1,42 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { MessageCircle, Sparkles, Truck } from 'lucide-react';
+import type { HomepageContent } from '@/lib/catalog';
 import type { HomepageBannerSlide } from '@/lib/homepage-assets';
 
 interface HomepageBannerSlideshowProps {
   slides: HomepageBannerSlide[];
+  homepage?: HomepageContent;
 }
 
-export function HomepageBannerSlideshow({ slides }: HomepageBannerSlideshowProps) {
-  const heroSlide = slides[0];
+function firstNonEmpty(...values: Array<string | undefined>) {
+  return values.find((value) => value?.trim()) ?? '';
+}
 
-  if (!heroSlide) {
+export function HomepageBannerSlideshow({ slides, homepage }: HomepageBannerSlideshowProps) {
+  const fallbackSlide = slides[0];
+
+  if (!fallbackSlide && !homepage) {
     return null;
   }
+
+  const heroSlide = {
+    image: firstNonEmpty(homepage?.heroImage, fallbackSlide?.image),
+    alt: firstNonEmpty(homepage?.heroImageAlt, fallbackSlide?.alt, homepage?.title),
+    eyebrow: firstNonEmpty(homepage?.eyebrow, fallbackSlide?.eyebrow),
+    title: firstNonEmpty(homepage?.title, fallbackSlide?.title),
+    body: firstNonEmpty(homepage?.body, fallbackSlide?.body)
+  };
+  const ctas = [
+    { label: firstNonEmpty(homepage?.primaryCtaLabel, 'Shop available today'), href: firstNonEmpty(homepage?.primaryCtaHref, '/categories/available-today'), variant: 'primary' },
+    { label: firstNonEmpty(homepage?.secondaryCtaLabel, 'All products'), href: firstNonEmpty(homepage?.secondaryCtaHref, '/products'), variant: 'secondary' },
+    { label: firstNonEmpty(homepage?.tertiaryCtaLabel, 'Best sellers'), href: firstNonEmpty(homepage?.tertiaryCtaHref, '/#best-sellers'), variant: 'soft' }
+  ].filter((cta) => cta.label && cta.href);
+  const trustItems = [
+    { label: firstNonEmpty(homepage?.trustItemOne, 'Same-day options'), icon: Truck },
+    { label: firstNonEmpty(homepage?.trustItemTwo, 'Premium finish'), icon: Sparkles },
+    { label: firstNonEmpty(homepage?.trustItemThree, 'Sales guidance'), icon: MessageCircle }
+  ].filter((item) => item.label);
 
   return (
     <section
@@ -36,50 +60,38 @@ export function HomepageBannerSlideshow({ slides }: HomepageBannerSlideshowProps
 
         <div className="relative z-10 flex min-h-[460px] items-center px-6 py-10 md:min-h-[520px] md:px-12 md:py-12 lg:px-16 xl:min-h-[560px]">
           <div className="max-w-xl text-stone-800 lg:max-w-2xl">
-            <p className="inline-flex rounded-full border border-rosewood/10 bg-white/72 px-5 py-2 text-xs font-semibold uppercase tracking-[0.32em] text-olive shadow-sm">
+            {heroSlide.eyebrow ? <p className="inline-flex rounded-full border border-rosewood/10 bg-white/72 px-5 py-2 text-xs font-semibold uppercase tracking-[0.32em] text-olive shadow-sm">
               {heroSlide.eyebrow}
-            </p>
+            </p> : null}
 
             <h1 id="home-hero-heading" className="mt-6 max-w-2xl font-display text-4xl leading-[0.98] text-rosewood md:text-6xl lg:text-7xl">
               {heroSlide.title}
             </h1>
 
-            <p className="mt-5 max-w-xl text-base leading-7 text-stone-700 md:text-lg md:leading-8">
+            {heroSlide.body ? <p className="mt-5 max-w-xl text-base leading-7 text-stone-700 md:text-lg md:leading-8">
               {heroSlide.body}
-            </p>
+            </p> : null}
 
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link href="/categories/available-today" className="inline-flex rounded-full bg-rosewood px-7 py-3.5 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(111,36,56,0.18)] transition hover:-translate-y-0.5 hover:bg-stone-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
-                Shop available today
-              </Link>
-              <Link href="/products" className="inline-flex rounded-full border border-rosewood/20 bg-white/78 px-7 py-3.5 text-sm font-semibold text-rosewood shadow-sm transition hover:-translate-y-0.5 hover:border-rosewood focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
-                All products
-              </Link>
-              <Link href="/#best-sellers" className="inline-flex rounded-full border border-rosewood/15 bg-white/58 px-7 py-3.5 text-sm font-semibold text-rosewood shadow-sm transition hover:-translate-y-0.5 hover:border-rosewood focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
-                Best sellers
-              </Link>
-            </div>
+            {ctas.length ? <div className="mt-8 flex flex-wrap items-center gap-3">
+              {ctas.map((cta) => (
+                <Link key={`${cta.label}-${cta.href}`} href={cta.href} className={cta.variant === 'primary' ? 'inline-flex rounded-full bg-rosewood px-7 py-3.5 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(111,36,56,0.18)] transition hover:-translate-y-0.5 hover:bg-stone-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30' : cta.variant === 'secondary' ? 'inline-flex rounded-full border border-rosewood/20 bg-white/78 px-7 py-3.5 text-sm font-semibold text-rosewood shadow-sm transition hover:-translate-y-0.5 hover:border-rosewood focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30' : 'inline-flex rounded-full border border-rosewood/15 bg-white/58 px-7 py-3.5 text-sm font-semibold text-rosewood shadow-sm transition hover:-translate-y-0.5 hover:border-rosewood focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30'}>
+                  {cta.label}
+                </Link>
+              ))}
+            </div> : null}
 
-            <div className="mt-8 flex flex-wrap gap-3 text-sm font-semibold text-stone-700">
-              <div className="inline-flex items-center gap-2 rounded-full border border-rosewood/10 bg-white/72 px-4 py-2 shadow-sm">
-                <Truck aria-hidden="true" className="h-4 w-4 text-rosewood" />
-                Same-day options
-              </div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-rosewood/10 bg-white/72 px-4 py-2 shadow-sm">
-                <Sparkles aria-hidden="true" className="h-4 w-4 text-rosewood" />
-                Premium finish
-              </div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-rosewood/10 bg-white/72 px-4 py-2 shadow-sm">
-                <MessageCircle aria-hidden="true" className="h-4 w-4 text-rosewood" />
-                Sales guidance
-              </div>
-            </div>
+            {trustItems.length ? <div className="mt-8 flex flex-wrap gap-3 text-sm font-semibold text-stone-700">
+              {trustItems.map((item) => {
+                const Icon = item.icon;
+                return <div key={item.label} className="inline-flex items-center gap-2 rounded-full border border-rosewood/10 bg-white/72 px-4 py-2 shadow-sm"><Icon aria-hidden="true" className="h-4 w-4 text-rosewood" />{item.label}</div>;
+              })}
+            </div> : null}
           </div>
         </div>
 
-        <div className="absolute bottom-6 right-6 hidden rounded-full border border-white/35 bg-white/72 px-5 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-rosewood shadow-sm md:block">
-          Golara studio selection
-        </div>
+        {homepage?.studioBadge !== '' ? <div className="absolute bottom-6 right-6 hidden rounded-full border border-white/35 bg-white/72 px-5 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-rosewood shadow-sm md:block">
+          {firstNonEmpty(homepage?.studioBadge, 'Golara studio selection')}
+        </div> : null}
       </div>
     </section>
   );
