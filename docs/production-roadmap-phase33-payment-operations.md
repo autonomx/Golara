@@ -6,7 +6,7 @@ This note tracks Phase 33 work after the Phase 32 repo-side webhook and settleme
 
 ## Current status
 
-Phase 33 has provider-neutral refund/void planning, no-mutation preview generation, a pure preview input normalization helper, a read-only preview view model, a route-core style preview result, a request-core wrapper for normalized preview requests, a compact read-only admin preview panel, a static-sample admin preview route for admin-safe display, and a documentation-only persistence design for future refund/void operation records. This is still repository-side planning only; it does not call Stripe, ZarinPal, or any other live provider, and it does not mutate payment attempts, orders, refunds, inventory, or audit logs.
+Phase 33 has provider-neutral refund/void planning, no-mutation preview generation, a pure preview input normalization helper, a read-only preview view model, a route-core style preview result, a request-core wrapper for normalized preview requests, a compact read-only admin preview panel, a static-sample admin preview route for admin-safe display, a documentation-only persistence design for future refund/void operation records, and pure order/payment transition plus inventory/capacity release planning. This is still repository-side planning only; it does not call Stripe, ZarinPal, or any other live provider, and it does not mutate payment attempts, orders, refunds, inventory, or audit logs.
 
 ## Completed in Phase 33 so far
 
@@ -30,6 +30,9 @@ Phase 33 has provider-neutral refund/void planning, no-mutation preview generati
 - Extended `tests/unit/payment-operation-plan.test.ts` to guard the admin preview route as static-sample, read-only, and free of provider calls, Prisma, mutations, click handlers, and execution buttons.
 - Added `docs/production-roadmap-phase33-refund-void-persistence-design.md` to document future refund/void operation records, idempotency, audit, order/payment timelines, and inventory/capacity release planning before any migration.
 - Extended `tests/unit/payment-operation-plan.test.ts` to guard the persistence design note and its explicit no-migration/no-provider-mutation boundary.
+- Added `lib/checkout/payment-operation-transition-plan.ts` for pure post-provider-success order/payment transition recommendations and inventory/capacity release planning.
+- Added `tests/unit/payment-operation-transition-plan.test.ts` for blocked, manual-review, partial refund, full refund, and void transition/release scenarios.
+- Wired `tests/unit/payment-operation-transition-plan.test.ts` into `tests/unit/run-tests.ts`, raising the runner count from 116 to 117 files.
 
 ## Current helper behavior
 
@@ -105,6 +108,16 @@ Phase 33 has provider-neutral refund/void planning, no-mutation preview generati
 - admin execution prerequisites;
 - explicit no-goals for migrations, provider calls, mutations, audit writes, and execution buttons.
 
+`planPaymentOperationTransition` can recommend future post-provider-success behavior without mutating anything:
+
+- blocked operations keep order/payment/release state unchanged;
+- manual-review operations stay unchanged until operator review;
+- partial refunds recommend partial payment status and no automatic release;
+- full refunds before fulfillment may evaluate capacity release;
+- full refunds after fulfillment starts require manual release review;
+- voids before fulfillment may cancel after provider success and evaluate capacity release;
+- voids after fulfillment starts require manual review before cancellation/release.
+
 ## Preview boundary acceptance criteria
 
 The no-mutation preview boundary should continue to:
@@ -120,6 +133,7 @@ The no-mutation preview boundary should continue to:
 - render read-only admin UI without execution controls;
 - keep static/demo preview routes free of provider calls, persistence, order mutation, payment attempt mutation, and execution affordances;
 - keep persistence design documentation explicit that no migration or provider mutation has been added yet;
+- keep transition/release planning pure and advisory until persistence, audit, and operator approval paths exist;
 - avoid database writes;
 - avoid checkout order mutation;
 - avoid payment attempt mutation;
@@ -151,7 +165,7 @@ Those remain future Phase 33 slices after the provider-neutral planning and prev
 1. Add migration-backed refund/void operation records only after the persistence design contract is accepted.
 2. Add a repository/service layer that can create pending operations idempotently.
 3. Add append-only audit events for preview/request/blocked states.
-4. Add pure order/payment transition and inventory/capacity release planning helpers before any live provider mutation.
+4. Feed `planPaymentOperationTransition` into future persisted operation previews or admin displays without mutating state.
 5. Add provider adapters for Stripe/ZarinPal refund and void execution only after preview, persistence, audit, and idempotency rules are defined.
 
 ## Verification status
