@@ -8,9 +8,11 @@ import {
   createStripeCheckoutSessionAdapter,
   createStripeGatewayMockAdapter,
   createWhatsAppGatewayAdapter,
+  createZarinPalPaymentRequestAdapter,
   initiatePaymentGateway,
   type PaymentGatewayInitiationInput,
-  type StripeCheckoutSessionHttpClient
+  type StripeCheckoutSessionHttpClient,
+  type ZarinPalPaymentRequestHttpClient
 } from '../../lib/checkout/payment-gateway-adapters';
 
 const basePayment: PaymentGatewayInitiationInput = {
@@ -144,6 +146,80 @@ export async function runPaymentGatewayAdaptersTests() {
     }
   );
 
+  assert.deepEqual(await createZarinPalPaymentRequestAdapter({ merchantId: 'merchant-1' }).initiate({ ...basePayment, currency: 'USD' }), {
+    provider: 'zarinpal',
+    status: 'unavailable',
+    reference: 'zarinpal:GOL-1001',
+    message: 'ZarinPal checkout only supports Toman orders.'
+  });
+
+  assert.deepEqual(await createZarinPalPaymentRequestAdapter().initiate(basePayment), {
+    provider: 'zarinpal',
+    status: 'unavailable',
+    reference: 'zarinpal:GOL-1001',
+    message: 'ZarinPal checkout requires ZARINPAL_MERCHANT_ID.'
+  });
+
+  let capturedZarinPalRequest: { url: string; headers: Record<string, string>; body: Record<string, unknown> } | undefined;
+  const zarinpalHttpClient: ZarinPalPaymentRequestHttpClient = async (url, init) => {
+    capturedZarinPalRequest = { url, headers: init.headers, body: JSON.parse(init.body) as Record<string, unknown> };
+    return {
+      ok: true,
+      status: 200,
+      async json() {
+        return { data: { code: 100, authority: 'A00000000000000000000000000000012345' } };
+      }
+    };
+  };
+
+  assert.deepEqual(
+    await createZarinPalPaymentRequestAdapter({ merchantId: ' merchant-1 ', httpClient: zarinpalHttpClient }).initiate({
+      ...basePayment,
+      customerEmail: 'customer@example.com',
+      idempotencyKey: 'idem-zarinpal-order-1'
+    }),
+    {
+      provider: 'zarinpal',
+      status: 'redirect',
+      reference: 'A00000000000000000000000000000012345',
+      redirectUrl: 'https://www.zarinpal.com/pg/StartPay/A00000000000000000000000000000012345',
+      message: 'ZarinPal payment request created.'
+    }
+  );
+
+  assert.ok(capturedZarinPalRequest);
+  assert.equal(capturedZarinPalRequest.url, 'https://api.zarinpal.com/pg/v4/payment/request.json');
+  assert.equal(capturedZarinPalRequest.headers['Content-Type'], 'application/json');
+  assert.equal(capturedZarinPalRequest.headers['Idempotency-Key'], 'idem-zarinpal-order-1');
+  assert.equal(capturedZarinPalRequest.body.merchant_id, 'merchant-1');
+  assert.equal(capturedZarinPalRequest.body.amount, 250000);
+  assert.equal(capturedZarinPalRequest.body.callback_url, 'https://golara.example/checkout/return?provider=zarinpal&order=order-1');
+  assert.equal(capturedZarinPalRequest.body.description, 'Golara order GOL-1001');
+  assert.deepEqual(capturedZarinPalRequest.body.metadata, {
+    email: 'customer@example.com',
+    mobile: '+989121234567',
+    order_id: 'order-1',
+    order_number: 'GOL-1001',
+    source: 'unit-test'
+  });
+
+  const failingZarinPalHttpClient: ZarinPalPaymentRequestHttpClient = async () => ({
+    ok: false,
+    status: 400,
+    async json() {
+      return { errors: { message: 'merchant not found' } };
+    }
+  });
+  assert.deepEqual(
+    await createZarinPalPaymentRequestAdapter({ merchantId: 'merchant-1', httpClient: failingZarinPalHttpClient }).initiate(basePayment),
+    {
+      provider: 'zarinpal',
+      status: 'unavailable',
+      reference: 'zarinpal:GOL-1001',
+      message: 'ZarinPal payment request could not be created: merchant not found'
+    }
+  );
+
   assert.deepEqual(await createWhatsAppGatewayAdapter().initiate(basePayment), {
     provider: 'whatsapp',
     status: 'manual',
@@ -162,12 +238,14 @@ export async function runPaymentGatewayAdaptersTests() {
   const adapters = createMockPaymentGatewayAdapters();
   assert.equal(adapters.manual.provider, 'manual');
   assert.equal(adapters.iranian.provider, 'iranian');
+  assert.equal(adapters.zarinpal.provider, 'iranian');
   assert.equal(adapters.stripe.provider, 'stripe');
   assert.equal(adapters.whatsapp.provider, 'whatsapp');
   assert.equal(adapters.inquiry.provider, 'inquiry');
 
-  const liveAdapters = createLivePaymentGatewayAdapters({ stripeSecretKey: 'sk_test_123' });
+  const liveAdapters = createLivePaymentGatewayAdapters({ stripeSecretKey: 'sk_test_123', zarinpalMerchantId: 'merchant-1' });
   assert.equal(liveAdapters.stripe.provider, 'stripe');
+  assert.equal(liveAdapters.zarinpal.provider, 'zarinpal');
 
   assert.equal((await initiatePaymentGateway({ provider: 'manual', payment: basePayment })).provider, 'manual');
   assert.equal((await initiatePaymentGateway({ provider: 'stripe', payment: { ...basePayment, currency: 'CAD' } })).status, 'redirect');
