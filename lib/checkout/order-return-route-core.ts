@@ -38,7 +38,7 @@ export function checkoutReturnApplyInput(requestUrl: string): CheckoutReturnAppl
   const orderNumber = url.searchParams.get('order') || '';
   const token = url.searchParams.get('token') || '';
   const authority = url.searchParams.get('Authority') || url.searchParams.get('authority') || undefined;
-  const hostedCheckoutReference = url.searchParams.get('checkout_session_id') || url.searchParams.get('checkoutSession') || undefined;
+  const hostedCheckoutReference = url.searchParams.get('checkout_session_id') || url.searchParams.get('session_id') || url.searchParams.get('checkoutSession') || undefined;
   const rawStatus = url.searchParams.get('Status') || url.searchParams.get('status');
   const paymentStatus = url.searchParams.get('payment');
   const status = provider === 'zarinpal'
