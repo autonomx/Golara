@@ -7,6 +7,7 @@ export type PaymentOperationPreviewView = {
   tone: PaymentOperationPreviewTone;
   statusLabel: string;
   detailRows: Array<{ label: string; value: string }>;
+  transitionRows: Array<{ label: string; value: string }>;
   actionLabel: string;
   disabledReason?: string;
 };
@@ -25,6 +26,10 @@ function tone(preview: PaymentOperationPreview): PaymentOperationPreviewTone {
 
 function formatAmount(amountCents: number, currency: string) {
   return `${(amountCents / 100).toFixed(2)} ${currency}`;
+}
+
+function displayValue(value: string) {
+  return value.replace(/_/g, ' ');
 }
 
 function actionLabel(preview: PaymentOperationPreview) {
@@ -49,15 +54,25 @@ export function buildPaymentOperationPreviewView(input: PaymentOperationPreviewI
     { label: 'Provider reference required', value: preview.plan.requiresProviderReference ? 'Yes' : 'No' },
     { label: 'Manual review', value: preview.requiresManualReview ? 'Yes' : 'No' }
   ];
+  const transitionRows = [
+    { label: 'Order recommendation', value: displayValue(preview.transition.orderStatusRecommendation) },
+    { label: 'Payment recommendation', value: displayValue(preview.transition.paymentStatusRecommendation) },
+    { label: 'Release recommendation', value: displayValue(preview.transition.releaseRecommendation) },
+    { label: 'Operator approval', value: preview.transition.requiresOperatorApproval ? 'Required' : 'Not required' }
+  ];
 
   if (preview.orderNumber) detailRows.unshift({ label: 'Order', value: preview.orderNumber });
   if (preview.paymentAttemptId) detailRows.push({ label: 'Payment attempt', value: preview.paymentAttemptId });
+  if (preview.transition.releaseReasons.length) {
+    transitionRows.push({ label: 'Release reasons', value: preview.transition.releaseReasons.map(displayValue).join(', ') });
+  }
 
   return {
     preview,
     tone: tone(preview),
     statusLabel: statusLabel(preview),
     detailRows,
+    transitionRows,
     actionLabel: actionLabel(preview),
     disabledReason: disabledReason(preview)
   };
