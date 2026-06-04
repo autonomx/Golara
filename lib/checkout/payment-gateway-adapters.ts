@@ -10,6 +10,9 @@ export type PaymentGatewayInitiationInput = {
   customerEmail?: string;
   customerPhone?: string;
   returnUrl: string;
+  successUrl?: string;
+  cancelUrl?: string;
+  idempotencyKey?: string;
   metadata?: Record<string, string>;
 };
 
@@ -28,6 +31,35 @@ export type PaymentGatewayAdapter = {
   initiate(input: PaymentGatewayInitiationInput): Promise<PaymentGatewayInitiationResult>;
 };
 
+export type StripeCheckoutSessionHttpResponse = {
+  ok: boolean;
+  status: number;
+  json(): Promise<unknown>;
+};
+
+export type StripeCheckoutSessionHttpClient = (
+  url: string,
+  init: {
+    method: 'POST';
+    headers: Record<string, string>;
+    body: string;
+  }
+) => Promise<StripeCheckoutSessionHttpResponse>;
+
+export type StripeCheckoutSessionAdapterOptions = {
+  secretKey?: string;
+  httpClient?: StripeCheckoutSessionHttpClient;
+  apiUrl?: string;
+};
+
+type StripeCheckoutSessionResponseBody = {
+  id?: unknown;
+  url?: unknown;
+  error?: {
+    message?: unknown;
+  };
+};
+
 function ensurePositiveAmount(input: PaymentGatewayInitiationInput) {
   if (!Number.isFinite(input.amountCents) || input.amountCents <= 0) {
     throw new Error('Payment gateway initiation requires a positive amount.');
@@ -40,6 +72,33 @@ function reference(provider: PaymentGatewayAdapterProvider, input: PaymentGatewa
 
 function encodedReturnUrl(input: PaymentGatewayInitiationInput) {
   return encodeURIComponent(input.returnUrl);
+}
+
+function defaultCheckoutReturnUrl(input: PaymentGatewayInitiationInput, outcome: 'success' | 'cancel') {
+  const separator = input.returnUrl.includes('?') ? '&' : '?';
+  return `${input.returnUrl}${separator}payment=${outcome}&provider=stripe&session_id={CHECKOUT_SESSION_ID}`;
+}
+
+function appendStripeMetadata(body: URLSearchParams, input: PaymentGatewayInitiationInput) {
+  body.set('metadata[golara_order_id]', input.orderId);
+  if (input.orderNumber) body.set('metadata[golara_order_number]', input.orderNumber);
+  for (const [key, value] of Object.entries(input.metadata ?? {})) {
+    body.set(`metadata[${key}]`, value);
+  }
+}
+
+function defaultStripeHttpClient(): StripeCheckoutSessionHttpClient {
+  return async (url, init) => {
+    if (typeof fetch !== 'function') {
+      throw new Error('Stripe checkout session creation requires fetch support.');
+    }
+    return fetch(url, init);
+  };
+}
+
+async function parseStripeResponse(response: StripeCheckoutSessionHttpResponse) {
+  const body = (await response.json()) as StripeCheckoutSessionResponseBody;
+  return body;
 }
 
 export function createManualGatewayAdapter(): PaymentGatewayAdapter {
@@ -105,6 +164,75 @@ export function createStripeGatewayMockAdapter(): PaymentGatewayAdapter {
   };
 }
 
+export function createStripeCheckoutSessionAdapter(options: StripeCheckoutSessionAdapterOptions = {}): PaymentGatewayAdapter {
+  return {
+    provider: 'stripe',
+    async initiate(input) {
+      ensurePositiveAmount(input);
+      if (input.currency === 'TOMAN') {
+        return {
+          provider: 'stripe',
+          status: 'unavailable',
+          reference: reference('stripe', input),
+          message: 'Stripe checkout sessions do not support Toman orders.'
+        };
+      }
+
+      const secretKey = options.secretKey?.trim();
+      if (!secretKey) {
+        return {
+          provider: 'stripe',
+          status: 'unavailable',
+          reference: reference('stripe', input),
+          message: 'Stripe checkout requires STRIPE_SECRET_KEY.'
+        };
+      }
+
+      const body = new URLSearchParams();
+      body.set('mode', 'payment');
+      body.set('success_url', input.successUrl ?? defaultCheckoutReturnUrl(input, 'success'));
+      body.set('cancel_url', input.cancelUrl ?? defaultCheckoutReturnUrl(input, 'cancel'));
+      body.set('client_reference_id', input.orderId);
+      body.set('line_items[0][quantity]', '1');
+      body.set('line_items[0][price_data][currency]', input.currency.toLowerCase());
+      body.set('line_items[0][price_data][unit_amount]', String(Math.round(input.amountCents)));
+      body.set('line_items[0][price_data][product_data][name]', `Golara order ${input.orderNumber ?? input.orderId}`);
+      if (input.customerEmail) body.set('customer_email', input.customerEmail);
+      appendStripeMetadata(body, input);
+
+      const httpClient = options.httpClient ?? defaultStripeHttpClient();
+      const response = await httpClient(options.apiUrl ?? 'https://api.stripe.com/v1/checkout/sessions', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${secretKey}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Idempotency-Key': input.idempotencyKey ?? `golara_checkout_${input.orderId}`
+        },
+        body: body.toString()
+      });
+      const responseBody = await parseStripeResponse(response);
+
+      if (!response.ok || typeof responseBody.id !== 'string') {
+        const detail = typeof responseBody.error?.message === 'string' ? responseBody.error.message : `Stripe returned HTTP ${response.status}.`;
+        return {
+          provider: 'stripe',
+          status: 'unavailable',
+          reference: reference('stripe', input),
+          message: `Stripe checkout session could not be created: ${detail}`
+        };
+      }
+
+      return {
+        provider: 'stripe',
+        status: 'redirect',
+        reference: responseBody.id,
+        redirectUrl: typeof responseBody.url === 'string' ? responseBody.url : undefined,
+        message: 'Stripe checkout session created.'
+      };
+    }
+  };
+}
+
 export function createWhatsAppGatewayAdapter(): PaymentGatewayAdapter {
   return {
     provider: 'whatsapp',
@@ -141,6 +269,16 @@ export function createMockPaymentGatewayAdapters(): Record<PaymentGatewayAdapter
     manual: createManualGatewayAdapter(),
     iranian: createIranianGatewayMockAdapter(),
     stripe: createStripeGatewayMockAdapter(),
+    whatsapp: createWhatsAppGatewayAdapter(),
+    inquiry: createInquiryGatewayAdapter()
+  };
+}
+
+export function createLivePaymentGatewayAdapters(options: { stripeSecretKey?: string; stripeHttpClient?: StripeCheckoutSessionHttpClient } = {}): Record<PaymentGatewayAdapterProvider, PaymentGatewayAdapter> {
+  return {
+    manual: createManualGatewayAdapter(),
+    iranian: createIranianGatewayMockAdapter(),
+    stripe: createStripeCheckoutSessionAdapter({ secretKey: options.stripeSecretKey, httpClient: options.stripeHttpClient }),
     whatsapp: createWhatsAppGatewayAdapter(),
     inquiry: createInquiryGatewayAdapter()
   };
