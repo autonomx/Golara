@@ -10,6 +10,7 @@ export async function runPaymentOperationMigrationContractTests() {
   const contract = source('docs/production-roadmap-phase33-payment-operation-migration-contract.md');
   const evidence = source('docs/production-roadmap-phase33-payment-operation-migration-validation-evidence.md');
   const repositoryDesign = source('docs/production-roadmap-phase33-payment-operation-repository-design.md');
+  const providerEndpointReadiness = source('docs/production-roadmap-phase33-provider-endpoint-mapping-readiness.md');
   const statusHelper = source('lib/checkout/payment-operation-migration-status.ts');
   const repository = source('lib/checkout/payment-operation-record-repository.ts');
   const service = source('lib/checkout/payment-operation-record-service.ts');
@@ -69,6 +70,21 @@ export async function runPaymentOperationMigrationContractTests() {
   assert.ok(repositoryDesign.includes('This design does not approve execution'));
   assert.ok(repositoryDesign.includes('live Stripe refund calls'));
   assert.ok(repositoryDesign.includes('admin refund/void execution controls'));
+
+  assert.ok(providerEndpointReadiness.includes('Provider Endpoint Mapping Readiness'));
+  assert.ok(providerEndpointReadiness.includes('documentation-only'));
+  assert.ok(providerEndpointReadiness.includes('does not add live Stripe or ZarinPal endpoint URLs'));
+  assert.ok(providerEndpointReadiness.includes('Required evidence before endpoint constants'));
+  assert.ok(providerEndpointReadiness.includes('Provider mapping worksheet'));
+  assert.ok(providerEndpointReadiness.includes('Pending operator confirmation'));
+  assert.ok(providerEndpointReadiness.includes('No admin execution button is enabled by endpoint mapping alone'));
+  assert.ok(providerEndpointReadiness.includes('caller-injected HTTP clients'));
+  assert.ok(providerEndpointReadiness.includes('avoid default `fetch` behavior'));
+  assert.ok(providerEndpointReadiness.includes('secret or credential commits'));
+  assert.ok(providerEndpointReadiness.includes('marking provider operations production-ready without target-environment validation'));
+  assert.equal(providerEndpointReadiness.includes('https://api.stripe.com'), false);
+  assert.equal(providerEndpointReadiness.includes('https://www.zarinpal.com'), false);
+  assert.equal(providerEndpointReadiness.includes('fetch('), false);
 
   assert.ok(statusHelper.includes('PAYMENT_OPERATION_RECORDS_MIGRATION_CONFIRMED'));
   assert.ok(statusHelper.includes('isPaymentOperationRecordsMigrationConfirmed'));
