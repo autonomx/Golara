@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 
 import { planPaymentOperation } from '../../lib/checkout/payment-operation-plan';
 import { buildPaymentOperationPreview } from '../../lib/checkout/payment-operation-preview';
+import { buildPaymentOperationPreviewView } from '../../lib/checkout/payment-operation-preview-view';
 
 function source(path: string) {
   return readFileSync(path, 'utf8');
@@ -11,6 +12,7 @@ function source(path: string) {
 export async function runPaymentOperationPlanTests() {
   const docs = source('docs/production-roadmap-phase33-payment-operations.md');
   const previewSource = source('lib/checkout/payment-operation-preview.ts');
+  const previewViewSource = source('lib/checkout/payment-operation-preview-view.ts');
   assert.match(docs, /Phase 33 Refunds, Voids, and Payment Operations Progress/);
   assert.match(docs, /provider-neutral refund\/void planning helper/);
   assert.match(docs, /does not call Stripe, ZarinPal, or any other live provider/);
@@ -39,6 +41,13 @@ export async function runPaymentOperationPlanTests() {
   assert.doesNotMatch(previewSource, /fetch\(/);
   assert.doesNotMatch(previewSource, /checkoutOrder\.update/);
   assert.doesNotMatch(previewSource, /checkoutPaymentAttempt\.update/);
+
+  assert.match(previewViewSource, /export function buildPaymentOperationPreviewView/);
+  assert.match(previewViewSource, /buildPaymentOperationPreview\(input\)/);
+  assert.doesNotMatch(previewViewSource, /prisma\./);
+  assert.doesNotMatch(previewViewSource, /fetch\(/);
+  assert.doesNotMatch(previewViewSource, /checkoutOrder\.update/);
+  assert.doesNotMatch(previewViewSource, /checkoutPaymentAttempt\.update/);
 
   const refund = planPaymentOperation({
     operation: 'refund',
@@ -89,6 +98,35 @@ export async function runPaymentOperationPlanTests() {
   assert.match(readyPreview.nextAction, /Provider execution can be added only after preview, persistence, audit, and idempotency rules are defined/);
   assert.deepEqual(readyPreview.warnings, []);
 
+  const readyView = buildPaymentOperationPreviewView({
+    operation: 'refund',
+    order: { status: 'paid', totalCents: 420000, currency: 'USD' },
+    payment: {
+      provider: 'stripe',
+      status: 'paid',
+      amountCents: 420000,
+      currency: 'USD',
+      providerReference: 'payment-reference'
+    },
+    amountCents: 210000,
+    orderNumber: 'GOL-1001',
+    paymentAttemptId: 'attempt-1'
+  });
+  assert.equal(readyView.tone, 'success');
+  assert.equal(readyView.statusLabel, 'Ready for preview approval');
+  assert.equal(readyView.actionLabel, 'Preview only');
+  assert.match(readyView.disabledReason ?? '', /does not submit/);
+  assert.deepEqual(readyView.detailRows.map((row) => row.label), [
+    'Order',
+    'Operation',
+    'Decision',
+    'Provider',
+    'Amount',
+    'Provider reference required',
+    'Manual review',
+    'Payment attempt'
+  ]);
+
   const missingReference = planPaymentOperation({
     operation: 'refund',
     order: { status: 'paid', totalCents: 10000, currency: 'USD' },
@@ -109,6 +147,16 @@ export async function runPaymentOperationPlanTests() {
     'A provider reference is required before this operation can be sent to a live payment provider.'
   ]);
 
+  const blockedView = buildPaymentOperationPreviewView({
+    operation: 'refund',
+    order: { status: 'paid', totalCents: 10000, currency: 'USD' },
+    payment: { provider: 'stripe', status: 'paid', amountCents: 10000, currency: 'USD' }
+  });
+  assert.equal(blockedView.tone, 'danger');
+  assert.equal(blockedView.statusLabel, 'Blocked');
+  assert.equal(blockedView.actionLabel, 'Resolve blockers');
+  assert.match(blockedView.disabledReason ?? '', /blocked/);
+
   const manualRefund = planPaymentOperation({
     operation: 'refund',
     order: { status: 'paid', totalCents: 15000, currency: 'USD' },
@@ -127,6 +175,16 @@ export async function runPaymentOperationPlanTests() {
   assert.equal(manualPreview.blocked, false);
   assert.equal(manualPreview.requiresManualReview, true);
   assert.match(manualPreview.nextAction, /Handle this operation manually/);
+
+  const manualView = buildPaymentOperationPreviewView({
+    operation: 'refund',
+    order: { status: 'paid', totalCents: 15000, currency: 'USD' },
+    payment: { provider: 'manual', status: 'paid', amountCents: 15000, currency: 'USD' }
+  });
+  assert.equal(manualView.tone, 'warning');
+  assert.equal(manualView.statusLabel, 'Manual review required');
+  assert.equal(manualView.actionLabel, 'Record manual review');
+  assert.match(manualView.disabledReason ?? '', /Manual-review operations/);
 
   const voidPlan = planPaymentOperation({
     operation: 'void',
