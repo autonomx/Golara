@@ -1,5 +1,5 @@
 import type { Product } from '@/lib/catalog';
-import { productRequiresQuote } from '@/lib/catalog';
+import { productRequiresQuote } from '@/lib/catalog-pricing';
 import type { PaymentGatewayReadiness } from '@/lib/checkout/payment-gateway-config';
 
 export type ProductCheckoutExperience = 'inquiry-only' | 'assisted-draft' | 'gateway-capable';
