@@ -2,6 +2,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { planPaymentOperation } from '../../lib/checkout/payment-operation-plan';
+import { buildPaymentOperationPreview } from '../../lib/checkout/payment-operation-preview';
+import { normalizePaymentOperationPreviewInput } from '../../lib/checkout/payment-operation-preview-input';
+import { buildPaymentOperationPreviewView } from '../../lib/checkout/payment-operation-preview-view';
 import { planPaymentOperationTransition } from '../../lib/checkout/payment-operation-transition-plan';
 
 function source(path: string) {
@@ -10,6 +13,10 @@ function source(path: string) {
 
 export async function runPaymentOperationTransitionPlanTests() {
   const transitionSource = source('lib/checkout/payment-operation-transition-plan.ts');
+  const previewSource = source('lib/checkout/payment-operation-preview.ts');
+  const previewInputSource = source('lib/checkout/payment-operation-preview-input.ts');
+  const previewViewSource = source('lib/checkout/payment-operation-preview-view.ts');
+  const adminPreviewPanelSource = source('components/admin/AdminPaymentOperationPreviewPanel.tsx');
   assert.match(transitionSource, /export function planPaymentOperationTransition/);
   assert.match(transitionSource, /orderStatusRecommendation/);
   assert.match(transitionSource, /paymentStatusRecommendation/);
@@ -18,6 +25,38 @@ export async function runPaymentOperationTransitionPlanTests() {
   assert.doesNotMatch(transitionSource, /fetch\(/);
   assert.doesNotMatch(transitionSource, /checkoutOrder\.update/);
   assert.doesNotMatch(transitionSource, /checkoutPaymentAttempt\.update/);
+
+  assert.match(previewSource, /planPaymentOperationTransition/);
+  assert.match(previewSource, /transition: PaymentOperationTransitionPlan/);
+  assert.match(previewSource, /transition\.notes/);
+  assert.doesNotMatch(previewSource, /prisma\./);
+  assert.doesNotMatch(previewSource, /fetch\(/);
+  assert.doesNotMatch(previewSource, /checkoutOrder\.update/);
+  assert.doesNotMatch(previewSource, /checkoutPaymentAttempt\.update/);
+
+  assert.match(previewInputSource, /fulfillmentStatus/);
+  assert.match(previewInputSource, /hasPerishableCapacity/);
+  assert.match(previewInputSource, /invalid_fulfillment_status/);
+  assert.doesNotMatch(previewInputSource, /prisma\./);
+  assert.doesNotMatch(previewInputSource, /fetch\(/);
+
+  assert.match(previewViewSource, /transitionRows/);
+  assert.match(previewViewSource, /Order recommendation/);
+  assert.match(previewViewSource, /Payment recommendation/);
+  assert.match(previewViewSource, /Release recommendation/);
+  assert.match(previewViewSource, /Operator approval/);
+  assert.doesNotMatch(previewViewSource, /prisma\./);
+  assert.doesNotMatch(previewViewSource, /fetch\(/);
+
+  assert.match(adminPreviewPanelSource, /Advisory transition plan/);
+  assert.match(adminPreviewPanelSource, /transitionRows/);
+  assert.match(adminPreviewPanelSource, /read-only and apply only after future provider success/);
+  assert.doesNotMatch(adminPreviewPanelSource, /prisma\./);
+  assert.doesNotMatch(adminPreviewPanelSource, /fetch\(/);
+  assert.doesNotMatch(adminPreviewPanelSource, /checkoutOrder\.update/);
+  assert.doesNotMatch(adminPreviewPanelSource, /checkoutPaymentAttempt\.update/);
+  assert.doesNotMatch(adminPreviewPanelSource, /onClick=/);
+  assert.doesNotMatch(adminPreviewPanelSource, /<button/);
 
   const readyPartialRefund = planPaymentOperation({
     operation: 'refund',
@@ -37,6 +76,80 @@ export async function runPaymentOperationTransitionPlanTests() {
   assert.equal(partialTransition.releaseRecommendation, 'none');
   assert.equal(partialTransition.requiresOperatorApproval, false);
   assert.deepEqual(partialTransition.releaseReasons, ['partial_refund']);
+
+  const normalizedTransitionInput = normalizePaymentOperationPreviewInput({
+    operation: 'refund',
+    orderStatus: 'paid',
+    orderTotalCents: '420000',
+    orderCurrency: 'usd',
+    paymentProvider: 'stripe',
+    paymentStatus: 'paid',
+    paymentAmountCents: '420000',
+    paymentCurrency: 'usd',
+    providerReference: 'pi_preview_123',
+    amountCents: '210000',
+    fulfillmentStatus: 'scheduled',
+    hasPerishableCapacity: 'false'
+  });
+  assert.equal(normalizedTransitionInput.ok, true);
+  if (normalizedTransitionInput.ok) {
+    assert.equal(normalizedTransitionInput.input.fulfillmentStatus, 'scheduled');
+    assert.equal(normalizedTransitionInput.input.hasPerishableCapacity, false);
+  }
+
+  const invalidTransitionInput = normalizePaymentOperationPreviewInput({
+    operation: 'refund',
+    orderStatus: 'paid',
+    orderTotalCents: '420000',
+    orderCurrency: 'usd',
+    paymentProvider: 'stripe',
+    paymentStatus: 'paid',
+    paymentAmountCents: '420000',
+    paymentCurrency: 'usd',
+    providerReference: 'pi_preview_123',
+    fulfillmentStatus: 'packed'
+  });
+  assert.equal(invalidTransitionInput.ok, false);
+  if (!invalidTransitionInput.ok) {
+    assert.ok(invalidTransitionInput.errors.some((error) => error.field === 'fulfillmentStatus' && error.code === 'invalid_fulfillment_status'));
+  }
+
+  const previewWithTransition = buildPaymentOperationPreview({
+    operation: 'refund',
+    order: { status: 'paid', totalCents: 420000, currency: 'USD' },
+    payment: {
+      provider: 'stripe',
+      status: 'paid',
+      amountCents: 420000,
+      currency: 'USD',
+      providerReference: 'payment-reference'
+    },
+    fulfillmentStatus: 'delivered'
+  });
+  assert.equal(previewWithTransition.transition.releaseRecommendation, 'manual_review');
+  assert.ok(previewWithTransition.warnings.some((warning) => warning.includes('Full refunds after fulfillment starts')));
+
+  const previewViewWithTransition = buildPaymentOperationPreviewView({
+    operation: 'void',
+    order: { status: 'pending_payment', totalCents: 420000, currency: 'USD' },
+    payment: {
+      provider: 'stripe',
+      status: 'authorized',
+      amountCents: 420000,
+      currency: 'USD',
+      providerReference: 'authorization-reference'
+    },
+    fulfillmentStatus: 'unfulfilled'
+  });
+  assert.deepEqual(previewViewWithTransition.transitionRows.map((row) => row.label), [
+    'Order recommendation',
+    'Payment recommendation',
+    'Release recommendation',
+    'Operator approval',
+    'Release reasons'
+  ]);
+  assert.equal(previewViewWithTransition.transitionRows[0].value, 'cancelled after provider success');
+  assert.equal(previewViewWithTransition.transitionRows[2].value, 'evaluate capacity release');
 
   const readyFullRefund = planPaymentOperation({
     operation: 'refund',
