@@ -9,6 +9,7 @@ export async function runPaymentOperationMigrationContractTests() {
   const migration = source('prisma/migrations/20260604200000_add_payment_operation_records/migration.sql');
   const contract = source('docs/production-roadmap-phase33-payment-operation-migration-contract.md');
   const evidence = source('docs/production-roadmap-phase33-payment-operation-migration-validation-evidence.md');
+  const statusHelper = source('lib/checkout/payment-operation-migration-status.ts');
   const schema = source('prisma/schema.prisma');
 
   assert.ok(migration.includes('CREATE TABLE IF NOT EXISTS "PaymentOperationRecord"'));
@@ -49,6 +50,17 @@ export async function runPaymentOperationMigrationContractTests() {
   assert.ok(evidence.includes('No live provider void calls were added or executed'));
   assert.ok(evidence.includes('No repository/service writes were enabled by this evidence alone'));
   assert.ok(evidence.includes('No admin refund/void execution buttons were enabled by this evidence alone'));
+
+  assert.ok(statusHelper.includes('PAYMENT_OPERATION_RECORDS_MIGRATION_CONFIRMED'));
+  assert.ok(statusHelper.includes('isPaymentOperationRecordsMigrationConfirmed'));
+  assert.ok(statusHelper.includes('getPaymentOperationRecordsMigrationStatus'));
+  assert.ok(statusHelper.includes('idempotent PaymentOperationRecord repository/service writes'));
+  assert.ok(statusHelper.includes('provider refund or void execution adapters'));
+  assert.ok(statusHelper.includes('inventory or capacity release based on refund or void success'));
+  assert.equal(statusHelper.includes('@prisma/client'), false);
+  assert.equal(statusHelper.includes('fetch('), false);
+  assert.equal(statusHelper.includes('CheckoutOrder'), false);
+  assert.equal(statusHelper.includes('CheckoutPaymentAttempt'), false);
 
   assert.equal(schema.includes('model PaymentOperationRecord'), false);
 
