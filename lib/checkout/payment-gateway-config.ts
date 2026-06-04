@@ -1,5 +1,5 @@
 export const CHECKOUT_MODES = ['inquiry', 'assisted', 'gateway'] as const;
-export const PAYMENT_GATEWAY_PROVIDERS = ['manual', 'iranian', 'stripe'] as const;
+export const PAYMENT_GATEWAY_PROVIDERS = ['manual', 'iranian', 'zarinpal', 'stripe'] as const;
 export const CHECKOUT_CURRENCIES = ['TOMAN', 'USD', 'CAD'] as const;
 export const OVERSEAS_FALLBACKS = ['whatsapp', 'inquiry', 'stripe'] as const;
 
@@ -94,7 +94,7 @@ export function getPaymentGatewayReadiness(config: PaymentGatewayConfig, env: Re
       code: 'gateway_mode_without_online_provider',
       severity: 'blocker',
       summary: 'Gateway checkout mode has no online provider selected.',
-      detail: 'Use an Iranian provider or Stripe for gateway mode, or switch CHECKOUT_MODE to assisted/inquiry.'
+      detail: 'Use ZarinPal, another Iranian provider, or Stripe for gateway mode, or switch CHECKOUT_MODE to assisted/inquiry.'
     });
   }
 
@@ -113,6 +113,25 @@ export function getPaymentGatewayReadiness(config: PaymentGatewayConfig, env: Re
         severity: 'blocker',
         summary: 'Iranian gateway requires Toman domestic currency.',
         detail: 'Set CHECKOUT_DOMESTIC_CURRENCY=TOMAN for Iranian provider checkout.'
+      });
+    }
+  }
+
+  if (providers.includes('zarinpal')) {
+    if (!hasEnv(env, 'ZARINPAL_MERCHANT_ID')) {
+      blockers.push({
+        code: 'zarinpal_merchant_missing',
+        severity: 'blocker',
+        summary: 'ZarinPal merchant identifier is missing.',
+        detail: 'Set ZARINPAL_MERCHANT_ID before enabling ZarinPal checkout.'
+      });
+    }
+    if (config.domesticCurrency !== 'TOMAN') {
+      blockers.push({
+        code: 'zarinpal_currency_invalid',
+        severity: 'blocker',
+        summary: 'ZarinPal checkout requires Toman domestic currency.',
+        detail: 'Set CHECKOUT_DOMESTIC_CURRENCY=TOMAN for ZarinPal domestic checkout.'
       });
     }
   }
