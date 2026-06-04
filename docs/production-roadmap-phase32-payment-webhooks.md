@@ -6,7 +6,7 @@ This note supplements `docs/production-roadmap.md` while Phase 32 is in progress
 
 ## Current status
 
-Phase 32 is in progress. Golara now has provider-neutral payment webhook normalization, idempotent inbound webhook persistence, webhook signature verification, minimal provider webhook routes, trusted webhook-driven checkout state transitions, durable settlement reconciliation records integrated into the webhook service path, authenticated admin settlement visibility, main admin navigation access, payment webhook alert planning, a read-only admin webhook alert surface, sidebar navigation for settlement and alert workflows, and normal unit-runner wiring for Phase 32 supplemental payment guards for:
+Phase 32 is in progress. Golara now has provider-neutral payment webhook normalization, idempotent inbound webhook persistence, webhook signature verification, minimal provider webhook routes, trusted webhook-driven checkout state transitions, durable settlement reconciliation records integrated into the webhook service path, authenticated admin settlement visibility, main admin navigation access, payment webhook alert planning, a read-only admin webhook alert surface, sidebar navigation for settlement and alert workflows, normal unit-runner wiring for Phase 32 supplemental payment guards, and an operator smoke-test runbook for:
 
 - **Stripe Checkout Sessions** webhooks.
 - **ZarinPal** verification/callback-style payment events.
@@ -44,12 +44,14 @@ Phase 32 is in progress. Golara now has provider-neutral payment webhook normali
 - Added `Payment alerts` to the main admin sidebar under Customer Ops.
 - Added supplemental source/pure guard tests for webhook service, route handling, signatures, state transitions, settlement reconciliation, settlement repository, settlement service integration, settlement summary service, admin settlement visibility, settlement navigation, webhook alert planning, webhook alert admin visibility, and webhook alert navigation.
 - Wired all Phase 32 supplemental guards into `tests/unit/run-tests.ts` and raised the runner count from 99 to 113 files.
+- Added `docs/production-roadmap-phase32-payment-webhook-smoke-tests.md` with staging/production validation steps, required URLs, required environment variables, database prerequisites, positive/negative provider checks, reconciliation checks, and exit criteria.
 
 ## Still pending before Phase 32 is complete
 
-- Validate Stripe and ZarinPal webhook signature behavior against live/staging provider dashboards.
-- Run production/staging webhook smoke tests with real provider credentials and callback URLs.
+- Execute the smoke-test runbook against live/staging Stripe and ZarinPal provider dashboards.
+- Validate Stripe and ZarinPal webhook signature behavior against provider-generated requests.
+- Apply and verify the settlement reconciliation migration in the target environment.
 
 ## Notes
 
-Phase 32 now has an end-to-end foundation from provider webhook receipt to idempotent event persistence, optional signature verification, trusted matched checkout state transitions, durable settlement reconciliation storage integrated into the webhook service path, operator settlement visibility, sidebar navigation for settlement and alert workflows, retry/alert planning, a read-only alert surface, and unit-runner coverage for Phase 32 webhook, settlement, admin visibility, and alert guards. Production trust still depends on configured webhook secrets, live provider dashboard validation, migration application, and smoke testing. Dashboard imports and actual outbound alert delivery remain pending.
+Phase 32 now has an end-to-end foundation from provider webhook receipt to idempotent event persistence, optional signature verification, trusted matched checkout state transitions, durable settlement reconciliation storage integrated into the webhook service path, operator settlement visibility, sidebar navigation for settlement and alert workflows, retry/alert planning, a read-only alert surface, unit-runner coverage for Phase 32 webhook, settlement, admin visibility, and alert guards, and a documented provider smoke-test runbook. Production trust still depends on configured webhook secrets, live provider dashboard validation, migration application, and smoke testing. Dashboard imports and actual outbound alert delivery remain pending.
