@@ -1,3 +1,20 @@
+export function formatMinorUnitAmount(amount: number, currency: string) {
+  const normalizedCurrency = currency?.trim().toUpperCase() || 'CAD';
+  const zeroDecimalCurrencies = new Set(['IRR', 'JPY', 'KRW', 'VND']);
+  const divisor = zeroDecimalCurrencies.has(normalizedCurrency) ? 1 : 100;
+  const value = Number.isFinite(amount) ? amount / divisor : 0;
+
+  try {
+    return new Intl.NumberFormat('en-CA', {
+      style: 'currency',
+      currency: normalizedCurrency,
+      maximumFractionDigits: zeroDecimalCurrencies.has(normalizedCurrency) ? 0 : 2
+    }).format(value);
+  } catch {
+    return `${value.toFixed(zeroDecimalCurrencies.has(normalizedCurrency) ? 0 : 2)} ${normalizedCurrency}`;
+  }
+}
+
 export type CatalogTranslation = {
   locale: string;
   title: string;
@@ -92,6 +109,7 @@ export type Product = {
   seoDescription?: string;
   canonicalPath?: string;
   seoIndex?: boolean;
+  sortOrder?: number;
   collections?: Collection[];
   updatedAt?: Date;
   translations?: CatalogTranslation[];
