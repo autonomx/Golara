@@ -8,9 +8,16 @@ import {
 import {
   createPendingPaymentOperationRecord,
   listPaymentOperationRecordsForOrder,
+  markPaymentOperationRecordFailed,
+  markPaymentOperationRecordSubmitted,
+  markPaymentOperationRecordSucceeded,
   type CreatePendingPaymentOperationRecordInput,
   type CreatePendingPaymentOperationRecordResult,
-  type PaymentOperationRecordRow
+  type MarkPaymentOperationFailedInput,
+  type MarkPaymentOperationSubmittedInput,
+  type MarkPaymentOperationSucceededInput,
+  type PaymentOperationRecordRow,
+  type PaymentOperationRecordTransitionResult
 } from './payment-operation-record-repository';
 
 export type PaymentOperationRecordServiceUnavailableResult = {
@@ -20,6 +27,10 @@ export type PaymentOperationRecordServiceUnavailableResult = {
 
 export type CreatePendingPaymentOperationServiceResult =
   | CreatePendingPaymentOperationRecordResult
+  | PaymentOperationRecordServiceUnavailableResult;
+
+export type PaymentOperationTransitionServiceResult =
+  | PaymentOperationRecordTransitionResult
   | PaymentOperationRecordServiceUnavailableResult;
 
 export type ListPaymentOperationRecordsForOrderServiceResult =
@@ -36,12 +47,17 @@ function auditMetadata(input: CreatePendingPaymentOperationRecordInput) {
   };
 }
 
+function migrationGate(env: Record<string, string | undefined>) {
+  const migrationStatus = getPaymentOperationRecordsMigrationStatus(env);
+  return migrationStatus.confirmed ? null : { status: 'migration_unconfirmed' as const, migrationStatus };
+}
+
 export async function createPendingPaymentOperationRecordIfConfirmed(
   input: CreatePendingPaymentOperationRecordInput,
   env: Record<string, string | undefined> = process.env
 ): Promise<CreatePendingPaymentOperationServiceResult> {
-  const migrationStatus = getPaymentOperationRecordsMigrationStatus(env);
-  if (!migrationStatus.confirmed) return { status: 'migration_unconfirmed', migrationStatus };
+  const blocked = migrationGate(env);
+  if (blocked) return blocked;
   const result = await createPendingPaymentOperationRecord(input);
 
   if (result.status === 'created') {
@@ -98,17 +114,47 @@ export async function createPendingPaymentOperationRecordIfConfirmed(
   return result;
 }
 
+export async function markPaymentOperationRecordSubmittedIfConfirmed(
+  input: MarkPaymentOperationSubmittedInput,
+  env: Record<string, string | undefined> = process.env
+): Promise<PaymentOperationTransitionServiceResult> {
+  const blocked = migrationGate(env);
+  if (blocked) return blocked;
+  return markPaymentOperationRecordSubmitted(input);
+}
+
+export async function markPaymentOperationRecordSucceededIfConfirmed(
+  input: MarkPaymentOperationSucceededInput,
+  env: Record<string, string | undefined> = process.env
+): Promise<PaymentOperationTransitionServiceResult> {
+  const blocked = migrationGate(env);
+  if (blocked) return blocked;
+  return markPaymentOperationRecordSucceeded(input);
+}
+
+export async function markPaymentOperationRecordFailedIfConfirmed(
+  input: MarkPaymentOperationFailedInput,
+  env: Record<string, string | undefined> = process.env
+): Promise<PaymentOperationTransitionServiceResult> {
+  const blocked = migrationGate(env);
+  if (blocked) return blocked;
+  return markPaymentOperationRecordFailed(input);
+}
+
 export async function listPaymentOperationRecordsForOrderIfConfirmed(
   orderId: string,
   limit = 25,
   env: Record<string, string | undefined> = process.env
 ): Promise<ListPaymentOperationRecordsForOrderServiceResult> {
-  const migrationStatus = getPaymentOperationRecordsMigrationStatus(env);
-  if (!migrationStatus.confirmed) return { status: 'migration_unconfirmed', migrationStatus };
+  const blocked = migrationGate(env);
+  if (blocked) return blocked;
   return { status: 'ok', records: await listPaymentOperationRecordsForOrder(orderId, limit) };
 }
 
 export const paymentOperationRecordService = {
   createPending: createPendingPaymentOperationRecordIfConfirmed,
+  markSubmitted: markPaymentOperationRecordSubmittedIfConfirmed,
+  markSucceeded: markPaymentOperationRecordSucceededIfConfirmed,
+  markFailed: markPaymentOperationRecordFailedIfConfirmed,
   listForOrder: listPaymentOperationRecordsForOrderIfConfirmed
 };
