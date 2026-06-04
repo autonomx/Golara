@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 
 import { planPaymentOperation } from '../../lib/checkout/payment-operation-plan';
 import { buildPaymentOperationPreview } from '../../lib/checkout/payment-operation-preview';
+import { normalizePaymentOperationPreviewInput } from '../../lib/checkout/payment-operation-preview-input';
 import { buildPaymentOperationPreviewRouteResult } from '../../lib/checkout/payment-operation-preview-route-core';
 import { buildPaymentOperationPreviewView } from '../../lib/checkout/payment-operation-preview-view';
 
@@ -13,6 +14,7 @@ function source(path: string) {
 export async function runPaymentOperationPlanTests() {
   const docs = source('docs/production-roadmap-phase33-payment-operations.md');
   const previewSource = source('lib/checkout/payment-operation-preview.ts');
+  const previewInputSource = source('lib/checkout/payment-operation-preview-input.ts');
   const previewRouteCoreSource = source('lib/checkout/payment-operation-preview-route-core.ts');
   const previewViewSource = source('lib/checkout/payment-operation-preview-view.ts');
   const adminPreviewPanelSource = source('components/admin/AdminPaymentOperationPreviewPanel.tsx');
@@ -26,6 +28,9 @@ export async function runPaymentOperationPlanTests() {
   assert.match(docs, /no-mutation preview acceptance criteria/);
   assert.match(docs, /compact read-only admin preview panel/);
   assert.match(docs, /components\/admin\/AdminPaymentOperationPreviewPanel\.tsx/);
+  assert.match(docs, /pure preview input normalization helper/);
+  assert.match(docs, /lib\/checkout\/payment-operation-preview-input\.ts/);
+  assert.match(docs, /structured field errors/);
   assert.match(docs, /## Preview boundary acceptance criteria/);
   assert.match(docs, /call `planPaymentOperation` as the single source of eligibility truth/);
   assert.match(docs, /return a preview payload that is safe for admin display/);
@@ -46,6 +51,14 @@ export async function runPaymentOperationPlanTests() {
   assert.doesNotMatch(previewSource, /fetch\(/);
   assert.doesNotMatch(previewSource, /checkoutOrder\.update/);
   assert.doesNotMatch(previewSource, /checkoutPaymentAttempt\.update/);
+
+  assert.match(previewInputSource, /export function normalizePaymentOperationPreviewInput/);
+  assert.match(previewInputSource, /PaymentOperationPreviewInputResult/);
+  assert.match(previewInputSource, /structured field errors|errors:/);
+  assert.doesNotMatch(previewInputSource, /prisma\./);
+  assert.doesNotMatch(previewInputSource, /fetch\(/);
+  assert.doesNotMatch(previewInputSource, /checkoutOrder\.update/);
+  assert.doesNotMatch(previewInputSource, /checkoutPaymentAttempt\.update/);
 
   assert.match(previewViewSource, /export function buildPaymentOperationPreviewView/);
   assert.match(previewViewSource, /buildPaymentOperationPreview\(input\)/);
@@ -70,6 +83,61 @@ export async function runPaymentOperationPlanTests() {
   assert.doesNotMatch(adminPreviewPanelSource, /checkoutPaymentAttempt\.update/);
   assert.doesNotMatch(adminPreviewPanelSource, /onClick=/);
   assert.doesNotMatch(adminPreviewPanelSource, /<button/);
+
+  const normalizedPreviewInput = normalizePaymentOperationPreviewInput({
+    operation: ' REFUND ',
+    orderStatus: 'paid',
+    orderTotalCents: '420000',
+    orderCurrency: 'usd',
+    paymentProvider: 'Stripe',
+    paymentStatus: 'paid',
+    paymentAmountCents: 420000,
+    paymentCurrency: 'usd',
+    providerReference: 'pi_preview_123',
+    amountCents: '210000',
+    reason: ' Customer requested partial refund ',
+    orderNumber: 'GOL-1001',
+    paymentAttemptId: 'attempt-1'
+  });
+  assert.equal(normalizedPreviewInput.ok, true);
+  if (normalizedPreviewInput.ok) {
+    assert.equal(normalizedPreviewInput.input.operation, 'refund');
+    assert.equal(normalizedPreviewInput.input.order.totalCents, 420000);
+    assert.equal(normalizedPreviewInput.input.order.currency, 'USD');
+    assert.equal(normalizedPreviewInput.input.payment.provider, 'Stripe');
+    assert.equal(normalizedPreviewInput.input.payment.currency, 'USD');
+    assert.equal(normalizedPreviewInput.input.payment.providerReference, 'pi_preview_123');
+    assert.equal(normalizedPreviewInput.input.amountCents, 210000);
+    assert.equal(normalizedPreviewInput.input.reason, 'Customer requested partial refund');
+    assert.equal(normalizedPreviewInput.input.orderNumber, 'GOL-1001');
+    assert.equal(normalizedPreviewInput.input.paymentAttemptId, 'attempt-1');
+  }
+
+  const invalidPreviewInput = normalizePaymentOperationPreviewInput({
+    operation: 'capture',
+    orderStatus: '',
+    orderTotalCents: '0',
+    orderCurrency: 'u$',
+    paymentProvider: '',
+    paymentStatus: '',
+    paymentAmountCents: 'twelve',
+    paymentCurrency: '',
+    providerReference: 'bad reference with spaces',
+    amountCents: '-1',
+    reason: 'x'.repeat(501),
+    orderNumber: 'bad order #',
+    paymentAttemptId: 'bad attempt #'
+  });
+  assert.equal(invalidPreviewInput.ok, false);
+  if (!invalidPreviewInput.ok) {
+    const codes = invalidPreviewInput.errors.map((error) => error.code);
+    assert.ok(codes.includes('invalid_operation'));
+    assert.ok(codes.includes('required'));
+    assert.ok(codes.includes('invalid_cents'));
+    assert.ok(codes.includes('invalid_currency'));
+    assert.ok(codes.includes('invalid_identifier'));
+    assert.ok(codes.includes('reason_too_long'));
+  }
 
   const refund = planPaymentOperation({
     operation: 'refund',
