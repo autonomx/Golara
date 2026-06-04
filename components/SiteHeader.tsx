@@ -39,7 +39,9 @@ export async function SiteHeader({ returnTo = '/', compact = false }: { returnTo
         <Link href="/" className={`rounded-full font-display tracking-tight text-rosewood outline-none focus-visible:ring-4 focus-visible:ring-olive/20 ${compact ? 'text-2xl' : 'text-3xl'}`}>Golara</Link>
         <div className="flex items-center gap-1 text-rosewood">
           <LanguageSwitcher locale={locale} returnTo={returnTo} />
-          <span className="rounded-full p-2 text-rosewood/70" aria-hidden="true"><Search className="h-5 w-5" /></span>
+          <Link href="/products" className={iconLinkClass} aria-label="Search products">
+            <Search className="h-5 w-5" aria-hidden="true" />
+          </Link>
           <Link href="/account" className={iconLinkClass} aria-label="Account"><UserRound className="h-5 w-5" aria-hidden="true" /></Link>
           <Link href="/cart" className={iconLinkClass} aria-label={`Cart${itemCount > 0 ? ` with ${itemCount} item${itemCount === 1 ? '' : 's'}` : ''}`}>
             <ShoppingBag className="h-5 w-5" aria-hidden="true" />
