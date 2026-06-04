@@ -6,7 +6,7 @@ This note supplements `docs/production-roadmap.md` while Phase 31 is in progress
 
 ## Current status
 
-Phase 31 is in progress. Golara now has live payment gateway adapter foundations, checkout-attempt routing, return parsing, payment-result confirmation UX, and pure payment-result transition planning foundations for both primary payment paths:
+Phase 31 is in progress. Golara now has live payment gateway adapter foundations, checkout-attempt routing, return parsing, payment-result confirmation UX, pure payment-result transition planning, and checkout redirect-path QA foundations for both primary payment paths:
 
 - **ZarinPal** for Iranian/Toman domestic checkout.
 - **Stripe Checkout Sessions** for overseas/card checkout.
@@ -29,15 +29,15 @@ Inquiry-first/manual checkout remains available as a fallback path.
 - Extracted `/orders/return` redirect handling into a unit-testable core helper.
 - Added result-aware copy for `/orders/confirmation` so paid, failed, cancelled, and missing-token returns show clearer payment status UX.
 - Added a pure checkout-result transition planner for order status, attempt status, and duplicate timeline-event decisions.
+- Added checkout redirect-path tests covering ZarinPal and Stripe hosted payment URLs plus non-redirect fallback behavior.
 - Folded return-handler and confirmation-copy coverage into the existing order return route core unit runner path.
-- Added unit coverage using injected HTTP clients, return-handler fakes, and pure transition plans so tests do not call live payment networks.
+- Added unit coverage using injected HTTP clients, return-handler fakes, pure transition plans, and redirect-path fixtures so tests do not call live payment networks.
 
 ## Still pending before Phase 31 is complete
 
-- Confirm customer checkout submit actions redirect to provider-hosted payment pages in all selected provider modes.
-- Add route-level tests for live checkout initiation and browser return paths.
+- Add route-level tests for browser return paths.
 - Add production operator runbook details for live payment setup and smoke testing.
 
 ## Notes
 
-The current work prepares provider requests, validates request shaping, credentials, currencies, metadata, and idempotency headers, routes checkout attempts to the live adapter factory, parses provider return parameters, covers return redirects through a pure handler helper, improves confirmation-page result UX, and centralizes internal payment-result transition decisions behind a unit-tested pure helper. It does not yet make payment webhooks authoritative, reconcile settlement, process refunds, or complete all route-level QA for browser return paths.
+The current work prepares provider requests, validates request shaping, credentials, currencies, metadata, and idempotency headers, routes checkout attempts to the live adapter factory, parses provider return parameters, covers return redirects through a pure handler helper, improves confirmation-page result UX, centralizes internal payment-result transition decisions behind a unit-tested pure helper, and confirms hosted checkout redirect paths for ZarinPal and Stripe-style provider URLs. It does not yet make payment webhooks authoritative, reconcile settlement, process refunds, or complete all route-level QA for browser return paths.
