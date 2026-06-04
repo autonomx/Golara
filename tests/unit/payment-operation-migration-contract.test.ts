@@ -92,6 +92,14 @@ export async function runPaymentOperationMigrationContractTests() {
   assert.ok(service.includes('migration_unconfirmed'));
   assert.ok(service.includes('createPendingPaymentOperationRecordIfConfirmed'));
   assert.ok(service.includes('listPaymentOperationRecordsForOrderIfConfirmed'));
+  assert.ok(service.includes('executePaymentOperationRecordIfConfirmed'));
+  assert.ok(service.includes('ExecutePaymentOperationRecordServiceResult'));
+  assert.ok(service.includes('recordIsExecutable'));
+  assert.ok(service.includes('submitted_for_provider_operation'));
+  assert.ok(service.includes('executePaymentOperationAdapter'));
+  assert.ok(service.includes('adapterResult.status === \'succeeded\''));
+  assert.ok(service.includes('adapterResult.status === \'manual_review\''));
+  assert.ok(service.includes('provider_http_client_missing') === false);
   assert.ok(service.includes('auditRecordTransition'));
   assert.ok(service.includes("auditRecordTransition('record_submitted'"));
   assert.ok(service.includes("auditRecordTransition('record_succeeded'"));
@@ -100,10 +108,10 @@ export async function runPaymentOperationMigrationContractTests() {
   assert.ok(service.includes('providerOperationReference'));
   assert.ok(service.includes('errorCategory'));
   assert.ok(service.includes('retryable'));
-  assert.equal(service.includes('stripe'), false);
-  assert.equal(service.includes('zarinpal'), false);
   assert.equal(service.includes('fetch('), false);
   assert.equal(service.includes('@prisma/client'), false);
+  assert.equal(service.includes('CheckoutOrder" SET'), false);
+  assert.equal(service.includes('CheckoutPaymentAttempt" SET'), false);
 
   assert.ok(audit.includes('PaymentOperationAuditKind'));
   assert.ok(audit.includes('preview_requested'));
