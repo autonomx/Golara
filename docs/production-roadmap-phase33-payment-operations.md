@@ -6,7 +6,7 @@ This note tracks Phase 33 work after the Phase 32 repo-side webhook and settleme
 
 ## Current status
 
-Phase 33 has provider-neutral refund/void planning, no-mutation preview generation, a pure preview input normalization helper, a read-only preview view model, a route-core style preview result, a request-core wrapper for normalized preview requests, and a compact read-only admin preview panel for admin-safe display. This is still repository-side planning only; it does not call Stripe, ZarinPal, or any other live provider, and it does not mutate payment attempts, orders, refunds, inventory, or audit logs.
+Phase 33 has provider-neutral refund/void planning, no-mutation preview generation, a pure preview input normalization helper, a read-only preview view model, a route-core style preview result, a request-core wrapper for normalized preview requests, a compact read-only admin preview panel, and a static-sample admin preview route for admin-safe display. This is still repository-side planning only; it does not call Stripe, ZarinPal, or any other live provider, and it does not mutate payment attempts, orders, refunds, inventory, or audit logs.
 
 ## Completed in Phase 33 so far
 
@@ -26,6 +26,8 @@ Phase 33 has provider-neutral refund/void planning, no-mutation preview generati
 - Extended `tests/unit/payment-operation-plan.test.ts` to guard valid preview input normalization, structured field errors, identifier/currency/amount validation, and source-level no-mutation constraints for the normalizer.
 - Added `lib/checkout/payment-operation-preview-request-core.ts` as a route-core wrapper that combines preview input normalization with `buildPaymentOperationPreviewRouteResult`.
 - Extended `tests/unit/payment-operation-plan.test.ts` to guard request-core success responses, `status: 400` structured validation errors, and source-level no-mutation constraints.
+- Added `app/admin/payments/operations/preview/page.tsx` as a compact read-only admin route that uses `buildPaymentOperationPreviewRequestResult` with static sample data and renders the existing preview panel.
+- Extended `tests/unit/payment-operation-plan.test.ts` to guard the admin preview route as static-sample, read-only, and free of provider calls, Prisma, mutations, click handlers, and execution buttons.
 
 ## Current helper behavior
 
@@ -89,6 +91,8 @@ Phase 33 has provider-neutral refund/void planning, no-mutation preview generati
 - disabled action copy;
 - no refund/void execution button.
 
+`/admin/payments/operations/preview` can render a static sample payment-operation preview for authenticated admins. It uses `buildPaymentOperationPreviewRequestResult` and `AdminPaymentOperationPreviewPanel`, and it does not submit refunds, void authorizations, create records, call providers, or mutate orders/payment attempts.
+
 ## Preview boundary acceptance criteria
 
 The no-mutation preview boundary should continue to:
@@ -102,6 +106,7 @@ The no-mutation preview boundary should continue to:
 - include operation kind, decision, provider, amount, currency, reasons, manual-review state, and provider-reference requirements;
 - include clear copy for blocked and manual-review states;
 - render read-only admin UI without execution controls;
+- keep static/demo preview routes free of provider calls, persistence, order mutation, payment attempt mutation, and execution affordances;
 - avoid database writes;
 - avoid checkout order mutation;
 - avoid payment attempt mutation;
@@ -128,7 +133,7 @@ Those remain future Phase 33 slices after the provider-neutral planning and prev
 
 ## Recommended next work
 
-1. Add a compact read-only admin route or demo entry point that uses `buildPaymentOperationPreviewRequestResult` with static/sample data or future query payloads, without execution controls.
+1. Add a route/query input mapping helper for future admin preview URLs, or pause preview UI and add refund/void persistence design documentation before any migration.
 2. Add persistent refund/void records only when the storage model is clear.
 3. Add audit-log and inventory/capacity release planning before any live provider mutation.
 4. Add provider adapters for Stripe/ZarinPal refund and void execution only after preview, persistence, audit, and idempotency rules are defined.
