@@ -35,6 +35,7 @@ export async function runPaymentOperationProviderReadinessTests() {
   const previewPage = source('app/admin/payments/operations/preview/page.tsx');
   const historyPage = source('app/admin/payments/operations/history/page.tsx');
   const settlementPage = source('app/admin/payments/settlement/page.tsx');
+  const navigationDocs = source('docs/production-roadmap-phase33-payment-operation-admin-navigation.md');
   const phase33Docs = source('docs/production-roadmap-phase33-payment-operations.md');
 
   const stripeBlocked = buildPaymentOperationProviderReadiness({ provider: 'stripe', env: {} });
@@ -167,11 +168,21 @@ export async function runPaymentOperationProviderReadinessTests() {
   assert.ok(settlementPage.includes('do not execute provider adapters'));
   assertNoExecutionSurface(settlementPage);
 
+  assert.ok(navigationDocs.includes('/admin/payments/operations'));
+  assert.ok(navigationDocs.includes('/admin/payments/operations/providers'));
+  assert.ok(navigationDocs.includes('/admin/payments/operations/history'));
+  assert.ok(navigationDocs.includes('/admin/payments/operations/preview'));
+  assert.ok(navigationDocs.includes('documentation-only'));
+  assert.ok(navigationDocs.includes('must remain read-only'));
+  assert.ok(navigationDocs.includes('Do not attempt live refund/void execution'));
+  assertNoExecutionSurface(navigationDocs);
+
   assert.ok(phase33Docs.includes('read-only provider-operation readiness diagnostics'));
   assert.ok(phase33Docs.includes('/admin/payments/operations/providers'));
   assert.ok(phase33Docs.includes('/admin/payments/operations`'));
   assert.ok(phase33Docs.includes('payment settlement admin page'));
   assert.ok(phase33Docs.includes('navigation consistency'));
+  assert.ok(phase33Docs.includes('payment-operation-admin-navigation'));
 
   console.log('payment-operation-provider-readiness.test.ts passed');
 }
