@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { planPaymentOperation } from '../../lib/checkout/payment-operation-plan';
 import { buildPaymentOperationPreview } from '../../lib/checkout/payment-operation-preview';
 import { normalizePaymentOperationPreviewInput } from '../../lib/checkout/payment-operation-preview-input';
+import { buildPaymentOperationPreviewRequestResult } from '../../lib/checkout/payment-operation-preview-request-core';
 import { buildPaymentOperationPreviewRouteResult } from '../../lib/checkout/payment-operation-preview-route-core';
 import { buildPaymentOperationPreviewView } from '../../lib/checkout/payment-operation-preview-view';
 
@@ -15,6 +16,7 @@ export async function runPaymentOperationPlanTests() {
   const docs = source('docs/production-roadmap-phase33-payment-operations.md');
   const previewSource = source('lib/checkout/payment-operation-preview.ts');
   const previewInputSource = source('lib/checkout/payment-operation-preview-input.ts');
+  const previewRequestCoreSource = source('lib/checkout/payment-operation-preview-request-core.ts');
   const previewRouteCoreSource = source('lib/checkout/payment-operation-preview-route-core.ts');
   const previewViewSource = source('lib/checkout/payment-operation-preview-view.ts');
   const adminPreviewPanelSource = source('components/admin/AdminPaymentOperationPreviewPanel.tsx');
@@ -31,6 +33,9 @@ export async function runPaymentOperationPlanTests() {
   assert.match(docs, /pure preview input normalization helper/);
   assert.match(docs, /lib\/checkout\/payment-operation-preview-input\.ts/);
   assert.match(docs, /structured field errors/);
+  assert.match(docs, /route-core wrapper that combines preview input normalization/);
+  assert.match(docs, /lib\/checkout\/payment-operation-preview-request-core\.ts/);
+  assert.match(docs, /status: 400/);
   assert.match(docs, /## Preview boundary acceptance criteria/);
   assert.match(docs, /call `planPaymentOperation` as the single source of eligibility truth/);
   assert.match(docs, /return a preview payload that is safe for admin display/);
@@ -59,6 +64,15 @@ export async function runPaymentOperationPlanTests() {
   assert.doesNotMatch(previewInputSource, /fetch\(/);
   assert.doesNotMatch(previewInputSource, /checkoutOrder\.update/);
   assert.doesNotMatch(previewInputSource, /checkoutPaymentAttempt\.update/);
+
+  assert.match(previewRequestCoreSource, /export function buildPaymentOperationPreviewRequestResult/);
+  assert.match(previewRequestCoreSource, /normalizePaymentOperationPreviewInput\(draft\)/);
+  assert.match(previewRequestCoreSource, /buildPaymentOperationPreviewRouteResult\(normalized\.input\)/);
+  assert.match(previewRequestCoreSource, /status: 400/);
+  assert.doesNotMatch(previewRequestCoreSource, /prisma\./);
+  assert.doesNotMatch(previewRequestCoreSource, /fetch\(/);
+  assert.doesNotMatch(previewRequestCoreSource, /checkoutOrder\.update/);
+  assert.doesNotMatch(previewRequestCoreSource, /checkoutPaymentAttempt\.update/);
 
   assert.match(previewViewSource, /export function buildPaymentOperationPreviewView/);
   assert.match(previewViewSource, /buildPaymentOperationPreview\(input\)/);
@@ -113,6 +127,28 @@ export async function runPaymentOperationPlanTests() {
     assert.equal(normalizedPreviewInput.input.paymentAttemptId, 'attempt-1');
   }
 
+  const validRequestResult = buildPaymentOperationPreviewRequestResult({
+    operation: 'refund',
+    orderStatus: 'paid',
+    orderTotalCents: '420000',
+    orderCurrency: 'usd',
+    paymentProvider: 'stripe',
+    paymentStatus: 'paid',
+    paymentAmountCents: '420000',
+    paymentCurrency: 'usd',
+    providerReference: 'pi_preview_123',
+    amountCents: '210000',
+    orderNumber: 'GOL-1001',
+    paymentAttemptId: 'attempt-1'
+  });
+  assert.equal(validRequestResult.status, 200);
+  assert.equal(validRequestResult.body.ok, true);
+  if (validRequestResult.body.ok) {
+    assert.equal(validRequestResult.body.preview.preview.plan.operation, 'refund');
+    assert.equal(validRequestResult.body.preview.preview.plan.decision, 'ready');
+    assert.equal(validRequestResult.body.preview.statusLabel, 'Ready for preview approval');
+  }
+
   const invalidPreviewInput = normalizePaymentOperationPreviewInput({
     operation: 'capture',
     orderStatus: '',
@@ -137,6 +173,24 @@ export async function runPaymentOperationPlanTests() {
     assert.ok(codes.includes('invalid_currency'));
     assert.ok(codes.includes('invalid_identifier'));
     assert.ok(codes.includes('reason_too_long'));
+  }
+
+  const invalidRequestResult = buildPaymentOperationPreviewRequestResult({
+    operation: 'capture',
+    orderStatus: '',
+    orderTotalCents: '0',
+    orderCurrency: 'u$',
+    paymentProvider: '',
+    paymentStatus: '',
+    paymentAmountCents: 'twelve',
+    paymentCurrency: '',
+    amountCents: '-1'
+  });
+  assert.equal(invalidRequestResult.status, 400);
+  assert.equal(invalidRequestResult.body.ok, false);
+  if (!invalidRequestResult.body.ok) {
+    assert.ok(invalidRequestResult.body.errors.some((error) => error.field === 'operation' && error.code === 'invalid_operation'));
+    assert.ok(invalidRequestResult.body.errors.some((error) => error.field === 'orderStatus' && error.code === 'required'));
   }
 
   const refund = planPaymentOperation({
