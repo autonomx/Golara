@@ -6,6 +6,7 @@ import {
   summarizePaymentSettlementPlans,
   type PaymentSettlementPlan
 } from './payment-settlement-reconciliation';
+import { paymentSettlementRepository } from './payment-settlement-repository';
 
 type PaymentSettlementEventRow = {
   id: string;
@@ -28,7 +29,16 @@ type PaymentSettlementEventRow = {
 
 export type PaymentSettlementSummary = ReturnType<typeof summarizePaymentSettlementPlans> & {
   recent: PaymentSettlementPlan[];
+  source: 'durable-reconciliation' | 'payment-events' | 'unavailable';
 };
+
+function emptyPaymentSettlementSummary(): PaymentSettlementSummary {
+  return {
+    ...summarizePaymentSettlementPlans([]),
+    recent: [],
+    source: 'unavailable'
+  };
+}
 
 function metadataRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
@@ -65,14 +75,21 @@ export function buildPaymentSettlementPlanFromEvent(row: PaymentSettlementEventR
   });
 }
 
-export async function paymentSettlementSummaryService(limit = 25): Promise<PaymentSettlementSummary> {
-  if (!hasDatabase()) {
+async function paymentSettlementSummaryFromDurableRecords(limit: number): Promise<PaymentSettlementSummary | null> {
+  try {
+    const recent = await paymentSettlementRepository.list(limit);
+    if (recent.length === 0) return null;
     return {
-      ...summarizePaymentSettlementPlans([]),
-      recent: []
+      ...summarizePaymentSettlementPlans(recent),
+      recent,
+      source: 'durable-reconciliation'
     };
+  } catch {
+    return null;
   }
+}
 
+async function paymentSettlementSummaryFromEvents(limit: number): Promise<PaymentSettlementSummary> {
   const rows = await prisma.checkoutPaymentEvent.findMany({
     orderBy: { createdAt: 'desc' },
     take: Math.max(1, Math.min(limit, 100)),
@@ -87,8 +104,18 @@ export async function paymentSettlementSummaryService(limit = 25): Promise<Payme
   const recent = rows.map((row) => buildPaymentSettlementPlanFromEvent(row));
   return {
     ...summarizePaymentSettlementPlans(recent),
-    recent
+    recent,
+    source: 'payment-events'
   };
+}
+
+export async function paymentSettlementSummaryService(limit = 25): Promise<PaymentSettlementSummary> {
+  if (!hasDatabase()) return emptyPaymentSettlementSummary();
+
+  const safeLimit = Math.max(1, Math.min(limit, 100));
+  const durableSummary = await paymentSettlementSummaryFromDurableRecords(safeLimit);
+  if (durableSummary) return durableSummary;
+  return paymentSettlementSummaryFromEvents(safeLimit);
 }
 
 export const paymentSettlementService = {
