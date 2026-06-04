@@ -14,6 +14,7 @@ function source(path: string) {
 
 export async function runPaymentOperationPlanTests() {
   const docs = source('docs/production-roadmap-phase33-payment-operations.md');
+  const persistenceDesignDocs = source('docs/production-roadmap-phase33-refund-void-persistence-design.md');
   const previewSource = source('lib/checkout/payment-operation-preview.ts');
   const previewInputSource = source('lib/checkout/payment-operation-preview-input.ts');
   const previewRequestCoreSource = source('lib/checkout/payment-operation-preview-request-core.ts');
@@ -40,6 +41,9 @@ export async function runPaymentOperationPlanTests() {
   assert.match(docs, /compact read-only admin route/);
   assert.match(docs, /app\/admin\/payments\/operations\/preview\/page\.tsx/);
   assert.match(docs, /static sample data/);
+  assert.match(docs, /refund\/void persistence design/);
+  assert.match(docs, /docs\/production-roadmap-phase33-refund-void-persistence-design\.md/);
+  assert.match(docs, /idempotency, audit, order\/payment timelines, and inventory\/capacity release planning/);
   assert.match(docs, /## Preview boundary acceptance criteria/);
   assert.match(docs, /call `planPaymentOperation` as the single source of eligibility truth/);
   assert.match(docs, /return a preview payload that is safe for admin display/);
@@ -53,6 +57,18 @@ export async function runPaymentOperationPlanTests() {
   assert.match(docs, /database writes/);
   assert.match(docs, /admin refund\/void execution buttons/);
   assert.match(docs, /local verification is pending/);
+
+  assert.match(persistenceDesignDocs, /Phase 33 Refund\/Void Persistence Design/);
+  assert.match(persistenceDesignDocs, /documentation-only/);
+  assert.match(persistenceDesignDocs, /idempotency key/);
+  assert.match(persistenceDesignDocs, /Audit timeline/);
+  assert.match(persistenceDesignDocs, /Order and payment timelines/);
+  assert.match(persistenceDesignDocs, /Inventory and capacity release planning/);
+  assert.match(persistenceDesignDocs, /Admin execution boundary/);
+  assert.match(persistenceDesignDocs, /database migrations/);
+  assert.match(persistenceDesignDocs, /provider refund calls/);
+  assert.match(persistenceDesignDocs, /provider void calls/);
+  assert.match(persistenceDesignDocs, /admin execution buttons/);
 
   assert.match(previewSource, /export function buildPaymentOperationPreview/);
   assert.match(previewSource, /planPaymentOperation\(input\)/);
