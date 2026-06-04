@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { Search, ShoppingBag, UserRound } from 'lucide-react';
+import { ShoppingBag, UserRound } from 'lucide-react';
+import { HeaderSearchControl } from '@/components/HeaderSearchControl';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { getCartTokenCookie } from '@/lib/cart/cart-cookie';
 import { getCartByToken } from '@/lib/cart/cart-repository';
@@ -39,9 +40,7 @@ export async function SiteHeader({ returnTo = '/', compact = false }: { returnTo
         <Link href="/" className={`rounded-full font-display tracking-tight text-rosewood outline-none focus-visible:ring-4 focus-visible:ring-olive/20 ${compact ? 'text-2xl' : 'text-3xl'}`}>Golara</Link>
         <div className="flex items-center gap-1 text-rosewood">
           <LanguageSwitcher locale={locale} returnTo={returnTo} />
-          <Link href="/products" className={iconLinkClass} aria-label="Search products">
-            <Search className="h-5 w-5" aria-hidden="true" />
-          </Link>
+          <HeaderSearchControl />
           <Link href="/account" className={iconLinkClass} aria-label="Account"><UserRound className="h-5 w-5" aria-hidden="true" /></Link>
           <Link href="/cart" className={iconLinkClass} aria-label={`Cart${itemCount > 0 ? ` with ${itemCount} item${itemCount === 1 ? '' : 's'}` : ''}`}>
             <ShoppingBag className="h-5 w-5" aria-hidden="true" />
