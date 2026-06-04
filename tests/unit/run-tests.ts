@@ -51,7 +51,7 @@ import { runManualPaymentAdjustmentFlowTests } from './manual-payment-adjustment
 import { runManualPaymentMarkingFlowTests } from './manual-payment-marking-flow.test';
 import { runMediaStorageReadinessTests } from './media-storage-readiness.test';
 import { runNotificationProviderSettingsTests } from './notification-provider-settings.test';
-import { runOrderActivityTimelineAttributionTests } from './order-activity-timeline-model.test';
+import { runOrderActivityTimelineAttributionTests } from './order-activity-timeline-attribution.test';
 import { runOrderNextPathTests } from './order-next-path.test';
 import { runOrderDiscountFlowTests } from './order-discount-flow.test';
 import { runOrderNotificationActionsFlowTests } from './order-notification-actions-flow.test';
