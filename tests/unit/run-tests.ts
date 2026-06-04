@@ -43,7 +43,7 @@ import { runInquiryWorkflowTests } from './inquiry-workflow.test';
 import { runIntegrationAppRegistryTests } from './integration-app-registry.test';
 import { runInventoryStockReservationModelTests } from './inventory-stock-reservation-model.test';
 import { runLaunchReadinessHealthTests } from './launch-readiness-health.test';
-import { runLocaleAwareMediaAltTextTests } from './locale-aware-media-alt.test';
+import { runLocaleAwareMediaAltTextTests } from './locale-aware-media-alt-text.test';
 import { runLocalizedSeoMetadataModelTests } from './localized-seo-metadata-model.test';
 import { runLowStockAlertsTests } from './low-stock-alerts.test';
 import { runManualPaymentAdjustmentFlowTests } from './manual-payment-adjustment-flow.test';
@@ -213,7 +213,7 @@ async function main() {
   await runPromotionValidityWindowsModelTests();
   await runPromotionUsageLimitsModelTests();
   await runPromotionEligibilityRulesModelTests();
-  await runPromotionOrderMinimumsTests();
+  await runPromotionOrderMinimumsModelTests();
   await runPromotionStoreCreditFoundationModelTests();
   await runPromotionAuditLogsModelTests();
   await runPromotionSchemaParityTests();
