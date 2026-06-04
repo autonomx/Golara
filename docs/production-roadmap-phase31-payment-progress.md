@@ -6,7 +6,7 @@ This note supplements `docs/production-roadmap.md` while Phase 31 is in progress
 
 ## Current status
 
-Phase 31 is in progress. Golara now has live payment gateway adapter foundations and checkout-attempt routing for both primary payment paths:
+Phase 31 is in progress. Golara now has live payment gateway adapter foundations, checkout-attempt routing, and a testable checkout-return redirect handler foundation for both primary payment paths:
 
 - **ZarinPal** for Iranian/Toman domestic checkout.
 - **Stripe Checkout Sessions** for overseas/card checkout.
@@ -26,7 +26,8 @@ Inquiry-first/manual checkout remains available as a fallback path.
 - Routed checkout payment attempts through live Stripe/ZarinPal adapters when those providers are selected.
 - Persisted adapter provider references through the existing checkout payment attempt `providerReference` field.
 - Extended return parsing for hosted checkout success/cancel values and provider checkout session reference aliases.
-- Added unit coverage using injected HTTP clients so tests do not call live payment networks.
+- Extracted `/orders/return` redirect handling into a unit-testable core helper.
+- Added unit coverage using injected HTTP clients and return-handler fakes so tests do not call live payment networks.
 
 ## Still pending before Phase 31 is complete
 
@@ -38,4 +39,4 @@ Inquiry-first/manual checkout remains available as a fallback path.
 
 ## Notes
 
-The current work prepares provider requests, validates request shaping, credentials, currencies, metadata, and idempotency headers, routes checkout attempts to the live adapter factory, and parses provider return parameters into the existing checkout result handler. It does not yet make payment webhooks authoritative, reconcile settlement, process refunds, or complete all route-level QA for browser return paths.
+The current work prepares provider requests, validates request shaping, credentials, currencies, metadata, and idempotency headers, routes checkout attempts to the live adapter factory, parses provider return parameters, and covers return redirects through a pure handler helper. It does not yet make payment webhooks authoritative, reconcile settlement, process refunds, or complete all route-level QA for browser return paths.
