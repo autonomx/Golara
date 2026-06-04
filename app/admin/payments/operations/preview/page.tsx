@@ -40,7 +40,10 @@ export default async function AdminPaymentOperationPreviewPage() {
                 Read-only Phase 33 preview entry point for refund and void planning. This page uses static sample data and does not submit refunds, void authorizations, create records, or call providers.
               </p>
             </div>
-            <Link href="/admin/payments/settlement" className="rounded-md bg-rosewood px-4 py-2 text-sm font-semibold text-white">Back to settlement</Link>
+            <div className="flex flex-wrap gap-2">
+              <Link href="/admin/payments/operations" className="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-800">Payment operations</Link>
+              <Link href="/admin/payments/settlement" className="rounded-md bg-rosewood px-4 py-2 text-sm font-semibold text-white">Back to settlement</Link>
+            </div>
           </div>
           <div className="mt-4 rounded-lg bg-stone-50 p-3 text-sm text-stone-600">
             {authConfigured ? authenticated ? `Signed in as ${identity.label ?? identity.email ?? 'admin'}.` : 'Admin authentication is required to view payment operation previews.' : 'Admin authentication is not configured yet.'}
