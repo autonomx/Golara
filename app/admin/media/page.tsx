@@ -8,8 +8,9 @@ import { listMedia } from '@/lib/cms/catalog-repository';
 export const dynamic = 'force-dynamic';
 
 const inputClass = 'rounded-lg border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100';
+const compactInputClass = 'w-full min-w-0 rounded-lg border border-rosewood/15 bg-white px-3 py-2 text-sm text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100';
 const buttonClass = 'rounded-full bg-rosewood px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-rosewood/15 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none';
-const secondaryButtonClass = 'rounded-full border border-rosewood/15 bg-white px-5 py-2.5 text-sm font-semibold text-rosewood';
+const secondaryButtonClass = 'rounded-full border border-rosewood/15 bg-white px-4 py-2 text-xs font-semibold text-rosewood disabled:cursor-not-allowed disabled:text-stone-400';
 
 const mediaCategoryOptions = [
   { value: 'product', label: 'Product' },
@@ -75,9 +76,9 @@ function mediaUrlFolder(value: unknown) {
   }
 }
 
-function MediaCategorySelect({ defaultValue = 'product', disabled = false }: { defaultValue?: string | null; disabled?: boolean }) {
+function MediaCategorySelect({ defaultValue = 'product', disabled = false, compact = false }: { defaultValue?: string | null; disabled?: boolean; compact?: boolean }) {
   return (
-    <select className={inputClass} name="mediaCategory" defaultValue={defaultValue ?? 'general'} disabled={disabled} required>
+    <select className={compact ? compactInputClass : inputClass} name="mediaCategory" defaultValue={defaultValue ?? 'general'} disabled={disabled} required>
       {mediaCategoryOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
     </select>
   );
@@ -126,23 +127,23 @@ export default async function AdminMediaPage() {
   const disabled = !authenticated;
 
   return (
-    <main className="min-h-screen bg-stone-50 lg:pl-72">
+    <main className="min-h-screen overflow-x-hidden bg-stone-50 lg:pl-72">
       <AdminSidebar authenticated={authenticated} authConfigured={authConfigured} />
 
       <header className="sticky top-0 z-20 border-b border-stone-200 bg-white/95 backdrop-blur">
         <div className="flex min-h-16 flex-wrap items-center justify-between gap-3 px-4 py-3 lg:px-6">
-          <div className="flex items-center gap-3">
-            <span className="grid h-9 w-9 place-items-center rounded-md border border-stone-200 bg-stone-50 text-stone-700"><ImageIcon className="h-4 w-4" /></span>
-            <div><h1 className="text-lg font-bold text-stone-950">Media library</h1><p className="text-xs font-medium text-stone-500">Manage image uploads, URL media, category tags, and usage.</p></div>
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-stone-200 bg-stone-50 text-stone-700"><ImageIcon className="h-4 w-4" /></span>
+            <div className="min-w-0"><h1 className="text-lg font-bold text-stone-950">Media library</h1><p className="truncate text-xs font-medium text-stone-500">Manage image uploads, URL media, category tags, and usage.</p></div>
           </div>
           <span className="rounded-md border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-semibold text-stone-700">{media.length} media</span>
         </div>
       </header>
 
-      <section className="grid gap-6 px-4 py-6 lg:px-6">
-        <section className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
+      <section className="grid min-w-0 gap-6 px-4 py-6 lg:px-6">
+        <section className="min-w-0 rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
+            <div className="min-w-0">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Admin / Catalog</p>
               <h2 className="mt-1 text-2xl font-bold text-stone-950">Media library</h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">Manage image uploads, URL media, category tags, and usage.</p>
@@ -151,7 +152,7 @@ export default async function AdminMediaPage() {
           </div>
         </section>
 
-        <section className="rounded-lg border border-rosewood/10 bg-white p-6 shadow-sm">
+        <section className="min-w-0 rounded-lg border border-rosewood/10 bg-white p-6 shadow-sm">
           <details className="rounded-lg border border-rosewood/10 bg-cream p-5">
             <summary className="cursor-pointer font-display text-3xl text-rosewood">Add image</summary>
             <div className="mt-5 grid gap-6 lg:grid-cols-2">
@@ -172,15 +173,15 @@ export default async function AdminMediaPage() {
             </div>
           </details>
 
-          <div className="mt-8 max-h-[760px] overflow-auto rounded-lg border border-rosewood/10 bg-white">
-            <table className="w-full min-w-[940px] border-collapse text-left text-sm">
+          <div className="mt-8 max-h-[760px] overflow-y-auto rounded-lg border border-rosewood/10 bg-white">
+            <table className="w-full table-fixed border-collapse text-left text-sm">
               <thead className="sticky top-0 z-[1] bg-cream text-xs font-semibold uppercase tracking-[0.16em] text-rosewood/70">
                 <tr>
-                  <th className="px-4 py-3">Image</th>
-                  <th className="px-4 py-3">Category</th>
-                  <th className="px-4 py-3">Source</th>
-                  <th className="px-4 py-3">URL</th>
-                  <th className="px-4 py-3">Actions</th>
+                  <th className="w-[28%] px-3 py-3">Image</th>
+                  <th className="w-[20%] px-3 py-3">Category</th>
+                  <th className="w-[13%] px-3 py-3">Source</th>
+                  <th className="w-[21%] px-3 py-3">URL</th>
+                  <th className="w-[18%] px-3 py-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -188,33 +189,33 @@ export default async function AdminMediaPage() {
                   const safeUrl = normalizeMediaUrl(item.url);
                   return (
                     <tr key={item.id ?? safeUrl ?? item.alt} className="border-t border-rosewood/10 align-top">
-                      <td className="px-4 py-4">
-                        <div className="flex min-w-72 gap-3">
-                          <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-blush">
-                            {safeUrl ? <Image src={safeUrl} alt={item.alt} fill className="object-cover" sizes="64px" /> : null}
+                      <td className="px-3 py-4">
+                        <div className="flex min-w-0 gap-3">
+                          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-blush">
+                            {safeUrl ? <Image src={safeUrl} alt={item.alt} fill className="object-cover" sizes="56px" /> : null}
                           </div>
-                          <div><div className="font-semibold text-rosewood">{item.alt}</div><div className="mt-1 text-xs text-stone-500">{item.createdAt ? item.createdAt.toLocaleDateString('en-CA') : 'Seed or static asset'}</div></div>
+                          <div className="min-w-0"><div className="truncate font-semibold text-rosewood">{item.alt}</div><div className="mt-1 truncate text-xs text-stone-500">{item.createdAt ? item.createdAt.toLocaleDateString('en-CA') : 'Seed or static asset'}</div></div>
                         </div>
                       </td>
-                      <td className="px-4 py-4">
+                      <td className="px-3 py-4">
                         {item.id ? (
-                          <form action={updateMediaCategoryAction.bind(null, item.id)} className="grid min-w-56 gap-2">
-                            <MediaCategorySelect defaultValue={item.mediaCategory} disabled={disabled} />
-                            <button type="submit" className={secondaryButtonClass} disabled={disabled}>Save category</button>
+                          <form action={updateMediaCategoryAction.bind(null, item.id)} className="grid min-w-0 gap-2">
+                            <MediaCategorySelect defaultValue={item.mediaCategory} disabled={disabled} compact />
+                            <button type="submit" className={secondaryButtonClass} disabled={disabled}>Save</button>
                           </form>
-                        ) : <span>{item.mediaCategory ?? 'general'}</span>}
+                        ) : <span className="truncate text-sm text-stone-700">{item.mediaCategory ?? 'general'}</span>}
                       </td>
-                      <td className="px-4 py-4"><div className="grid gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-olive"><span>{item.source ?? 'static'}</span>{item.storageKey ? <span className="text-stone-400">{item.storageKey}</span> : null}</div></td>
-                      <td className="px-4 py-4"><div className="max-w-64" title={safeUrl ?? ''}><span className="inline-flex max-w-full rounded-md border border-stone-200 bg-stone-50 px-2.5 py-1 font-mono text-[11px] font-semibold text-stone-700"><span className="truncate">{mediaUrlLabel(item.url)}</span></span><div className="mt-1 max-w-full truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-olive">{mediaUrlFolder(item.url)}</div></div></td>
-                      <td className="px-4 py-4">
+                      <td className="px-3 py-4"><div className="grid min-w-0 gap-1 text-xs font-semibold uppercase tracking-[0.12em] text-olive"><span className="truncate">{item.source ?? 'static'}</span>{item.storageKey ? <span className="truncate text-stone-400">{item.storageKey}</span> : null}</div></td>
+                      <td className="px-3 py-4"><div className="min-w-0" title={safeUrl ?? ''}><span className="inline-flex max-w-full rounded-md border border-stone-200 bg-stone-50 px-2 py-1 font-mono text-[11px] font-semibold text-stone-700"><span className="truncate">{mediaUrlLabel(item.url)}</span></span><div className="mt-1 truncate text-[11px] font-semibold uppercase tracking-[0.1em] text-olive">{mediaUrlFolder(item.url)}</div></div></td>
+                      <td className="px-3 py-4">
                         {item.id ? (
-                          <details className="min-w-80">
+                          <details className="min-w-0">
                             <summary className="cursor-pointer text-xs font-semibold text-rosewood underline-offset-4 hover:underline">Edit</summary>
-                            <form action={updateMediaAction.bind(null, item.id)} className="mt-4 grid gap-4 rounded-lg border border-rosewood/10 bg-[#fffdfb] p-4">
-                              <label className="grid gap-2 text-sm font-semibold text-rosewood">Image URL<input className={inputClass} name="url" defaultValue={safeUrl ?? ''} disabled={disabled} required /></label>
-                              <label className="grid gap-2 text-sm font-semibold text-rosewood">Alt text<input className={inputClass} name="alt" defaultValue={item.alt} disabled={disabled} required /></label>
-                              <MediaCategorySelect defaultValue={item.mediaCategory} disabled={disabled} />
-                              <button className={buttonClass} type="submit" disabled={disabled}>Update media</button>
+                            <form action={updateMediaAction.bind(null, item.id)} className="mt-4 grid min-w-0 gap-3 rounded-lg border border-rosewood/10 bg-[#fffdfb] p-3">
+                              <label className="grid min-w-0 gap-2 text-xs font-semibold text-rosewood">Image URL<input className={compactInputClass} name="url" defaultValue={safeUrl ?? ''} disabled={disabled} required /></label>
+                              <label className="grid min-w-0 gap-2 text-xs font-semibold text-rosewood">Alt text<input className={compactInputClass} name="alt" defaultValue={item.alt} disabled={disabled} required /></label>
+                              <MediaCategorySelect defaultValue={item.mediaCategory} disabled={disabled} compact />
+                              <button className={buttonClass} type="submit" disabled={disabled}>Update</button>
                             </form>
                           </details>
                         ) : <span className="text-xs font-semibold text-stone-400">Static</span>}
