@@ -1,7 +1,7 @@
 # Golara Production Readiness Roadmap
 
-Last updated: 2026-05-31
-Current main baseline: Phase 30 merged
+Last updated: 2026-06-03
+Current main baseline: Phase 30 merged, followed by admin/storefront expansion work
 Current production path: inquiry-first launch. Payment-provider implementation remains deferred until explicitly approved.
 
 ## Current readiness state
@@ -10,8 +10,10 @@ Golara has completed the inquiry-first production-readiness roadmap through Phas
 
 Important distinction:
 
-- Production-readiness work is complete in the repository.
-- Actual production launch still requires environment-specific operator sign-off: secrets, database, Cloudinary, notification mode, data-safety confirmations, deploy-readiness output, and manual smoke audit.
+- Production-readiness work is complete for the inquiry-first launch path.
+- Recent admin/storefront work has expanded the demo-commerce/admin surface: product/category/media management, homepage management, displayed occasion tiles, featured picks, demo orders/inquiries/customers/discounts, settings pages, and analytics panels.
+- Actual production launch still requires environment-specific operator sign-off: secrets, database, Cloudinary or another production-safe media store, notification mode, data-safety confirmations, deploy-readiness output, and manual smoke audit.
+- Full payment-provider checkout is not implemented yet. Current payment work is settings/readiness/foundation only, not live gateway capture, redirect, webhook, settlement, or refund processing.
 
 Completed foundations:
 
@@ -27,6 +29,8 @@ Completed foundations:
 - Inquiry notification delivery now returns structured results, exposes readiness blockers/warnings, and includes retry runbook guidance.
 - Production data-safety deploy guard blockers, migration runbook, backup/restore expectations, and rollback plan are in place.
 - Final launch audit sign-off artifact is in place at `docs/LAUNCH_AUDIT.md`.
+- Admin Saleor-parity foundations now cover catalog, PIM, inventory, fulfillment, customers, orders, discounts, settings, integrations, and analytics.
+- Homepage admin now supports editing hero content/media, CTAs, trust chips, section copy, footer copy, displayed occasion tiles, and featured picks.
 
 ## Completed recent phases
 
@@ -98,7 +102,7 @@ Completed foundations:
 
 ## Remaining before real production launch
 
-These are environment/operator tasks, not repository blockers:
+These are environment/operator tasks, not repository blockers for the inquiry-first launch path:
 
 1. Configure production secrets and environment variables.
 2. Configure production PostgreSQL and verify backup/restore.
@@ -108,44 +112,172 @@ These are environment/operator tasks, not repository blockers:
 6. Complete the manual smoke audit in `docs/LAUNCH_AUDIT.md`.
 7. Record the go/no-go decision in the launch sign-off template.
 
-## Deferred post-launch phases
+## Deferred production feature roadmap
 
-### Payment provider implementation
+The following phases are the next roadmap for moving from inquiry-first/demo-commerce readiness to a full production commerce system. These are not blockers if Golara launches as inquiry-first, but they are blockers for a real card/gateway checkout launch.
 
-Status: deferred pending explicit approval.
+### Phase 31 — payment gateway implementation
 
-Notes:
+Status: not implemented; highest-priority missing production feature.
 
-- Inquiry-first remains the production path.
-- Payment provider selection, checkout payment capture, refunds, reconciliation, webhook handling, and payment security review should be planned as a separate phase only after approval.
+Goal: replace manual/inquiry-only payment behavior with real provider-backed checkout while keeping the existing payment settings/readiness admin controls.
 
-### Full commerce order automation
+Checklist:
 
-Status: deferred.
+- [ ] Choose first live provider path: Stripe for card/overseas checkout, Iranian gateway for Toman/local checkout, or both behind the existing provider config.
+- [ ] Add provider adapter interface for creating checkout sessions/payment intents.
+- [ ] Add provider-specific implementation for the selected first gateway.
+- [ ] Store provider session/payment intent IDs on checkout payment attempts.
+- [ ] Redirect customers to provider-hosted checkout or render the provider-approved payment UI.
+- [ ] Add checkout return/success/cancel pages.
+- [ ] Convert provider success/failure into order payment state transitions.
+- [ ] Add idempotency keys so repeated checkout submissions do not create duplicate charges/orders.
+- [ ] Add unit and route tests for success, failure, cancel, duplicate, and provider-error paths.
+- [ ] Update `.env.example`, production checklist, and admin readiness blockers for the selected provider.
 
-Notes:
+Success criteria:
 
-- Admin order readiness exists separately from inquiry-first operations.
-- Full order lifecycle automation should follow payment-provider approval and production inquiry validation.
+- A customer can place an order and complete payment through a real configured provider.
+- Admin can see provider reference IDs, payment state, and payment attempt history.
+- Failed or cancelled payment attempts do not mark orders as paid.
+- Inquiry-first/manual mode remains available as a fallback mode.
 
-### Provider-backed per-user admin auth
+### Phase 32 — payment webhooks and settlement reconciliation
 
-Status: deferred.
+Status: not implemented.
 
-Notes:
+Goal: make payment state authoritative from provider webhooks, not only browser returns.
 
-- Current runtime admin auth remains password-gated with environment-backed identity metadata.
-- Owner-visible account readiness inventory and staff procedure controls are sufficient for the inquiry-first launch scope only.
-- Provider-backed, per-user login should be planned before broader staff scaling.
+Checklist:
 
-### Email and WhatsApp notification providers
+- [ ] Add signed webhook endpoint for the selected provider.
+- [ ] Verify webhook signatures/secrets before processing events.
+- [ ] Add idempotent webhook event storage and replay protection.
+- [ ] Map provider events to internal payment attempt and order states.
+- [ ] Add settlement/captured/failed/refunded/chargeback-style state support where provider supports it.
+- [ ] Add admin visibility for webhook events and reconciliation mismatches.
+- [ ] Add tests for duplicate webhooks, invalid signatures, unknown payment IDs, and out-of-order events.
 
-Status: deferred.
+Success criteria:
 
-Notes:
+- Provider webhook state can safely update orders after the customer leaves checkout.
+- Duplicate or forged webhooks do not corrupt order/payment state.
+- Admin can diagnose payment provider events without checking external dashboards first.
 
-- Current supported inquiry notification modes are log and webhook.
-- Email and WhatsApp provider delivery should be added behind the notification seam when a provider and operating model are selected.
+### Phase 33 — refunds, voids, and payment operations
+
+Status: foundation exists in admin/payment records, but live provider operations still need implementation.
+
+Checklist:
+
+- [ ] Add provider-backed refund and void actions where supported.
+- [ ] Support partial refunds if the selected provider supports them.
+- [ ] Store refund/void provider references and staff attribution.
+- [ ] Release inventory/capacity when a paid order is cancelled or refunded according to policy.
+- [ ] Add refund/void audit log entries.
+- [ ] Add tests for full refund, partial refund, void before capture, provider failure, and duplicate refund protection.
+
+Success criteria:
+
+- Staff can refund/void from admin without manually editing payment state.
+- Payment operations remain auditable and reconcile with the provider.
+- Inventory and order state remain consistent after payment reversals.
+
+### Phase 34 — real notification providers
+
+Status: settings/readiness foundations exist; real provider delivery should still be verified/implemented.
+
+Checklist:
+
+- [ ] Choose first email provider, such as SMTP, Resend, or SendGrid.
+- [ ] Choose SMS/WhatsApp operating model if needed.
+- [ ] Add provider adapter for order and inquiry notifications.
+- [ ] Add templated messages for order confirmation, staff notification, inquiry acknowledgement, and fulfillment updates.
+- [ ] Store delivery attempts with provider references and error details.
+- [ ] Add retry controls and admin visibility for failed notification delivery.
+- [ ] Add tests for provider success, provider failure, missing credentials, retries, and disabled channels.
+
+Success criteria:
+
+- Customers and staff receive operational notifications through real providers.
+- Failed notifications are visible and retryable.
+- Log/webhook mode remains available for development and fallback operations.
+
+### Phase 35 — webhook delivery worker and integration reliability
+
+Status: configuration/event-log foundations exist; durable delivery worker is still needed.
+
+Checklist:
+
+- [ ] Add outbound webhook dispatcher for configured integrations.
+- [ ] Add retry/backoff schedule and terminal failure state.
+- [ ] Sign outbound webhook payloads.
+- [ ] Add admin retry/cancel controls.
+- [ ] Add dead-letter visibility for repeatedly failed deliveries.
+- [ ] Add tests for successful delivery, non-2xx response, timeout, retry, and signing.
+
+Success criteria:
+
+- Configured integrations receive durable event delivery.
+- Failed deliveries are observable and recoverable.
+- Webhook configuration is not just stored; it is operational.
+
+### Phase 36 — production authentication hardening
+
+Status: password-gated admin and role foundations exist; provider-backed per-user auth is deferred.
+
+Checklist:
+
+- [ ] Add provider-backed per-user login for admins/staff.
+- [ ] Enforce owner/staff role boundaries on every admin write action.
+- [ ] Add session rotation/expiry policies.
+- [ ] Add account deactivation enforcement.
+- [ ] Add audit visibility for login/logout/admin write events.
+- [ ] Add tests for unauthorized, staff, owner, inactive, and missing-identity cases.
+
+Success criteria:
+
+- Each admin user has a distinct identity.
+- Owner-only actions cannot be performed by staff users.
+- Disabled staff accounts lose access immediately.
+
+### Phase 37 — checkout, order, and fulfillment end-to-end QA
+
+Status: admin foundations exist; full live commerce workflow requires end-to-end validation.
+
+Checklist:
+
+- [ ] Add end-to-end tests for cart → checkout → payment → order → notification → fulfillment.
+- [ ] Add inventory reservation/release tests around paid, cancelled, refunded, and failed-payment orders.
+- [ ] Add discount interaction tests with real checkout totals.
+- [ ] Add tax/shipping calculation tests for supported markets.
+- [ ] Add printable/CSV/packing-slip validation for live paid orders.
+- [ ] Add manual QA runbook for the complete production order lifecycle.
+
+Success criteria:
+
+- The full customer and staff workflow is tested as one system.
+- Payment, inventory, discounts, tax, shipping, notifications, and fulfillment agree on order truth.
+- A production operator can follow a documented runbook for launch validation.
+
+### Phase 38 — production operations and monitoring
+
+Status: partial readiness checks exist; full production observability remains needed.
+
+Checklist:
+
+- [ ] Add structured logging for checkout, payments, webhooks, notifications, and admin writes.
+- [ ] Add error monitoring integration.
+- [ ] Add uptime/health checks for storefront, admin, database, media storage, and provider dependencies.
+- [ ] Add backup/restore drill evidence for the target production database.
+- [ ] Add incident runbooks for payment failure, provider outage, webhook backlog, notification outage, and migration rollback.
+- [ ] Add performance pass for homepage, product listing, admin media, and checkout.
+
+Success criteria:
+
+- Operators can detect and respond to production incidents.
+- Payment/provider issues are observable before customers report them.
+- Restore and rollback procedures have been tested against the actual production stack.
 
 ## Current launch blocker summary
 
@@ -159,9 +291,20 @@ Environment/operator blockers before inquiry-first production launch:
 - Pass production deploy-readiness with production-like environment variables.
 - Complete manual smoke audit and go/no-go sign-off.
 
+Repository blockers before full automated commerce launch:
+
+- Live payment gateway checkout.
+- Payment webhooks and settlement reconciliation.
+- Provider-backed refunds/voids.
+- Real notification provider delivery.
+- Durable outbound webhook worker.
+- Provider-backed per-user admin authentication.
+- End-to-end checkout/order/fulfillment QA.
+- Production monitoring and incident runbooks.
+
 Not blocking inquiry-first launch:
 
 - Payment provider implementation, as long as the site remains inquiry-first.
 - Full automated checkout/order-payment lifecycle.
 - Provider-backed per-user admin auth, as long as password-gated admin access and staff procedures are controlled for the inquiry-first launch.
-- Email and WhatsApp notification providers, as long as log or webhook notification mode is operationally accepted.
+- Email, SMS, and WhatsApp notification providers, as long as log or webhook notification mode is operationally accepted.
