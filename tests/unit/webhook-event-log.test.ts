@@ -8,6 +8,10 @@ import {
   summarizePaymentWebhookSettlement
 } from '../../lib/checkout/payment-webhook-core';
 import {
+  buildPaymentWebhookRecordSummary,
+  planPaymentWebhookRecord
+} from '../../lib/checkout/payment-webhook-record';
+import {
   WEBHOOK_EVENT_LOG_STATUSES,
   buildWebhookEventLogSummary,
   createWebhookPayloadDigest,
@@ -22,6 +26,7 @@ export async function runWebhookEventLogTests() {
   const migration = source('prisma/migrations/20260603090000_add_webhook_event_log/migration.sql');
   const service = source('lib/settings/webhook-event-log.ts');
   const paymentWebhookCore = source('lib/checkout/payment-webhook-core.ts');
+  const paymentWebhookRecord = source('lib/checkout/payment-webhook-record.ts');
   const panel = source('components/admin/AdminWebhookEventLogPanel.tsx');
   const fulfillmentPanel = source('components/admin/AdminFulfillmentSettingsPanel.tsx');
   const roadmap = source('docs/ADMIN_SALEOR_PARITY_ROADMAP.md');
@@ -48,6 +53,8 @@ export async function runWebhookEventLogTests() {
   assert.match(paymentWebhookCore, /export function normalizePaymentWebhookEvent/);
   assert.match(paymentWebhookCore, /export function paymentWebhookIdempotencyKey/);
   assert.match(paymentWebhookCore, /export function summarizePaymentWebhookSettlement/);
+  assert.match(paymentWebhookRecord, /export function planPaymentWebhookRecord/);
+  assert.match(paymentWebhookRecord, /export function buildPaymentWebhookRecordSummary/);
 
   const digestA = createWebhookPayloadDigest({ b: 2, a: 1 });
   const digestB = createWebhookPayloadDigest({ a: 1, b: 2 });
@@ -195,6 +202,40 @@ export async function runWebhookEventLogTests() {
     cancelled: 1,
     pending: 1,
     needsAttention: 2
+  });
+
+  const paidRecord = planPaymentWebhookRecord({ event: stripePaid });
+  assert.equal(paidRecord.persistenceStatus, 'recorded');
+  assert.equal(paidRecord.shouldApplyPaymentState, true);
+  assert.equal(paidRecord.shouldReconcileSettlement, true);
+  assert.equal(paidRecord.needsAttention, false);
+  assert.equal(paidRecord.metadata.hasProviderReference, true);
+  assert.equal(paidRecord.metadata.hasOrderReference, true);
+
+  const duplicateRecord = planPaymentWebhookRecord({
+    event: stripePaid,
+    existingIdempotencyKey: stripePaid.idempotencyKey
+  });
+  assert.equal(duplicateRecord.persistenceStatus, 'duplicate');
+  assert.equal(duplicateRecord.shouldApplyPaymentState, false);
+  assert.equal(duplicateRecord.shouldReconcileSettlement, false);
+  assert.equal(duplicateRecord.metadata.duplicate, true);
+
+  const failedRecord = planPaymentWebhookRecord({
+    event: normalizePaymentWebhookEvent({ provider: 'zarinpal', payload: { Status: 'NOK', Authority: 'A0002' } })
+  });
+  assert.equal(failedRecord.persistenceStatus, 'needs_attention');
+  assert.equal(failedRecord.shouldApplyPaymentState, false);
+  assert.equal(failedRecord.needsAttention, true);
+
+  const recordSummary = buildPaymentWebhookRecordSummary([paidRecord, duplicateRecord, failedRecord]);
+  assert.deepEqual(recordSummary, {
+    total: 3,
+    recorded: 1,
+    duplicate: 1,
+    needsAttention: 1,
+    paymentStateApplications: 1,
+    settlementCandidates: 1
   });
 
   assert.match(panel, /export function AdminWebhookEventLogPanel/);
