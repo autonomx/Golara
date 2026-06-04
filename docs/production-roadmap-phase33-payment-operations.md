@@ -6,7 +6,7 @@ This note tracks Phase 33 work after the Phase 32 repo-side webhook and settleme
 
 ## Current status
 
-Phase 33 has provider-neutral refund/void planning, no-mutation preview generation, a pure preview input normalization helper, a read-only preview view model, a route-core style preview result, a request-core wrapper for normalized preview requests, a compact read-only admin preview panel, a static-sample admin preview route for admin-safe display, a documentation-only persistence design for future refund/void operation records, pure order/payment transition plus inventory/capacity release planning, read-only transition guidance in the admin preview payload/UI, a migration-backed table contract for future payment operation records, a blank operator evidence template for target-environment payment-operation migration validation, a read-only migration status helper for checking whether the target environment has been operator-confirmed, a docs-only repository/service design, a gated raw-SQL repository/service foundation for idempotent pending operation-record creation, append-only admin audit-log wiring for pending/duplicate/conflict/submitted/succeeded/failed operation-record lifecycle events, a provider operation adapter contract with inert mock/manual/unavailable execution boundaries for future refund/void provider integration, provider-specific request/response mappers for Stripe and ZarinPal using symbolic provider endpoints, and injected provider HTTP adapter factories that require caller-supplied HTTP clients before execution. This remains repo-side foundation work: no default live Stripe or ZarinPal refund/void HTTP calls, order/payment mutations, inventory/capacity release, or admin execution buttons have been added. Repository/service use is gated behind target-environment migration confirmation.
+Phase 33 has provider-neutral refund/void planning, no-mutation preview generation, a pure preview input normalization helper, a read-only preview view model, a route-core style preview result, a request-core wrapper for normalized preview requests, a compact read-only admin preview panel, a static-sample admin preview route for admin-safe display, a documentation-only persistence design for future refund/void operation records, pure order/payment transition plus inventory/capacity release planning, read-only transition guidance in the admin preview payload/UI, a migration-backed table contract for future payment operation records, a blank operator evidence template for target-environment payment-operation migration validation, a read-only migration status helper for checking whether the target environment has been operator-confirmed, a docs-only repository/service design, a gated raw-SQL repository/service foundation for idempotent pending operation-record creation, append-only admin audit-log wiring for pending/duplicate/conflict/submitted/succeeded/failed operation-record lifecycle events, a provider operation adapter contract with inert mock/manual/unavailable execution boundaries for future refund/void provider integration, provider-specific request/response mappers for Stripe and ZarinPal using symbolic provider endpoints, injected provider HTTP adapter factories that require caller-supplied HTTP clients before execution, and migration-gated service-level execution orchestration for existing operation records. This remains repo-side foundation work: no default live Stripe or ZarinPal refund/void HTTP calls, order/payment mutations, inventory/capacity release, or admin execution buttons have been added. Repository/service use is gated behind target-environment migration confirmation.
 
 ## Completed in Phase 33 so far
 
@@ -59,6 +59,8 @@ Phase 33 has provider-neutral refund/void planning, no-mutation preview generati
 - Extended `tests/unit/payment-operation-adapters.test.ts` to guard Stripe/ZarinPal mapper request shape, missing credential handling, missing provider-reference handling, success response normalization, retryable provider errors, rejected provider errors, source-level no-fetch/no-Prisma/no-mutation boundaries, and this progress note. The runner count remains 119 files.
 - Extended `lib/checkout/payment-operation-adapters.ts` with `ProviderPaymentOperationHttpClient`, `createStripePaymentOperationHttpAdapter`, and `createZarinPalPaymentOperationHttpAdapter` so provider operation execution requires an injected HTTP client and otherwise returns `provider_http_client_missing`.
 - Extended `tests/unit/payment-operation-adapters.test.ts` to guard missing injected-client behavior, injected-client request capture, normalized success results, and the continued no-default-fetch/no-Prisma/no-mutation boundary. The runner count remains 119 files.
+- Added `executePaymentOperationRecordIfConfirmed` to `lib/checkout/payment-operation-record-service.ts` to orchestrate execution for an existing operation record through migration confirmation, executable-state checks, submitted transition, injected adapter execution, and succeeded/failed/manual-review result handling without order/payment mutation.
+- Extended `tests/unit/payment-operation-migration-contract.test.ts` to guard execution orchestration, migration gate usage, submitted/succeeded/failed transition ordering, injected adapter use, no default fetch, no Prisma import in the service, and no order/payment mutation. The runner count remains 119 files.
 
 ## Current helper behavior
 
@@ -159,7 +161,7 @@ Phase 33 has provider-neutral refund/void planning, no-mutation preview generati
 
 `paymentOperationRecordRepository` can create pending operation records idempotently by `idempotencyKey`, reuse matching duplicates, report conflicts for mismatched duplicate keys, find records by idempotency key, mark records submitted/succeeded/failed, and list records for an order. It uses raw SQL because `PaymentOperationRecord` is not a Prisma model. It does not call providers, mutate orders/payment attempts, release inventory/capacity, or write audit logs.
 
-`paymentOperationRecordService` gates repository access through `getPaymentOperationRecordsMigrationStatus`. If `PAYMENT_OPERATION_RECORDS_MIGRATION_CONFIRMED` is not true for the target environment, it returns `migration_unconfirmed` instead of creating, transitioning, or listing records. When the gate is confirmed and repository transition updates succeed, the service appends admin audit-log entries for submitted, succeeded, and failed operation-record states with provider-operation reference, provider status, error category, retryability, and transition metadata.
+`paymentOperationRecordService` gates repository access through `getPaymentOperationRecordsMigrationStatus`. If `PAYMENT_OPERATION_RECORDS_MIGRATION_CONFIRMED` is not true for the target environment, it returns `migration_unconfirmed` instead of creating, transitioning, listing records, or orchestrating operation execution. When the gate is confirmed and repository transition updates succeed, the service appends admin audit-log entries for submitted, succeeded, and failed operation-record states with provider-operation reference, provider status, error category, retryability, and transition metadata. `executePaymentOperationRecordIfConfirmed` can orchestrate an existing operation record by blocking non-executable statuses/decisions, marking the record submitted, calling injected provider adapters through `executePaymentOperationAdapter`, and marking the record succeeded or failed based on normalized adapter results. Manual-review adapter results are returned without order/payment mutation.
 
 `buildPaymentOperationAuditLogInput` can normalize payment-operation audit events into the existing admin audit-log shape for preview, blocked/manual-review, pending record creation, idempotency duplicate reuse, idempotency conflict blocking, and submitted/succeeded/failed record transitions. It does not call providers, mutate orders/payment attempts, or release inventory/capacity.
 
@@ -184,7 +186,7 @@ The current boundary should continue to:
 - keep transition/release planning pure and advisory until provider execution and operator approval paths exist;
 - keep repository/service implementation behind target-environment migration verification and explicit idempotency rules;
 - keep `PaymentOperationRecord` raw-SQL-backed until a deliberate Prisma/client decision is made;
-- require target-environment migration verification before repository/service writes;
+- require target-environment migration verification before repository/service writes or execution orchestration;
 - capture operator migration evidence before any execution path depends on the table;
 - keep migration confirmation helpers read-only until execution behavior is deliberately added in a later guarded slice;
 - append admin audit-log entries only for repository/service lifecycle events already gated by migration confirmation;
@@ -192,11 +194,12 @@ The current boundary should continue to:
 - keep provider-specific mapper endpoints symbolic until target-environment endpoint mapping is deliberately added;
 - require caller-injected HTTP clients for any provider operation adapter execution path;
 - require provider-reference, idempotency, status, and error normalization before any live provider adapter is exposed to admin flows;
+- block execution orchestration for non-executable operation-record statuses or blocked preview decisions;
 - avoid checkout order mutation;
 - avoid payment attempt mutation;
 - avoid inventory or capacity release;
 - avoid default live provider calls;
-- be covered by source/unit guards before provider execution is added.
+- be covered by source/unit guards before admin execution controls are added.
 
 ## Explicit non-goals for this slice
 
@@ -217,10 +220,10 @@ Those remain future Phase 33 slices after target-environment migration verificat
 
 ## Recommended next work
 
-1. Add service-level execution orchestration that requires migration confirmation, an existing pending operation record, idempotency, audit transition logging, injected provider adapters, and adapter result normalization.
-2. Add target-environment provider endpoint mapping only after staging credentials and provider operation contracts are confirmed by operators.
+1. Add target-environment provider endpoint mapping only after staging credentials and provider operation contracts are confirmed by operators.
+2. Add read-only admin operation-history/status display from `PaymentOperationRecord` before adding execution controls.
 3. Add admin execution controls only after provider execution, provider error normalization, and post-success order/payment transition behavior are explicitly guarded.
 
 ## Verification status
 
-Source/unit guard coverage has been added, but local verification is pending. Do not claim `npm run test:unit`, `npm run typecheck`, `npx prisma generate`, `npx prisma migrate status`, migration application, repository write execution, adapter execution in a target environment, or live provider validation passed unless those checks are actually run.
+Source/unit guard coverage has been added, but local verification is pending. Do not claim `npm run test:unit`, `npm run typecheck`, `npx prisma generate`, `npx prisma migrate status`, migration application, repository write execution, adapter execution in a target environment, orchestration execution in a target environment, or live provider validation passed unless those checks are actually run.
