@@ -27,6 +27,16 @@ export type PaymentOperationProviderReadiness = {
   checks: PaymentOperationProviderReadinessCheck[];
 };
 
+export type PaymentOperationProviderReadinessSummary = {
+  ready: boolean;
+  total: number;
+  readyCount: number;
+  needsOperatorEvidence: number;
+  manualReview: number;
+  unavailable: number;
+  providers: PaymentOperationProviderReadiness[];
+};
+
 const PROVIDER_OPERATION_CREDENTIALS: Partial<Record<PaymentOperationAdapterProvider, string[]>> = {
   stripe: ['STRIPE_SECRET_KEY'],
   zarinpal: ['ZARINPAL_MERCHANT_ID']
@@ -149,7 +159,7 @@ export function buildPaymentOperationProviderReadiness(input: PaymentOperationPr
   };
 }
 
-export function buildPaymentOperationProviderReadinessSummary(inputs: PaymentOperationProviderReadinessInput[]) {
+export function buildPaymentOperationProviderReadinessSummary(inputs: PaymentOperationProviderReadinessInput[]): PaymentOperationProviderReadinessSummary {
   const providers = inputs.map(buildPaymentOperationProviderReadiness);
   const readyCount = providers.filter((provider) => provider.status === 'ready').length;
   const needsOperatorEvidence = providers.filter((provider) => provider.status === 'needs_operator_evidence').length;
