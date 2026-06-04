@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { orderConfirmationPanelClass, orderConfirmationResultCopy } from '../../lib/checkout/order-confirmation-copy';
 import {
   checkoutReturnApplyInput,
   checkoutReturnFallbackUrl,
@@ -22,6 +23,15 @@ export async function runOrderReturnRouteCoreTests() {
   assert.equal(normalizeHostedCheckoutReturnStatus(' cancel '), 'cancelled');
   assert.equal(normalizeHostedCheckoutReturnStatus(null), 'failed');
   assert.equal(normalizeHostedCheckoutReturnStatus('failed'), 'failed');
+
+  assert.equal(orderConfirmationResultCopy().title, 'Thank you');
+  assert.equal(orderConfirmationResultCopy('paid').tone, 'success');
+  assert.equal(orderConfirmationResultCopy('failed').title, 'Payment was not verified');
+  assert.equal(orderConfirmationResultCopy('cancelled').title, 'Checkout was cancelled');
+  assert.equal(orderConfirmationResultCopy('missing-token').title, 'We could not open the order status page');
+  assert.equal(orderConfirmationResultCopy('unknown').title, 'Thank you');
+  assert.equal(orderConfirmationPanelClass('success'), 'border-olive/20 bg-cream text-olive');
+  assert.equal(orderConfirmationPanelClass('warning'), 'border-amber-300 bg-amber-50 text-amber-900');
 
   assert.deepEqual(checkoutReturnApplyInput(requestUrl), {
     orderNumber: 'GOL-1001',
