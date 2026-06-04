@@ -51,7 +51,7 @@ import { runManualPaymentAdjustmentFlowTests } from './manual-payment-adjustment
 import { runManualPaymentMarkingFlowTests } from './manual-payment-marking-flow.test';
 import { runMediaStorageReadinessTests } from './media-storage-readiness.test';
 import { runNotificationProviderSettingsTests } from './notification-provider-settings.test';
-import { runOrderActivityTimelineAttributionTests } from './order-activity-timeline-attribution.test';
+import { runOrderActivityTimelineAttributionTests } from './order-activity-timeline-model.test';
 import { runOrderNextPathTests } from './order-next-path.test';
 import { runOrderDiscountFlowTests } from './order-discount-flow.test';
 import { runOrderNotificationActionsFlowTests } from './order-notification-actions-flow.test';
@@ -95,7 +95,7 @@ import { runPromotionEligibilityRulesModelTests } from './promotion-eligibility-
 import { runPromotionOrderMinimumsModelTests } from './promotion-order-minimums-model.test';
 import { runPromotionSchemaParityTests } from './promotion-schema-parity.test';
 import { runPromotionStoreCreditFoundationModelTests } from './promotion-store-credit-foundation-model.test';
-import { runPromotionUsageLimitsModelTests } from './promotion-usage-limits.test';
+import { runPromotionUsageLimitsModelTests } from './promotion-usage-limits-model.test';
 import { runPromotionValidityWindowsModelTests } from './promotion-validity-windows-model.test';
 import { runPromotionVoucherModelTests } from './promotion-voucher-model.test';
 import { runProviderDiagnosticsTests } from './provider-diagnostics.test';
@@ -238,7 +238,7 @@ async function main() {
   await runVariantStockMigrationTests();
   await runVariantLocationStockModelTests();
   await runWarehouseLocationModelTests();
-  await runFulfillmentMethodSettingsTests();
+  await runFulfillmentMethodSettingsModelTests();
   await runFulfillmentShipmentRecordsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
