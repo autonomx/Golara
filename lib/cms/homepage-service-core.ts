@@ -1,18 +1,8 @@
 import type { Prisma } from '@prisma/client';
+import type { HomepageContent } from '@/lib/catalog';
 import type { CmsAuditWriter, CmsIdentifiedRecord, CmsPublishedRecord } from '@/lib/cms/service-types';
 
-export type HomepagePayload = {
-  eyebrow: string;
-  title: string;
-  body: string;
-  primaryCtaLabel: string;
-  primaryCtaHref: string;
-  secondaryCtaLabel: string;
-  secondaryCtaHref: string;
-  panelEyebrow: string;
-  panelTitle: string;
-  panelBody: string;
-};
+export type HomepagePayload = HomepageContent;
 
 export type CmsHomepageSectionRecord = CmsIdentifiedRecord & {
   key: string;
@@ -119,7 +109,7 @@ export function createCmsHomepageService(deps: CmsHomepageServiceDeps) {
         action: 'homepage.update',
         entity: 'homepageSection',
         entityId: section.id,
-        summary: 'Updated homepage hero content',
+        summary: 'Updated homepage content',
         metadata: { key: section.key, locale: 'fa-IR', title: input.payload.title }
       });
 
