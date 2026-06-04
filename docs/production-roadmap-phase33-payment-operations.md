@@ -6,7 +6,7 @@ This note tracks Phase 33 work after the Phase 32 repo-side webhook and settleme
 
 ## Current status
 
-Phase 33 has provider-neutral refund/void planning, no-mutation preview generation, a pure preview input normalization helper, a read-only preview view model, a route-core style preview result, a request-core wrapper for normalized preview requests, a compact read-only admin preview panel, a static-sample admin preview route for admin-safe display, a documentation-only persistence design for future refund/void operation records, pure order/payment transition plus inventory/capacity release planning, read-only transition guidance in the admin preview payload/UI, a migration-backed table contract for future payment operation records, a blank operator evidence template for target-environment payment-operation migration validation, a read-only migration status helper for checking whether the target environment has been operator-confirmed, a docs-only repository/service design, a gated raw-SQL repository/service foundation for idempotent pending operation-record creation, and append-only admin audit-log wiring for pending/duplicate/conflict/submitted/succeeded/failed operation-record lifecycle events. This remains repo-side foundation work: no provider calls, order/payment mutations, inventory/capacity release, or execution buttons have been added. Repository/service use is gated behind target-environment migration confirmation.
+Phase 33 has provider-neutral refund/void planning, no-mutation preview generation, a pure preview input normalization helper, a read-only preview view model, a route-core style preview result, a request-core wrapper for normalized preview requests, a compact read-only admin preview panel, a static-sample admin preview route for admin-safe display, a documentation-only persistence design for future refund/void operation records, pure order/payment transition plus inventory/capacity release planning, read-only transition guidance in the admin preview payload/UI, a migration-backed table contract for future payment operation records, a blank operator evidence template for target-environment payment-operation migration validation, a read-only migration status helper for checking whether the target environment has been operator-confirmed, a docs-only repository/service design, a gated raw-SQL repository/service foundation for idempotent pending operation-record creation, append-only admin audit-log wiring for pending/duplicate/conflict/submitted/succeeded/failed operation-record lifecycle events, and a provider operation adapter contract with inert mock/manual/unavailable execution boundaries for future refund/void provider integration. This remains repo-side foundation work: no live Stripe or ZarinPal refund/void HTTP calls, order/payment mutations, inventory/capacity release, or admin execution buttons have been added. Repository/service use is gated behind target-environment migration confirmation.
 
 ## Completed in Phase 33 so far
 
@@ -52,6 +52,9 @@ Phase 33 has provider-neutral refund/void planning, no-mutation preview generati
 - Extended `tests/unit/payment-operation-migration-contract.test.ts` to guard the repository/service source boundaries, idempotency handling, migration gate, no provider calls, and no order/payment mutation. The runner count remains 118 files.
 - Extended `lib/checkout/payment-operation-audit.ts` with submitted/succeeded/failed operation-record audit kinds and wired `payment-operation-record-service.ts` to append admin audit-log entries after migration-gated record transitions.
 - Extended `tests/unit/payment-operation-migration-contract.test.ts` to guard submitted/succeeded/failed transition audit wiring, provider-operation reference/error metadata capture, and the continued no-provider/no-order-mutation source boundary. The runner count remains 118 files.
+- Added `lib/checkout/payment-operation-adapters.ts` as a provider operation adapter contract for future refund/void execution boundaries, with provider normalization, manual-review behavior, unavailable-provider behavior, and inert mock adapters for Stripe/ZarinPal/manual/unknown.
+- Added `tests/unit/payment-operation-adapters.test.ts` to guard adapter normalization, mock success behavior, missing provider-reference failure behavior, manual-review behavior, unavailable-provider behavior, source-level no-fetch/no-Prisma/no-mutation boundaries, and this progress note.
+- Wired `tests/unit/payment-operation-adapters.test.ts` into `tests/unit/run-tests.ts`, raising the runner count from 118 to 119 files.
 
 ## Current helper behavior
 
@@ -156,6 +159,8 @@ Phase 33 has provider-neutral refund/void planning, no-mutation preview generati
 
 `buildPaymentOperationAuditLogInput` can normalize payment-operation audit events into the existing admin audit-log shape for preview, blocked/manual-review, pending record creation, idempotency duplicate reuse, idempotency conflict blocking, and submitted/succeeded/failed record transitions. It does not call providers, mutate orders/payment attempts, or release inventory/capacity.
 
+`payment-operation-adapters.ts` defines a provider operation adapter contract for future refund/void execution. It can normalize providers, route operations through supplied adapters, return manual-review results for manual operations, return unavailable results for unconfigured providers, and provide inert mock Stripe/ZarinPal/manual behavior for source/unit coverage. It does not make live provider HTTP calls, use Prisma, mutate order/payment state, release inventory/capacity, or expose admin execution controls.
+
 ## Preview and persistence boundary acceptance criteria
 
 The current boundary should continue to:
@@ -179,6 +184,8 @@ The current boundary should continue to:
 - capture operator migration evidence before any execution path depends on the table;
 - keep migration confirmation helpers read-only until execution behavior is deliberately added in a later guarded slice;
 - append admin audit-log entries only for repository/service lifecycle events already gated by migration confirmation;
+- keep provider operation adapters injectable and inert by default until live provider execution is intentionally wired;
+- require provider-reference, idempotency, status, and error normalization before any live provider adapter is exposed to admin flows;
 - avoid checkout order mutation;
 - avoid payment attempt mutation;
 - avoid inventory or capacity release;
@@ -189,8 +196,8 @@ The current boundary should continue to:
 
 This slice intentionally does not add:
 
-- live provider refund calls;
-- live provider void calls;
+- live provider refund HTTP calls;
+- live provider void HTTP calls;
 - Prisma model/client access for `PaymentOperationRecord`;
 - order status mutation;
 - payment attempt mutation;
@@ -203,10 +210,10 @@ Those remain future Phase 33 slices after target-environment migration verificat
 
 ## Recommended next work
 
-1. Add provider operation adapter interfaces for Stripe/ZarinPal refund and void execution, still without calling live providers from admin routes.
-2. Add provider-specific refund/void execution mappers behind tests and service boundaries only after idempotency, audit, and migration gates are preserved.
+1. Add provider-specific request/response mappers for Stripe/ZarinPal refund and void operations behind injected HTTP clients, still without wiring admin execution controls.
+2. Add service-level execution orchestration that requires migration confirmation, an existing pending operation record, idempotency, audit transition logging, and adapter result normalization.
 3. Add admin execution controls only after provider execution, provider error normalization, and post-success order/payment transition behavior are explicitly guarded.
 
 ## Verification status
 
-Source/unit guard coverage has been added, but local verification is pending. Do not claim `npm run test:unit`, `npm run typecheck`, `npx prisma generate`, `npx prisma migrate status`, migration application, repository write execution, or live provider validation passed unless those checks are actually run.
+Source/unit guard coverage has been added, but local verification is pending. Do not claim `npm run test:unit`, `npm run typecheck`, `npx prisma generate`, `npx prisma migrate status`, migration application, repository write execution, adapter execution in a target environment, or live provider validation passed unless those checks are actually run.
