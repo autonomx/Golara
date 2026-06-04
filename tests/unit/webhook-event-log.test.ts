@@ -8,6 +8,7 @@ import {
   summarizePaymentWebhookSettlement
 } from '../../lib/checkout/payment-webhook-core';
 import {
+  buildPaymentWebhookEventPersistenceInput,
   buildPaymentWebhookRecordSummary,
   planPaymentWebhookRecord
 } from '../../lib/checkout/payment-webhook-record';
@@ -23,6 +24,7 @@ function source(path: string) {
 }
 
 export async function runWebhookEventLogTests() {
+  const schema = source('prisma/schema.prisma');
   const migration = source('prisma/migrations/20260603090000_add_webhook_event_log/migration.sql');
   const service = source('lib/settings/webhook-event-log.ts');
   const paymentWebhookCore = source('lib/checkout/payment-webhook-core.ts');
@@ -30,6 +32,13 @@ export async function runWebhookEventLogTests() {
   const panel = source('components/admin/AdminWebhookEventLogPanel.tsx');
   const fulfillmentPanel = source('components/admin/AdminFulfillmentSettingsPanel.tsx');
   const roadmap = source('docs/ADMIN_SALEOR_PARITY_ROADMAP.md');
+
+  assert.match(schema, /model CheckoutPaymentEvent/);
+  assert.match(schema, /paymentAttemptId String/);
+  assert.match(schema, /provider         String/);
+  assert.match(schema, /eventType        String/);
+  assert.match(schema, /idempotencyKey   String/);
+  assert.match(schema, /@@unique\(\[provider, idempotencyKey\]\)/);
 
   assert.match(migration, /CREATE TABLE IF NOT EXISTS "WebhookEventLog"/);
   assert.match(migration, /"webhookConfigurationKey" TEXT NOT NULL/);
@@ -54,6 +63,7 @@ export async function runWebhookEventLogTests() {
   assert.match(paymentWebhookCore, /export function paymentWebhookIdempotencyKey/);
   assert.match(paymentWebhookCore, /export function summarizePaymentWebhookSettlement/);
   assert.match(paymentWebhookRecord, /export function planPaymentWebhookRecord/);
+  assert.match(paymentWebhookRecord, /export function buildPaymentWebhookEventPersistenceInput/);
   assert.match(paymentWebhookRecord, /export function buildPaymentWebhookRecordSummary/);
 
   const digestA = createWebhookPayloadDigest({ b: 2, a: 1 });
@@ -211,6 +221,27 @@ export async function runWebhookEventLogTests() {
   assert.equal(paidRecord.needsAttention, false);
   assert.equal(paidRecord.metadata.hasProviderReference, true);
   assert.equal(paidRecord.metadata.hasOrderReference, true);
+
+  const persistenceInput = buildPaymentWebhookEventPersistenceInput({
+    paymentAttemptId: ' attempt-123 ',
+    event: stripePaid,
+    plan: paidRecord,
+    processedAt: new Date('2026-06-04T08:05:00.000Z')
+  });
+  assert.equal(persistenceInput.paymentAttemptId, 'attempt-123');
+  assert.equal(persistenceInput.provider, 'stripe');
+  assert.equal(persistenceInput.eventType, 'checkout.session.completed');
+  assert.equal(persistenceInput.idempotencyKey, stripePaid.idempotencyKey);
+  assert.equal(persistenceInput.status, 'paid');
+  assert.equal(persistenceInput.processedAt?.toISOString(), '2026-06-04T08:05:00.000Z');
+  assert.equal(persistenceInput.metadata.providerReference, 'cs_test_paid_123');
+  assert.equal(persistenceInput.metadata.orderNumber, 'GOL-2001');
+  assert.equal(persistenceInput.metadata.publicLookupToken, 'public-token-stripe');
+  assert.equal(persistenceInput.metadata.amountCents, 420000);
+  assert.equal(persistenceInput.metadata.currency, 'usd');
+  assert.equal(persistenceInput.metadata.persistenceStatus, 'recorded');
+  assert.equal(persistenceInput.metadata.shouldApplyPaymentState, true);
+  assert.throws(() => buildPaymentWebhookEventPersistenceInput({ paymentAttemptId: ' ', event: stripePaid }), /paymentAttemptId is required/);
 
   const duplicateRecord = planPaymentWebhookRecord({
     event: stripePaid,
