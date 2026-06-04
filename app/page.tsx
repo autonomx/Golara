@@ -12,6 +12,10 @@ import { getStorefrontCopy, getStorefrontCopyDirection } from '@/lib/localizatio
 
 const footerLinkClass = 'outline-none transition hover:text-rosewood focus-visible:ring-4 focus-visible:ring-olive/20';
 
+function firstNonEmpty(...values: Array<string | undefined>) {
+  return values.find((value) => value?.trim()) ?? '';
+}
+
 export default async function HomePage() {
   const locale = await resolveStorefrontLocale();
   const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key, locale);
@@ -42,7 +46,7 @@ export default async function HomePage() {
     >
       <SiteHeader returnTo="/" />
 
-      <HomepageBannerSlideshow slides={homepageBannerSlides} />
+      <HomepageBannerSlideshow slides={homepageBannerSlides} homepage={homepage} />
       <HomepageOccasionRail occasions={occasionRailItems} />
 
       <BestSellersCarousel products={bestSellers} locale={locale} />
@@ -57,11 +61,11 @@ export default async function HomePage() {
         <div className="mx-auto max-w-[1520px]">
           <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">{copy('home.collectionsEyebrow')}</p>
-              <h2 id="home-collections-heading" className="mt-2 font-display text-4xl text-rosewood md:text-5xl">{copy('home.collectionsTitle')}</h2>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-stone-600 md:text-base">Browse by the moment you are buying for, from birthdays and weddings to sympathy, baby flowers, and same-day gifts.</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">{firstNonEmpty(homepage.collectionsEyebrow, copy('home.collectionsEyebrow'))}</p>
+              <h2 id="home-collections-heading" className="mt-2 font-display text-4xl text-rosewood md:text-5xl">{firstNonEmpty(homepage.collectionsTitle, copy('home.collectionsTitle'))}</h2>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-stone-600 md:text-base">{firstNonEmpty(homepage.collectionsBody, 'Browse by the moment you are buying for, from birthdays and weddings to sympathy, baby flowers, and same-day gifts.')}</p>
             </div>
-            <Link href="/categories" className="inline-flex rounded-full border border-rosewood/15 bg-white px-5 py-2.5 text-sm font-semibold text-rosewood shadow-[0_12px_28px_rgba(111,36,56,0.08)] transition hover:-translate-y-0.5 hover:border-rosewood hover:bg-rosewood hover:text-white">See all occasions</Link>
+            <Link href={firstNonEmpty(homepage.collectionsCtaHref, '/categories')} className="inline-flex rounded-full border border-rosewood/15 bg-white px-5 py-2.5 text-sm font-semibold text-rosewood shadow-[0_12px_28px_rgba(111,36,56,0.08)] transition hover:-translate-y-0.5 hover:border-rosewood hover:bg-rosewood hover:text-white">{firstNonEmpty(homepage.collectionsCtaLabel, 'See all occasions')}</Link>
           </div>
           <div className="grid gap-5 md:grid-cols-2">
             {featuredOccasions.map((category, index) => <HomepageCategoryTileCard key={category.slug} category={category} priority={index < 4} />)}
@@ -73,7 +77,7 @@ export default async function HomePage() {
         <div className="mx-auto grid max-w-7xl gap-8 px-5 py-10 text-sm text-stone-600 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
           <div>
             <div className="font-display text-3xl text-rosewood">Golara</div>
-            <p className="mt-3 max-w-md leading-7">A luxury floral storefront for bouquets, flower boxes, weddings, events, and premium gifting.</p>
+            <p className="mt-3 max-w-md leading-7">{firstNonEmpty(homepage.footerBody, 'A luxury floral storefront for bouquets, flower boxes, weddings, events, and premium gifting.')}</p>
           </div>
           <div>
             <h3 className="font-semibold text-rosewood">Shop</h3>
@@ -85,7 +89,7 @@ export default async function HomePage() {
           </div>
           <div>
             <h3 className="font-semibold text-rosewood">Service</h3>
-            <p className="mt-3 leading-7">Same-day availability, premium boxes, event flowers, and staff-assisted ordering.</p>
+            <p className="mt-3 leading-7">{firstNonEmpty(homepage.footerServiceBody, 'Same-day availability, premium boxes, event flowers, and staff-assisted ordering.')}</p>
           </div>
         </div>
       </footer>
