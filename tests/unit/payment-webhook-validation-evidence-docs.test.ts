@@ -35,6 +35,10 @@ export async function runPaymentWebhookValidationEvidenceDocsTests() {
   assert.match(phase32, /production-roadmap-phase32-payment-webhook-validation-evidence\.md/);
   assert.match(phase32, /validation evidence template/);
   assert.match(phase32, /does not claim provider validation has been completed/);
+  assert.match(phase32, /blank provider validation evidence template with a completion checklist/);
+  assert.match(phase32, /completion checklist requiring concrete values, links, screenshot references, command output, provider event identifiers, or operator notes/);
+  assert.match(phase32, /deployed SHA confirmation, migration verification, provider-generated success\/duplicate\/invalid-signature cases/);
+  assert.match(phase32, /confirmation-flag ordering/);
   assert.match(phase32, /## Recommended validation sequence/);
   assert.match(phase32, /Apply and verify `prisma\/migrations\/20260604170000_add_payment_settlement_reconciliation\/migration\.sql`/);
   assert.match(phase32, /PAYMENT_SETTLEMENT_MIGRATION_CONFIRMED="true"/);
