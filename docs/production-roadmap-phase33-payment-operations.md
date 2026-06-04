@@ -13,6 +13,7 @@ Phase 33 has started with a provider-neutral refund/void planning helper. This i
 - Added `lib/checkout/payment-operation-plan.ts` for pure refund/void operation planning.
 - Added `tests/unit/payment-operation-plan.test.ts` for refund and void eligibility coverage.
 - Wired `tests/unit/payment-operation-plan.test.ts` into `tests/unit/run-tests.ts`, raising the runner count from 115 to 116 files.
+- Added no-mutation preview acceptance criteria below so the next Phase 33 repository slice has a clear boundary before persistence or live provider operations.
 
 ## Current helper behavior
 
@@ -30,6 +31,23 @@ Phase 33 has started with a provider-neutral refund/void planning helper. This i
 - voidable payment statuses;
 - full vs partial amount metadata;
 - operator reason metadata.
+
+## Preview boundary acceptance criteria
+
+The next no-mutation preview boundary should:
+
+- accept an order/payment snapshot and desired refund or void request;
+- call `planPaymentOperation` as the single source of eligibility truth;
+- return a preview payload that is safe for admin display;
+- include operation kind, decision, provider, amount, currency, reasons, manual-review state, and provider-reference requirements;
+- include clear copy for blocked and manual-review states;
+- avoid database writes;
+- avoid checkout order mutation;
+- avoid payment attempt mutation;
+- avoid inventory or capacity release;
+- avoid audit-log writes;
+- avoid live provider calls;
+- be covered by source/unit guards before any persistence or provider execution is added.
 
 ## Explicit non-goals for this slice
 
