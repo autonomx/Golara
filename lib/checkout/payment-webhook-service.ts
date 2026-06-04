@@ -8,6 +8,7 @@ import {
   type PaymentWebhookEventPersistenceInput,
   type PaymentWebhookRecordPlan
 } from './payment-webhook-record';
+import { paymentSettlementRepository, type PaymentSettlementReconciliationRecord } from './payment-settlement-repository';
 import { planPaymentWebhookStateChange, type PaymentWebhookStatePlan } from './payment-webhook-transition-plan';
 
 export type PaymentWebhookServiceResult = {
@@ -17,6 +18,7 @@ export type PaymentWebhookServiceResult = {
   idempotencyKey: string;
   plan: PaymentWebhookRecordPlan;
   statePlan?: PaymentWebhookStatePlan;
+  settlementReconciliation?: PaymentSettlementReconciliationRecord | null;
   persistenceInput?: PaymentWebhookEventPersistenceInput;
 };
 
@@ -152,7 +154,8 @@ export async function recordPaymentWebhookEvent(input: PaymentWebhookEventInput)
       paymentAttemptId: existing.paymentAttemptId,
       paymentEventId: existing.id,
       idempotencyKey: event.idempotencyKey,
-      plan
+      plan,
+      settlementReconciliation: await paymentSettlementRepository.upsertForPaymentEvent(existing.id)
     };
   }
 
@@ -214,6 +217,7 @@ export async function recordPaymentWebhookEvent(input: PaymentWebhookEventInput)
     statePlan,
     metadata
   });
+  const settlementReconciliation = await paymentSettlementRepository.upsertForPaymentEvent(created.id);
 
   return {
     status: plan.persistenceStatus,
@@ -222,6 +226,7 @@ export async function recordPaymentWebhookEvent(input: PaymentWebhookEventInput)
     idempotencyKey: event.idempotencyKey,
     plan,
     statePlan,
+    settlementReconciliation,
     persistenceInput: {
       ...persistenceInput,
       metadata
