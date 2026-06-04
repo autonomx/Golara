@@ -8,7 +8,10 @@ export type PaymentOperationAuditKind =
   | 'preview_manual_review'
   | 'pending_record_created'
   | 'idempotency_duplicate_reused'
-  | 'idempotency_conflict_blocked';
+  | 'idempotency_conflict_blocked'
+  | 'record_submitted'
+  | 'record_succeeded'
+  | 'record_failed';
 
 export type PaymentOperationAuditInput = {
   kind: PaymentOperationAuditKind;
@@ -41,7 +44,10 @@ const actionByKind: Record<PaymentOperationAuditKind, string> = {
   preview_manual_review: 'payment_operation.preview.manual_review',
   pending_record_created: 'payment_operation.record.pending_created',
   idempotency_duplicate_reused: 'payment_operation.record.idempotency_duplicate_reused',
-  idempotency_conflict_blocked: 'payment_operation.record.idempotency_conflict_blocked'
+  idempotency_conflict_blocked: 'payment_operation.record.idempotency_conflict_blocked',
+  record_submitted: 'payment_operation.record.submitted',
+  record_succeeded: 'payment_operation.record.succeeded',
+  record_failed: 'payment_operation.record.failed'
 };
 
 const summaryByKind: Record<PaymentOperationAuditKind, string> = {
@@ -50,7 +56,10 @@ const summaryByKind: Record<PaymentOperationAuditKind, string> = {
   preview_manual_review: 'Payment operation preview requires manual review',
   pending_record_created: 'Pending payment operation record created',
   idempotency_duplicate_reused: 'Payment operation idempotency duplicate reused',
-  idempotency_conflict_blocked: 'Payment operation idempotency conflict blocked'
+  idempotency_conflict_blocked: 'Payment operation idempotency conflict blocked',
+  record_submitted: 'Payment operation record submitted',
+  record_succeeded: 'Payment operation record succeeded',
+  record_failed: 'Payment operation record failed'
 };
 
 function cleanText(value: string | null | undefined) {
