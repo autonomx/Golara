@@ -39,6 +39,7 @@ export async function runPaymentOperationProviderReadinessTests() {
   const operatorRunbook = source('docs/production-roadmap-phase33-payment-operation-operator-runbook.md');
   const goNoGoChecklist = source('docs/production-roadmap-phase33-refund-void-go-no-go-checklist.md');
   const providerEvidenceExample = source('docs/production-roadmap-phase33-provider-readiness-evidence-example.md');
+  const smokeTestChecklist = source('docs/production-roadmap-phase33-refund-void-smoke-test-checklist.md');
   const phase33Docs = source('docs/production-roadmap-phase33-payment-operations.md');
 
   const stripeBlocked = buildPaymentOperationProviderReadiness({ provider: 'stripe', env: {} });
@@ -210,6 +211,18 @@ export async function runPaymentOperationProviderReadinessTests() {
   assert.ok(providerEvidenceExample.includes('does not enable live provider execution'));
   assertNoExecutionSurface(providerEvidenceExample);
 
+  assert.ok(smokeTestChecklist.includes('Status: **documentation-only checklist**'));
+  assert.ok(smokeTestChecklist.includes('NO-GO for live refund/void execution'));
+  assert.ok(smokeTestChecklist.includes('PAYMENT_OPERATION_RECORDS_MIGRATION_CONFIRMED=true'));
+  assert.ok(smokeTestChecklist.includes('docs/production-roadmap-phase33-provider-readiness-evidence-example.md'));
+  assert.ok(smokeTestChecklist.includes('executionEnabled: false'));
+  assert.ok(smokeTestChecklist.includes('Adapter execution enabled: false'));
+  assert.ok(smokeTestChecklist.includes('Admin execution enabled: false'));
+  assert.ok(smokeTestChecklist.includes('Order/payment mutation enabled: false'));
+  assert.ok(smokeTestChecklist.includes('Inventory/capacity release enabled: false'));
+  assert.ok(smokeTestChecklist.includes('verification results are assumed rather than actually run'));
+  assertNoExecutionSurface(smokeTestChecklist);
+
   assert.ok(phase33Docs.includes('read-only provider-operation readiness diagnostics'));
   assert.ok(phase33Docs.includes('/admin/payments/operations/providers'));
   assert.ok(phase33Docs.includes('/admin/payments/operations`'));
@@ -219,6 +232,7 @@ export async function runPaymentOperationProviderReadinessTests() {
   assert.ok(phase33Docs.includes('payment-operation-operator-runbook'));
   assert.ok(phase33Docs.includes('refund-void-go-no-go-checklist'));
   assert.ok(phase33Docs.includes('provider-readiness-evidence-example'));
+  assert.ok(phase33Docs.includes('refund-void-smoke-test-checklist'));
 
   console.log('payment-operation-provider-readiness.test.ts passed');
 }
