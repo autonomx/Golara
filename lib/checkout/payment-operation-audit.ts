@@ -15,8 +15,6 @@ export type PaymentOperationAuditKind =
   | 'record_succeeded'
   | 'record_failed';
 
-export type PaymentOperationAuditMetadataValue = string | number | boolean | string[] | number[] | boolean[] | Record<string, string | number | boolean | string[] | number[] | boolean[] | undefined> | undefined;
-
 export type PaymentOperationAuditInput = {
   kind: PaymentOperationAuditKind;
   orderId?: string | null;
@@ -31,7 +29,7 @@ export type PaymentOperationAuditInput = {
   previewReasons?: string[];
   conflicts?: string[];
   operatorReason?: string | null;
-  metadata?: Record<string, PaymentOperationAuditMetadataValue>;
+  metadata?: Record<string, unknown>;
 };
 
 export type PaymentOperationAuditLogInput = {
@@ -74,14 +72,25 @@ function cleanList(values: string[] | undefined) {
   return Array.isArray(values) ? values.map((value) => value.trim()).filter(Boolean) : [];
 }
 
-function metadataValue(value: PaymentOperationAuditMetadataValue): Prisma.InputJsonValue | undefined {
-  if (value === undefined) return undefined;
+function metadataValue(value: unknown): Prisma.InputJsonValue | undefined {
+  if (value === null || value === undefined) return undefined;
   if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return value;
-  if (Array.isArray(value)) return value;
-  return Object.fromEntries(Object.entries(value).filter((entry): entry is [string, string | number | boolean | string[] | number[] | boolean[]] => entry[1] !== undefined));
+  if (Array.isArray(value)) {
+    return value
+      .map(metadataValue)
+      .filter((entry): entry is Prisma.InputJsonValue => entry !== undefined) as Prisma.InputJsonValue;
+  }
+  if (typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value)
+        .map(([key, entry]) => [key, metadataValue(entry)] as const)
+        .filter((entry): entry is readonly [string, Prisma.InputJsonValue] => entry[1] !== undefined)
+    );
+  }
+  return String(value);
 }
 
-function cleanMetadata(value: Record<string, PaymentOperationAuditMetadataValue> | undefined): Record<string, Prisma.InputJsonValue> {
+function cleanMetadata(value: Record<string, unknown> | undefined): Record<string, Prisma.InputJsonValue> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
   return Object.fromEntries(
     Object.entries(value)
