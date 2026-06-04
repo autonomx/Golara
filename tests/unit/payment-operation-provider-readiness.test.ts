@@ -5,6 +5,7 @@ import {
   buildPaymentOperationProviderReadiness,
   buildPaymentOperationProviderReadinessSummary
 } from '../../lib/checkout/payment-operation-provider-readiness';
+import { buildPaymentOperationProviderReadinessRouteResult } from '../../lib/checkout/payment-operation-provider-readiness-route-core';
 
 function source(path: string) {
   return readFileSync(path, 'utf8');
@@ -12,6 +13,7 @@ function source(path: string) {
 
 export async function runPaymentOperationProviderReadinessTests() {
   const readinessSource = source('lib/checkout/payment-operation-provider-readiness.ts');
+  const readinessRouteCore = source('lib/checkout/payment-operation-provider-readiness-route-core.ts');
   const readinessPanel = source('components/admin/AdminPaymentOperationProviderReadinessPanel.tsx');
   const phase33Docs = source('docs/production-roadmap-phase33-payment-operations.md');
 
@@ -73,6 +75,21 @@ export async function runPaymentOperationProviderReadinessTests() {
   assert.equal(summary.manualReview, 1);
   assert.equal(summary.unavailable, 1);
 
+  const routeResult = buildPaymentOperationProviderReadinessRouteResult({
+    env: { STRIPE_SECRET_KEY: 'sk_test_example' },
+    endpointMappingConfirmed: true,
+    liveValidationConfirmed: false,
+    providers: ['stripe', 'manual', 'not-real']
+  });
+  assert.equal(routeResult.status, 200);
+  assert.equal(routeResult.body.ok, true);
+  assert.equal(routeResult.body.executionEnabled, false);
+  assert.equal(routeResult.body.summary.total, 3);
+  assert.equal(routeResult.body.summary.readyCount, 0);
+  assert.equal(routeResult.body.summary.needsOperatorEvidence, 1);
+  assert.equal(routeResult.body.summary.manualReview, 1);
+  assert.equal(routeResult.body.summary.unavailable, 1);
+
   assert.ok(readinessSource.includes('buildPaymentOperationProviderReadiness'));
   assert.ok(readinessSource.includes('buildPaymentOperationProviderReadinessSummary'));
   assert.ok(readinessSource.includes('executionEnabled: false'));
@@ -91,6 +108,21 @@ export async function runPaymentOperationProviderReadinessTests() {
   assert.equal(readinessSource.includes('createZarinPalPaymentOperationHttpAdapter'), false);
   assert.equal(readinessSource.includes('https://api.stripe.com'), false);
   assert.equal(readinessSource.includes('https://www.zarinpal.com'), false);
+
+  assert.ok(readinessRouteCore.includes('buildPaymentOperationProviderReadinessRouteResult'));
+  assert.ok(readinessRouteCore.includes('buildPaymentOperationProviderReadinessSummary'));
+  assert.ok(readinessRouteCore.includes('executionEnabled: false'));
+  assert.ok(readinessRouteCore.includes("['stripe', 'zarinpal', 'manual']"));
+  assert.equal(readinessRouteCore.includes('fetch('), false);
+  assert.equal(readinessRouteCore.includes('@prisma/client'), false);
+  assert.equal(readinessRouteCore.includes('prisma.'), false);
+  assert.equal(readinessRouteCore.includes('executePaymentOperationAdapter'), false);
+  assert.equal(readinessRouteCore.includes('createStripePaymentOperationHttpAdapter'), false);
+  assert.equal(readinessRouteCore.includes('createZarinPalPaymentOperationHttpAdapter'), false);
+  assert.equal(readinessRouteCore.includes('CheckoutOrder" SET'), false);
+  assert.equal(readinessRouteCore.includes('CheckoutPaymentAttempt" SET'), false);
+  assert.equal(readinessRouteCore.includes('onClick='), false);
+  assert.equal(readinessRouteCore.includes('<button'), false);
 
   assert.ok(readinessPanel.includes('AdminPaymentOperationProviderReadinessPanel'));
   assert.ok(readinessPanel.includes('PaymentOperationProviderReadinessSummary'));
