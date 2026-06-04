@@ -16,6 +16,15 @@ export async function runPaymentOperationPlanTests() {
   assert.match(docs, /lib\/checkout\/payment-operation-plan\.ts/);
   assert.match(docs, /tests\/unit\/payment-operation-plan\.test\.ts/);
   assert.match(docs, /raising the runner count from 115 to 116 files/);
+  assert.match(docs, /no-mutation preview acceptance criteria/);
+  assert.match(docs, /## Preview boundary acceptance criteria/);
+  assert.match(docs, /call `planPaymentOperation` as the single source of eligibility truth/);
+  assert.match(docs, /return a preview payload that is safe for admin display/);
+  assert.match(docs, /include operation kind, decision, provider, amount, currency, reasons, manual-review state, and provider-reference requirements/);
+  assert.match(docs, /avoid database writes/);
+  assert.match(docs, /avoid checkout order mutation/);
+  assert.match(docs, /avoid payment attempt mutation/);
+  assert.match(docs, /avoid live provider calls/);
   assert.match(docs, /live provider refund calls/);
   assert.match(docs, /live provider void calls/);
   assert.match(docs, /database writes/);
