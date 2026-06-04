@@ -183,7 +183,16 @@ export type ProductVariantLocationStock = {
   updatedAt?: Date;
 };
 
-export type Collection = { id: string; slug: string; title: string; description?: string; isActive: boolean; sortOrder: number; productCount?: number; updatedAt?: Date };
+export type Collection = {
+  id: string;
+  slug: string;
+  title: string;
+  description?: string;
+  isActive: boolean;
+  sortOrder: number;
+  productCount?: number;
+  updatedAt?: Date;
+};
 
 export type ProductVariant = {
   id: string;
@@ -203,58 +212,19 @@ export type ProductVariant = {
   locationStocks?: ProductVariantLocationStock[];
 };
 
-export type MediaItem = {
-  id?: string;
-  url: string;
-  alt: string;
-  mediaCategory?: string;
-  sourceType?: string;
-  storageProvider?: string;
-  mimeType?: number | string;
-  sizeBytes?: number;
-  productId?: string;
-  createdAt?: Date;
-  source?: string;
-  storageKey?: string;
-};
-
-export type CustomerInquiry = {
+export type StoreSetting = {
   id: string;
-  name?: string;
-  email?: string;
-  phone?: string;
-  message: string;
-  productId?: string;
-  productTitle?: string;
-  deliveryDate?: Date;
-  deliveryNotes?: string;
-  staffNotes?: string;
-  assignee?: {
-    adminId?: string;
-    label?: string;
-    email?: string;
-    role?: string;
-    assignedAt?: Date;
-  };
-  followUps?: { id: string; note: string; channel: string; createdAt: Date }[];
-  status: string;
-  createdAt: Date;
-};
-
-export type CheckoutOrderSummary = {
-  id: string;
-  orderNumber: string;
-  status: string;
-  checkoutMode: string;
-  fulfillmentStatus: string;
-  currency: string;
-  totalCents: number;
-  customerPhone?: string;
-  customerName?: string;
-  itemCount: number;
-  latestPaymentStatus?: string;
-  latestTimelineTitle?: string;
-  createdAt: Date;
+  key: string;
+  storeName: string;
+  legalName?: string;
+  supportEmail?: string;
+  supportPhone?: string;
+  defaultLocale: string;
+  defaultCurrency: string;
+  timezone: string;
+  storefrontBaseUrl?: string;
+  isMaintenanceMode: boolean;
+  updatedAt?: Date;
 };
 
 export type FulfillmentMethodSetting = {
@@ -268,6 +238,71 @@ export type FulfillmentMethodSetting = {
   requiresScheduling: boolean;
   sortOrder: number;
   updatedAt?: Date;
+};
+
+export type MediaSourceType = 'external' | 'upload' | 'seed' | 'generated';
+
+export type MediaItem = {
+  id?: string;
+  url: string;
+  alt: string;
+  mediaCategory?: string;
+  sourceType?: string;
+  storageProvider?: string;
+  mimeType?: string;
+  sizeBytes?: number;
+  productId?: string;
+  createdAt?: Date;
+  source?: string;
+  storageKey?: string;
+};
+
+export type CustomerInquiryFollowUp = {
+  id: string;
+  note: string;
+  channel: string;
+  createdAt: Date;
+};
+
+export type CustomerInquiryAssignee = {
+  adminId?: string;
+  label?: string;
+  email?: string;
+  role?: string;
+  assignedAt?: Date;
+};
+
+export type CustomerInquiry = {
+  id: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  message: string;
+  productId?: string;
+  productTitle?: string;
+  deliveryDate?: Date;
+  deliveryNotes?: string;
+  staffNotes?: string;
+  assignee?: CustomerInquiryAssignee;
+  followUps?: CustomerInquiryFollowUp[];
+  status: string;
+  createdAt: Date;
+};
+
+export type CheckoutOrderSummary = {
+  id: string;
+  orderNumber: string;
+  status: string;
+  checkoutMode: string;
+  fulfillmentStatus?: string;
+  currency: string;
+  totalCents: number;
+  customerPhone?: string;
+  customerName?: string;
+  itemCount: number;
+  latestPaymentStatus?: string;
+  latestTimelineTitle?: string;
+  createdAt: Date;
 };
 
 export type AdminAuditLogEntry = {
