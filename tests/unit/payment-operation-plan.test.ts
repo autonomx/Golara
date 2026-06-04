@@ -20,6 +20,7 @@ export async function runPaymentOperationPlanTests() {
   const previewRouteCoreSource = source('lib/checkout/payment-operation-preview-route-core.ts');
   const previewViewSource = source('lib/checkout/payment-operation-preview-view.ts');
   const adminPreviewPanelSource = source('components/admin/AdminPaymentOperationPreviewPanel.tsx');
+  const adminPreviewRouteSource = source('app/admin/payments/operations/preview/page.tsx');
   assert.match(docs, /Phase 33 Refunds, Voids, and Payment Operations Progress/);
   assert.match(docs, /provider-neutral refund\/void planning helper/);
   assert.match(docs, /does not call Stripe, ZarinPal, or any other live provider/);
@@ -36,6 +37,9 @@ export async function runPaymentOperationPlanTests() {
   assert.match(docs, /route-core wrapper that combines preview input normalization/);
   assert.match(docs, /lib\/checkout\/payment-operation-preview-request-core\.ts/);
   assert.match(docs, /status: 400/);
+  assert.match(docs, /compact read-only admin route/);
+  assert.match(docs, /app\/admin\/payments\/operations\/preview\/page\.tsx/);
+  assert.match(docs, /static sample data/);
   assert.match(docs, /## Preview boundary acceptance criteria/);
   assert.match(docs, /call `planPaymentOperation` as the single source of eligibility truth/);
   assert.match(docs, /return a preview payload that is safe for admin display/);
@@ -97,6 +101,19 @@ export async function runPaymentOperationPlanTests() {
   assert.doesNotMatch(adminPreviewPanelSource, /checkoutPaymentAttempt\.update/);
   assert.doesNotMatch(adminPreviewPanelSource, /onClick=/);
   assert.doesNotMatch(adminPreviewPanelSource, /<button/);
+
+  assert.match(adminPreviewRouteSource, /export default async function AdminPaymentOperationPreviewPage/);
+  assert.match(adminPreviewRouteSource, /samplePreviewRequest/);
+  assert.match(adminPreviewRouteSource, /buildPaymentOperationPreviewRequestResult\(samplePreviewRequest\)/);
+  assert.match(adminPreviewRouteSource, /AdminPaymentOperationPreviewPanel/);
+  assert.match(adminPreviewRouteSource, /static sample data/);
+  assert.match(adminPreviewRouteSource, /does not submit refunds, void authorizations, create records, or call providers/);
+  assert.doesNotMatch(adminPreviewRouteSource, /prisma\./);
+  assert.doesNotMatch(adminPreviewRouteSource, /fetch\(/);
+  assert.doesNotMatch(adminPreviewRouteSource, /checkoutOrder\.update/);
+  assert.doesNotMatch(adminPreviewRouteSource, /checkoutPaymentAttempt\.update/);
+  assert.doesNotMatch(adminPreviewRouteSource, /onClick=/);
+  assert.doesNotMatch(adminPreviewRouteSource, /<button/);
 
   const normalizedPreviewInput = normalizePaymentOperationPreviewInput({
     operation: ' REFUND ',
