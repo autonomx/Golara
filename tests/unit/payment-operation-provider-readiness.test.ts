@@ -42,6 +42,7 @@ export async function runPaymentOperationProviderReadinessTests() {
   const smokeTestChecklist = source('docs/production-roadmap-phase33-refund-void-smoke-test-checklist.md');
   const phase33Docs = source('docs/production-roadmap-phase33-payment-operations.md');
   const productionRoadmap = source('docs/production-roadmap.md');
+  const mainRoadmapGuardNote = source('docs/production-roadmap-phase33-main-roadmap-guard-note.md');
 
   const stripeBlocked = buildPaymentOperationProviderReadiness({ provider: 'stripe', env: {} });
   assert.equal(stripeBlocked.provider, 'stripe');
@@ -245,6 +246,19 @@ export async function runPaymentOperationProviderReadinessTests() {
   assert.ok(productionRoadmap.includes('default fetch behavior'));
   assert.ok(productionRoadmap.includes('Prisma model/client access for `PaymentOperationRecord`'));
   assertNoExecutionSurface(productionRoadmap);
+
+  assert.ok(mainRoadmapGuardNote.includes('Status: documentation-only.'));
+  assert.ok(mainRoadmapGuardNote.includes('docs/production-roadmap.md'));
+  assert.ok(mainRoadmapGuardNote.includes('tests/unit/payment-operation-provider-readiness.test.ts'));
+  assert.ok(mainRoadmapGuardNote.includes('docs/production-roadmap-phase33-payment-operations.md'));
+  assert.ok(mainRoadmapGuardNote.includes('docs/production-roadmap-phase33-provider-readiness-evidence-example.md'));
+  assert.ok(mainRoadmapGuardNote.includes('docs/production-roadmap-phase33-refund-void-smoke-test-checklist.md'));
+  assert.ok(mainRoadmapGuardNote.includes('read-only planning and diagnostics'));
+  assert.ok(mainRoadmapGuardNote.includes('disabled provider-readiness execution'));
+  assert.ok(mainRoadmapGuardNote.includes('no default HTTP behavior'));
+  assert.ok(mainRoadmapGuardNote.includes('no Prisma client model path for `PaymentOperationRecord`'));
+  assert.ok(mainRoadmapGuardNote.includes('does not change runtime behavior'));
+  assertNoExecutionSurface(mainRoadmapGuardNote);
 
   console.log('payment-operation-provider-readiness.test.ts passed');
 }
