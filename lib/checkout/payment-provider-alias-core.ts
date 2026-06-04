@@ -2,8 +2,8 @@ import { mapAdapterAliasAttempt, type AdapterAliasAttempt } from '@/lib/checkout
 import type { PaymentAttemptOrder } from '@/lib/checkout/payment-attempt-core';
 import type { PaymentGatewayInitiationResult } from '@/lib/checkout/payment-gateway-adapters';
 
-export const LEGACY_PAYMENT_PROVIDER_NAMES = ['manual', 'domestic_redirect', 'zarinpal'] as const;
-export const ADAPTER_PAYMENT_PROVIDER_NAMES = ['iranian', 'stripe', 'whatsapp', 'inquiry'] as const;
+export const LEGACY_PAYMENT_PROVIDER_NAMES = ['manual', 'domestic_redirect'] as const;
+export const ADAPTER_PAYMENT_PROVIDER_NAMES = ['iranian', 'zarinpal', 'stripe', 'whatsapp', 'inquiry'] as const;
 
 export type LegacyPaymentProviderName = typeof LEGACY_PAYMENT_PROVIDER_NAMES[number];
 export type AdapterPaymentProviderName = typeof ADAPTER_PAYMENT_PROVIDER_NAMES[number];
