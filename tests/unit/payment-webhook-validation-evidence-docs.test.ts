@@ -56,6 +56,11 @@ export async function runPaymentWebhookValidationEvidenceDocsTests() {
   assert.match(phase32, /repo-side Phase 32 as ready for operator validation/);
   assert.match(phase32, /start Phase 33 with a small provider-neutral refund\/void planning helper/);
   assert.match(phase32, /Keep provider dashboard settlement imports, outbound alert delivery, real notification providers, and durable outbound webhook workers in later phases/);
+  assert.match(phase32, /## Next-session decision point/);
+  assert.match(phase32, /Choose \*\*Phase 32 environment validation\*\*/);
+  assert.match(phase32, /Choose \*\*Phase 33 repo planning\*\*/);
+  assert.match(phase32, /Do not mark Phase 32 target-environment validation complete from source guards, documentation guards, or repository diffs alone/);
+  assert.match(phase32, /Do not add live refund, void, provider-import, notification-delivery, or outbound-worker behavior under Phase 32/);
 
   console.log('payment-webhook-validation-evidence-docs.test.ts passed');
 }
