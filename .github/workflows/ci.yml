@@ -13,12 +13,30 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install --package-lock-only
-      - run: npm ci
-      - run: npm run check:file-lines
-      - run: npm run check:runtime
-      - run: npm run db:generate
-      - run: npm run typecheck
-      - run: npm run test:unit
-      - run: npm run build
-      - run: npm run smoke:routes:local
+      - name: Prepare CI results
+        run: mkdir -p ci-results
+      - name: Prepare package lock
+        run: npm install --package-lock-only > ci-results/01-package-lock.log 2>&1
+      - name: Install dependencies
+        run: npm ci > ci-results/02-npm-ci.log 2>&1
+      - name: Check file lines
+        run: npm run check:file-lines > ci-results/03-check-file-lines.log 2>&1
+      - name: Check runtime
+        run: npm run check:runtime > ci-results/04-check-runtime.log 2>&1
+      - name: Generate Prisma client
+        run: npm run db:generate > ci-results/05-db-generate.log 2>&1
+      - name: Typecheck
+        run: npm run typecheck > ci-results/06-typecheck.log 2>&1
+      - name: Unit tests
+        run: npm run test:unit > ci-results/07-test-unit.log 2>&1
+      - name: Build
+        run: npm run build > ci-results/08-build.log 2>&1
+      - name: Route smoke
+        run: npm run smoke:routes:local > ci-results/09-smoke-routes-local.log 2>&1
+      - name: Upload CI command logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-command-logs
+          path: ci-results
+          if-no-files-found: ignore
