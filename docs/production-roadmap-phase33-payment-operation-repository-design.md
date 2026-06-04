@@ -57,7 +57,7 @@ Rules:
 
 ## Audit coupling
 
-Audit writes should be coupled at the service layer, not the raw repository layer.
+audit writes should be coupled at the service layer, not the raw repository layer.
 
 Future audit events should include:
 
