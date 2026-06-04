@@ -46,6 +46,16 @@ function adapterAttempt(provider: AdapterPaymentProviderName, payment: PaymentGa
     });
   }
 
+  if (provider === 'zarinpal') {
+    return Promise.resolve({
+      provider,
+      status: 'redirect',
+      reference: 'A00000000000000000000000000000012345',
+      redirectUrl: 'https://www.zarinpal.com/pg/StartPay/A00000000000000000000000000000012345',
+      message: 'ZarinPal payment request created.'
+    });
+  }
+
   if (provider === 'iranian') {
     return Promise.resolve({
       provider,
@@ -101,6 +111,18 @@ export async function runPaymentProviderRuntimeCoreTests() {
     }
   });
 
+  assert.deepEqual(await runAttempt('zarinpal'), {
+    provider: 'zarinpal',
+    status: 'redirect_required',
+    providerReference: 'A00000000000000000000000000000012345',
+    redirectUrl: 'https://www.zarinpal.com/pg/StartPay/A00000000000000000000000000000012345',
+    metadata: {
+      gatewayStatus: 'redirect',
+      gatewayMessage: 'ZarinPal payment request created.',
+      orderNumber: 'GOL-1001'
+    }
+  });
+
   assert.deepEqual(await runAttempt('stripe', { ...baseOrder, currency: 'USD' }), {
     provider: 'stripe',
     status: 'redirect_required',
@@ -120,7 +142,6 @@ export async function runPaymentProviderRuntimeCoreTests() {
 
   assert.equal((await runAttempt('manual')).provider, 'manual');
   assert.equal((await runAttempt('domestic_redirect')).provider, 'domestic_redirect');
-  assert.equal((await runAttempt('zarinpal')).provider, 'zarinpal');
 
   console.log('payment-provider-runtime-core.test.ts passed');
 }
