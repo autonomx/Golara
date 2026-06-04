@@ -230,7 +230,7 @@ async function main() {
   await runVariantStockAuditTests();
   await runVariantStockStatusTests();
   await runVariantStockMigrationTests();
-  await runVariantLocationStockTests();
+  await runVariantLocationStockModelTests();
   await runWarehouseLocationModelTests();
   await runFulfillmentMethodSettingsTests();
   await runFulfillmentShipmentRecordsModelTests();
