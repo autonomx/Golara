@@ -6,7 +6,7 @@ This note supplements `docs/production-roadmap.md` while Phase 32 is in progress
 
 ## Current status
 
-Phase 32 is in progress. Golara now has provider-neutral payment webhook normalization and persistable webhook record planning foundations for:
+Phase 32 is in progress. Golara now has provider-neutral payment webhook normalization, persistable webhook record planning, and database-facing payment event persistence input foundations for:
 
 - **Stripe Checkout Sessions** webhooks.
 - **ZarinPal** verification/callback-style payment events.
@@ -21,16 +21,17 @@ Phase 32 is in progress. Golara now has provider-neutral payment webhook normali
 - Added `lib/checkout/payment-webhook-record.ts` for persistable payment webhook record planning.
 - Added record planning for recorded, duplicate, and needs-attention webhook states.
 - Added explicit decisions for when a webhook may apply payment state and when it becomes a settlement reconciliation candidate.
-- Folded payment webhook normalization and record-planning coverage into the existing wired webhook event log unit test path.
+- Added a `CheckoutPaymentEvent` persistence input builder that targets the existing provider/idempotency unique event table.
+- Folded payment webhook normalization, record-planning, schema-guard, and persistence-input coverage into the existing wired webhook event log unit test path.
 
 ## Still pending before Phase 32 is complete
 
 - Add route handlers for Stripe and ZarinPal payment webhooks.
-- Persist inbound payment webhook events and idempotency decisions through the database.
+- Persist inbound payment webhook events and idempotency decisions through database-backed services/routes.
 - Apply authoritative webhook-paid state transitions to checkout orders and payment attempts.
 - Add settlement reconciliation records/views for provider reference, amount, currency, order, and webhook status.
 - Add retry/alerting behavior for failed or pending payment webhook events.
 
 ## Notes
 
-The current Phase 32 work is deliberately pure and network-free. It prepares normalized webhook events, idempotent record plans, and settlement candidates but does not yet make webhooks authoritative, persist inbound provider events, or reconcile settlement against provider dashboards.
+The current Phase 32 work is deliberately pure and network-free. It prepares normalized webhook events, idempotent record plans, existing-table persistence inputs, and settlement candidates but does not yet make webhooks authoritative, persist inbound provider events through a route/service, or reconcile settlement against provider dashboards.
