@@ -21,18 +21,20 @@ const baseOrder: PaymentAttemptOrder = {
 export async function runPaymentProviderAliasCoreTests() {
   assert.equal(isLegacyPaymentProviderName('manual'), true);
   assert.equal(isLegacyPaymentProviderName('domestic_redirect'), true);
-  assert.equal(isLegacyPaymentProviderName('zarinpal'), true);
+  assert.equal(isLegacyPaymentProviderName('zarinpal'), false);
   assert.equal(isLegacyPaymentProviderName('iranian'), false);
   assert.equal(isLegacyPaymentProviderName(' MANUAL '), true);
-  assert.equal(isLegacyPaymentProviderName('ZARINPAL'), true);
+  assert.equal(isLegacyPaymentProviderName('ZARINPAL'), false);
 
   assert.equal(isAdapterPaymentProviderName('iranian'), true);
+  assert.equal(isAdapterPaymentProviderName('zarinpal'), true);
   assert.equal(isAdapterPaymentProviderName('stripe'), true);
   assert.equal(isAdapterPaymentProviderName('whatsapp'), true);
   assert.equal(isAdapterPaymentProviderName('inquiry'), true);
   assert.equal(isAdapterPaymentProviderName('manual'), false);
   assert.equal(isAdapterPaymentProviderName(' STRIPE '), true);
   assert.equal(isAdapterPaymentProviderName('Inquiry'), true);
+  assert.equal(isAdapterPaymentProviderName('ZARINPAL'), true);
 
   assert.equal(normalizeCheckoutProviderName('manual'), 'manual');
   assert.equal(normalizeCheckoutProviderName('domestic_redirect'), 'domestic_redirect');
@@ -49,7 +51,7 @@ export async function runPaymentProviderAliasCoreTests() {
 
   assert.equal(shouldUseDirectCheckoutProvider('manual'), true);
   assert.equal(shouldUseDirectCheckoutProvider('domestic_redirect'), true);
-  assert.equal(shouldUseDirectCheckoutProvider('zarinpal'), true);
+  assert.equal(shouldUseDirectCheckoutProvider('zarinpal'), false);
   assert.equal(shouldUseDirectCheckoutProvider('iranian'), false);
   assert.equal(shouldUseDirectCheckoutProvider('stripe'), false);
   assert.equal(shouldUseDirectCheckoutProvider('whatsapp'), false);
@@ -57,7 +59,7 @@ export async function runPaymentProviderAliasCoreTests() {
 
   assert.equal(checkoutProviderRoutingKind('manual'), 'local');
   assert.equal(checkoutProviderRoutingKind('domestic_redirect'), 'local');
-  assert.equal(checkoutProviderRoutingKind('zarinpal'), 'local');
+  assert.equal(checkoutProviderRoutingKind('zarinpal'), 'adapter');
   assert.equal(checkoutProviderRoutingKind('iranian'), 'adapter');
   assert.equal(checkoutProviderRoutingKind('stripe'), 'adapter');
   assert.equal(checkoutProviderRoutingKind('whatsapp'), 'adapter');
@@ -80,6 +82,27 @@ export async function runPaymentProviderAliasCoreTests() {
     metadata: {
       gatewayStatus: 'redirect',
       gatewayMessage: 'Iranian gateway mock redirect prepared.',
+      orderNumber: 'GOL-1001'
+    }
+  });
+
+  assert.deepEqual(mapAliasGatewayResultToLegacyAttempt({
+    order: baseOrder,
+    result: {
+      provider: 'zarinpal',
+      status: 'redirect',
+      reference: 'A00000000000000000000000000000012345',
+      redirectUrl: 'https://www.zarinpal.com/pg/StartPay/A00000000000000000000000000000012345',
+      message: 'ZarinPal payment request created.'
+    }
+  }), {
+    provider: 'zarinpal',
+    status: 'redirect_required',
+    providerReference: 'A00000000000000000000000000000012345',
+    redirectUrl: 'https://www.zarinpal.com/pg/StartPay/A00000000000000000000000000000012345',
+    metadata: {
+      gatewayStatus: 'redirect',
+      gatewayMessage: 'ZarinPal payment request created.',
       orderNumber: 'GOL-1001'
     }
   });
