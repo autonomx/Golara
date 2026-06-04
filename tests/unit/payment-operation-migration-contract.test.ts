@@ -16,6 +16,7 @@ export async function runPaymentOperationMigrationContractTests() {
   const historyView = source('lib/checkout/payment-operation-history-view.ts');
   const historyRouteCore = source('lib/checkout/payment-operation-history-route-core.ts');
   const historyPanel = source('components/admin/AdminPaymentOperationHistoryPanel.tsx');
+  const historyPage = source('app/admin/payments/operations/history/page.tsx');
   const audit = source('lib/checkout/payment-operation-audit.ts');
   const schema = source('prisma/schema.prisma');
 
@@ -154,6 +155,22 @@ export async function runPaymentOperationMigrationContractTests() {
   assert.equal(historyPanel.includes('<button'), false);
   assert.equal(historyPanel.includes('CheckoutOrder" SET'), false);
   assert.equal(historyPanel.includes('CheckoutPaymentAttempt" SET'), false);
+
+  assert.ok(historyPage.includes('AdminPaymentOperationHistoryPanel'));
+  assert.ok(historyPage.includes('buildPaymentOperationHistoryRouteResult'));
+  assert.ok(historyPage.includes('orderId: firstParam(params.orderId)'));
+  assert.ok(historyPage.includes('Payment operation records unavailable'));
+  assert.ok(historyPage.includes('Migration confirmation required'));
+  assert.ok(historyPage.includes('does not submit') === false);
+  assert.equal(historyPage.includes('executePaymentOperationRecordIfConfirmed'), false);
+  assert.equal(historyPage.includes('createPendingPaymentOperationRecordIfConfirmed'), false);
+  assert.equal(historyPage.includes('fetch('), false);
+  assert.equal(historyPage.includes('@prisma/client'), false);
+  assert.equal(historyPage.includes('prisma.'), false);
+  assert.equal(historyPage.includes('onClick='), false);
+  assert.equal(historyPage.includes('<button'), false);
+  assert.equal(historyPage.includes('CheckoutOrder" SET'), false);
+  assert.equal(historyPage.includes('CheckoutPaymentAttempt" SET'), false);
 
   assert.ok(audit.includes('PaymentOperationAuditKind'));
   assert.ok(audit.includes('preview_requested'));
