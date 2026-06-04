@@ -1,5 +1,7 @@
 import 'server-only';
 
+import type { Prisma } from '@prisma/client';
+
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
 
 export type PaymentOperationAuditKind =
@@ -27,7 +29,7 @@ export type PaymentOperationAuditInput = {
   previewReasons?: string[];
   conflicts?: string[];
   operatorReason?: string | null;
-  metadata?: Record<string, unknown>;
+  metadata?: Record<string, Prisma.InputJsonValue | undefined>;
 };
 
 export type PaymentOperationAuditLogInput = {
@@ -35,7 +37,7 @@ export type PaymentOperationAuditLogInput = {
   entity: 'paymentOperation';
   entityId?: string;
   summary: string;
-  metadata: Record<string, unknown>;
+  metadata: Prisma.InputJsonValue;
 };
 
 const actionByKind: Record<PaymentOperationAuditKind, string> = {
@@ -70,8 +72,9 @@ function cleanList(values: string[] | undefined) {
   return Array.isArray(values) ? values.map((value) => value.trim()).filter(Boolean) : [];
 }
 
-function cleanMetadata(value: Record<string, unknown> | undefined) {
-  return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+function cleanMetadata(value: Record<string, Prisma.InputJsonValue | undefined> | undefined): Record<string, Prisma.InputJsonValue> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return Object.fromEntries(Object.entries(value).filter((entry): entry is [string, Prisma.InputJsonValue] => entry[1] !== undefined));
 }
 
 export function buildPaymentOperationAuditLogInput(input: PaymentOperationAuditInput): PaymentOperationAuditLogInput {
