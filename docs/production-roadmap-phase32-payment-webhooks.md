@@ -6,7 +6,7 @@ This note supplements `docs/production-roadmap.md` while Phase 32 is in progress
 
 ## Current status
 
-Phase 32 is in progress. Golara now has provider-neutral payment webhook normalization, idempotent inbound webhook persistence, webhook signature verification, minimal provider webhook routes, trusted webhook-driven checkout state transitions, durable settlement reconciliation records integrated into the webhook service path, authenticated admin settlement visibility with an explicit durable/fallback source indicator, main admin navigation access, payment webhook alert planning, a read-only admin webhook alert surface, sidebar navigation for settlement and alert workflows, normal unit-runner wiring for Phase 32 supplemental payment guards, conditional deploy-readiness blockers for production gateway checkout, an operator smoke-test runbook, a production gateway launch checklist, a blank provider validation evidence template with a completion checklist, a settlement migration contract note, launch-checklist links to evidence/contract docs, production-checklist links to evidence/contract docs, closeout criteria separating repo-side completion from target-environment validation, recommended next-work guidance, and wired launch/evidence/migration-contract documentation guard coverage for:
+Phase 32 is in progress. Golara now has provider-neutral payment webhook normalization, idempotent inbound webhook persistence, webhook signature verification, minimal provider webhook routes, trusted webhook-driven checkout state transitions, durable settlement reconciliation records integrated into the webhook service path, authenticated admin settlement visibility with an explicit durable/fallback source indicator, main admin navigation access, payment webhook alert planning, a read-only admin webhook alert surface, sidebar navigation for settlement and alert workflows, normal unit-runner wiring for Phase 32 supplemental payment guards, conditional deploy-readiness blockers for production gateway checkout, an operator smoke-test runbook, a production gateway launch checklist, a blank provider validation evidence template with a completion checklist, a settlement migration contract note, launch-checklist links to evidence/contract docs, production-checklist links to evidence/contract docs, closeout criteria separating repo-side completion from target-environment validation, recommended next-work guidance, next-session decision guidance, and wired launch/evidence/migration-contract documentation guard coverage for:
 
 - **Stripe Checkout Sessions** webhooks.
 - **ZarinPal** verification/callback-style payment events.
@@ -63,6 +63,7 @@ Phase 32 is in progress. Golara now has provider-neutral payment webhook normali
 - Extended `tests/unit/payment-webhook-validation-evidence-docs.test.ts` to guard the completion checklist language. This reuses the existing wired guard and does not change the runner count.
 - Added closeout criteria below to clarify what counts as repo-side Phase 32 completion, what remains target-environment validation, and what belongs to later phases.
 - Added recommended next-work guidance below to keep environment validation, optional Phase 32 docs cleanup, and Phase 33 repo-side planning separate.
+- Added next-session decision guidance below so future implementation sessions can choose between environment validation and Phase 33 planning without adding more Phase 32 repo-only claims.
 
 ## Recommended validation sequence
 
@@ -93,6 +94,13 @@ Out of scope for Phase 32 closeout: provider-backed refunds/voids, provider dash
 3. If continuing repository work without provider access, start Phase 33 with a small provider-neutral refund/void planning helper and tests, not live provider mutations.
 4. Keep provider dashboard settlement imports, outbound alert delivery, real notification providers, and durable outbound webhook workers in later phases unless the roadmap is explicitly reprioritized.
 
+## Next-session decision point
+
+- Choose **Phase 32 environment validation** when operator access is available for provider dashboards, target database migration checks, deploy-readiness output, and admin verification.
+- Choose **Phase 33 repo planning** when operator access is unavailable and repository work should continue.
+- Do not mark Phase 32 target-environment validation complete from source guards, documentation guards, or repository diffs alone.
+- Do not add live refund, void, provider-import, notification-delivery, or outbound-worker behavior under Phase 32; start or reprioritize the appropriate later phase instead.
+
 ## Still pending before Phase 32 is complete
 
 - Execute the smoke-test runbook against live/staging Stripe and ZarinPal provider dashboards.
@@ -102,4 +110,4 @@ Out of scope for Phase 32 closeout: provider-backed refunds/voids, provider dash
 
 ## Notes
 
-Phase 32 now has an end-to-end foundation from provider webhook receipt to idempotent event persistence, optional signature verification, trusted matched checkout state transitions, durable settlement reconciliation storage integrated into the webhook service path, operator settlement visibility with explicit durable/fallback source labeling, sidebar navigation for settlement and alert workflows, retry/alert planning, a read-only alert surface, unit-runner coverage for Phase 32 webhook, settlement, admin visibility, alert, deploy-readiness, launch-documentation, validation-evidence documentation, settlement migration contract, gateway evidence-link guards, a recommended validation sequence, closeout criteria, and recommended next-work guidance, conditional production gateway deploy-readiness blockers, a documented provider smoke-test runbook, a production gateway launch checklist, a blank validation evidence template with a completion checklist, and a settlement migration contract note. Production trust still depends on configured webhook secrets, live provider dashboard validation, migration application, smoke testing, and captured operator evidence. Dashboard imports and actual outbound alert delivery remain pending.
+Phase 32 now has an end-to-end foundation from provider webhook receipt to idempotent event persistence, optional signature verification, trusted matched checkout state transitions, durable settlement reconciliation storage integrated into the webhook service path, operator settlement visibility with explicit durable/fallback source labeling, sidebar navigation for settlement and alert workflows, retry/alert planning, a read-only alert surface, unit-runner coverage for Phase 32 webhook, settlement, admin visibility, alert, deploy-readiness, launch-documentation, validation-evidence documentation, settlement migration contract, gateway evidence-link guards, a recommended validation sequence, closeout criteria, recommended next-work guidance, and next-session decision guidance, conditional production gateway deploy-readiness blockers, a documented provider smoke-test runbook, a production gateway launch checklist, a blank validation evidence template with a completion checklist, and a settlement migration contract note. Production trust still depends on configured webhook secrets, live provider dashboard validation, migration application, smoke testing, and captured operator evidence. Dashboard imports and actual outbound alert delivery remain pending.
