@@ -62,6 +62,7 @@ import { runPaymentGatewayAdaptersTests } from './payment-gateway-adapters.test'
 import { runPaymentGatewayConfigTests } from './payment-gateway-config.test';
 import { runPaymentGatewayLaunchDocsTests } from './payment-gateway-launch-docs.test';
 import { runPaymentOperationPlanTests } from './payment-operation-plan.test';
+import { runPaymentOperationTransitionPlanTests } from './payment-operation-transition-plan.test';
 import { runPaymentProviderAliasCoreTests } from './payment-provider-alias-core.test';
 import { runPaymentProviderModeTests } from './payment-provider-mode.test';
 import { runPaymentProviderRuntimeCoreTests } from './payment-provider-runtime-core.test';
@@ -175,6 +176,7 @@ async function main() {
   await runPaymentGatewayAdaptersTests();
   await runPaymentGatewayLaunchDocsTests();
   await runPaymentOperationPlanTests();
+  await runPaymentOperationTransitionPlanTests();
   await runPaymentWebhookValidationEvidenceDocsTests();
   await runPaymentProviderSettingsTests();
   await runPaymentWebhookServiceTests();
@@ -232,7 +234,7 @@ async function main() {
   await runFulfillmentShipmentRecordsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (116 files)');
+  console.log('unit tests passed (117 files)');
 }
 
 main().catch((error) => {
