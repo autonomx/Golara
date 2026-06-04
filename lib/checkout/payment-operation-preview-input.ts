@@ -15,6 +15,8 @@ export type PaymentOperationPreviewInputDraft = {
   reason?: unknown;
   orderNumber?: unknown;
   paymentAttemptId?: unknown;
+  fulfillmentStatus?: unknown;
+  hasPerishableCapacity?: unknown;
 };
 
 export type PaymentOperationPreviewInputError = {
@@ -28,6 +30,7 @@ export type PaymentOperationPreviewInputResult =
   | { ok: false; errors: PaymentOperationPreviewInputError[] };
 
 const OPERATION_KINDS = new Set<PaymentOperationKind>(['refund', 'void']);
+const FULFILLMENT_STATUSES = new Set(['unfulfilled', 'scheduled', 'in_progress', 'fulfilled', 'delivered', 'cancelled']);
 const CURRENCY_PATTERN = /^[A-Z][A-Z0-9_]{2,11}$/;
 const SAFE_IDENTIFIER_PATTERN = /^[A-Za-z0-9._:@/-]{1,160}$/;
 
@@ -103,6 +106,26 @@ function validateOptionalIdentifier(
   return text;
 }
 
+function normalizeOptionalBoolean(value: unknown) {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true' || normalized === 'yes' || normalized === '1') return true;
+    if (normalized === 'false' || normalized === 'no' || normalized === '0') return false;
+  }
+  return undefined;
+}
+
+function normalizeFulfillmentStatus(draft: PaymentOperationPreviewInputDraft, errors: PaymentOperationPreviewInputError[]) {
+  const text = optionalString(draft.fulfillmentStatus)?.toLowerCase();
+  if (!text) return undefined;
+  if (!FULFILLMENT_STATUSES.has(text)) {
+    errors.push({ field: 'fulfillmentStatus', code: 'invalid_fulfillment_status', message: 'Choose a supported fulfillment status.' });
+    return undefined;
+  }
+  return text;
+}
+
 export function normalizePaymentOperationPreviewInput(draft: PaymentOperationPreviewInputDraft): PaymentOperationPreviewInputResult {
   const errors: PaymentOperationPreviewInputError[] = [];
   const operation = stringValue(draft.operation).toLowerCase() as PaymentOperationKind;
@@ -128,6 +151,8 @@ export function normalizePaymentOperationPreviewInput(draft: PaymentOperationPre
   const providerReference = validateOptionalIdentifier(draft, 'providerReference', errors, 'Provider reference can only include letters, numbers, dots, dashes, underscores, colons, slashes, and @.');
   const orderNumber = validateOptionalIdentifier(draft, 'orderNumber', errors, 'Order number can only include letters, numbers, dots, dashes, underscores, colons, slashes, and @.');
   const paymentAttemptId = validateOptionalIdentifier(draft, 'paymentAttemptId', errors, 'Payment attempt ID can only include letters, numbers, dots, dashes, underscores, colons, slashes, and @.');
+  const fulfillmentStatus = normalizeFulfillmentStatus(draft, errors);
+  const hasPerishableCapacity = normalizeOptionalBoolean(draft.hasPerishableCapacity);
 
   if (errors.length) return { ok: false, errors };
 
@@ -150,7 +175,9 @@ export function normalizePaymentOperationPreviewInput(draft: PaymentOperationPre
       ...(amountCents ? { amountCents } : {}),
       ...(reason ? { reason } : {}),
       ...(orderNumber ? { orderNumber } : {}),
-      ...(paymentAttemptId ? { paymentAttemptId } : {})
+      ...(paymentAttemptId ? { paymentAttemptId } : {}),
+      ...(fulfillmentStatus ? { fulfillmentStatus } : {}),
+      ...(hasPerishableCapacity === undefined ? {} : { hasPerishableCapacity })
     }
   };
 }
