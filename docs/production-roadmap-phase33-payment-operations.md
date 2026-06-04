@@ -6,7 +6,7 @@ This note tracks Phase 33 work after the Phase 32 repo-side webhook and settleme
 
 ## Current status
 
-Phase 33 has provider-neutral refund/void planning, no-mutation preview generation, a pure preview input normalization helper, a read-only preview view model, a route-core style preview result, a request-core wrapper for normalized preview requests, a compact read-only admin preview panel, a static-sample admin preview route for admin-safe display, a documentation-only persistence design for future refund/void operation records, pure order/payment transition plus inventory/capacity release planning, read-only transition guidance in the admin preview payload/UI, a migration-backed table contract for future payment operation records, a blank operator evidence template for target-environment payment-operation migration validation, a read-only migration status helper for checking whether the target environment has been operator-confirmed, and a docs-only repository/service design for future idempotent operation-record creation. This remains repo-side foundation work: the table migration, evidence template, status helper, and repository design are added, but no repository/service writes, provider calls, order/payment mutations, inventory/capacity release, audit writes, or execution buttons have been added.
+Phase 33 has provider-neutral refund/void planning, no-mutation preview generation, a pure preview input normalization helper, a read-only preview view model, a route-core style preview result, a request-core wrapper for normalized preview requests, a compact read-only admin preview panel, a static-sample admin preview route for admin-safe display, a documentation-only persistence design for future refund/void operation records, pure order/payment transition plus inventory/capacity release planning, read-only transition guidance in the admin preview payload/UI, a migration-backed table contract for future payment operation records, a blank operator evidence template for target-environment payment-operation migration validation, a read-only migration status helper for checking whether the target environment has been operator-confirmed, a docs-only repository/service design, and a gated raw-SQL repository/service foundation for idempotent pending operation-record creation. This remains repo-side foundation work: no provider calls, order/payment mutations, inventory/capacity release, audit writes, or execution buttons have been added. Repository/service use is gated behind target-environment migration confirmation.
 
 ## Completed in Phase 33 so far
 
@@ -47,6 +47,9 @@ Phase 33 has provider-neutral refund/void planning, no-mutation preview generati
 - Extended `tests/unit/payment-operation-migration-contract.test.ts` to guard the migration status helper, its prerequisite copy, and its no-Prisma/no-fetch/no-order-payment-source boundary. The runner count remains 118 files.
 - Added `docs/production-roadmap-phase33-payment-operation-repository-design.md` to document future idempotent `PaymentOperationRecord` repository/service semantics before implementation.
 - Extended `tests/unit/payment-operation-migration-contract.test.ts` to guard the repository design note, idempotency requirements, audit coupling, and no-execution boundary. The runner count remains 118 files.
+- Added `lib/checkout/payment-operation-record-repository.ts` as a raw-SQL repository for pending operation records with idempotency-key duplicate reuse and conflict detection.
+- Added `lib/checkout/payment-operation-record-service.ts` as a migration-confirmed service gate around pending record creation and order-history reads.
+- Extended `tests/unit/payment-operation-migration-contract.test.ts` to guard the repository/service source boundaries, idempotency handling, migration gate, no provider calls, and no order/payment mutation. The runner count remains 118 files.
 
 ## Current helper behavior
 
@@ -143,7 +146,11 @@ Phase 33 has provider-neutral refund/void planning, no-mutation preview generati
 
 `getPaymentOperationRecordsMigrationStatus` can summarize the read-only `PAYMENT_OPERATION_RECORDS_MIGRATION_CONFIRMED` environment gate. It returns the flag name, raw value, migration path, evidence path, prerequisite behavior that must not depend on the table before confirmation, and warnings when the target environment has not been operator-confirmed. It does not use Prisma, fetch, provider adapters, order/payment mutation, inventory/capacity release, audit writes, or admin execution controls.
 
-`docs/production-roadmap-phase33-payment-operation-repository-design.md` defines the future idempotent repository/service contract for creating pending `PaymentOperationRecord` rows. It covers create-pending semantics, duplicate idempotency reuse, conflict blocking, pending/submitted/succeeded/failed/manual-review transitions, service-layer audit coupling, and implementation acceptance criteria. It is design-only and does not add persistence code or approve execution.
+`docs/production-roadmap-phase33-payment-operation-repository-design.md` defines the future idempotent repository/service contract for creating pending `PaymentOperationRecord` rows. It covers create-pending semantics, duplicate idempotency reuse, conflict blocking, pending/submitted/succeeded/failed/manual-review transitions, service-layer audit coupling, and implementation acceptance criteria. It is design-only and does not approve execution.
+
+`paymentOperationRecordRepository` can create pending operation records idempotently by `idempotencyKey`, reuse matching duplicates, report conflicts for mismatched duplicate keys, find records by idempotency key, and list records for an order. It uses raw SQL because `PaymentOperationRecord` is not a Prisma model. It does not call providers, mutate orders/payment attempts, release inventory/capacity, or write audit logs.
+
+`paymentOperationRecordService` gates repository access through `getPaymentOperationRecordsMigrationStatus`. If `PAYMENT_OPERATION_RECORDS_MIGRATION_CONFIRMED` is not true for the target environment, it returns `migration_unconfirmed` instead of creating or listing records.
 
 ## Preview and persistence boundary acceptance criteria
 
@@ -167,7 +174,6 @@ The current boundary should continue to:
 - require target-environment migration verification before repository/service writes;
 - capture operator migration evidence before any execution path depends on the table;
 - keep migration confirmation helpers read-only until execution behavior is deliberately added in a later guarded slice;
-- avoid repository/service writes until an idempotent creation layer is added;
 - avoid checkout order mutation;
 - avoid payment attempt mutation;
 - avoid inventory or capacity release;
@@ -182,8 +188,6 @@ This slice intentionally does not add:
 - live provider refund calls;
 - live provider void calls;
 - Prisma model/client access for `PaymentOperationRecord`;
-- repository writes;
-- service writes;
 - order status mutation;
 - payment attempt mutation;
 - inventory or capacity release;
@@ -191,14 +195,14 @@ This slice intentionally does not add:
 - admin refund/void execution buttons;
 - provider dashboard settlement imports.
 
-Those remain future Phase 33 slices after the migration contract is accepted and target-environment migration verification is complete.
+Those remain future Phase 33 slices after target-environment migration verification is complete and audit/provider execution boundaries are defined.
 
 ## Recommended next work
 
-1. Add a repository/service layer that can create pending operation records idempotently only after the target migration is applied, verified, and gated.
-2. Add append-only audit events for preview/request/blocked states.
+1. Add append-only audit events for preview/request/blocked states.
+2. Add submitted/succeeded/failed repository status transitions behind the same migration gate.
 3. Add provider adapters for Stripe/ZarinPal refund and void execution only after preview, persistence, audit, and idempotency rules are defined.
 
 ## Verification status
 
-Source/unit guard coverage has been added, but local verification is pending. Do not claim `npm run test:unit`, `npm run typecheck`, `npx prisma generate`, `npx prisma migrate status`, migration application, or live provider validation passed unless those checks are actually run.
+Source/unit guard coverage has been added, but local verification is pending. Do not claim `npm run test:unit`, `npm run typecheck`, `npx prisma generate`, `npx prisma migrate status`, migration application, repository write execution, or live provider validation passed unless those checks are actually run.
