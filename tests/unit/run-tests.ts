@@ -64,6 +64,7 @@ import { runPaymentGatewayLaunchDocsTests } from './payment-gateway-launch-docs.
 import { runPaymentOperationAdaptersTests } from './payment-operation-adapters.test';
 import { runPaymentOperationMigrationContractTests } from './payment-operation-migration-contract.test';
 import { runPaymentOperationPlanTests } from './payment-operation-plan.test';
+import { runPaymentOperationProviderReadinessTests } from './payment-operation-provider-readiness.test';
 import { runPaymentOperationTransitionPlanTests } from './payment-operation-transition-plan.test';
 import { runPaymentProviderAliasCoreTests } from './payment-provider-alias-core.test';
 import { runPaymentProviderModeTests } from './payment-provider-mode.test';
@@ -93,7 +94,7 @@ import { runPromotionEligibilityRulesModelTests } from './promotion-eligibility-
 import { runPromotionOrderMinimumsModelTests } from './promotion-order-minimums-model.test';
 import { runPromotionSchemaParityTests } from './promotion-schema-parity.test';
 import { runPromotionStoreCreditFoundationModelTests } from './promotion-store-credit-foundation-model.test';
-import { runPromotionUsageLimitsModelTests } from './promotion-usage-limits-model.test';
+import { runPromotionUsageLimitsModelTests } from './promotion-usage-limits.test';
 import { runPromotionValidityWindowsModelTests } from './promotion-validity-windows-model.test';
 import { runPromotionVoucherModelTests } from './promotion-voucher-model.test';
 import { runProviderDiagnosticsTests } from './provider-diagnostics.test';
@@ -179,6 +180,7 @@ async function main() {
   await runPaymentGatewayLaunchDocsTests();
   await runPaymentOperationMigrationContractTests();
   await runPaymentOperationPlanTests();
+  await runPaymentOperationProviderReadinessTests();
   await runPaymentOperationTransitionPlanTests();
   await runPaymentOperationAdaptersTests();
   await runPaymentWebhookValidationEvidenceDocsTests();
@@ -213,7 +215,7 @@ async function main() {
   await runPromotionValidityWindowsModelTests();
   await runPromotionUsageLimitsModelTests();
   await runPromotionEligibilityRulesModelTests();
-  await runPromotionOrderMinimumsModelTests();
+  await runPromotionOrderMinimumsTests();
   await runPromotionStoreCreditFoundationModelTests();
   await runPromotionAuditLogsModelTests();
   await runPromotionSchemaParityTests();
@@ -238,7 +240,7 @@ async function main() {
   await runFulfillmentShipmentRecordsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (119 files)');
+  console.log('unit tests passed (120 files)');
 }
 
 main().catch((error) => {
