@@ -92,6 +92,14 @@ export async function runPaymentOperationMigrationContractTests() {
   assert.ok(service.includes('migration_unconfirmed'));
   assert.ok(service.includes('createPendingPaymentOperationRecordIfConfirmed'));
   assert.ok(service.includes('listPaymentOperationRecordsForOrderIfConfirmed'));
+  assert.ok(service.includes('auditRecordTransition'));
+  assert.ok(service.includes("auditRecordTransition('record_submitted'"));
+  assert.ok(service.includes("auditRecordTransition('record_succeeded'"));
+  assert.ok(service.includes("auditRecordTransition('record_failed'"));
+  assert.ok(service.includes('transitionAuditMetadata'));
+  assert.ok(service.includes('providerOperationReference'));
+  assert.ok(service.includes('errorCategory'));
+  assert.ok(service.includes('retryable'));
   assert.equal(service.includes('stripe'), false);
   assert.equal(service.includes('zarinpal'), false);
   assert.equal(service.includes('fetch('), false);
@@ -104,6 +112,12 @@ export async function runPaymentOperationMigrationContractTests() {
   assert.ok(audit.includes('pending_record_created'));
   assert.ok(audit.includes('idempotency_duplicate_reused'));
   assert.ok(audit.includes('idempotency_conflict_blocked'));
+  assert.ok(audit.includes('record_submitted'));
+  assert.ok(audit.includes('record_succeeded'));
+  assert.ok(audit.includes('record_failed'));
+  assert.ok(audit.includes('payment_operation.record.submitted'));
+  assert.ok(audit.includes('payment_operation.record.succeeded'));
+  assert.ok(audit.includes('payment_operation.record.failed'));
   assert.ok(audit.includes('buildPaymentOperationAuditLogInput'));
   assert.ok(audit.includes('recordPaymentOperationAuditEvent'));
   assert.ok(audit.includes('recordAdminAuditLog'));
