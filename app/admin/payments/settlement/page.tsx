@@ -22,10 +22,18 @@ export default async function AdminPaymentSettlementPage() {
               <h1 className="mt-1 text-3xl font-bold text-stone-950">Payment settlement</h1>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">Review recent payment webhook events and compare provider-reported settlement data against checkout orders.</p>
             </div>
-            <Link href="/admin/orders" className="rounded-md bg-rosewood px-4 py-2 text-sm font-semibold text-white">Back to orders</Link>
+            <div className="flex flex-wrap gap-2">
+              <Link href="/admin/payments/operations/providers" className="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-800">Provider readiness</Link>
+              <Link href="/admin/payments/operations/history" className="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-800">Operation history</Link>
+              <Link href="/admin/payments/operations/preview" className="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-800">Preview operations</Link>
+              <Link href="/admin/orders" className="rounded-md bg-rosewood px-4 py-2 text-sm font-semibold text-white">Back to orders</Link>
+            </div>
           </div>
           <div className="mt-4 rounded-lg bg-stone-50 p-3 text-sm text-stone-600">
             {authConfigured ? authenticated ? `Signed in as ${identity.label ?? identity.email ?? 'admin'}.` : 'Admin authentication is required to view settlement data.' : 'Admin authentication is not configured yet.'}
+          </div>
+          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-950">
+            Refund and void operation pages are read-only Phase 33 diagnostics. They do not execute provider adapters, submit refunds or voids, mutate orders/payments, or release inventory/capacity.
           </div>
         </section>
 
