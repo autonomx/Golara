@@ -266,6 +266,8 @@ Gateway checkout launch checklist:
 
 - Use `docs/production-payment-gateway-launch-checklist.md` before enabling `CHECKOUT_MODE="gateway"`.
 - Use `docs/production-roadmap-phase32-payment-webhook-smoke-tests.md` for provider-generated webhook validation.
+- Use `docs/production-roadmap-phase32-payment-webhook-validation-evidence.md` to record operator evidence before confirming gateway smoke tests.
+- Use `docs/production-roadmap-phase32-settlement-migration-contract.md` before confirming the settlement migration flag.
 - Verify `/admin/payments/settlement` shows durable settlement records after provider events arrive.
 - Verify `/admin/payments/alerts` shows expected failed/missing/stale/mismatch alert states.
 - Do not manually mark orders paid unless the provider dashboard confirms payment capture/settlement.
@@ -317,43 +319,23 @@ The deploy readiness guard blocks production mode when any required production d
 - Media storage must be production-safe, currently configured Cloudinary.
 - `INQUIRY_NOTIFICATION_MODE="webhook"` requires `INQUIRY_NOTIFICATION_WEBHOOK_URL`.
 - Unsupported notification modes are blocked.
+- Production gateway mode is blocked until enabled provider webhook secrets are configured.
+- Production gateway mode is blocked until `PAYMENT_SETTLEMENT_MIGRATION_CONFIRMED=true`.
+- Production gateway mode is blocked until `PAYMENT_WEBHOOK_SMOKE_TESTS_CONFIRMED=true`.
 
-When `CHECKOUT_MODE="gateway"`, the deploy readiness guard also blocks production until:
+Release sign-off:
 
-- Required gateway provider credentials and webhook signing settings are configured.
-- The Phase 32 settlement reconciliation migration is confirmed for the target database.
-- The Phase 32 provider smoke-test runbook is confirmed for the target provider dashboards.
+- Complete `docs/LAUNCH_AUDIT.md` with the deployed git SHA and production URL.
+- Record who verified admin login, CMS edits, inquiry flow, notification path, media upload behavior, checkout/payment mode, and rollback plan.
+- Attach or link evidence from the preflight commands and production smoke tests.
+- If gateway checkout is in scope, attach or link provider dashboard smoke-test evidence, settlement migration verification, admin settlement/alert review, and the completed gateway launch checklist.
+- If gateway checkout is in scope, capture evidence in `docs/production-roadmap-phase32-payment-webhook-validation-evidence.md` before setting Phase 32 gateway confirmation flags.
+- Keep inquiry-first launch sign-off separate from full gateway checkout sign-off when gateway validation remains pending.
 
-`INQUIRY_NOTIFICATION_MODE="log"` is allowed but reported as a warning because staff must monitor the admin inbox manually.
+## Current known limitations
 
-Final launch audit:
-
-- Complete `docs/LAUNCH_AUDIT.md` for the target production release.
-- Record release SHA, deployment environment, operator, CI run URL, deploy-readiness result, backup/migration/rollback checks, media readiness, notification mode, manual smoke audit result, deferred item acceptance, and go/no-go decision.
-- Do not treat payment provider work, full automated checkout payment lifecycle, provider-backed per-user admin auth, or email/WhatsApp notifications as blockers for the inquiry-first launch unless the launch scope changes.
-- If the launch scope includes gateway checkout, attach the completed production payment gateway launch checklist and Phase 32 smoke-test results to the go/no-go decision.
-
-Manual smoke test:
-
-- Homepage loads with database content.
-- Category pages load.
-- Product detail pages load.
-- Inquiry form rejects invalid input.
-- Inquiry form creates a record.
-- Admin inquiry inbox shows the new record.
-- Admin readiness shows notification blockers, warnings, and retry runbook guidance.
-- Product/category/homepage edits show on public pages for owner role.
-- Media registration works for owner role.
-- Staff role can update inquiry status, assignment, and follow-up notes.
-- Staff role is blocked from catalog/homepage/media writes.
-- Owner role can perform catalog/homepage/media writes and inquiry writes.
-- Owner role can view staff account readiness and access rotation/deactivation guidance.
-- Admin audit entries include actor label, role, email, type, and provider metadata.
-- Media upload writes local/dev files to `/uploads/...` when configured for `local`.
-- Media upload returns a hosted URL when configured for `cloudinary`.
-- Admin readiness shows local media storage as a warning outside production and blocked in production.
-- Admin readiness shows incomplete Cloudinary configuration as blocked in production.
-- Admin readiness shows configured Cloudinary storage as ready.
-- Production data-safety confirmations are set only after migration, backup/restore, and rollback procedures are verified.
-- If gateway checkout is in scope, provider checkout, webhook receipt, durable settlement records, admin settlement visibility, admin payment alerts, and duplicate webhook replay behavior are verified.
-- Logout returns admin to read-only/login flow.
+- Admin authentication is password-backed only and not per-user at runtime.
+- Uploaded media must use Cloudinary or another durable provider before production; local filesystem storage is development-only.
+- Inquiry notifications are log/webhook only; email, SMS, and WhatsApp provider variables are placeholders until Phase 34.
+- Gateway checkout remains disabled unless the production launch scope explicitly enables `CHECKOUT_MODE="gateway"` and completes provider dashboard validation, settlement migration verification, and launch checklist evidence.
+- Tax, shipping, inventory reservation, refunds/voids, real notification providers, durable outbound webhook workers, provider-backed per-user admin auth, and full checkout/order/fulfillment QA remain roadmap work.
