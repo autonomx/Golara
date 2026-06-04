@@ -10,6 +10,7 @@ function source(path: string) {
 export async function runPaymentSettlementRepositoryTests() {
   const migration = source('prisma/migrations/20260604170000_add_payment_settlement_reconciliation/migration.sql');
   const repository = source('lib/checkout/payment-settlement-repository.ts');
+  const contract = source('docs/production-roadmap-phase32-settlement-migration-contract.md');
 
   assert.match(migration, /CREATE TABLE IF NOT EXISTS "PaymentSettlementReconciliation"/);
   assert.match(migration, /"paymentEventId" TEXT NOT NULL/);
@@ -32,6 +33,16 @@ export async function runPaymentSettlementRepositoryTests() {
   assert.match(repository, /paymentSettlementRepository = \{/);
   assert.doesNotMatch(repository, /checkoutOrder\.update/);
   assert.doesNotMatch(repository, /checkoutPaymentAttempt\.update/);
+
+  assert.match(contract, /Phase 32 Settlement Migration Contract/);
+  assert.match(contract, /documentation only/);
+  assert.match(contract, /does not claim the migration has been applied/);
+  assert.match(contract, /PaymentSettlementReconciliation` table/);
+  assert.match(contract, /not represented as a Prisma model/);
+  assert.match(contract, /raw-SQL backed through `lib\/checkout\/payment-settlement-repository\.ts`/);
+  assert.match(contract, /prisma generate` does not validate this table/);
+  assert.match(contract, /PAYMENT_SETTLEMENT_MIGRATION_CONFIRMED="true"/);
+  assert.match(contract, /Avoid mutating checkout orders or payment attempts directly/);
 
   const settled = buildSettlementPlanFromSource({
     paymentEventId: 'event-1',
