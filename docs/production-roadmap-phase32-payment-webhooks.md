@@ -58,6 +58,21 @@ Phase 32 is in progress. Golara now has provider-neutral payment webhook normali
 - Extended `tests/unit/payment-settlement-repository.test.ts` to guard the migration contract note alongside the existing table/repository contract guard. This reuses the existing wired guard and does not change the runner count.
 - Linked the validation evidence template and settlement migration contract from `docs/production-payment-gateway-launch-checklist.md` and `docs/PRODUCTION_CHECKLIST.md` so gateway launch sign-off points to both operator evidence capture and migration contract review.
 - Extended `tests/unit/payment-gateway-launch-docs.test.ts` to guard the evidence/contract links from the gateway launch checklist and canonical production checklist. This reuses the existing wired guard and does not change the runner count.
+- Added this recommended validation sequence so operators can complete the remaining Phase 32 environment checks in a consistent order without treating repository documentation as provider validation evidence.
+
+## Recommended validation sequence
+
+Use this order before enabling production `CHECKOUT_MODE="gateway"`:
+
+1. Deploy the intended git SHA to a staging or production-like environment with provider credentials configured.
+2. Apply and verify `prisma/migrations/20260604170000_add_payment_settlement_reconciliation/migration.sql` against the target PostgreSQL database.
+3. Review `docs/production-roadmap-phase32-settlement-migration-contract.md`, then set `PAYMENT_SETTLEMENT_MIGRATION_CONFIRMED="true"` only after the target table, indexes, and admin read path are verified.
+4. Configure Stripe and/or ZarinPal provider dashboard webhook endpoints for the target environment.
+5. Run `docs/production-roadmap-phase32-payment-webhook-smoke-tests.md` with provider-generated requests, including success, failure/cancel, duplicate replay, and invalid-signature cases.
+6. Confirm `/admin/payments/settlement` shows durable settlement records and `/admin/payments/alerts` shows expected attention states.
+7. Record the results in `docs/production-roadmap-phase32-payment-webhook-validation-evidence.md` with operator, date, environment, deployed SHA, duplicate replay result, invalid signature result, and admin verification notes.
+8. Set `PAYMENT_WEBHOOK_SMOKE_TESTS_CONFIRMED="true"` only after the evidence template is complete.
+9. Run production deploy-readiness with gateway mode enabled and keep rollback to `CHECKOUT_MODE="inquiry"` or `CHECKOUT_MODE="assisted"` available until live traffic is verified.
 
 ## Still pending before Phase 32 is complete
 
@@ -68,4 +83,4 @@ Phase 32 is in progress. Golara now has provider-neutral payment webhook normali
 
 ## Notes
 
-Phase 32 now has an end-to-end foundation from provider webhook receipt to idempotent event persistence, optional signature verification, trusted matched checkout state transitions, durable settlement reconciliation storage integrated into the webhook service path, operator settlement visibility with explicit durable/fallback source labeling, sidebar navigation for settlement and alert workflows, retry/alert planning, a read-only alert surface, unit-runner coverage for Phase 32 webhook, settlement, admin visibility, alert, deploy-readiness, launch-documentation, validation-evidence documentation, settlement migration contract, and gateway evidence-link guards, conditional production gateway deploy-readiness blockers, a documented provider smoke-test runbook, a production gateway launch checklist, a blank validation evidence template, and a settlement migration contract note. Production trust still depends on configured webhook secrets, live provider dashboard validation, migration application, smoke testing, and captured operator evidence. Dashboard imports and actual outbound alert delivery remain pending.
+Phase 32 now has an end-to-end foundation from provider webhook receipt to idempotent event persistence, optional signature verification, trusted matched checkout state transitions, durable settlement reconciliation storage integrated into the webhook service path, operator settlement visibility with explicit durable/fallback source labeling, sidebar navigation for settlement and alert workflows, retry/alert planning, a read-only alert surface, unit-runner coverage for Phase 32 webhook, settlement, admin visibility, alert, deploy-readiness, launch-documentation, validation-evidence documentation, settlement migration contract, gateway evidence-link guards, and a recommended validation sequence, conditional production gateway deploy-readiness blockers, a documented provider smoke-test runbook, a production gateway launch checklist, a blank validation evidence template, and a settlement migration contract note. Production trust still depends on configured webhook secrets, live provider dashboard validation, migration application, smoke testing, and captured operator evidence. Dashboard imports and actual outbound alert delivery remain pending.
