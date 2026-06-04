@@ -3,6 +3,7 @@ import {
   checkoutReturnApplyInput,
   checkoutReturnFallbackUrl,
   checkoutReturnSuccessUrl,
+  normalizeHostedCheckoutReturnStatus,
   normalizeZarinpalReturnStatus
 } from '../../lib/checkout/order-return-route-core';
 
@@ -14,6 +15,11 @@ export async function runOrderReturnRouteCoreTests() {
   assert.equal(normalizeZarinpalReturnStatus('NOK'), 'failed');
   assert.equal(normalizeZarinpalReturnStatus(null), 'failed');
   assert.equal(normalizeZarinpalReturnStatus('pending'), 'pending');
+
+  assert.equal(normalizeHostedCheckoutReturnStatus('success'), 'paid');
+  assert.equal(normalizeHostedCheckoutReturnStatus(' cancel '), 'cancelled');
+  assert.equal(normalizeHostedCheckoutReturnStatus(null), 'failed');
+  assert.equal(normalizeHostedCheckoutReturnStatus('failed'), 'failed');
 
   assert.deepEqual(checkoutReturnApplyInput(requestUrl), {
     orderNumber: 'GOL-1001',
@@ -30,6 +36,24 @@ export async function runOrderReturnRouteCoreTests() {
     status: 'cancelled',
     provider: undefined,
     providerReference: 'REF-1',
+    authority: undefined
+  });
+
+  assert.deepEqual(checkoutReturnApplyInput('https://golara.example/orders/return?order=GOL-1003&token=lookup-token-stripe&provider=stripe&payment=success&checkout_session_id=cs_test_123'), {
+    orderNumber: 'GOL-1003',
+    token: 'lookup-token-stripe',
+    status: 'paid',
+    provider: 'stripe',
+    providerReference: 'cs_test_123',
+    authority: undefined
+  });
+
+  assert.deepEqual(checkoutReturnApplyInput('https://golara.example/orders/return?order=GOL-1004&token=lookup-token-stripe&provider=stripe&payment=cancel&checkoutSession=cs_test_cancel'), {
+    orderNumber: 'GOL-1004',
+    token: 'lookup-token-stripe',
+    status: 'cancelled',
+    provider: 'stripe',
+    providerReference: 'cs_test_cancel',
     authority: undefined
   });
 
