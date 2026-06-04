@@ -16,6 +16,7 @@ export async function runPaymentOperationProviderReadinessTests() {
   const readinessRouteCore = source('lib/checkout/payment-operation-provider-readiness-route-core.ts');
   const readinessPanel = source('components/admin/AdminPaymentOperationProviderReadinessPanel.tsx');
   const readinessPage = source('app/admin/payments/operations/providers/page.tsx');
+  const operationsPage = source('app/admin/payments/operations/page.tsx');
   const settlementPage = source('app/admin/payments/settlement/page.tsx');
   const phase33Docs = source('docs/production-roadmap-phase33-payment-operations.md');
 
@@ -160,6 +161,24 @@ export async function runPaymentOperationProviderReadinessTests() {
   assert.equal(readinessPage.includes('CheckoutOrder" SET'), false);
   assert.equal(readinessPage.includes('CheckoutPaymentAttempt" SET'), false);
 
+  assert.ok(operationsPage.includes('/admin/payments/operations/providers'));
+  assert.ok(operationsPage.includes('/admin/payments/operations/history'));
+  assert.ok(operationsPage.includes('/admin/payments/operations/preview'));
+  assert.ok(operationsPage.includes('Execution remains disabled'));
+  assert.ok(operationsPage.includes('navigation-only'));
+  assert.equal(operationsPage.includes('fetch('), false);
+  assert.equal(operationsPage.includes('@prisma/client'), false);
+  assert.equal(operationsPage.includes('prisma.'), false);
+  assert.equal(operationsPage.includes('executePaymentOperationAdapter'), false);
+  assert.equal(operationsPage.includes('createStripePaymentOperationHttpAdapter'), false);
+  assert.equal(operationsPage.includes('createZarinPalPaymentOperationHttpAdapter'), false);
+  assert.equal(operationsPage.includes('https://api.stripe.com'), false);
+  assert.equal(operationsPage.includes('https://www.zarinpal.com'), false);
+  assert.equal(operationsPage.includes('onClick='), false);
+  assert.equal(operationsPage.includes('<button'), false);
+  assert.equal(operationsPage.includes('CheckoutOrder" SET'), false);
+  assert.equal(operationsPage.includes('CheckoutPaymentAttempt" SET'), false);
+
   assert.ok(settlementPage.includes('/admin/payments/operations/providers'));
   assert.ok(settlementPage.includes('/admin/payments/operations/history'));
   assert.ok(settlementPage.includes('/admin/payments/operations/preview'));
@@ -180,6 +199,7 @@ export async function runPaymentOperationProviderReadinessTests() {
 
   assert.ok(phase33Docs.includes('read-only provider-operation readiness diagnostics'));
   assert.ok(phase33Docs.includes('/admin/payments/operations/providers'));
+  assert.ok(phase33Docs.includes('/admin/payments/operations`'));
   assert.ok(phase33Docs.includes('payment settlement admin page'));
 
   console.log('payment-operation-provider-readiness.test.ts passed');
