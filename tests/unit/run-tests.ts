@@ -214,7 +214,7 @@ async function main() {
   await runProductVariantMapperTests();
   await runPromotionDiscountModelTests();
   await runPromotionVoucherModelTests();
-  await runPromotionValidityWindowsTests();
+  await runPromotionValidityWindowsModelTests();
   await runPromotionUsageLimitsModelTests();
   await runPromotionEligibilityRulesModelTests();
   await runPromotionOrderMinimumsModelTests();
