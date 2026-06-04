@@ -6,6 +6,8 @@ import { listProducts } from '@/lib/cms/catalog-repository';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { getStorefrontCopy, getStorefrontCopyDirection } from '@/lib/localization/storefront-copy';
 
+type ProductsSearchParams = { q?: string };
+
 function normalizeSearch(value?: string) {
   return value?.trim().replace(/\s+/g, ' ') ?? '';
 }
@@ -18,10 +20,11 @@ function productMatchesSearch(product: Awaited<ReturnType<typeof listProducts>>[
     .some((value) => value?.toLowerCase().includes(query));
 }
 
-export default async function ProductsPage({ searchParams }: { searchParams?: Promise<{ q?: string }> }) {
-  const [{ q }, locale] = await Promise.all([searchParams ?? Promise.resolve({}), resolveStorefrontLocale()]);
+export default async function ProductsPage({ searchParams }: { searchParams?: Promise<ProductsSearchParams> }) {
+  const emptySearchParams: ProductsSearchParams = {};
+  const [resolvedSearchParams, locale] = await Promise.all([searchParams ?? Promise.resolve(emptySearchParams), resolveStorefrontLocale()]);
+  const search = normalizeSearch(resolvedSearchParams.q);
   const products = await listProducts({ locale });
-  const search = normalizeSearch(q);
   const filteredProducts = products.filter((product) => productMatchesSearch(product, search));
 
   return (
