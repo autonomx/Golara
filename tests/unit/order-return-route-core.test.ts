@@ -4,8 +4,10 @@ import {
   checkoutReturnFallbackUrl,
   checkoutReturnSuccessUrl,
   normalizeHostedCheckoutReturnStatus,
-  normalizeZarinpalReturnStatus
+  normalizeZarinpalReturnStatus,
+  type CheckoutReturnApplyInput
 } from '../../lib/checkout/order-return-route-core';
+import { checkoutReturnRouteRedirect } from '../../lib/checkout/order-return-route-handler-core';
 
 const requestUrl = 'https://golara.example/orders/return?order=GOL-1001&token=lookup-token-123456&provider=zarinpal&Authority=A0001&Status=OK';
 
@@ -74,6 +76,36 @@ export async function runOrderReturnRouteCoreTests() {
     checkoutReturnSuccessUrl(requestUrl, { publicLookupToken: null, status: 'paid' }).toString(),
     'https://golara.example/orders/confirmation?result=missing-token'
   );
+
+  const appliedInputs: CheckoutReturnApplyInput[] = [];
+  const success = await checkoutReturnRouteRedirect({
+    requestUrl: 'https://golara.example/orders/return?order=GOL-1005&token=lookup-token-route&provider=stripe&payment=success&session_id=cs_test_456',
+    applyResult: async (input) => {
+      appliedInputs.push(input);
+      return { publicLookupToken: 'public-token-route', status: 'paid' };
+    }
+  });
+  assert.equal(success.applied, true);
+  assert.equal(success.error, undefined);
+  assert.equal(success.redirectUrl.toString(), 'https://golara.example/orders/public-token-route?result=paid');
+  assert.deepEqual(appliedInputs, [{
+    orderNumber: 'GOL-1005',
+    token: 'lookup-token-route',
+    status: 'paid',
+    provider: 'stripe',
+    providerReference: 'cs_test_456',
+    authority: undefined
+  }]);
+
+  const failure = await checkoutReturnRouteRedirect({
+    requestUrl: 'https://golara.example/orders/return?order=GOL-1006&token=short&provider=zarinpal&Authority=A0002&Status=OK',
+    applyResult: async () => {
+      throw new Error('invalid return reference');
+    }
+  });
+  assert.equal(failure.applied, false);
+  assert.ok(failure.error instanceof Error);
+  assert.equal(failure.redirectUrl.toString(), 'https://golara.example/orders/confirmation?result=failed');
 
   console.log('order-return-route-core.test.ts passed');
 }
