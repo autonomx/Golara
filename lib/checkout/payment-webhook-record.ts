@@ -22,6 +22,16 @@ export type PaymentWebhookRecordPlan = {
   metadata: Record<string, string | number | boolean>;
 };
 
+export type PaymentWebhookEventPersistenceInput = {
+  paymentAttemptId: string;
+  provider: string;
+  eventType: string;
+  idempotencyKey: string;
+  status: PaymentWebhookStatus;
+  processedAt?: Date;
+  metadata: Record<string, string | number | boolean>;
+};
+
 export function planPaymentWebhookRecord(input: {
   event: NormalizedPaymentWebhookEvent;
   existingIdempotencyKey?: string | null;
@@ -56,6 +66,39 @@ export function planPaymentWebhookRecord(input: {
       hasSettlementAmount: Boolean(input.event.amountCents),
       hasSettlementCurrency: Boolean(input.event.currency),
       receivedAt: input.event.receivedAt.toISOString()
+    }
+  };
+}
+
+export function buildPaymentWebhookEventPersistenceInput(input: {
+  paymentAttemptId: string;
+  event: NormalizedPaymentWebhookEvent;
+  plan?: PaymentWebhookRecordPlan;
+  processedAt?: Date;
+}): PaymentWebhookEventPersistenceInput {
+  const paymentAttemptId = input.paymentAttemptId.trim();
+  if (!paymentAttemptId) throw new Error('paymentAttemptId is required for payment webhook event persistence.');
+  const plan = input.plan ?? planPaymentWebhookRecord({ event: input.event });
+
+  return {
+    paymentAttemptId,
+    provider: input.event.provider,
+    eventType: input.event.eventName,
+    idempotencyKey: input.event.idempotencyKey,
+    status: input.event.status,
+    processedAt: input.processedAt,
+    metadata: {
+      ...plan.metadata,
+      providerReference: input.event.providerReference || '',
+      orderNumber: input.event.orderNumber || '',
+      publicLookupToken: input.event.publicLookupToken || '',
+      amountCents: input.event.amountCents ?? 0,
+      currency: input.event.currency || '',
+      payloadDigest: input.event.payloadDigest,
+      persistenceStatus: plan.persistenceStatus,
+      shouldApplyPaymentState: plan.shouldApplyPaymentState,
+      shouldReconcileSettlement: plan.shouldReconcileSettlement,
+      needsAttention: plan.needsAttention
     }
   };
 }
