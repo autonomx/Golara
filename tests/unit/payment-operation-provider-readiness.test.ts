@@ -12,6 +12,7 @@ function source(path: string) {
 
 export async function runPaymentOperationProviderReadinessTests() {
   const readinessSource = source('lib/checkout/payment-operation-provider-readiness.ts');
+  const readinessPanel = source('components/admin/AdminPaymentOperationProviderReadinessPanel.tsx');
   const phase33Docs = source('docs/production-roadmap-phase33-payment-operations.md');
 
   const stripeBlocked = buildPaymentOperationProviderReadiness({ provider: 'stripe', env: {} });
@@ -90,6 +91,22 @@ export async function runPaymentOperationProviderReadinessTests() {
   assert.equal(readinessSource.includes('createZarinPalPaymentOperationHttpAdapter'), false);
   assert.equal(readinessSource.includes('https://api.stripe.com'), false);
   assert.equal(readinessSource.includes('https://www.zarinpal.com'), false);
+
+  assert.ok(readinessPanel.includes('AdminPaymentOperationProviderReadinessPanel'));
+  assert.ok(readinessPanel.includes('PaymentOperationProviderReadinessSummary'));
+  assert.ok(readinessPanel.includes('Read-only diagnostics'));
+  assert.ok(readinessPanel.includes('without secrets, provider calls, or execution controls'));
+  assert.ok(readinessPanel.includes('Execution:</span> disabled'));
+  assert.equal(readinessPanel.includes('fetch('), false);
+  assert.equal(readinessPanel.includes('@prisma/client'), false);
+  assert.equal(readinessPanel.includes('prisma.'), false);
+  assert.equal(readinessPanel.includes('executePaymentOperationAdapter'), false);
+  assert.equal(readinessPanel.includes('createStripePaymentOperationHttpAdapter'), false);
+  assert.equal(readinessPanel.includes('createZarinPalPaymentOperationHttpAdapter'), false);
+  assert.equal(readinessPanel.includes('onClick='), false);
+  assert.equal(readinessPanel.includes('<button'), false);
+  assert.equal(readinessPanel.includes('CheckoutOrder" SET'), false);
+  assert.equal(readinessPanel.includes('CheckoutPaymentAttempt" SET'), false);
 
   assert.ok(phase33Docs.includes('read-only provider-operation readiness diagnostics'));
 
