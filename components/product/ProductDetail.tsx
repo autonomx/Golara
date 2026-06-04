@@ -2,7 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { addToCartAction } from '@/app/cart/actions';
 import type { Category, Product } from '@/lib/catalog';
-import { formatPrice } from '@/lib/catalog';
+import { formatPrice } from '@/lib/catalog-pricing';
 import type { ProductCheckoutPolicy } from '@/lib/checkout/product-checkout-policy';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 import { getStorefrontCopy } from '@/lib/localization/storefront-copy';
