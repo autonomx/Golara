@@ -16,11 +16,16 @@ export async function runPaymentGatewayLaunchDocsTests() {
   assert.match(checklist, /PAYMENT_SETTLEMENT_MIGRATION_CONFIRMED="true"/);
   assert.match(checklist, /PAYMENT_WEBHOOK_SMOKE_TESTS_CONFIRMED="true"/);
   assert.match(checklist, /docs\/production-roadmap-phase32-payment-webhook-smoke-tests\.md/);
+  assert.match(checklist, /docs\/production-roadmap-phase32-payment-webhook-validation-evidence\.md/);
+  assert.match(checklist, /docs\/production-roadmap-phase32-settlement-migration-contract\.md/);
   assert.match(checklist, /admin\/payments\/settlement/);
   assert.match(checklist, /admin\/payments\/alerts/);
+  assert.match(checklist, /evidence capture/);
   assert.match(checklist, /Roll back to `CHECKOUT_MODE="inquiry"`|Switch `CHECKOUT_MODE` back to `inquiry`/);
 
   assert.match(productionChecklist, /docs\/production-payment-gateway-launch-checklist\.md/);
+  assert.match(productionChecklist, /docs\/production-roadmap-phase32-payment-webhook-validation-evidence\.md/);
+  assert.match(productionChecklist, /docs\/production-roadmap-phase32-settlement-migration-contract\.md/);
   assert.match(productionChecklist, /PAYMENT_SETTLEMENT_MIGRATION_CONFIRMED/);
   assert.match(productionChecklist, /PAYMENT_WEBHOOK_SMOKE_TESTS_CONFIRMED/);
   assert.match(productionChecklist, /Phase 32 settlement reconciliation migration/);
