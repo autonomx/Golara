@@ -6,7 +6,7 @@ This note supplements `docs/production-roadmap.md` while Phase 32 is in progress
 
 ## Current status
 
-Phase 32 is in progress. Golara now has provider-neutral payment webhook normalization, idempotent inbound webhook persistence, webhook signature verification, minimal provider webhook routes, trusted webhook-driven checkout state transitions, read-only settlement reconciliation, authenticated admin settlement visibility, main admin navigation access, payment webhook alert planning, and a read-only admin webhook alert surface for:
+Phase 32 is in progress. Golara now has provider-neutral payment webhook normalization, idempotent inbound webhook persistence, webhook signature verification, minimal provider webhook routes, trusted webhook-driven checkout state transitions, read-only settlement reconciliation, authenticated admin settlement visibility, main admin navigation access, payment webhook alert planning, a read-only admin webhook alert surface, and sidebar navigation for settlement and alert workflows for:
 
 - **Stripe Checkout Sessions** webhooks.
 - **ZarinPal** verification/callback-style payment events.
@@ -38,7 +38,8 @@ Phase 32 is in progress. Golara now has provider-neutral payment webhook normali
 - Added `Payment settlement` to the main admin sidebar under Customer Ops.
 - Added `lib/checkout/payment-webhook-alerts.ts` for retry/alert planning around failed, pending, missing-attempt, stale-pending, and settlement-mismatch payment webhook events.
 - Added `lib/checkout/payment-webhook-alert-service.ts`, `components/admin/AdminPaymentWebhookAlertsPanel.tsx`, and `app/admin/payments/alerts/page.tsx` for read-only operator alert visibility.
-- Added supplemental source/pure guard tests for webhook service, route handling, signatures, state transitions, settlement reconciliation, settlement summary service, admin settlement visibility, settlement navigation, webhook alert planning, and webhook alert admin visibility.
+- Added `Payment alerts` to the main admin sidebar under Customer Ops.
+- Added supplemental source/pure guard tests for webhook service, route handling, signatures, state transitions, settlement reconciliation, settlement summary service, admin settlement visibility, settlement navigation, webhook alert planning, webhook alert admin visibility, and webhook alert navigation.
 - Kept supplemental test files separate because edits to `tests/unit/run-tests.ts` have been unreliable in the connector environment.
 
 ## Still pending before Phase 32 is complete
@@ -46,9 +47,8 @@ Phase 32 is in progress. Golara now has provider-neutral payment webhook normali
 - Wire supplemental Phase 32 test files into `tests/unit/run-tests.ts` when runner edits are safe, or fold their coverage into an existing wired test file.
 - Validate Stripe and ZarinPal webhook signature behavior against live/staging provider dashboards.
 - Add persisted settlement reconciliation records/views if durable settlement history is required beyond read-only summaries.
-- Add main admin navigation for the webhook alerts page if operator access should be one-click from the sidebar.
 - Run production/staging webhook smoke tests with real provider credentials and callback URLs.
 
 ## Notes
 
-Phase 32 now has an end-to-end foundation from provider webhook receipt to idempotent event persistence, optional signature verification, trusted matched checkout state transitions, read-only settlement classification, operator settlement visibility, admin navigation access for settlement, retry/alert planning, and a read-only alert surface. Production trust still depends on configured webhook secrets, live provider dashboard validation, and smoke testing. Durable settlement history, dashboard imports, and actual outbound alert delivery remain pending.
+Phase 32 now has an end-to-end foundation from provider webhook receipt to idempotent event persistence, optional signature verification, trusted matched checkout state transitions, read-only settlement classification, operator settlement visibility, sidebar navigation for settlement and alert workflows, retry/alert planning, and a read-only alert surface. Production trust still depends on configured webhook secrets, live provider dashboard validation, and smoke testing. Durable settlement history, dashboard imports, and actual outbound alert delivery remain pending.
