@@ -46,6 +46,8 @@ export type ProviderPaymentOperationResponse = {
   body?: Record<string, unknown> | null;
 };
 
+export type ProviderPaymentOperationHttpClient = (request: ProviderPaymentOperationRequest) => Promise<ProviderPaymentOperationResponse>;
+
 function cleanProvider(provider: string): PaymentOperationAdapterProvider {
   const normalized = provider.trim().toLowerCase();
   if (normalized === 'stripe') return 'stripe';
@@ -88,6 +90,18 @@ function baseMetadata(input: PaymentOperationAdapterInput): Record<string, strin
     reason: input.reason?.trim() || null,
     idempotencyKey: input.idempotencyKey.trim(),
     ...(input.metadata ?? {})
+  };
+}
+
+function unavailableHttpClientResult(provider: PaymentOperationAdapterProvider, input: PaymentOperationAdapterInput): PaymentOperationAdapterResult {
+  return {
+    provider,
+    operationKind: input.operationKind,
+    status: 'unavailable',
+    errorCategory: 'provider_http_client_missing',
+    retryable: false,
+    message: `${provider} payment operation execution requires an injected provider HTTP client.`,
+    metadata: baseMetadata(input)
   };
 }
 
@@ -241,6 +255,34 @@ export function normalizeZarinPalPaymentOperationResponse(input: PaymentOperatio
     retryable: response.status >= 500,
     message: providerResponseError(response.body, `ZarinPal returned HTTP ${response.status}.`),
     metadata: { ...baseMetadata(input), httpStatus: response.status }
+  };
+}
+
+export function createStripePaymentOperationHttpAdapter(options: { secretKey?: string; httpClient?: ProviderPaymentOperationHttpClient } = {}): PaymentOperationAdapter {
+  return {
+    provider: 'stripe',
+    supports: ['refund', 'void'],
+    async execute(input) {
+      if (!options.httpClient) return unavailableHttpClientResult('stripe', input);
+      const request = buildStripePaymentOperationRequest(input, options.secretKey);
+      if ('status' in request) return request;
+      const response = await options.httpClient(request);
+      return normalizeStripePaymentOperationResponse(input, response);
+    }
+  };
+}
+
+export function createZarinPalPaymentOperationHttpAdapter(options: { merchantId?: string; httpClient?: ProviderPaymentOperationHttpClient } = {}): PaymentOperationAdapter {
+  return {
+    provider: 'zarinpal',
+    supports: ['refund', 'void'],
+    async execute(input) {
+      if (!options.httpClient) return unavailableHttpClientResult('zarinpal', input);
+      const request = buildZarinPalPaymentOperationRequest(input, options.merchantId);
+      if ('status' in request) return request;
+      const response = await options.httpClient(request);
+      return normalizeZarinPalPaymentOperationResponse(input, response);
+    }
   };
 }
 
