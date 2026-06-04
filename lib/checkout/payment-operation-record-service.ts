@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { executePaymentOperationAdapter, type PaymentOperationAdapter, type PaymentOperationAdapterProvider, type PaymentOperationAdapterResult } from './payment-operation-adapters';
+import { executePaymentOperationAdapter, type PaymentOperationAdapter, type PaymentOperationAdapterInput, type PaymentOperationAdapterProvider, type PaymentOperationAdapterResult } from './payment-operation-adapters';
 import { recordPaymentOperationAuditEvent } from './payment-operation-audit';
 import {
   getPaymentOperationRecordsMigrationStatus,
@@ -103,7 +103,7 @@ async function auditRecordTransition(
   });
 }
 
-function adapterInput(record: PaymentOperationRecordRow) {
+function adapterInput(record: PaymentOperationRecordRow): PaymentOperationAdapterInput | null {
   const kind = operationKind(record);
   if (!kind) return null;
   return {
