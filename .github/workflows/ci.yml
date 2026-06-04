@@ -40,3 +40,4 @@ jobs:
           name: ci-command-logs
           path: ci-results
           if-no-files-found: ignore
+# CI trigger marker: current main verification
