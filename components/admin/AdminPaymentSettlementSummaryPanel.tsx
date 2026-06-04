@@ -9,6 +9,18 @@ function statusLabel(status: string) {
   return status.replace(/_/g, ' ');
 }
 
+function sourceLabel(source: PaymentSettlementSummary['source']) {
+  if (source === 'durable-reconciliation') return 'Durable settlement records';
+  if (source === 'payment-events') return 'Payment event fallback';
+  return 'Settlement data unavailable';
+}
+
+function sourceDescription(source: PaymentSettlementSummary['source']) {
+  if (source === 'durable-reconciliation') return 'Summary is backed by PaymentSettlementReconciliation rows.';
+  if (source === 'payment-events') return 'Summary is derived from CheckoutPaymentEvent rows because no durable reconciliation rows were available.';
+  return 'Summary is empty because no database connection is available.';
+}
+
 export function AdminPaymentSettlementSummaryPanel({ summary }: { summary: PaymentSettlementSummary }) {
   const cards = [
     ['Settled', summary.settled],
@@ -26,8 +38,12 @@ export function AdminPaymentSettlementSummaryPanel({ summary }: { summary: Payme
           <h2 className="mt-1 text-2xl font-bold text-stone-950">Settlement reconciliation</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">Read-only summary of recent payment webhook events compared with checkout order totals and currencies.</p>
         </div>
-        <p className="rounded-full bg-stone-100 px-3 py-1 text-xs font-semibold text-stone-700">{summary.total} recent events</p>
+        <div className="flex flex-col items-start gap-2 sm:items-end">
+          <p className="rounded-full bg-stone-100 px-3 py-1 text-xs font-semibold text-stone-700">{summary.total} recent events</p>
+          <p className="rounded-full bg-stone-50 px-3 py-1 text-xs font-semibold text-stone-600">{sourceLabel(summary.source)}</p>
+        </div>
       </div>
+      <p className="mt-3 text-xs text-stone-500">{sourceDescription(summary.source)}</p>
 
       <div className="mt-5 grid gap-3 md:grid-cols-5">
         {cards.map(([label, value]) => (
