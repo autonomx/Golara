@@ -215,7 +215,7 @@ async function main() {
   await runPromotionValidityWindowsModelTests();
   await runPromotionUsageLimitsModelTests();
   await runPromotionEligibilityRulesModelTests();
-  await runPromotionOrderMinimumsTests();
+  await runPromotionOrderMinimumsModelTests();
   await runPromotionStoreCreditFoundationModelTests();
   await runPromotionAuditLogsModelTests();
   await runPromotionSchemaParityTests();
