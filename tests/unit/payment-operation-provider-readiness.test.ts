@@ -37,6 +37,7 @@ export async function runPaymentOperationProviderReadinessTests() {
   const settlementPage = source('app/admin/payments/settlement/page.tsx');
   const navigationDocs = source('docs/production-roadmap-phase33-payment-operation-admin-navigation.md');
   const operatorRunbook = source('docs/production-roadmap-phase33-payment-operation-operator-runbook.md');
+  const goNoGoChecklist = source('docs/production-roadmap-phase33-refund-void-go-no-go-checklist.md');
   const phase33Docs = source('docs/production-roadmap-phase33-payment-operations.md');
 
   const stripeBlocked = buildPaymentOperationProviderReadiness({ provider: 'stripe', env: {} });
@@ -188,6 +189,15 @@ export async function runPaymentOperationProviderReadinessTests() {
   assert.ok(operatorRunbook.includes('docs/production-roadmap-phase33-provider-endpoint-mapping-readiness.md'));
   assertNoExecutionSurface(operatorRunbook);
 
+  assert.ok(goNoGoChecklist.includes('Status: **NO-GO for live refund/void execution**'));
+  assert.ok(goNoGoChecklist.includes('PAYMENT_OPERATION_RECORDS_MIGRATION_CONFIRMED=true'));
+  assert.ok(goNoGoChecklist.includes('docs/production-roadmap-phase33-provider-endpoint-mapping-readiness.md'));
+  assert.ok(goNoGoChecklist.includes('Go criteria for a future guarded execution slice'));
+  assert.ok(goNoGoChecklist.includes('No-go triggers'));
+  assert.ok(goNoGoChecklist.includes('truthful verification reporting'));
+  assert.ok(goNoGoChecklist.includes('admin navigation that remains read-only'));
+  assertNoExecutionSurface(goNoGoChecklist);
+
   assert.ok(phase33Docs.includes('read-only provider-operation readiness diagnostics'));
   assert.ok(phase33Docs.includes('/admin/payments/operations/providers'));
   assert.ok(phase33Docs.includes('/admin/payments/operations`'));
@@ -195,6 +205,7 @@ export async function runPaymentOperationProviderReadinessTests() {
   assert.ok(phase33Docs.includes('navigation consistency'));
   assert.ok(phase33Docs.includes('payment-operation-admin-navigation'));
   assert.ok(phase33Docs.includes('payment-operation-operator-runbook'));
+  assert.ok(phase33Docs.includes('refund-void-go-no-go-checklist'));
 
   console.log('payment-operation-provider-readiness.test.ts passed');
 }
