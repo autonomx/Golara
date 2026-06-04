@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
+  normalizePaymentWebhookEvent,
+  normalizeStripeWebhookStatus,
+  normalizeZarinpalWebhookStatus,
+  paymentWebhookIdempotencyKey,
+  summarizePaymentWebhookSettlement
+} from '../../lib/checkout/payment-webhook-core';
+import {
   WEBHOOK_EVENT_LOG_STATUSES,
   buildWebhookEventLogSummary,
   createWebhookPayloadDigest,
@@ -14,6 +21,7 @@ function source(path: string) {
 export async function runWebhookEventLogTests() {
   const migration = source('prisma/migrations/20260603090000_add_webhook_event_log/migration.sql');
   const service = source('lib/settings/webhook-event-log.ts');
+  const paymentWebhookCore = source('lib/checkout/payment-webhook-core.ts');
   const panel = source('components/admin/AdminWebhookEventLogPanel.tsx');
   const fulfillmentPanel = source('components/admin/AdminFulfillmentSettingsPanel.tsx');
   const roadmap = source('docs/ADMIN_SALEOR_PARITY_ROADMAP.md');
@@ -36,6 +44,10 @@ export async function runWebhookEventLogTests() {
   assert.match(service, /FROM "WebhookEventLog"/);
   assert.match(service, /INSERT INTO "WebhookEventLog"/);
   assert.match(service, /action: 'settings\.webhook_event_log\.record'/);
+
+  assert.match(paymentWebhookCore, /export function normalizePaymentWebhookEvent/);
+  assert.match(paymentWebhookCore, /export function paymentWebhookIdempotencyKey/);
+  assert.match(paymentWebhookCore, /export function summarizePaymentWebhookSettlement/);
 
   const digestA = createWebhookPayloadDigest({ b: 2, a: 1 });
   const digestB = createWebhookPayloadDigest({ a: 1, b: 2 });
@@ -92,6 +104,98 @@ export async function runWebhookEventLogTests() {
   assert.equal(summary.abandoned, 1);
   assert.equal(summary.needsAttention, 3);
   assert.equal(summary.recent.length, 5);
+
+  assert.equal(normalizeStripeWebhookStatus('checkout.session.completed', 'paid'), 'paid');
+  assert.equal(normalizeStripeWebhookStatus('checkout.session.expired'), 'cancelled');
+  assert.equal(normalizeStripeWebhookStatus('payment_intent.payment_failed'), 'failed');
+  assert.equal(normalizeZarinpalWebhookStatus('OK'), 'paid');
+  assert.equal(normalizeZarinpalWebhookStatus('NOK'), 'failed');
+  assert.equal(normalizeZarinpalWebhookStatus('cancelled'), 'cancelled');
+
+  const stripePaid = normalizePaymentWebhookEvent({
+    provider: 'stripe',
+    eventType: 'checkout.session.completed',
+    receivedAt: '2026-06-04T08:00:00.000Z',
+    payload: {
+      id: 'evt_1',
+      type: 'checkout.session.completed',
+      data: {
+        object: {
+          id: 'cs_test_paid_123',
+          payment_status: 'paid',
+          amount_total: 420000,
+          currency: 'USD',
+          metadata: {
+            orderNumber: 'GOL-2001',
+            publicLookupToken: 'public-token-stripe'
+          }
+        }
+      }
+    }
+  });
+  assert.equal(stripePaid.provider, 'stripe');
+  assert.equal(stripePaid.eventName, 'checkout.session.completed');
+  assert.equal(stripePaid.status, 'paid');
+  assert.equal(stripePaid.providerReference, 'cs_test_paid_123');
+  assert.equal(stripePaid.orderNumber, 'GOL-2001');
+  assert.equal(stripePaid.publicLookupToken, 'public-token-stripe');
+  assert.equal(stripePaid.amountCents, 420000);
+  assert.equal(stripePaid.currency, 'usd');
+  assert.equal(stripePaid.payloadDigest.length, 64);
+  assert.equal(stripePaid.idempotencyKey, paymentWebhookIdempotencyKey(stripePaid));
+
+  const stripeExpired = normalizePaymentWebhookEvent({
+    provider: 'stripe',
+    eventType: 'checkout.session.expired',
+    payload: {
+      data: {
+        object: {
+          id: 'cs_test_expired_123',
+          metadata: { order_number: 'GOL-2002' }
+        }
+      }
+    }
+  });
+  assert.equal(stripeExpired.status, 'cancelled');
+  assert.equal(stripeExpired.orderNumber, 'GOL-2002');
+
+  const zarinpalPaid = normalizePaymentWebhookEvent({
+    provider: 'zarin-pal',
+    eventType: 'zarinpal.verify',
+    receivedAt: '2026-06-04T09:00:00.000Z',
+    payload: {
+      Status: 'OK',
+      Authority: 'A0001',
+      RefID: '123456',
+      order: 'GOL-3001',
+      token: 'public-token-zarinpal',
+      amount: '850000',
+      currency: 'IRT'
+    }
+  });
+  assert.equal(zarinpalPaid.provider, 'zarinpal');
+  assert.equal(zarinpalPaid.status, 'paid');
+  assert.equal(zarinpalPaid.providerReference, '123456');
+  assert.equal(zarinpalPaid.orderNumber, 'GOL-3001');
+  assert.equal(zarinpalPaid.publicLookupToken, 'public-token-zarinpal');
+  assert.equal(zarinpalPaid.amountCents, 850000);
+  assert.equal(zarinpalPaid.currency, 'irt');
+
+  const settlement = summarizePaymentWebhookSettlement([
+    stripePaid,
+    stripeExpired,
+    zarinpalPaid,
+    normalizePaymentWebhookEvent({ provider: 'zarinpal', payload: { Status: 'NOK', Authority: 'A0002' } }),
+    normalizePaymentWebhookEvent({ provider: 'unknown', payload: { id: 'evt_unknown' } })
+  ]);
+  assert.deepEqual(settlement, {
+    total: 5,
+    paid: 2,
+    failed: 1,
+    cancelled: 1,
+    pending: 1,
+    needsAttention: 2
+  });
 
   assert.match(panel, /export function AdminWebhookEventLogPanel/);
   assert.match(panel, /Webhook event log/);
