@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { cmsCategoryService } from '@/lib/cms/category-service';
 import { normalizeImageUrl } from '@/lib/media/media-storage';
-import { hasDatabase } from '@/lib/prisma';
+import { hasDatabase, prisma } from '@/lib/prisma';
 
 async function ensureCanWriteHomepageCategory() {
   await assertAdminRole('owner');
@@ -47,6 +47,18 @@ function optionalParentId(formData: FormData, categoryId: string) {
   return parentId && parentId !== categoryId ? parentId : null;
 }
 
+function homepageCategoryReturnPath(status: string, page?: string) {
+  const params = new URLSearchParams({ status });
+  if (page && page !== '1') params.set('occasionPage', page);
+  return `/admin/homepage?${params.toString()}`;
+}
+
+function revalidateHomepageCategoryPaths() {
+  revalidatePath('/');
+  revalidatePath('/categories');
+  revalidatePath('/admin/homepage');
+}
+
 export async function updateHomepageCategoryTileAction(categoryId: string, formData: FormData) {
   await ensureCanWriteHomepageCategory();
   if (!categoryId) throw new Error('categoryId is required');
@@ -63,8 +75,36 @@ export async function updateHomepageCategoryTileAction(categoryId: string, formD
     isActive: boolField(formData, 'isActive')
   });
 
-  revalidatePath('/');
-  revalidatePath('/categories');
-  revalidatePath('/admin/homepage');
-  redirect('/admin/homepage?status=homepage-category-updated');
+  revalidateHomepageCategoryPaths();
+  redirect(homepageCategoryReturnPath('homepage-category-updated', stringField(formData, 'occasionPage')));
+}
+
+export async function addHomepageCategoryTileAction(formData: FormData) {
+  await ensureCanWriteHomepageCategory();
+  const categoryId = requiredString(formData, 'categoryId');
+
+  await prisma.category.update({
+    where: { id: categoryId },
+    data: {
+      showOnHomepage: true,
+      isActive: true,
+      sortOrder: intField(formData, 'sortOrder', 100)
+    }
+  });
+
+  revalidateHomepageCategoryPaths();
+  redirect('/admin/homepage?status=homepage-category-added');
+}
+
+export async function removeHomepageCategoryTileAction(categoryId: string, formData: FormData) {
+  await ensureCanWriteHomepageCategory();
+  if (!categoryId) throw new Error('categoryId is required');
+
+  await prisma.category.update({
+    where: { id: categoryId },
+    data: { showOnHomepage: false }
+  });
+
+  revalidateHomepageCategoryPaths();
+  redirect(homepageCategoryReturnPath('homepage-category-removed', stringField(formData, 'occasionPage')));
 }
