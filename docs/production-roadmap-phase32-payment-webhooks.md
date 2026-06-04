@@ -6,7 +6,7 @@ This note supplements `docs/production-roadmap.md` while Phase 32 is in progress
 
 ## Current status
 
-Phase 32 is in progress. Golara now has provider-neutral payment webhook normalization, persistable webhook record planning, and database-facing payment event persistence input foundations for:
+Phase 32 is in progress. Golara now has provider-neutral payment webhook normalization, idempotent inbound webhook persistence, webhook signature verification, minimal provider webhook routes, trusted webhook-driven checkout state transitions, read-only settlement reconciliation, and an authenticated admin settlement visibility page for:
 
 - **Stripe Checkout Sessions** webhooks.
 - **ZarinPal** verification/callback-style payment events.
@@ -22,16 +22,31 @@ Phase 32 is in progress. Golara now has provider-neutral payment webhook normali
 - Added record planning for recorded, duplicate, and needs-attention webhook states.
 - Added explicit decisions for when a webhook may apply payment state and when it becomes a settlement reconciliation candidate.
 - Added a `CheckoutPaymentEvent` persistence input builder that targets the existing provider/idempotency unique event table.
-- Folded payment webhook normalization, record-planning, schema-guard, and persistence-input coverage into the existing wired webhook event log unit test path.
+- Added `lib/checkout/payment-webhook-service.ts` for DB-backed inbound webhook persistence through the existing `CheckoutPaymentEvent` table.
+- Added duplicate protection via the existing unique provider/idempotency key.
+- Added minimal payment webhook routes:
+  - `app/api/webhooks/payments/stripe/route.ts`
+  - `app/api/webhooks/payments/zarinpal/route.ts`
+- Added `lib/checkout/payment-webhook-route-core.ts` for provider-neutral webhook route handling.
+- Added `lib/checkout/payment-webhook-signature.ts` for Stripe and ZarinPal/Golara-style HMAC signature checks.
+- Updated webhook routes to read raw request bodies, verify signatures when secrets are configured, then parse JSON and record events.
+- Added `lib/checkout/payment-webhook-transition-plan.ts` for pure webhook-to-checkout state transition planning.
+- Integrated trusted webhook state transitions into `payment-webhook-service.ts` so matched trusted webhook events can update `CheckoutPaymentAttempt.status`, `CheckoutOrder.status`, and payment-result timeline events after the webhook event is created.
+- Added `lib/checkout/payment-settlement-reconciliation.ts` for pure settlement classification.
+- Added `lib/checkout/payment-settlement-service.ts` for read-only settlement summaries derived from recorded `CheckoutPaymentEvent` rows.
+- Added `components/admin/AdminPaymentSettlementSummaryPanel.tsx` and `app/admin/payments/settlement/page.tsx` for authenticated settlement visibility.
+- Added supplemental source/pure guard tests for webhook service, route handling, signatures, state transitions, settlement reconciliation, settlement summary service, and admin settlement visibility.
+- Kept supplemental test files separate because edits to `tests/unit/run-tests.ts` have been unreliable in the connector environment.
 
 ## Still pending before Phase 32 is complete
 
-- Add route handlers for Stripe and ZarinPal payment webhooks.
-- Persist inbound payment webhook events and idempotency decisions through database-backed services/routes.
-- Apply authoritative webhook-paid state transitions to checkout orders and payment attempts.
-- Add settlement reconciliation records/views for provider reference, amount, currency, order, and webhook status.
-- Add retry/alerting behavior for failed or pending payment webhook events.
+- Wire supplemental Phase 32 test files into `tests/unit/run-tests.ts` when runner edits are safe, or fold their coverage into an existing wired test file.
+- Validate Stripe and ZarinPal webhook signature behavior against live/staging provider dashboards.
+- Add persisted settlement reconciliation records/views if durable settlement history is required beyond read-only summaries.
+- Add the settlement page to the main admin sidebar/navigation.
+- Add retry/alerting behavior for failed, pending, or needs-attention payment webhook events.
+- Run production/staging webhook smoke tests with real provider credentials and callback URLs.
 
 ## Notes
 
-The current Phase 32 work is deliberately pure and network-free. It prepares normalized webhook events, idempotent record plans, existing-table persistence inputs, and settlement candidates but does not yet make webhooks authoritative, persist inbound provider events through a route/service, or reconcile settlement against provider dashboards.
+Phase 32 now has an end-to-end foundation from provider webhook receipt to idempotent event persistence, optional signature verification, trusted matched checkout state transitions, read-only settlement classification, and operator settlement visibility. Production trust still depends on configured webhook secrets, live provider dashboard validation, and smoke testing. Durable settlement history, dashboard imports, and alerting remain pending.
