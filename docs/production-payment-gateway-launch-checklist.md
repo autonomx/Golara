@@ -2,7 +2,7 @@
 
 Last updated: 2026-06-04
 
-Use this checklist before enabling `CHECKOUT_MODE="gateway"` in a production deployment. It supplements `docs/PRODUCTION_CHECKLIST.md`, `docs/production-roadmap-phase32-payment-webhooks.md`, and `docs/production-roadmap-phase32-payment-webhook-smoke-tests.md`.
+Use this checklist before enabling `CHECKOUT_MODE="gateway"` in a production deployment. It supplements `docs/PRODUCTION_CHECKLIST.md`, `docs/production-roadmap-phase32-payment-webhooks.md`, `docs/production-roadmap-phase32-payment-webhook-smoke-tests.md`, `docs/production-roadmap-phase32-payment-webhook-validation-evidence.md`, and `docs/production-roadmap-phase32-settlement-migration-contract.md`.
 
 This checklist is not required for an inquiry-first launch where checkout remains `CHECKOUT_MODE="inquiry"`.
 
@@ -61,10 +61,18 @@ Set `PAYMENT_SETTLEMENT_MIGRATION_CONFIRMED=true` only after verifying the targe
 prisma/migrations/20260604170000_add_payment_settlement_reconciliation/migration.sql
 ```
 
+Use `docs/production-roadmap-phase32-settlement-migration-contract.md` to confirm the migration-backed/raw-SQL contract before setting this flag.
+
 Set `PAYMENT_WEBHOOK_SMOKE_TESTS_CONFIRMED=true` only after completing the provider checks in:
 
 ```text
 docs/production-roadmap-phase32-payment-webhook-smoke-tests.md
+```
+
+Record the completed operator evidence in:
+
+```text
+docs/production-roadmap-phase32-payment-webhook-validation-evidence.md
 ```
 
 ## 4. Deploy-readiness expectation
@@ -118,4 +126,4 @@ If gateway checkout fails validation:
 
 ## Current status
 
-This checklist is repository documentation and does not claim production/staging validation has been completed. Provider-generated webhook validation, target-environment migration verification, and final gateway launch sign-off remain operator tasks.
+This checklist is repository documentation and does not claim production/staging validation has been completed. Provider-generated webhook validation, target-environment migration verification, evidence capture, and final gateway launch sign-off remain operator tasks.
