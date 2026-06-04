@@ -1,7 +1,7 @@
 # Golara Production Readiness Roadmap
 
-Last updated: 2026-06-03
-Current main baseline: Phase 31 started after admin/storefront expansion work
+Last updated: 2026-06-04
+Current main baseline: Phase 32 payment webhook and settlement foundations are in progress after Phase 31 live payment gateway foundations.
 Current production path: inquiry-first launch remains available; full commerce rollout is now progressing through the deferred production feature roadmap.
 
 ## Current readiness state
@@ -13,7 +13,7 @@ Important distinction:
 - Production-readiness work is complete for the inquiry-first launch path.
 - Recent admin/storefront work has expanded the demo-commerce/admin surface: product/category/media management, homepage management, displayed occasion tiles, featured picks, demo orders/inquiries/customers/discounts, settings pages, analytics panels, and hideable storefront header search.
 - Actual production launch still requires environment-specific operator sign-off: secrets, database, Cloudinary or another production-safe media store, notification mode, data-safety confirmations, deploy-readiness output, and manual smoke audit.
-- Full payment-provider checkout is in progress. Phase 31 now has a live Stripe Checkout Session adapter foundation, but browser return handling, checkout wiring, order state transitions, webhooks, settlement, and refunds are still not complete.
+- Full payment-provider checkout is in progress. Phase 31 added live Stripe/ZarinPal checkout foundations and Phase 32 now has webhook, settlement, admin visibility, guard coverage, and smoke-test runbook foundations, but provider-generated staging/production validation, migration verification, refunds, outbound alert delivery, and full end-to-end commerce QA are still not complete.
 
 Completed foundations:
 
@@ -31,7 +31,8 @@ Completed foundations:
 - Final launch audit sign-off artifact is in place at `docs/LAUNCH_AUDIT.md`.
 - Admin Saleor-parity foundations now cover catalog, PIM, inventory, fulfillment, customers, orders, discounts, settings, integrations, and analytics.
 - Homepage admin now supports editing hero content/media, CTAs, trust chips, section copy, footer copy, displayed occasion tiles, and featured picks.
-- Payment gateway adapter foundations include manual/inquiry fallback adapters, Stripe/Iranian mock adapters, and a live Stripe Checkout Session adapter foundation with idempotency-key support.
+- Payment gateway adapter foundations include manual/inquiry fallback adapters, Stripe/Iranian mock adapters, live Stripe Checkout Session foundations, ZarinPal adapter foundations, and idempotency-key support.
+- Payment webhook and settlement foundations include provider-neutral normalization, signed route helpers, idempotent event persistence, trusted matched state transitions, durable settlement reconciliation storage, admin settlement/alert visibility, source-labeled settlement summaries, unit-runner guards, and a provider smoke-test runbook.
 
 ## Completed recent phases
 
@@ -119,7 +120,7 @@ The following phases are the next roadmap for moving from inquiry-first/demo-com
 
 ### Phase 31 — live payment gateway implementation
 
-Status: in progress; Stripe Checkout Session adapter foundation added, but customer checkout is not fully wired to live payment completion yet.
+Status: in progress; live Stripe/ZarinPal checkout foundations exist, but full live provider validation remains tied to the Phase 32 webhook/smoke-test work and later end-to-end QA.
 
 Goal: replace manual/inquiry-only payment behavior with real provider-backed checkout while keeping the existing payment settings/readiness admin controls.
 
@@ -128,20 +129,21 @@ Checklist:
 - [x] Choose first live provider path: Stripe for overseas/card checkout first; Iranian/local gateway remains a later provider path behind the existing config.
 - [x] Add provider adapter interface for creating checkout sessions/payment intents.
 - [x] Add provider-specific implementation foundation for the selected first gateway: Stripe Checkout Sessions.
-- [ ] Store provider session/payment intent IDs on checkout payment attempts.
-- [ ] Redirect customers to provider-hosted checkout or render the provider-approved payment UI from the live checkout flow.
-- [ ] Add checkout return/success/cancel pages.
-- [ ] Convert provider success/failure into order payment state transitions.
+- [x] Store provider session/payment intent IDs on checkout payment attempts.
+- [x] Redirect customers to provider-hosted checkout or render the provider-approved payment UI from the live checkout flow.
+- [x] Add checkout return/success/cancel pages.
+- [x] Convert provider success/failure into order payment state transitions.
 - [x] Add idempotency-key support so repeated checkout submissions can avoid duplicate provider sessions/charges once wired into checkout submission.
-- [~] Add unit and route tests for success, failure, cancel, duplicate, and provider-error paths. Unit coverage exists for Stripe session creation success/failure and idempotency headers; route and browser-return coverage is still pending.
-- [x] Update `.env.example`, production checklist, and admin readiness blockers for the selected provider. `.env.example` and existing readiness blockers cover Stripe secret requirements; production checklist still needs live-checkout operator runbook details.
+- [~] Add unit and route tests for success, failure, cancel, duplicate, and provider-error paths. Unit coverage exists for adapter/session creation, return route parsing, and order confirmation copy; live provider browser validation remains pending.
+- [x] Update `.env.example`, production checklist, and admin readiness blockers for the selected provider. `.env.example` and existing readiness blockers cover Stripe secret requirements; Phase 32 smoke-test runbook now covers webhook/callback validation details.
 
 Progress notes:
 
 - Added `createStripeCheckoutSessionAdapter` for Stripe Checkout Session creation using `STRIPE_SECRET_KEY`.
 - Added `createLivePaymentGatewayAdapters` so live Stripe can be selected without removing manual/inquiry fallback adapters.
 - Added Stripe request shaping for amount, currency, customer email, success/cancel URLs, client reference, metadata, and idempotency key.
-- Added unit coverage with an injected Stripe HTTP client; no live Stripe network calls run in tests.
+- Added ZarinPal adapter foundations and return parsing for status/authority callback parameters.
+- Added unit coverage with injected provider clients; no live provider network calls run in tests.
 
 Success criteria:
 
@@ -152,19 +154,36 @@ Success criteria:
 
 ### Phase 32 — payment webhooks and settlement reconciliation
 
-Status: not implemented.
+Status: in progress; foundation implemented, wired into the unit runner, and documented, but live/staging provider validation and target-environment migration verification remain pending.
 
 Goal: make payment state authoritative from provider webhooks, not only browser returns.
 
 Checklist:
 
-- [ ] Add signed webhook endpoint for the selected provider.
-- [ ] Verify webhook signatures/secrets before processing events.
-- [ ] Add idempotent webhook event storage and replay protection.
-- [ ] Map provider events to internal payment attempt and order states.
-- [ ] Add settlement/captured/failed/refunded/chargeback-style state support where provider supports it.
-- [ ] Add admin visibility for webhook events and reconciliation mismatches.
-- [ ] Add tests for duplicate webhooks, invalid signatures, unknown payment IDs, and out-of-order events.
+- [x] Add signed webhook endpoint for the selected provider.
+- [x] Verify webhook signatures/secrets before processing events.
+- [x] Add idempotent webhook event storage and replay protection.
+- [x] Map provider events to internal payment attempt and order states.
+- [~] Add settlement/captured/failed/refunded/chargeback-style state support where provider supports it. Paid/failed/cancelled/pending settlement reconciliation is implemented; refunds, chargebacks, provider dashboard imports, and provider-backed payment operations remain later work.
+- [x] Add admin visibility for webhook events and reconciliation mismatches.
+- [x] Add tests for duplicate webhooks, invalid signatures, unknown payment IDs, and out-of-order events. Source/unit guards are wired into `tests/unit/run-tests.ts`; live provider replay/order validation remains pending.
+- [x] Add provider smoke-test runbook for staging/production validation.
+
+Progress notes:
+
+- Added provider-neutral webhook normalization for Stripe Checkout Session and ZarinPal-style payment events.
+- Added Stripe and ZarinPal webhook routes under `app/api/webhooks/payments/*` with raw-body signature verification when secrets are configured.
+- Added idempotent `CheckoutPaymentEvent` persistence, stable payload digests, replay protection, and trusted matched checkout state transitions.
+- Added durable `PaymentSettlementReconciliation` migration and raw-SQL repository integration from webhook service creation and duplicate refresh paths.
+- Added read-only admin settlement and payment alert pages, sidebar navigation, durable-first settlement summaries, and explicit durable/fallback source labeling.
+- Wired all Phase 32 supplemental guards into `tests/unit/run-tests.ts`, raising the runner count to 113 files.
+- Added `docs/production-roadmap-phase32-payment-webhooks.md` and `docs/production-roadmap-phase32-payment-webhook-smoke-tests.md` for progress tracking and operator validation.
+
+Still pending before Phase 32 is complete:
+
+- Execute the smoke-test runbook against live/staging Stripe and ZarinPal provider dashboards.
+- Validate Stripe and ZarinPal webhook signature behavior against provider-generated requests.
+- Apply and verify the settlement reconciliation migration in the target environment.
 
 Success criteria:
 
@@ -301,8 +320,8 @@ Environment/operator blockers before inquiry-first production launch:
 
 Repository blockers before full automated commerce launch:
 
-- Live payment gateway checkout wiring, return handling, and order payment transitions.
-- Payment webhooks and settlement reconciliation.
+- Live payment gateway staging/production validation and checkout/order/fulfillment end-to-end QA.
+- Payment webhook provider smoke validation and settlement migration verification.
 - Provider-backed refunds/voids.
 - Real notification provider delivery.
 - Durable outbound webhook worker.
