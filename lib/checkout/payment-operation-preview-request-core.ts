@@ -41,6 +41,7 @@ export async function buildAuditedPaymentOperationPreviewRequestResult(draft: Pa
 
   const result = buildPaymentOperationPreviewRouteResult(normalized.input);
   const preview = result.body.preview.preview;
+  const operatorReason = typeof preview.plan.metadata.reason === 'string' ? preview.plan.metadata.reason : null;
   await recordPaymentOperationAuditEvent({
     kind: preview.blocked ? 'preview_blocked' : preview.requiresManualReview ? 'preview_manual_review' : 'preview_requested',
     orderId: null,
@@ -51,7 +52,7 @@ export async function buildAuditedPaymentOperationPreviewRequestResult(draft: Pa
     currency: preview.plan.currency,
     previewDecision: preview.plan.decision,
     previewReasons: preview.plan.reasons,
-    operatorReason: preview.plan.operatorReason,
+    operatorReason,
     metadata: {
       orderNumber: preview.orderNumber ?? null,
       warningCount: preview.warnings.length,
