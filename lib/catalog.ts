@@ -210,7 +210,7 @@ export type MediaItem = {
   mediaCategory?: string;
   sourceType?: string;
   storageProvider?: string;
-  mimeType?: string;
+  mimeType?: number | string;
   sizeBytes?: number;
   productId?: string;
   createdAt?: Date;
@@ -238,6 +238,22 @@ export type CustomerInquiry = {
   };
   followUps?: { id: string; note: string; channel: string; createdAt: Date }[];
   status: string;
+  createdAt: Date;
+};
+
+export type CheckoutOrderSummary = {
+  id: string;
+  orderNumber: string;
+  status: string;
+  checkoutMode: string;
+  fulfillmentStatus: string;
+  currency: string;
+  totalCents: number;
+  customerPhone?: string;
+  customerName?: string;
+  itemCount: number;
+  latestPaymentStatus?: string;
+  latestTimelineTitle?: string;
   createdAt: Date;
 };
 
