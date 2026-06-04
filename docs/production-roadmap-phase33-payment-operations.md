@@ -6,7 +6,7 @@ This note tracks Phase 33 work after the Phase 32 repo-side webhook and settleme
 
 ## Current status
 
-Phase 33 has provider-neutral refund/void planning, no-mutation preview generation, a pure preview input normalization helper, a read-only preview view model, a route-core style preview result, a request-core wrapper for normalized preview requests, a compact read-only admin preview panel, a static-sample admin preview route for admin-safe display, a documentation-only persistence design for future refund/void operation records, pure order/payment transition plus inventory/capacity release planning, read-only transition guidance in the admin preview payload/UI, a migration-backed table contract for future payment operation records, and a blank operator evidence template for target-environment payment-operation migration validation. This remains repo-side foundation work: the table migration and evidence template are added, but no repository/service writes, provider calls, order/payment mutations, inventory/capacity release, audit writes, or execution buttons have been added.
+Phase 33 has provider-neutral refund/void planning, no-mutation preview generation, a pure preview input normalization helper, a read-only preview view model, a route-core style preview result, a request-core wrapper for normalized preview requests, a compact read-only admin preview panel, a static-sample admin preview route for admin-safe display, a documentation-only persistence design for future refund/void operation records, pure order/payment transition plus inventory/capacity release planning, read-only transition guidance in the admin preview payload/UI, a migration-backed table contract for future payment operation records, a blank operator evidence template for target-environment payment-operation migration validation, and a read-only migration status helper for checking whether the target environment has been operator-confirmed. This remains repo-side foundation work: the table migration, evidence template, and status helper are added, but no repository/service writes, provider calls, order/payment mutations, inventory/capacity release, audit writes, or execution buttons have been added.
 
 ## Completed in Phase 33 so far
 
@@ -43,6 +43,8 @@ Phase 33 has provider-neutral refund/void planning, no-mutation preview generati
 - Wired `tests/unit/payment-operation-migration-contract.test.ts` into `tests/unit/run-tests.ts`, raising the runner count from 117 to 118 files.
 - Added `docs/production-roadmap-phase33-payment-operation-migration-validation-evidence.md` as a blank operator evidence template for target-environment `PaymentOperationRecord` migration validation.
 - Extended `tests/unit/payment-operation-migration-contract.test.ts` to guard the migration validation evidence template and its no-execution boundary. The runner count remains 118 files.
+- Added `lib/checkout/payment-operation-migration-status.ts` as a read-only helper for the `PAYMENT_OPERATION_RECORDS_MIGRATION_CONFIRMED` environment gate.
+- Extended `tests/unit/payment-operation-migration-contract.test.ts` to guard the migration status helper, its prerequisite copy, and its no-Prisma/no-fetch/no-order-payment-source boundary. The runner count remains 118 files.
 
 ## Current helper behavior
 
@@ -137,6 +139,8 @@ Phase 33 has provider-neutral refund/void planning, no-mutation preview generati
 
 `docs/production-roadmap-phase33-payment-operation-migration-validation-evidence.md` defines the operator evidence expected before considering the `PaymentOperationRecord` migration target-environment verified. It captures target SHA, migration command/job evidence, table/column verification, foreign key and index verification, application read-access evidence, rollback mode, execution-boundary confirmation, and operator sign-off. It is a blank template only and does not claim migration application or production validation.
 
+`getPaymentOperationRecordsMigrationStatus` can summarize the read-only `PAYMENT_OPERATION_RECORDS_MIGRATION_CONFIRMED` environment gate. It returns the flag name, raw value, migration path, evidence path, prerequisite behavior that must not depend on the table before confirmation, and warnings when the target environment has not been operator-confirmed. It does not use Prisma, fetch, provider adapters, order/payment mutation, inventory/capacity release, audit writes, or admin execution controls.
+
 ## Preview and persistence boundary acceptance criteria
 
 The current boundary should continue to:
@@ -157,6 +161,7 @@ The current boundary should continue to:
 - keep `PaymentOperationRecord` raw-SQL-backed until a deliberate Prisma/client decision is made;
 - require target-environment migration verification before repository/service writes;
 - capture operator migration evidence before any execution path depends on the table;
+- keep migration confirmation helpers read-only until execution behavior is deliberately added in a later guarded slice;
 - avoid repository/service writes until an idempotent creation layer is added;
 - avoid checkout order mutation;
 - avoid payment attempt mutation;
@@ -185,11 +190,10 @@ Those remain future Phase 33 slices after the migration contract is accepted and
 
 ## Recommended next work
 
-1. Add a read-only migration status/helper contract for `PaymentOperationRecord` confirmation, without wiring execution behavior yet.
-2. Add a repository/service design note for future idempotent operation-record creation.
-3. Add a repository/service layer that can create pending operation records idempotently only after the target migration is applied, verified, and gated.
-4. Add append-only audit events for preview/request/blocked states.
-5. Add provider adapters for Stripe/ZarinPal refund and void execution only after preview, persistence, audit, and idempotency rules are defined.
+1. Add a repository/service design note for future idempotent operation-record creation.
+2. Add a repository/service layer that can create pending operation records idempotently only after the target migration is applied, verified, and gated.
+3. Add append-only audit events for preview/request/blocked states.
+4. Add provider adapters for Stripe/ZarinPal refund and void execution only after preview, persistence, audit, and idempotency rules are defined.
 
 ## Verification status
 
