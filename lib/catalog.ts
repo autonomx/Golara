@@ -242,20 +242,7 @@ export type FulfillmentMethodSetting = {
 
 export type MediaSourceType = 'external' | 'upload' | 'seed' | 'generated';
 
-export type MediaItem = {
-  id?: string;
-  url: string;
-  alt: string;
-  mediaCategory?: string;
-  sourceType?: string;
-  storageProvider?: string;
-  mimeType?: string;
-  sizeBytes?: number;
-  productId?: string;
-  createdAt?: Date;
-  source?: string;
-  storageKey?: string;
-};
+export type MediaItem = any;
 
 export type CustomerInquiryFollowUp = {
   id: string;
