@@ -15,6 +15,7 @@ export async function runPaymentOperationPlanTests() {
   const previewSource = source('lib/checkout/payment-operation-preview.ts');
   const previewRouteCoreSource = source('lib/checkout/payment-operation-preview-route-core.ts');
   const previewViewSource = source('lib/checkout/payment-operation-preview-view.ts');
+  const adminPreviewPanelSource = source('components/admin/AdminPaymentOperationPreviewPanel.tsx');
   assert.match(docs, /Phase 33 Refunds, Voids, and Payment Operations Progress/);
   assert.match(docs, /provider-neutral refund\/void planning helper/);
   assert.match(docs, /does not call Stripe, ZarinPal, or any other live provider/);
@@ -23,6 +24,8 @@ export async function runPaymentOperationPlanTests() {
   assert.match(docs, /tests\/unit\/payment-operation-plan\.test\.ts/);
   assert.match(docs, /raising the runner count from 115 to 116 files/);
   assert.match(docs, /no-mutation preview acceptance criteria/);
+  assert.match(docs, /compact read-only admin preview panel/);
+  assert.match(docs, /components\/admin\/AdminPaymentOperationPreviewPanel\.tsx/);
   assert.match(docs, /## Preview boundary acceptance criteria/);
   assert.match(docs, /call `planPaymentOperation` as the single source of eligibility truth/);
   assert.match(docs, /return a preview payload that is safe for admin display/);
@@ -34,7 +37,7 @@ export async function runPaymentOperationPlanTests() {
   assert.match(docs, /live provider refund calls/);
   assert.match(docs, /live provider void calls/);
   assert.match(docs, /database writes/);
-  assert.match(docs, /admin refund\/void buttons/);
+  assert.match(docs, /admin refund\/void execution buttons/);
   assert.match(docs, /local verification is pending/);
 
   assert.match(previewSource, /export function buildPaymentOperationPreview/);
@@ -57,6 +60,16 @@ export async function runPaymentOperationPlanTests() {
   assert.doesNotMatch(previewRouteCoreSource, /fetch\(/);
   assert.doesNotMatch(previewRouteCoreSource, /checkoutOrder\.update/);
   assert.doesNotMatch(previewRouteCoreSource, /checkoutPaymentAttempt\.update/);
+
+  assert.match(adminPreviewPanelSource, /export function AdminPaymentOperationPreviewPanel/);
+  assert.match(adminPreviewPanelSource, /PaymentOperationPreviewRouteResult/);
+  assert.match(adminPreviewPanelSource, /does not render a refund or void execution button/);
+  assert.doesNotMatch(adminPreviewPanelSource, /prisma\./);
+  assert.doesNotMatch(adminPreviewPanelSource, /fetch\(/);
+  assert.doesNotMatch(adminPreviewPanelSource, /checkoutOrder\.update/);
+  assert.doesNotMatch(adminPreviewPanelSource, /checkoutPaymentAttempt\.update/);
+  assert.doesNotMatch(adminPreviewPanelSource, /onClick=/);
+  assert.doesNotMatch(adminPreviewPanelSource, /<button/);
 
   const refund = planPaymentOperation({
     operation: 'refund',
