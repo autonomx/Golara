@@ -13,6 +13,14 @@ export async function runPaymentSettlementAdminPanelTests() {
   assert.match(service, /export const paymentSettlementService/);
   assert.match(panel, /export function AdminPaymentSettlementSummaryPanel/);
   assert.match(panel, /Settlement reconciliation/);
+  assert.match(panel, /function sourceLabel/);
+  assert.match(panel, /function sourceDescription/);
+  assert.match(panel, /Durable settlement records/);
+  assert.match(panel, /Payment event fallback/);
+  assert.match(panel, /Settlement data unavailable/);
+  assert.match(panel, /PaymentSettlementReconciliation rows/);
+  assert.match(panel, /CheckoutPaymentEvent rows/);
+  assert.match(panel, /summary\.source/);
   assert.match(panel, /summary\.settled/);
   assert.match(panel, /summary\.amountMismatch/);
   assert.match(panel, /summary\.currencyMismatch/);
