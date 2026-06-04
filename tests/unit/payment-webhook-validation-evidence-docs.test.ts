@@ -29,6 +29,12 @@ export async function runPaymentWebhookValidationEvidenceDocsTests() {
   assert.match(phase32, /production-roadmap-phase32-payment-webhook-validation-evidence\.md/);
   assert.match(phase32, /validation evidence template/);
   assert.match(phase32, /does not claim provider validation has been completed/);
+  assert.match(phase32, /## Recommended validation sequence/);
+  assert.match(phase32, /Apply and verify `prisma\/migrations\/20260604170000_add_payment_settlement_reconciliation\/migration\.sql`/);
+  assert.match(phase32, /PAYMENT_SETTLEMENT_MIGRATION_CONFIRMED="true"/);
+  assert.match(phase32, /provider-generated requests, including success, failure\/cancel, duplicate replay, and invalid-signature cases/);
+  assert.match(phase32, /PAYMENT_WEBHOOK_SMOKE_TESTS_CONFIRMED="true"/);
+  assert.match(phase32, /rollback to `CHECKOUT_MODE="inquiry"` or `CHECKOUT_MODE="assisted"`/);
 
   console.log('payment-webhook-validation-evidence-docs.test.ts passed');
 }
