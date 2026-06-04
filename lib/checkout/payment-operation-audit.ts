@@ -15,6 +15,8 @@ export type PaymentOperationAuditKind =
   | 'record_succeeded'
   | 'record_failed';
 
+export type PaymentOperationAuditMetadataValue = string | number | boolean | string[] | number[] | boolean[] | Record<string, string | number | boolean | string[] | number[] | boolean[] | undefined> | undefined;
+
 export type PaymentOperationAuditInput = {
   kind: PaymentOperationAuditKind;
   orderId?: string | null;
@@ -29,7 +31,7 @@ export type PaymentOperationAuditInput = {
   previewReasons?: string[];
   conflicts?: string[];
   operatorReason?: string | null;
-  metadata?: Record<string, Prisma.InputJsonValue | undefined>;
+  metadata?: Record<string, PaymentOperationAuditMetadataValue>;
 };
 
 export type PaymentOperationAuditLogInput = {
@@ -72,9 +74,20 @@ function cleanList(values: string[] | undefined) {
   return Array.isArray(values) ? values.map((value) => value.trim()).filter(Boolean) : [];
 }
 
-function cleanMetadata(value: Record<string, Prisma.InputJsonValue | undefined> | undefined): Record<string, Prisma.InputJsonValue> {
+function metadataValue(value: PaymentOperationAuditMetadataValue): Prisma.InputJsonValue | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return value;
+  if (Array.isArray(value)) return value;
+  return Object.fromEntries(Object.entries(value).filter((entry): entry is [string, string | number | boolean | string[] | number[] | boolean[]] => entry[1] !== undefined));
+}
+
+function cleanMetadata(value: Record<string, PaymentOperationAuditMetadataValue> | undefined): Record<string, Prisma.InputJsonValue> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
-  return Object.fromEntries(Object.entries(value).filter((entry): entry is [string, Prisma.InputJsonValue] => entry[1] !== undefined));
+  return Object.fromEntries(
+    Object.entries(value)
+      .map(([key, entry]) => [key, metadataValue(entry)] as const)
+      .filter((entry): entry is readonly [string, Prisma.InputJsonValue] => entry[1] !== undefined)
+  );
 }
 
 export function buildPaymentOperationAuditLogInput(input: PaymentOperationAuditInput): PaymentOperationAuditLogInput {
@@ -92,18 +105,18 @@ export function buildPaymentOperationAuditLogInput(input: PaymentOperationAuditI
     metadata: {
       ...cleanMetadata(input.metadata),
       kind: input.kind,
-      orderId: orderId ?? null,
-      paymentAttemptId: paymentAttemptId ?? null,
-      paymentOperationRecordId: operationRecordId ?? null,
-      idempotencyKey: cleanText(input.idempotencyKey) ?? null,
       operationKind: input.operationKind.trim().toLowerCase(),
       provider: input.provider.trim().toLowerCase(),
       requestedAmountCents: input.requestedAmountCents,
       currency: input.currency.trim().toUpperCase(),
-      previewDecision: cleanText(input.previewDecision) ?? null,
       previewReasons,
       conflicts,
-      operatorReason: cleanText(input.operatorReason) ?? null
+      ...(orderId ? { orderId } : {}),
+      ...(paymentAttemptId ? { paymentAttemptId } : {}),
+      ...(operationRecordId ? { paymentOperationRecordId: operationRecordId } : {}),
+      ...(cleanText(input.idempotencyKey) ? { idempotencyKey: cleanText(input.idempotencyKey) } : {}),
+      ...(cleanText(input.previewDecision) ? { previewDecision: cleanText(input.previewDecision) } : {}),
+      ...(cleanText(input.operatorReason) ? { operatorReason: cleanText(input.operatorReason) } : {})
     }
   };
 }
