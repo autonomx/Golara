@@ -5,6 +5,7 @@ import { runAdminModuleAccessTests } from './admin-module-access.test';
 import { runAdminOrderCustomerAssignmentFlowTests } from './admin-order-customer-assignment-flow.test';
 import { runAdminOrderLineEditFlowTests } from './admin-order-line-edit-flow.test';
 import { runAdminRoleBoundaryTests } from './admin-role-boundary.test';
+import { runAdminStatusSummaryViewTests } from './admin-status-summary-view.test';
 import { runApiTokenManagementTests } from './api-token-management.test';
 import { runBestSellingProductsTests } from './best-selling-products.test';
 import { runChannelPriceOverrideModelTests } from './channel-price-override-model.test';
@@ -131,6 +132,7 @@ async function main() {
   await runAdminAccountCoreTests();
   await runAdminRoleBoundaryTests();
   await runAdminModuleAccessTests();
+  await runAdminStatusSummaryViewTests();
   await runCmsServiceTypesTests();
   await runCmsMediaServiceTests();
   await runCmsCategoryServiceTests();
@@ -212,7 +214,7 @@ async function main() {
   await runProductVariantMapperTests();
   await runPromotionDiscountModelTests();
   await runPromotionVoucherModelTests();
-  await runPromotionValidityWindowsModelTests();
+  await runPromotionValidityWindowsTests();
   await runPromotionUsageLimitsModelTests();
   await runPromotionEligibilityRulesModelTests();
   await runPromotionOrderMinimumsModelTests();
@@ -240,7 +242,7 @@ async function main() {
   await runFulfillmentShipmentRecordsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (120 files)');
+  console.log('unit tests passed (121 files)');
 }
 
 main().catch((error) => {
