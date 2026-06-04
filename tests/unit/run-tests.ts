@@ -57,18 +57,28 @@ import { runOrderNotificationActionsFlowTests } from './order-notification-actio
 import { runOrderReturnRouteCoreTests } from './order-return-route-core.test';
 import { runOrderRevenueSummaryTests } from './order-revenue-summary.test';
 import { runOtpRateLimitTests } from './otp-rate-limit.test';
+import { runPaymentAttemptTimelineFlowTests } from './payment-attempt-timeline-flow.test';
 import { runPaymentGatewayAdaptersTests } from './payment-gateway-adapters.test';
 import { runPaymentGatewayConfigTests } from './payment-gateway-config.test';
-import { runPaymentProviderSettingsTests } from './payment-provider-settings.test';
-import { runPaymentAttemptTimelineFlowTests } from './payment-attempt-timeline-flow.test';
 import { runPaymentProviderAliasCoreTests } from './payment-provider-alias-core.test';
 import { runPaymentProviderModeTests } from './payment-provider-mode.test';
 import { runPaymentProviderRuntimeCoreTests } from './payment-provider-runtime-core.test';
+import { runPaymentProviderSettingsTests } from './payment-provider-settings.test';
 import { runPaymentResultCoreTests } from './payment-result-core.test';
+import { runPaymentSettlementAdminPanelTests } from './payment-settlement-admin-panel.test';
+import { runPaymentSettlementNavigationTests } from './payment-settlement-navigation.test';
+import { runPaymentSettlementReconciliationTests } from './payment-settlement-reconciliation.test';
 import { runPaymentSettlementRepositoryTests } from './payment-settlement-repository.test';
+import { runPaymentSettlementServiceTests } from './payment-settlement-service.test';
+import { runPaymentWebhookAlertNavigationTests } from './payment-webhook-alert-navigation.test';
 import { runPaymentWebhookAlertServicePanelTests } from './payment-webhook-alert-service-panel.test';
+import { runPaymentWebhookAlertsTests } from './payment-webhook-alerts.test';
+import { runPaymentWebhookRouteCoreTests } from './payment-webhook-route-core.test';
+import { runPaymentWebhookServiceTests } from './payment-webhook-service.test';
 import { runPaymentWebhookServiceSettlementTests } from './payment-webhook-service-settlement.test';
+import { runPaymentWebhookServiceTransitionTests } from './payment-webhook-service-transition.test';
 import { runPaymentWebhookSignatureTests } from './payment-webhook-signature.test';
+import { runPaymentWebhookTransitionPlanTests } from './payment-webhook-transition-plan.test';
 import { runProductCheckoutPolicyTests } from './product-checkout-policy.test';
 import { runProductVariantMapperTests } from './product-variant-mapper.test';
 import { runPromotionAuditLogsModelTests } from './promotion-audit-logs-model.test';
@@ -161,10 +171,20 @@ async function main() {
   await runPaymentGatewayConfigTests();
   await runPaymentGatewayAdaptersTests();
   await runPaymentProviderSettingsTests();
+  await runPaymentWebhookServiceTests();
+  await runPaymentWebhookRouteCoreTests();
   await runPaymentWebhookSignatureTests();
-  await runPaymentWebhookServiceSettlementTests();
+  await runPaymentWebhookTransitionPlanTests();
+  await runPaymentWebhookServiceTransitionTests();
+  await runPaymentSettlementReconciliationTests();
+  await runPaymentSettlementServiceTests();
   await runPaymentSettlementRepositoryTests();
+  await runPaymentWebhookServiceSettlementTests();
+  await runPaymentSettlementAdminPanelTests();
+  await runPaymentSettlementNavigationTests();
+  await runPaymentWebhookAlertsTests();
   await runPaymentWebhookAlertServicePanelTests();
+  await runPaymentWebhookAlertNavigationTests();
   await runNotificationProviderSettingsTests();
   await runWebhookConfigurationTests();
   await runWebhookEventLogTests();
@@ -206,7 +226,7 @@ async function main() {
   await runFulfillmentShipmentRecordsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (103 files)');
+  console.log('unit tests passed (113 files)');
 }
 
 main().catch((error) => {
