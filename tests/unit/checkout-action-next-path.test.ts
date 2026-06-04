@@ -13,6 +13,22 @@ export async function runCheckoutActionNextPathTests() {
   }), 'https://pay.example.test/start/GOL-1001');
 
   assert.equal(checkoutActionNextPath({
+    orderNumber: 'GOL-1002',
+    publicLookupToken: 'lookup-token-zarinpal'
+  }, {
+    status: 'redirect_required',
+    redirectUrl: 'https://payment.zarinpal.com/pg/StartPay/A0001'
+  }), 'https://payment.zarinpal.com/pg/StartPay/A0001');
+
+  assert.equal(checkoutActionNextPath({
+    orderNumber: 'GOL-1003',
+    publicLookupToken: 'lookup-token-stripe'
+  }, {
+    status: 'redirect_required',
+    redirectUrl: 'https://checkout.stripe.com/c/pay/cs_test_123'
+  }), 'https://checkout.stripe.com/c/pay/cs_test_123');
+
+  assert.equal(checkoutActionNextPath({
     orderNumber: 'GOL 1001',
     publicLookupToken: null
   }, {
@@ -21,6 +37,11 @@ export async function runCheckoutActionNextPathTests() {
 
   assert.equal(checkoutActionNextPath(orderWithLookup, {
     status: 'manual_pending'
+  }), '/orders/lookup-token');
+
+  assert.equal(checkoutActionNextPath(orderWithLookup, {
+    status: 'manual_pending',
+    redirectUrl: 'https://checkout.stripe.com/c/pay/should-not-open'
   }), '/orders/lookup-token');
 
   assert.equal(checkoutActionNextPath(orderWithLookup, {
