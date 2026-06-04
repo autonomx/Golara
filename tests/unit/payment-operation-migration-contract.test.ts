@@ -9,6 +9,7 @@ export async function runPaymentOperationMigrationContractTests() {
   const migration = source('prisma/migrations/20260604200000_add_payment_operation_records/migration.sql');
   const contract = source('docs/production-roadmap-phase33-payment-operation-migration-contract.md');
   const evidence = source('docs/production-roadmap-phase33-payment-operation-migration-validation-evidence.md');
+  const repositoryDesign = source('docs/production-roadmap-phase33-payment-operation-repository-design.md');
   const statusHelper = source('lib/checkout/payment-operation-migration-status.ts');
   const schema = source('prisma/schema.prisma');
 
@@ -50,6 +51,17 @@ export async function runPaymentOperationMigrationContractTests() {
   assert.ok(evidence.includes('No live provider void calls were added or executed'));
   assert.ok(evidence.includes('No repository/service writes were enabled by this evidence alone'));
   assert.ok(evidence.includes('No admin refund/void execution buttons were enabled by this evidence alone'));
+
+  assert.ok(repositoryDesign.includes('Payment Operation Repository Design'));
+  assert.ok(repositoryDesign.includes('createPendingPaymentOperationRecord'));
+  assert.ok(repositoryDesign.includes('findPaymentOperationRecordByIdempotencyKey'));
+  assert.ok(repositoryDesign.includes('Idempotent create-pending semantics'));
+  assert.ok(repositoryDesign.includes('duplicate idempotency reuse'));
+  assert.ok(repositoryDesign.includes('idempotency conflict blocking'));
+  assert.ok(repositoryDesign.includes('audit writes should be coupled at the service layer'));
+  assert.ok(repositoryDesign.includes('This design does not approve execution'));
+  assert.ok(repositoryDesign.includes('live Stripe refund calls'));
+  assert.ok(repositoryDesign.includes('admin refund/void execution controls'));
 
   assert.ok(statusHelper.includes('PAYMENT_OPERATION_RECORDS_MIGRATION_CONFIRMED'));
   assert.ok(statusHelper.includes('isPaymentOperationRecordsMigrationConfirmed'));
