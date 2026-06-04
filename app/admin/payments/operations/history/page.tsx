@@ -12,7 +12,7 @@ function firstParam(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
-export default async function AdminPaymentOperationHistoryPage({ searchParams }: { searchParams?: Promise<SearchParams> | SearchParams }) {
+export default async function AdminPaymentOperationHistoryPage({ searchParams }: { searchParams?: Promise<SearchParams> }) {
   const authenticated = await isAdminAuthenticated();
   const authConfigured = isAdminAuthConfigured();
   const identity = await getAdminIdentity();
