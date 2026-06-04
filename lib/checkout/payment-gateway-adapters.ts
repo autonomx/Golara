@@ -31,25 +31,39 @@ export type PaymentGatewayAdapter = {
   initiate(input: PaymentGatewayInitiationInput): Promise<PaymentGatewayInitiationResult>;
 };
 
-export type StripeCheckoutSessionHttpResponse = {
+type GatewayJsonHttpResponse = {
   ok: boolean;
   status: number;
   json(): Promise<unknown>;
 };
 
-export type StripeCheckoutSessionHttpClient = (
+type GatewayJsonHttpClient = (
   url: string,
   init: {
     method: 'POST';
     headers: Record<string, string>;
     body: string;
   }
-) => Promise<StripeCheckoutSessionHttpResponse>;
+) => Promise<GatewayJsonHttpResponse>;
+
+export type StripeCheckoutSessionHttpResponse = GatewayJsonHttpResponse;
+export type StripeCheckoutSessionHttpClient = GatewayJsonHttpClient;
 
 export type StripeCheckoutSessionAdapterOptions = {
   secretKey?: string;
   httpClient?: StripeCheckoutSessionHttpClient;
   apiUrl?: string;
+};
+
+export type ZarinPalPaymentRequestHttpResponse = GatewayJsonHttpResponse;
+export type ZarinPalPaymentRequestHttpClient = GatewayJsonHttpClient;
+
+export type ZarinPalPaymentRequestAdapterOptions = {
+  merchantId?: string;
+  httpClient?: ZarinPalPaymentRequestHttpClient;
+  requestUrl?: string;
+  startPayUrl?: string;
+  description?: string;
 };
 
 type StripeCheckoutSessionResponseBody = {
@@ -58,6 +72,17 @@ type StripeCheckoutSessionResponseBody = {
   error?: {
     message?: unknown;
   };
+};
+
+type ZarinPalPaymentRequestResponseBody = {
+  data?: {
+    authority?: unknown;
+    code?: unknown;
+    message?: unknown;
+  };
+  errors?: {
+    message?: unknown;
+  } | string[] | Record<string, unknown>;
 };
 
 function ensurePositiveAmount(input: PaymentGatewayInitiationInput) {
@@ -79,6 +104,15 @@ function defaultCheckoutReturnUrl(input: PaymentGatewayInitiationInput, outcome:
   return `${input.returnUrl}${separator}payment=${outcome}&provider=stripe&session_id={CHECKOUT_SESSION_ID}`;
 }
 
+function defaultZarinPalCallbackUrl(input: PaymentGatewayInitiationInput) {
+  const separator = input.returnUrl.includes('?') ? '&' : '?';
+  return `${input.returnUrl}${separator}provider=zarinpal&order=${encodeURIComponent(input.orderId)}`;
+}
+
+function tomanAmount(input: PaymentGatewayInitiationInput) {
+  return Math.round(input.amountCents);
+}
+
 function appendStripeMetadata(body: URLSearchParams, input: PaymentGatewayInitiationInput) {
   body.set('metadata[golara_order_id]', input.orderId);
   if (input.orderNumber) body.set('metadata[golara_order_number]', input.orderNumber);
@@ -87,18 +121,40 @@ function appendStripeMetadata(body: URLSearchParams, input: PaymentGatewayInitia
   }
 }
 
-function defaultStripeHttpClient(): StripeCheckoutSessionHttpClient {
+function defaultJsonHttpClient(): GatewayJsonHttpClient {
   return async (url, init) => {
     if (typeof fetch !== 'function') {
-      throw new Error('Stripe checkout session creation requires fetch support.');
+      throw new Error('Payment gateway request requires fetch support.');
     }
     return fetch(url, init);
   };
 }
 
+function defaultStripeHttpClient(): StripeCheckoutSessionHttpClient {
+  return defaultJsonHttpClient();
+}
+
+function defaultZarinPalHttpClient(): ZarinPalPaymentRequestHttpClient {
+  return defaultJsonHttpClient();
+}
+
 async function parseStripeResponse(response: StripeCheckoutSessionHttpResponse) {
   const body = (await response.json()) as StripeCheckoutSessionResponseBody;
   return body;
+}
+
+async function parseZarinPalResponse(response: ZarinPalPaymentRequestHttpResponse) {
+  const body = (await response.json()) as ZarinPalPaymentRequestResponseBody;
+  return body;
+}
+
+function zarinPalErrorMessage(body: ZarinPalPaymentRequestResponseBody, status: number) {
+  if (typeof body.errors === 'object' && body.errors && !Array.isArray(body.errors) && typeof body.errors.message === 'string') {
+    return body.errors.message;
+  }
+  if (Array.isArray(body.errors) && body.errors.length) return body.errors.join(', ');
+  if (typeof body.data?.message === 'string') return body.data.message;
+  return `ZarinPal returned HTTP ${status}.`;
 }
 
 export function createManualGatewayAdapter(): PaymentGatewayAdapter {
@@ -233,6 +289,76 @@ export function createStripeCheckoutSessionAdapter(options: StripeCheckoutSessio
   };
 }
 
+export function createZarinPalPaymentRequestAdapter(options: ZarinPalPaymentRequestAdapterOptions = {}): PaymentGatewayAdapter {
+  return {
+    provider: 'zarinpal',
+    async initiate(input) {
+      ensurePositiveAmount(input);
+      if (input.currency !== 'TOMAN') {
+        return {
+          provider: 'zarinpal',
+          status: 'unavailable',
+          reference: reference('zarinpal', input),
+          message: 'ZarinPal checkout only supports Toman orders.'
+        };
+      }
+
+      const merchantId = options.merchantId?.trim();
+      if (!merchantId) {
+        return {
+          provider: 'zarinpal',
+          status: 'unavailable',
+          reference: reference('zarinpal', input),
+          message: 'ZarinPal checkout requires ZARINPAL_MERCHANT_ID.'
+        };
+      }
+
+      const callbackUrl = input.successUrl ?? defaultZarinPalCallbackUrl(input);
+      const httpClient = options.httpClient ?? defaultZarinPalHttpClient();
+      const response = await httpClient(options.requestUrl ?? 'https://api.zarinpal.com/pg/v4/payment/request.json', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': input.idempotencyKey ?? `golara_zarinpal_${input.orderId}`
+        },
+        body: JSON.stringify({
+          merchant_id: merchantId,
+          amount: tomanAmount(input),
+          callback_url: callbackUrl,
+          description: options.description ?? `Golara order ${input.orderNumber ?? input.orderId}`,
+          metadata: {
+            email: input.customerEmail,
+            mobile: input.customerPhone,
+            order_id: input.orderId,
+            order_number: input.orderNumber,
+            ...input.metadata
+          }
+        })
+      });
+      const responseBody = await parseZarinPalResponse(response);
+      const authority = responseBody.data?.authority;
+      const code = responseBody.data?.code;
+
+      if (!response.ok || typeof authority !== 'string' || code !== 100) {
+        return {
+          provider: 'zarinpal',
+          status: 'unavailable',
+          reference: reference('zarinpal', input),
+          message: `ZarinPal payment request could not be created: ${zarinPalErrorMessage(responseBody, response.status)}`
+        };
+      }
+
+      return {
+        provider: 'zarinpal',
+        status: 'redirect',
+        reference: authority,
+        redirectUrl: `${options.startPayUrl ?? 'https://www.zarinpal.com/pg/StartPay'}/${encodeURIComponent(authority)}`,
+        message: 'ZarinPal payment request created.'
+      };
+    }
+  };
+}
+
 export function createWhatsAppGatewayAdapter(): PaymentGatewayAdapter {
   return {
     provider: 'whatsapp',
@@ -268,16 +394,23 @@ export function createMockPaymentGatewayAdapters(): Record<PaymentGatewayAdapter
   return {
     manual: createManualGatewayAdapter(),
     iranian: createIranianGatewayMockAdapter(),
+    zarinpal: createIranianGatewayMockAdapter(),
     stripe: createStripeGatewayMockAdapter(),
     whatsapp: createWhatsAppGatewayAdapter(),
     inquiry: createInquiryGatewayAdapter()
   };
 }
 
-export function createLivePaymentGatewayAdapters(options: { stripeSecretKey?: string; stripeHttpClient?: StripeCheckoutSessionHttpClient } = {}): Record<PaymentGatewayAdapterProvider, PaymentGatewayAdapter> {
+export function createLivePaymentGatewayAdapters(options: {
+  stripeSecretKey?: string;
+  stripeHttpClient?: StripeCheckoutSessionHttpClient;
+  zarinpalMerchantId?: string;
+  zarinpalHttpClient?: ZarinPalPaymentRequestHttpClient;
+} = {}): Record<PaymentGatewayAdapterProvider, PaymentGatewayAdapter> {
   return {
     manual: createManualGatewayAdapter(),
     iranian: createIranianGatewayMockAdapter(),
+    zarinpal: createZarinPalPaymentRequestAdapter({ merchantId: options.zarinpalMerchantId, httpClient: options.zarinpalHttpClient }),
     stripe: createStripeCheckoutSessionAdapter({ secretKey: options.stripeSecretKey, httpClient: options.stripeHttpClient }),
     whatsapp: createWhatsAppGatewayAdapter(),
     inquiry: createInquiryGatewayAdapter()
