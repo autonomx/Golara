@@ -1,22 +1,24 @@
 import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
+import { orderConfirmationPanelClass, orderConfirmationResultCopy } from '@/lib/checkout/order-confirmation-copy';
 
 export const dynamic = 'force-dynamic';
 
-export default async function OrderConfirmationPage({ searchParams }: { searchParams: Promise<{ order?: string }> }) {
-  const { order } = await searchParams;
+export default async function OrderConfirmationPage({ searchParams }: { searchParams: Promise<{ order?: string; result?: string }> }) {
+  const { order, result } = await searchParams;
   const orderNumber = order?.trim();
+  const copy = orderConfirmationResultCopy(result);
 
   return (
     <main>
       <SiteHeader />
       <section className="mx-auto max-w-3xl px-5 py-20">
         <div className="rounded-[2rem] border border-rosewood/10 bg-white p-8 text-center shadow-sm">
-          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Order draft created</p>
-          <h1 className="mt-3 font-display text-5xl text-rosewood">Thank you</h1>
-          <p className="mt-5 text-lg leading-8 text-stone-700">
-            Your order draft has been sent to the shop. Staff will review availability and follow up with the next step.
-          </p>
+          <div className={`rounded-3xl border p-5 ${orderConfirmationPanelClass(copy.tone)}`} role="status" aria-live="polite">
+            <p className="text-sm font-semibold uppercase tracking-[0.25em]">{copy.eyebrow}</p>
+            <h1 className="mt-3 font-display text-5xl">{copy.title}</h1>
+            <p className="mt-5 text-lg leading-8">{copy.body}</p>
+          </div>
           {orderNumber ? (
             <div className="mt-6 rounded-3xl border border-rosewood/10 bg-cream p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rosewood/60">Reference</p>
