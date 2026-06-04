@@ -159,6 +159,7 @@ export async function runPaymentOperationProviderReadinessTests() {
   assert.ok(historyPage.includes('Read-only Phase 33 operation history'));
   assertNoExecutionSurface(historyPage);
 
+  assert.ok(settlementPage.includes('/admin/payments/operations'));
   assert.ok(settlementPage.includes('/admin/payments/operations/providers'));
   assert.ok(settlementPage.includes('/admin/payments/operations/history'));
   assert.ok(settlementPage.includes('/admin/payments/operations/preview'));
