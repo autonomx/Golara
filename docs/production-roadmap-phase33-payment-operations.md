@@ -6,7 +6,7 @@ This note tracks Phase 33 work after the Phase 32 repo-side webhook and settleme
 
 ## Current status
 
-Phase 33 has provider-neutral refund/void planning, no-mutation preview generation, a pure preview input normalization helper, a read-only preview view model, a route-core style preview result, a request-core wrapper for normalized preview requests, a compact read-only admin preview panel, a static-sample admin preview route for admin-safe display, a documentation-only persistence design for future refund/void operation records, pure order/payment transition plus inventory/capacity release planning, and read-only transition guidance in the admin preview payload/UI. This is still repository-side planning only; it does not call Stripe, ZarinPal, or any other live provider, and it does not mutate payment attempts, orders, refunds, inventory, or audit logs.
+Phase 33 has provider-neutral refund/void planning, no-mutation preview generation, a pure preview input normalization helper, a read-only preview view model, a route-core style preview result, a request-core wrapper for normalized preview requests, a compact read-only admin preview panel, a static-sample admin preview route for admin-safe display, a documentation-only persistence design for future refund/void operation records, pure order/payment transition plus inventory/capacity release planning, read-only transition guidance in the admin preview payload/UI, and a migration-backed table contract for future payment operation records. This remains repo-side foundation work: the table migration is added, but no repository/service writes, provider calls, order/payment mutations, inventory/capacity release, audit writes, or execution buttons have been added.
 
 ## Completed in Phase 33 so far
 
@@ -37,6 +37,10 @@ Phase 33 has provider-neutral refund/void planning, no-mutation preview generati
 - Extended `normalizePaymentOperationPreviewInput` to accept optional fulfillment status and perishable-capacity context for transition planning.
 - Extended `buildPaymentOperationPreviewView` and `AdminPaymentOperationPreviewPanel` to show read-only advisory transition rows for future post-provider-success outcomes.
 - Extended `tests/unit/payment-operation-transition-plan.test.ts` to guard transition context normalization, preview integration, view rows, and read-only admin display boundaries.
+- Added `prisma/migrations/20260604200000_add_payment_operation_records/migration.sql` for the future `PaymentOperationRecord` table.
+- Added `docs/production-roadmap-phase33-payment-operation-migration-contract.md` to document target-environment migration application, raw-SQL/Prisma caveats, and future persistence prerequisites.
+- Added `tests/unit/payment-operation-migration-contract.test.ts` to guard the migration SQL, migration contract note, and absence of a Prisma model.
+- Wired `tests/unit/payment-operation-migration-contract.test.ts` into `tests/unit/run-tests.ts`, raising the runner count from 117 to 118 files.
 
 ## Current helper behavior
 
@@ -127,9 +131,11 @@ Phase 33 has provider-neutral refund/void planning, no-mutation preview generati
 - voids before fulfillment may cancel after provider success and evaluate capacity release;
 - voids after fulfillment starts require manual review before cancellation/release.
 
-## Preview boundary acceptance criteria
+`PaymentOperationRecord` migration-backed storage is now defined for future persistence. The table is intentionally raw-SQL-backed for this slice and is not in `prisma/schema.prisma`; `prisma generate` does not validate a Prisma client model for it. Target environments must apply and verify `prisma/migrations/20260604200000_add_payment_operation_records/migration.sql` before any repository/service writes depend on it.
 
-The no-mutation preview boundary should continue to:
+## Preview and persistence boundary acceptance criteria
+
+The current boundary should continue to:
 
 - accept an order/payment snapshot and desired refund or void request;
 - normalize untrusted admin form/query inputs through a pure helper before route-core preview construction;
@@ -142,15 +148,17 @@ The no-mutation preview boundary should continue to:
 - include transition/release planning as advisory-only display data;
 - render read-only admin UI without execution controls;
 - keep static/demo preview routes free of provider calls, persistence, order mutation, payment attempt mutation, and execution affordances;
-- keep persistence design documentation explicit that no migration or provider mutation has been added yet;
+- keep persistence design documentation explicit when migrations or provider mutation have not been added;
 - keep transition/release planning pure and advisory until persistence, audit, and operator approval paths exist;
-- avoid database writes;
+- keep `PaymentOperationRecord` raw-SQL-backed until a deliberate Prisma/client decision is made;
+- require target-environment migration verification before repository/service writes;
+- avoid repository/service writes until an idempotent creation layer is added;
 - avoid checkout order mutation;
 - avoid payment attempt mutation;
 - avoid inventory or capacity release;
 - avoid audit-log writes;
 - avoid live provider calls;
-- be covered by source/unit guards before any persistence or provider execution is added.
+- be covered by source/unit guards before provider execution is added.
 
 ## Explicit non-goals for this slice
 
@@ -158,9 +166,9 @@ This slice intentionally does not add:
 
 - live provider refund calls;
 - live provider void calls;
-- database writes;
-- database migrations;
-- Prisma models;
+- Prisma model/client access for `PaymentOperationRecord`;
+- repository writes;
+- service writes;
 - order status mutation;
 - payment attempt mutation;
 - inventory or capacity release;
@@ -168,15 +176,15 @@ This slice intentionally does not add:
 - admin refund/void execution buttons;
 - provider dashboard settlement imports.
 
-Those remain future Phase 33 slices after the provider-neutral planning and preview contracts are stable.
+Those remain future Phase 33 slices after the migration contract is accepted and target-environment migration verification is complete.
 
 ## Recommended next work
 
-1. Add migration-backed refund/void operation records only after the persistence design contract is accepted.
-2. Add a repository/service layer that can create pending operations idempotently.
-3. Add append-only audit events for preview/request/blocked states.
-4. Add provider adapters for Stripe/ZarinPal refund and void execution only after preview, persistence, audit, and idempotency rules are defined.
+1. Add a repository/service layer that can create pending operation records idempotently only after the target migration is applied and verified.
+2. Add append-only audit events for preview/request/blocked states.
+3. Add provider adapters for Stripe/ZarinPal refund and void execution only after preview, persistence, audit, and idempotency rules are defined.
+4. Add operator-facing migration validation evidence before enabling any execution path.
 
 ## Verification status
 
-Source/unit guard coverage has been added, but local verification is pending. Do not claim `npm run test:unit`, `npm run typecheck`, `npx prisma generate`, `npx prisma migrate status`, or live provider validation passed unless those checks are actually run.
+Source/unit guard coverage has been added, but local verification is pending. Do not claim `npm run test:unit`, `npm run typecheck`, `npx prisma generate`, `npx prisma migrate status`, migration application, or live provider validation passed unless those checks are actually run.
