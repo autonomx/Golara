@@ -6,7 +6,7 @@ This note supplements `docs/production-roadmap.md` while Phase 32 is in progress
 
 ## Current status
 
-Phase 32 is in progress. Golara now has provider-neutral payment webhook normalization, idempotent inbound webhook persistence, webhook signature verification, minimal provider webhook routes, trusted webhook-driven checkout state transitions, read-only settlement reconciliation, and an authenticated admin settlement visibility page for:
+Phase 32 is in progress. Golara now has provider-neutral payment webhook normalization, idempotent inbound webhook persistence, webhook signature verification, minimal provider webhook routes, trusted webhook-driven checkout state transitions, read-only settlement reconciliation, an authenticated admin settlement visibility page, and main admin navigation access for:
 
 - **Stripe Checkout Sessions** webhooks.
 - **ZarinPal** verification/callback-style payment events.
@@ -35,7 +35,8 @@ Phase 32 is in progress. Golara now has provider-neutral payment webhook normali
 - Added `lib/checkout/payment-settlement-reconciliation.ts` for pure settlement classification.
 - Added `lib/checkout/payment-settlement-service.ts` for read-only settlement summaries derived from recorded `CheckoutPaymentEvent` rows.
 - Added `components/admin/AdminPaymentSettlementSummaryPanel.tsx` and `app/admin/payments/settlement/page.tsx` for authenticated settlement visibility.
-- Added supplemental source/pure guard tests for webhook service, route handling, signatures, state transitions, settlement reconciliation, settlement summary service, and admin settlement visibility.
+- Added `Payment settlement` to the main admin sidebar under Customer Ops.
+- Added supplemental source/pure guard tests for webhook service, route handling, signatures, state transitions, settlement reconciliation, settlement summary service, admin settlement visibility, and settlement navigation.
 - Kept supplemental test files separate because edits to `tests/unit/run-tests.ts` have been unreliable in the connector environment.
 
 ## Still pending before Phase 32 is complete
@@ -43,10 +44,9 @@ Phase 32 is in progress. Golara now has provider-neutral payment webhook normali
 - Wire supplemental Phase 32 test files into `tests/unit/run-tests.ts` when runner edits are safe, or fold their coverage into an existing wired test file.
 - Validate Stripe and ZarinPal webhook signature behavior against live/staging provider dashboards.
 - Add persisted settlement reconciliation records/views if durable settlement history is required beyond read-only summaries.
-- Add the settlement page to the main admin sidebar/navigation.
 - Add retry/alerting behavior for failed, pending, or needs-attention payment webhook events.
 - Run production/staging webhook smoke tests with real provider credentials and callback URLs.
 
 ## Notes
 
-Phase 32 now has an end-to-end foundation from provider webhook receipt to idempotent event persistence, optional signature verification, trusted matched checkout state transitions, read-only settlement classification, and operator settlement visibility. Production trust still depends on configured webhook secrets, live provider dashboard validation, and smoke testing. Durable settlement history, dashboard imports, and alerting remain pending.
+Phase 32 now has an end-to-end foundation from provider webhook receipt to idempotent event persistence, optional signature verification, trusted matched checkout state transitions, read-only settlement classification, operator settlement visibility, and admin navigation access. Production trust still depends on configured webhook secrets, live provider dashboard validation, and smoke testing. Durable settlement history, dashboard imports, and alerting remain pending.
