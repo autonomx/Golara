@@ -13,6 +13,7 @@ export async function runPaymentOperationMigrationContractTests() {
   const statusHelper = source('lib/checkout/payment-operation-migration-status.ts');
   const repository = source('lib/checkout/payment-operation-record-repository.ts');
   const service = source('lib/checkout/payment-operation-record-service.ts');
+  const audit = source('lib/checkout/payment-operation-audit.ts');
   const schema = source('prisma/schema.prisma');
 
   assert.ok(migration.includes('CREATE TABLE IF NOT EXISTS "PaymentOperationRecord"'));
@@ -95,6 +96,22 @@ export async function runPaymentOperationMigrationContractTests() {
   assert.equal(service.includes('zarinpal'), false);
   assert.equal(service.includes('fetch('), false);
   assert.equal(service.includes('@prisma/client'), false);
+
+  assert.ok(audit.includes('PaymentOperationAuditKind'));
+  assert.ok(audit.includes('preview_requested'));
+  assert.ok(audit.includes('preview_blocked'));
+  assert.ok(audit.includes('preview_manual_review'));
+  assert.ok(audit.includes('pending_record_created'));
+  assert.ok(audit.includes('idempotency_duplicate_reused'));
+  assert.ok(audit.includes('idempotency_conflict_blocked'));
+  assert.ok(audit.includes('buildPaymentOperationAuditLogInput'));
+  assert.ok(audit.includes('recordPaymentOperationAuditEvent'));
+  assert.ok(audit.includes('recordAdminAuditLog'));
+  assert.equal(audit.includes('stripe'), false);
+  assert.equal(audit.includes('zarinpal'), false);
+  assert.equal(audit.includes('fetch('), false);
+  assert.equal(audit.includes('CheckoutOrder" SET'), false);
+  assert.equal(audit.includes('CheckoutPaymentAttempt" SET'), false);
 
   assert.equal(schema.includes('model PaymentOperationRecord'), false);
 
