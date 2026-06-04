@@ -6,7 +6,7 @@ This note tracks Phase 33 work after the Phase 32 repo-side webhook and settleme
 
 ## Current status
 
-Phase 33 has provider-neutral refund/void planning, no-mutation preview generation, pure preview input normalization, read-only preview view models, route-core preview/request helpers, compact read-only admin preview display, documentation-only persistence design, pure order/payment transition plus inventory/capacity release planning, a migration-backed `PaymentOperationRecord` table contract, target-environment migration evidence templates, a read-only migration status helper, repository/service design notes, gated raw-SQL repository/service foundations, append-only admin audit-log wiring for operation-record lifecycle events, provider operation adapter contracts, inert mock/manual/unavailable adapter behavior, symbolic Stripe/ZarinPal request/response mappers, injected provider HTTP adapter factories, migration-gated service-level execution orchestration for existing operation records, read-only payment operation history view/panel helpers, and a migration-gated payment operation history route-core helper.
+Phase 33 has provider-neutral refund/void planning, no-mutation preview generation, pure preview input normalization, read-only preview view models, route-core preview/request helpers, compact read-only admin preview display, documentation-only persistence design, pure order/payment transition plus inventory/capacity release planning, a migration-backed `PaymentOperationRecord` table contract, target-environment migration evidence templates, a read-only migration status helper, repository/service design notes, gated raw-SQL repository/service foundations, append-only admin audit-log wiring for operation-record lifecycle events, provider operation adapter contracts, inert mock/manual/unavailable adapter behavior, symbolic Stripe/ZarinPal request/response mappers, injected provider HTTP adapter factories, migration-gated service-level execution orchestration for existing operation records, read-only payment operation history view/panel helpers, a migration-gated payment operation history route-core helper, and a compact read-only admin operation-history route.
 
 This remains repo-side foundation work: no default live Stripe or ZarinPal refund/void HTTP calls, concrete live provider endpoint URLs, order/payment mutations, inventory/capacity release, admin refund/void execution buttons, or Prisma model/client access for `PaymentOperationRecord` have been added. Repository/service access and history reads remain gated behind target-environment migration confirmation.
 
@@ -44,7 +44,8 @@ This remains repo-side foundation work: no default live Stripe or ZarinPal refun
 - Added `lib/checkout/payment-operation-history-view.ts` to build read-only payment operation history rows and view models from `PaymentOperationRecord` rows, including status tones, provider references, operator labels, timestamps, retryability, and error details.
 - Added `components/admin/AdminPaymentOperationHistoryPanel.tsx` as a read-only admin history/status panel that renders operation records without buttons, click handlers, provider calls, Prisma access, or order/payment mutation.
 - Added `lib/checkout/payment-operation-history-route-core.ts` as a migration-gated route-core helper that validates order-history read inputs, calls `listPaymentOperationRecordsForOrderIfConfirmed`, returns migration-unconfirmed state when the target environment is not confirmed, and passes confirmed records through `buildPaymentOperationHistoryView` without provider calls or mutation.
-- Extended `tests/unit/payment-operation-migration-contract.test.ts` to guard the history view model, read-only history panel, migration-gated history route-core helper, no-fetch/no-Prisma/no-mutation boundaries, and absence of execution controls. The runner count remains 119 files.
+- Added `app/admin/payments/operations/history/page.tsx` as an authenticated, read-only admin route that accepts `orderId` and optional `limit` query parameters, renders `AdminPaymentOperationHistoryPanel` for confirmed reads, and renders migration-unconfirmed/validation guidance without creating records, calling providers, or mutating orders/payments.
+- Extended `tests/unit/payment-operation-migration-contract.test.ts` to guard the history view model, read-only history panel, migration-gated history route-core helper, admin history route, no-fetch/no-Prisma/no-mutation boundaries, and absence of execution controls. The runner count remains 119 files.
 
 ## Current helper behavior
 
@@ -65,6 +66,8 @@ This remains repo-side foundation work: no default live Stripe or ZarinPal refun
 `buildPaymentOperationHistoryView` can format persisted operation records into read-only admin rows with status tones, amount/provider/reference labels, operator attribution, timestamps, retryability, error categories, and operation details. `AdminPaymentOperationHistoryPanel` can render those rows for admin review without provider calls, Prisma access, click handlers, buttons, order mutation, or payment mutation.
 
 `buildPaymentOperationHistoryRouteResult` validates an order ID and optional limit, calls `listPaymentOperationRecordsForOrderIfConfirmed`, returns `status: 503` plus migration status and an empty read-only history view when the target environment is not confirmed, and returns `status: 200` plus `buildPaymentOperationHistoryView(records)` when records are available. It does not execute provider operations, create payment-operation records, use direct Prisma access, call fetch, mutate orders/payments, release inventory/capacity, or render admin execution controls.
+
+`/admin/payments/operations/history` can render authenticated read-only operation history for an `orderId` query parameter. It calls `buildPaymentOperationHistoryRouteResult`, displays validation errors or migration-unconfirmed guidance when appropriate, and renders `AdminPaymentOperationHistoryPanel` for confirmed reads. It does not create pending records, execute provider operations, expose refund/void buttons, call fetch, use direct Prisma access, mutate orders/payments, or release inventory/capacity.
 
 `payment-operation-adapters.ts` defines a provider operation adapter contract for future refund/void execution. It can normalize providers, route operations through supplied adapters, return manual-review results for manual operations, return unavailable results for unconfigured providers, provide inert mock Stripe/ZarinPal/manual behavior for source/unit coverage, build symbolic Stripe/ZarinPal request envelopes, normalize Stripe/ZarinPal operation responses into succeeded/failed/retryable result shapes, and execute provider operation adapters only through caller-injected `ProviderPaymentOperationHttpClient` functions. If no HTTP client is injected, the Stripe/ZarinPal HTTP adapters return `provider_http_client_missing`. This module does not make default live provider HTTP calls, use Prisma, mutate order/payment state, release inventory/capacity, or expose admin execution controls.
 
@@ -96,7 +99,7 @@ The current boundary should continue to:
 - require caller-injected HTTP clients for any provider operation adapter execution path;
 - require provider-reference, idempotency, status, and error normalization before any live provider adapter is exposed to admin flows;
 - block execution orchestration for non-executable operation-record statuses or blocked preview decisions;
-- keep admin operation-history/status route-core and panel display read-only until target-environment migration and provider validation are complete;
+- keep admin operation-history/status route-core and page/panel display read-only until target-environment migration and provider validation are complete;
 - avoid checkout order mutation;
 - avoid payment attempt mutation;
 - avoid inventory or capacity release;
@@ -122,9 +125,9 @@ Those remain future Phase 33 slices after target-environment migration verificat
 
 ## Recommended next work
 
-1. Add or extend a compact read-only admin route/page that uses `buildPaymentOperationHistoryRouteResult` and `AdminPaymentOperationHistoryPanel` after confirming the route UX conventions.
-2. Add target-environment provider endpoint mapping only after staging credentials and provider operation contracts are confirmed by operators.
-3. Add admin execution controls only after provider execution, provider error normalization, and post-success order/payment transition behavior are explicitly guarded.
+1. Add target-environment provider endpoint mapping documentation only after staging credentials and provider operation contracts are confirmed by operators.
+2. Add admin execution controls only after provider execution, provider error normalization, migration validation, and post-success order/payment transition behavior are explicitly guarded.
+3. Keep expanding read-only operator diagnostics before introducing destructive refund/void actions.
 
 ## Verification status
 
