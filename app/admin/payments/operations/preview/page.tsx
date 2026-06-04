@@ -27,6 +27,7 @@ export default async function AdminPaymentOperationPreviewPage() {
   const authConfigured = isAdminAuthConfigured();
   const identity = await getAdminIdentity();
   const previewResult = buildPaymentOperationPreviewRequestResult(samplePreviewRequest);
+  const previewRouteResult = previewResult.status === 200 && previewResult.body.ok ? previewResult : null;
 
   return (
     <main className="min-h-screen bg-stone-50 px-4 py-6 lg:px-8">
@@ -50,7 +51,7 @@ export default async function AdminPaymentOperationPreviewPage() {
           </div>
         </section>
 
-        {authenticated && previewResult.body.ok ? <AdminPaymentOperationPreviewPanel result={previewResult} /> : null}
+        {authenticated && previewRouteResult ? <AdminPaymentOperationPreviewPanel result={previewRouteResult} /> : null}
         {authenticated && !previewResult.body.ok ? (
           <section className="rounded-lg border border-red-200 bg-red-50 p-5 text-red-950 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-[0.16em]">Preview sample validation failed</p>
