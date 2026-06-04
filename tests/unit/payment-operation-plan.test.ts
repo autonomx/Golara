@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 
 import { planPaymentOperation } from '../../lib/checkout/payment-operation-plan';
 import { buildPaymentOperationPreview } from '../../lib/checkout/payment-operation-preview';
+import { buildPaymentOperationPreviewRouteResult } from '../../lib/checkout/payment-operation-preview-route-core';
 import { buildPaymentOperationPreviewView } from '../../lib/checkout/payment-operation-preview-view';
 
 function source(path: string) {
@@ -12,6 +13,7 @@ function source(path: string) {
 export async function runPaymentOperationPlanTests() {
   const docs = source('docs/production-roadmap-phase33-payment-operations.md');
   const previewSource = source('lib/checkout/payment-operation-preview.ts');
+  const previewRouteCoreSource = source('lib/checkout/payment-operation-preview-route-core.ts');
   const previewViewSource = source('lib/checkout/payment-operation-preview-view.ts');
   assert.match(docs, /Phase 33 Refunds, Voids, and Payment Operations Progress/);
   assert.match(docs, /provider-neutral refund\/void planning helper/);
@@ -48,6 +50,13 @@ export async function runPaymentOperationPlanTests() {
   assert.doesNotMatch(previewViewSource, /fetch\(/);
   assert.doesNotMatch(previewViewSource, /checkoutOrder\.update/);
   assert.doesNotMatch(previewViewSource, /checkoutPaymentAttempt\.update/);
+
+  assert.match(previewRouteCoreSource, /export function buildPaymentOperationPreviewRouteResult/);
+  assert.match(previewRouteCoreSource, /buildPaymentOperationPreviewView\(input\)/);
+  assert.doesNotMatch(previewRouteCoreSource, /prisma\./);
+  assert.doesNotMatch(previewRouteCoreSource, /fetch\(/);
+  assert.doesNotMatch(previewRouteCoreSource, /checkoutOrder\.update/);
+  assert.doesNotMatch(previewRouteCoreSource, /checkoutPaymentAttempt\.update/);
 
   const refund = planPaymentOperation({
     operation: 'refund',
@@ -126,6 +135,24 @@ export async function runPaymentOperationPlanTests() {
     'Manual review',
     'Payment attempt'
   ]);
+
+  const readyRouteResult = buildPaymentOperationPreviewRouteResult({
+    operation: 'refund',
+    order: { status: 'paid', totalCents: 420000, currency: 'USD' },
+    payment: {
+      provider: 'stripe',
+      status: 'paid',
+      amountCents: 420000,
+      currency: 'USD',
+      providerReference: 'payment-reference'
+    },
+    amountCents: 210000,
+    orderNumber: 'GOL-1001',
+    paymentAttemptId: 'attempt-1'
+  });
+  assert.equal(readyRouteResult.status, 200);
+  assert.equal(readyRouteResult.body.ok, true);
+  assert.equal(readyRouteResult.body.preview.statusLabel, 'Ready for preview approval');
 
   const missingReference = planPaymentOperation({
     operation: 'refund',
