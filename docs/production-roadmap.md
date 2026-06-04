@@ -1,7 +1,7 @@
 # Golara Production Readiness Roadmap
 
 Last updated: 2026-06-04
-Current main baseline: Phase 32 payment webhook and settlement foundations are in progress after Phase 31 live payment gateway foundations.
+Current main baseline: Phase 33 refund/void and payment-operation foundations are in progress after Phase 32 payment webhook and settlement foundations.
 Current production path: inquiry-first launch remains available; full commerce rollout is now progressing through the deferred production feature roadmap.
 
 ## Current readiness state
@@ -13,7 +13,7 @@ Important distinction:
 - Production-readiness work is complete for the inquiry-first launch path.
 - Recent admin/storefront work has expanded the demo-commerce/admin surface: product/category/media management, homepage management, displayed occasion tiles, featured picks, demo orders/inquiries/customers/discounts, settings pages, analytics panels, and hideable storefront header search.
 - Actual production launch still requires environment-specific operator sign-off: secrets, database, Cloudinary or another production-safe media store, notification mode, data-safety confirmations, deploy-readiness output, and manual smoke audit.
-- Full payment-provider checkout is in progress. Phase 31 added live Stripe/ZarinPal checkout foundations and Phase 32 now has webhook, settlement, admin visibility, guard coverage, and smoke-test runbook foundations, but provider-generated staging/production validation, migration verification, refunds, outbound alert delivery, and full end-to-end commerce QA are still not complete.
+- Full payment-provider checkout is in progress. Phase 31 added live Stripe/ZarinPal checkout foundations, Phase 32 added webhook, settlement, admin visibility, guard coverage, and smoke-test runbook foundations, and Phase 33 now has read-only refund/void/payment-operation foundations plus strict no-go evidence checklists. Provider-generated staging/production validation, migration verification, live refund/void execution, outbound alert delivery, and full end-to-end commerce QA are still not complete.
 
 Completed foundations:
 
@@ -33,6 +33,7 @@ Completed foundations:
 - Homepage admin now supports editing hero content/media, CTAs, trust chips, section copy, footer copy, displayed occasion tiles, and featured picks.
 - Payment gateway adapter foundations include manual/inquiry fallback adapters, Stripe/Iranian mock adapters, live Stripe Checkout Session foundations, ZarinPal adapter foundations, and idempotency-key support.
 - Payment webhook and settlement foundations include provider-neutral normalization, signed route helpers, idempotent event persistence, trusted matched state transitions, durable settlement reconciliation storage, admin settlement/alert visibility, source-labeled settlement summaries, unit-runner guards, and a provider smoke-test runbook.
+- Payment operation foundations include provider-neutral refund/void planning, no-mutation previews, migration-gated operation-record repository/service foundations, injected provider adapter contracts, read-only admin operation diagnostics, provider readiness diagnostics, operator runbooks, go/no-go criteria, provider evidence examples, and a target-environment smoke-test checklist. The current refund/void execution decision remains **NO-GO**.
 
 ## Completed recent phases
 
@@ -193,22 +194,47 @@ Success criteria:
 
 ### Phase 33 — refunds, voids, and payment operations
 
-Status: foundation exists in admin/payment records, but live provider operations still need implementation.
+Status: repo-side foundation in progress; current decision is **NO-GO for live refund/void execution**. Read-only planning, persistence contracts, migration-gated repository/service foundations, provider adapter contracts, admin diagnostic surfaces, operator runbooks, go/no-go criteria, provider evidence examples, and smoke-test checklist documentation exist. Live provider execution, admin execution controls, order/payment mutation, inventory/capacity release, concrete provider endpoint URLs, default fetch behavior, provider credentials, production-ready claims, and Prisma model/client access for `PaymentOperationRecord` remain out of scope.
+
+Goal: create a safe, idempotent, auditable foundation for future provider-backed refunds and voids while preserving read-only admin diagnostics and strict target-environment evidence gates before any destructive financial action is enabled.
 
 Checklist:
 
-- [ ] Add provider-backed refund and void actions where supported.
-- [ ] Support partial refunds if the selected provider supports them.
-- [ ] Store refund/void provider references and staff attribution.
-- [ ] Release inventory/capacity when a paid order is cancelled or refunded according to policy.
-- [ ] Add refund/void audit log entries.
-- [ ] Add tests for full refund, partial refund, void before capture, provider failure, and duplicate refund protection.
+- [x] Add provider-neutral refund/void operation planning and no-mutation preview helpers.
+- [x] Add raw-SQL `PaymentOperationRecord` migration contract and target-environment migration evidence template.
+- [x] Add migration-gated operation-record repository/service foundations with idempotency-key duplicate reuse and conflict blocking.
+- [x] Add append-only admin audit-log wiring for operation-record lifecycle transitions behind migration confirmation.
+- [x] Add provider operation adapter contracts, inert manual/mock/unavailable behavior, symbolic Stripe/ZarinPal request/response mappers, and caller-injected HTTP adapter factories.
+- [x] Add read-only admin diagnostics for preview, operation history, provider readiness, and payment-operation navigation.
+- [x] Add documentation-only provider endpoint mapping worksheet, operator runbook, admin navigation map, provider readiness evidence example, refund/void smoke-test checklist, and refund/void go/no-go checklist.
+- [~] Add tests/source guards for full refund, partial refund, void before capture, provider failure, and duplicate refund protection. Current source/unit guards cover planning, transition planning, migration contract, provider readiness, adapter boundaries, no-execution admin surfaces, documentation safety language, and idempotency/repository semantics; live provider behavior remains pending.
+- [ ] Add provider-backed refund and void actions where supported after target-environment evidence and guarded execution criteria are approved.
+- [ ] Support partial refunds in live provider execution after provider endpoint mapping and response normalization are validated.
+- [ ] Mutate order/payment state only after provider success behavior is explicitly guarded and reviewed.
+- [ ] Release inventory/capacity only after policy and post-success transition criteria are explicitly guarded and reviewed.
+
+Progress notes:
+
+- Added `docs/production-roadmap-phase33-payment-operations.md` as the authoritative Phase 33 progress tracker.
+- Added read-only admin pages under `/admin/payments/operations`, `/admin/payments/operations/preview`, `/admin/payments/operations/history`, and `/admin/payments/operations/providers`.
+- Added migration-gated history route-core helpers and read-only history panel behavior; repository/service reads and writes require `PAYMENT_OPERATION_RECORDS_MIGRATION_CONFIRMED=true` in the target environment.
+- Added provider readiness diagnostics that always return `executionEnabled: false` and expose credential environment variable names without secret values.
+- Added `docs/production-roadmap-phase33-provider-endpoint-mapping-readiness.md`, `docs/production-roadmap-phase33-provider-readiness-evidence-example.md`, `docs/production-roadmap-phase33-refund-void-smoke-test-checklist.md`, and `docs/production-roadmap-phase33-refund-void-go-no-go-checklist.md` to keep future provider validation evidence explicit before execution work proceeds.
+- Added source guards in `tests/unit/payment-operation-provider-readiness.test.ts` to block provider calls, adapter execution wiring, default fetch, direct Prisma access, concrete provider endpoint URLs, admin buttons/click handlers, order/payment mutation SQL, and weakened no-go/evidence language in guarded Phase 33 surfaces.
+
+Still pending before Phase 33 live execution:
+
+- Apply and verify the `PaymentOperationRecord` migration in the target environment.
+- Complete provider endpoint mapping evidence for Stripe/ZarinPal without publishing concrete live endpoint URLs in docs/source.
+- Complete provider readiness evidence packets and smoke-test checklist review in the target environment.
+- Implement guarded admin execution controls only after provider execution, provider error normalization, migration validation, authorization/confirmation UX, and post-success order/payment transition behavior are explicitly guarded.
+- Validate live/staging provider refund/void behavior against provider-generated responses.
 
 Success criteria:
 
-- Staff can refund/void from admin without manually editing payment state.
-- Payment operations remain auditable and reconcile with the provider.
-- Inventory and order state remain consistent after payment reversals.
+- Staff can eventually refund/void from admin without manually editing payment state, but only after target-environment evidence gates and guarded execution controls are satisfied.
+- Payment operations remain idempotent, auditable, and reconcilable with the provider.
+- Inventory and order state remain consistent after payment reversals through explicitly guarded post-provider-success transitions.
 
 ### Phase 34 — real email/SMS/WhatsApp notification providers
 
@@ -322,7 +348,7 @@ Repository blockers before full automated commerce launch:
 
 - Live payment gateway staging/production validation and checkout/order/fulfillment end-to-end QA.
 - Payment webhook provider smoke validation and settlement migration verification.
-- Provider-backed refunds/voids.
+- Provider-backed refunds/voids after Phase 33 no-go criteria, migration evidence, provider endpoint mapping evidence, provider readiness evidence, guarded execution controls, and post-success state transition criteria are satisfied.
 - Real notification provider delivery.
 - Durable outbound webhook worker.
 - Provider-backed per-user admin authentication.
