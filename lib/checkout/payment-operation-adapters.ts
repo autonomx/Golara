@@ -33,6 +33,19 @@ export type PaymentOperationAdapter = {
   execute(input: PaymentOperationAdapterInput): Promise<PaymentOperationAdapterResult>;
 };
 
+export type ProviderPaymentOperationRequest = {
+  method: 'POST';
+  endpoint: string;
+  headers: Record<string, string>;
+  body: string;
+};
+
+export type ProviderPaymentOperationResponse = {
+  ok: boolean;
+  status: number;
+  body?: Record<string, unknown> | null;
+};
+
 function cleanProvider(provider: string): PaymentOperationAdapterProvider {
   const normalized = provider.trim().toLowerCase();
   if (normalized === 'stripe') return 'stripe';
@@ -47,6 +60,21 @@ function hasRequiredReference(input: PaymentOperationAdapterInput) {
 
 function operationReference(provider: PaymentOperationAdapterProvider, input: PaymentOperationAdapterInput) {
   return `${provider}:${input.operationKind}:${input.paymentOperationRecordId}`;
+}
+
+function cleanOperationReference(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+}
+
+function providerResponseError(body: Record<string, unknown> | null | undefined, fallback: string) {
+  const error = body?.error;
+  if (error && typeof error === 'object' && !Array.isArray(error)) {
+    const message = (error as Record<string, unknown>).message;
+    if (typeof message === 'string' && message.trim()) return message.trim();
+  }
+  const message = body?.message;
+  if (typeof message === 'string' && message.trim()) return message.trim();
+  return fallback;
 }
 
 function baseMetadata(input: PaymentOperationAdapterInput): Record<string, string | number | boolean | null> {
@@ -65,6 +93,155 @@ function baseMetadata(input: PaymentOperationAdapterInput): Record<string, strin
 
 export function normalizePaymentOperationAdapterProvider(provider: string): PaymentOperationAdapterProvider {
   return cleanProvider(provider);
+}
+
+export function buildStripePaymentOperationRequest(input: PaymentOperationAdapterInput, secretKey?: string): ProviderPaymentOperationRequest | PaymentOperationAdapterResult {
+  if (!secretKey?.trim()) {
+    return {
+      provider: 'stripe',
+      operationKind: input.operationKind,
+      status: 'unavailable',
+      errorCategory: 'provider_credentials_missing',
+      retryable: false,
+      message: 'Stripe payment operation execution requires configured credentials.',
+      metadata: baseMetadata(input)
+    };
+  }
+  if (!hasRequiredReference(input)) {
+    return {
+      provider: 'stripe',
+      operationKind: input.operationKind,
+      status: 'failed',
+      providerStatus: 'missing_provider_reference',
+      errorCategory: 'provider_reference_required',
+      retryable: false,
+      message: 'Stripe payment operation execution requires a provider payment reference.',
+      metadata: baseMetadata(input)
+    };
+  }
+
+  const body = new URLSearchParams();
+  if (input.operationKind === 'refund') {
+    body.set('payment_intent', input.providerReference!.trim());
+    body.set('amount', String(Math.round(input.amountCents)));
+  }
+  body.set('metadata[golara_payment_operation_record_id]', input.paymentOperationRecordId);
+  if (input.reason?.trim()) body.set('metadata[golara_reason]', input.reason.trim());
+
+  return {
+    method: 'POST',
+    endpoint: input.operationKind === 'refund' ? 'stripe.refunds.create' : 'stripe.payment_intents.cancel',
+    headers: {
+      Authorization: 'configured-stripe-credential',
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Idempotency-Key': input.idempotencyKey.trim()
+    },
+    body: body.toString()
+  };
+}
+
+export function normalizeStripePaymentOperationResponse(input: PaymentOperationAdapterInput, response: ProviderPaymentOperationResponse): PaymentOperationAdapterResult {
+  const reference = cleanOperationReference(response.body?.id);
+  const providerStatus = cleanOperationReference(response.body?.status);
+  if (response.ok && reference) {
+    return {
+      provider: 'stripe',
+      operationKind: input.operationKind,
+      status: 'succeeded',
+      providerOperationReference: reference,
+      providerStatus: providerStatus ?? `${input.operationKind}_succeeded`,
+      retryable: false,
+      message: `Stripe ${input.operationKind} operation succeeded.`,
+      metadata: { ...baseMetadata(input), httpStatus: response.status }
+    };
+  }
+  return {
+    provider: 'stripe',
+    operationKind: input.operationKind,
+    status: 'failed',
+    providerStatus: providerStatus ?? 'provider_error',
+    errorCategory: response.status >= 500 ? 'provider_retryable_error' : 'provider_rejected_operation',
+    retryable: response.status >= 500,
+    message: providerResponseError(response.body, `Stripe returned HTTP ${response.status}.`),
+    metadata: { ...baseMetadata(input), httpStatus: response.status }
+  };
+}
+
+export function buildZarinPalPaymentOperationRequest(input: PaymentOperationAdapterInput, merchantId?: string): ProviderPaymentOperationRequest | PaymentOperationAdapterResult {
+  if (!merchantId?.trim()) {
+    return {
+      provider: 'zarinpal',
+      operationKind: input.operationKind,
+      status: 'unavailable',
+      errorCategory: 'provider_credentials_missing',
+      retryable: false,
+      message: 'ZarinPal payment operation execution requires configured credentials.',
+      metadata: baseMetadata(input)
+    };
+  }
+  if (!hasRequiredReference(input)) {
+    return {
+      provider: 'zarinpal',
+      operationKind: input.operationKind,
+      status: 'failed',
+      providerStatus: 'missing_provider_reference',
+      errorCategory: 'provider_reference_required',
+      retryable: false,
+      message: 'ZarinPal payment operation execution requires a provider payment reference.',
+      metadata: baseMetadata(input)
+    };
+  }
+  return {
+    method: 'POST',
+    endpoint: input.operationKind === 'refund' ? 'zarinpal.payment.refund' : 'zarinpal.payment.reverse',
+    headers: {
+      'Content-Type': 'application/json',
+      'Idempotency-Key': input.idempotencyKey.trim()
+    },
+    body: JSON.stringify({
+      merchant_id: merchantId.trim(),
+      authority: input.providerReference!.trim(),
+      amount: Math.round(input.amountCents),
+      operation: input.operationKind,
+      description: input.reason?.trim() || `Golara ${input.operationKind} ${input.paymentOperationRecordId}`,
+      metadata: {
+        payment_operation_record_id: input.paymentOperationRecordId,
+        order_id: input.orderId,
+        payment_attempt_id: input.paymentAttemptId
+      }
+    })
+  };
+}
+
+export function normalizeZarinPalPaymentOperationResponse(input: PaymentOperationAdapterInput, response: ProviderPaymentOperationResponse): PaymentOperationAdapterResult {
+  const data = response.body?.data && typeof response.body.data === 'object' && !Array.isArray(response.body.data)
+    ? response.body.data as Record<string, unknown>
+    : {};
+  const reference = cleanOperationReference(data.ref_id) ?? cleanOperationReference(data.refId) ?? cleanOperationReference(data.authority) ?? cleanOperationReference(input.providerReference);
+  const code = typeof data.code === 'number' ? data.code : undefined;
+  const providerStatus = code !== undefined ? String(code) : cleanOperationReference(data.status);
+  if (response.ok && (code === 100 || code === 101 || providerStatus === 'ok')) {
+    return {
+      provider: 'zarinpal',
+      operationKind: input.operationKind,
+      status: 'succeeded',
+      providerOperationReference: reference,
+      providerStatus: providerStatus ?? `${input.operationKind}_succeeded`,
+      retryable: false,
+      message: `ZarinPal ${input.operationKind} operation succeeded.`,
+      metadata: { ...baseMetadata(input), httpStatus: response.status }
+    };
+  }
+  return {
+    provider: 'zarinpal',
+    operationKind: input.operationKind,
+    status: 'failed',
+    providerStatus: providerStatus ?? 'provider_error',
+    errorCategory: response.status >= 500 ? 'provider_retryable_error' : 'provider_rejected_operation',
+    retryable: response.status >= 500,
+    message: providerResponseError(response.body, `ZarinPal returned HTTP ${response.status}.`),
+    metadata: { ...baseMetadata(input), httpStatus: response.status }
+  };
 }
 
 export function createUnavailablePaymentOperationAdapter(provider: string, message?: string): PaymentOperationAdapter {
