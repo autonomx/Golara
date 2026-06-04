@@ -6,7 +6,7 @@ This note tracks Phase 33 work after the Phase 32 repo-side webhook and settleme
 
 ## Current status
 
-Phase 33 has provider-neutral refund/void planning, no-mutation preview generation, and a read-only preview view model for admin-safe display. This is still repository-side planning only; it does not call Stripe, ZarinPal, or any other live provider, and it does not mutate payment attempts, orders, refunds, inventory, or audit logs.
+Phase 33 has provider-neutral refund/void planning, no-mutation preview generation, a read-only preview view model, and a route-core style preview result for admin-safe display. This is still repository-side planning only; it does not call Stripe, ZarinPal, or any other live provider, and it does not mutate payment attempts, orders, refunds, inventory, or audit logs.
 
 ## Completed in Phase 33 so far
 
@@ -18,6 +18,8 @@ Phase 33 has provider-neutral refund/void planning, no-mutation preview generati
 - Extended `tests/unit/payment-operation-plan.test.ts` to guard ready, blocked, and manual-review preview behavior plus source-level no-mutation constraints.
 - Added `lib/checkout/payment-operation-preview-view.ts` to format preview results into read-only admin display rows, status labels, tones, action labels, and disabled-reason copy.
 - Extended `tests/unit/payment-operation-plan.test.ts` to guard preview view success, warning, and danger states plus source-level no-mutation constraints.
+- Added `lib/checkout/payment-operation-preview-route-core.ts` to return a stable route-core result shape around `buildPaymentOperationPreviewView` without persistence or provider calls.
+- Extended `tests/unit/payment-operation-plan.test.ts` to guard the preview route-core helper and source-level no-mutation constraints.
 
 ## Current helper behavior
 
@@ -51,6 +53,8 @@ Phase 33 has provider-neutral refund/void planning, no-mutation preview generati
 - operation detail rows;
 - action labels;
 - disabled-reason copy for read-only admin display.
+
+`buildPaymentOperationPreviewRouteResult` can wrap the preview view into a route-core response shape for future admin routes without adding database writes, provider calls, order mutation, payment attempt mutation, inventory/capacity release, or audit-log writes.
 
 ## Preview boundary acceptance criteria
 
@@ -87,7 +91,7 @@ Those remain future Phase 33 slices after the provider-neutral planning and prev
 
 ## Recommended next work
 
-1. Add a compact admin UI or route-core entry point that consumes `buildPaymentOperationPreviewView` without creating records or calling providers.
+1. Add a compact read-only admin UI entry point that consumes `buildPaymentOperationPreviewRouteResult` without creating records or calling providers.
 2. Add persistent refund/void records only when the storage model is clear.
 3. Add audit-log and inventory/capacity release planning before any live provider mutation.
 4. Add provider adapters for Stripe/ZarinPal refund and void execution only after preview, persistence, audit, and idempotency rules are defined.
