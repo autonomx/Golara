@@ -5,6 +5,7 @@ This checklist turns the roadmap's remaining production blockers into explicit l
 For the Phase 3 completion summary, see `docs/PHASE_3_CLOSEOUT.md`.
 For the checkout and payment decision record, see `docs/CHECKOUT_PAYMENT_DECISION.md`.
 For the final release sign-off artifact, see `docs/LAUNCH_AUDIT.md`.
+For production gateway checkout launch steps, see `docs/production-payment-gateway-launch-checklist.md`.
 
 ## 1. Environment and secrets
 
@@ -29,15 +30,24 @@ Required production variables:
 - `INQUIRY_NOTIFICATION_EMAIL`: placeholder for a future email provider integration; currently not used for delivery.
 - `INQUIRY_NOTIFICATION_WHATSAPP`: placeholder for a future WhatsApp provider integration; currently not used for delivery.
 
+Additional variables before enabling `CHECKOUT_MODE="gateway"`:
+
+- Provider credentials for every enabled gateway provider.
+- Provider webhook signing/HMAC secrets for every enabled provider.
+- `PAYMENT_SETTLEMENT_MIGRATION_CONFIRMED`: set to `true` only after verifying the Phase 32 settlement reconciliation migration in the target database.
+- `PAYMENT_WEBHOOK_SMOKE_TESTS_CONFIRMED`: set to `true` only after running the Phase 32 provider smoke-test runbook against the target provider dashboards.
+
 Rules:
 
 - Never commit real `.env.local` or production secrets.
 - Generate a new `ADMIN_SESSION_SECRET` per deployed environment.
 - Treat the password gate as temporary until account/provider auth is wired to the admin login flow.
 - Treat webhook URLs as secrets if they include provider tokens or private routing keys.
+- Treat provider webhook signing secrets and payment gateway credentials as production secrets.
 - Use `ADMIN_ROLE="owner"` for full CMS administration and `ADMIN_ROLE="staff"` for inquiry operations only.
 - Do not launch production with local media storage. Local uploads are not durable on serverless or multi-instance hosting.
 - Do not set production data-safety confirmation flags to `true` until the corresponding runbook step has been reviewed and verified.
+- Do not set Phase 32 payment confirmation flags to `true` until the target migration and provider smoke tests have actually been completed.
 
 ## 2. Database setup and data safety
 
@@ -49,6 +59,7 @@ Current production target:
 - Admin audit logs are stored in `AdminAuditLog` and require the latest Prisma schema to be pushed.
 - Admin account readiness reads `AdminAccount` when database records are present, with environment-configured admin identity as fallback.
 - Audit rows include actor label, email, role, and provider metadata from the current admin identity seam.
+- Payment settlement reconciliation uses the Phase 32 migration-backed `PaymentSettlementReconciliation` table for durable gateway settlement records.
 
 Preflight:
 
@@ -67,16 +78,17 @@ Production migration runbook:
 3. Verify a restorable backup exists before applying schema changes.
 4. Run `npm run db:generate` after dependency install.
 5. Apply schema changes with production `DATABASE_URL` using `npm run db:push` until formal migrations replace this process.
-6. Deploy the matching git SHA.
-7. Smoke-test public product pages, inquiry creation, admin inquiry list, assignment, export, print, and notification readiness.
-8. Record the deployed SHA, schema-change time, and operator who performed the change.
+6. Apply and verify explicit migration files required by the launch scope, including the Phase 32 payment settlement reconciliation migration before gateway checkout.
+7. Deploy the matching git SHA.
+8. Smoke-test public product pages, inquiry creation, admin inquiry list, assignment, export, print, notification readiness, and any enabled payment gateway paths.
+9. Record the deployed SHA, schema-change time, and operator who performed the change.
 
 Backup and restore expectation:
 
 - Take or verify a provider-level PostgreSQL backup immediately before production schema changes.
 - Confirm the backup can be restored to a separate database or restore target before relying on it.
 - Keep the backup retention window long enough to cover launch verification and early customer inquiry review.
-- Treat customer inquiries, admin audit logs, assignment history, follow-ups, and uploaded media records as production data.
+- Treat customer inquiries, admin audit logs, assignment history, follow-ups, uploaded media records, checkout orders, payment attempts, payment events, and settlement reconciliation rows as production data.
 
 Rollback plan:
 
@@ -84,7 +96,7 @@ Rollback plan:
 2. Redeploy the last known-good git SHA.
 3. Restore the verified production database backup if schema/data rollback is required.
 4. Re-run `npm run check:deploy-readiness` with production-like env vars.
-5. Smoke-test inquiry creation, admin list, assignment, export, print, and notification path before reopening operations.
+5. Smoke-test inquiry creation, admin list, assignment, export, print, notification path, and any enabled payment gateway path before reopening operations.
 
 Database bootstrap for first setup or demo reset only:
 
@@ -245,10 +257,28 @@ CLOUDINARY_UPLOAD_FOLDER="golara"
 
 Current decision:
 
-- Golara remains inquiry-first for the current production-readiness pass.
-- Checkout and online payment implementation are deferred until explicitly selected.
-- Existing checkout-related schema groundwork does not mean payment provider code is approved.
-- No payment provider code should be added until `docs/CHECKOUT_PAYMENT_DECISION.md` is updated with an approved provider, payment mode, and launch scope.
+- Golara remains inquiry-first unless the production launch scope explicitly enables gateway checkout.
+- Inquiry-first launch remains available without completing live gateway provider validation.
+- Live Stripe/ZarinPal checkout, webhook, settlement, and admin visibility foundations now exist for the full-commerce path.
+- Full gateway checkout still requires provider dashboard validation, target-database settlement migration verification, and the production gateway launch checklist.
+
+Gateway checkout launch checklist:
+
+- Use `docs/production-payment-gateway-launch-checklist.md` before enabling `CHECKOUT_MODE="gateway"`.
+- Use `docs/production-roadmap-phase32-payment-webhook-smoke-tests.md` for provider-generated webhook validation.
+- Verify `/admin/payments/settlement` shows durable settlement records after provider events arrive.
+- Verify `/admin/payments/alerts` shows expected failed/missing/stale/mismatch alert states.
+- Do not manually mark orders paid unless the provider dashboard confirms payment capture/settlement.
+- Roll back to `CHECKOUT_MODE="inquiry"` or `CHECKOUT_MODE="assisted"` if gateway validation fails.
+
+Gateway deploy-readiness confirmations:
+
+```bash
+PAYMENT_SETTLEMENT_MIGRATION_CONFIRMED="true"
+PAYMENT_WEBHOOK_SMOKE_TESTS_CONFIRMED="true"
+```
+
+Set these only after completing the corresponding target-environment checks. They are not required for inquiry-first launch.
 
 ## 7. Deployment preflight and final launch audit
 
@@ -288,6 +318,12 @@ The deploy readiness guard blocks production mode when any required production d
 - `INQUIRY_NOTIFICATION_MODE="webhook"` requires `INQUIRY_NOTIFICATION_WEBHOOK_URL`.
 - Unsupported notification modes are blocked.
 
+When `CHECKOUT_MODE="gateway"`, the deploy readiness guard also blocks production until:
+
+- Required gateway provider credentials and webhook signing settings are configured.
+- The Phase 32 settlement reconciliation migration is confirmed for the target database.
+- The Phase 32 provider smoke-test runbook is confirmed for the target provider dashboards.
+
 `INQUIRY_NOTIFICATION_MODE="log"` is allowed but reported as a warning because staff must monitor the admin inbox manually.
 
 Final launch audit:
@@ -295,6 +331,7 @@ Final launch audit:
 - Complete `docs/LAUNCH_AUDIT.md` for the target production release.
 - Record release SHA, deployment environment, operator, CI run URL, deploy-readiness result, backup/migration/rollback checks, media readiness, notification mode, manual smoke audit result, deferred item acceptance, and go/no-go decision.
 - Do not treat payment provider work, full automated checkout payment lifecycle, provider-backed per-user admin auth, or email/WhatsApp notifications as blockers for the inquiry-first launch unless the launch scope changes.
+- If the launch scope includes gateway checkout, attach the completed production payment gateway launch checklist and Phase 32 smoke-test results to the go/no-go decision.
 
 Manual smoke test:
 
@@ -318,4 +355,5 @@ Manual smoke test:
 - Admin readiness shows incomplete Cloudinary configuration as blocked in production.
 - Admin readiness shows configured Cloudinary storage as ready.
 - Production data-safety confirmations are set only after migration, backup/restore, and rollback procedures are verified.
+- If gateway checkout is in scope, provider checkout, webhook receipt, durable settlement records, admin settlement visibility, admin payment alerts, and duplicate webhook replay behavior are verified.
 - Logout returns admin to read-only/login flow.
