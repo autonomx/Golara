@@ -24,6 +24,34 @@ export type HomepageTranslation = {
   updatedAt?: Date;
 };
 
+export type HomepageContent = {
+  eyebrow: string;
+  title: string;
+  body: string;
+  primaryCtaLabel: string;
+  primaryCtaHref: string;
+  secondaryCtaLabel: string;
+  secondaryCtaHref: string;
+  panelEyebrow: string;
+  panelTitle: string;
+  panelBody: string;
+  heroImage?: string;
+  heroImageAlt?: string;
+  tertiaryCtaLabel?: string;
+  tertiaryCtaHref?: string;
+  trustItemOne?: string;
+  trustItemTwo?: string;
+  trustItemThree?: string;
+  studioBadge?: string;
+  collectionsEyebrow?: string;
+  collectionsTitle?: string;
+  collectionsBody?: string;
+  collectionsCtaLabel?: string;
+  collectionsCtaHref?: string;
+  footerBody?: string;
+  footerServiceBody?: string;
+};
+
 export type Category = {
   id?: string;
   slug: string;
@@ -137,16 +165,7 @@ export type ProductVariantLocationStock = {
   updatedAt?: Date;
 };
 
-export type Collection = {
-  id: string;
-  slug: string;
-  title: string;
-  description?: string;
-  isActive: boolean;
-  sortOrder: number;
-  productCount?: number;
-  updatedAt?: Date;
-};
+export type Collection = { id: string; slug: string; title: string; description?: string; isActive: boolean; sortOrder: number; productCount?: number; updatedAt?: Date };
 
 export type ProductVariant = {
   id: string;
@@ -161,40 +180,10 @@ export type ProductVariant = {
   lowStockThreshold?: number;
   isActive: boolean;
   sortOrder: number;
+  updatedAt?: Date;
   attributeValues?: ProductAttributeValue[];
   locationStocks?: ProductVariantLocationStock[];
-  updatedAt?: Date;
 };
-
-export type StoreSetting = {
-  id: string;
-  key: string;
-  storeName: string;
-  legalName?: string;
-  supportEmail?: string;
-  supportPhone?: string;
-  defaultLocale: string;
-  defaultCurrency: string;
-  timezone: string;
-  storefrontBaseUrl?: string;
-  isMaintenanceMode: boolean;
-  updatedAt?: Date;
-};
-
-export type FulfillmentMethodSetting = {
-  id: string;
-  key: string;
-  label: string;
-  description?: string;
-  isActive: boolean;
-  isDefault: boolean;
-  requiresAddress: boolean;
-  requiresScheduling: boolean;
-  sortOrder: number;
-  updatedAt?: Date;
-};
-
-export type MediaSourceType = 'external' | 'upload' | 'seed' | 'generated';
 
 export type MediaItem = {
   id?: string;
@@ -207,21 +196,8 @@ export type MediaItem = {
   sizeBytes?: number;
   productId?: string;
   createdAt?: Date;
-};
-
-export type CustomerInquiryFollowUp = {
-  id: string;
-  note: string;
-  channel: string;
-  createdAt: Date;
-};
-
-export type CustomerInquiryAssignee = {
-  adminId?: string;
-  label?: string;
-  email?: string;
-  role?: string;
-  assignedAt?: Date;
+  source?: string;
+  storageKey?: string;
 };
 
 export type CustomerInquiry = {
@@ -235,26 +211,29 @@ export type CustomerInquiry = {
   deliveryDate?: Date;
   deliveryNotes?: string;
   staffNotes?: string;
-  assignee?: CustomerInquiryAssignee;
-  followUps?: CustomerInquiryFollowUp[];
+  assignee?: {
+    adminId?: string;
+    label?: string;
+    email?: string;
+    role?: string;
+    assignedAt?: Date;
+  };
+  followUps?: { id: string; note: string; channel: string; createdAt: Date }[];
   status: string;
   createdAt: Date;
 };
 
-export type CheckoutOrderSummary = {
-  id: string;
-  orderNumber: string;
-  status: string;
-  checkoutMode: string;
-  fulfillmentStatus?: string;
-  currency: string;
-  totalCents: number;
-  customerPhone?: string;
-  customerName?: string;
-  itemCount: number;
-  latestPaymentStatus?: string;
-  latestTimelineTitle?: string;
-  createdAt: Date;
+export type FulfillmentMethodSetting = {
+  id?: string;
+  key: string;
+  label: string;
+  description?: string;
+  isActive: boolean;
+  isDefault: boolean;
+  requiresAddress: boolean;
+  requiresScheduling: boolean;
+  sortOrder: number;
+  updatedAt?: Date;
 };
 
 export type AdminAuditLogEntry = {
@@ -269,30 +248,3 @@ export type AdminAuditLogEntry = {
   actorProvider: string;
   createdAt: Date;
 };
-
-export type HomepageContent = {
-  eyebrow: string;
-  title: string;
-  body: string;
-  primaryCtaLabel: string;
-  primaryCtaHref: string;
-  secondaryCtaLabel: string;
-  secondaryCtaHref: string;
-  panelEyebrow: string;
-  panelTitle: string;
-  panelBody: string;
-};
-
-export function productRequiresQuote(product: Product) {
-  return Boolean(product.requiresQuote || product.price <= 0);
-}
-
-export function formatPrice(product: Product) {
-  if (productRequiresQuote(product)) return 'Call for purchase';
-  return new Intl.NumberFormat('en-CA', { style: 'currency', currency: product.currency }).format(product.price);
-}
-
-export function formatMinorUnitAmount(amountCents: number, currency: string) {
-  const amount = amountCents / 100;
-  return new Intl.NumberFormat('en-CA', { maximumFractionDigits: 0 }).format(amount) + ` ${currency}`;
-}
