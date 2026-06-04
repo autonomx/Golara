@@ -2,15 +2,26 @@ import Link from 'next/link';
 
 import { AdminPaymentSettlementSummaryPanel } from '@/components/admin/AdminPaymentSettlementSummaryPanel';
 import { getAdminIdentity, isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
-import { paymentSettlementService } from '@/lib/checkout/payment-settlement-service';
+import { paymentSettlementService, type PaymentSettlementSummary } from '@/lib/checkout/payment-settlement-service';
 
 export const dynamic = 'force-dynamic';
+
+const emptySettlementSummary: PaymentSettlementSummary = {
+  total: 0,
+  settled: 0,
+  amountMismatch: 0,
+  currencyMismatch: 0,
+  pending: 0,
+  needsAttention: 0,
+  recent: [],
+  source: 'unavailable'
+};
 
 export default async function AdminPaymentSettlementPage() {
   const authenticated = await isAdminAuthenticated();
   const authConfigured = isAdminAuthConfigured();
   const identity = await getAdminIdentity();
-  const summary = authenticated ? await paymentSettlementService.summary(50) : { total: 0, settled: 0, amountMismatch: 0, currencyMismatch: 0, pending: 0, needsAttention: 0, recent: [] };
+  const summary = authenticated ? await paymentSettlementService.summary(50) : emptySettlementSummary;
 
   return (
     <main className="min-h-screen bg-stone-50 px-4 py-6 lg:px-8">
