@@ -47,9 +47,41 @@ function auditMetadata(input: CreatePendingPaymentOperationRecordInput) {
   };
 }
 
+function transitionAuditMetadata(input: MarkPaymentOperationSubmittedInput | MarkPaymentOperationSucceededInput | MarkPaymentOperationFailedInput) {
+  return {
+    providerOperationReference: input.providerOperationReference ?? null,
+    providerStatus: input.providerStatus ?? null,
+    errorCategory: 'errorCategory' in input ? input.errorCategory ?? null : null,
+    retryable: 'retryable' in input ? input.retryable ?? false : false,
+    transitionMetadata: input.metadata ?? {}
+  };
+}
+
 function migrationGate(env: Record<string, string | undefined>) {
   const migrationStatus = getPaymentOperationRecordsMigrationStatus(env);
   return migrationStatus.confirmed ? null : { status: 'migration_unconfirmed' as const, migrationStatus };
+}
+
+async function auditRecordTransition(
+  kind: 'record_submitted' | 'record_succeeded' | 'record_failed',
+  record: PaymentOperationRecordRow,
+  metadata: Record<string, unknown>
+) {
+  await recordPaymentOperationAuditEvent({
+    kind,
+    orderId: record.orderId,
+    paymentAttemptId: record.paymentAttemptId,
+    paymentOperationRecordId: record.id,
+    idempotencyKey: record.idempotencyKey,
+    operationKind: record.operationKind,
+    provider: record.provider,
+    requestedAmountCents: record.requestedAmountCents,
+    currency: record.currency,
+    previewDecision: record.previewDecision,
+    previewReasons: record.previewReasons,
+    operatorReason: record.operatorReason,
+    metadata
+  });
 }
 
 export async function createPendingPaymentOperationRecordIfConfirmed(
@@ -120,7 +152,11 @@ export async function markPaymentOperationRecordSubmittedIfConfirmed(
 ): Promise<PaymentOperationTransitionServiceResult> {
   const blocked = migrationGate(env);
   if (blocked) return blocked;
-  return markPaymentOperationRecordSubmitted(input);
+  const result = await markPaymentOperationRecordSubmitted(input);
+  if (result.status === 'updated') {
+    await auditRecordTransition('record_submitted', result.record, transitionAuditMetadata(input));
+  }
+  return result;
 }
 
 export async function markPaymentOperationRecordSucceededIfConfirmed(
@@ -129,7 +165,11 @@ export async function markPaymentOperationRecordSucceededIfConfirmed(
 ): Promise<PaymentOperationTransitionServiceResult> {
   const blocked = migrationGate(env);
   if (blocked) return blocked;
-  return markPaymentOperationRecordSucceeded(input);
+  const result = await markPaymentOperationRecordSucceeded(input);
+  if (result.status === 'updated') {
+    await auditRecordTransition('record_succeeded', result.record, transitionAuditMetadata(input));
+  }
+  return result;
 }
 
 export async function markPaymentOperationRecordFailedIfConfirmed(
@@ -138,7 +178,11 @@ export async function markPaymentOperationRecordFailedIfConfirmed(
 ): Promise<PaymentOperationTransitionServiceResult> {
   const blocked = migrationGate(env);
   if (blocked) return blocked;
-  return markPaymentOperationRecordFailed(input);
+  const result = await markPaymentOperationRecordFailed(input);
+  if (result.status === 'updated') {
+    await auditRecordTransition('record_failed', result.record, transitionAuditMetadata(input));
+  }
+  return result;
 }
 
 export async function listPaymentOperationRecordsForOrderIfConfirmed(
