@@ -6,11 +6,14 @@ import {
   buildZarinPalPaymentOperationRequest,
   createMockPaymentOperationAdapter,
   createMockPaymentOperationAdapters,
+  createStripePaymentOperationHttpAdapter,
   createUnavailablePaymentOperationAdapter,
+  createZarinPalPaymentOperationHttpAdapter,
   executePaymentOperationAdapter,
   normalizePaymentOperationAdapterProvider,
   normalizeStripePaymentOperationResponse,
-  normalizeZarinPalPaymentOperationResponse
+  normalizeZarinPalPaymentOperationResponse,
+  type ProviderPaymentOperationRequest
 } from '../../lib/checkout/payment-operation-adapters';
 
 function source(path: string) {
@@ -127,13 +130,53 @@ export async function runPaymentOperationAdaptersTests() {
   assert.equal(zarinpalRejected.errorCategory, 'provider_rejected_operation');
   assert.equal(zarinpalRejected.retryable, false);
 
+  const stripeHttpMissing = await createStripePaymentOperationHttpAdapter({ secretKey: 'configured-secret' }).execute(operation);
+  assert.equal(stripeHttpMissing.status, 'unavailable');
+  assert.equal(stripeHttpMissing.errorCategory, 'provider_http_client_missing');
+
+  const stripeHttpRequests: ProviderPaymentOperationRequest[] = [];
+  const stripeHttp = createStripePaymentOperationHttpAdapter({
+    secretKey: 'configured-secret',
+    httpClient: async (request) => {
+      stripeHttpRequests.push(request);
+      return { ok: true, status: 200, body: { id: 're_http_123', status: 'succeeded' } };
+    }
+  });
+  const stripeHttpResult = await stripeHttp.execute(operation);
+  assert.equal(stripeHttpResult.status, 'succeeded');
+  assert.equal(stripeHttpResult.providerOperationReference, 're_http_123');
+  assert.equal(stripeHttpRequests.length, 1);
+  assert.equal(stripeHttpRequests[0].endpoint, 'stripe.refunds.create');
+
+  const zarinpalHttpMissing = await createZarinPalPaymentOperationHttpAdapter({ merchantId: 'merchant-123' }).execute(operation);
+  assert.equal(zarinpalHttpMissing.status, 'unavailable');
+  assert.equal(zarinpalHttpMissing.errorCategory, 'provider_http_client_missing');
+
+  const zarinpalHttpRequests: ProviderPaymentOperationRequest[] = [];
+  const zarinpalHttp = createZarinPalPaymentOperationHttpAdapter({
+    merchantId: 'merchant-123',
+    httpClient: async (request) => {
+      zarinpalHttpRequests.push(request);
+      return { ok: true, status: 200, body: { data: { ref_id: 'zp_http_123', code: 100 } } };
+    }
+  });
+  const zarinpalHttpResult = await zarinpalHttp.execute(operation);
+  assert.equal(zarinpalHttpResult.status, 'succeeded');
+  assert.equal(zarinpalHttpResult.providerOperationReference, 'zp_http_123');
+  assert.equal(zarinpalHttpRequests.length, 1);
+  assert.equal(zarinpalHttpRequests[0].endpoint, 'zarinpal.payment.refund');
+
   assert.ok(adapterSource.includes('PaymentOperationAdapter'));
   assert.ok(adapterSource.includes('PaymentOperationAdapterResult'));
   assert.ok(adapterSource.includes('ProviderPaymentOperationRequest'));
+  assert.ok(adapterSource.includes('ProviderPaymentOperationHttpClient'));
   assert.ok(adapterSource.includes('buildStripePaymentOperationRequest'));
   assert.ok(adapterSource.includes('normalizeStripePaymentOperationResponse'));
   assert.ok(adapterSource.includes('buildZarinPalPaymentOperationRequest'));
   assert.ok(adapterSource.includes('normalizeZarinPalPaymentOperationResponse'));
+  assert.ok(adapterSource.includes('createStripePaymentOperationHttpAdapter'));
+  assert.ok(adapterSource.includes('createZarinPalPaymentOperationHttpAdapter'));
+  assert.ok(adapterSource.includes('provider_http_client_missing'));
   assert.ok(adapterSource.includes('createMockPaymentOperationAdapters'));
   assert.ok(adapterSource.includes('executePaymentOperationAdapter'));
   assert.ok(adapterSource.includes('provider_operation_not_configured'));
@@ -148,6 +191,7 @@ export async function runPaymentOperationAdaptersTests() {
   assert.ok(phase33Docs.includes('provider operation adapter contract'));
   assert.ok(phase33Docs.includes('provider-specific request/response mappers'));
   assert.ok(phase33Docs.includes('symbolic provider endpoints'));
+  assert.ok(phase33Docs.includes('injected provider HTTP client boundary'));
   assert.ok(phase33Docs.includes('lib/checkout/payment-operation-adapters.ts'));
   assert.ok(phase33Docs.includes('tests/unit/payment-operation-adapters.test.ts'));
   assert.ok(phase33Docs.includes('raising the runner count from 118 to 119 files'));
