@@ -69,6 +69,15 @@ export async function runOrderReturnRouteCoreTests() {
     authority: undefined
   });
 
+  assert.deepEqual(checkoutReturnApplyInput('https://golara.example/orders/return?order=GOL-1007&token=lookup-token-zarinpal&provider=zarinpal&Authority=A0007&Status=NOK'), {
+    orderNumber: 'GOL-1007',
+    token: 'lookup-token-zarinpal',
+    status: 'failed',
+    provider: 'zarinpal',
+    providerReference: 'A0007',
+    authority: 'A0007'
+  });
+
   assert.equal(
     checkoutReturnFallbackUrl('https://golara.example/orders/return?order=GOL-1001').toString(),
     'https://golara.example/orders/confirmation?result=failed'
@@ -81,6 +90,14 @@ export async function runOrderReturnRouteCoreTests() {
   assert.equal(
     checkoutReturnSuccessUrl(requestUrl, { publicLookupToken: 'public-token', status: 'paid' }).toString(),
     'https://golara.example/orders/public-token?result=paid'
+  );
+  assert.equal(
+    checkoutReturnSuccessUrl(requestUrl, { publicLookupToken: 'public-token-failed', status: 'failed' }).toString(),
+    'https://golara.example/orders/public-token-failed?result=failed'
+  );
+  assert.equal(
+    checkoutReturnSuccessUrl(requestUrl, { publicLookupToken: 'public-token-cancelled', status: 'cancelled' }).toString(),
+    'https://golara.example/orders/public-token-cancelled?result=cancelled'
   );
   assert.equal(
     checkoutReturnSuccessUrl(requestUrl, { publicLookupToken: null, status: 'paid' }).toString(),
@@ -105,6 +122,46 @@ export async function runOrderReturnRouteCoreTests() {
     provider: 'stripe',
     providerReference: 'cs_test_456',
     authority: undefined
+  }]);
+
+  const cancelInputs: CheckoutReturnApplyInput[] = [];
+  const cancelled = await checkoutReturnRouteRedirect({
+    requestUrl: 'https://golara.example/orders/return?order=GOL-1008&token=lookup-token-cancel&provider=stripe&payment=cancel&session_id=cs_test_cancel_789',
+    applyResult: async (input) => {
+      cancelInputs.push(input);
+      return { publicLookupToken: 'public-token-cancel', status: input.status };
+    }
+  });
+  assert.equal(cancelled.applied, true);
+  assert.equal(cancelled.error, undefined);
+  assert.equal(cancelled.redirectUrl.toString(), 'https://golara.example/orders/public-token-cancel?result=cancelled');
+  assert.deepEqual(cancelInputs, [{
+    orderNumber: 'GOL-1008',
+    token: 'lookup-token-cancel',
+    status: 'cancelled',
+    provider: 'stripe',
+    providerReference: 'cs_test_cancel_789',
+    authority: undefined
+  }]);
+
+  const zarinpalFailedInputs: CheckoutReturnApplyInput[] = [];
+  const zarinpalFailed = await checkoutReturnRouteRedirect({
+    requestUrl: 'https://golara.example/orders/return?order=GOL-1009&token=lookup-token-zarinpal-failed&provider=zarinpal&Authority=A0009&Status=NOK',
+    applyResult: async (input) => {
+      zarinpalFailedInputs.push(input);
+      return { publicLookupToken: 'public-token-zarinpal-failed', status: input.status };
+    }
+  });
+  assert.equal(zarinpalFailed.applied, true);
+  assert.equal(zarinpalFailed.error, undefined);
+  assert.equal(zarinpalFailed.redirectUrl.toString(), 'https://golara.example/orders/public-token-zarinpal-failed?result=failed');
+  assert.deepEqual(zarinpalFailedInputs, [{
+    orderNumber: 'GOL-1009',
+    token: 'lookup-token-zarinpal-failed',
+    status: 'failed',
+    provider: 'zarinpal',
+    providerReference: 'A0009',
+    authority: 'A0009'
   }]);
 
   const failure = await checkoutReturnRouteRedirect({
