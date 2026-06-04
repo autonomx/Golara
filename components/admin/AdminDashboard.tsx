@@ -79,6 +79,7 @@ const textAreaClass = 'min-h-28 rounded-lg border border-rosewood/15 bg-white px
 const toggleClass = 'flex items-center gap-3 rounded-lg border border-rosewood/10 bg-white px-4 py-3 text-sm font-semibold text-rosewood outline-none transition focus-within:ring-4 focus-within:ring-olive/20';
 const primaryButtonClass = 'w-fit rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none';
 const secondaryButtonClass = 'rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood outline-none transition hover:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20';
+const formCardClass = 'grid gap-4 rounded-lg border border-rosewood/10 bg-white p-5 shadow-sm';
 const panelClass = 'scroll-mt-24 rounded-lg border border-rosewood/10 bg-white p-6 shadow-sm';
 const scrollListClass = 'max-h-[760px] overflow-auto pr-2 [scrollbar-width:thin] [scrollbar-color:#6f2438_#fff8f1]';
 const catalogPageSize = 12;
