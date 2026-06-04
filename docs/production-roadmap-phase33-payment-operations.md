@@ -6,7 +6,7 @@ This note tracks Phase 33 work after the Phase 32 repo-side webhook and settleme
 
 ## Current status
 
-Phase 33 has provider-neutral refund/void planning, no-mutation preview generation, a pure preview input normalization helper, a read-only preview view model, a route-core style preview result, a request-core wrapper for normalized preview requests, a compact read-only admin preview panel, a static-sample admin preview route for admin-safe display, a documentation-only persistence design for future refund/void operation records, pure order/payment transition plus inventory/capacity release planning, read-only transition guidance in the admin preview payload/UI, a migration-backed table contract for future payment operation records, a blank operator evidence template for target-environment payment-operation migration validation, and a read-only migration status helper for checking whether the target environment has been operator-confirmed. This remains repo-side foundation work: the table migration, evidence template, and status helper are added, but no repository/service writes, provider calls, order/payment mutations, inventory/capacity release, audit writes, or execution buttons have been added.
+Phase 33 has provider-neutral refund/void planning, no-mutation preview generation, a pure preview input normalization helper, a read-only preview view model, a route-core style preview result, a request-core wrapper for normalized preview requests, a compact read-only admin preview panel, a static-sample admin preview route for admin-safe display, a documentation-only persistence design for future refund/void operation records, pure order/payment transition plus inventory/capacity release planning, read-only transition guidance in the admin preview payload/UI, a migration-backed table contract for future payment operation records, a blank operator evidence template for target-environment payment-operation migration validation, a read-only migration status helper for checking whether the target environment has been operator-confirmed, and a docs-only repository/service design for future idempotent operation-record creation. This remains repo-side foundation work: the table migration, evidence template, status helper, and repository design are added, but no repository/service writes, provider calls, order/payment mutations, inventory/capacity release, audit writes, or execution buttons have been added.
 
 ## Completed in Phase 33 so far
 
@@ -45,6 +45,8 @@ Phase 33 has provider-neutral refund/void planning, no-mutation preview generati
 - Extended `tests/unit/payment-operation-migration-contract.test.ts` to guard the migration validation evidence template and its no-execution boundary. The runner count remains 118 files.
 - Added `lib/checkout/payment-operation-migration-status.ts` as a read-only helper for the `PAYMENT_OPERATION_RECORDS_MIGRATION_CONFIRMED` environment gate.
 - Extended `tests/unit/payment-operation-migration-contract.test.ts` to guard the migration status helper, its prerequisite copy, and its no-Prisma/no-fetch/no-order-payment-source boundary. The runner count remains 118 files.
+- Added `docs/production-roadmap-phase33-payment-operation-repository-design.md` to document future idempotent `PaymentOperationRecord` repository/service semantics before implementation.
+- Extended `tests/unit/payment-operation-migration-contract.test.ts` to guard the repository design note, idempotency requirements, audit coupling, and no-execution boundary. The runner count remains 118 files.
 
 ## Current helper behavior
 
@@ -141,6 +143,8 @@ Phase 33 has provider-neutral refund/void planning, no-mutation preview generati
 
 `getPaymentOperationRecordsMigrationStatus` can summarize the read-only `PAYMENT_OPERATION_RECORDS_MIGRATION_CONFIRMED` environment gate. It returns the flag name, raw value, migration path, evidence path, prerequisite behavior that must not depend on the table before confirmation, and warnings when the target environment has not been operator-confirmed. It does not use Prisma, fetch, provider adapters, order/payment mutation, inventory/capacity release, audit writes, or admin execution controls.
 
+`docs/production-roadmap-phase33-payment-operation-repository-design.md` defines the future idempotent repository/service contract for creating pending `PaymentOperationRecord` rows. It covers create-pending semantics, duplicate idempotency reuse, conflict blocking, pending/submitted/succeeded/failed/manual-review transitions, service-layer audit coupling, and implementation acceptance criteria. It is design-only and does not add persistence code or approve execution.
+
 ## Preview and persistence boundary acceptance criteria
 
 The current boundary should continue to:
@@ -158,6 +162,7 @@ The current boundary should continue to:
 - keep static/demo preview routes free of provider calls, persistence, order mutation, payment attempt mutation, and execution affordances;
 - keep persistence design documentation explicit when migrations or provider mutation have not been added;
 - keep transition/release planning pure and advisory until persistence, audit, and operator approval paths exist;
+- keep repository/service implementation behind target-environment migration verification and explicit idempotency rules;
 - keep `PaymentOperationRecord` raw-SQL-backed until a deliberate Prisma/client decision is made;
 - require target-environment migration verification before repository/service writes;
 - capture operator migration evidence before any execution path depends on the table;
@@ -190,10 +195,9 @@ Those remain future Phase 33 slices after the migration contract is accepted and
 
 ## Recommended next work
 
-1. Add a repository/service design note for future idempotent operation-record creation.
-2. Add a repository/service layer that can create pending operation records idempotently only after the target migration is applied, verified, and gated.
-3. Add append-only audit events for preview/request/blocked states.
-4. Add provider adapters for Stripe/ZarinPal refund and void execution only after preview, persistence, audit, and idempotency rules are defined.
+1. Add a repository/service layer that can create pending operation records idempotently only after the target migration is applied, verified, and gated.
+2. Add append-only audit events for preview/request/blocked states.
+3. Add provider adapters for Stripe/ZarinPal refund and void execution only after preview, persistence, audit, and idempotency rules are defined.
 
 ## Verification status
 
