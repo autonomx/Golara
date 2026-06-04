@@ -13,6 +13,8 @@ export async function runPaymentOperationMigrationContractTests() {
   const statusHelper = source('lib/checkout/payment-operation-migration-status.ts');
   const repository = source('lib/checkout/payment-operation-record-repository.ts');
   const service = source('lib/checkout/payment-operation-record-service.ts');
+  const historyView = source('lib/checkout/payment-operation-history-view.ts');
+  const historyPanel = source('components/admin/AdminPaymentOperationHistoryPanel.tsx');
   const audit = source('lib/checkout/payment-operation-audit.ts');
   const schema = source('prisma/schema.prisma');
 
@@ -112,6 +114,29 @@ export async function runPaymentOperationMigrationContractTests() {
   assert.equal(service.includes('@prisma/client'), false);
   assert.equal(service.includes('CheckoutOrder" SET'), false);
   assert.equal(service.includes('CheckoutPaymentAttempt" SET'), false);
+
+  assert.ok(historyView.includes('buildPaymentOperationHistoryView'));
+  assert.ok(historyView.includes('PaymentOperationHistoryRow'));
+  assert.ok(historyView.includes('toneForStatus'));
+  assert.ok(historyView.includes('Provider reference pending'));
+  assert.ok(historyView.includes('This view does not execute provider operations'));
+  assert.equal(historyView.includes('fetch('), false);
+  assert.equal(historyView.includes('@prisma/client'), false);
+  assert.equal(historyView.includes('prisma.'), false);
+  assert.equal(historyView.includes('CheckoutOrder" SET'), false);
+  assert.equal(historyView.includes('CheckoutPaymentAttempt" SET'), false);
+
+  assert.ok(historyPanel.includes('AdminPaymentOperationHistoryPanel'));
+  assert.ok(historyPanel.includes('PaymentOperationHistoryView'));
+  assert.ok(historyPanel.includes('Read-only'));
+  assert.ok(historyPanel.includes('does not render refund or void execution controls'));
+  assert.equal(historyPanel.includes('fetch('), false);
+  assert.equal(historyPanel.includes('@prisma/client'), false);
+  assert.equal(historyPanel.includes('prisma.'), false);
+  assert.equal(historyPanel.includes('onClick='), false);
+  assert.equal(historyPanel.includes('<button'), false);
+  assert.equal(historyPanel.includes('CheckoutOrder" SET'), false);
+  assert.equal(historyPanel.includes('CheckoutPaymentAttempt" SET'), false);
 
   assert.ok(audit.includes('PaymentOperationAuditKind'));
   assert.ok(audit.includes('preview_requested'));
