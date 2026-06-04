@@ -45,7 +45,7 @@ export function HomepageBannerSlideshow({ slides, homepage }: HomepageBannerSlid
       aria-labelledby="home-hero-heading"
       className="relative overflow-hidden bg-[#fff7f1] px-4 pb-10 pt-5 md:px-8 md:pb-14 md:pt-7"
     >
-      <div className="relative mx-auto min-h-[460px] max-w-[1520px] overflow-hidden rounded-[1.75rem] border border-rosewood/10 bg-stone-900 shadow-[0_22px_56px_rgba(111,36,56,0.12)] md:min-h-[520px] xl:min-h-[560px]">
+      <div dir="ltr" className="relative mx-auto min-h-[460px] max-w-[1520px] overflow-hidden rounded-[1.75rem] border border-rosewood/10 bg-stone-900 shadow-[0_22px_56px_rgba(111,36,56,0.12)] md:min-h-[520px] xl:min-h-[560px]">
         <Image
           src={heroSlide.image}
           alt={heroSlide.alt}
@@ -58,8 +58,8 @@ export function HomepageBannerSlideshow({ slides, homepage }: HomepageBannerSlid
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,248,241,0.97)_0%,rgba(255,248,241,0.9)_32%,rgba(255,248,241,0.44)_56%,rgba(43,29,32,0.12)_100%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_28%,rgba(255,255,255,0.82)_0%,rgba(255,255,255,0.16)_34%,rgba(255,255,255,0)_62%)]" />
 
-        <div className="relative z-10 flex min-h-[460px] items-center px-6 py-10 md:min-h-[520px] md:px-12 md:py-12 lg:px-16 xl:min-h-[560px]">
-          <div className="max-w-xl text-stone-800 lg:max-w-2xl">
+        <div className="relative z-10 flex min-h-[460px] items-center justify-start px-6 py-10 text-left md:min-h-[520px] md:px-12 md:py-12 lg:px-16 xl:min-h-[560px]">
+          <div className="max-w-xl text-left text-stone-800 lg:max-w-2xl">
             {heroSlide.eyebrow ? <p className="inline-flex rounded-full border border-rosewood/10 bg-white/72 px-5 py-2 text-xs font-semibold uppercase tracking-[0.32em] text-olive shadow-sm">
               {heroSlide.eyebrow}
             </p> : null}
@@ -72,7 +72,7 @@ export function HomepageBannerSlideshow({ slides, homepage }: HomepageBannerSlid
               {heroSlide.body}
             </p> : null}
 
-            {ctas.length ? <div className="mt-8 flex flex-wrap items-center gap-3">
+            {ctas.length ? <div className="mt-8 flex flex-wrap items-center justify-start gap-3">
               {ctas.map((cta) => (
                 <Link key={`${cta.label}-${cta.href}`} href={cta.href} className={cta.variant === 'primary' ? 'inline-flex rounded-full bg-rosewood px-7 py-3.5 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(111,36,56,0.18)] transition hover:-translate-y-0.5 hover:bg-stone-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30' : cta.variant === 'secondary' ? 'inline-flex rounded-full border border-rosewood/20 bg-white/78 px-7 py-3.5 text-sm font-semibold text-rosewood shadow-sm transition hover:-translate-y-0.5 hover:border-rosewood focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30' : 'inline-flex rounded-full border border-rosewood/15 bg-white/58 px-7 py-3.5 text-sm font-semibold text-rosewood shadow-sm transition hover:-translate-y-0.5 hover:border-rosewood focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30'}>
                   {cta.label}
@@ -80,7 +80,7 @@ export function HomepageBannerSlideshow({ slides, homepage }: HomepageBannerSlid
               ))}
             </div> : null}
 
-            {trustItems.length ? <div className="mt-8 flex flex-wrap gap-3 text-sm font-semibold text-stone-700">
+            {trustItems.length ? <div className="mt-8 flex flex-wrap justify-start gap-3 text-sm font-semibold text-stone-700">
               {trustItems.map((item) => {
                 const Icon = item.icon;
                 return <div key={item.label} className="inline-flex items-center gap-2 rounded-full border border-rosewood/10 bg-white/72 px-4 py-2 shadow-sm"><Icon aria-hidden="true" className="h-4 w-4 text-rosewood" />{item.label}</div>;
