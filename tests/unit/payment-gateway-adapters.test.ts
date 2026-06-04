@@ -8,6 +8,7 @@ import {
   createStripeCheckoutSessionAdapter,
   createStripeGatewayMockAdapter,
   createWhatsAppGatewayAdapter,
+  createZarinPalGatewayMockAdapter,
   createZarinPalPaymentRequestAdapter,
   initiatePaymentGateway,
   type PaymentGatewayInitiationInput,
@@ -51,6 +52,14 @@ export async function runPaymentGatewayAdaptersTests() {
     status: 'unavailable',
     reference: 'iranian:GOL-1001',
     message: 'Iranian gateway mock only supports Toman orders.'
+  });
+
+  assert.deepEqual(await createZarinPalGatewayMockAdapter().initiate(basePayment), {
+    provider: 'zarinpal',
+    status: 'redirect',
+    reference: 'zarinpal:GOL-1001',
+    redirectUrl: '/checkout/mock/zarinpal?order=order-1&return=https%3A%2F%2Fgolara.example%2Fcheckout%2Freturn',
+    message: 'ZarinPal mock redirect prepared.'
   });
 
   assert.deepEqual(await createStripeGatewayMockAdapter().initiate({ ...basePayment, currency: 'USD' }), {
@@ -238,7 +247,7 @@ export async function runPaymentGatewayAdaptersTests() {
   const adapters = createMockPaymentGatewayAdapters();
   assert.equal(adapters.manual.provider, 'manual');
   assert.equal(adapters.iranian.provider, 'iranian');
-  assert.equal(adapters.zarinpal.provider, 'iranian');
+  assert.equal(adapters.zarinpal.provider, 'zarinpal');
   assert.equal(adapters.stripe.provider, 'stripe');
   assert.equal(adapters.whatsapp.provider, 'whatsapp');
   assert.equal(adapters.inquiry.provider, 'inquiry');
@@ -249,6 +258,7 @@ export async function runPaymentGatewayAdaptersTests() {
 
   assert.equal((await initiatePaymentGateway({ provider: 'manual', payment: basePayment })).provider, 'manual');
   assert.equal((await initiatePaymentGateway({ provider: 'stripe', payment: { ...basePayment, currency: 'CAD' } })).status, 'redirect');
+  assert.equal((await initiatePaymentGateway({ provider: 'zarinpal', payment: basePayment })).status, 'redirect');
 
   console.log('payment-gateway-adapters.test.ts passed');
 }
