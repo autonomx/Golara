@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { planPaymentOperation } from '../../lib/checkout/payment-operation-plan';
+import { buildPaymentOperationPreview } from '../../lib/checkout/payment-operation-preview';
 
 function source(path: string) {
   return readFileSync(path, 'utf8');
@@ -9,6 +10,7 @@ function source(path: string) {
 
 export async function runPaymentOperationPlanTests() {
   const docs = source('docs/production-roadmap-phase33-payment-operations.md');
+  const previewSource = source('lib/checkout/payment-operation-preview.ts');
   assert.match(docs, /Phase 33 Refunds, Voids, and Payment Operations Progress/);
   assert.match(docs, /provider-neutral refund\/void planning helper/);
   assert.match(docs, /does not call Stripe, ZarinPal, or any other live provider/);
@@ -30,6 +32,13 @@ export async function runPaymentOperationPlanTests() {
   assert.match(docs, /database writes/);
   assert.match(docs, /admin refund\/void buttons/);
   assert.match(docs, /local verification is pending/);
+
+  assert.match(previewSource, /export function buildPaymentOperationPreview/);
+  assert.match(previewSource, /planPaymentOperation\(input\)/);
+  assert.doesNotMatch(previewSource, /prisma\./);
+  assert.doesNotMatch(previewSource, /fetch\(/);
+  assert.doesNotMatch(previewSource, /checkoutOrder\.update/);
+  assert.doesNotMatch(previewSource, /checkoutPaymentAttempt\.update/);
 
   const refund = planPaymentOperation({
     operation: 'refund',
@@ -56,6 +65,30 @@ export async function runPaymentOperationPlanTests() {
   assert.equal(refund.metadata.fullAmount, false);
   assert.equal(refund.metadata.reason, 'Customer requested partial refund');
 
+  const readyPreview = buildPaymentOperationPreview({
+    operation: 'refund',
+    order: { status: 'paid', totalCents: 420000, currency: 'USD' },
+    payment: {
+      provider: 'stripe',
+      status: 'paid',
+      amountCents: 420000,
+      currency: 'USD',
+      providerReference: 'payment-reference'
+    },
+    amountCents: 210000,
+    orderNumber: 'GOL-1001',
+    paymentAttemptId: 'attempt-1'
+  });
+  assert.equal(readyPreview.canSubmit, true);
+  assert.equal(readyPreview.blocked, false);
+  assert.equal(readyPreview.requiresManualReview, false);
+  assert.equal(readyPreview.orderNumber, 'GOL-1001');
+  assert.equal(readyPreview.paymentAttemptId, 'attempt-1');
+  assert.equal(readyPreview.plan.decision, 'ready');
+  assert.match(readyPreview.summary, /Refund preview/);
+  assert.match(readyPreview.nextAction, /Provider execution can be added only after preview, persistence, audit, and idempotency rules are defined/);
+  assert.deepEqual(readyPreview.warnings, []);
+
   const missingReference = planPaymentOperation({
     operation: 'refund',
     order: { status: 'paid', totalCents: 10000, currency: 'USD' },
@@ -63,6 +96,18 @@ export async function runPaymentOperationPlanTests() {
   });
   assert.equal(missingReference.decision, 'blocked');
   assert.deepEqual(missingReference.reasons, ['provider_reference_required']);
+
+  const blockedPreview = buildPaymentOperationPreview({
+    operation: 'refund',
+    order: { status: 'paid', totalCents: 10000, currency: 'USD' },
+    payment: { provider: 'stripe', status: 'paid', amountCents: 10000, currency: 'USD' }
+  });
+  assert.equal(blockedPreview.canSubmit, false);
+  assert.equal(blockedPreview.blocked, true);
+  assert.equal(blockedPreview.requiresManualReview, false);
+  assert.deepEqual(blockedPreview.warnings, [
+    'A provider reference is required before this operation can be sent to a live payment provider.'
+  ]);
 
   const manualRefund = planPaymentOperation({
     operation: 'refund',
@@ -72,6 +117,16 @@ export async function runPaymentOperationPlanTests() {
   assert.equal(manualRefund.decision, 'manual_review');
   assert.equal(manualRefund.manualOnly, true);
   assert.equal(manualRefund.requiresProviderReference, false);
+
+  const manualPreview = buildPaymentOperationPreview({
+    operation: 'refund',
+    order: { status: 'paid', totalCents: 15000, currency: 'USD' },
+    payment: { provider: 'manual', status: 'paid', amountCents: 15000, currency: 'USD' }
+  });
+  assert.equal(manualPreview.canSubmit, false);
+  assert.equal(manualPreview.blocked, false);
+  assert.equal(manualPreview.requiresManualReview, true);
+  assert.match(manualPreview.nextAction, /Handle this operation manually/);
 
   const voidPlan = planPaymentOperation({
     operation: 'void',
