@@ -51,6 +51,11 @@ export async function runPaymentWebhookValidationEvidenceDocsTests() {
   assert.match(phase32, /Out of scope for Phase 32 closeout/);
   assert.match(phase32, /provider-backed refunds\/voids/);
   assert.match(phase32, /Phase 33, Phase 34, and Phase 35 work/);
+  assert.match(phase32, /## Recommended next work/);
+  assert.match(phase32, /run the Phase 32 validation sequence and fill in the evidence template/);
+  assert.match(phase32, /repo-side Phase 32 as ready for operator validation/);
+  assert.match(phase32, /start Phase 33 with a small provider-neutral refund\/void planning helper/);
+  assert.match(phase32, /Keep provider dashboard settlement imports, outbound alert delivery, real notification providers, and durable outbound webhook workers in later phases/);
 
   console.log('payment-webhook-validation-evidence-docs.test.ts passed');
 }
