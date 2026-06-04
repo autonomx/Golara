@@ -6,6 +6,7 @@ import {
   nextCheckoutOrderStatus,
   normalizeCheckoutResultStatus,
   optionalCheckoutResultText,
+  planCheckoutResultTransition,
   providerVerificationResult,
   shouldUpdateCheckoutAttemptStatus
 } from '../../lib/checkout/payment-result-core';
@@ -102,6 +103,70 @@ export async function runPaymentResultCoreTests() {
     lastEvent: { title: 'Payment verified paid', createdAt: new Date(nowMs - 6 * 60_000) }
   }), false);
   assert.equal(isDuplicateCheckoutResultEvent({ nowMs, status: 'failed', lastEvent: null }), false);
+
+  assert.deepEqual(planCheckoutResultTransition({
+    currentOrderStatus: 'pending_payment',
+    currentAttemptStatus: 'pending_payment',
+    resultStatus: 'paid',
+    nowMs,
+    lastEvent: null
+  }), {
+    nextAttemptStatus: 'verified_paid',
+    shouldUpdateAttemptStatus: true,
+    nextOrderStatus: 'paid',
+    orderStatusChanged: true,
+    duplicateTimelineEvent: false,
+    shouldCreateTimelineEvent: true,
+    shouldPersistOrderUpdate: true
+  });
+
+  assert.deepEqual(planCheckoutResultTransition({
+    currentOrderStatus: 'pending_payment',
+    currentAttemptStatus: 'pending_payment',
+    resultStatus: 'failed',
+    nowMs,
+    lastEvent: null
+  }), {
+    nextAttemptStatus: 'failed',
+    shouldUpdateAttemptStatus: true,
+    nextOrderStatus: 'pending_payment',
+    orderStatusChanged: false,
+    duplicateTimelineEvent: false,
+    shouldCreateTimelineEvent: true,
+    shouldPersistOrderUpdate: true
+  });
+
+  assert.deepEqual(planCheckoutResultTransition({
+    currentOrderStatus: 'paid',
+    currentAttemptStatus: 'verified_paid',
+    resultStatus: 'cancelled',
+    nowMs,
+    lastEvent: { title: 'Payment cancelled', createdAt: new Date(nowMs - 60_000) }
+  }), {
+    nextAttemptStatus: 'cancelled',
+    shouldUpdateAttemptStatus: false,
+    nextOrderStatus: 'paid',
+    orderStatusChanged: false,
+    duplicateTimelineEvent: true,
+    shouldCreateTimelineEvent: false,
+    shouldPersistOrderUpdate: false
+  });
+
+  assert.deepEqual(planCheckoutResultTransition({
+    currentOrderStatus: 'paid',
+    currentAttemptStatus: 'failed',
+    resultStatus: 'paid',
+    nowMs,
+    lastEvent: { title: 'Payment failed', createdAt: new Date(nowMs - 60_000) }
+  }), {
+    nextAttemptStatus: 'verified_paid',
+    shouldUpdateAttemptStatus: true,
+    nextOrderStatus: 'paid',
+    orderStatusChanged: false,
+    duplicateTimelineEvent: false,
+    shouldCreateTimelineEvent: true,
+    shouldPersistOrderUpdate: true
+  });
 
   console.log('payment-result-core.test.ts passed');
 }

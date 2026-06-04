@@ -1,14 +1,11 @@
 import 'server-only';
 
 import {
-  checkoutAttemptStatusForResult,
   checkoutResultEventTitle,
-  isDuplicateCheckoutResultEvent,
-  nextCheckoutOrderStatus,
   normalizeCheckoutResultStatus,
   optionalCheckoutResultText,
+  planCheckoutResultTransition,
   providerVerificationResult,
-  shouldUpdateCheckoutAttemptStatus,
   type CheckoutProviderVerificationResult,
   type CheckoutResultStatus
 } from '@/lib/checkout/payment-result-core';
@@ -162,14 +159,18 @@ export async function applyCheckoutResult(input: CheckoutResultInput) {
     amountCents: latestAttempt?.amountCents ?? order.totalCents
   });
   const status = verification.status;
-  const nextAttemptStatus = checkoutAttemptStatusForResult(status);
-  let attemptChanged = false;
+  const transition = planCheckoutResultTransition({
+    currentOrderStatus: order.status,
+    currentAttemptStatus: latestAttempt?.status,
+    resultStatus: status,
+    lastEvent: order.timelineEvents[0]
+  });
 
-  if (latestAttempt && shouldUpdateCheckoutAttemptStatus(latestAttempt.status, nextAttemptStatus)) {
+  if (latestAttempt && transition.shouldUpdateAttemptStatus) {
     await prisma.checkoutPaymentAttempt.update({
       where: { id: latestAttempt.id },
       data: {
-        status: nextAttemptStatus,
+        status: transition.nextAttemptStatus,
         providerReference: verification.providerReference || latestAttempt.providerReference,
         metadata: {
           requestedStatus,
@@ -181,20 +182,14 @@ export async function applyCheckoutResult(input: CheckoutResultInput) {
         }
       }
     });
-    attemptChanged = true;
   }
 
-  const updatedOrderStatus = nextCheckoutOrderStatus(order.status, status);
-  const statusChanged = updatedOrderStatus !== order.status;
-  const lastEvent = order.timelineEvents[0];
-  const duplicateLatestEvent = isDuplicateCheckoutResultEvent({ lastEvent, status });
-
-  if (statusChanged || attemptChanged || !duplicateLatestEvent) {
+  if (transition.shouldPersistOrderUpdate) {
     await prisma.checkoutOrder.update({
       where: { id: order.id },
       data: {
-        status: updatedOrderStatus,
-        timelineEvents: duplicateLatestEvent
+        status: transition.nextOrderStatus,
+        timelineEvents: transition.duplicateTimelineEvent
           ? undefined
           : {
               create: {
@@ -205,7 +200,7 @@ export async function applyCheckoutResult(input: CheckoutResultInput) {
                   resultStatus: status,
                   provider: provider || latestAttempt?.provider || '',
                   providerReference: verification.providerReference || '',
-                  idempotent: !attemptChanged && !statusChanged,
+                  idempotent: !transition.shouldUpdateAttemptStatus && !transition.orderStatusChanged,
                   ...(verification.metadata ?? {})
                 }
               }
@@ -218,8 +213,8 @@ export async function applyCheckoutResult(input: CheckoutResultInput) {
     orderNumber: order.orderNumber,
     publicLookupToken: order.publicLookupToken,
     status,
-    orderStatus: updatedOrderStatus,
-    attemptChanged,
-    timelineChanged: !duplicateLatestEvent
+    orderStatus: transition.nextOrderStatus,
+    attemptChanged: transition.shouldUpdateAttemptStatus,
+    timelineChanged: transition.shouldCreateTimelineEvent
   };
 }

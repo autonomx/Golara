@@ -6,6 +6,24 @@ export type CheckoutProviderVerificationResult = {
   metadata?: Record<string, string | number | boolean>;
 };
 
+export type CheckoutResultTransitionInput = {
+  currentOrderStatus: string;
+  currentAttemptStatus?: string | null;
+  resultStatus: CheckoutResultStatus;
+  lastEvent?: { title: string; createdAt: Date } | null;
+  nowMs?: number;
+};
+
+export type CheckoutResultTransitionPlan = {
+  nextAttemptStatus: string;
+  shouldUpdateAttemptStatus: boolean;
+  nextOrderStatus: string;
+  orderStatusChanged: boolean;
+  duplicateTimelineEvent: boolean;
+  shouldCreateTimelineEvent: boolean;
+  shouldPersistOrderUpdate: boolean;
+};
+
 const FINAL_ATTEMPT_STATUSES = new Set(['verified_paid', 'cancelled', 'failed']);
 
 export function normalizeCheckoutResultStatus(value: string): CheckoutResultStatus {
@@ -54,6 +72,30 @@ export function isDuplicateCheckoutResultEvent(input: {
   if (!lastEvent) return false;
   if (lastEvent.title !== checkoutResultEventTitle(input.status)) return false;
   return lastEvent.createdAt.getTime() > (input.nowMs ?? Date.now()) - 5 * 60 * 1000;
+}
+
+export function planCheckoutResultTransition(input: CheckoutResultTransitionInput): CheckoutResultTransitionPlan {
+  const nextAttemptStatus = checkoutAttemptStatusForResult(input.resultStatus);
+  const shouldUpdateAttemptStatus = input.currentAttemptStatus
+    ? shouldUpdateCheckoutAttemptStatus(input.currentAttemptStatus, nextAttemptStatus)
+    : false;
+  const nextOrderStatus = nextCheckoutOrderStatus(input.currentOrderStatus, input.resultStatus);
+  const orderStatusChanged = nextOrderStatus !== input.currentOrderStatus;
+  const duplicateTimelineEvent = isDuplicateCheckoutResultEvent({
+    lastEvent: input.lastEvent,
+    status: input.resultStatus,
+    nowMs: input.nowMs
+  });
+
+  return {
+    nextAttemptStatus,
+    shouldUpdateAttemptStatus,
+    nextOrderStatus,
+    orderStatusChanged,
+    duplicateTimelineEvent,
+    shouldCreateTimelineEvent: !duplicateTimelineEvent,
+    shouldPersistOrderUpdate: orderStatusChanged || shouldUpdateAttemptStatus || !duplicateTimelineEvent
+  };
 }
 
 export function providerVerificationResult(input: {
