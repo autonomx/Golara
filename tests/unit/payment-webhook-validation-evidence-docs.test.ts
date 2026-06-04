@@ -45,6 +45,12 @@ export async function runPaymentWebhookValidationEvidenceDocsTests() {
   assert.match(phase32, /provider-generated requests, including success, failure\/cancel, duplicate replay, and invalid-signature cases/);
   assert.match(phase32, /PAYMENT_WEBHOOK_SMOKE_TESTS_CONFIRMED="true"/);
   assert.match(phase32, /rollback to `CHECKOUT_MODE="inquiry"` or `CHECKOUT_MODE="assisted"`/);
+  assert.match(phase32, /## Phase 32 closeout criteria/);
+  assert.match(phase32, /Repo-side Phase 32 can be considered complete/);
+  assert.match(phase32, /Target-environment Phase 32 can be considered validated only after/);
+  assert.match(phase32, /Out of scope for Phase 32 closeout/);
+  assert.match(phase32, /provider-backed refunds\/voids/);
+  assert.match(phase32, /Phase 33, Phase 34, and Phase 35 work/);
 
   console.log('payment-webhook-validation-evidence-docs.test.ts passed');
 }
