@@ -205,7 +205,7 @@ async function main() {
   await runPromotionValidityWindowsModelTests();
   await runPromotionUsageLimitsModelTests();
   await runPromotionEligibilityRulesModelTests();
-  await runPromotionOrderMinimumsModelTests();
+  await runPromotionOrderMinimumsTests();
   await runPromotionStoreCreditFoundationModelTests();
   await runPromotionAuditLogsModelTests();
   await runPromotionSchemaParityTests();
@@ -224,7 +224,7 @@ async function main() {
   await runVariantStockAuditTests();
   await runVariantStockStatusTests();
   await runVariantStockMigrationTests();
-  await runVariantLocationStockTests();
+  await runVariantLocationStockModelTests();
   await runWarehouseLocationModelTests();
   await runFulfillmentMethodSettingsTests();
   await runFulfillmentShipmentRecordsModelTests();
