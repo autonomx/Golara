@@ -80,6 +80,7 @@ import { runPaymentWebhookServiceSettlementTests } from './payment-webhook-servi
 import { runPaymentWebhookServiceTransitionTests } from './payment-webhook-service-transition.test';
 import { runPaymentWebhookSignatureTests } from './payment-webhook-signature.test';
 import { runPaymentWebhookTransitionPlanTests } from './payment-webhook-transition-plan.test';
+import { runPaymentWebhookValidationEvidenceDocsTests } from './payment-webhook-validation-evidence-docs.test';
 import { runProductCheckoutPolicyTests } from './product-checkout-policy.test';
 import { runProductVariantMapperTests } from './product-variant-mapper.test';
 import { runPromotionAuditLogsModelTests } from './promotion-audit-logs-model.test';
@@ -172,6 +173,7 @@ async function main() {
   await runPaymentGatewayConfigTests();
   await runPaymentGatewayAdaptersTests();
   await runPaymentGatewayLaunchDocsTests();
+  await runPaymentWebhookValidationEvidenceDocsTests();
   await runPaymentProviderSettingsTests();
   await runPaymentWebhookServiceTests();
   await runPaymentWebhookRouteCoreTests();
@@ -222,13 +224,13 @@ async function main() {
   await runVariantStockAuditTests();
   await runVariantStockStatusTests();
   await runVariantStockMigrationTests();
-  await runVariantLocationStockModelTests();
+  await runVariantLocationStockTests();
   await runWarehouseLocationModelTests();
   await runFulfillmentMethodSettingsTests();
   await runFulfillmentShipmentRecordsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (114 files)');
+  console.log('unit tests passed (115 files)');
 }
 
 main().catch((error) => {
