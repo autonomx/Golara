@@ -25,15 +25,26 @@ export function normalizeZarinpalReturnStatus(status: string | null) {
   return status || 'failed';
 }
 
+export function normalizeHostedCheckoutReturnStatus(status: string | null) {
+  const normalized = status?.trim().toLowerCase();
+  if (normalized === 'success') return 'paid';
+  if (normalized === 'cancel') return 'cancelled';
+  return status || 'failed';
+}
+
 export function checkoutReturnApplyInput(requestUrl: string): CheckoutReturnApplyInput {
   const url = new URL(requestUrl);
   const provider = url.searchParams.get('provider') || undefined;
   const orderNumber = url.searchParams.get('order') || '';
   const token = url.searchParams.get('token') || '';
   const authority = url.searchParams.get('Authority') || url.searchParams.get('authority') || undefined;
+  const hostedCheckoutReference = url.searchParams.get('checkout_session_id') || url.searchParams.get('checkoutSession') || undefined;
   const rawStatus = url.searchParams.get('Status') || url.searchParams.get('status');
-  const status = provider === 'zarinpal' ? normalizeZarinpalReturnStatus(rawStatus) : rawStatus || 'failed';
-  const providerReference = url.searchParams.get('ref') || authority || undefined;
+  const paymentStatus = url.searchParams.get('payment');
+  const status = provider === 'zarinpal'
+    ? normalizeZarinpalReturnStatus(rawStatus)
+    : normalizeHostedCheckoutReturnStatus(rawStatus || paymentStatus);
+  const providerReference = url.searchParams.get('ref') || hostedCheckoutReference || authority || undefined;
 
   return { orderNumber, token, status, provider, providerReference, authority };
 }
