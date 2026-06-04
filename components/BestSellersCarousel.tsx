@@ -4,7 +4,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, MessageCircle, ShoppingBag } from 'lucide-react';
-import { formatPrice, productRequiresQuote, type Product } from '@/lib/catalog';
+import type { Product } from '@/lib/catalog';
+import { formatPrice, productRequiresQuote } from '@/lib/catalog-pricing';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 import { getStorefrontCopy } from '@/lib/localization/storefront-copy';
 import { homepageBestSellerImage } from '@/lib/homepage-assets';
@@ -139,18 +140,6 @@ export function BestSellersCarousel({ products, locale }: BestSellersCarouselPro
               </article>
             ))}
           </div>
-        </div>
-
-        <div className="mt-6 flex justify-center gap-2">
-          {products.slice(0, maxStartIndex + 1).map((product, index) => (
-            <button
-              key={product.slug}
-              type="button"
-              onClick={() => setActiveIndex(index)}
-              aria-label={`Show best sellers starting with ${product.title}`}
-              className={`h-1.5 rounded-full transition-all ${index === activeIndex ? 'w-8 bg-rosewood' : 'w-2 bg-rosewood/25 hover:bg-rosewood/50'}`}
-            />
-          ))}
         </div>
       </div>
     </section>
