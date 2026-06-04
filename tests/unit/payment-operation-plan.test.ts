@@ -1,8 +1,27 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import { planPaymentOperation } from '../../lib/checkout/payment-operation-plan';
 
+function source(path: string) {
+  return readFileSync(path, 'utf8');
+}
+
 export async function runPaymentOperationPlanTests() {
+  const docs = source('docs/production-roadmap-phase33-payment-operations.md');
+  assert.match(docs, /Phase 33 Refunds, Voids, and Payment Operations Progress/);
+  assert.match(docs, /provider-neutral refund\/void planning helper/);
+  assert.match(docs, /does not call Stripe, ZarinPal, or any other live provider/);
+  assert.match(docs, /does not mutate payment attempts, orders, refunds, inventory, or audit logs/);
+  assert.match(docs, /lib\/checkout\/payment-operation-plan\.ts/);
+  assert.match(docs, /tests\/unit\/payment-operation-plan\.test\.ts/);
+  assert.match(docs, /raising the runner count from 115 to 116 files/);
+  assert.match(docs, /live provider refund calls/);
+  assert.match(docs, /live provider void calls/);
+  assert.match(docs, /database writes/);
+  assert.match(docs, /admin refund\/void buttons/);
+  assert.match(docs, /local verification is pending/);
+
   const refund = planPaymentOperation({
     operation: 'refund',
     order: { status: 'paid', totalCents: 420000, currency: 'USD' },
