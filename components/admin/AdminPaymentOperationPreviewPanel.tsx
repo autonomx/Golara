@@ -55,6 +55,21 @@ export function AdminPaymentOperationPreviewPanel({ result }: { result: PaymentO
         ))}
       </dl>
 
+      <div className="mt-5 rounded-lg border border-stone-200 bg-white p-4">
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-stone-500">Advisory transition plan</p>
+        <p className="mt-2 text-sm leading-6 text-stone-600">
+          These recommendations are read-only and apply only after future provider success, persistence, audit, and operator approval rules exist.
+        </p>
+        <dl className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {preview.transitionRows.map((row) => (
+            <div key={row.label} className="rounded-lg border border-stone-200 bg-stone-50 p-3">
+              <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">{row.label}</dt>
+              <dd className="mt-2 break-words text-sm font-semibold text-stone-900">{displayLabel(row.value)}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+
       {warnings.length ? (
         <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-950">
           <p className="text-xs font-bold uppercase tracking-[0.16em]">Preview warnings</p>
