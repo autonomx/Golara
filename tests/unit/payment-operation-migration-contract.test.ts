@@ -11,6 +11,8 @@ export async function runPaymentOperationMigrationContractTests() {
   const evidence = source('docs/production-roadmap-phase33-payment-operation-migration-validation-evidence.md');
   const repositoryDesign = source('docs/production-roadmap-phase33-payment-operation-repository-design.md');
   const statusHelper = source('lib/checkout/payment-operation-migration-status.ts');
+  const repository = source('lib/checkout/payment-operation-record-repository.ts');
+  const service = source('lib/checkout/payment-operation-record-service.ts');
   const schema = source('prisma/schema.prisma');
 
   assert.ok(migration.includes('CREATE TABLE IF NOT EXISTS "PaymentOperationRecord"'));
@@ -73,6 +75,26 @@ export async function runPaymentOperationMigrationContractTests() {
   assert.equal(statusHelper.includes('fetch('), false);
   assert.equal(statusHelper.includes('CheckoutOrder'), false);
   assert.equal(statusHelper.includes('CheckoutPaymentAttempt'), false);
+
+  assert.ok(repository.includes('createPendingPaymentOperationRecord'));
+  assert.ok(repository.includes('findPaymentOperationRecordByIdempotencyKey'));
+  assert.ok(repository.includes('ON CONFLICT ("idempotencyKey") DO NOTHING'));
+  assert.ok(repository.includes('idempotencyConflicts'));
+  assert.ok(repository.includes('listPaymentOperationRecordsForOrder'));
+  assert.equal(repository.includes('stripe'), false);
+  assert.equal(repository.includes('zarinpal'), false);
+  assert.equal(repository.includes('fetch('), false);
+  assert.equal(repository.includes('CheckoutOrder" SET'), false);
+  assert.equal(repository.includes('CheckoutPaymentAttempt" SET'), false);
+
+  assert.ok(service.includes('getPaymentOperationRecordsMigrationStatus'));
+  assert.ok(service.includes('migration_unconfirmed'));
+  assert.ok(service.includes('createPendingPaymentOperationRecordIfConfirmed'));
+  assert.ok(service.includes('listPaymentOperationRecordsForOrderIfConfirmed'));
+  assert.equal(service.includes('stripe'), false);
+  assert.equal(service.includes('zarinpal'), false);
+  assert.equal(service.includes('fetch('), false);
+  assert.equal(service.includes('@prisma/client'), false);
 
   assert.equal(schema.includes('model PaymentOperationRecord'), false);
 
