@@ -10,6 +10,7 @@ function source(path: string) {
 export async function runPaymentSettlementServiceTests() {
   const service = source('lib/checkout/payment-settlement-service.ts');
   const helper = source('lib/checkout/payment-settlement-reconciliation.ts');
+  const repository = source('lib/checkout/payment-settlement-repository.ts');
   const schema = source('prisma/schema.prisma');
 
   assert.match(schema, /model CheckoutPaymentEvent/);
@@ -17,7 +18,19 @@ export async function runPaymentSettlementServiceTests() {
   assert.match(schema, /model CheckoutOrder/);
 
   assert.match(helper, /export function planPaymentSettlementReconciliation/);
+  assert.match(repository, /listPaymentSettlementReconciliations/);
   assert.match(service, /import 'server-only'/);
+  assert.match(service, /paymentSettlementRepository/);
+  assert.match(service, /source: 'durable-reconciliation' \| 'payment-events' \| 'unavailable'/);
+  assert.match(service, /function emptyPaymentSettlementSummary/);
+  assert.match(service, /async function paymentSettlementSummaryFromDurableRecords/);
+  assert.match(service, /paymentSettlementRepository\.list\(limit\)/);
+  assert.match(service, /catch \{/);
+  assert.match(service, /return null;/);
+  assert.match(service, /async function paymentSettlementSummaryFromEvents/);
+  assert.match(service, /source: 'payment-events'/);
+  assert.match(service, /if \(durableSummary\) return durableSummary/);
+  assert.match(service, /return paymentSettlementSummaryFromEvents\(safeLimit\)/);
   assert.match(service, /export function buildPaymentSettlementPlanFromEvent/);
   assert.match(service, /export async function paymentSettlementSummaryService/);
   assert.match(service, /prisma\.checkoutPaymentEvent\.findMany/);
@@ -28,6 +41,11 @@ export async function runPaymentSettlementServiceTests() {
   assert.doesNotMatch(service, /checkoutOrder\.update/);
   assert.doesNotMatch(service, /checkoutPaymentAttempt\.update/);
   assert.doesNotMatch(service, /checkoutPaymentEvent\.create/);
+
+  const durableIndex = service.indexOf('const durableSummary = await paymentSettlementSummaryFromDurableRecords');
+  const fallbackIndex = service.indexOf('return paymentSettlementSummaryFromEvents(safeLimit)');
+  assert.ok(durableIndex > -1);
+  assert.ok(fallbackIndex > durableIndex);
 
   const plan = buildPaymentSettlementPlanFromEvent({
     id: 'event-1',
