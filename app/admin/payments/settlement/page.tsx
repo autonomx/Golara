@@ -23,6 +23,7 @@ export default async function AdminPaymentSettlementPage() {
               <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">Review recent payment webhook events and compare provider-reported settlement data against checkout orders.</p>
             </div>
             <div className="flex flex-wrap gap-2">
+              <Link href="/admin/payments/operations" className="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-800">Payment operations</Link>
               <Link href="/admin/payments/operations/providers" className="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-800">Provider readiness</Link>
               <Link href="/admin/payments/operations/history" className="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-800">Operation history</Link>
               <Link href="/admin/payments/operations/preview" className="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-800">Preview operations</Link>
