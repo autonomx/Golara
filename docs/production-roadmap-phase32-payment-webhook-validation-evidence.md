@@ -16,6 +16,23 @@ Use this file after running `docs/production-roadmap-phase32-payment-webhook-smo
 - Provider dashboards used:
 - Database or migration target:
 
+## Completion checklist
+
+Do not mark this evidence complete until every item below has a concrete value, link, screenshot reference, command output, provider event identifier, or operator note.
+
+- Deployed SHA matches the target environment:
+- Settlement migration application is verified in the target database:
+- Settlement migration confirmation flag was enabled only after migration verification:
+- Stripe provider-generated success case is recorded, if Stripe is enabled:
+- Stripe duplicate replay and invalid-signature cases are recorded, if Stripe is enabled:
+- ZarinPal provider-generated success case is recorded, if ZarinPal is enabled:
+- ZarinPal duplicate replay and invalid-signature cases are recorded, if ZarinPal is enabled:
+- Durable settlement records are visible in `/admin/payments/settlement`:
+- Attention/alert states are reviewed in `/admin/payments/alerts`:
+- Gateway deploy-readiness output is recorded:
+- Rollback path to inquiry or assisted checkout is confirmed:
+- Webhook smoke-test confirmation flag was enabled only after this evidence was captured:
+
 ## Preconditions
 
 - `CHECKOUT_MODE="gateway"` is intended for this validation:
