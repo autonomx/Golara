@@ -8,6 +8,7 @@ function source(path: string) {
 export async function runPaymentOperationMigrationContractTests() {
   const migration = source('prisma/migrations/20260604200000_add_payment_operation_records/migration.sql');
   const contract = source('docs/production-roadmap-phase33-payment-operation-migration-contract.md');
+  const evidence = source('docs/production-roadmap-phase33-payment-operation-migration-validation-evidence.md');
   const schema = source('prisma/schema.prisma');
 
   assert.ok(migration.includes('CREATE TABLE IF NOT EXISTS "PaymentOperationRecord"'));
@@ -35,6 +36,19 @@ export async function runPaymentOperationMigrationContractTests() {
   assert.ok(contract.includes('provider refund calls'));
   assert.ok(contract.includes('provider void calls'));
   assert.ok(contract.includes('admin execution buttons'));
+
+  assert.ok(evidence.includes('Payment Operation Migration Validation Evidence Template'));
+  assert.ok(evidence.includes('does not claim that staging or production validation has been completed'));
+  assert.ok(evidence.includes('PaymentOperationRecord'));
+  assert.ok(evidence.includes('Commit SHA deployed'));
+  assert.ok(evidence.includes('Table verification evidence'));
+  assert.ok(evidence.includes('Constraint and index evidence'));
+  assert.ok(evidence.includes('Application read-access evidence'));
+  assert.ok(evidence.includes('Execution boundary confirmation'));
+  assert.ok(evidence.includes('No live provider refund calls were added or executed'));
+  assert.ok(evidence.includes('No live provider void calls were added or executed'));
+  assert.ok(evidence.includes('No repository/service writes were enabled by this evidence alone'));
+  assert.ok(evidence.includes('No admin refund/void execution buttons were enabled by this evidence alone'));
 
   assert.equal(schema.includes('model PaymentOperationRecord'), false);
 
