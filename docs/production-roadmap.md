@@ -1,19 +1,19 @@
 # Golara Production Readiness Roadmap
 
 Last updated: 2026-06-03
-Current main baseline: Phase 30 merged, followed by admin/storefront expansion work
-Current production path: inquiry-first launch. Payment-provider implementation remains deferred until explicitly approved.
+Current main baseline: Phase 31 started after admin/storefront expansion work
+Current production path: inquiry-first launch remains available; full commerce rollout is now progressing through the deferred production feature roadmap.
 
 ## Current readiness state
 
-Golara has completed the inquiry-first production-readiness roadmap through Phase 30. The codebase is ready for an operator-led production sign-off using `docs/LAUNCH_AUDIT.md`.
+Golara has completed the inquiry-first production-readiness roadmap through Phase 30. The codebase is ready for an operator-led production sign-off using `docs/LAUNCH_AUDIT.md` if the site remains inquiry-first.
 
 Important distinction:
 
 - Production-readiness work is complete for the inquiry-first launch path.
-- Recent admin/storefront work has expanded the demo-commerce/admin surface: product/category/media management, homepage management, displayed occasion tiles, featured picks, demo orders/inquiries/customers/discounts, settings pages, and analytics panels.
+- Recent admin/storefront work has expanded the demo-commerce/admin surface: product/category/media management, homepage management, displayed occasion tiles, featured picks, demo orders/inquiries/customers/discounts, settings pages, analytics panels, and hideable storefront header search.
 - Actual production launch still requires environment-specific operator sign-off: secrets, database, Cloudinary or another production-safe media store, notification mode, data-safety confirmations, deploy-readiness output, and manual smoke audit.
-- Full payment-provider checkout is not implemented yet. Current payment work is settings/readiness/foundation only, not live gateway capture, redirect, webhook, settlement, or refund processing.
+- Full payment-provider checkout is in progress. Phase 31 now has a live Stripe Checkout Session adapter foundation, but browser return handling, checkout wiring, order state transitions, webhooks, settlement, and refunds are still not complete.
 
 Completed foundations:
 
@@ -31,6 +31,7 @@ Completed foundations:
 - Final launch audit sign-off artifact is in place at `docs/LAUNCH_AUDIT.md`.
 - Admin Saleor-parity foundations now cover catalog, PIM, inventory, fulfillment, customers, orders, discounts, settings, integrations, and analytics.
 - Homepage admin now supports editing hero content/media, CTAs, trust chips, section copy, footer copy, displayed occasion tiles, and featured picks.
+- Payment gateway adapter foundations include manual/inquiry fallback adapters, Stripe/Iranian mock adapters, and a live Stripe Checkout Session adapter foundation with idempotency-key support.
 
 ## Completed recent phases
 
@@ -116,24 +117,31 @@ These are environment/operator tasks, not repository blockers for the inquiry-fi
 
 The following phases are the next roadmap for moving from inquiry-first/demo-commerce readiness to a full production commerce system. These are not blockers if Golara launches as inquiry-first, but they are blockers for a real card/gateway checkout launch.
 
-### Phase 31 — payment gateway implementation
+### Phase 31 — live payment gateway implementation
 
-Status: not implemented; highest-priority missing production feature.
+Status: in progress; Stripe Checkout Session adapter foundation added, but customer checkout is not fully wired to live payment completion yet.
 
 Goal: replace manual/inquiry-only payment behavior with real provider-backed checkout while keeping the existing payment settings/readiness admin controls.
 
 Checklist:
 
-- [ ] Choose first live provider path: Stripe for card/overseas checkout, Iranian gateway for Toman/local checkout, or both behind the existing provider config.
-- [ ] Add provider adapter interface for creating checkout sessions/payment intents.
-- [ ] Add provider-specific implementation for the selected first gateway.
+- [x] Choose first live provider path: Stripe for overseas/card checkout first; Iranian/local gateway remains a later provider path behind the existing config.
+- [x] Add provider adapter interface for creating checkout sessions/payment intents.
+- [x] Add provider-specific implementation foundation for the selected first gateway: Stripe Checkout Sessions.
 - [ ] Store provider session/payment intent IDs on checkout payment attempts.
-- [ ] Redirect customers to provider-hosted checkout or render the provider-approved payment UI.
+- [ ] Redirect customers to provider-hosted checkout or render the provider-approved payment UI from the live checkout flow.
 - [ ] Add checkout return/success/cancel pages.
 - [ ] Convert provider success/failure into order payment state transitions.
-- [ ] Add idempotency keys so repeated checkout submissions do not create duplicate charges/orders.
-- [ ] Add unit and route tests for success, failure, cancel, duplicate, and provider-error paths.
-- [ ] Update `.env.example`, production checklist, and admin readiness blockers for the selected provider.
+- [x] Add idempotency-key support so repeated checkout submissions can avoid duplicate provider sessions/charges once wired into checkout submission.
+- [~] Add unit and route tests for success, failure, cancel, duplicate, and provider-error paths. Unit coverage exists for Stripe session creation success/failure and idempotency headers; route and browser-return coverage is still pending.
+- [x] Update `.env.example`, production checklist, and admin readiness blockers for the selected provider. `.env.example` and existing readiness blockers cover Stripe secret requirements; production checklist still needs live-checkout operator runbook details.
+
+Progress notes:
+
+- Added `createStripeCheckoutSessionAdapter` for Stripe Checkout Session creation using `STRIPE_SECRET_KEY`.
+- Added `createLivePaymentGatewayAdapters` so live Stripe can be selected without removing manual/inquiry fallback adapters.
+- Added Stripe request shaping for amount, currency, customer email, success/cancel URLs, client reference, metadata, and idempotency key.
+- Added unit coverage with an injected Stripe HTTP client; no live Stripe network calls run in tests.
 
 Success criteria:
 
@@ -183,7 +191,7 @@ Success criteria:
 - Payment operations remain auditable and reconcile with the provider.
 - Inventory and order state remain consistent after payment reversals.
 
-### Phase 34 — real notification providers
+### Phase 34 — real email/SMS/WhatsApp notification providers
 
 Status: settings/readiness foundations exist; real provider delivery should still be verified/implemented.
 
@@ -203,7 +211,7 @@ Success criteria:
 - Failed notifications are visible and retryable.
 - Log/webhook mode remains available for development and fallback operations.
 
-### Phase 35 — webhook delivery worker and integration reliability
+### Phase 35 — durable outbound webhook worker
 
 Status: configuration/event-log foundations exist; durable delivery worker is still needed.
 
@@ -222,7 +230,7 @@ Success criteria:
 - Failed deliveries are observable and recoverable.
 - Webhook configuration is not just stored; it is operational.
 
-### Phase 36 — production authentication hardening
+### Phase 36 — provider-backed per-user admin authentication
 
 Status: password-gated admin and role foundations exist; provider-backed per-user auth is deferred.
 
@@ -293,7 +301,7 @@ Environment/operator blockers before inquiry-first production launch:
 
 Repository blockers before full automated commerce launch:
 
-- Live payment gateway checkout.
+- Live payment gateway checkout wiring, return handling, and order payment transitions.
 - Payment webhooks and settlement reconciliation.
 - Provider-backed refunds/voids.
 - Real notification provider delivery.
