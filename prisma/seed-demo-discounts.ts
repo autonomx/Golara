@@ -66,6 +66,7 @@ const demoDiscounts = [
 ];
 
 async function upsertDemoDiscount(row: (typeof demoDiscounts)[number]) {
+  const currency = row.currency ?? undefined;
   const discount = await prisma.promotionDiscount.upsert({
     where: { slug: row.slug },
     create: {
@@ -73,7 +74,7 @@ async function upsertDemoDiscount(row: (typeof demoDiscounts)[number]) {
       name: row.name,
       discountType: row.discountType,
       value: row.value,
-      currency: row.currency,
+      currency,
       status: row.status,
       description: row.description,
       usageLimit: row.usageLimit,
@@ -86,7 +87,7 @@ async function upsertDemoDiscount(row: (typeof demoDiscounts)[number]) {
       name: row.name,
       discountType: row.discountType,
       value: row.value,
-      currency: row.currency,
+      currency,
       status: row.status,
       description: row.description,
       usageLimit: row.usageLimit,
