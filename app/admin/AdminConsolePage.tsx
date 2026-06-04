@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BadgePercent, BarChart3, ClipboardList, CreditCard, FileText, Home, ImageIcon, LayoutDashboard, LogIn, Package, Settings, ShoppingBag, ShieldCheck, Users } from 'lucide-react';
+import { BadgePercent, BarChart3, Bell, ClipboardList, CreditCard, FileText, Home, ImageIcon, LayoutDashboard, LogIn, Package, Settings, ShoppingBag, ShieldCheck, Users } from 'lucide-react';
 import { AdminActionBanner } from '@/components/admin/AdminActionBanner';
 import { AdminAuditLogPanel } from '@/components/admin/AdminAuditLogPanel';
 import { AdminCustomerPanel } from '@/components/admin/AdminCustomerPanel';
@@ -97,6 +97,7 @@ function moduleHeader(activeTab: AdminTab, activeNavKey: string): AdminModuleHea
     sales: { eyebrow: 'Admin / Sales', title: 'Sales operations', description: 'Review orders and customer inquiries.' },
     orders: { eyebrow: 'Admin / Sales', title: 'Orders', description: 'Review checkout orders, fulfillment, payment status, and exports.', action: { href: '/admin/orders/print', label: 'Print orders' } },
     'payment-settlement': { eyebrow: 'Admin / Payments', title: 'Payment settlement', description: 'Review provider webhook settlement status and reconciliation mismatches.' },
+    'payment-alerts': { eyebrow: 'Admin / Payments', title: 'Payment webhook alerts', description: 'Review payment webhook events that need operator attention or retry follow-up.' },
     inquiries: { eyebrow: 'Admin / Sales', title: 'Inquiries', description: 'Review customer requests, assignments, follow-ups, and exports.', action: { href: '/admin/inquiries/print', label: 'Print inquiries' } },
     customers: { eyebrow: 'Admin / Customer Ops', title: 'Customers', description: 'Review customer profiles, addresses, accounts, and order counts.' },
     discounts: { eyebrow: 'Admin / Customer Ops', title: 'Discounts', description: 'Plan voucher, campaign, and gift-card workflows.' },
@@ -156,6 +157,7 @@ const sidebarSections = [
   { label: 'Customer Ops', items: [
     { href: '/admin/orders', key: 'orders', tab: 'sales' as AdminTab, label: 'Orders', icon: ShoppingBag },
     { href: '/admin/payments/settlement', key: 'payment-settlement', tab: 'sales' as AdminTab, label: 'Payment settlement', icon: CreditCard },
+    { href: '/admin/payments/alerts', key: 'payment-alerts', tab: 'sales' as AdminTab, label: 'Payment alerts', icon: Bell },
     { href: '/admin/inquiries', key: 'inquiries', tab: 'sales' as AdminTab, label: 'Inquiries', icon: Users },
     { href: '/admin/customers', key: 'customers', tab: 'customers' as AdminTab, label: 'Customers', icon: Users },
     { href: '/admin/discounts', key: 'discounts', tab: 'discounts' as AdminTab, label: 'Discounts', icon: BadgePercent }
