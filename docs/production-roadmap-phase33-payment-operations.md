@@ -6,7 +6,7 @@ This note tracks Phase 33 work after the Phase 32 repo-side webhook and settleme
 
 ## Current status
 
-Phase 33 has provider-neutral refund/void planning, no-mutation preview generation, a pure preview input normalization helper, a read-only preview view model, a route-core style preview result, a request-core wrapper for normalized preview requests, a compact read-only admin preview panel, a static-sample admin preview route for admin-safe display, a documentation-only persistence design for future refund/void operation records, pure order/payment transition plus inventory/capacity release planning, read-only transition guidance in the admin preview payload/UI, a migration-backed table contract for future payment operation records, a blank operator evidence template for target-environment payment-operation migration validation, a read-only migration status helper for checking whether the target environment has been operator-confirmed, a docs-only repository/service design, a gated raw-SQL repository/service foundation for idempotent pending operation-record creation, append-only admin audit-log wiring for pending/duplicate/conflict/submitted/succeeded/failed operation-record lifecycle events, a provider operation adapter contract with inert mock/manual/unavailable execution boundaries for future refund/void provider integration, and provider-specific request/response mappers for Stripe and ZarinPal using symbolic provider endpoints. This remains repo-side foundation work: no live Stripe or ZarinPal refund/void HTTP calls, order/payment mutations, inventory/capacity release, or admin execution buttons have been added. Repository/service use is gated behind target-environment migration confirmation.
+Phase 33 has provider-neutral refund/void planning, no-mutation preview generation, a pure preview input normalization helper, a read-only preview view model, a route-core style preview result, a request-core wrapper for normalized preview requests, a compact read-only admin preview panel, a static-sample admin preview route for admin-safe display, a documentation-only persistence design for future refund/void operation records, pure order/payment transition plus inventory/capacity release planning, read-only transition guidance in the admin preview payload/UI, a migration-backed table contract for future payment operation records, a blank operator evidence template for target-environment payment-operation migration validation, a read-only migration status helper for checking whether the target environment has been operator-confirmed, a docs-only repository/service design, a gated raw-SQL repository/service foundation for idempotent pending operation-record creation, append-only admin audit-log wiring for pending/duplicate/conflict/submitted/succeeded/failed operation-record lifecycle events, a provider operation adapter contract with inert mock/manual/unavailable execution boundaries for future refund/void provider integration, provider-specific request/response mappers for Stripe and ZarinPal using symbolic provider endpoints, and injected provider HTTP adapter factories that require caller-supplied HTTP clients before execution. This remains repo-side foundation work: no default live Stripe or ZarinPal refund/void HTTP calls, order/payment mutations, inventory/capacity release, or admin execution buttons have been added. Repository/service use is gated behind target-environment migration confirmation.
 
 ## Completed in Phase 33 so far
 
@@ -57,6 +57,8 @@ Phase 33 has provider-neutral refund/void planning, no-mutation preview generati
 - Wired `tests/unit/payment-operation-adapters.test.ts` into `tests/unit/run-tests.ts`, raising the runner count from 118 to 119 files.
 - Extended `lib/checkout/payment-operation-adapters.ts` with provider-specific request/response mappers for Stripe and ZarinPal refund/void operations using symbolic provider endpoints, credential/provider-reference preflight results, idempotency headers, provider-operation references, provider status normalization, and retryable-vs-rejected error categories.
 - Extended `tests/unit/payment-operation-adapters.test.ts` to guard Stripe/ZarinPal mapper request shape, missing credential handling, missing provider-reference handling, success response normalization, retryable provider errors, rejected provider errors, source-level no-fetch/no-Prisma/no-mutation boundaries, and this progress note. The runner count remains 119 files.
+- Extended `lib/checkout/payment-operation-adapters.ts` with `ProviderPaymentOperationHttpClient`, `createStripePaymentOperationHttpAdapter`, and `createZarinPalPaymentOperationHttpAdapter` so provider operation execution requires an injected HTTP client and otherwise returns `provider_http_client_missing`.
+- Extended `tests/unit/payment-operation-adapters.test.ts` to guard missing injected-client behavior, injected-client request capture, normalized success results, and the continued no-default-fetch/no-Prisma/no-mutation boundary. The runner count remains 119 files.
 
 ## Current helper behavior
 
@@ -161,7 +163,7 @@ Phase 33 has provider-neutral refund/void planning, no-mutation preview generati
 
 `buildPaymentOperationAuditLogInput` can normalize payment-operation audit events into the existing admin audit-log shape for preview, blocked/manual-review, pending record creation, idempotency duplicate reuse, idempotency conflict blocking, and submitted/succeeded/failed record transitions. It does not call providers, mutate orders/payment attempts, or release inventory/capacity.
 
-`payment-operation-adapters.ts` defines a provider operation adapter contract for future refund/void execution. It can normalize providers, route operations through supplied adapters, return manual-review results for manual operations, return unavailable results for unconfigured providers, provide inert mock Stripe/ZarinPal/manual behavior for source/unit coverage, build symbolic Stripe/ZarinPal request envelopes, and normalize Stripe/ZarinPal operation responses into succeeded/failed/retryable result shapes. It does not make live provider HTTP calls, use Prisma, mutate order/payment state, release inventory/capacity, or expose admin execution controls.
+`payment-operation-adapters.ts` defines a provider operation adapter contract for future refund/void execution. It can normalize providers, route operations through supplied adapters, return manual-review results for manual operations, return unavailable results for unconfigured providers, provide inert mock Stripe/ZarinPal/manual behavior for source/unit coverage, build symbolic Stripe/ZarinPal request envelopes, normalize Stripe/ZarinPal operation responses into succeeded/failed/retryable result shapes, and execute provider operation adapters only through caller-injected `ProviderPaymentOperationHttpClient` functions. If no HTTP client is injected, the Stripe/ZarinPal HTTP adapters return `provider_http_client_missing`. This module does not make default live provider HTTP calls, use Prisma, mutate order/payment state, release inventory/capacity, or expose admin execution controls.
 
 ## Preview and persistence boundary acceptance criteria
 
@@ -187,21 +189,22 @@ The current boundary should continue to:
 - keep migration confirmation helpers read-only until execution behavior is deliberately added in a later guarded slice;
 - append admin audit-log entries only for repository/service lifecycle events already gated by migration confirmation;
 - keep provider operation adapters injectable and inert by default until live provider execution is intentionally wired;
-- keep provider-specific mapper endpoints symbolic until an injected HTTP boundary is deliberately added;
+- keep provider-specific mapper endpoints symbolic until target-environment endpoint mapping is deliberately added;
+- require caller-injected HTTP clients for any provider operation adapter execution path;
 - require provider-reference, idempotency, status, and error normalization before any live provider adapter is exposed to admin flows;
 - avoid checkout order mutation;
 - avoid payment attempt mutation;
 - avoid inventory or capacity release;
-- avoid live provider calls;
+- avoid default live provider calls;
 - be covered by source/unit guards before provider execution is added.
 
 ## Explicit non-goals for this slice
 
 This slice intentionally does not add:
 
-- live provider refund HTTP calls;
-- live provider void HTTP calls;
-- injected provider HTTP clients;
+- default live provider refund HTTP calls;
+- default live provider void HTTP calls;
+- concrete provider endpoint URLs;
 - Prisma model/client access for `PaymentOperationRecord`;
 - order status mutation;
 - payment attempt mutation;
@@ -214,8 +217,8 @@ Those remain future Phase 33 slices after target-environment migration verificat
 
 ## Recommended next work
 
-1. Add an injected HTTP-client adapter boundary that consumes the symbolic Stripe/ZarinPal request envelopes without wiring admin execution controls.
-2. Add service-level execution orchestration that requires migration confirmation, an existing pending operation record, idempotency, audit transition logging, and adapter result normalization.
+1. Add service-level execution orchestration that requires migration confirmation, an existing pending operation record, idempotency, audit transition logging, injected provider adapters, and adapter result normalization.
+2. Add target-environment provider endpoint mapping only after staging credentials and provider operation contracts are confirmed by operators.
 3. Add admin execution controls only after provider execution, provider error normalization, and post-success order/payment transition behavior are explicitly guarded.
 
 ## Verification status
