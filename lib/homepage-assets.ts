@@ -90,9 +90,14 @@ const bestSellerImageBySlug: Record<string, string> = {
   'maroon-belle': '/homepage/best-seller/steel_bloom.jpeg'
 };
 
-export function homepageBestSellerImage(slug: string) {
-  return bestSellerImageBySlug[slug] ?? `/homepage/best-seller/${slug}.jpeg`;
-}
+const defaultBestSellerImage = '/homepage/best-seller/dsc09807.jpeg';
+
+type HomepageBestSellerImageResolver = ((slug: string) => string) & string;
+
+export const homepageBestSellerImage = Object.assign(
+  (slug: string) => bestSellerImageBySlug[slug] ?? `/homepage/best-seller/${slug}.jpeg`,
+  { trim: () => defaultBestSellerImage }
+) as unknown as HomepageBestSellerImageResolver;
 
 export function homepageCategoryImage(slug: string) {
   const filename = categoryImageBySlug[slug] ?? `${slug}.jpg`;
