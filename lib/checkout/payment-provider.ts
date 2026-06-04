@@ -1,13 +1,12 @@
 import 'server-only';
 
 import { mapCheckoutAttemptStatus } from '@/lib/checkout/checkout-attempt-status';
-import { initiatePaymentGateway } from '@/lib/checkout/payment-gateway-adapters';
-import { normalizeCheckoutProviderName } from '@/lib/checkout/payment-provider-alias-core';
+import { createLivePaymentGatewayAdapters, initiatePaymentGateway } from '@/lib/checkout/payment-gateway-adapters';
+import { normalizeCheckoutProviderName, type CheckoutPaymentProviderName, type LegacyPaymentProviderName } from '@/lib/checkout/payment-provider-alias-core';
 import { createCheckoutProviderRuntimeAttempt } from '@/lib/checkout/payment-provider-runtime-core';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
-export type PaymentProviderName = 'manual' | 'domestic_redirect' | 'zarinpal' | 'iranian' | 'stripe' | 'whatsapp' | 'inquiry';
-type LegacyPaymentProviderName = 'manual' | 'domestic_redirect' | 'zarinpal';
+export type PaymentProviderName = CheckoutPaymentProviderName;
 
 type CreatePaymentAttemptInput = {
   orderId: string;
@@ -33,20 +32,9 @@ type PaymentProviderOrder = {
   publicLookupToken?: string | null;
 };
 
-type PaymentProvider = {
+type LocalPaymentProvider = {
   name: LegacyPaymentProviderName;
   createAttempt(order: PaymentProviderOrder): Promise<PaymentProviderResult>;
-};
-
-type ZarinpalRequestResponse = {
-  data?: {
-    code?: number;
-    message?: string;
-    authority?: string;
-    fee_type?: string;
-    fee?: number;
-  };
-  errors?: Record<string, unknown> | string[];
 };
 
 function configuredPaymentProvider(): PaymentProviderName {
@@ -58,23 +46,6 @@ function siteUrl() {
   return process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, '') || '';
 }
 
-function zarinpalRequestUrl() {
-  return process.env.ZARINPAL_REQUEST_URL?.trim() || 'https://payment.zarinpal.com/pg/v4/payment/request.json';
-}
-
-function zarinpalStartUrl() {
-  return process.env.ZARINPAL_START_URL?.trim().replace(/\/$/, '') || 'https://payment.zarinpal.com/pg/StartPay';
-}
-
-function zarinpalMerchantId() {
-  return process.env.ZARINPAL_MERCHANT_ID?.trim();
-}
-
-function zarinpalAmount(order: PaymentProviderOrder) {
-  const multiplier = Number.parseInt(process.env.ZARINPAL_AMOUNT_MULTIPLIER || '1', 10);
-  return order.totalCents * (Number.isFinite(multiplier) && multiplier > 0 ? multiplier : 1);
-}
-
 function checkoutReturnUrl(order: PaymentProviderOrder, provider?: PaymentProviderName) {
   if (!order.publicLookupToken || !siteUrl()) return undefined;
   const returnUrl = new URL(`${siteUrl()}/orders/return`);
@@ -84,7 +55,17 @@ function checkoutReturnUrl(order: PaymentProviderOrder, provider?: PaymentProvid
   return returnUrl.toString();
 }
 
-const manualPaymentProvider: PaymentProvider = {
+function liveGatewayAdapters() {
+  return createLivePaymentGatewayAdapters({
+    stripeSecretKey: process.env.STRIPE_SECRET_KEY,
+    zarinpalMerchantId: process.env.ZARINPAL_MERCHANT_ID,
+    zarinpalRequestUrl: process.env.ZARINPAL_REQUEST_URL,
+    zarinpalStartPayUrl: process.env.ZARINPAL_START_URL,
+    zarinpalDescription: process.env.ZARINPAL_DESCRIPTION
+  });
+}
+
+const manualPaymentProvider: LocalPaymentProvider = {
   name: 'manual',
   async createAttempt(order) {
     return {
@@ -99,7 +80,7 @@ const manualPaymentProvider: PaymentProvider = {
   }
 };
 
-const domesticRedirectProvider: PaymentProvider = {
+const domesticRedirectProvider: LocalPaymentProvider = {
   name: 'domestic_redirect',
   async createAttempt(order) {
     const baseUrl = process.env.CHECKOUT_DOMESTIC_GATEWAY_START_URL?.trim();
@@ -123,102 +104,21 @@ const domesticRedirectProvider: PaymentProvider = {
     const returnUrl = checkoutReturnUrl(order, 'domestic_redirect');
     if (returnUrl) url.searchParams.set('callback', returnUrl);
 
-    const metadata: PaymentMetadata = {
-      orderNumber: order.orderNumber,
-      configuredUrl: baseUrl
-    };
     return {
       provider: 'domestic_redirect',
       status: mapCheckoutAttemptStatus('redirect'),
       providerReference: order.orderNumber,
       redirectUrl: url.toString(),
-      metadata
-    };
-  }
-};
-
-const zarinpalPaymentProvider: PaymentProvider = {
-  name: 'zarinpal',
-  async createAttempt(order): Promise<PaymentProviderResult> {
-    const merchantId = zarinpalMerchantId();
-    const callbackUrl = checkoutReturnUrl(order, 'zarinpal');
-    if (!merchantId || !callbackUrl) {
-      const metadata: PaymentMetadata = {
-        instruction: 'Zarinpal is not fully configured; manual staff follow-up required',
-        missingMerchantId: !merchantId,
-        missingCallbackUrl: !callbackUrl,
-        orderNumber: order.orderNumber
-      };
-      return {
-        provider: 'zarinpal',
-        status: mapCheckoutAttemptStatus('manual'),
-        providerReference: order.orderNumber,
-        metadata
-      };
-    }
-
-    const amount = zarinpalAmount(order);
-    const response = await fetch(zarinpalRequestUrl(), {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', accept: 'application/json' },
-      body: JSON.stringify({
-        merchant_id: merchantId,
-        amount,
-        callback_url: callbackUrl,
-        description: process.env.ZARINPAL_DESCRIPTION?.trim() || `Golara order ${order.orderNumber}`,
-        metadata: {
-          order_number: order.orderNumber
-        }
-      })
-    });
-
-    let payload: ZarinpalRequestResponse | undefined;
-    try {
-      payload = (await response.json()) as ZarinpalRequestResponse;
-    } catch {
-      payload = undefined;
-    }
-
-    const authority = payload?.data?.authority;
-    const code = payload?.data?.code;
-    if (!response.ok || code !== 100 || !authority) {
-      console.warn('[checkout] zarinpal request failed', { status: response.status, code, errors: payload?.errors });
-      const metadata: PaymentMetadata = {
-        instruction: 'Zarinpal payment request failed; manual staff follow-up required',
+      metadata: {
         orderNumber: order.orderNumber,
-        httpStatus: response.status,
-        providerCode: code ?? 'missing'
-      };
-      return {
-        provider: 'zarinpal',
-        status: mapCheckoutAttemptStatus('manual'),
-        providerReference: order.orderNumber,
-        metadata
-      };
-    }
-
-    const metadata: PaymentMetadata = {
-      orderNumber: order.orderNumber,
-      providerCode: code,
-      authority,
-      amount,
-      fee: payload?.data?.fee ?? 0,
-      feeType: payload?.data?.fee_type ?? ''
-    };
-    return {
-      provider: 'zarinpal',
-      status: mapCheckoutAttemptStatus('redirect'),
-      providerReference: authority,
-      redirectUrl: `${zarinpalStartUrl()}/${authority}`,
-      metadata
+        configuredUrl: baseUrl
+      }
     };
   }
 };
 
-function getPaymentProvider(provider?: PaymentProviderName): PaymentProvider {
-  const selected = provider || configuredPaymentProvider();
-  if (selected === 'domestic_redirect') return domesticRedirectProvider;
-  if (selected === 'zarinpal') return zarinpalPaymentProvider;
+function getLocalPaymentProvider(provider?: LegacyPaymentProviderName): LocalPaymentProvider {
+  if (provider === 'domestic_redirect') return domesticRedirectProvider;
   return manualPaymentProvider;
 }
 
@@ -243,12 +143,17 @@ export async function createCheckoutPaymentAttempt(input: CreatePaymentAttemptIn
     throw new Error('Order is not eligible for payment.');
   }
 
+  const provider = input.provider ?? configuredPaymentProvider();
   const result = await createCheckoutProviderRuntimeAttempt({
     order,
-    provider: input.provider ?? configuredPaymentProvider(),
-    returnUrl: checkoutReturnUrl(order, input.provider ?? configuredPaymentProvider()) ?? siteUrl(),
-    localAttempt: async (provider, localOrder) => getPaymentProvider(provider).createAttempt(localOrder),
-    adapterAttempt: async (provider, payment) => initiatePaymentGateway({ provider, payment })
+    provider,
+    returnUrl: checkoutReturnUrl(order, provider) ?? siteUrl(),
+    localAttempt: async (localProvider, localOrder) => getLocalPaymentProvider(localProvider).createAttempt(localOrder),
+    adapterAttempt: async (adapterProvider, payment) => initiatePaymentGateway({
+      provider: adapterProvider,
+      payment,
+      adapters: liveGatewayAdapters()
+    })
   });
 
   const attemptData = {
