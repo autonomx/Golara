@@ -1,0 +1,62 @@
+import Link from 'next/link';
+
+import { AdminPaymentOperationPreviewPanel } from '@/components/admin/AdminPaymentOperationPreviewPanel';
+import { getAdminIdentity, isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
+import { buildPaymentOperationPreviewRequestResult } from '@/lib/checkout/payment-operation-preview-request-core';
+
+export const dynamic = 'force-dynamic';
+
+const samplePreviewRequest = {
+  operation: 'refund',
+  orderStatus: 'paid',
+  orderTotalCents: '420000',
+  orderCurrency: 'USD',
+  paymentProvider: 'stripe',
+  paymentStatus: 'paid',
+  paymentAmountCents: '420000',
+  paymentCurrency: 'USD',
+  providerReference: 'pi_preview_reference',
+  amountCents: '210000',
+  reason: 'Operator preview sample. No refund is submitted.',
+  orderNumber: 'GOL-PREVIEW-1001',
+  paymentAttemptId: 'attempt-preview-1'
+};
+
+export default async function AdminPaymentOperationPreviewPage() {
+  const authenticated = await isAdminAuthenticated();
+  const authConfigured = isAdminAuthConfigured();
+  const identity = await getAdminIdentity();
+  const previewResult = buildPaymentOperationPreviewRequestResult(samplePreviewRequest);
+
+  return (
+    <main className="min-h-screen bg-stone-50 px-4 py-6 lg:px-8">
+      <div className="mx-auto grid max-w-7xl gap-6">
+        <section className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Admin / Payments</p>
+              <h1 className="mt-1 text-3xl font-bold text-stone-950">Payment operation preview</h1>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">
+                Read-only Phase 33 preview entry point for refund and void planning. This page uses static sample data and does not submit refunds, void authorizations, create records, or call providers.
+              </p>
+            </div>
+            <Link href="/admin/payments/settlement" className="rounded-md bg-rosewood px-4 py-2 text-sm font-semibold text-white">Back to settlement</Link>
+          </div>
+          <div className="mt-4 rounded-lg bg-stone-50 p-3 text-sm text-stone-600">
+            {authConfigured ? authenticated ? `Signed in as ${identity.label ?? identity.email ?? 'admin'}.` : 'Admin authentication is required to view payment operation previews.' : 'Admin authentication is not configured yet.'}
+          </div>
+        </section>
+
+        {authenticated && previewResult.body.ok ? <AdminPaymentOperationPreviewPanel result={previewResult} /> : null}
+        {authenticated && !previewResult.body.ok ? (
+          <section className="rounded-lg border border-red-200 bg-red-50 p-5 text-red-950 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-[0.16em]">Preview sample validation failed</p>
+            <ul className="mt-3 list-disc space-y-1 pl-5 text-sm leading-6">
+              {previewResult.body.errors.map((error) => <li key={`${error.field}-${error.code}`}>{error.field}: {error.message}</li>)}
+            </ul>
+          </section>
+        ) : null}
+      </div>
+    </main>
+  );
+}
