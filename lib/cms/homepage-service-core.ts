@@ -109,7 +109,7 @@ export function createCmsHomepageService(deps: CmsHomepageServiceDeps) {
         action: 'homepage.update',
         entity: 'homepageSection',
         entityId: section.id,
-        summary: 'Updated homepage content',
+        summary: 'Updated homepage hero content',
         metadata: { key: section.key, locale: 'fa-IR', title: input.payload.title }
       });
 
