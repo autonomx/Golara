@@ -13,6 +13,12 @@ export async function runPaymentWebhookValidationEvidenceDocsTests() {
   assert.match(evidence, /blank operator evidence template/);
   assert.match(evidence, /does not claim that staging or production validation has been completed/);
   assert.match(evidence, /docs\/production-roadmap-phase32-payment-webhook-smoke-tests\.md/);
+  assert.match(evidence, /## Completion checklist/);
+  assert.match(evidence, /Do not mark this evidence complete/);
+  assert.match(evidence, /concrete value, link, screenshot reference, command output, provider event identifier, or operator note/);
+  assert.match(evidence, /Deployed SHA matches the target environment/);
+  assert.match(evidence, /Settlement migration confirmation flag was enabled only after migration verification/);
+  assert.match(evidence, /Webhook smoke-test confirmation flag was enabled only after this evidence was captured/);
   assert.match(evidence, /Commit SHA deployed/);
   assert.match(evidence, /PAYMENT_SETTLEMENT_MIGRATION_CONFIRMED="true"/);
   assert.match(evidence, /PAYMENT_WEBHOOK_SMOKE_TESTS_CONFIRMED="true"/);
