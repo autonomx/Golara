@@ -1,12 +1,16 @@
 import { planPaymentOperation, type PaymentOperationPlan, type PaymentOperationPlanInput } from '@/lib/checkout/payment-operation-plan';
+import { planPaymentOperationTransition, type PaymentOperationTransitionPlan } from '@/lib/checkout/payment-operation-transition-plan';
 
 export type PaymentOperationPreviewInput = PaymentOperationPlanInput & {
   orderNumber?: string | null;
   paymentAttemptId?: string | null;
+  fulfillmentStatus?: string | null;
+  hasPerishableCapacity?: boolean;
 };
 
 export type PaymentOperationPreview = {
   plan: PaymentOperationPlan;
+  transition: PaymentOperationTransitionPlan;
   orderNumber?: string;
   paymentAttemptId?: string;
   canSubmit: boolean;
@@ -43,9 +47,14 @@ function reasonCopy(reason: string) {
 
 export function buildPaymentOperationPreview(input: PaymentOperationPreviewInput): PaymentOperationPreview {
   const plan = planPaymentOperation(input);
+  const transition = planPaymentOperationTransition({
+    plan,
+    fulfillmentStatus: input.fulfillmentStatus,
+    hasPerishableCapacity: input.hasPerishableCapacity
+  });
   const label = operationLabel(plan.operation);
   const amount = formatAmount(plan.amountCents, plan.currency);
-  const warnings = plan.reasons.map(reasonCopy);
+  const warnings = [...plan.reasons.map(reasonCopy), ...transition.notes];
   const orderNumber = input.orderNumber?.trim() || undefined;
   const paymentAttemptId = input.paymentAttemptId?.trim() || undefined;
 
@@ -68,6 +77,7 @@ export function buildPaymentOperationPreview(input: PaymentOperationPreviewInput
 
   return {
     plan,
+    transition,
     ...(orderNumber ? { orderNumber } : {}),
     ...(paymentAttemptId ? { paymentAttemptId } : {}),
     canSubmit,
