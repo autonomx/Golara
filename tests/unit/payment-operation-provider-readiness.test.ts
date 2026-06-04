@@ -41,6 +41,7 @@ export async function runPaymentOperationProviderReadinessTests() {
   const providerEvidenceExample = source('docs/production-roadmap-phase33-provider-readiness-evidence-example.md');
   const smokeTestChecklist = source('docs/production-roadmap-phase33-refund-void-smoke-test-checklist.md');
   const phase33Docs = source('docs/production-roadmap-phase33-payment-operations.md');
+  const productionRoadmap = source('docs/production-roadmap.md');
 
   const stripeBlocked = buildPaymentOperationProviderReadiness({ provider: 'stripe', env: {} });
   assert.equal(stripeBlocked.provider, 'stripe');
@@ -233,6 +234,17 @@ export async function runPaymentOperationProviderReadinessTests() {
   assert.ok(phase33Docs.includes('refund-void-go-no-go-checklist'));
   assert.ok(phase33Docs.includes('provider-readiness-evidence-example'));
   assert.ok(phase33Docs.includes('refund-void-smoke-test-checklist'));
+
+  assert.ok(productionRoadmap.includes('Phase 33 — refunds, voids, and payment operations'));
+  assert.ok(productionRoadmap.includes('NO-GO for live refund/void execution'));
+  assert.ok(productionRoadmap.includes('docs/production-roadmap-phase33-payment-operations.md'));
+  assert.ok(productionRoadmap.includes('docs/production-roadmap-phase33-provider-readiness-evidence-example.md'));
+  assert.ok(productionRoadmap.includes('docs/production-roadmap-phase33-refund-void-smoke-test-checklist.md'));
+  assert.ok(productionRoadmap.includes('PAYMENT_OPERATION_RECORDS_MIGRATION_CONFIRMED=true'));
+  assert.ok(productionRoadmap.includes('executionEnabled: false'));
+  assert.ok(productionRoadmap.includes('default fetch behavior'));
+  assert.ok(productionRoadmap.includes('Prisma model/client access for `PaymentOperationRecord`'));
+  assertNoExecutionSurface(productionRoadmap);
 
   console.log('payment-operation-provider-readiness.test.ts passed');
 }
