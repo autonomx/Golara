@@ -1,7 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { addToCartAction } from '@/app/cart/actions';
-import { formatPrice, productRequiresQuote, type Product } from '@/lib/catalog';
+import type { Product } from '@/lib/catalog';
+import { formatPrice, productRequiresQuote } from '@/lib/catalog-pricing';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 import { getStorefrontCopy } from '@/lib/localization/storefront-copy';
 
