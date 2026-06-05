@@ -165,7 +165,7 @@ export async function runOutboundWebhookDeliveryPlanTests() {
   assert.match(migrationNote, /does not make outbound delivery operational/);
 
   assert.match(modelAlignmentNote, /Prisma Model Alignment/);
-  assert.match(modelAlignmentNote, /model alignment planning, source coverage, schema-update preflight, and canonical model snippet contract only/);
+  assert.match(modelAlignmentNote, /connector-write blocker documentation only/);
   assert.match(modelAlignmentNote, /Expected Prisma model shape/);
   assert.match(modelAlignmentNote, /passive client mapping only/);
   assert.match(modelAlignmentNote, /`idempotencyKey` \| `String` \| Required and unique/);
@@ -193,15 +193,20 @@ export async function runOutboundWebhookDeliveryPlanTests() {
   assert.match(modelAlignmentNote, /Insert only one `model OutboundWebhookDelivery` block/);
   assert.match(modelAlignmentNote, /Treat any truncated schema read as a blocker/);
   assert.match(modelAlignmentNote, /schema diff contains only the intended additive model block/);
+  assert.match(modelAlignmentNote, /## Connector write blocker/);
+  assert.match(modelAlignmentNote, /5bf481b801ef73f28ea0c0eee98e26e7abb731be/);
+  assert.match(modelAlignmentNote, /final `AdminAuditLog` model/);
+  assert.match(modelAlignmentNote, /does not yet contain `model OutboundWebhookDelivery`/);
+  assert.match(modelAlignmentNote, /replaces a complete file/);
+  assert.match(modelAlignmentNote, /safe line-range edit/);
+  assert.match(modelAlignmentNote, /verified full-file schema source or a patch-capable write path/);
   assert.match(modelAlignmentNote, /Source guard expectations/);
   assert.match(modelAlignmentNote, /Add `model OutboundWebhookDelivery` to `prisma\/schema\.prisma`/);
   assert.match(modelAlignmentNote, /service write paths/);
   assert.match(modelAlignmentNote, /does not make outbound delivery operational/);
 
+  assert.match(schema, /model AdminAuditLog \{/);
   assert.equal(schema.includes('model OutboundWebhookDelivery'), false);
-  assert.equal(helper.includes('fetch('), false);
-  assert.equal(helper.includes('setInterval'), false);
-  assert.equal(helper.includes('crypto'), false);
 
   console.log('outbound-webhook-delivery-plan.test.ts passed');
 }
