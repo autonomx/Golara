@@ -44,6 +44,7 @@ export async function runPaymentOperationProviderReadinessTests() {
   const productionRoadmap = source('docs/production-roadmap.md');
   const mainRoadmapGuardNote = source('docs/production-roadmap-phase33-main-roadmap-guard-note.md');
   const coverageIndex = source('docs/production-roadmap-phase33-coverage-index.md');
+  const coverageProgress = source('docs/production-roadmap-phase33-coverage-progress-20260604.md');
 
   const stripeBlocked = buildPaymentOperationProviderReadiness({ provider: 'stripe', env: {} });
   assert.equal(stripeBlocked.provider, 'stripe');
@@ -276,6 +277,17 @@ export async function runPaymentOperationProviderReadinessTests() {
   assert.ok(coverageIndex.includes('order/payment state'));
   assert.ok(coverageIndex.includes('Prisma model access'));
   assertNoExecutionSurface(coverageIndex);
+
+  assert.ok(coverageProgress.includes('Phase 33 Coverage Progress'));
+  assert.ok(coverageProgress.includes('Status: documentation-only progress note'));
+  assert.ok(coverageProgress.includes('coverage-index/doc-guard loop through PR #277 through PR #284'));
+  assert.ok(coverageProgress.includes('provider-readiness source guards'));
+  assert.ok(coverageProgress.includes('follow-up tracker documentation'));
+  assert.ok(coverageProgress.includes('typecheck, unit tests, build, and route smoke'));
+  assert.ok(coverageProgress.includes('known build-rate-limit failure'));
+  assert.ok(coverageProgress.includes('do not change runtime behavior'));
+  assert.ok(coverageProgress.includes('order/payment state'));
+  assertNoExecutionSurface(coverageProgress);
 
   assert.ok(productionRoadmap.includes('Phase 33 — refunds, voids, and payment operations'));
   assert.ok(productionRoadmap.includes('NO-GO for live refund/void execution'));
