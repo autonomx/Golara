@@ -133,7 +133,7 @@ export function normalizePaymentWebhookEvent(input: PaymentWebhookEventInput): N
     provider,
     eventName: optionalText(input.eventType) || 'payment.unknown',
     status: 'pending',
-    providerReference: optionalText(payload.id) || optionalText(payload.reference),
+    providerReference: optionalText(payload.reference),
     receivedAt,
     payloadDigest,
     idempotencyKey: ''
