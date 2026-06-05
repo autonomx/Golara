@@ -61,10 +61,21 @@ export async function runPaymentWebhookTransitionPlanTests() {
     currentOrderStatus: 'pending_payment',
     currentAttemptStatus: 'pending_payment'
   });
-  assert.equal(pendingPlan.trusted, true);
-  assert.equal(pendingPlan.reason, 'pending_webhook');
+  assert.equal(pendingPlan.trusted, false);
+  assert.equal(pendingPlan.reason, 'missing_provider_reference');
   assert.equal(pendingPlan.shouldUpdateOrder, false);
-  assert.equal(pendingPlan.shouldUpdateAttempt, true);
+  assert.equal(pendingPlan.shouldUpdateAttempt, false);
+
+  const pendingWithReference = normalizePaymentWebhookEvent({ provider: 'unknown', payload: { reference: 'evt_unknown' } });
+  const pendingWithReferencePlan = planPaymentWebhookStateChange({
+    event: pendingWithReference,
+    currentOrderStatus: 'pending_payment',
+    currentAttemptStatus: 'pending_payment'
+  });
+  assert.equal(pendingWithReferencePlan.trusted, false);
+  assert.equal(pendingWithReferencePlan.reason, 'pending_webhook');
+  assert.equal(pendingWithReferencePlan.shouldUpdateOrder, false);
+  assert.equal(pendingWithReferencePlan.shouldUpdateAttempt, false);
 
   const missingReference = normalizePaymentWebhookEvent({ provider: 'stripe', eventType: 'checkout.session.completed', payload: { data: { object: { payment_status: 'paid' } } } });
   const missingReferencePlan = planPaymentWebhookStateChange({
