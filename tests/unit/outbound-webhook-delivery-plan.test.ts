@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 
 import { buildOutboundWebhookDeliveryPlan } from '../../lib/settings/outbound-webhook-delivery-plan';
 
@@ -7,9 +8,21 @@ function source(path: string) {
   return readFileSync(path, 'utf8');
 }
 
+function migrationFiles(root = 'prisma/migrations') {
+  if (!existsSync(root)) return [];
+
+  return readdirSync(root, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .flatMap((entry) => {
+      const migrationPath = join(root, entry.name, 'migration.sql');
+      return existsSync(migrationPath) ? [migrationPath] : [];
+    });
+}
+
 export async function runOutboundWebhookDeliveryPlanTests() {
   const helper = source('lib/settings/outbound-webhook-delivery-plan.ts');
   const tracker = source('docs/production-roadmap-phase35-durable-outbound-webhook-worker.md');
+  const migrations = migrationFiles().map((path) => [path, source(path)] as const);
 
   assert.match(helper, /buildOutboundWebhookDeliveryPlan/);
   assert.match(helper, /dispatcherEnabled: false/);
@@ -78,7 +91,23 @@ export async function runOutboundWebhookDeliveryPlanTests() {
   assert.equal(acceptedDelivery.readyForFutureDispatch, false);
 
   assert.match(tracker, /outbound-webhook-delivery-plan\.ts/);
-  assert.match(tracker, /persistence planning before any database migration/);
+  assert.match(tracker, /## Persistence planning/);
+  assert.match(tracker, /no database migration/);
+  assert.match(tracker, /payload digest/i);
+  assert.match(tracker, /idempotency/i);
+  assert.match(tracker, /configuration\/status lookups/);
+  assert.match(tracker, /nextEligibleAttemptAt/);
+  assert.match(tracker, /Do not store signing secrets/);
+  assert.match(tracker, /Do not store raw sensitive response bodies/);
+  assert.match(tracker, /Migration contract reviewed/);
+  assert.match(tracker, /Dispatcher remains deferred/);
+  assert.match(tracker, /Admin retry\/cancel controls should remain deferred/);
+
+  assert.equal(
+    migrations.some(([path, content]) => /outbound[-_ ]?webhook[-_ ]?delivery/i.test(path) || /OutboundWebhookDelivery/.test(content)),
+    false
+  );
+  assert.equal(migrations.some(([, content]) => /CREATE TABLE[^;]+OutboundWebhookDelivery/s.test(content)), false);
 
   console.log('outbound-webhook-delivery-plan.test.ts passed');
 }
