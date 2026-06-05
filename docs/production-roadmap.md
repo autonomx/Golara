@@ -1,7 +1,7 @@
 # Golara Production Readiness Roadmap
 
-Last updated: 2026-06-04
-Current main baseline: Phase 33 refund/void and payment-operation foundations are in progress after Phase 32 payment webhook and settlement foundations.
+Last updated: 2026-06-05
+Current main baseline: Phase 34 real notification provider foundations are repo-side complete after Phase 33 refund/void and payment-operation foundations.
 Current production path: inquiry-first launch remains available; full commerce rollout is now progressing through the deferred production feature roadmap.
 
 ## Current readiness state
@@ -13,7 +13,7 @@ Important distinction:
 - Production-readiness work is complete for the inquiry-first launch path.
 - Recent admin/storefront work has expanded the demo-commerce/admin surface: product/category/media management, homepage management, displayed occasion tiles, featured picks, demo orders/inquiries/customers/discounts, settings pages, analytics panels, and hideable storefront header search.
 - Actual production launch still requires environment-specific operator sign-off: secrets, database, Cloudinary or another production-safe media store, notification mode, data-safety confirmations, deploy-readiness output, and manual smoke audit.
-- Full payment-provider checkout is in progress. Phase 31 added live Stripe/ZarinPal checkout foundations, Phase 32 added webhook, settlement, admin visibility, guard coverage, and smoke-test runbook foundations, and Phase 33 now has read-only refund/void/payment-operation foundations plus strict no-go evidence checklists. Provider-generated staging/production validation, migration verification, live refund/void execution, outbound alert delivery, and full end-to-end commerce QA are still not complete.
+- Full payment-provider checkout is in progress. Phase 31 added live Stripe/ZarinPal checkout foundations, Phase 32 added webhook, settlement, admin visibility, guard coverage, and smoke-test runbook foundations, Phase 33 added read-only refund/void/payment-operation foundations plus strict no-go evidence checklists, and Phase 34 added inert real-notification provider foundations. Provider-generated staging/production validation, migration verification, live refund/void execution, real notification delivery, outbound alert delivery, and full end-to-end commerce QA are still not complete.
 
 Completed foundations:
 
@@ -34,6 +34,7 @@ Completed foundations:
 - Payment gateway adapter foundations include manual/inquiry fallback adapters, Stripe/Iranian mock adapters, live Stripe Checkout Session foundations, ZarinPal adapter foundations, and idempotency-key support.
 - Payment webhook and settlement foundations include provider-neutral normalization, signed route helpers, idempotent event persistence, trusted matched state transitions, durable settlement reconciliation storage, admin settlement/alert visibility, source-labeled settlement summaries, unit-runner guards, and a provider smoke-test runbook.
 - Payment operation foundations include provider-neutral refund/void planning, no-mutation previews, migration-gated operation-record repository/service foundations, injected provider adapter contracts, read-only admin operation diagnostics, provider readiness diagnostics, operator runbooks, go/no-go criteria, provider evidence examples, and a target-environment smoke-test checklist. The current refund/void execution decision remains **NO-GO**.
+- Real notification provider foundations include an inert provider-neutral delivery contract, read-only provider readiness diagnostics, operator evidence and smoke-test templates, delivery-attempt persistence planning, inert disabled/manual/log adapters, and source coverage that preserves no real email/SMS/WhatsApp delivery.
 
 ## Completed recent phases
 
@@ -238,23 +239,43 @@ Success criteria:
 
 ### Phase 34 — real email/SMS/WhatsApp notification providers
 
-Status: settings/readiness foundations exist; real provider delivery should still be verified/implemented.
+Status: repo-side foundation complete; live provider delivery remains disabled until operator-selected provider evidence and smoke-test validation are complete.
+
+Goal: prepare a safe provider-neutral foundation for real notification delivery without enabling real email, SMS, or WhatsApp sends before provider selection, evidence, and smoke-test gates are complete.
 
 Checklist:
 
-- [ ] Choose first email provider, such as SMTP, Resend, or SendGrid.
-- [ ] Choose SMS/WhatsApp operating model if needed.
-- [ ] Add provider adapter for order and inquiry notifications.
-- [ ] Add templated messages for order confirmation, staff notification, inquiry acknowledgement, and fulfillment updates.
-- [ ] Store delivery attempts with provider references and error details.
-- [ ] Add retry controls and admin visibility for failed notification delivery.
-- [ ] Add tests for provider success, provider failure, missing credentials, retries, and disabled channels.
+- [~] Choose first email provider, such as SMTP, Resend, or SendGrid. Provider candidates and evidence expectations are documented; operator selection remains pending.
+- [~] Choose SMS/WhatsApp operating model if needed. Candidate modes are documented; operator selection remains pending.
+- [x] Add provider-neutral delivery contract for order and inquiry notifications.
+- [x] Add readiness diagnostics for configured providers while keeping live delivery disabled.
+- [x] Add templated-message planning scope for order confirmation, staff notification, inquiry acknowledgement, and fulfillment updates.
+- [x] Add documentation-only provider evidence template and operator smoke-test checklist.
+- [x] Add delivery-attempt persistence planning before any database migration or retry controls.
+- [x] Add inert disabled/manual/log adapters that consume the delivery contract without real provider delivery.
+- [x] Add source coverage for the Phase 34 foundation and no-live-delivery boundary.
+- [ ] Add real provider-backed delivery after operator evidence, smoke-test validation, consent/suppression review, and guarded live enablement.
+- [ ] Add durable retry controls and admin visibility for failed notification delivery in Phase 35 or later.
+
+Progress notes:
+
+- Added `docs/production-roadmap-phase34-notification-providers.md` as the authoritative Phase 34 tracker.
+- Added `lib/notifications/notification-delivery-contract.ts`, `lib/notifications/notification-provider-readiness.ts`, and `lib/notifications/notification-delivery-adapters.ts`.
+- Added `docs/production-roadmap-phase34-provider-readiness-evidence-example.md`, `docs/production-roadmap-phase34-notification-smoke-test-checklist.md`, and `docs/production-roadmap-phase34-delivery-attempt-persistence-planning.md`.
+- Extended `tests/unit/notification-provider-phase34-kickoff.test.ts` to cover the Phase 34 tracker, evidence template, smoke checklist, persistence plan, delivery contract, readiness helper, inert adapters, and no-live-delivery source boundary.
+- Current repo-side delivery state remains inert: `liveDeliveryEnabled` is always false in the Phase 34 delivery contract, readiness diagnostics, and inert adapters.
+
+Still pending before Phase 34 live delivery:
+
+- Operator selects and approves provider/account ownership for each enabled channel.
+- Operator records configuration source names, sender verification, template approval, consent/suppression review, and smoke-test outcomes outside source control.
+- Real provider-backed delivery remains a separate guarded change after evidence is complete.
 
 Success criteria:
 
-- Customers and staff receive operational notifications through real providers.
-- Failed notifications are visible and retryable.
-- Log/webhook mode remains available for development and fallback operations.
+- Customers and staff eventually receive operational notifications through real providers after operator evidence and live-enablement gates are complete.
+- Failed notifications become visible and retryable after durable retry/admin visibility work is explicitly scoped.
+- Log/manual modes remain available for development and fallback operations.
 
 ### Phase 35 — durable outbound webhook worker
 
@@ -349,7 +370,7 @@ Repository blockers before full automated commerce launch:
 - Live payment gateway staging/production validation and checkout/order/fulfillment end-to-end QA.
 - Payment webhook provider smoke validation and settlement migration verification.
 - Provider-backed refunds/voids after Phase 33 no-go criteria, migration evidence, provider endpoint mapping evidence, provider readiness evidence, guarded execution controls, and post-success state transition criteria are satisfied.
-- Real notification provider delivery.
+- Real notification provider delivery after Phase 34 operator evidence and smoke-test validation.
 - Durable outbound webhook worker.
 - Provider-backed per-user admin authentication.
 - End-to-end checkout/order/fulfillment QA.
