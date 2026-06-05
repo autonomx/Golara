@@ -18,6 +18,7 @@ export async function runPaymentOperationMigrationContractTests() {
   const historyView = source('lib/checkout/payment-operation-history-view.ts');
   const historyRouteInput = source('lib/checkout/payment-operation-history-route-input.ts');
   const historyRouteCore = source('lib/checkout/payment-operation-history-route-core.ts');
+  const historyRouteCoreTest = source('tests/unit/payment-operation-history-route-core.test.ts');
   const historyPanel = source('components/admin/AdminPaymentOperationHistoryPanel.tsx');
   const historyPage = source('app/admin/payments/operations/history/page.tsx');
   const audit = source('lib/checkout/payment-operation-audit.ts');
@@ -205,6 +206,21 @@ export async function runPaymentOperationMigrationContractTests() {
   assert.equal(historyRouteCore.includes('CheckoutPaymentAttempt" SET'), false);
   assert.equal(historyRouteCore.includes('onClick='), false);
   assert.equal(historyRouteCore.includes('<button'), false);
+
+  assert.ok(historyRouteCoreTest.includes('runPaymentOperationHistoryRouteCoreTests'));
+  assert.ok(historyRouteCoreTest.includes('buildPaymentOperationHistoryRouteResult'));
+  assert.ok(historyRouteCoreTest.includes('status, 400'));
+  assert.ok(historyRouteCoreTest.includes('status, 503'));
+  assert.ok(historyRouteCoreTest.includes('payment_operation_records_migration_unconfirmed'));
+  assert.ok(historyRouteCoreTest.includes('PAYMENT_OPERATION_RECORDS_MIGRATION_CONFIRMED'));
+  assert.ok(historyRouteCoreTest.includes('Read-only history review'));
+  assert.equal(historyRouteCoreTest.includes('fetch('), false);
+  assert.equal(historyRouteCoreTest.includes('@prisma/client'), false);
+  assert.equal(historyRouteCoreTest.includes('prisma.'), false);
+  assert.equal(historyRouteCoreTest.includes('onClick='), false);
+  assert.equal(historyRouteCoreTest.includes('<button'), false);
+  assert.equal(historyRouteCoreTest.includes('CheckoutOrder" SET'), false);
+  assert.equal(historyRouteCoreTest.includes('CheckoutPaymentAttempt" SET'), false);
 
   assert.ok(historyPanel.includes('AdminPaymentOperationHistoryPanel'));
   assert.ok(historyPanel.includes('PaymentOperationHistoryView'));
