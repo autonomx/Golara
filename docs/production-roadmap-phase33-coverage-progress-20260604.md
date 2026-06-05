@@ -13,6 +13,7 @@ This note records recent test-hardening work completed after the read-only payme
 - Expanded provider evidence-packet coverage for per-check statuses, complete-packet detail copy, manual-provider review status, and unsupported-provider status.
 - Expanded provider-readiness diagnostics coverage for credential, endpoint, validation, manual-provider, unsupported-provider, and default route-result summary behavior.
 - Expanded operation-history view coverage for row labels, amount/provider/order/operator display, timestamp labels, provider-status fallback, no-error fallback, no-reason fallback, and reference/operator fallback behavior.
+- Closed the coverage-index/doc-guard loop through PR #277 through PR #284, including the coverage index, tracker notes, provider-readiness source guards, and follow-up tracker documentation.
 
 ## Verification notes
 
