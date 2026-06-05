@@ -21,9 +21,26 @@ export function AdminPaymentOperationHistoryPanel({ view }: { view: PaymentOpera
         </div>
       </div>
 
+      <dl className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {view.summaryRows.map((summary) => (
+          <div key={summary.label} className="rounded-lg border border-stone-200 bg-stone-50 p-3">
+            <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">{summary.label}</dt>
+            <dd className="mt-2 break-words text-lg font-bold text-stone-950">{summary.value}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        {view.filterLabels.map((filter) => (
+          <span key={filter.label} className="rounded-full border border-stone-200 bg-white px-3 py-1 text-xs font-semibold text-stone-700">
+            {filter.label}: {filter.value}
+          </span>
+        ))}
+      </div>
+
       {view.status === 'empty' ? (
         <div className="mt-5 rounded-lg border border-dashed border-stone-300 bg-stone-50 p-4 text-sm text-stone-600">
-          No payment operation records have been persisted for this order.
+          No payment operation records have been persisted for this order. This read-only panel only displays rows after the target environment confirms the migration gate.
         </div>
       ) : (
         <div className="mt-5 space-y-4">
