@@ -21,7 +21,7 @@ This remains repo-side foundation work: it does not call Stripe, ZarinPal, or an
 - Added `lib/checkout/payment-operation-preview-route-core.ts` to return a stable route-core result shape around `buildPaymentOperationPreviewView` without persistence or provider calls.
 - Added `components/admin/AdminPaymentOperationPreviewPanel.tsx` as a compact read-only admin preview panel without execution controls.
 - Added `lib/checkout/payment-operation-preview-input.ts` as a pure preview input normalization helper for future admin form/query payloads.
-- Added `lib/checkout/payment-operation-preview-request-core.ts` as a route-core wrapper that combines preview input normalization with `buildPaymentOperationPreviewRouteResult`.
+- Added `lib/checkout/payment-operation-preview-request-core.ts` as a route-core wrapper that combines preview input normalization with `buildPaymentOperationPreviewRouteResult` and returns `status: 400` for invalid preview inputs.
 - Added `app/admin/payments/operations/preview/page.tsx` as a compact read-only admin route that uses static sample data and renders the existing preview panel.
 - Added `docs/production-roadmap-phase33-refund-void-persistence-design.md` to document future refund/void operation records, idempotency, audit, order/payment timelines, and inventory/capacity release planning before any migration.
 - Added `lib/checkout/payment-operation-transition-plan.ts` for pure post-provider-success order/payment transition recommendations and inventory/capacity release planning.
