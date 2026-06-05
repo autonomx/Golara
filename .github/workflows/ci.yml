@@ -40,4 +40,4 @@ jobs:
           name: ci-command-logs
           path: ci-results
           if-no-files-found: ignore
-# CI trigger marker: unit guard update verification
+# CI trigger marker: doc guard verification

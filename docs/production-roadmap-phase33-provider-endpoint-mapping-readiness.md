@@ -42,7 +42,7 @@ A later code slice that introduces concrete provider endpoint mappings should in
 - void/cancel semantics are valid for the order/payment states the UI can preview;
 - refund semantics are valid for full and partial amounts;
 - provider operation references are captured for audit/history display;
-- no admin execution button is enabled by endpoint mapping alone.
+- No admin execution button is enabled by endpoint mapping alone.
 
 ## Source boundary for the later mapping slice
 

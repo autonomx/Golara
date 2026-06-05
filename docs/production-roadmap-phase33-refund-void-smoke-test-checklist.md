@@ -8,6 +8,8 @@ Status: **documentation-only checklist**. This checklist is for a future target-
 
 Use this checklist only after the migration contract, provider endpoint mapping worksheet, provider readiness evidence example, and go/no-go checklist have been reviewed for the target environment. The goal is to make a future smoke-test rehearsal auditable before any guarded execution slice is considered.
 
+Required linked evidence includes `docs/production-roadmap-phase33-provider-readiness-evidence-example.md` as the provider readiness evidence packet example for future operator review.
+
 This checklist is intentionally conservative. Completing it is not enough to enable admin refund/void controls, live provider calls, order/payment mutation, inventory/capacity release, or production-ready claims.
 
 ## Required evidence before rehearsal planning
