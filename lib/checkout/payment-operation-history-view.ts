@@ -12,6 +12,11 @@ export type PaymentOperationHistoryFilterLabel = {
   value: string;
 };
 
+export type PaymentOperationHistoryFacetLabel = {
+  label: string;
+  value: string;
+};
+
 export type PaymentOperationHistoryViewOptions = {
   orderId?: string | null;
   limit?: number | null;
@@ -38,6 +43,7 @@ export type PaymentOperationHistoryView = {
   summary: string;
   summaryRows: PaymentOperationHistorySummaryRow[];
   filterLabels: PaymentOperationHistoryFilterLabel[];
+  facetLabels: PaymentOperationHistoryFacetLabel[];
   rows: PaymentOperationHistoryRow[];
 };
 
@@ -94,6 +100,29 @@ function buildFilterLabels(options: PaymentOperationHistoryViewOptions): Payment
   ];
 }
 
+function countBy(records: PaymentOperationRecordRow[], field: 'operationKind' | 'provider' | 'status') {
+  return records.reduce<Record<string, number>>((counts, record) => {
+    const value = label(String(record[field] ?? ''), 'unknown').toLowerCase();
+    counts[value] = (counts[value] ?? 0) + 1;
+    return counts;
+  }, {});
+}
+
+function countLabel(counts: Record<string, number>) {
+  const entries = Object.entries(counts).sort(([left], [right]) => left.localeCompare(right));
+  return entries.length > 0
+    ? entries.map(([value, count]) => `${titleCase(value)}: ${count}`).join(', ')
+    : 'No records loaded';
+}
+
+function buildFacetLabels(records: PaymentOperationRecordRow[]): PaymentOperationHistoryFacetLabel[] {
+  return [
+    { label: 'Operation mix', value: countLabel(countBy(records, 'operationKind')) },
+    { label: 'Provider mix', value: countLabel(countBy(records, 'provider')) },
+    { label: 'Status mix', value: countLabel(countBy(records, 'status')) }
+  ];
+}
+
 export function buildPaymentOperationHistoryRow(record: PaymentOperationRecordRow): PaymentOperationHistoryRow {
   const title = `${titleCase(record.operationKind)} ${money(record.requestedAmountCents, record.currency)}`;
   return {
@@ -134,6 +163,7 @@ export function buildPaymentOperationHistoryView(
       : 'No payment operation records are available for this order yet. Confirm the migration gate before expecting persisted history rows.',
     summaryRows: buildSummaryRows(records),
     filterLabels: buildFilterLabels(options),
+    facetLabels: buildFacetLabels(records),
     rows
   };
 }
