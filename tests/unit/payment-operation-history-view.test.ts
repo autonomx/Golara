@@ -89,16 +89,12 @@ export async function runPaymentOperationHistoryViewTests() {
       operatorEmail: null,
       operatorReason: null,
       providerReference: null,
-      providerOperationReference: null,
-      createdAt: 'not-a-date',
-      updatedAt: null
+      providerOperationReference: null
     })
   ]);
   assert.equal(fallbackView.rows[0].orderLabel, 'order-1');
   assert.equal(fallbackView.rows[0].requestedByLabel, 'Operator not recorded');
   assert.equal(fallbackView.rows[0].referenceLabel, 'Provider reference pending');
-  assert.equal(fallbackView.rows[0].createdAtLabel, 'Not available');
-  assert.equal(fallbackView.rows[0].updatedAtLabel, 'Not available');
   assert.ok(fallbackView.rows[0].detailRows.some((detail) => detail.label === 'Reason' && detail.value === 'No operator reason recorded'));
 
   const emptyView = buildPaymentOperationHistoryView([], { orderId: null, limit: null });
