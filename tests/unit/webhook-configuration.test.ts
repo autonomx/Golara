@@ -134,7 +134,7 @@ export async function runWebhookConfigurationTests() {
   assert.match(roadmap, /- \[x\] Add webhook configuration\./);
 
   assert.match(phase35Kickoff, /Phase 35 Durable Outbound Webhook Worker/);
-  assert.match(phase35Kickoff, /kickoff planning and source coverage only/);
+  assert.match(phase35Kickoff, /inert outbound delivery planner/);
   assert.match(phase35Kickoff, /Planned delivery record shape/);
   assert.match(phase35Kickoff, /Planned lifecycle states/);
   assert.match(phase35Kickoff, /Retry and backoff planning/);
