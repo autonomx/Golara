@@ -135,6 +135,12 @@ export async function runPaymentOperationMigrationContractTests() {
 
   assert.ok(historyView.includes('buildPaymentOperationHistoryView'));
   assert.ok(historyView.includes('PaymentOperationHistoryRow'));
+  assert.ok(historyView.includes('PaymentOperationHistorySummaryRow'));
+  assert.ok(historyView.includes('PaymentOperationHistoryFilterLabel'));
+  assert.ok(historyView.includes('buildSummaryRows'));
+  assert.ok(historyView.includes('buildFilterLabels'));
+  assert.ok(historyView.includes('Read-only history review'));
+  assert.ok(historyView.includes('Confirm the migration gate before expecting persisted history rows.'));
   assert.ok(historyView.includes('toneForStatus'));
   assert.ok(historyView.includes('Provider reference pending'));
   assert.ok(historyView.includes('This view does not execute provider operations'));
@@ -146,7 +152,8 @@ export async function runPaymentOperationMigrationContractTests() {
 
   assert.ok(historyRouteCore.includes('buildPaymentOperationHistoryRouteResult'));
   assert.ok(historyRouteCore.includes('listPaymentOperationRecordsForOrderIfConfirmed'));
-  assert.ok(historyRouteCore.includes('buildPaymentOperationHistoryView(serviceResult.records)'));
+  assert.ok(historyRouteCore.includes('buildPaymentOperationHistoryView(serviceResult.records, historyOptions)'));
+  assert.ok(historyRouteCore.includes('buildPaymentOperationHistoryView([], historyOptions)'));
   assert.ok(historyRouteCore.includes('payment_operation_records_migration_unconfirmed'));
   assert.ok(historyRouteCore.includes('Limit must be a positive integer.'));
   assert.ok(historyRouteCore.includes('Order ID is required to read payment operation history.'));
@@ -162,8 +169,11 @@ export async function runPaymentOperationMigrationContractTests() {
 
   assert.ok(historyPanel.includes('AdminPaymentOperationHistoryPanel'));
   assert.ok(historyPanel.includes('PaymentOperationHistoryView'));
+  assert.ok(historyPanel.includes('summaryRows.map'));
+  assert.ok(historyPanel.includes('filterLabels.map'));
   assert.ok(historyPanel.includes('Read-only'));
   assert.ok(historyPanel.includes('does not render refund or void execution controls'));
+  assert.ok(historyPanel.includes('This read-only panel only displays rows after the target environment confirms the migration gate.'));
   assert.equal(historyPanel.includes('fetch('), false);
   assert.equal(historyPanel.includes('@prisma/client'), false);
   assert.equal(historyPanel.includes('prisma.'), false);
