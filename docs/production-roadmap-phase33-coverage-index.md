@@ -7,6 +7,8 @@ Status: documentation-only index for recent Phase 33 coverage notes.
 - `docs/production-roadmap-phase33-coverage-progress-20260604.md` records recent Phase 33 test-hardening and documentation-hardening slices.
 - `docs/production-roadmap-phase33-history-pending-row-coverage.md` records the pending operation-history row coverage assertions implemented in PR #273.
 - `docs/production-roadmap-phase33-history-doc-guard.md` records the source-guard assertions implemented in PR #275 for the pending-row coverage note.
+- `tests/unit/payment-operation-provider-readiness.test.ts` now source-guards this coverage index for documentation-only status, PR #275 source-guard history, closed follow-up wording, and no-execution/no-mutation boundaries.
+- `docs/production-roadmap-phase33-payment-operations.md` records the source-guarded coverage-index status after PR #280.
 
 ## Use
 
