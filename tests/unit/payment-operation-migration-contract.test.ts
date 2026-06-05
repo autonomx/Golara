@@ -11,6 +11,7 @@ export async function runPaymentOperationMigrationContractTests() {
   const evidence = source('docs/production-roadmap-phase33-payment-operation-migration-validation-evidence.md');
   const repositoryDesign = source('docs/production-roadmap-phase33-payment-operation-repository-design.md');
   const providerEndpointReadiness = source('docs/production-roadmap-phase33-provider-endpoint-mapping-readiness.md');
+  const historyRouteInputDoc = source('docs/production-roadmap-phase33-payment-operation-history-route-input.md');
   const statusHelper = source('lib/checkout/payment-operation-migration-status.ts');
   const repository = source('lib/checkout/payment-operation-record-repository.ts');
   const service = source('lib/checkout/payment-operation-record-service.ts');
@@ -86,6 +87,22 @@ export async function runPaymentOperationMigrationContractTests() {
   assert.equal(providerEndpointReadiness.includes('https://api.stripe.com'), false);
   assert.equal(providerEndpointReadiness.includes('https://www.zarinpal.com'), false);
   assert.equal(providerEndpointReadiness.includes('fetch('), false);
+
+  assert.ok(historyRouteInputDoc.includes('Phase 33 Payment Operation History Route Input'));
+  assert.ok(historyRouteInputDoc.includes('Status: repo-side read-only helper documentation'));
+  assert.ok(historyRouteInputDoc.includes('normalizePaymentOperationHistoryRouteInput'));
+  assert.ok(historyRouteInputDoc.includes('PAYMENT_OPERATION_RECORDS_MIGRATION_CONFIRMED=true'));
+  assert.ok(historyRouteInputDoc.includes('unit runner count is now `124 files`'));
+  assert.ok(historyRouteInputDoc.includes('provider calls'));
+  assert.ok(historyRouteInputDoc.includes('default `fetch` behavior'));
+  assert.ok(historyRouteInputDoc.includes('admin execution buttons or click handlers'));
+  assert.ok(historyRouteInputDoc.includes('order/payment mutation'));
+  assert.ok(historyRouteInputDoc.includes('inventory/capacity release'));
+  assert.ok(historyRouteInputDoc.includes('Prisma model/client access for `PaymentOperationRecord`'));
+  assert.equal(historyRouteInputDoc.includes('https://api.stripe.com'), false);
+  assert.equal(historyRouteInputDoc.includes('https://www.zarinpal.com'), false);
+  assert.equal(historyRouteInputDoc.includes('fetch('), false);
+  assert.equal(historyRouteInputDoc.includes('<button'), false);
 
   assert.ok(statusHelper.includes('PAYMENT_OPERATION_RECORDS_MIGRATION_CONFIRMED'));
   assert.ok(statusHelper.includes('isPaymentOperationRecordsMigrationConfirmed'));
