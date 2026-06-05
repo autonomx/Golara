@@ -1,22 +1,25 @@
-# Phase 33 History Documentation Guard Follow-up
+# Phase 33 History Documentation Guard
 
-Status: documentation-only follow-up note.
+Status: implemented in PR #275.
 
 ## Scope
 
-The pending-row coverage gap is now recorded in `docs/production-roadmap-phase33-history-pending-row-coverage.md`.
+The pending-row coverage note is recorded in `docs/production-roadmap-phase33-history-pending-row-coverage.md` and is now guarded by `tests/unit/payment-operation-migration-contract.test.ts`.
 
-A future narrow source-guard slice should add that note to `tests/unit/payment-operation-migration-contract.test.ts` once the full-file test patch path is available again.
+## Source-guard assertions added
 
-## Desired source-guard assertions
-
-The guard should require the pending-row coverage note to include:
+PR #275 added a narrow source guard requiring the pending-row coverage note to include:
 
 - the `buildPaymentOperationHistoryView` helper name
-- succeeded, failed, manual-review, submitted, fallback, and empty history states
+- succeeded, failed, manual-review, submitted, pending, fallback, and empty history states
 - pending-row assertions for loaded, succeeded, needs-review, retryable, neutral tone, and `Pending` status label
-- documentation-only status
-- unchanged runtime behavior
+- the exact PR #273 GitHub Actions verification reference
+- unchanged runtime behavior and read-only safety language
+- no `fetch(` or `<button` content in the note
+
+## Verification
+
+GitHub Actions CI run `27000088255` passed on exact PR head `db1d5bbce79f08f5b039020a700bdbc69997c701` before merge.
 
 ## Safety boundaries
 
