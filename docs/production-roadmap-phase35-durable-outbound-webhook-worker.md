@@ -1,6 +1,6 @@
 # Phase 35 Durable Outbound Webhook Worker
 
-Status: kickoff planning, inert outbound delivery planner, persistence planning, migration contract planning, authenticity contract planning, retry/backoff policy planning, and source coverage added; no database migration, dispatcher, queue, retry loop, signing runtime, admin retry control, or live outbound webhook delivery is enabled.
+Status: kickoff planning, inert outbound delivery planner, persistence planning, migration contract planning, authenticity contract planning, retry/backoff policy planning, admin visibility planning, admin query contract planning, admin read-model planning, admin helper planning, and source coverage added; no database migration, dispatcher, queue, retry loop, signing runtime, admin retry control, or live outbound webhook delivery is enabled.
 
 Last updated: 2026-06-05
 
@@ -30,6 +30,7 @@ This kickoff slice defines the safety boundary, record lifecycle, retry planning
 - Added a migration contract plan that documents the future table, columns, constraints, indexes, rollback/readiness checks, and deferred runtime boundaries without adding a Prisma migration.
 - Added authenticity contract planning for future payload canonicalization, headers, secret-source labels, timestamp tolerance, verification documentation, and rotation expectations without adding runtime signing or secret reads.
 - Added retry/backoff policy planning for future maximum attempts, delay progression, jitter, retryable and terminal outcomes, idempotency preservation, dead-letter visibility, and operator visibility without adding retry execution.
+- Added admin visibility, admin query contract, admin read-model, and pure helper contract planning for future read-only admin views without adding routes, UI, repository reads, recovery controls, or runtime behavior.
 
 ## Safety boundaries
 
@@ -317,12 +318,25 @@ Future admin surfaces may show:
 
 Admin retry/cancel controls should remain deferred until authorization, confirmation UX, idempotency, and audit logging are explicitly covered.
 
+## Read-only admin planning links
+
+Read-only admin planning now includes separate notes for visibility, query inputs, DTO output, redaction, and pure helper boundaries. These notes keep the admin surface focused on safe summaries and normalized inputs before any route, UI, repository read path, or recovery action is implemented.
+
+Future implementation should proceed in this order:
+
+1. Pure DTO and normalization helpers.
+2. Repository read adapter using normalized inputs only.
+3. Route-core wrapper with authorization checks.
+4. UI list/detail views.
+5. Recovery controls only after separate authorization, confirmation, idempotency, and audit planning.
+
 ## Recommended next implementation slices
 
 1. Add the actual additive migration only after the migration contract is accepted.
-2. Add admin visibility before any retry/cancel/replay controls.
-3. Add runtime signing only after the authenticity contract is accepted.
-4. Add a dispatcher only after persistence, signing, retry policy, and admin recovery boundaries are in place.
+2. Add pure admin read-model helpers before repository, route, or UI work.
+3. Add repository-backed read-only admin visibility before any retry/cancel/replay controls.
+4. Add runtime signing only after the authenticity contract is accepted.
+5. Add a dispatcher only after persistence, signing, retry policy, and admin recovery boundaries are in place.
 
 ## Completion criteria for kickoff
 
@@ -334,7 +348,7 @@ This kickoff is complete when:
 - Migration contract planning documents future table, column, constraint, index, rollout, and rollback expectations without adding a migration.
 - Authenticity contract planning documents future canonical payload, header, verification, secret-source, rotation, and runtime deferral expectations without adding runtime signing.
 - Retry/backoff policy planning documents future maximum attempt count, initial delay, backoff multiplier, jitter, retryable outcome, terminal outcome, `nextEligibleAttemptAt`, idempotency, dead-letter, operator visibility, and deferral expectations without adding retry execution.
-- Signing and admin visibility expectations are documented.
+- Admin visibility, query contract, read-model DTO, redaction, and pure helper boundaries are documented.
 - Source coverage confirms the kickoff remains planning-only.
 
 This kickoff must not include a dispatcher, queue consumer, retry loop, signing runtime, admin retry/cancel control, database migration, or production-ready outbound delivery claim.

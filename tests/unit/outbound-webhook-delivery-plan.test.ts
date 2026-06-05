@@ -111,6 +111,10 @@ export async function runOutboundWebhookDeliveryPlanTests() {
   assert.match(tracker, /Migration contract reviewed/);
   assert.match(tracker, /Dispatcher remains deferred/);
   assert.match(tracker, /Admin retry\/cancel controls should remain deferred/);
+  assert.match(tracker, /admin read-model planning/i);
+  assert.match(tracker, /pure helper contract planning/i);
+  assert.match(tracker, /Read-only admin planning links/);
+  assert.match(tracker, /pure admin read-model helpers/);
 
   assert.match(tracker, /## Migration contract planning/);
   assert.match(tracker, /Future table contract/);
