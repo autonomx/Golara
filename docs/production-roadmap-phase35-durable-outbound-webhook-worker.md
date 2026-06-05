@@ -1,6 +1,6 @@
 # Phase 35 Durable Outbound Webhook Worker
 
-Status: kickoff planning and source coverage only; no dispatcher, queue, retry loop, signing runtime, admin retry control, or live outbound webhook delivery is enabled.
+Status: kickoff planning, inert outbound delivery planner, and source coverage added; no dispatcher, queue, retry loop, signing runtime, admin retry control, or live outbound webhook delivery is enabled.
 
 Last updated: 2026-06-05
 
@@ -19,6 +19,13 @@ This kickoff slice defines the safety boundary, record lifecycle, retry planning
 - Define payload signing expectations without introducing signing runtime or secret access in this slice.
 - Keep admin retry/cancel controls deferred until durable state and authorization boundaries exist.
 - Add source coverage so future slices cannot silently add live delivery behavior to the kickoff foundation.
+
+## Completed in Phase 35 so far
+
+- Added this Phase 35 kickoff tracker for durable outbound webhook worker foundations.
+- Extended webhook configuration source coverage to keep the kickoff planning-only.
+- Added `lib/settings/outbound-webhook-delivery-plan.ts` as an inert delivery planning helper. It normalizes configuration/event/payload metadata, derives lifecycle status, keeps `dispatcherEnabled: false`, reports blockers, and builds safe audit labels without network behavior.
+- Added `tests/unit/outbound-webhook-delivery-plan.test.ts` and wired it into the aggregate unit runner.
 
 ## Safety boundaries
 
@@ -127,11 +134,10 @@ Admin retry/cancel controls should remain deferred until authorization, confirma
 
 ## Recommended next implementation slices
 
-1. Add an inert outbound delivery planning helper with lifecycle/status mapping and no network behavior.
-2. Add source coverage for the planning helper and no-dispatch boundary.
-3. Add persistence planning before any database migration.
-4. Add a migration contract only after the record shape is reviewed.
-5. Add a dispatcher only after persistence, signing, retry policy, and admin recovery boundaries are in place.
+1. Add persistence planning before any database migration.
+2. Add a migration contract only after the record shape is reviewed.
+3. Add signing contract planning without runtime secret reads.
+4. Add a dispatcher only after persistence, signing, retry policy, and admin recovery boundaries are in place.
 
 ## Completion criteria for kickoff
 
