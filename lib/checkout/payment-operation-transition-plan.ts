@@ -37,8 +37,6 @@ export function planPaymentOperationTransition(input: PaymentOperationTransition
   const plan = input.plan;
   const fullAmount = plan.metadata.fullAmount;
   const partialAmount = plan.metadata.partialAmount;
-  const notes: string[] = [];
-  const releaseReasons: string[] = [];
 
   if (plan.decision === 'blocked') {
     return {
@@ -85,14 +83,13 @@ export function planPaymentOperationTransition(input: PaymentOperationTransition
   }
 
   if (partialAmount) {
-    notes.push('Partial refunds should keep the order and payment attempt active unless an operator chooses a separate adjustment workflow.');
     return {
       orderStatusRecommendation: 'paid_partial_refund_after_provider_success',
       paymentStatusRecommendation: 'partially_refunded_after_provider_success',
       releaseRecommendation: 'none',
       releaseReasons: ['partial_refund'],
       requiresOperatorApproval: false,
-      notes
+      notes: []
     };
   }
 
