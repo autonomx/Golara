@@ -50,6 +50,7 @@ import { runLowStockAlertsTests } from './low-stock-alerts.test';
 import { runManualPaymentAdjustmentFlowTests } from './manual-payment-adjustment-flow.test';
 import { runManualPaymentMarkingFlowTests } from './manual-payment-marking-flow.test';
 import { runMediaStorageReadinessTests } from './media-storage-readiness.test';
+import { runNotificationProviderPhase34KickoffTests } from './notification-provider-phase34-kickoff.test';
 import { runNotificationProviderSettingsTests } from './notification-provider-settings.test';
 import { runOrderActivityTimelineAttributionTests } from './order-activity-timeline-attribution.test';
 import { runOrderNextPathTests } from './order-next-path.test';
@@ -213,6 +214,7 @@ async function main() {
   await runPaymentWebhookAlertsTests();
   await runPaymentWebhookAlertServicePanelTests();
   await runPaymentWebhookAlertNavigationTests();
+  await runNotificationProviderPhase34KickoffTests();
   await runNotificationProviderSettingsTests();
   await runWebhookConfigurationTests();
   await runWebhookEventLogTests();
@@ -254,7 +256,7 @@ async function main() {
   await runFulfillmentShipmentRecordsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (127 files)');
+  console.log('unit tests passed (128 files)');
 }
 
 main().catch((error) => {
