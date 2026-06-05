@@ -159,6 +159,53 @@ This slice defines an implementation deferral boundary. A future implementation 
 
 This plan does not make outbound delivery operational and does not change production behavior.
 
+## Pure helper contract planning
+
+A future pure helper contract should be the first implementation step before repository access, route handlers, or UI. The helper contract should accept plain delivery-like input records and query options, then return deterministic DTO and normalization results without reading from Prisma, calling external services, mutating records, computing signatures, or triggering delivery.
+
+Future helper entry points may include:
+
+- `normalizeOutboundDeliveryAdminFilters`
+- `normalizeOutboundDeliveryAdminSort`
+- `normalizeOutboundDeliveryAdminPagination`
+- `buildOutboundDeliveryListItemDto`
+- `buildOutboundDeliveryDetailDto`
+- `buildOutboundDeliveryPaginationEnvelope`
+
+Helper contract boundaries:
+
+- pure functions only
+- deterministic outputs for stable inputs
+- no Prisma imports
+- no repository access
+- no route handler dependency
+- no UI dependency
+- no environment variable reads
+- no secret reads
+- no outbound HTTP delivery
+- no retry or recovery mutation
+
+Expected pure helper inputs:
+
+- record snapshot with stable scalar fields
+- optional filter query object
+- optional sort query object
+- optional pagination query object
+- current timestamp supplied by caller for stale label derivation
+
+Expected pure helper outputs:
+
+- normalized filter result
+- normalized sort result
+- normalized page-size result
+- opaque cursor summary
+- list item DTO
+- detail DTO
+- pagination envelope
+- redaction audit labels
+
+The future helper tests should cover valid and invalid filter inputs, status allowlist behavior, page size default and maximum handling, sort allowlist behavior, date filter boundaries, null-safe optional fields, derived stale labels, terminal labels, dead-letter labels, redacted delivery summary behavior, and the absence of raw payload or secret values in DTO output.
+
 ## Source guard expectations
 
 The unit source guard should assert that this document keeps the stable planning phrases for:
@@ -179,3 +226,10 @@ The unit source guard should assert that this document keeps the stable planning
 - raw payload
 - secret values
 - implementation deferral
+- Pure helper contract planning
+- deterministic outputs
+- no Prisma imports
+- no repository access
+- no route handler dependency
+- no UI dependency
+- redaction audit labels
