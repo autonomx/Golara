@@ -37,12 +37,82 @@ export type PaymentOperationProviderReadinessSummary = {
   providers: PaymentOperationProviderReadiness[];
 };
 
+export type PaymentOperationProviderEvidencePacketInput = {
+  provider: string;
+  endpointMappingConfirmed?: boolean;
+  liveValidationConfirmed?: boolean;
+  credentialEvidenceCaptured?: boolean;
+  idempotencyEvidenceCaptured?: boolean;
+  responseExampleCaptured?: boolean;
+  dashboardEvidenceCaptured?: boolean;
+};
+
+export type PaymentOperationProviderEvidencePacketValidation = {
+  provider: PaymentOperationAdapterProvider;
+  complete: boolean;
+  executionEnabled: false;
+  missing: string[];
+  warnings: string[];
+  checks: PaymentOperationProviderReadinessCheck[];
+};
+
 const PROVIDER_OPERATION_CREDENTIALS: Partial<Record<PaymentOperationAdapterProvider, string[]>> = {
   stripe: ['STRIPE_SECRET_KEY'],
   zarinpal: ['ZARINPAL_MERCHANT_ID']
 };
 
 const SUPPORTED_OPERATION_PROVIDERS = new Set<PaymentOperationAdapterProvider>(['stripe', 'zarinpal', 'manual']);
+
+const REQUIRED_PROVIDER_EVIDENCE_PACKET_KEYS: Array<{
+  key: keyof Omit<PaymentOperationProviderEvidencePacketInput, 'provider'>;
+  label: string;
+  missingCode: string;
+  readyDetail: string;
+  missingDetail: string;
+}> = [
+  {
+    key: 'endpointMappingConfirmed',
+    label: 'Endpoint mapping evidence',
+    missingCode: 'endpoint_mapping_evidence_missing',
+    readyDetail: 'Operator endpoint mapping evidence is captured for the provider.',
+    missingDetail: 'Endpoint mapping evidence must be captured before any future guarded execution phase.'
+  },
+  {
+    key: 'liveValidationConfirmed',
+    label: 'Live/staging provider validation',
+    missingCode: 'provider_validation_evidence_missing',
+    readyDetail: 'Target-environment provider validation evidence is captured.',
+    missingDetail: 'Provider validation evidence must be captured from the target environment.'
+  },
+  {
+    key: 'credentialEvidenceCaptured',
+    label: 'Credential evidence',
+    missingCode: 'credential_evidence_missing',
+    readyDetail: 'Credential-source evidence is captured without exposing secret values.',
+    missingDetail: 'Credential evidence must reference source names only and must not expose secret values.'
+  },
+  {
+    key: 'idempotencyEvidenceCaptured',
+    label: 'Idempotency evidence',
+    missingCode: 'idempotency_evidence_missing',
+    readyDetail: 'Provider idempotency semantics are captured for retry behavior.',
+    missingDetail: 'Provider idempotency semantics must be captured before retryable execution is considered.'
+  },
+  {
+    key: 'responseExampleCaptured',
+    label: 'Response examples',
+    missingCode: 'response_example_evidence_missing',
+    readyDetail: 'Provider success, rejected, retryable, and unknown response examples are captured.',
+    missingDetail: 'Provider response examples must be captured for result normalization review.'
+  },
+  {
+    key: 'dashboardEvidenceCaptured',
+    label: 'Dashboard evidence',
+    missingCode: 'dashboard_evidence_missing',
+    readyDetail: 'Operator dashboard evidence is captured without secrets.',
+    missingDetail: 'Operator dashboard evidence must be captured without secrets or customer-sensitive values.'
+  }
+];
 
 function hasEnv(env: Record<string, string | undefined>, key: string) {
   return Boolean(env[key]?.trim());
@@ -155,6 +225,62 @@ export function buildPaymentOperationProviderReadiness(input: PaymentOperationPr
     executionEnabled: false,
     blockers,
     warnings,
+    checks
+  };
+}
+
+export function validatePaymentOperationProviderEvidencePacket(input: PaymentOperationProviderEvidencePacketInput): PaymentOperationProviderEvidencePacketValidation {
+  const provider = normalizePaymentOperationAdapterProvider(input.provider);
+
+  if (!SUPPORTED_OPERATION_PROVIDERS.has(provider)) {
+    return {
+      provider,
+      complete: false,
+      executionEnabled: false,
+      missing: ['provider_operation_adapter_unavailable'],
+      warnings: [],
+      checks: [{
+        key: 'provider_supported',
+        label: 'Provider support',
+        status: 'missing',
+        detail: 'Evidence packets are not accepted for unsupported payment-operation providers.'
+      }]
+    };
+  }
+
+  if (provider === 'manual') {
+    return {
+      provider,
+      complete: false,
+      executionEnabled: false,
+      missing: [],
+      warnings: ['manual_provider_requires_operator_review'],
+      checks: [{
+        key: 'manual_review_required',
+        label: 'Manual review',
+        status: 'pending',
+        detail: 'Manual provider evidence remains operator-review only and does not enable live provider execution.'
+      }]
+    };
+  }
+
+  const checks = REQUIRED_PROVIDER_EVIDENCE_PACKET_KEYS.map((requirement) => {
+    const captured = input[requirement.key] === true;
+    return {
+      key: requirement.missingCode,
+      label: requirement.label,
+      status: captured ? 'ready' as const : 'missing' as const,
+      detail: captured ? requirement.readyDetail : requirement.missingDetail
+    };
+  });
+  const missing = checks.filter((check) => check.status === 'missing').map((check) => check.key);
+
+  return {
+    provider,
+    complete: missing.length === 0,
+    executionEnabled: false,
+    missing,
+    warnings: [],
     checks
   };
 }
