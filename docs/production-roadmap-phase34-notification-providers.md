@@ -1,6 +1,6 @@
 # Phase 34 Real Notification Provider Foundations
 
-Status: planning/documentation kickoff; no real email, SMS, or WhatsApp provider delivery is enabled.
+Status: provider-neutral/inert delivery contract added; no real email, SMS, or WhatsApp provider delivery is enabled.
 
 Last updated: 2026-06-05
 
@@ -18,6 +18,13 @@ This kickoff document defines the repo-side boundaries before implementation beg
 - Add templated delivery payload planning for order confirmation, staff notification, inquiry acknowledgement, and fulfillment updates.
 - Add delivery-attempt persistence planning before any retry or admin retry controls are enabled.
 - Add source guards so provider credentials, live endpoint defaults, and accidental send paths cannot be introduced silently.
+
+## Completed in Phase 34 so far
+
+- Added the Phase 34 kickoff document for provider-neutral email/SMS/WhatsApp foundations.
+- Added a kickoff source guard and wired it into the aggregate unit runner.
+- Added `lib/notifications/notification-delivery-contract.ts` as an inert provider-neutral delivery planning helper. It covers email, SMS, and WhatsApp planning states, always returns `liveDeliveryEnabled: false`, and does not call providers.
+- Extended the kickoff source guard to behavior-test the inert delivery contract and preserve no fetch/default endpoint/admin-send-control boundaries.
 
 ## Initial provider candidates
 
@@ -54,13 +61,13 @@ Before live delivery can be enabled, the following evidence must exist:
 7. Opt-out, consent, and suppression-list expectations where required.
 8. Operator-reviewed smoke-test checklist results.
 
-## Recommended first implementation slices
+## Recommended next implementation slices
 
-1. Add a provider-neutral notification delivery contract and inert adapters for disabled/log/manual modes.
-2. Add readiness diagnostics that report credential-source names, sender verification status, template readiness, and live-delivery disabled state.
-3. Add source guards preventing fetch/default endpoint/credential/send-control regressions.
-4. Add documentation-only provider evidence template and smoke-test checklist.
-5. Add delivery-attempt persistence planning before any database migration or retry controls.
+1. Add readiness diagnostics that report credential-source names, sender verification status, template readiness, and live-delivery disabled state.
+2. Add documentation-only provider evidence template and smoke-test checklist.
+3. Add delivery-attempt persistence planning before any database migration or retry controls.
+4. Add inert/manual/log adapters that consume the delivery contract without live provider calls.
+5. Keep durable retry worker behavior deferred to Phase 35 unless explicitly scoped as a no-send planning contract.
 
 ## Relationship to later phases
 
