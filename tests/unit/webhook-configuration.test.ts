@@ -140,7 +140,8 @@ export async function runWebhookConfigurationTests() {
   assert.match(phase35Kickoff, /Retry and backoff planning/);
   assert.match(phase35Kickoff, /Signing expectations/);
   assert.match(phase35Kickoff, /Admin visibility expectations/);
-  assert.match(phase35Kickoff, /must not include a dispatcher, queue consumer, retry loop, signing runtime, admin retry\/cancel control, or production-ready outbound delivery claim/);
+  assert.match(phase35Kickoff, /no database migration/);
+  assert.match(phase35Kickoff, /production-ready outbound delivery claim/);
   assertNoPhase35RuntimeDeliverySurface(phase35Kickoff);
 
   console.log('webhook-configuration.test.ts passed');
