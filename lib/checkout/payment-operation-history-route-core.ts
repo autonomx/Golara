@@ -84,6 +84,7 @@ export async function buildPaymentOperationHistoryRouteResult(
   if (limit.error) errors.push(limit.error);
   if (errors.length > 0 || !orderId || limit.value === undefined) return { status: 400, body: { ok: false, errors } };
 
+  const historyOptions = { orderId, limit: limit.value };
   const serviceResult = await listPaymentOperationRecordsForOrderIfConfirmed(orderId, limit.value, input.env ?? process.env);
   if (serviceResult.status === 'migration_unconfirmed') {
     return {
@@ -95,7 +96,7 @@ export async function buildPaymentOperationHistoryRouteResult(
         orderId,
         limit: limit.value,
         migrationStatus: serviceResult.migrationStatus,
-        history: buildPaymentOperationHistoryView([])
+        history: buildPaymentOperationHistoryView([], historyOptions)
       }
     };
   }
@@ -107,7 +108,7 @@ export async function buildPaymentOperationHistoryRouteResult(
       orderId,
       limit: limit.value,
       recordCount: serviceResult.records.length,
-      history: buildPaymentOperationHistoryView(serviceResult.records)
+      history: buildPaymentOperationHistoryView(serviceResult.records, historyOptions)
     }
   };
 }
