@@ -1,6 +1,6 @@
 # Phase 35 Durable Outbound Webhook Worker
 
-Status: kickoff planning, inert outbound delivery planner, and source coverage added; no dispatcher, queue, retry loop, signing runtime, admin retry control, or live outbound webhook delivery is enabled.
+Status: kickoff planning, inert outbound delivery planner, persistence planning, and source coverage added; no database migration, dispatcher, queue, retry loop, signing runtime, admin retry control, or live outbound webhook delivery is enabled.
 
 Last updated: 2026-06-05
 
@@ -26,6 +26,7 @@ This kickoff slice defines the safety boundary, record lifecycle, retry planning
 - Extended webhook configuration source coverage to keep the kickoff planning-only.
 - Added `lib/settings/outbound-webhook-delivery-plan.ts` as an inert delivery planning helper. It normalizes configuration/event/payload metadata, derives lifecycle status, keeps `dispatcherEnabled: false`, reports blockers, and builds safe audit labels without network behavior.
 - Added `tests/unit/outbound-webhook-delivery-plan.test.ts` and wired it into the aggregate unit runner.
+- Added persistence planning for the future durable delivery record, indexes, sensitive-data rules, and migration readiness gates without adding a database migration.
 
 ## Safety boundaries
 
@@ -71,6 +72,59 @@ A future outbound webhook delivery record should describe a single event deliver
 | `lastResponseCode` | Safe HTTP status summary, if available. | Do not store sensitive response bodies. |
 | `createdAt` | Creation timestamp. | Required. |
 | `updatedAt` | Last update timestamp. | Required. |
+
+## Persistence planning
+
+Persistence planning is documentation-only in this slice. There is no database migration, no Prisma model, and no repository/service write path for outbound delivery records yet.
+
+The future durable record should be represented by one provider-neutral table for logical delivery jobs, with a separate attempt-history table considered only if operator evidence needs per-attempt detail beyond the latest safe outcome. The initial migration contract should prefer the smallest durable shape that can support idempotency, future dispatcher polling, admin list views, and dead-letter visibility without storing raw sensitive data.
+
+Future durable job fields should include:
+
+| Field | Planning expectation |
+| --- | --- |
+| `id` | Stable delivery/job id for admin links, audit labels, and future dispatcher claims. |
+| `configurationKey` | String key for the stored webhook configuration used by the job. |
+| `eventType` | Provider-neutral event name that can be matched against subscribed configuration events. |
+| `eventRef` | Safe business-event reference, such as an order id, not a raw payload dump. |
+| `payloadDigest` | Digest of the canonical payload bytes/string for audit, idempotency, and replay comparison. |
+| `idempotencyKey` | Unique logical delivery key derived from configuration, event type, event ref, and payload digest unless explicitly supplied. |
+| `status` | One of the planned lifecycle states documented in this tracker. |
+| `attemptCount` | Number of outbound attempts; must stay `0` until a dispatcher slice exists. |
+| `lastOutcomeCategory` | Safe summary such as `accepted`, `non_2xx`, `timeout`, `unavailable`, `cancelled`, `dead_letter`, or `failed`. |
+| `nextEligibleAttemptAt` | Nullable timestamp used later for dispatcher polling and backoff eligibility. |
+| `lastResponseCode` | Optional safe numeric response code; do not pair with raw sensitive response bodies. |
+| `deadLetterSummary` | Optional operator-visible terminal summary that excludes secrets and raw payloads. |
+| `createdAt` | Creation timestamp for audit and admin list ordering. |
+| `updatedAt` | Last mutation timestamp for audit and admin freshness. |
+
+Future indexes and constraints should be planned before migration:
+
+- Enforce idempotency uniqueness for the selected logical delivery key.
+- Support configuration/status lookups for admin filtering and provider-specific operations.
+- Support event ref lookup for order/customer/inquiry timeline back-links.
+- Support `nextEligibleAttemptAt` plus status lookup for a future dispatcher, while dispatcher remains deferred.
+- Support `createdAt` ordering for admin list pagination and audit review.
+- Keep nullable outcome fields compatible with planned, not-yet-attempted records.
+
+Sensitive-data rules for persistence:
+
+- Do not store signing secrets.
+- Do not store raw sensitive response bodies.
+- Prefer payload digest and safe event refs over raw payload storage.
+- Keep secret-source names or environment-variable labels separate from secret values.
+- Store only safe response codes, safe outcome categories, and operator-visible summaries.
+- Treat any future payload snapshot storage as a separate reviewed contract with redaction rules.
+
+Migration readiness gates before adding a database migration:
+
+- Migration contract reviewed against the field, index, and constraint plan.
+- Lifecycle statuses frozen for the first migration.
+- Idempotency strategy covered by tests and documented operator semantics.
+- Admin visibility and audit boundaries covered before exposing recovery controls.
+- Dispatcher remains deferred until persistence, signing, retry policy, and admin recovery boundaries are reviewed.
+- Signing runtime and secret reads remain deferred until a dedicated signing contract slice.
+- Retry execution remains deferred until a dedicated retry policy and dispatcher slice.
 
 ## Planned lifecycle states
 
@@ -134,10 +188,11 @@ Admin retry/cancel controls should remain deferred until authorization, confirma
 
 ## Recommended next implementation slices
 
-1. Add persistence planning before any database migration.
-2. Add a migration contract only after the record shape is reviewed.
-3. Add signing contract planning without runtime secret reads.
+1. Add a migration contract only after the record shape is reviewed.
+2. Add signing contract planning without runtime secret reads.
+3. Add retry/backoff policy planning without retry execution.
 4. Add a dispatcher only after persistence, signing, retry policy, and admin recovery boundaries are in place.
+5. Add admin visibility before any retry/cancel/replay controls.
 
 ## Completion criteria for kickoff
 
@@ -145,7 +200,8 @@ This kickoff is complete when:
 
 - Phase 35 scope and safety boundaries are documented.
 - Delivery record planning and lifecycle states are documented.
+- Persistence planning documents future fields, indexes, constraints, sensitive-data rules, and migration readiness gates.
 - Retry/backoff, signing, and admin visibility expectations are documented.
 - Source coverage confirms the kickoff remains planning-only.
 
-This kickoff must not include a dispatcher, queue consumer, retry loop, signing runtime, admin retry/cancel control, or production-ready outbound delivery claim.
+This kickoff must not include a dispatcher, queue consumer, retry loop, signing runtime, admin retry/cancel control, database migration, or production-ready outbound delivery claim.
