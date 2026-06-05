@@ -1,6 +1,6 @@
 # Phase 34 Real Notification Provider Foundations
 
-Status: provider-neutral/inert delivery contract, read-only readiness diagnostics, provider evidence template, smoke-test checklist, and delivery-attempt persistence planning added; no real email, SMS, or WhatsApp provider delivery is enabled.
+Status: provider-neutral/inert delivery contract, read-only readiness diagnostics, provider evidence template, smoke-test checklist, delivery-attempt persistence planning, and inert/manual/log adapters added; no real email, SMS, or WhatsApp provider delivery is enabled.
 
 Last updated: 2026-06-05
 
@@ -30,6 +30,7 @@ This kickoff document defines the repo-side boundaries before implementation beg
 - Added `docs/production-roadmap-phase34-provider-readiness-evidence-example.md` as a documentation-only provider evidence template for operator-reviewed readiness records.
 - Added `docs/production-roadmap-phase34-notification-smoke-test-checklist.md` as a documentation-only checklist for operator-led notification smoke-test evidence.
 - Added `docs/production-roadmap-phase34-delivery-attempt-persistence-planning.md` as documentation-only planning for future delivery-attempt records, lifecycle states, idempotency, retention, privacy, and Phase 35 worker boundaries.
+- Added `lib/notifications/notification-delivery-adapters.ts` as inert disabled/manual/log adapters that consume the delivery contract, return audit labels, and always keep `liveDeliveryEnabled: false`.
 
 ## Initial provider candidates
 
@@ -68,7 +69,7 @@ Before live delivery can be enabled, the following evidence must exist:
 
 ## Recommended next implementation slices
 
-1. Add inert/manual/log adapters that consume the delivery contract without live provider calls.
+1. Add Phase 34 closeout source guard coverage for the repo-side no-live-delivery foundation.
 2. Keep durable retry worker behavior deferred to Phase 35 unless explicitly scoped as a no-send planning contract.
 
 ## Relationship to later phases

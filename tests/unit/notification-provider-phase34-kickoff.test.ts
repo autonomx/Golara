@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
+import { runNotificationDeliveryAdapter } from '../../lib/notifications/notification-delivery-adapters';
 import { buildNotificationDeliveryPlan } from '../../lib/notifications/notification-delivery-contract';
 import { buildNotificationProviderReadiness } from '../../lib/notifications/notification-provider-readiness';
 
@@ -27,6 +28,7 @@ export async function runNotificationProviderPhase34KickoffTests() {
   const kickoff = source('docs/production-roadmap-phase34-notification-providers.md');
   const deliveryContract = source('lib/notifications/notification-delivery-contract.ts');
   const providerReadiness = source('lib/notifications/notification-provider-readiness.ts');
+  const deliveryAdapters = source('lib/notifications/notification-delivery-adapters.ts');
 
   assert.ok(kickoff.includes('Phase 34 Real Notification Provider Foundations'));
   assert.ok(kickoff.includes('no real email, SMS, or WhatsApp provider delivery is enabled'));
@@ -63,6 +65,11 @@ export async function runNotificationProviderPhase34KickoffTests() {
   assert.ok(providerReadiness.includes('sender_verification_missing'));
   assert.ok(providerReadiness.includes('template_approval_missing'));
   assertNoLiveDeliverySurface(providerReadiness);
+
+  assert.ok(deliveryAdapters.includes('runNotificationDeliveryAdapter'));
+  assert.ok(deliveryAdapters.includes('liveDeliveryEnabled: false'));
+  assert.ok(deliveryAdapters.includes("action: 'skipped' | 'manual_review' | 'logged'"));
+  assertNoLiveDeliverySurface(deliveryAdapters);
 
   const plannedEmail = buildNotificationDeliveryPlan({
     channel: 'email',
@@ -131,6 +138,44 @@ export async function runNotificationProviderPhase34KickoffTests() {
   const unsupported = buildNotificationProviderReadiness({ channel: 'sms', provider: 'sendgrid' });
   assert.equal(unsupported.status, 'needs_operator_evidence');
   assert.ok(unsupported.blockers.includes('provider_channel_unsupported'));
+
+  const loggedAdapter = runNotificationDeliveryAdapter({
+    adapter: 'log',
+    channel: 'email',
+    provider: 'log',
+    templateKey: ' order.confirmed ',
+    recipient: ' customer@example.com ',
+    providerReady: true,
+    operatorNote: ' queued for audit log '
+  });
+  assert.equal(loggedAdapter.action, 'logged');
+  assert.equal(loggedAdapter.handled, true);
+  assert.equal(loggedAdapter.liveDeliveryEnabled, false);
+  assert.equal(loggedAdapter.operatorNoteLabel, 'queued for audit log');
+  assert.equal(loggedAdapter.plan.status, 'planned');
+  assert.ok(loggedAdapter.auditLabels.includes('adapter:log'));
+
+  const manualAdapter = runNotificationDeliveryAdapter({
+    adapter: 'manual',
+    channel: 'sms',
+    provider: 'manual',
+    templateKey: 'fulfillment.ready',
+    recipient: '+15551234567'
+  });
+  assert.equal(manualAdapter.action, 'manual_review');
+  assert.equal(manualAdapter.plan.status, 'manual_review');
+  assert.ok(manualAdapter.auditLabels.includes('provider:manual'));
+
+  const disabledAdapter = runNotificationDeliveryAdapter({
+    adapter: 'disabled',
+    channel: 'whatsapp',
+    provider: 'disabled',
+    templateKey: 'inquiry.received',
+    recipient: '+15551234567'
+  });
+  assert.equal(disabledAdapter.action, 'skipped');
+  assert.equal(disabledAdapter.plan.status, 'disabled');
+  assert.equal(disabledAdapter.liveDeliveryEnabled, false);
 
   console.log('notification-provider-phase34-kickoff.test.ts passed');
 }
