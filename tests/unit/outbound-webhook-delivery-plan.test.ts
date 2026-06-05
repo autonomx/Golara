@@ -23,6 +23,7 @@ export async function runOutboundWebhookDeliveryPlanTests() {
   const helper = source('lib/settings/outbound-webhook-delivery-plan.ts');
   const tracker = source('docs/production-roadmap-phase35-durable-outbound-webhook-worker.md');
   const migrationNote = source('docs/production-roadmap-phase35-outbound-delivery-migration.md');
+  const modelAlignmentNote = source('docs/production-roadmap-phase35-prisma-model-alignment.md');
   const schema = source('prisma/schema.prisma');
   const migrations = migrationFiles();
   const outboundDeliveryMigration = migrations.find(([path, content]) =>
@@ -162,6 +163,12 @@ export async function runOutboundWebhookDeliveryPlanTests() {
   assert.match(migrationNote, /additive migration slice/);
   assert.match(migrationNote, /repository\/service write path/);
   assert.match(migrationNote, /does not make outbound delivery operational/);
+
+  assert.match(modelAlignmentNote, /Prisma Model Alignment/);
+  assert.match(modelAlignmentNote, /model alignment planning and source coverage only/);
+  assert.match(modelAlignmentNote, /Add `model OutboundWebhookDelivery` to `prisma\/schema\.prisma`/);
+  assert.match(modelAlignmentNote, /repository\/service write paths/);
+  assert.match(modelAlignmentNote, /does not make outbound delivery operational/);
 
   assert.equal(schema.includes('model OutboundWebhookDelivery'), false);
   assert.equal(helper.includes('fetch('), false);
