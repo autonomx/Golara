@@ -16,6 +16,16 @@ function source(path: string) {
   return readFileSync(path, 'utf8');
 }
 
+function assertNoPhase35RuntimeDeliverySurface(pageSource: string) {
+  assert.equal(pageSource.includes('fetch('), false);
+  assert.equal(pageSource.includes('setInterval('), false);
+  assert.equal(pageSource.includes('setTimeout('), false);
+  assert.equal(pageSource.includes('cron'), false);
+  assert.equal(pageSource.includes('retryWebhookDeliveryAction'), false);
+  assert.equal(pageSource.includes('cancelWebhookDeliveryAction'), false);
+  assert.equal(pageSource.includes('forceSendWebhook'), false);
+}
+
 export async function runWebhookConfigurationTests() {
   const migration = source('prisma/migrations/20260603080000_add_webhook_configuration/migration.sql');
   const service = source('lib/settings/webhook-configuration.ts');
@@ -23,6 +33,7 @@ export async function runWebhookConfigurationTests() {
   const fulfillmentPanel = source('components/admin/AdminFulfillmentSettingsPanel.tsx');
   const actions = source('app/admin/settings/actions.ts');
   const roadmap = source('docs/ADMIN_SALEOR_PARITY_ROADMAP.md');
+  const phase35Kickoff = source('docs/production-roadmap-phase35-durable-outbound-webhook-worker.md');
 
   assert.match(migration, /CREATE TABLE IF NOT EXISTS "WebhookConfiguration"/);
   assert.match(migration, /"targetUrl" TEXT NOT NULL/);
@@ -121,6 +132,16 @@ export async function runWebhookConfigurationTests() {
   assert.match(actions, /webhook-configuration-updated/);
 
   assert.match(roadmap, /- \[x\] Add webhook configuration\./);
+
+  assert.match(phase35Kickoff, /Phase 35 Durable Outbound Webhook Worker/);
+  assert.match(phase35Kickoff, /kickoff planning and source coverage only/);
+  assert.match(phase35Kickoff, /Planned delivery record shape/);
+  assert.match(phase35Kickoff, /Planned lifecycle states/);
+  assert.match(phase35Kickoff, /Retry and backoff planning/);
+  assert.match(phase35Kickoff, /Signing expectations/);
+  assert.match(phase35Kickoff, /Admin visibility expectations/);
+  assert.match(phase35Kickoff, /must not include a dispatcher, queue consumer, retry loop, signing runtime, admin retry\/cancel control, or production-ready outbound delivery claim/);
+  assertNoPhase35RuntimeDeliverySurface(phase35Kickoff);
 
   console.log('webhook-configuration.test.ts passed');
 }
