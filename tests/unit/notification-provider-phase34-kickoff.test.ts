@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { buildNotificationDeliveryPlan } from '../../lib/notifications/notification-delivery-contract';
+import { buildNotificationProviderReadiness } from '../../lib/notifications/notification-provider-readiness';
 
 function source(path: string) {
   return readFileSync(path, 'utf8');
@@ -25,6 +26,7 @@ function assertNoLiveDeliverySurface(pageSource: string) {
 export async function runNotificationProviderPhase34KickoffTests() {
   const kickoff = source('docs/production-roadmap-phase34-notification-providers.md');
   const deliveryContract = source('lib/notifications/notification-delivery-contract.ts');
+  const providerReadiness = source('lib/notifications/notification-provider-readiness.ts');
 
   assert.ok(kickoff.includes('Phase 34 Real Notification Provider Foundations'));
   assert.ok(kickoff.includes('no real email, SMS, or WhatsApp provider delivery is enabled'));
@@ -55,6 +57,12 @@ export async function runNotificationProviderPhase34KickoffTests() {
   assert.ok(deliveryContract.includes('liveDeliveryEnabled: false'));
   assert.ok(deliveryContract.includes('provider_readiness_evidence_missing'));
   assertNoLiveDeliverySurface(deliveryContract);
+
+  assert.ok(providerReadiness.includes('buildNotificationProviderReadiness'));
+  assert.ok(providerReadiness.includes('liveDeliveryEnabled: false'));
+  assert.ok(providerReadiness.includes('sender_verification_missing'));
+  assert.ok(providerReadiness.includes('template_approval_missing'));
+  assertNoLiveDeliverySurface(providerReadiness);
 
   const plannedEmail = buildNotificationDeliveryPlan({
     channel: 'email',
@@ -87,6 +95,42 @@ export async function runNotificationProviderPhase34KickoffTests() {
   assert.equal(blockedWhatsapp.status, 'blocked');
   assert.equal(blockedWhatsapp.templateKey, 'notification-template-missing');
   assert.deepEqual(blockedWhatsapp.reasons, ['whatsapp_recipient_missing_or_invalid', 'provider_readiness_evidence_missing']);
+
+  const readyResend = buildNotificationProviderReadiness({
+    channel: 'email',
+    provider: 'resend',
+    env: { RESEND_API_KEY: 'present' },
+    senderVerified: true,
+    templatesApproved: true
+  });
+  assert.equal(readyResend.status, 'ready');
+  assert.equal(readyResend.liveDeliveryEnabled, false);
+  assert.deepEqual(readyResend.blockers, []);
+
+  const blockedTwilioSms = buildNotificationProviderReadiness({
+    channel: 'sms',
+    provider: 'twilio',
+    env: { TWILIO_ACCOUNT_SID: 'AC123' }
+  });
+  assert.equal(blockedTwilioSms.status, 'needs_operator_evidence');
+  assert.ok(blockedTwilioSms.blockers.includes('twilio_auth_token_missing'));
+  assert.ok(blockedTwilioSms.blockers.includes('twilio_from_number_missing'));
+  assert.ok(blockedTwilioSms.blockers.includes('sender_verification_missing'));
+  assert.ok(blockedTwilioSms.blockers.includes('template_approval_missing'));
+
+  const manualWhatsapp = buildNotificationProviderReadiness({ channel: 'whatsapp', provider: 'manual' });
+  assert.equal(manualWhatsapp.status, 'manual_review');
+  assert.equal(manualWhatsapp.liveDeliveryEnabled, false);
+  assert.deepEqual(manualWhatsapp.warnings, ['manual_provider_requires_operator_review']);
+
+  const disabledEmail = buildNotificationProviderReadiness({ channel: 'email', provider: 'disabled' });
+  assert.equal(disabledEmail.status, 'disabled');
+  assert.equal(disabledEmail.liveDeliveryEnabled, false);
+  assert.deepEqual(disabledEmail.warnings, ['provider_disabled']);
+
+  const unsupported = buildNotificationProviderReadiness({ channel: 'sms', provider: 'sendgrid' });
+  assert.equal(unsupported.status, 'needs_operator_evidence');
+  assert.ok(unsupported.blockers.includes('provider_channel_unsupported'));
 
   console.log('notification-provider-phase34-kickoff.test.ts passed');
 }
