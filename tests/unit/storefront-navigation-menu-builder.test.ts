@@ -105,7 +105,7 @@ export async function runStorefrontNavigationMenuBuilderTests() {
 
   assert.match(adminConsole, /AdminStorefrontNavigationPanel/);
   assert.match(adminConsole, /storefrontNavigationMenuService/);
-  assert.match(adminConsole, /storefrontNavigationMenu\] = await Promise\.all/);
+  assert.match(adminConsole, /storefrontNavigationMenu, storeSetting\] = await Promise\.all/);
   assert.match(adminConsole, /storefrontNavigationMenuService\.get\(\)/);
   assert.match(adminConsole, /<AdminStorefrontNavigationPanel menu=\{storefrontNavigationMenu\} databaseReady=\{runtimeReadiness\.databaseUrlPresent\} \/>/);
 
