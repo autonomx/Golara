@@ -12,6 +12,7 @@ export async function runPaymentOperationMigrationContractTests() {
   const repositoryDesign = source('docs/production-roadmap-phase33-payment-operation-repository-design.md');
   const providerEndpointReadiness = source('docs/production-roadmap-phase33-provider-endpoint-mapping-readiness.md');
   const historyRouteInputDoc = source('docs/production-roadmap-phase33-payment-operation-history-route-input.md');
+  const historyPendingRowCoverageDoc = source('docs/production-roadmap-phase33-history-pending-row-coverage.md');
   const statusHelper = source('lib/checkout/payment-operation-migration-status.ts');
   const repository = source('lib/checkout/payment-operation-record-repository.ts');
   const service = source('lib/checkout/payment-operation-record-service.ts');
@@ -105,6 +106,26 @@ export async function runPaymentOperationMigrationContractTests() {
   assert.equal(historyRouteInputDoc.includes('https://www.zarinpal.com'), false);
   assert.equal(historyRouteInputDoc.includes('fetch('), false);
   assert.equal(historyRouteInputDoc.includes('<button'), false);
+
+  assert.ok(historyPendingRowCoverageDoc.includes('Status: implemented in PR #273'));
+  assert.ok(historyPendingRowCoverageDoc.includes('buildPaymentOperationHistoryView'));
+  assert.ok(historyPendingRowCoverageDoc.includes('succeeded, failed, manual-review, submitted, pending, fallback, and empty history states'));
+  assert.ok(historyPendingRowCoverageDoc.includes('is counted as a loaded record'));
+  assert.ok(historyPendingRowCoverageDoc.includes('is not counted as succeeded'));
+  assert.ok(historyPendingRowCoverageDoc.includes('is not counted as needs-review'));
+  assert.ok(historyPendingRowCoverageDoc.includes('is not counted as retryable unless `retryable` is true'));
+  assert.ok(historyPendingRowCoverageDoc.includes('uses neutral row tone'));
+  assert.ok(historyPendingRowCoverageDoc.includes('renders the status label as `Pending`'));
+  assert.ok(historyPendingRowCoverageDoc.includes('GitHub Actions CI run `26999535590` passed on exact PR head'));
+  assert.ok(historyPendingRowCoverageDoc.includes('This note does not change runtime behavior'));
+  assert.equal(historyPendingRowCoverageDoc.includes('provider calls'), true);
+  assert.equal(historyPendingRowCoverageDoc.includes('execution controls'), true);
+  assert.equal(historyPendingRowCoverageDoc.includes('repository writes'), true);
+  assert.equal(historyPendingRowCoverageDoc.includes('order/payment mutation'), true);
+  assert.equal(historyPendingRowCoverageDoc.includes('inventory/capacity release'), true);
+  assert.equal(historyPendingRowCoverageDoc.includes('Prisma model/client access'), true);
+  assert.equal(historyPendingRowCoverageDoc.includes('fetch('), false);
+  assert.equal(historyPendingRowCoverageDoc.includes('<button'), false);
 
   assert.ok(statusHelper.includes('PAYMENT_OPERATION_RECORDS_MIGRATION_CONFIRMED'));
   assert.ok(statusHelper.includes('isPaymentOperationRecordsMigrationConfirmed'));
