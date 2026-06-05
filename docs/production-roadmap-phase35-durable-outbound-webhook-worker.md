@@ -202,7 +202,7 @@ The future lifecycle should remain integration-neutral and safe for admin visibi
 
 ## Retry/backoff policy planning
 
-Retry/backoff policy planning is documentation-only in this slice. It defines future delivery retry expectations but does not add retry execution, dispatcher polling, scheduled jobs, queue consumers, outbound HTTP calls, durable record mutation, admin recovery controls, or live target calls.
+Retry and backoff planning remains documentation-only in this slice. Retry/backoff policy planning defines future delivery retry expectations but does not add retry execution, dispatcher polling, scheduled jobs, queue consumers, outbound HTTP calls, durable record mutation, admin recovery controls, or live target calls.
 
 Future policy values should be reviewed before implementation:
 
