@@ -1,6 +1,6 @@
 # Phase 35 Prisma Model Alignment
 
-Status: model alignment planning, source coverage, schema-update preflight, and canonical model snippet contract only; no Prisma schema model is added in this slice.
+Status: model alignment planning, source coverage, schema-update preflight, canonical model snippet contract, and connector-write blocker documentation only; no Prisma schema model is added in this slice.
 
 Last updated: 2026-06-05
 
@@ -100,7 +100,7 @@ model OutboundWebhookDelivery {
 }
 ```
 
-The snippet is intentionally passive. It should not be paired with service writes, background processors, delivery execution, recovery controls, or live external calls.
+The snippet is intentionally passive. It should not be paired with service writes, processors, delivery behavior, recovery controls, or live external calls.
 
 ## Schema update preflight
 
@@ -119,13 +119,19 @@ Preflight rules for the future schema model slice:
 
 A future schema model PR should document that the `Generate Prisma client` job passed on the exact PR head before merging.
 
+## Connector write blocker
+
+The current GitHub connector can read `prisma/schema.prisma` in ordered chunks, and the current source schema blob SHA observed for this preflight is `5bf481b801ef73f28ea0c0eee98e26e7abb731be`. The ordered chunk read reaches the final `AdminAuditLog` model and confirms the current schema does not yet contain `model OutboundWebhookDelivery`.
+
+The available connector write action replaces a complete file and does not provide a safe line-range edit for adding a small model block to a long schema file. Until a verified full-file source or patch-capable write path is available, the schema model insertion remains deferred rather than replacing `schema.prisma` from a partial response.
+
 ## Runtime boundary
 
 Adding a Prisma model must not introduce:
 
 - service write paths
-- background processors
-- delivery execution
+- processors
+- delivery behavior
 - external calls
 - secret access
 - recovery controls
@@ -141,7 +147,7 @@ The source guard for the future schema model slice should verify both halves of 
 - the schema model contains `idempotencyKey`, `nextEligibleAttemptAt`, `deadLetterSummary`, and `attemptCount`
 - the schema model contains the expected unique/index declarations
 - no service write path is added in the same slice
-- no background processor, delivery executor, route handler, or recovery control is added in the same slice
+- no processor, delivery executor, route handler, or recovery control is added in the same slice
 
 ## Follow-up implementation gate
 
@@ -153,5 +159,6 @@ The actual model-alignment slice should:
 4. Keep source coverage verifying the model exists and runtime behavior remains deferred.
 5. Avoid service write paths until a dedicated persistence-access slice.
 6. Confirm the schema diff is additive and limited to the passive model block.
+7. Require either a verified full-file schema source or a patch-capable write path before editing the long schema file.
 
 This note is intentionally planning-only and does not make outbound delivery operational.
