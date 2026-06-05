@@ -37,6 +37,9 @@ export async function runPaymentOperationProviderEvidencePacketTests() {
   assert.ok(partialStripe.missing.includes('idempotency_evidence_missing'));
   assert.ok(partialStripe.missing.includes('response_example_evidence_missing'));
   assert.ok(partialStripe.missing.includes('dashboard_evidence_missing'));
+  assert.equal(partialStripe.checks.find((check) => check.key === 'endpoint_mapping_evidence_missing')?.status, 'ready');
+  assert.equal(partialStripe.checks.find((check) => check.key === 'credential_evidence_missing')?.status, 'missing');
+  assert.equal(partialStripe.checks.length, 6);
 
   const completeZarinpal = validatePaymentOperationProviderEvidencePacket({
     provider: 'zarin-pal',
@@ -51,17 +54,21 @@ export async function runPaymentOperationProviderEvidencePacketTests() {
   assert.equal(completeZarinpal.complete, true);
   assert.equal(completeZarinpal.executionEnabled, false);
   assert.deepEqual(completeZarinpal.missing, []);
+  assert.ok(completeZarinpal.checks.every((check) => check.status === 'ready'));
+  assert.ok(completeZarinpal.checks.every((check) => check.detail.endsWith('is captured for operator review.')));
 
   const manual = validatePaymentOperationProviderEvidencePacket({ provider: 'manual' });
   assert.equal(manual.complete, false);
   assert.equal(manual.executionEnabled, false);
   assert.ok(manual.warnings.includes('manual_provider_requires_operator_review'));
+  assert.equal(manual.checks.find((check) => check.key === 'manual_review_required')?.status, 'pending');
 
   const unknown = validatePaymentOperationProviderEvidencePacket({ provider: 'not-real' });
   assert.equal(unknown.provider, 'unknown');
   assert.equal(unknown.complete, false);
   assert.equal(unknown.executionEnabled, false);
   assert.ok(unknown.missing.includes('provider_operation_adapter_unavailable'));
+  assert.equal(unknown.checks.find((check) => check.key === 'provider_supported')?.status, 'missing');
 
   const blankMigrationSha = validatePaymentOperationMigrationEvidence({ deployedSha: '   ' });
   assert.equal(blankMigrationSha.complete, false);
@@ -101,6 +108,8 @@ export async function runPaymentOperationProviderEvidencePacketTests() {
   assert.ok(readinessSource.includes('idempotency_evidence_missing'));
   assert.ok(readinessSource.includes('response_example_evidence_missing'));
   assert.ok(readinessSource.includes('dashboard_evidence_missing'));
+  assert.ok(readinessSource.includes('Evidence packets are not accepted for unsupported payment-operation providers.'));
+  assert.ok(readinessSource.includes('Manual provider evidence remains operator-review only'));
   assert.ok(readinessSource.includes('executionEnabled: false'));
   assertNoExecutionSurface(readinessSource);
 
