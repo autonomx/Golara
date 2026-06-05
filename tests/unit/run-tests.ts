@@ -58,6 +58,7 @@ import { runOrderDiscountFlowTests } from './order-discount-flow.test';
 import { runOrderNotificationActionsFlowTests } from './order-notification-actions-flow.test';
 import { runOrderReturnRouteCoreTests } from './order-return-route-core.test';
 import { runOrderRevenueSummaryTests } from './order-revenue-summary.test';
+import { runOutboundWebhookDeliveryPlanTests } from './outbound-webhook-delivery-plan.test';
 import { runOtpRateLimitTests } from './otp-rate-limit.test';
 import { runPaymentAttemptTimelineFlowTests } from './payment-attempt-timeline-flow.test';
 import { runPaymentGatewayAdaptersTests } from './payment-gateway-adapters.test';
@@ -217,6 +218,7 @@ async function main() {
   await runNotificationProviderPhase34KickoffTests();
   await runNotificationProviderSettingsTests();
   await runWebhookConfigurationTests();
+  await runOutboundWebhookDeliveryPlanTests();
   await runWebhookEventLogTests();
   await runIntegrationAppRegistryTests();
   await runApiTokenManagementTests();
@@ -256,7 +258,7 @@ async function main() {
   await runFulfillmentShipmentRecordsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (128 files)');
+  console.log('unit tests passed (129 files)');
 }
 
 main().catch((error) => {
