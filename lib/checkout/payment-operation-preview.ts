@@ -54,7 +54,7 @@ export function buildPaymentOperationPreview(input: PaymentOperationPreviewInput
   });
   const label = operationLabel(plan.operation);
   const amount = formatAmount(plan.amountCents, plan.currency);
-  const warnings = [...plan.reasons.map(reasonCopy), ...transition.notes];
+  const warnings = plan.reasons.map(reasonCopy);
   const orderNumber = input.orderNumber?.trim() || undefined;
   const paymentAttemptId = input.paymentAttemptId?.trim() || undefined;
 
