@@ -259,6 +259,7 @@ export async function runPaymentOperationProviderReadinessTests() {
   assert.ok(phase33Docs.includes('provider-readiness-evidence-example'));
   assert.ok(phase33Docs.includes('refund-void-smoke-test-checklist'));
   assert.ok(phase33Docs.includes('production-roadmap-phase33-coverage-index.md'));
+  assert.ok(phase33Docs.includes('Updated `docs/production-roadmap-phase33-coverage-index.md` to record the provider-readiness source guard and the Phase 33 tracker follow-up after PR #280.'));
 
   assert.ok(coverageIndex.includes('Phase 33 Coverage Index'));
   assert.ok(coverageIndex.includes('Status: documentation-only index'));
@@ -266,6 +267,8 @@ export async function runPaymentOperationProviderReadinessTests() {
   assert.ok(coverageIndex.includes('production-roadmap-phase33-history-pending-row-coverage.md'));
   assert.ok(coverageIndex.includes('production-roadmap-phase33-history-doc-guard.md'));
   assert.ok(coverageIndex.includes('implemented in PR #275'));
+  assert.ok(coverageIndex.includes('source-guards this coverage index'));
+  assert.ok(coverageIndex.includes('source-guarded coverage-index status after PR #280'));
   assert.ok(coverageIndex.includes('follow-up source guard are now closed'));
   assert.ok(coverageIndex.includes('documentation-only'));
   assert.ok(coverageIndex.includes('does not change runtime behavior'));
