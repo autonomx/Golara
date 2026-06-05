@@ -43,6 +43,7 @@ export async function runPaymentOperationProviderReadinessTests() {
   const phase33Docs = source('docs/production-roadmap-phase33-payment-operations.md');
   const productionRoadmap = source('docs/production-roadmap.md');
   const mainRoadmapGuardNote = source('docs/production-roadmap-phase33-main-roadmap-guard-note.md');
+  const coverageIndex = source('docs/production-roadmap-phase33-coverage-index.md');
 
   const stripeBlocked = buildPaymentOperationProviderReadiness({ provider: 'stripe', env: {} });
   assert.equal(stripeBlocked.provider, 'stripe');
@@ -257,6 +258,21 @@ export async function runPaymentOperationProviderReadinessTests() {
   assert.ok(phase33Docs.includes('refund-void-go-no-go-checklist'));
   assert.ok(phase33Docs.includes('provider-readiness-evidence-example'));
   assert.ok(phase33Docs.includes('refund-void-smoke-test-checklist'));
+  assert.ok(phase33Docs.includes('production-roadmap-phase33-coverage-index.md'));
+
+  assert.ok(coverageIndex.includes('Phase 33 Coverage Index'));
+  assert.ok(coverageIndex.includes('Status: documentation-only index'));
+  assert.ok(coverageIndex.includes('production-roadmap-phase33-coverage-progress-20260604.md'));
+  assert.ok(coverageIndex.includes('production-roadmap-phase33-history-pending-row-coverage.md'));
+  assert.ok(coverageIndex.includes('production-roadmap-phase33-history-doc-guard.md'));
+  assert.ok(coverageIndex.includes('implemented in PR #275'));
+  assert.ok(coverageIndex.includes('follow-up source guard are now closed'));
+  assert.ok(coverageIndex.includes('documentation-only'));
+  assert.ok(coverageIndex.includes('does not change runtime behavior'));
+  assert.ok(coverageIndex.includes('provider behavior'));
+  assert.ok(coverageIndex.includes('order/payment state'));
+  assert.ok(coverageIndex.includes('Prisma model access'));
+  assertNoExecutionSurface(coverageIndex);
 
   assert.ok(productionRoadmap.includes('Phase 33 — refunds, voids, and payment operations'));
   assert.ok(productionRoadmap.includes('NO-GO for live refund/void execution'));
