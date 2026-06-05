@@ -1,6 +1,6 @@
 # Phase 35 Durable Outbound Webhook Worker
 
-Status: kickoff planning, inert outbound delivery planner, persistence planning, and source coverage added; no database migration, dispatcher, queue, retry loop, signing runtime, admin retry control, or live outbound webhook delivery is enabled.
+Status: kickoff planning, inert outbound delivery planner, persistence planning, migration contract planning, and source coverage added; no database migration, dispatcher, queue, retry loop, signing runtime, admin retry control, or live outbound webhook delivery is enabled.
 
 Last updated: 2026-06-05
 
@@ -27,6 +27,7 @@ This kickoff slice defines the safety boundary, record lifecycle, retry planning
 - Added `lib/settings/outbound-webhook-delivery-plan.ts` as an inert delivery planning helper. It normalizes configuration/event/payload metadata, derives lifecycle status, keeps `dispatcherEnabled: false`, reports blockers, and builds safe audit labels without network behavior.
 - Added `tests/unit/outbound-webhook-delivery-plan.test.ts` and wired it into the aggregate unit runner.
 - Added persistence planning for the future durable delivery record, indexes, sensitive-data rules, and migration readiness gates without adding a database migration.
+- Added a migration contract plan that documents the future table, columns, constraints, indexes, rollback/readiness checks, and deferred runtime boundaries without adding a Prisma migration.
 
 ## Safety boundaries
 
@@ -126,6 +127,61 @@ Migration readiness gates before adding a database migration:
 - Signing runtime and secret reads remain deferred until a dedicated signing contract slice.
 - Retry execution remains deferred until a dedicated retry policy and dispatcher slice.
 
+## Migration contract planning
+
+Migration contract planning is documentation-only in this slice. It defines the future migration contract but does not add `prisma/schema.prisma` changes, generated Prisma client changes, migration SQL, repositories, services, route handlers, scheduled jobs, or admin mutation controls.
+
+The first durable migration should introduce one logical delivery table using a name such as `OutboundWebhookDelivery`. A future attempt-history table may be added only after the logical job lifecycle, dispatcher claim behavior, and operator audit needs are proven insufficient with latest-outcome fields.
+
+Future table contract:
+
+| Column | Contract |
+| --- | --- |
+| `id` | Primary key using the repository's established id strategy. |
+| `configurationKey` | Required string, aligned with `WebhookConfiguration.key`; keep it denormalized enough for audit labels. |
+| `eventType` | Required string containing the normalized provider-neutral event name. |
+| `eventRef` | Required safe business-event reference; do not store raw customer, payment, or provider payload bodies here. |
+| `payloadDigest` | Required digest for the canonical payload representation. |
+| `idempotencyKey` | Required unique logical delivery key. |
+| `status` | Required lifecycle status with an allowlist aligned to this tracker. |
+| `attemptCount` | Required integer defaulting to `0`; cannot be negative. |
+| `lastOutcomeCategory` | Nullable safe latest outcome category. |
+| `nextEligibleAttemptAt` | Nullable timestamp for future dispatcher polling; not acted on until dispatcher work exists. |
+| `lastResponseCode` | Nullable integer safe response code summary. |
+| `deadLetterSummary` | Nullable safe text summary for terminal operator visibility. |
+| `createdAt` | Required timestamp defaulting to the insert time. |
+| `updatedAt` | Required timestamp maintained by application or database conventions. |
+
+Future constraint/index contract:
+
+- Primary key on `id`.
+- Unique index on `idempotencyKey`.
+- Lookup index on `configurationKey` plus `status`.
+- Lookup index on `eventType` plus `eventRef`.
+- Polling index on `status` plus `nextEligibleAttemptAt` for a later dispatcher.
+- Admin list index on `createdAt`.
+- Optional check constraint for non-negative `attemptCount`.
+- Optional lifecycle-status check constraint if the project wants database-level status enforcement.
+
+Future migration review checks before implementation:
+
+- Confirm the id generation strategy matches existing repository conventions.
+- Confirm whether `configurationKey` should remain string-only or gain a foreign key after configuration lifecycle behavior is stable.
+- Confirm lifecycle statuses are frozen for the initial migration.
+- Confirm idempotency key derivation and collision behavior are documented.
+- Confirm payload digest canonicalization is documented before any replay or signing work.
+- Confirm no signing secret, raw payload body, raw provider response body, or unrestricted operator note is stored.
+- Confirm dispatcher, retry execution, signing runtime, and admin retry/cancel/replay controls remain deferred.
+
+Rollback and rollout expectations:
+
+- The eventual migration should be additive and safe to apply before any dispatcher exists.
+- Backfill is not required for the first migration because no durable outbound delivery records exist yet.
+- Rollback planning should treat the table as empty until a dispatcher or write path is intentionally added.
+- Operator documentation should state that adding the table does not enable outbound delivery.
+
+This migration contract plan is not a database migration. No migration directory, SQL file, schema model, generated client change, or persistence write path belongs in this slice.
+
 ## Planned lifecycle states
 
 The future lifecycle should remain integration-neutral and safe for admin visibility.
@@ -188,11 +244,11 @@ Admin retry/cancel controls should remain deferred until authorization, confirma
 
 ## Recommended next implementation slices
 
-1. Add a migration contract only after the record shape is reviewed.
-2. Add signing contract planning without runtime secret reads.
-3. Add retry/backoff policy planning without retry execution.
-4. Add a dispatcher only after persistence, signing, retry policy, and admin recovery boundaries are in place.
-5. Add admin visibility before any retry/cancel/replay controls.
+1. Add signing contract planning without runtime secret reads.
+2. Add retry/backoff policy planning without retry execution.
+3. Add the actual additive migration only after the migration contract is accepted.
+4. Add admin visibility before any retry/cancel/replay controls.
+5. Add a dispatcher only after persistence, signing, retry policy, and admin recovery boundaries are in place.
 
 ## Completion criteria for kickoff
 
@@ -201,6 +257,7 @@ This kickoff is complete when:
 - Phase 35 scope and safety boundaries are documented.
 - Delivery record planning and lifecycle states are documented.
 - Persistence planning documents future fields, indexes, constraints, sensitive-data rules, and migration readiness gates.
+- Migration contract planning documents future table, column, constraint, index, rollout, and rollback expectations without adding a migration.
 - Retry/backoff, signing, and admin visibility expectations are documented.
 - Source coverage confirms the kickoff remains planning-only.
 
