@@ -166,6 +166,19 @@ export async function runOutboundWebhookDeliveryPlanTests() {
 
   assert.match(modelAlignmentNote, /Prisma Model Alignment/);
   assert.match(modelAlignmentNote, /model alignment planning and source coverage only/);
+  assert.match(modelAlignmentNote, /Expected Prisma model shape/);
+  assert.match(modelAlignmentNote, /passive client mapping only/);
+  assert.match(modelAlignmentNote, /`idempotencyKey` \| `String` \| Required and unique/);
+  assert.match(modelAlignmentNote, /`nextEligibleAttemptAt` \| `DateTime\?`/);
+  assert.match(modelAlignmentNote, /`deadLetterSummary` \| `String\?`/);
+  assert.match(modelAlignmentNote, /`attemptCount` \| `Int`/);
+  assert.match(modelAlignmentNote, /@@unique\(\[idempotencyKey\]\)/);
+  assert.match(modelAlignmentNote, /@@index\(\[configurationKey, status\]\)/);
+  assert.match(modelAlignmentNote, /@@index\(\[eventType, eventRef\]\)/);
+  assert.match(modelAlignmentNote, /@@index\(\[status, nextEligibleAttemptAt\]\)/);
+  assert.match(modelAlignmentNote, /@@index\(\[createdAt\]\)/);
+  assert.match(modelAlignmentNote, /Generated-client validation must run on the exact PR head/);
+  assert.match(modelAlignmentNote, /Source guard expectations/);
   assert.match(modelAlignmentNote, /Add `model OutboundWebhookDelivery` to `prisma\/schema\.prisma`/);
   assert.match(modelAlignmentNote, /repository\/service write paths/);
   assert.match(modelAlignmentNote, /does not make outbound delivery operational/);
