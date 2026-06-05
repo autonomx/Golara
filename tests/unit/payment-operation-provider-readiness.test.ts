@@ -53,6 +53,10 @@ export async function runPaymentOperationProviderReadinessTests() {
   assert.ok(stripeBlocked.blockers.includes('provider_credentials_missing'));
   assert.ok(stripeBlocked.blockers.includes('provider_endpoint_mapping_unconfirmed'));
   assert.ok(stripeBlocked.warnings.includes('provider_validation_evidence_pending'));
+  assert.equal(stripeBlocked.checks.find((check) => check.key === 'STRIPE_SECRET_KEY')?.status, 'missing');
+  assert.equal(stripeBlocked.checks.find((check) => check.key === 'endpoint_mapping_evidence')?.status, 'pending');
+  assert.equal(stripeBlocked.checks.find((check) => check.key === 'live_provider_validation')?.status, 'pending');
+  assert.ok(stripeBlocked.checks.find((check) => check.key === 'STRIPE_SECRET_KEY')?.detail.includes('outside source control'));
 
   const stripeReady = buildPaymentOperationProviderReadiness({
     provider: 'stripe',
@@ -65,6 +69,8 @@ export async function runPaymentOperationProviderReadinessTests() {
   assert.deepEqual(stripeReady.blockers, []);
   assert.deepEqual(stripeReady.warnings, []);
   assert.equal(stripeReady.checks.find((check) => check.key === 'STRIPE_SECRET_KEY')?.status, 'ready');
+  assert.equal(stripeReady.checks.find((check) => check.key === 'endpoint_mapping_evidence')?.status, 'ready');
+  assert.equal(stripeReady.checks.find((check) => check.key === 'live_provider_validation')?.status, 'ready');
 
   const zarinpalPending = buildPaymentOperationProviderReadiness({
     provider: 'zarin-pal',
@@ -76,18 +82,23 @@ export async function runPaymentOperationProviderReadinessTests() {
   assert.equal(zarinpalPending.status, 'needs_operator_evidence');
   assert.deepEqual(zarinpalPending.credentialEnvironmentVariables, ['ZARINPAL_MERCHANT_ID']);
   assert.ok(zarinpalPending.blockers.includes('provider_endpoint_mapping_unconfirmed'));
+  assert.equal(zarinpalPending.checks.find((check) => check.key === 'ZARINPAL_MERCHANT_ID')?.status, 'ready');
+  assert.equal(zarinpalPending.checks.find((check) => check.key === 'endpoint_mapping_evidence')?.status, 'pending');
+  assert.equal(zarinpalPending.checks.find((check) => check.key === 'live_provider_validation')?.status, 'ready');
 
   const manual = buildPaymentOperationProviderReadiness({ provider: 'manual' });
   assert.equal(manual.status, 'manual_review');
   assert.equal(manual.executionEnabled, false);
   assert.ok(manual.warnings.includes('manual_provider_requires_operator_review'));
   assert.equal(manual.checks.find((check) => check.key === 'credentials_not_required')?.status, 'not_required');
+  assert.equal(manual.checks.find((check) => check.key === 'manual_review_required')?.status, 'pending');
 
   const unknown = buildPaymentOperationProviderReadiness({ provider: 'unknown-provider' });
   assert.equal(unknown.provider, 'unknown');
   assert.equal(unknown.status, 'unavailable');
   assert.equal(unknown.executionEnabled, false);
   assert.ok(unknown.blockers.includes('provider_operation_adapter_unavailable'));
+  assert.equal(unknown.checks.find((check) => check.key === 'provider_supported')?.status, 'missing');
 
   const summary = buildPaymentOperationProviderReadinessSummary([
     { provider: 'stripe', env: { STRIPE_SECRET_KEY: 'sk_test_example' }, endpointMappingConfirmed: true, liveValidationConfirmed: true },
@@ -124,6 +135,8 @@ export async function runPaymentOperationProviderReadinessTests() {
   assert.ok(readinessSource.includes('provider_validation_evidence_pending'));
   assert.ok(readinessSource.includes('provider_credentials_missing'));
   assert.ok(readinessSource.includes('manual_provider_requires_operator_review'));
+  assert.ok(readinessSource.includes('Concrete provider endpoint mapping remains pending operator confirmation.'));
+  assert.ok(readinessSource.includes('Provider validation evidence is marked confirmed for diagnostics.'));
   assert.ok(readinessSource.includes('normalizePaymentOperationAdapterProvider'));
   assertNoExecutionSurface(readinessSource);
 
