@@ -13,6 +13,10 @@ import {
   OUTBOUND_WEBHOOK_ADMIN_SAFE_FIELDS,
   buildOutboundWebhookAdminReadQuerySpec
 } from '../../lib/settings/outbound-webhook-admin-read-query';
+import {
+  buildOutboundWebhookAdminDetailReadPlan,
+  buildOutboundWebhookAdminListReadPlan
+} from '../../lib/settings/outbound-webhook-admin-read-plan';
 
 const baseRecord: OutboundWebhookAdminRecordSnapshot = {
   id: 'delivery_123',
@@ -147,6 +151,23 @@ export async function runOutboundWebhookAdminReadModelTests() {
   assert.equal(rejectedSpec.take, 26);
   assert.equal(rejectedSpec.cursor, null);
   assert.deepEqual(rejectedSpec.rejected, ['status', 'createdTo', 'field', 'direction', 'pageSize']);
+
+  const listPlan = buildOutboundWebhookAdminListReadPlan(querySpec);
+  assert.equal(listPlan.kind, 'list');
+  assert.equal(listPlan.deliveryId, null);
+  assert.deepEqual(listPlan.rejected, []);
+  assert.deepEqual(listPlan.auditLabels.slice(0, 2), ['kind:list', 'filters:8']);
+
+  const detailPlan = buildOutboundWebhookAdminDetailReadPlan({ deliveryId: ' delivery_123 ', query: querySpec });
+  assert.equal(detailPlan.kind, 'detail');
+  assert.equal(detailPlan.deliveryId, 'delivery_123');
+  assert.deepEqual(detailPlan.rejected, []);
+  assert.deepEqual(detailPlan.auditLabels.slice(0, 3), ['kind:detail', 'delivery:present', 'filters:8']);
+
+  const missingDetailPlan = buildOutboundWebhookAdminDetailReadPlan({ deliveryId: ' ', query: rejectedSpec });
+  assert.equal(missingDetailPlan.deliveryId, null);
+  assert.deepEqual(missingDetailPlan.rejected, ['status', 'createdTo', 'field', 'direction', 'pageSize', 'deliveryId']);
+  assert.deepEqual(missingDetailPlan.auditLabels.slice(0, 2), ['kind:detail', 'delivery:missing']);
 
   console.log('outbound-webhook-admin-read-model.test.ts passed');
 }
