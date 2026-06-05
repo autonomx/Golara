@@ -30,7 +30,7 @@ The helper is intentionally pure and presentation-adjacent:
 - invalid-limit validation errors
 - multiple validation errors returned together
 
-The test is wired into `tests/unit/run-tests.ts`; the unit runner count is now `124 files`.
+The route-input test was first wired into `tests/unit/run-tests.ts` when the unit runner count reached `124 files`. A follow-up route-core behavior test now brings the current unit runner count to `125 files` while preserving this helper's read-only role.
 
 ## Source-boundary coverage
 
