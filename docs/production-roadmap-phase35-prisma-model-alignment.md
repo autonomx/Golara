@@ -39,6 +39,39 @@ The model should preserve these storage guarantees:
 - non-negative `attemptCount` handled by the migration check constraint
 - lifecycle status values aligned with the Phase 35 tracker
 
+## Expected Prisma model shape
+
+The future schema model should be added as a passive client mapping only. It should expose the storage table to generated Prisma Client without adding application read/write paths in the same slice.
+
+Expected field mapping:
+
+| Field | Prisma type | Required/default expectation |
+| --- | --- | --- |
+| `id` | `String` | `@id @default(cuid())` or another reviewed repository id convention before changing the SQL default. |
+| `configurationKey` | `String` | Required. |
+| `eventType` | `String` | Required. |
+| `eventRef` | `String` | Required. |
+| `payloadDigest` | `String` | Required. |
+| `idempotencyKey` | `String` | Required and unique. |
+| `status` | `String` | Required, defaulting to `planned` if the schema default is mirrored. |
+| `attemptCount` | `Int` | Required, defaulting to `0`; the migration check keeps values non-negative. |
+| `lastOutcomeCategory` | `String?` | Optional safe latest outcome label. |
+| `nextEligibleAttemptAt` | `DateTime?` | Optional future eligibility timestamp. |
+| `lastResponseCode` | `Int?` | Optional safe response-code summary. |
+| `deadLetterSummary` | `String?` | Optional safe operator summary. |
+| `createdAt` | `DateTime` | Required, defaulting to `now()`. |
+| `updatedAt` | `DateTime` | Required, using `@updatedAt`. |
+
+Expected schema indexes:
+
+- `@@unique([idempotencyKey])`
+- `@@index([configurationKey, status])`
+- `@@index([eventType, eventRef])`
+- `@@index([status, nextEligibleAttemptAt])`
+- `@@index([createdAt])`
+
+Generated-client validation must run on the exact PR head before merging the future schema model slice. CI's `Generate Prisma client` step is enough evidence if it completes on the exact head.
+
 ## Runtime boundary
 
 Adding a Prisma model must not introduce:
@@ -51,6 +84,17 @@ Adding a Prisma model must not introduce:
 - admin retry, cancel, replay, or force-send controls
 - route handlers
 - live provider delivery
+
+## Source guard expectations
+
+The source guard for the future schema model slice should verify both halves of the boundary:
+
+- the migration exists and includes the expected storage fields/indexes
+- `prisma/schema.prisma` contains `model OutboundWebhookDelivery`
+- the schema model contains `idempotencyKey`, `nextEligibleAttemptAt`, `deadLetterSummary`, and `attemptCount`
+- the schema model contains the expected unique/index declarations
+- no repository/service write path is added in the same slice
+- no dispatcher, scheduler, retry executor, target call, signing runtime, route handler, or admin recovery control is added in the same slice
 
 ## Follow-up implementation gate
 
