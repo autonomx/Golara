@@ -63,55 +63,17 @@ const PROVIDER_OPERATION_CREDENTIALS: Partial<Record<PaymentOperationAdapterProv
 
 const SUPPORTED_OPERATION_PROVIDERS = new Set<PaymentOperationAdapterProvider>(['stripe', 'zarinpal', 'manual']);
 
-const REQUIRED_PROVIDER_EVIDENCE_PACKET_KEYS: Array<{
-  key: keyof Omit<PaymentOperationProviderEvidencePacketInput, 'provider'>;
-  label: string;
+const EVIDENCE_PACKET_REQUIREMENTS: Array<{
+  inputKey: keyof Omit<PaymentOperationProviderEvidencePacketInput, 'provider'>;
   missingCode: string;
-  readyDetail: string;
-  missingDetail: string;
+  label: string;
 }> = [
-  {
-    key: 'endpointMappingConfirmed',
-    label: 'Endpoint mapping evidence',
-    missingCode: 'endpoint_mapping_evidence_missing',
-    readyDetail: 'Operator endpoint mapping evidence is captured for the provider.',
-    missingDetail: 'Endpoint mapping evidence must be captured before any future guarded execution phase.'
-  },
-  {
-    key: 'liveValidationConfirmed',
-    label: 'Live/staging provider validation',
-    missingCode: 'provider_validation_evidence_missing',
-    readyDetail: 'Target-environment provider validation evidence is captured.',
-    missingDetail: 'Provider validation evidence must be captured from the target environment.'
-  },
-  {
-    key: 'credentialEvidenceCaptured',
-    label: 'Credential evidence',
-    missingCode: 'credential_evidence_missing',
-    readyDetail: 'Credential-source evidence is captured without exposing secret values.',
-    missingDetail: 'Credential evidence must reference source names only and must not expose secret values.'
-  },
-  {
-    key: 'idempotencyEvidenceCaptured',
-    label: 'Idempotency evidence',
-    missingCode: 'idempotency_evidence_missing',
-    readyDetail: 'Provider idempotency semantics are captured for retry behavior.',
-    missingDetail: 'Provider idempotency semantics must be captured before retryable execution is considered.'
-  },
-  {
-    key: 'responseExampleCaptured',
-    label: 'Response examples',
-    missingCode: 'response_example_evidence_missing',
-    readyDetail: 'Provider success, rejected, retryable, and unknown response examples are captured.',
-    missingDetail: 'Provider response examples must be captured for result normalization review.'
-  },
-  {
-    key: 'dashboardEvidenceCaptured',
-    label: 'Dashboard evidence',
-    missingCode: 'dashboard_evidence_missing',
-    readyDetail: 'Operator dashboard evidence is captured without secrets.',
-    missingDetail: 'Operator dashboard evidence must be captured without secrets or customer-sensitive values.'
-  }
+  { inputKey: 'endpointMappingConfirmed', missingCode: 'endpoint_mapping_evidence_missing', label: 'Endpoint mapping evidence' },
+  { inputKey: 'liveValidationConfirmed', missingCode: 'provider_validation_evidence_missing', label: 'Live/staging provider validation' },
+  { inputKey: 'credentialEvidenceCaptured', missingCode: 'credential_evidence_missing', label: 'Credential evidence' },
+  { inputKey: 'idempotencyEvidenceCaptured', missingCode: 'idempotency_evidence_missing', label: 'Idempotency evidence' },
+  { inputKey: 'responseExampleCaptured', missingCode: 'response_example_evidence_missing', label: 'Response examples' },
+  { inputKey: 'dashboardEvidenceCaptured', missingCode: 'dashboard_evidence_missing', label: 'Dashboard evidence' }
 ];
 
 function hasEnv(env: Record<string, string | undefined>, key: string) {
@@ -264,15 +226,14 @@ export function validatePaymentOperationProviderEvidencePacket(input: PaymentOpe
     };
   }
 
-  const checks = REQUIRED_PROVIDER_EVIDENCE_PACKET_KEYS.map((requirement) => {
-    const captured = input[requirement.key] === true;
-    return {
-      key: requirement.missingCode,
-      label: requirement.label,
-      status: captured ? 'ready' as const : 'missing' as const,
-      detail: captured ? requirement.readyDetail : requirement.missingDetail
-    };
-  });
+  const checks = EVIDENCE_PACKET_REQUIREMENTS.map((requirement) => ({
+    key: requirement.missingCode,
+    label: requirement.label,
+    status: input[requirement.inputKey] === true ? 'ready' as const : 'missing' as const,
+    detail: input[requirement.inputKey] === true
+      ? `${requirement.label} is captured for operator review.`
+      : `${requirement.label} must be captured before future guarded execution is considered.`
+  }));
   const missing = checks.filter((check) => check.status === 'missing').map((check) => check.key);
 
   return {
