@@ -128,6 +128,15 @@ export async function runPaymentOperationProviderReadinessTests() {
   assert.equal(routeResult.body.summary.manualReview, 1);
   assert.equal(routeResult.body.summary.unavailable, 1);
 
+  const defaultRouteResult = buildPaymentOperationProviderReadinessRouteResult({ env: {} });
+  assert.equal(defaultRouteResult.status, 200);
+  assert.equal(defaultRouteResult.body.ok, true);
+  assert.equal(defaultRouteResult.body.executionEnabled, false);
+  assert.equal(defaultRouteResult.body.summary.total, 3);
+  assert.equal(defaultRouteResult.body.summary.providers.map((provider) => provider.provider).join(','), 'stripe,zarinpal,manual');
+  assert.equal(defaultRouteResult.body.summary.needsOperatorEvidence, 2);
+  assert.equal(defaultRouteResult.body.summary.manualReview, 1);
+
   assert.ok(readinessSource.includes('buildPaymentOperationProviderReadiness'));
   assert.ok(readinessSource.includes('buildPaymentOperationProviderReadinessSummary'));
   assert.ok(readinessSource.includes('executionEnabled: false'));
