@@ -15,6 +15,7 @@ export async function runPaymentOperationMigrationContractTests() {
   const repository = source('lib/checkout/payment-operation-record-repository.ts');
   const service = source('lib/checkout/payment-operation-record-service.ts');
   const historyView = source('lib/checkout/payment-operation-history-view.ts');
+  const historyRouteInput = source('lib/checkout/payment-operation-history-route-input.ts');
   const historyRouteCore = source('lib/checkout/payment-operation-history-route-core.ts');
   const historyPanel = source('components/admin/AdminPaymentOperationHistoryPanel.tsx');
   const historyPage = source('app/admin/payments/operations/history/page.tsx');
@@ -156,13 +157,28 @@ export async function runPaymentOperationMigrationContractTests() {
   assert.equal(historyView.includes('CheckoutOrder" SET'), false);
   assert.equal(historyView.includes('CheckoutPaymentAttempt" SET'), false);
 
+  assert.ok(historyRouteInput.includes('normalizePaymentOperationHistoryRouteInput'));
+  assert.ok(historyRouteInput.includes('NormalizedPaymentOperationHistoryRouteInput'));
+  assert.ok(historyRouteInput.includes('Order ID is required to read payment operation history.'));
+  assert.ok(historyRouteInput.includes('Limit must be a positive integer.'));
+  assert.ok(historyRouteInput.includes('Math.min(numeric, 100)'));
+  assert.ok(historyRouteInput.includes('historyOptions: { orderId, limit: limit.value }'));
+  assert.equal(historyRouteInput.includes('server-only'), false);
+  assert.equal(historyRouteInput.includes('listPaymentOperationRecordsForOrderIfConfirmed'), false);
+  assert.equal(historyRouteInput.includes('fetch('), false);
+  assert.equal(historyRouteInput.includes('@prisma/client'), false);
+  assert.equal(historyRouteInput.includes('prisma.'), false);
+  assert.equal(historyRouteInput.includes('CheckoutOrder" SET'), false);
+  assert.equal(historyRouteInput.includes('CheckoutPaymentAttempt" SET'), false);
+
   assert.ok(historyRouteCore.includes('buildPaymentOperationHistoryRouteResult'));
+  assert.ok(historyRouteCore.includes('normalizePaymentOperationHistoryRouteInput'));
   assert.ok(historyRouteCore.includes('listPaymentOperationRecordsForOrderIfConfirmed'));
-  assert.ok(historyRouteCore.includes('buildPaymentOperationHistoryView(serviceResult.records, historyOptions)'));
-  assert.ok(historyRouteCore.includes('buildPaymentOperationHistoryView([], historyOptions)'));
+  assert.ok(historyRouteCore.includes('buildPaymentOperationHistoryView(serviceResult.records, normalized.historyOptions)'));
+  assert.ok(historyRouteCore.includes('buildPaymentOperationHistoryView([], normalized.historyOptions)'));
   assert.ok(historyRouteCore.includes('payment_operation_records_migration_unconfirmed'));
-  assert.ok(historyRouteCore.includes('Limit must be a positive integer.'));
-  assert.ok(historyRouteCore.includes('Order ID is required to read payment operation history.'));
+  assert.equal(historyRouteCore.includes('function normalizeOrderId'), false);
+  assert.equal(historyRouteCore.includes('function normalizeLimit'), false);
   assert.equal(historyRouteCore.includes('executePaymentOperationRecordIfConfirmed'), false);
   assert.equal(historyRouteCore.includes('createPendingPaymentOperationRecordIfConfirmed'), false);
   assert.equal(historyRouteCore.includes('fetch('), false);
