@@ -1,6 +1,6 @@
 # Phase 35 Durable Outbound Webhook Worker
 
-Status: kickoff planning, inert outbound delivery planner, persistence planning, migration contract planning, and source coverage added; no database migration, dispatcher, queue, retry loop, signing runtime, admin retry control, or live outbound webhook delivery is enabled.
+Status: kickoff planning, inert outbound delivery planner, persistence planning, migration contract planning, authenticity contract planning, and source coverage added; no database migration, dispatcher, queue, retry loop, signing runtime, admin retry control, or live outbound webhook delivery is enabled.
 
 Last updated: 2026-06-05
 
@@ -28,6 +28,7 @@ This kickoff slice defines the safety boundary, record lifecycle, retry planning
 - Added `tests/unit/outbound-webhook-delivery-plan.test.ts` and wired it into the aggregate unit runner.
 - Added persistence planning for the future durable delivery record, indexes, sensitive-data rules, and migration readiness gates without adding a database migration.
 - Added a migration contract plan that documents the future table, columns, constraints, indexes, rollback/readiness checks, and deferred runtime boundaries without adding a Prisma migration.
+- Added authenticity contract planning for future payload canonicalization, headers, secret-source labels, timestamp tolerance, verification documentation, and rotation expectations without adding runtime signing or secret reads.
 
 ## Safety boundaries
 
@@ -227,6 +228,50 @@ Future signing work should define:
 
 This kickoff slice should not read signing secrets or compute runtime signatures.
 
+## Authenticity contract planning
+
+Authenticity contract planning is documentation-only in this slice. It defines how future webhook deliveries should be signed and verified by receivers, but it does not add runtime cryptography, secret reads, outbound HTTP calls, dispatcher execution, admin retry controls, or live delivery.
+
+Future canonical payload expectations:
+
+- Sign the exact outbound request body bytes or a documented canonical UTF-8 string representation.
+- Include the event type, event ref, payload digest, idempotency key, and delivery id in the signed metadata contract.
+- Preserve stable JSON field ordering rules only if the project signs reconstructed JSON rather than raw bytes.
+- Document how payload digest canonicalization aligns with the durable delivery record.
+- Treat replay payload snapshots as a separate reviewed contract with redaction rules.
+
+Future header contract:
+
+| Header | Planning expectation |
+| --- | --- |
+| `X-Golara-Event` | Provider-neutral event name. |
+| `X-Golara-Delivery-Id` | Durable delivery id once persistence exists. |
+| `X-Golara-Idempotency-Key` | Logical delivery key used for duplicate detection. |
+| `X-Golara-Timestamp` | Request timestamp used for replay-window validation. |
+| `X-Golara-Payload-Digest` | Digest of the canonical payload representation. |
+| `X-Golara-Signature` | Future signature header; format must be documented before runtime signing exists. |
+
+Future verification contract:
+
+- Receivers should verify the timestamp is inside the documented tolerance window before accepting a delivery.
+- Receivers should recompute the payload digest from the received body and compare it with the digest header.
+- Receivers should recompute the signature using the documented canonical payload and metadata string.
+- Receivers should treat mismatched signatures, stale timestamps, missing digest headers, and duplicate idempotency keys as rejected deliveries.
+- Operator docs should include a safe verification example without exposing real secrets.
+
+Secret and rotation boundaries:
+
+- Do not store signing secret values in delivery records, admin-visible records, logs, or tests.
+- Keep only secret-source labels, such as environment-variable names, in configuration and documentation.
+- Document rotation as a future two-secret verification window before runtime signing is introduced.
+- Keep rotation evidence and live provider validation as operator work until staging credentials exist.
+
+Runtime deferral gates:
+
+- No `crypto`, HMAC helper, signature formatter, timestamp generator, or secret lookup belongs in this slice.
+- No dispatcher, queue consumer, route handler, scheduled job, retry execution, admin retry/cancel/replay control, or outbound HTTP call belongs in this slice.
+- Runtime signing can only be added after the canonical payload, header format, timestamp tolerance, secret-source behavior, and verification docs are reviewed.
+
 ## Admin visibility expectations
 
 Admin visibility should come after the durable delivery record exists.
@@ -244,10 +289,10 @@ Admin retry/cancel controls should remain deferred until authorization, confirma
 
 ## Recommended next implementation slices
 
-1. Add signing contract planning without runtime secret reads.
-2. Add retry/backoff policy planning without retry execution.
-3. Add the actual additive migration only after the migration contract is accepted.
-4. Add admin visibility before any retry/cancel/replay controls.
+1. Add retry/backoff policy planning without retry execution.
+2. Add the actual additive migration only after the migration contract is accepted.
+3. Add admin visibility before any retry/cancel/replay controls.
+4. Add runtime signing only after the authenticity contract is accepted.
 5. Add a dispatcher only after persistence, signing, retry policy, and admin recovery boundaries are in place.
 
 ## Completion criteria for kickoff
@@ -258,6 +303,7 @@ This kickoff is complete when:
 - Delivery record planning and lifecycle states are documented.
 - Persistence planning documents future fields, indexes, constraints, sensitive-data rules, and migration readiness gates.
 - Migration contract planning documents future table, column, constraint, index, rollout, and rollback expectations without adding a migration.
+- Authenticity contract planning documents future canonical payload, header, verification, secret-source, rotation, and runtime deferral expectations without adding runtime signing.
 - Retry/backoff, signing, and admin visibility expectations are documented.
 - Source coverage confirms the kickoff remains planning-only.
 
