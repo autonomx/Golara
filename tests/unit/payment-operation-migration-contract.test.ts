@@ -215,13 +215,13 @@ export async function runPaymentOperationMigrationContractTests() {
   assert.ok(historyRouteCoreTest.includes('payment_operation_records_migration_unconfirmed'));
   assert.ok(historyRouteCoreTest.includes('PAYMENT_OPERATION_RECORDS_MIGRATION_CONFIRMED'));
   assert.ok(historyRouteCoreTest.includes('Read-only history review'));
-  assert.equal(historyRouteCoreTest.includes('fetch('), false);
-  assert.equal(historyRouteCoreTest.includes('@prisma/client'), false);
-  assert.equal(historyRouteCoreTest.includes('prisma.'), false);
-  assert.equal(historyRouteCoreTest.includes('onClick='), false);
-  assert.equal(historyRouteCoreTest.includes('<button'), false);
-  assert.equal(historyRouteCoreTest.includes('CheckoutOrder" SET'), false);
-  assert.equal(historyRouteCoreTest.includes('CheckoutPaymentAttempt" SET'), false);
+  assert.ok(historyRouteCoreTest.includes('assert.doesNotMatch(routeCoreSource, /fetch\\(/);'));
+  assert.ok(historyRouteCoreTest.includes('assert.doesNotMatch(routeCoreSource, /@prisma\\/client/);'));
+  assert.ok(historyRouteCoreTest.includes('assert.doesNotMatch(routeCoreSource, /prisma\\./);'));
+  assert.ok(historyRouteCoreTest.includes('assert.doesNotMatch(routeCoreSource, /onClick=/);'));
+  assert.ok(historyRouteCoreTest.includes('assert.doesNotMatch(routeCoreSource, /<button/);'));
+  assert.ok(historyRouteCoreTest.includes('assert.doesNotMatch(routeCoreSource, /CheckoutOrder" SET/);'));
+  assert.ok(historyRouteCoreTest.includes('assert.doesNotMatch(routeCoreSource, /CheckoutPaymentAttempt" SET/);'));
 
   assert.ok(historyPanel.includes('AdminPaymentOperationHistoryPanel'));
   assert.ok(historyPanel.includes('PaymentOperationHistoryView'));
