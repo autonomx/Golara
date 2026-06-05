@@ -28,7 +28,7 @@ export async function runPaymentOperationTransitionPlanTests() {
 
   assert.match(previewSource, /planPaymentOperationTransition/);
   assert.match(previewSource, /transition: PaymentOperationTransitionPlan/);
-  assert.match(previewSource, /transition\.notes/);
+  assert.match(previewSource, /warnings = plan\.reasons\.map\(reasonCopy\)/);
   assert.doesNotMatch(previewSource, /prisma\./);
   assert.doesNotMatch(previewSource, /fetch\(/);
   assert.doesNotMatch(previewSource, /checkoutOrder\.update/);
@@ -127,7 +127,8 @@ export async function runPaymentOperationTransitionPlanTests() {
     fulfillmentStatus: 'delivered'
   });
   assert.equal(previewWithTransition.transition.releaseRecommendation, 'manual_review');
-  assert.ok(previewWithTransition.warnings.some((warning) => warning.includes('Full refunds after fulfillment starts')));
+  assert.deepEqual(previewWithTransition.warnings, []);
+  assert.ok(previewWithTransition.transition.notes.some((note) => note.includes('Full refunds after fulfillment starts')));
 
   const previewViewWithTransition = buildPaymentOperationPreviewView({
     operation: 'void',
