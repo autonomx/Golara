@@ -10,6 +10,10 @@ Phase 33 has a provider-neutral refund/void planning helper, no-mutation preview
 
 This remains repo-side foundation work: it does not call Stripe, ZarinPal, or any other live provider; it does not mutate payment attempts, orders, refunds, inventory, or audit logs; no default live Stripe or ZarinPal refund/void HTTP calls, concrete live provider endpoint URLs, order/payment mutations, inventory/capacity release, admin refund/void execution buttons, provider credentials, or Prisma model/client access for `PaymentOperationRecord` have been added. Repository/service access and history reads remain gated behind target-environment migration confirmation. Provider-operation diagnostics always report `executionEnabled: false` and do not execute adapters.
 
+## Preview boundary acceptance criteria
+
+The refund/void persistence design remains documentation-only. Preview helpers must call `planPaymentOperation` as the single source of eligibility truth, return a preview payload that is safe for admin display, and include operation kind, decision, provider, amount, currency, reasons, manual-review state, and provider-reference requirements. They must avoid database writes, avoid checkout order mutation, avoid payment attempt mutation, avoid live provider calls, live provider refund calls, live provider void calls, database writes, and admin refund/void execution buttons. Current local verification is pending unless CI or a local runner reports otherwise.
+
 ## Completed in Phase 33 so far
 
 - Added `lib/checkout/payment-operation-plan.ts` for pure refund/void operation planning.
