@@ -6,11 +6,11 @@ Status: documentation-only index for recent Phase 33 coverage notes.
 
 - `docs/production-roadmap-phase33-coverage-progress-20260604.md` records recent Phase 33 test-hardening and documentation-hardening slices.
 - `docs/production-roadmap-phase33-history-pending-row-coverage.md` records the pending operation-history row coverage assertions implemented in PR #273.
-- `docs/production-roadmap-phase33-history-doc-guard.md` records the follow-up source-guard expectations for the pending-row coverage note.
+- `docs/production-roadmap-phase33-history-doc-guard.md` records the source-guard assertions implemented in PR #275 for the pending-row coverage note.
 
 ## Use
 
-Use this index when continuing Phase 33 read-only hardening work. The previous pending operation-history row behavior gap is now closed; continue with similarly narrow read-only coverage, documentation, or source-guard slices.
+Use this index when continuing Phase 33 read-only hardening work. The previous pending operation-history row behavior gap and follow-up source guard are now closed; continue with similarly narrow read-only coverage, documentation, or source-guard slices.
 
 ## Safety boundaries
 
