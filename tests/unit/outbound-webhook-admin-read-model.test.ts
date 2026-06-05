@@ -177,9 +177,23 @@ export async function runOutboundWebhookAdminReadModelTests() {
     idempotencyKey: 'idem-456',
     updatedAt: '2026-06-05T09:45:00.000Z'
   };
+  const memoryQuerySpec = buildOutboundWebhookAdminReadQuerySpec({
+    filters: normalizeOutboundDeliveryAdminFilters({
+      status: 'retry_wait',
+      configurationKey: 'default-webhook-configuration',
+      eventType: 'order.created',
+      payloadDigest: 'sha256:abc',
+      createdFrom: '2026-06-01',
+      updatedTo: '2026-06-05T12:00:00.000Z'
+    }),
+    sort: normalizeOutboundDeliveryAdminSort({ field: 'updatedAt', direction: 'asc' }),
+    pagination: normalizeOutboundDeliveryAdminPagination({ pageSize: 10 })
+  });
+  const memoryListPlan = buildOutboundWebhookAdminListReadPlan(memoryQuerySpec);
+  const memoryDetailPlan = buildOutboundWebhookAdminDetailReadPlan({ deliveryId: ' delivery_123 ', query: memoryQuerySpec });
   const memoryList = readOutboundWebhookAdminMemory({
     records: [secondRecord, baseRecord],
-    plan: listPlan,
+    plan: memoryListPlan,
     now: '2026-06-05T11:00:00.000Z'
   });
   assert.equal(memoryList.items.length, 2);
@@ -190,7 +204,7 @@ export async function runOutboundWebhookAdminReadModelTests() {
 
   const memoryDetail = readOutboundWebhookAdminMemory({
     records: [secondRecord, baseRecord],
-    plan: detailPlan,
+    plan: memoryDetailPlan,
     now: '2026-06-05T11:00:00.000Z'
   });
   assert.equal(memoryDetail.items.length, 0);
