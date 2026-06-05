@@ -65,11 +65,41 @@ export async function runPaymentOperationHistoryViewTests() {
     { label: 'Status mix', value: 'Failed: 1, Manual Review: 1, Succeeded: 1' }
   ]);
   assert.equal(view.rows[0].tone, 'success');
+  assert.equal(view.rows[0].title, 'Refund 125.00 USD');
+  assert.equal(view.rows[0].amountLabel, '125.00 USD');
+  assert.equal(view.rows[0].providerLabel, 'Stripe');
   assert.equal(view.rows[0].referenceLabel, 'refund_123');
+  assert.equal(view.rows[0].orderLabel, 'GOL-1001');
+  assert.equal(view.rows[0].requestedByLabel, 'Ops Lead');
+  assert.equal(view.rows[0].createdAtLabel, '2026-06-04T20:00:00.000Z');
+  assert.equal(view.rows[0].updatedAtLabel, '2026-06-04T20:05:00.000Z');
+  assert.ok(view.rows[0].detailRows.some((detail) => detail.label === 'Provider status' && detail.value === 'Provider status pending'));
+  assert.ok(view.rows[0].detailRows.some((detail) => detail.label === 'Error category' && detail.value === 'No error recorded'));
   assert.equal(view.rows[1].tone, 'danger');
   assert.ok(view.rows[1].detailRows.some((detail) => detail.label === 'Retryable' && detail.value === 'Yes'));
   assert.equal(view.rows[2].tone, 'warning');
   assert.equal(view.rows[2].referenceLabel, 'Provider reference pending');
+
+  const fallbackView = buildPaymentOperationHistoryView([
+    record({
+      id: 'operation-fallbacks',
+      orderNumber: null,
+      operatorId: null,
+      operatorLabel: null,
+      operatorEmail: null,
+      operatorReason: null,
+      providerReference: null,
+      providerOperationReference: null,
+      createdAt: 'not-a-date',
+      updatedAt: null
+    })
+  ]);
+  assert.equal(fallbackView.rows[0].orderLabel, 'order-1');
+  assert.equal(fallbackView.rows[0].requestedByLabel, 'Operator not recorded');
+  assert.equal(fallbackView.rows[0].referenceLabel, 'Provider reference pending');
+  assert.equal(fallbackView.rows[0].createdAtLabel, 'Not available');
+  assert.equal(fallbackView.rows[0].updatedAtLabel, 'Not available');
+  assert.ok(fallbackView.rows[0].detailRows.some((detail) => detail.label === 'Reason' && detail.value === 'No operator reason recorded'));
 
   const emptyView = buildPaymentOperationHistoryView([], { orderId: null, limit: null });
   assert.equal(emptyView.status, 'empty');
