@@ -22,6 +22,7 @@ function migrationFiles(root = 'prisma/migrations') {
 export async function runOutboundWebhookDeliveryPlanTests() {
   const helper = source('lib/settings/outbound-webhook-delivery-plan.ts');
   const tracker = source('docs/production-roadmap-phase35-durable-outbound-webhook-worker.md');
+  const schema = source('prisma/schema.prisma');
   const migrations = migrationFiles().map((path) => [path, source(path)] as const);
 
   assert.match(helper, /buildOutboundWebhookDeliveryPlan/);
@@ -103,6 +104,16 @@ export async function runOutboundWebhookDeliveryPlanTests() {
   assert.match(tracker, /Dispatcher remains deferred/);
   assert.match(tracker, /Admin retry\/cancel controls should remain deferred/);
 
+  assert.match(tracker, /## Migration contract planning/);
+  assert.match(tracker, /Future table contract/);
+  assert.match(tracker, /Future constraint\/index contract/);
+  assert.match(tracker, /Unique index on `idempotencyKey`/);
+  assert.match(tracker, /Polling index on `status` plus `nextEligibleAttemptAt`/);
+  assert.match(tracker, /Rollback and rollout expectations/);
+  assert.match(tracker, /This migration contract plan is not a database migration/);
+  assert.match(tracker, /No migration directory, SQL file, schema model, generated client change, or persistence write path belongs in this slice/);
+
+  assert.equal(schema.includes('model OutboundWebhookDelivery'), false);
   assert.equal(
     migrations.some(([path, content]) => /outbound[-_ ]?webhook[-_ ]?delivery/i.test(path) || /OutboundWebhookDelivery/.test(content)),
     false
