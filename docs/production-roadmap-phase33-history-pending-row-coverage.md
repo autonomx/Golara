@@ -1,16 +1,14 @@
-# Phase 33 Pending History Row Coverage Gap
+# Phase 33 Pending History Row Coverage
 
-Status: documentation-only coverage note.
+Status: implemented in PR #273.
 
 ## Scope
 
-`buildPaymentOperationHistoryView` already has behavior coverage for succeeded, failed, manual-review, submitted, fallback, and empty history states.
+`buildPaymentOperationHistoryView` now has behavior coverage for succeeded, failed, manual-review, submitted, pending, fallback, and empty history states.
 
-A future narrow test slice should add explicit pending-row assertions once the test-file patch path is available again.
+## Pending-row assertions added
 
-## Desired pending-row assertions
-
-The pending-row test should verify that a pending operation-history row:
+PR #273 added explicit pending-row assertions verifying that a pending operation-history row:
 
 - is counted as a loaded record
 - is not counted as succeeded
@@ -18,6 +16,12 @@ The pending-row test should verify that a pending operation-history row:
 - is not counted as retryable unless `retryable` is true
 - uses neutral row tone
 - renders the status label as `Pending`
+
+The same slice also covers the retryable-pending case so retryable accounting remains explicit without changing pending row tone.
+
+## Verification
+
+GitHub Actions CI run `26999535590` passed on exact PR head `91963ffaa95d3d58b58f6dc79ba2a71cf5c9e94e` before merge.
 
 ## Safety boundaries
 
