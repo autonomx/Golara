@@ -41,7 +41,7 @@ function record(overrides: Partial<PaymentOperationRecordRow>): PaymentOperation
 export async function runPaymentOperationHistoryViewTests() {
   const view = buildPaymentOperationHistoryView([
     record({ id: 'operation-succeeded', status: 'succeeded', retryable: false, providerOperationReference: 'refund_123' }),
-    record({ id: 'operation-failed', status: 'failed', retryable: true, errorCategory: 'provider_timeout' }),
+    record({ id: 'operation-failed', status: 'failed', retryable: true, errorCategory: 'provider_timeout', operationKind: 'void' }),
     record({ id: 'operation-review', status: 'manual_review', retryable: false, provider: 'manual', providerReference: null })
   ], { orderId: ' order-1 ', limit: 10 });
 
@@ -58,6 +58,11 @@ export async function runPaymentOperationHistoryViewTests() {
     { label: 'Order filter', value: 'order-1' },
     { label: 'Display limit', value: 'Latest 10' },
     { label: 'Mode', value: 'Read-only history review' }
+  ]);
+  assert.deepEqual(view.facetLabels, [
+    { label: 'Operation mix', value: 'Refund: 2, Void: 1' },
+    { label: 'Provider mix', value: 'Manual: 1, Stripe: 2' },
+    { label: 'Status mix', value: 'Failed: 1, Manual Review: 1, Succeeded: 1' }
   ]);
   assert.equal(view.rows[0].tone, 'success');
   assert.equal(view.rows[0].referenceLabel, 'refund_123');
@@ -79,6 +84,11 @@ export async function runPaymentOperationHistoryViewTests() {
     { label: 'Order filter', value: 'No order selected' },
     { label: 'Display limit', value: 'Default latest records' },
     { label: 'Mode', value: 'Read-only history review' }
+  ]);
+  assert.deepEqual(emptyView.facetLabels, [
+    { label: 'Operation mix', value: 'No records loaded' },
+    { label: 'Provider mix', value: 'No records loaded' },
+    { label: 'Status mix', value: 'No records loaded' }
   ]);
 
   console.log('payment-operation-history-view.test.ts passed');
