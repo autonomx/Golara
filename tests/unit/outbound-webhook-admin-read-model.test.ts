@@ -9,6 +9,7 @@ import {
   normalizeOutboundDeliveryAdminSort,
   type OutboundWebhookAdminRecordSnapshot
 } from '../../lib/settings/outbound-webhook-admin-read-model';
+import { readOutboundWebhookAdminMemory } from '../../lib/settings/outbound-webhook-admin-read-memory';
 import {
   OUTBOUND_WEBHOOK_ADMIN_SAFE_FIELDS,
   buildOutboundWebhookAdminReadQuerySpec
@@ -168,6 +169,42 @@ export async function runOutboundWebhookAdminReadModelTests() {
   assert.equal(missingDetailPlan.deliveryId, null);
   assert.deepEqual(missingDetailPlan.rejected, ['status', 'createdTo', 'field', 'direction', 'pageSize', 'deliveryId']);
   assert.deepEqual(missingDetailPlan.auditLabels.slice(0, 2), ['kind:detail', 'delivery:missing']);
+
+  const secondRecord: OutboundWebhookAdminRecordSnapshot = {
+    ...baseRecord,
+    id: 'delivery_456',
+    eventRef: 'order_456',
+    idempotencyKey: 'idem-456',
+    updatedAt: '2026-06-05T09:45:00.000Z'
+  };
+  const memoryList = readOutboundWebhookAdminMemory({
+    records: [secondRecord, baseRecord],
+    plan: listPlan,
+    now: '2026-06-05T11:00:00.000Z'
+  });
+  assert.equal(memoryList.items.length, 2);
+  assert.equal(memoryList.items[0].id, 'delivery_123');
+  assert.equal(memoryList.detail, null);
+  assert.deepEqual(memoryList.rejected, []);
+  assert.deepEqual(memoryList.auditLabels.slice(0, 4), ['memory-read', 'matched:2', 'returned:2', 'kind:list']);
+
+  const memoryDetail = readOutboundWebhookAdminMemory({
+    records: [secondRecord, baseRecord],
+    plan: detailPlan,
+    now: '2026-06-05T11:00:00.000Z'
+  });
+  assert.equal(memoryDetail.items.length, 0);
+  assert.equal(memoryDetail.detail?.id, 'delivery_123');
+  assert.equal(memoryDetail.detail?.redactedDeliverySummary, 'order.created:order_123:retry_wait');
+  assert.deepEqual(memoryDetail.rejected, []);
+
+  const missingMemoryDetail = readOutboundWebhookAdminMemory({
+    records: [secondRecord, baseRecord],
+    plan: missingDetailPlan,
+    now: '2026-06-05T11:00:00.000Z'
+  });
+  assert.equal(missingMemoryDetail.detail, null);
+  assert.deepEqual(missingMemoryDetail.rejected, ['status', 'createdTo', 'field', 'direction', 'pageSize', 'deliveryId']);
 
   console.log('outbound-webhook-admin-read-model.test.ts passed');
 }
