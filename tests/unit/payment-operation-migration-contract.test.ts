@@ -137,8 +137,14 @@ export async function runPaymentOperationMigrationContractTests() {
   assert.ok(historyView.includes('PaymentOperationHistoryRow'));
   assert.ok(historyView.includes('PaymentOperationHistorySummaryRow'));
   assert.ok(historyView.includes('PaymentOperationHistoryFilterLabel'));
+  assert.ok(historyView.includes('PaymentOperationHistoryFacetLabel'));
   assert.ok(historyView.includes('buildSummaryRows'));
   assert.ok(historyView.includes('buildFilterLabels'));
+  assert.ok(historyView.includes('buildFacetLabels'));
+  assert.ok(historyView.includes('Operation mix'));
+  assert.ok(historyView.includes('Provider mix'));
+  assert.ok(historyView.includes('Status mix'));
+  assert.ok(historyView.includes('No records loaded'));
   assert.ok(historyView.includes('Read-only history review'));
   assert.ok(historyView.includes('Confirm the migration gate before expecting persisted history rows.'));
   assert.ok(historyView.includes('toneForStatus'));
@@ -171,6 +177,7 @@ export async function runPaymentOperationMigrationContractTests() {
   assert.ok(historyPanel.includes('PaymentOperationHistoryView'));
   assert.ok(historyPanel.includes('summaryRows.map'));
   assert.ok(historyPanel.includes('filterLabels.map'));
+  assert.ok(historyPanel.includes('facetLabels.map'));
   assert.ok(historyPanel.includes('Read-only'));
   assert.ok(historyPanel.includes('does not render refund or void execution controls'));
   assert.ok(historyPanel.includes('This read-only panel only displays rows after the target environment confirms the migration gate.'));
