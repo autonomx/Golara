@@ -63,11 +63,20 @@ export async function runPaymentOperationProviderEvidencePacketTests() {
   assert.equal(unknown.executionEnabled, false);
   assert.ok(unknown.missing.includes('provider_operation_adapter_unavailable'));
 
+  const blankMigrationSha = validatePaymentOperationMigrationEvidence({ deployedSha: '   ' });
+  assert.equal(blankMigrationSha.complete, false);
+  assert.equal(blankMigrationSha.executionEnabled, false);
+  assert.ok(blankMigrationSha.missing.includes('deployed_sha_missing'));
+  assert.equal(blankMigrationSha.checks.find((check) => check.key === 'deployed_sha_missing')?.status, 'missing');
+
   const partialMigration = validatePaymentOperationMigrationEvidence({ deployedSha: '909eb871' });
   assert.equal(partialMigration.complete, false);
   assert.equal(partialMigration.executionEnabled, false);
   assert.ok(partialMigration.missing.includes('migration_application_missing'));
   assert.ok(partialMigration.missing.includes('operator_signoff_missing'));
+  assert.equal(partialMigration.checks.find((check) => check.key === 'deployed_sha_missing')?.status, 'ready');
+  assert.equal(partialMigration.checks.find((check) => check.key === 'operator_signoff_missing')?.status, 'missing');
+  assert.equal(partialMigration.checks.length, 9);
 
   const completeMigration = validatePaymentOperationMigrationEvidence({
     deployedSha: '909eb871874be6565e258440edd845a1df9d6b3d',
@@ -83,6 +92,8 @@ export async function runPaymentOperationProviderEvidencePacketTests() {
   assert.equal(completeMigration.complete, true);
   assert.equal(completeMigration.executionEnabled, false);
   assert.deepEqual(completeMigration.missing, []);
+  assert.ok(completeMigration.checks.every((check) => check.status === 'ready'));
+  assert.ok(completeMigration.checks.every((check) => check.detail.endsWith('evidence is captured for operator review.')));
   assert.ok(completeMigration.warnings.includes('migration_evidence_complete_but_execution_still_disabled'));
 
   assert.ok(readinessSource.includes('validatePaymentOperationProviderEvidencePacket'));
@@ -96,6 +107,9 @@ export async function runPaymentOperationProviderEvidencePacketTests() {
   assert.ok(migrationEvidenceSource.includes('validatePaymentOperationMigrationEvidence'));
   assert.ok(migrationEvidenceSource.includes('migration_application_missing'));
   assert.ok(migrationEvidenceSource.includes('operator_signoff_missing'));
+  assert.ok(migrationEvidenceSource.includes('deployed_sha_missing'));
+  assert.ok(migrationEvidenceSource.includes('evidence is captured for operator review.'));
+  assert.ok(migrationEvidenceSource.includes('evidence must be captured before migration confirmation is trusted.'));
   assert.ok(migrationEvidenceSource.includes('executionEnabled: false'));
   assertNoExecutionSurface(migrationEvidenceSource);
 
