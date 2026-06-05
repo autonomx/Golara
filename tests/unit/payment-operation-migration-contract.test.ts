@@ -93,7 +93,8 @@ export async function runPaymentOperationMigrationContractTests() {
   assert.ok(historyRouteInputDoc.includes('Status: repo-side read-only helper documentation'));
   assert.ok(historyRouteInputDoc.includes('normalizePaymentOperationHistoryRouteInput'));
   assert.ok(historyRouteInputDoc.includes('PAYMENT_OPERATION_RECORDS_MIGRATION_CONFIRMED=true'));
-  assert.ok(historyRouteInputDoc.includes('unit runner count is now `124 files`'));
+  assert.ok(historyRouteInputDoc.includes('route-input test was first wired into `tests/unit/run-tests.ts`'));
+  assert.ok(historyRouteInputDoc.includes('current unit runner count to `125 files`'));
   assert.ok(historyRouteInputDoc.includes('provider calls'));
   assert.ok(historyRouteInputDoc.includes('default `fetch` behavior'));
   assert.ok(historyRouteInputDoc.includes('admin execution buttons or click handlers'));
