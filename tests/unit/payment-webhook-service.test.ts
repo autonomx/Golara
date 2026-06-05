@@ -29,8 +29,19 @@ export async function runPaymentWebhookServiceTests() {
   assert.match(service, /publicLookupToken: input\.publicLookupToken/);
   assert.match(service, /checkoutPaymentEvent\.create/);
   assert.match(service, /paymentWebhookService = \{/);
-  assert.doesNotMatch(service, /checkoutOrder\.update/);
-  assert.doesNotMatch(service, /checkoutPaymentAttempt\.update/);
+  assert.match(service, /async function applyTrustedWebhookStateChange/);
+  assert.match(service, /if \(!input\.statePlan\.trusted\) return/);
+  assert.match(service, /checkoutOrder\.update/);
+  assert.match(service, /checkoutPaymentAttempt\.update/);
+
+  const helperIndex = service.indexOf('async function applyTrustedWebhookStateChange');
+  const attemptUpdateIndex = service.indexOf('checkoutPaymentAttempt.update');
+  const orderUpdateIndex = service.indexOf('checkoutOrder.update');
+  const recordIndex = service.indexOf('export async function recordPaymentWebhookEvent');
+  assert.ok(helperIndex > -1);
+  assert.ok(recordIndex > helperIndex);
+  assert.ok(attemptUpdateIndex > helperIndex && attemptUpdateIndex < recordIndex);
+  assert.ok(orderUpdateIndex > helperIndex && orderUpdateIndex < recordIndex);
 
   console.log('payment-webhook-service.test.ts passed');
 }
