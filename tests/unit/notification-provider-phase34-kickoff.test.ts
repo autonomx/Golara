@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
+import { buildNotificationDeliveryPlan } from '../../lib/notifications/notification-delivery-contract';
+
 function source(path: string) {
   return readFileSync(path, 'utf8');
 }
@@ -22,6 +24,7 @@ function assertNoLiveDeliverySurface(pageSource: string) {
 
 export async function runNotificationProviderPhase34KickoffTests() {
   const kickoff = source('docs/production-roadmap-phase34-notification-providers.md');
+  const deliveryContract = source('lib/notifications/notification-delivery-contract.ts');
 
   assert.ok(kickoff.includes('Phase 34 Real Notification Provider Foundations'));
   assert.ok(kickoff.includes('no real email, SMS, or WhatsApp provider delivery is enabled'));
@@ -47,6 +50,43 @@ export async function runNotificationProviderPhase34KickoffTests() {
   assert.ok(kickoff.includes('Phase 35 owns durable outbound retry/worker behavior'));
   assert.ok(kickoff.includes('Phase 38 owns production operations and monitoring'));
   assertNoLiveDeliverySurface(kickoff);
+
+  assert.ok(deliveryContract.includes("NOTIFICATION_DELIVERY_CHANNELS = ['email', 'sms', 'whatsapp'] as const"));
+  assert.ok(deliveryContract.includes('liveDeliveryEnabled: false'));
+  assert.ok(deliveryContract.includes('provider_readiness_evidence_missing'));
+  assertNoLiveDeliverySurface(deliveryContract);
+
+  const plannedEmail = buildNotificationDeliveryPlan({
+    channel: 'email',
+    provider: 'log',
+    templateKey: ' order.confirmed ',
+    recipient: ' customer@example.com ',
+    providerReady: true
+  });
+  assert.equal(plannedEmail.status, 'planned');
+  assert.equal(plannedEmail.liveDeliveryEnabled, false);
+  assert.equal(plannedEmail.templateKey, 'order.confirmed');
+  assert.deepEqual(plannedEmail.reasons, []);
+
+  const manualSms = buildNotificationDeliveryPlan({
+    channel: 'sms',
+    provider: 'manual',
+    templateKey: 'fulfillment.ready',
+    recipient: '+15551234567'
+  });
+  assert.equal(manualSms.status, 'manual_review');
+  assert.deepEqual(manualSms.reasons, ['manual_provider_requires_operator_review']);
+
+  const blockedWhatsapp = buildNotificationDeliveryPlan({
+    channel: 'whatsapp',
+    provider: 'meta-whatsapp',
+    templateKey: '',
+    recipient: 'not-a-phone',
+    providerReady: false
+  });
+  assert.equal(blockedWhatsapp.status, 'blocked');
+  assert.equal(blockedWhatsapp.templateKey, 'notification-template-missing');
+  assert.deepEqual(blockedWhatsapp.reasons, ['whatsapp_recipient_missing_or_invalid', 'provider_readiness_evidence_missing']);
 
   console.log('notification-provider-phase34-kickoff.test.ts passed');
 }
