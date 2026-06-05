@@ -80,6 +80,19 @@ export async function runPaymentOperationHistoryViewTests() {
   assert.equal(view.rows[2].tone, 'warning');
   assert.equal(view.rows[2].referenceLabel, 'Provider reference pending');
 
+  const submittedView = buildPaymentOperationHistoryView([
+    record({ id: 'operation-submitted', status: 'submitted', providerStatus: 'processing' })
+  ]);
+  assert.deepEqual(submittedView.summaryRows, [
+    { label: 'Loaded records', value: '1' },
+    { label: 'Succeeded', value: '0' },
+    { label: 'Needs review', value: '1' },
+    { label: 'Retryable', value: '0' }
+  ]);
+  assert.equal(submittedView.rows[0].tone, 'warning');
+  assert.equal(submittedView.rows[0].statusLabel, 'Submitted');
+  assert.ok(submittedView.rows[0].detailRows.some((detail) => detail.label === 'Provider status' && detail.value === 'processing'));
+
   const fallbackView = buildPaymentOperationHistoryView([
     record({
       id: 'operation-fallbacks',
