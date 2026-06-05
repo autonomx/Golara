@@ -58,6 +58,7 @@ import { runOrderDiscountFlowTests } from './order-discount-flow.test';
 import { runOrderNotificationActionsFlowTests } from './order-notification-actions-flow.test';
 import { runOrderReturnRouteCoreTests } from './order-return-route-core.test';
 import { runOrderRevenueSummaryTests } from './order-revenue-summary.test';
+import { runOutboundWebhookAdminReadModelTests } from './outbound-webhook-admin-read-model.test';
 import { runOutboundWebhookDeliveryPlanTests } from './outbound-webhook-delivery-plan.test';
 import { runOtpRateLimitTests } from './otp-rate-limit.test';
 import { runPaymentAttemptTimelineFlowTests } from './payment-attempt-timeline-flow.test';
@@ -219,6 +220,7 @@ async function main() {
   await runNotificationProviderSettingsTests();
   await runWebhookConfigurationTests();
   await runOutboundWebhookDeliveryPlanTests();
+  await runOutboundWebhookAdminReadModelTests();
   await runWebhookEventLogTests();
   await runIntegrationAppRegistryTests();
   await runApiTokenManagementTests();
@@ -233,7 +235,7 @@ async function main() {
   await runPromotionValidityWindowsModelTests();
   await runPromotionUsageLimitsModelTests();
   await runPromotionEligibilityRulesModelTests();
-  await runPromotionOrderMinimumsModelTests();
+  await runPromotionOrderMinimumsTests();
   await runPromotionStoreCreditFoundationModelTests();
   await runPromotionAuditLogsModelTests();
   await runPromotionSchemaParityTests();
@@ -258,7 +260,7 @@ async function main() {
   await runFulfillmentShipmentRecordsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (129 files)');
+  console.log('unit tests passed (130 files)');
 }
 
 main().catch((error) => {
