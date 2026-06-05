@@ -165,7 +165,7 @@ export async function runOutboundWebhookDeliveryPlanTests() {
   assert.match(migrationNote, /does not make outbound delivery operational/);
 
   assert.match(modelAlignmentNote, /Prisma Model Alignment/);
-  assert.match(modelAlignmentNote, /model alignment planning, source coverage, and schema-update preflight only/);
+  assert.match(modelAlignmentNote, /model alignment planning, source coverage, schema-update preflight, and canonical model snippet contract only/);
   assert.match(modelAlignmentNote, /Expected Prisma model shape/);
   assert.match(modelAlignmentNote, /passive client mapping only/);
   assert.match(modelAlignmentNote, /`idempotencyKey` \| `String` \| Required and unique/);
@@ -178,6 +178,14 @@ export async function runOutboundWebhookDeliveryPlanTests() {
   assert.match(modelAlignmentNote, /@@index\(\[status, nextEligibleAttemptAt\]\)/);
   assert.match(modelAlignmentNote, /@@index\(\[createdAt\]\)/);
   assert.match(modelAlignmentNote, /Generated-client validation must run on the exact PR head/);
+  assert.match(modelAlignmentNote, /## Canonical passive model snippet/);
+  assert.match(modelAlignmentNote, /model OutboundWebhookDelivery \{/);
+  assert.match(modelAlignmentNote, /id\s+String\s+@id @default\(cuid\(\)\)/);
+  assert.match(modelAlignmentNote, /idempotencyKey\s+String\s+@unique/);
+  assert.match(modelAlignmentNote, /status\s+String\s+@default\("planned"\)/);
+  assert.match(modelAlignmentNote, /attemptCount\s+Int\s+@default\(0\)/);
+  assert.match(modelAlignmentNote, /nextEligibleAttemptAt DateTime\?/);
+  assert.match(modelAlignmentNote, /updatedAt\s+DateTime\s+@updatedAt/);
   assert.match(modelAlignmentNote, /## Schema update preflight/);
   assert.match(modelAlignmentNote, /Record the source schema blob SHA before editing/);
   assert.match(modelAlignmentNote, /Read the entire file in ordered chunks/);
@@ -187,7 +195,7 @@ export async function runOutboundWebhookDeliveryPlanTests() {
   assert.match(modelAlignmentNote, /schema diff contains only the intended additive model block/);
   assert.match(modelAlignmentNote, /Source guard expectations/);
   assert.match(modelAlignmentNote, /Add `model OutboundWebhookDelivery` to `prisma\/schema\.prisma`/);
-  assert.match(modelAlignmentNote, /repository\/service write paths/);
+  assert.match(modelAlignmentNote, /service write paths/);
   assert.match(modelAlignmentNote, /does not make outbound delivery operational/);
 
   assert.equal(schema.includes('model OutboundWebhookDelivery'), false);

@@ -1,6 +1,6 @@
 # Phase 35 Prisma Model Alignment
 
-Status: model alignment planning, source coverage, and schema-update preflight only; no Prisma schema model is added in this slice.
+Status: model alignment planning, source coverage, schema-update preflight, and canonical model snippet contract only; no Prisma schema model is added in this slice.
 
 Last updated: 2026-06-05
 
@@ -72,6 +72,36 @@ Expected schema indexes:
 
 Generated-client validation must run on the exact PR head before merging the future schema model slice. CI's `Generate Prisma client` step is enough evidence if it completes on the exact head.
 
+## Canonical passive model snippet
+
+The future schema model slice should insert exactly one passive model block equivalent to this snippet, adjusted only if the repository chooses a different reviewed id-default convention before implementation:
+
+```prisma
+model OutboundWebhookDelivery {
+  id                    String    @id @default(cuid())
+  configurationKey      String
+  eventType             String
+  eventRef              String
+  payloadDigest         String
+  idempotencyKey        String    @unique
+  status                String    @default("planned")
+  attemptCount          Int       @default(0)
+  lastOutcomeCategory   String?
+  nextEligibleAttemptAt DateTime?
+  lastResponseCode      Int?
+  deadLetterSummary     String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([configurationKey, status])
+  @@index([eventType, eventRef])
+  @@index([status, nextEligibleAttemptAt])
+  @@index([createdAt])
+}
+```
+
+The snippet is intentionally passive. It should not be paired with service writes, background processors, delivery execution, recovery controls, or live external calls.
+
 ## Schema update preflight
 
 The schema file is long enough that connector edits must not be made from a partial/truncated response. The actual Prisma model slice should only update `prisma/schema.prisma` after the full file has been reconstructed from complete, ordered chunks or another verified full-file source.
@@ -93,14 +123,14 @@ A future schema model PR should document that the `Generate Prisma client` job p
 
 Adding a Prisma model must not introduce:
 
-- repository/service write paths
-- dispatcher polling
-- retry execution
-- outbound HTTP delivery
-- signing runtime or secret reads
-- admin retry, cancel, replay, or force-send controls
+- service write paths
+- background processors
+- delivery execution
+- external calls
+- secret access
+- recovery controls
 - route handlers
-- live provider delivery
+- live provider behavior
 
 ## Source guard expectations
 
@@ -110,8 +140,8 @@ The source guard for the future schema model slice should verify both halves of 
 - `prisma/schema.prisma` contains `model OutboundWebhookDelivery`
 - the schema model contains `idempotencyKey`, `nextEligibleAttemptAt`, `deadLetterSummary`, and `attemptCount`
 - the schema model contains the expected unique/index declarations
-- no repository/service write path is added in the same slice
-- no dispatcher, scheduler, retry executor, target call, signing runtime, route handler, or admin recovery control is added in the same slice
+- no service write path is added in the same slice
+- no background processor, delivery executor, route handler, or recovery control is added in the same slice
 
 ## Follow-up implementation gate
 
@@ -121,7 +151,7 @@ The actual model-alignment slice should:
 2. Keep the existing SQL migration unchanged unless a correction is required.
 3. Run `npm run db:generate` or the CI `Generate Prisma client` step on the exact PR head.
 4. Keep source coverage verifying the model exists and runtime behavior remains deferred.
-5. Avoid repository/service write paths until a dedicated persistence-access slice.
+5. Avoid service write paths until a dedicated persistence-access slice.
 6. Confirm the schema diff is additive and limited to the passive model block.
 
 This note is intentionally planning-only and does not make outbound delivery operational.
