@@ -1,6 +1,6 @@
 # Phase 34 Real Notification Provider Foundations
 
-Status: provider-neutral/inert delivery contract added; no real email, SMS, or WhatsApp provider delivery is enabled.
+Status: provider-neutral/inert delivery contract and read-only readiness diagnostics added; no real email, SMS, or WhatsApp provider delivery is enabled.
 
 Last updated: 2026-06-05
 
@@ -25,6 +25,8 @@ This kickoff document defines the repo-side boundaries before implementation beg
 - Added a kickoff source guard and wired it into the aggregate unit runner.
 - Added `lib/notifications/notification-delivery-contract.ts` as an inert provider-neutral delivery planning helper. It covers email, SMS, and WhatsApp planning states, always returns `liveDeliveryEnabled: false`, and does not call providers.
 - Extended the kickoff source guard to behavior-test the inert delivery contract and preserve no fetch/default endpoint/admin-send-control boundaries.
+- Added `lib/notifications/notification-provider-readiness.ts` as a read-only readiness diagnostics helper. It reports provider/channel support, credential-source naming, sender verification evidence, template approval evidence, disabled/manual/provider-backed readiness states, and always keeps `liveDeliveryEnabled: false`.
+- Extended the Phase 34 source guard to behavior-test the readiness diagnostics and preserve the inert/no-live-provider boundary.
 
 ## Initial provider candidates
 
@@ -63,8 +65,8 @@ Before live delivery can be enabled, the following evidence must exist:
 
 ## Recommended next implementation slices
 
-1. Add readiness diagnostics that report credential-source names, sender verification status, template readiness, and live-delivery disabled state.
-2. Add documentation-only provider evidence template and smoke-test checklist.
+1. Add documentation-only provider evidence template.
+2. Add documentation-only notification smoke-test checklist.
 3. Add delivery-attempt persistence planning before any database migration or retry controls.
 4. Add inert/manual/log adapters that consume the delivery contract without live provider calls.
 5. Keep durable retry worker behavior deferred to Phase 35 unless explicitly scoped as a no-send planning contract.
