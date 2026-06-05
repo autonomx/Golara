@@ -113,6 +113,17 @@ export async function runOutboundWebhookDeliveryPlanTests() {
   assert.match(tracker, /This migration contract plan is not a database migration/);
   assert.match(tracker, /No migration directory, SQL file, schema model, generated client change, or persistence write path belongs in this slice/);
 
+  assert.match(tracker, /## Authenticity contract planning/);
+  assert.match(tracker, /Future canonical payload expectations/);
+  assert.match(tracker, /Future header contract/);
+  assert.match(tracker, /X-Golara-Timestamp/);
+  assert.match(tracker, /X-Golara-Payload-Digest/);
+  assert.match(tracker, /X-Golara-Signature/);
+  assert.match(tracker, /Future verification contract/);
+  assert.match(tracker, /Secret and rotation boundaries/);
+  assert.match(tracker, /Runtime deferral gates/);
+  assert.match(tracker, /without adding runtime signing/);
+
   assert.equal(schema.includes('model OutboundWebhookDelivery'), false);
   assert.equal(
     migrations.some(([path, content]) => /outbound[-_ ]?webhook[-_ ]?delivery/i.test(path) || /OutboundWebhookDelivery/.test(content)),
