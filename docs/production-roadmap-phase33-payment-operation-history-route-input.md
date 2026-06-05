@@ -45,6 +45,8 @@ The route-input test was first wired into `tests/unit/run-tests.ts` when the uni
 - route-core delegation to `normalizePaymentOperationHistoryRouteInput`
 - no route-core-owned `normalizeOrderId` or `normalizeLimit` functions
 
+A follow-up guard fix aligned this source-boundary coverage with the updated runner-count wording by checking that the route-input test was first wired into `tests/unit/run-tests.ts` and that the current unit runner count is `125 files`. That fix was documentation/test guard alignment only; it did not add execution paths.
+
 ## Safety boundaries
 
 This helper must remain read-only and must not add:
