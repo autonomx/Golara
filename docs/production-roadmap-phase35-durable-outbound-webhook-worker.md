@@ -25,7 +25,7 @@ This kickoff slice defines the safety boundary, record lifecycle, retry planning
 Do not add or enable these behaviors during the Phase 35 kickoff slices:
 
 - Outbound HTTP delivery to configured webhook targets.
-- Queue consumers, cron jobs, background loops, or automatic dispatchers.
+- Queue consumers, scheduled jobs, background loops, or automatic dispatchers.
 - Retry/backoff execution.
 - Payload signing runtime or direct secret reads.
 - Admin retry, cancel, replay, or force-send controls.
