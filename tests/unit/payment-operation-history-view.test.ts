@@ -93,6 +93,32 @@ export async function runPaymentOperationHistoryViewTests() {
   assert.equal(submittedView.rows[0].statusLabel, 'Submitted');
   assert.ok(submittedView.rows[0].detailRows.some((detail) => detail.label === 'Provider status' && detail.value === 'processing'));
 
+  const pendingView = buildPaymentOperationHistoryView([
+    record({ id: 'operation-pending', status: 'pending', retryable: false, providerStatus: null })
+  ]);
+  assert.deepEqual(pendingView.summaryRows, [
+    { label: 'Loaded records', value: '1' },
+    { label: 'Succeeded', value: '0' },
+    { label: 'Needs review', value: '0' },
+    { label: 'Retryable', value: '0' }
+  ]);
+  assert.equal(pendingView.rows[0].tone, 'neutral');
+  assert.equal(pendingView.rows[0].statusLabel, 'Pending');
+  assert.ok(pendingView.rows[0].detailRows.some((detail) => detail.label === 'Retryable' && detail.value === 'No'));
+
+  const retryablePendingView = buildPaymentOperationHistoryView([
+    record({ id: 'operation-retryable-pending', status: 'pending', retryable: true })
+  ]);
+  assert.deepEqual(retryablePendingView.summaryRows, [
+    { label: 'Loaded records', value: '1' },
+    { label: 'Succeeded', value: '0' },
+    { label: 'Needs review', value: '0' },
+    { label: 'Retryable', value: '1' }
+  ]);
+  assert.equal(retryablePendingView.rows[0].tone, 'neutral');
+  assert.equal(retryablePendingView.rows[0].statusLabel, 'Pending');
+  assert.ok(retryablePendingView.rows[0].detailRows.some((detail) => detail.label === 'Retryable' && detail.value === 'Yes'));
+
   const fallbackView = buildPaymentOperationHistoryView([
     record({
       id: 'operation-fallbacks',
