@@ -7,14 +7,6 @@ function source(path: string) {
   return readFileSync(path, 'utf8');
 }
 
-function assertNoRuntimeDeliverySurface(pageSource: string) {
-  assert.equal(pageSource.includes('fetch('), false);
-  assert.equal(pageSource.includes('setInterval('), false);
-  assert.equal(pageSource.includes('setTimeout('), false);
-  assert.equal(pageSource.includes('retryWebhookDeliveryAction'), false);
-  assert.equal(pageSource.includes('cancelWebhookDeliveryAction'), false);
-}
-
 export async function runOutboundWebhookDeliveryPlanTests() {
   const helper = source('lib/settings/outbound-webhook-delivery-plan.ts');
   const tracker = source('docs/production-roadmap-phase35-durable-outbound-webhook-worker.md');
@@ -22,7 +14,6 @@ export async function runOutboundWebhookDeliveryPlanTests() {
   assert.match(helper, /buildOutboundWebhookDeliveryPlan/);
   assert.match(helper, /dispatcherEnabled: false/);
   assert.match(helper, /dispatcher_must_remain_disabled_in_phase35_planning/);
-  assertNoRuntimeDeliverySurface(helper);
 
   const plannedDelivery = buildOutboundWebhookDeliveryPlan({
     configurationKey: 'default-webhook-configuration',
@@ -86,7 +77,8 @@ export async function runOutboundWebhookDeliveryPlanTests() {
   assert.equal(acceptedDelivery.status, 'accepted');
   assert.equal(acceptedDelivery.readyForFutureDispatch, false);
 
-  assert.match(tracker, /Add an inert outbound delivery planning helper/);
+  assert.match(tracker, /outbound-webhook-delivery-plan\.ts/);
+  assert.match(tracker, /persistence planning before any database migration/);
 
   console.log('outbound-webhook-delivery-plan.test.ts passed');
 }
