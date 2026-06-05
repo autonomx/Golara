@@ -38,6 +38,15 @@ export function AdminPaymentOperationHistoryPanel({ view }: { view: PaymentOpera
         ))}
       </div>
 
+      <dl className="mt-4 grid gap-3 md:grid-cols-3">
+        {view.facetLabels.map((facet) => (
+          <div key={facet.label} className="rounded-lg border border-stone-200 bg-white p-3">
+            <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">{facet.label}</dt>
+            <dd className="mt-2 break-words text-sm font-semibold text-stone-900">{facet.value}</dd>
+          </div>
+        ))}
+      </dl>
+
       {view.status === 'empty' ? (
         <div className="mt-5 rounded-lg border border-dashed border-stone-300 bg-stone-50 p-4 text-sm text-stone-600">
           No payment operation records have been persisted for this order. This read-only panel only displays rows after the target environment confirms the migration gate.
