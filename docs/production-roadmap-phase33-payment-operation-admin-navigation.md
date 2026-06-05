@@ -21,6 +21,7 @@ This note maps the read-only admin surfaces for Phase 33 refund, void, and payme
   - Read-only operation history view for a supplied order ID.
   - Reads persisted `PaymentOperationRecord` rows only when the target environment confirms the migration gate.
   - Shows migration-unconfirmed guidance otherwise.
+  - History/admin polish may add read-only filters, summaries, and empty-state copy, but must not add execution controls.
 - `/admin/payments/operations/preview`
   - Read-only static preview sample for refund/void planning.
   - Uses route-core preview normalization and view helpers without creating records or executing provider adapters.
@@ -31,6 +32,27 @@ This note maps the read-only admin surfaces for Phase 33 refund, void, and payme
 - Settlement may also link directly to provider readiness, history, and preview diagnostics for convenience.
 - Provider readiness, history, and preview pages should each link back to `/admin/payments/operations`.
 - Operation pages may link to each other when useful, but all links must remain plain navigation.
+
+## History/admin polish boundaries
+
+Approved read-only history improvements include:
+
+- clearer migration-unconfirmed empty states;
+- operator-facing summary rows for already persisted operation records;
+- display-only filtering labels based on existing query parameters;
+- status, retryability, provider, and order labels derived from already loaded records;
+- links back to read-only Phase 33 operation pages.
+
+History/admin polish must not introduce:
+
+- operation-record creation;
+- provider adapter execution;
+- refund or void submission;
+- order/payment mutation;
+- inventory/capacity release;
+- default HTTP clients;
+- live provider endpoint URLs;
+- execution buttons or click handlers.
 
 ## Safety boundaries
 
@@ -69,4 +91,5 @@ Source/unit guards should continue checking the navigation pages for:
 - no direct Prisma client/model use for operation records;
 - no live provider endpoint URLs;
 - no refund/void buttons or click handlers;
-- no order/payment mutation SQL.
+- no order/payment mutation SQL;
+- no history/admin polish language that implies execution is available.
