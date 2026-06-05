@@ -37,12 +37,44 @@ export type PaymentOperationProviderReadinessSummary = {
   providers: PaymentOperationProviderReadiness[];
 };
 
+export type PaymentOperationProviderEvidencePacketInput = {
+  provider: string;
+  endpointMappingConfirmed?: boolean;
+  liveValidationConfirmed?: boolean;
+  credentialEvidenceCaptured?: boolean;
+  idempotencyEvidenceCaptured?: boolean;
+  responseExampleCaptured?: boolean;
+  dashboardEvidenceCaptured?: boolean;
+};
+
+export type PaymentOperationProviderEvidencePacketValidation = {
+  provider: PaymentOperationAdapterProvider;
+  complete: boolean;
+  executionEnabled: false;
+  missing: string[];
+  warnings: string[];
+  checks: PaymentOperationProviderReadinessCheck[];
+};
+
 const PROVIDER_OPERATION_CREDENTIALS: Partial<Record<PaymentOperationAdapterProvider, string[]>> = {
   stripe: ['STRIPE_SECRET_KEY'],
   zarinpal: ['ZARINPAL_MERCHANT_ID']
 };
 
 const SUPPORTED_OPERATION_PROVIDERS = new Set<PaymentOperationAdapterProvider>(['stripe', 'zarinpal', 'manual']);
+
+const EVIDENCE_PACKET_REQUIREMENTS: Array<{
+  inputKey: keyof Omit<PaymentOperationProviderEvidencePacketInput, 'provider'>;
+  missingCode: string;
+  label: string;
+}> = [
+  { inputKey: 'endpointMappingConfirmed', missingCode: 'endpoint_mapping_evidence_missing', label: 'Endpoint mapping evidence' },
+  { inputKey: 'liveValidationConfirmed', missingCode: 'provider_validation_evidence_missing', label: 'Live/staging provider validation' },
+  { inputKey: 'credentialEvidenceCaptured', missingCode: 'credential_evidence_missing', label: 'Credential evidence' },
+  { inputKey: 'idempotencyEvidenceCaptured', missingCode: 'idempotency_evidence_missing', label: 'Idempotency evidence' },
+  { inputKey: 'responseExampleCaptured', missingCode: 'response_example_evidence_missing', label: 'Response examples' },
+  { inputKey: 'dashboardEvidenceCaptured', missingCode: 'dashboard_evidence_missing', label: 'Dashboard evidence' }
+];
 
 function hasEnv(env: Record<string, string | undefined>, key: string) {
   return Boolean(env[key]?.trim());
@@ -155,6 +187,61 @@ export function buildPaymentOperationProviderReadiness(input: PaymentOperationPr
     executionEnabled: false,
     blockers,
     warnings,
+    checks
+  };
+}
+
+export function validatePaymentOperationProviderEvidencePacket(input: PaymentOperationProviderEvidencePacketInput): PaymentOperationProviderEvidencePacketValidation {
+  const provider = normalizePaymentOperationAdapterProvider(input.provider);
+
+  if (!SUPPORTED_OPERATION_PROVIDERS.has(provider)) {
+    return {
+      provider,
+      complete: false,
+      executionEnabled: false,
+      missing: ['provider_operation_adapter_unavailable'],
+      warnings: [],
+      checks: [{
+        key: 'provider_supported',
+        label: 'Provider support',
+        status: 'missing',
+        detail: 'Evidence packets are not accepted for unsupported payment-operation providers.'
+      }]
+    };
+  }
+
+  if (provider === 'manual') {
+    return {
+      provider,
+      complete: false,
+      executionEnabled: false,
+      missing: [],
+      warnings: ['manual_provider_requires_operator_review'],
+      checks: [{
+        key: 'manual_review_required',
+        label: 'Manual review',
+        status: 'pending',
+        detail: 'Manual provider evidence remains operator-review only and does not enable live provider execution.'
+      }]
+    };
+  }
+
+  const checks = EVIDENCE_PACKET_REQUIREMENTS.map((requirement) => ({
+    key: requirement.missingCode,
+    label: requirement.label,
+    status: input[requirement.inputKey] === true ? 'ready' as const : 'missing' as const,
+    detail: input[requirement.inputKey] === true
+      ? `${requirement.label} is captured for operator review.`
+      : `${requirement.label} must be captured before future guarded execution is considered.`
+  }));
+  const missing = checks.filter((check) => check.status === 'missing').map((check) => check.key);
+
+  return {
+    provider,
+    complete: missing.length === 0,
+    executionEnabled: false,
+    missing,
+    warnings: [],
     checks
   };
 }
