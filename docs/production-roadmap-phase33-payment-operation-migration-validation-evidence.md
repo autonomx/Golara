@@ -4,7 +4,7 @@ Last updated: 2026-06-04
 
 This is a blank operator evidence template for validating the Phase 33 `PaymentOperationRecord` migration in a target environment. It does not claim that staging or production validation has been completed.
 
-Use this after applying and verifying `prisma/migrations/20260604200000_add_payment_operation_records/migration.sql` against the intended staging or production-like database. This evidence alone must not enable provider refund calls, provider void calls, order/payment mutation, inventory/capacity release, audit-log writes, or admin execution buttons.
+Use this after applying and verifying `prisma/migrations/20260604200000_add_payment_operation_records/migration.sql` against the intended staging or production-like database. This evidence alone must not enable provider refund calls, provider void calls, order/payment mutation, inventory/capacity release, audit-log writes, repository writes, service writes, or admin execution buttons.
 
 ## Validation scope
 
@@ -31,6 +31,24 @@ Do not mark this evidence complete until every item below has a concrete value, 
 - Migration confirmation flag remains disabled until verification is complete:
 - Rollback path to inquiry or assisted checkout is confirmed:
 - Operator sign-off is recorded below:
+
+## Migration evidence completeness check
+
+The read-only helper `validatePaymentOperationMigrationEvidence` can be used by future route-core or operator tooling to check whether this template has enough evidence fields for review. It is a completeness helper only. It does not enable repository writes, does not enable service writes, does not enable adapter execution, does not enable live refund/void execution, does not mutate order/payment state, does not release inventory/capacity, and always returns `executionEnabled: false`.
+
+Required completeness inputs:
+
+- deployed SHA captured;
+- migration application captured;
+- table verification captured;
+- foreign key verification captured;
+- idempotency index verification captured;
+- lookup index verification captured;
+- application read-access verification captured;
+- rollback confirmation captured;
+- operator sign-off captured.
+
+A complete evidence result is still not a go decision. It only means the migration evidence packet is ready for operator review.
 
 ## Migration command evidence
 
