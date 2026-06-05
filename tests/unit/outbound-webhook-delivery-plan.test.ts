@@ -24,6 +24,7 @@ export async function runOutboundWebhookDeliveryPlanTests() {
   const tracker = source('docs/production-roadmap-phase35-durable-outbound-webhook-worker.md');
   const migrationNote = source('docs/production-roadmap-phase35-outbound-delivery-migration.md');
   const modelAlignmentNote = source('docs/production-roadmap-phase35-prisma-model-alignment.md');
+  const adminVisibilityNote = source('docs/production-roadmap-phase35-admin-visibility.md');
   const schema = source('prisma/schema.prisma');
   const migrations = migrationFiles();
   const outboundDeliveryMigration = migrations.find(([path, content]) =>
@@ -204,6 +205,20 @@ export async function runOutboundWebhookDeliveryPlanTests() {
   assert.match(modelAlignmentNote, /Add `model OutboundWebhookDelivery` to `prisma\/schema\.prisma`/);
   assert.match(modelAlignmentNote, /service write paths/);
   assert.match(modelAlignmentNote, /does not make outbound delivery operational/);
+
+  assert.match(adminVisibilityNote, /Admin Visibility Planning/);
+  assert.match(adminVisibilityNote, /read-only visibility contract/);
+  assert.match(adminVisibilityNote, /Read-only list view contract/);
+  assert.match(adminVisibilityNote, /Detail view contract/);
+  assert.match(adminVisibilityNote, /Filtering and sorting/);
+  assert.match(adminVisibilityNote, /Redaction and safety rules/);
+  assert.match(adminVisibilityNote, /Deferred controls/);
+  assert.match(adminVisibilityNote, /payload digest only/);
+  assert.match(adminVisibilityNote, /safe outcome labels/);
+  assert.match(adminVisibilityNote, /recovery-control slice/);
+  assert.match(adminVisibilityNote, /raw payload bodies/);
+  assert.match(adminVisibilityNote, /raw provider response bodies/);
+  assert.match(adminVisibilityNote, /does not make outbound delivery operational/);
 
   assert.match(schema, /model AdminAuditLog \{/);
   assert.equal(schema.includes('model OutboundWebhookDelivery'), false);
