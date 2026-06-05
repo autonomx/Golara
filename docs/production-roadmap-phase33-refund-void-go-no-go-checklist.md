@@ -31,6 +31,7 @@ A future slice may move toward guarded execution only after all of the following
 - Idempotency request semantics are confirmed for retry behavior.
 - Success, rejected, retryable, and unknown response examples are captured.
 - Dashboard evidence is captured by operators.
+- Evidence-packet validation is complete for endpoint mapping, provider validation, credential-source, idempotency, response-example, and dashboard evidence.
 
 ### 3. Provider adapter readiness
 
@@ -106,4 +107,5 @@ Until every go criterion is satisfied, approved Phase 33 work remains limited to
 - migration/operator validation support;
 - adapter contracts and symbolic mappers;
 - route-core helpers without live execution;
+- read-only provider evidence-packet validation that only checks operator evidence completeness and keeps `executionEnabled: false`;
 - admin navigation that remains read-only.
