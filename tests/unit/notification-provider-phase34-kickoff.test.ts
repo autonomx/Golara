@@ -26,6 +26,9 @@ function assertNoLiveDeliverySurface(pageSource: string) {
 
 export async function runNotificationProviderPhase34KickoffTests() {
   const kickoff = source('docs/production-roadmap-phase34-notification-providers.md');
+  const evidenceTemplate = source('docs/production-roadmap-phase34-provider-readiness-evidence-example.md');
+  const smokeChecklist = source('docs/production-roadmap-phase34-notification-smoke-test-checklist.md');
+  const persistencePlan = source('docs/production-roadmap-phase34-delivery-attempt-persistence-planning.md');
   const deliveryContract = source('lib/notifications/notification-delivery-contract.ts');
   const providerReadiness = source('lib/notifications/notification-provider-readiness.ts');
   const deliveryAdapters = source('lib/notifications/notification-delivery-adapters.ts');
@@ -36,6 +39,7 @@ export async function runNotificationProviderPhase34KickoffTests() {
   assert.ok(kickoff.includes('email, SMS, and WhatsApp-style channels'));
   assert.ok(kickoff.includes('readiness diagnostics before any live provider calls'));
   assert.ok(kickoff.includes('delivery-attempt persistence planning'));
+  assert.ok(kickoff.includes('notification-delivery-adapters.ts'));
   assert.ok(kickoff.includes('Email: SMTP, Resend, SendGrid'));
   assert.ok(kickoff.includes('SMS: Twilio'));
   assert.ok(kickoff.includes('WhatsApp: Twilio WhatsApp, Meta WhatsApp Cloud API'));
@@ -54,6 +58,22 @@ export async function runNotificationProviderPhase34KickoffTests() {
   assert.ok(kickoff.includes('Phase 35 owns durable outbound retry/worker behavior'));
   assert.ok(kickoff.includes('Phase 38 owns production operations and monitoring'));
   assertNoLiveDeliverySurface(kickoff);
+
+  assert.ok(evidenceTemplate.includes('Provider Readiness Evidence Example'));
+  assert.ok(evidenceTemplate.includes('configuration source names only'));
+  assert.ok(evidenceTemplate.includes('Ready for live delivery enablement'));
+  assertNoLiveDeliverySurface(evidenceTemplate);
+
+  assert.ok(smokeChecklist.includes('Notification Smoke-Test Checklist'));
+  assert.ok(smokeChecklist.includes('operator-led notification provider smoke tests'));
+  assert.ok(smokeChecklist.includes('Ready for separate live enablement change'));
+  assertNoLiveDeliverySurface(smokeChecklist);
+
+  assert.ok(persistencePlan.includes('Delivery-Attempt Persistence Planning'));
+  assert.ok(persistencePlan.includes('no database migration, retry worker, admin retry control, or live provider delivery is enabled'));
+  assert.ok(persistencePlan.includes('Idempotency expectations'));
+  assert.ok(persistencePlan.includes('Relationship to Phase 35'));
+  assertNoLiveDeliverySurface(persistencePlan);
 
   assert.ok(deliveryContract.includes("NOTIFICATION_DELIVERY_CHANNELS = ['email', 'sms', 'whatsapp'] as const"));
   assert.ok(deliveryContract.includes('liveDeliveryEnabled: false'));
