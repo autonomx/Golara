@@ -1,6 +1,6 @@
 # Phase 35 Durable Outbound Webhook Worker
 
-Status: kickoff planning, inert outbound delivery planner, persistence planning, migration contract planning, authenticity contract planning, and source coverage added; no database migration, dispatcher, queue, retry loop, signing runtime, admin retry control, or live outbound webhook delivery is enabled.
+Status: kickoff planning, inert outbound delivery planner, persistence planning, migration contract planning, authenticity contract planning, retry/backoff policy planning, and source coverage added; no database migration, dispatcher, queue, retry loop, signing runtime, admin retry control, or live outbound webhook delivery is enabled.
 
 Last updated: 2026-06-05
 
@@ -29,6 +29,7 @@ This kickoff slice defines the safety boundary, record lifecycle, retry planning
 - Added persistence planning for the future durable delivery record, indexes, sensitive-data rules, and migration readiness gates without adding a database migration.
 - Added a migration contract plan that documents the future table, columns, constraints, indexes, rollback/readiness checks, and deferred runtime boundaries without adding a Prisma migration.
 - Added authenticity contract planning for future payload canonicalization, headers, secret-source labels, timestamp tolerance, verification documentation, and rotation expectations without adding runtime signing or secret reads.
+- Added retry/backoff policy planning for future maximum attempts, delay progression, jitter, retryable and terminal outcomes, idempotency preservation, dead-letter visibility, and operator visibility without adding retry execution.
 
 ## Safety boundaries
 
@@ -199,19 +200,48 @@ The future lifecycle should remain integration-neutral and safe for admin visibi
 - `dead_letter`: delivery reached terminal failure policy.
 - `failed`: delivery failed without further retry eligibility.
 
-## Retry and backoff planning
+## Retry/backoff policy planning
 
-Before retry execution is implemented, define these expectations:
+Retry and backoff planning remains documentation-only in this slice. Retry/backoff policy planning defines future delivery retry expectations but does not add retry execution, dispatcher polling, scheduled jobs, queue consumers, outbound HTTP calls, durable record mutation, admin recovery controls, or live target calls.
 
-1. Maximum attempt count.
-2. Initial delay and backoff multiplier.
-3. Jitter policy.
-4. Which outcome categories are retryable.
-5. Which outcome categories are terminal.
-6. How retries preserve idempotency.
-7. How dead-letter records become visible to admins.
+Future policy values should be reviewed before implementation:
 
-No retry execution belongs in this kickoff slice.
+| Policy item | Planning expectation |
+| --- | --- |
+| maximum attempt count | A small finite cap should be chosen before runtime work; the cap must include the first outbound attempt and all later retry attempts. |
+| initial delay | The first retry should wait a documented minimum interval after a retryable outcome instead of being immediately eligible. |
+| backoff multiplier | Later retry delays should grow predictably from the initial delay and should never bypass the maximum delay cap. |
+| maximum delay cap | Backoff must stop growing beyond a documented ceiling so stalled deliveries remain operator-visible. |
+| jitter strategy | Add bounded jitter to future eligibility calculations so many failed deliveries do not become eligible at the exact same instant. |
+| retryable outcome categories | Treat timeout, unavailable, transient network failures, and selected provider/server response categories as retryable only after they are mapped to safe outcome labels. |
+| terminal outcome categories | Treat accepted, cancelled, explicit non-retryable receiver rejection, exhausted attempts, and policy-blocked records as terminal. |
+| dead-letter transition | Move exhausted or policy-terminal failures to `dead_letter` with a safe `deadLetterSummary` for operator review. |
+
+Future retry state rules:
+
+- `attemptCount` records how many outbound attempts have happened; it remains zero until a dispatcher exists.
+- `nextEligibleAttemptAt` represents the earliest future retry eligibility time after a retryable outcome.
+- `nextEligibleAttemptAt` must be nullable for planned, accepted, cancelled, failed, and dead-letter records.
+- A retryable outcome should move the logical delivery into `retry_wait` only when another attempt remains under the maximum attempt count.
+- Exhausting the maximum attempt count should move the logical delivery to `dead_letter` or another documented terminal status, not continue retry eligibility.
+- Idempotency must be preserved across retries: the same logical delivery should keep the same `idempotencyKey`, `payloadDigest`, event type, and event ref unless a future reviewed replay contract explicitly creates a new logical delivery.
+- Retry decisions should use safe outcome categories and response codes, not raw provider response bodies.
+
+Operator visibility expectations:
+
+- Admin list views should be able to show status, `attemptCount`, `nextEligibleAttemptAt`, last safe outcome, and dead-letter summary after persistence exists.
+- Dead-letter records should be visible before any manual recovery control exists.
+- Manual recovery remains deferred until authorization, confirmation UX, idempotency, audit logging, and replay boundaries are covered in a separate slice.
+- Provider-specific documentation should explain which safe outcome labels are retryable or terminal before live delivery is enabled.
+
+Retry safety rules for this slice:
+
+- No retry execution is added here.
+- The dispatcher remains deferred.
+- No scheduler, queue consumer, or automatic background loop is added here.
+- No code mutates durable delivery records for retry state here.
+- No outbound HTTP delivery or live target call is added here.
+- No admin retry, cancel, replay, or force-send control is added here.
 
 ## Signing expectations
 
@@ -289,11 +319,10 @@ Admin retry/cancel controls should remain deferred until authorization, confirma
 
 ## Recommended next implementation slices
 
-1. Add retry/backoff policy planning without retry execution.
-2. Add the actual additive migration only after the migration contract is accepted.
-3. Add admin visibility before any retry/cancel/replay controls.
-4. Add runtime signing only after the authenticity contract is accepted.
-5. Add a dispatcher only after persistence, signing, retry policy, and admin recovery boundaries are in place.
+1. Add the actual additive migration only after the migration contract is accepted.
+2. Add admin visibility before any retry/cancel/replay controls.
+3. Add runtime signing only after the authenticity contract is accepted.
+4. Add a dispatcher only after persistence, signing, retry policy, and admin recovery boundaries are in place.
 
 ## Completion criteria for kickoff
 
@@ -304,7 +333,8 @@ This kickoff is complete when:
 - Persistence planning documents future fields, indexes, constraints, sensitive-data rules, and migration readiness gates.
 - Migration contract planning documents future table, column, constraint, index, rollout, and rollback expectations without adding a migration.
 - Authenticity contract planning documents future canonical payload, header, verification, secret-source, rotation, and runtime deferral expectations without adding runtime signing.
-- Retry/backoff, signing, and admin visibility expectations are documented.
+- Retry/backoff policy planning documents future maximum attempt count, initial delay, backoff multiplier, jitter, retryable outcome, terminal outcome, `nextEligibleAttemptAt`, idempotency, dead-letter, operator visibility, and deferral expectations without adding retry execution.
+- Signing and admin visibility expectations are documented.
 - Source coverage confirms the kickoff remains planning-only.
 
 This kickoff must not include a dispatcher, queue consumer, retry loop, signing runtime, admin retry/cancel control, database migration, or production-ready outbound delivery claim.

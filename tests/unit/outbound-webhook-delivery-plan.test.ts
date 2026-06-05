@@ -124,6 +124,22 @@ export async function runOutboundWebhookDeliveryPlanTests() {
   assert.match(tracker, /Runtime deferral gates/);
   assert.match(tracker, /without adding runtime signing/);
 
+  assert.match(tracker, /## Retry\/backoff policy planning/);
+  assert.match(tracker, /maximum attempt count/);
+  assert.match(tracker, /initial delay/);
+  assert.match(tracker, /backoff multiplier/);
+  assert.match(tracker, /maximum delay cap/);
+  assert.match(tracker, /jitter strategy/);
+  assert.match(tracker, /retryable outcome categories/);
+  assert.match(tracker, /terminal outcome categories/);
+  assert.match(tracker, /nextEligibleAttemptAt/);
+  assert.match(tracker, /attemptCount/);
+  assert.match(tracker, /Idempotency must be preserved across retries/);
+  assert.match(tracker, /Dead-letter records should be visible/);
+  assert.match(tracker, /Manual recovery remains deferred/);
+  assert.match(tracker, /No retry execution is added here/);
+  assert.match(tracker, /The dispatcher remains deferred/);
+
   assert.equal(schema.includes('model OutboundWebhookDelivery'), false);
   assert.equal(
     migrations.some(([path, content]) => /outbound[-_ ]?webhook[-_ ]?delivery/i.test(path) || /OutboundWebhookDelivery/.test(content)),
