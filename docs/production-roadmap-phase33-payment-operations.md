@@ -94,6 +94,7 @@ The refund/void persistence design remains documentation-only. Preview helpers m
 - Added `docs/production-roadmap-phase33-coverage-index.md` as a documentation-only index for recent Phase 33 coverage notes, marking the pending operation-history row behavior gap and source-guard follow-up as closed.
 - Extended `tests/unit/payment-operation-provider-readiness.test.ts` to source-guard the coverage index for documentation-only status, PR #275 source-guard history, closed follow-up wording, and no-execution/no-mutation boundaries.
 - Updated `docs/production-roadmap-phase33-coverage-index.md` to record the provider-readiness source guard and the Phase 33 tracker follow-up after PR #280.
+- Extended `tests/unit/payment-operation-provider-readiness.test.ts` to guard the PR #280/PR #281 coverage-index follow-up wording in the Phase 33 tracker and coverage index.
 
 ## Current helper behavior
 
