@@ -1,6 +1,6 @@
 # Phase 34 Real Notification Provider Foundations
 
-Status: provider-neutral/inert delivery contract, read-only readiness diagnostics, and provider evidence template added; no real email, SMS, or WhatsApp provider delivery is enabled.
+Status: provider-neutral/inert delivery contract, read-only readiness diagnostics, provider evidence template, and smoke-test checklist added; no real email, SMS, or WhatsApp provider delivery is enabled.
 
 Last updated: 2026-06-05
 
@@ -28,6 +28,7 @@ This kickoff document defines the repo-side boundaries before implementation beg
 - Added `lib/notifications/notification-provider-readiness.ts` as a read-only readiness diagnostics helper. It reports provider/channel support, credential-source naming, sender verification evidence, template approval evidence, disabled/manual/provider-backed readiness states, and always keeps `liveDeliveryEnabled: false`.
 - Extended the Phase 34 source guard to behavior-test the readiness diagnostics and preserve the inert/no-live-provider boundary.
 - Added `docs/production-roadmap-phase34-provider-readiness-evidence-example.md` as a documentation-only provider evidence template for operator-reviewed readiness records.
+- Added `docs/production-roadmap-phase34-notification-smoke-test-checklist.md` as a documentation-only checklist for operator-led notification smoke-test evidence.
 
 ## Initial provider candidates
 
@@ -66,10 +67,9 @@ Before live delivery can be enabled, the following evidence must exist:
 
 ## Recommended next implementation slices
 
-1. Add documentation-only notification smoke-test checklist.
-2. Add delivery-attempt persistence planning before any database migration or retry controls.
-3. Add inert/manual/log adapters that consume the delivery contract without live provider calls.
-4. Keep durable retry worker behavior deferred to Phase 35 unless explicitly scoped as a no-send planning contract.
+1. Add delivery-attempt persistence planning before any database migration or retry controls.
+2. Add inert/manual/log adapters that consume the delivery contract without live provider calls.
+3. Keep durable retry worker behavior deferred to Phase 35 unless explicitly scoped as a no-send planning contract.
 
 ## Relationship to later phases
 
