@@ -15,7 +15,7 @@ function migrationFiles(root = 'prisma/migrations') {
     .filter((entry) => entry.isDirectory())
     .flatMap((entry) => {
       const migrationPath = join(root, entry.name, 'migration.sql');
-      return existsSync(migrationPath) ? [migrationPath, source(migrationPath)] as const : [];
+      return existsSync(migrationPath) ? ([[migrationPath, source(migrationPath)] as const]) : [];
     });
 }
 
