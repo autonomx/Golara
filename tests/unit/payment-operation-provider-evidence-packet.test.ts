@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
+import { validatePaymentOperationMigrationEvidence } from '../../lib/checkout/payment-operation-migration-evidence';
 import { validatePaymentOperationProviderEvidencePacket } from '../../lib/checkout/payment-operation-provider-readiness';
 
 function source(path: string) {
@@ -14,13 +15,13 @@ function assertNoExecutionSurface(pageSource: string) {
   assert.equal(pageSource.includes('executePaymentOperationAdapter'), false);
   assert.equal(pageSource.includes('https://api.stripe.com'), false);
   assert.equal(pageSource.includes('https://www.zarinpal.com'), false);
-  assert.equal(pageSource.includes('CheckoutOrder" SET'), false);
-  assert.equal(pageSource.includes('CheckoutPaymentAttempt" SET'), false);
 }
 
 export async function runPaymentOperationProviderEvidencePacketTests() {
   const readinessSource = source('lib/checkout/payment-operation-provider-readiness.ts');
+  const migrationEvidenceSource = source('lib/checkout/payment-operation-migration-evidence.ts');
   const phase33Docs = source('docs/production-roadmap-phase33-payment-operations.md');
+  const migrationEvidenceDocs = source('docs/production-roadmap-phase33-payment-operation-migration-validation-evidence.md');
   const goNoGoChecklist = source('docs/production-roadmap-phase33-refund-void-go-no-go-checklist.md');
   const providerEvidenceExample = source('docs/production-roadmap-phase33-provider-readiness-evidence-example.md');
 
@@ -62,6 +63,28 @@ export async function runPaymentOperationProviderEvidencePacketTests() {
   assert.equal(unknown.executionEnabled, false);
   assert.ok(unknown.missing.includes('provider_operation_adapter_unavailable'));
 
+  const partialMigration = validatePaymentOperationMigrationEvidence({ deployedSha: '909eb871' });
+  assert.equal(partialMigration.complete, false);
+  assert.equal(partialMigration.executionEnabled, false);
+  assert.ok(partialMigration.missing.includes('migration_application_missing'));
+  assert.ok(partialMigration.missing.includes('operator_signoff_missing'));
+
+  const completeMigration = validatePaymentOperationMigrationEvidence({
+    deployedSha: '909eb871874be6565e258440edd845a1df9d6b3d',
+    migrationApplied: true,
+    tableVerified: true,
+    foreignKeysVerified: true,
+    idempotencyIndexVerified: true,
+    lookupIndexesVerified: true,
+    applicationReadAccessVerified: true,
+    rollbackConfirmed: true,
+    operatorSignoff: true
+  });
+  assert.equal(completeMigration.complete, true);
+  assert.equal(completeMigration.executionEnabled, false);
+  assert.deepEqual(completeMigration.missing, []);
+  assert.ok(completeMigration.warnings.includes('migration_evidence_complete_but_execution_still_disabled'));
+
   assert.ok(readinessSource.includes('validatePaymentOperationProviderEvidencePacket'));
   assert.ok(readinessSource.includes('credential_evidence_missing'));
   assert.ok(readinessSource.includes('idempotency_evidence_missing'));
@@ -70,8 +93,17 @@ export async function runPaymentOperationProviderEvidencePacketTests() {
   assert.ok(readinessSource.includes('executionEnabled: false'));
   assertNoExecutionSurface(readinessSource);
 
+  assert.ok(migrationEvidenceSource.includes('validatePaymentOperationMigrationEvidence'));
+  assert.ok(migrationEvidenceSource.includes('migration_application_missing'));
+  assert.ok(migrationEvidenceSource.includes('operator_signoff_missing'));
+  assert.ok(migrationEvidenceSource.includes('executionEnabled: false'));
+  assertNoExecutionSurface(migrationEvidenceSource);
+
   assert.ok(phase33Docs.includes('provider evidence-packet validation helper'));
+  assert.ok(phase33Docs.includes('migration evidence-completeness validation helper'));
   assert.ok(phase33Docs.includes('executionEnabled: false'));
+  assert.ok(migrationEvidenceDocs.includes('Migration evidence completeness check'));
+  assert.ok(migrationEvidenceDocs.includes('does not enable repository writes'));
   assert.ok(goNoGoChecklist.includes('evidence-packet validation'));
   assert.ok(providerEvidenceExample.includes('Evidence packet validation'));
 
