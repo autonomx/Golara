@@ -9,6 +9,7 @@ function source(path: string) {
 
 export async function runPaymentOperationHistoryRouteCoreTests() {
   const routeCoreSource = source('lib/checkout/payment-operation-history-route-core.ts');
+  const routeCoreDoc = source('docs/production-roadmap-phase33-payment-operation-history-route-core.md');
   assert.match(routeCoreSource, /normalizePaymentOperationHistoryRouteInput\(input\)/);
   assert.match(routeCoreSource, /status: 400/);
   assert.match(routeCoreSource, /payment_operation_records_migration_unconfirmed/);
@@ -20,6 +21,19 @@ export async function runPaymentOperationHistoryRouteCoreTests() {
   assert.doesNotMatch(routeCoreSource, /<button/);
   assert.doesNotMatch(routeCoreSource, /CheckoutOrder" SET/);
   assert.doesNotMatch(routeCoreSource, /CheckoutPaymentAttempt" SET/);
+
+  assert.match(routeCoreDoc, /Phase 33 Payment Operation History Route Core/);
+  assert.match(routeCoreDoc, /repo-side read-only route-core documentation/);
+  assert.match(routeCoreDoc, /status: 400/);
+  assert.match(routeCoreDoc, /status: 503/);
+  assert.match(routeCoreDoc, /payment_operation_records_migration_unconfirmed/);
+  assert.match(routeCoreDoc, /unit runner count is now `125 files`/);
+  assert.match(routeCoreDoc, /PAYMENT_OPERATION_RECORDS_MIGRATION_CONFIRMED=true/);
+  assert.match(routeCoreDoc, /does not enable execution/);
+  assert.doesNotMatch(routeCoreDoc, /https:\/\/api\.stripe\.com/);
+  assert.doesNotMatch(routeCoreDoc, /https:\/\/www\.zarinpal\.com/);
+  assert.doesNotMatch(routeCoreDoc, /fetch\(/);
+  assert.doesNotMatch(routeCoreDoc, /<button/);
 
   const invalid = await buildPaymentOperationHistoryRouteResult({ orderId: ' ', limit: 'abc', env: {} });
   assert.equal(invalid.status, 400);
