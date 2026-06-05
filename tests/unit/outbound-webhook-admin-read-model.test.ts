@@ -9,6 +9,10 @@ import {
   normalizeOutboundDeliveryAdminSort,
   type OutboundWebhookAdminRecordSnapshot
 } from '../../lib/settings/outbound-webhook-admin-read-model';
+import {
+  OUTBOUND_WEBHOOK_ADMIN_SAFE_FIELDS,
+  buildOutboundWebhookAdminReadQuerySpec
+} from '../../lib/settings/outbound-webhook-admin-read-query';
 
 const baseRecord: OutboundWebhookAdminRecordSnapshot = {
   id: 'delivery_123',
@@ -107,6 +111,42 @@ export async function runOutboundWebhookAdminReadModelTests() {
   assert.equal(envelope.hasNextPage, true);
   assert.equal(envelope.nextCursor, 'cursor-2');
   assert.equal(envelope.normalizedSortSummary.field, 'createdAt');
+
+  const querySpec = buildOutboundWebhookAdminReadQuerySpec({
+    filters: normalizeOutboundDeliveryAdminFilters({
+      status: 'retry_wait',
+      configurationKey: 'default-webhook-configuration',
+      eventType: 'order.created',
+      eventRef: 'order_123',
+      idempotencyKey: 'idem-123',
+      payloadDigest: 'sha256:abc',
+      createdFrom: '2026-06-01',
+      updatedTo: '2026-06-05T12:00:00.000Z'
+    }),
+    sort: normalizeOutboundDeliveryAdminSort({ field: 'updatedAt', direction: 'asc' }),
+    pagination: normalizeOutboundDeliveryAdminPagination({ pageSize: 10, cursor: ' cursor-1 ' })
+  });
+  assert.equal(querySpec.where.status, 'retry_wait');
+  assert.deepEqual(querySpec.where.createdAt, { gte: '2026-06-01T00:00:00.000Z' });
+  assert.deepEqual(querySpec.where.updatedAt, { lte: '2026-06-05T12:00:00.000Z' });
+  assert.deepEqual(querySpec.orderBy, { field: 'updatedAt', direction: 'asc' });
+  assert.equal(querySpec.take, 11);
+  assert.equal(querySpec.cursor, 'cursor-1');
+  assert.deepEqual(querySpec.auditLabels, ['filters:8', 'sort:updatedAt:asc', 'take:11', 'cursor:present']);
+  for (const field of OUTBOUND_WEBHOOK_ADMIN_SAFE_FIELDS) assert.equal(querySpec.select[field], true);
+  assert.equal(Object.prototype.hasOwnProperty.call(querySpec.select, 'rawPayload'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(querySpec.select, 'secretValue'), false);
+
+  const rejectedSpec = buildOutboundWebhookAdminReadQuerySpec({
+    filters: normalizeOutboundDeliveryAdminFilters({ status: 'unsupported', createdTo: 'bad-date' }),
+    sort: normalizeOutboundDeliveryAdminSort({ field: 'unsupported', direction: 'sideways' }),
+    pagination: normalizeOutboundDeliveryAdminPagination({ pageSize: 'large' })
+  });
+  assert.deepEqual(rejectedSpec.where, {});
+  assert.deepEqual(rejectedSpec.orderBy, { field: 'createdAt', direction: 'desc' });
+  assert.equal(rejectedSpec.take, 26);
+  assert.equal(rejectedSpec.cursor, null);
+  assert.deepEqual(rejectedSpec.rejected, ['status', 'createdTo', 'field', 'direction', 'pageSize']);
 
   console.log('outbound-webhook-admin-read-model.test.ts passed');
 }
