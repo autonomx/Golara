@@ -32,8 +32,22 @@ This example must remain free of:
 | Migration status | pending / confirmed separately | `PAYMENT_OPERATION_RECORDS_MIGRATION_CONFIRMED=true` must be verified separately before repository/service reads or writes are used. |
 | Endpoint mapping status | pending / confirmed separately | Confirmation belongs in the endpoint mapping worksheet, not in source code comments. |
 | Provider validation evidence | pending / attached separately | Attach dashboard screenshots, redacted logs, and operator notes in target-environment evidence storage. |
+| Evidence packet validation | pending / complete | Use `validatePaymentOperationProviderEvidencePacket` only as a read-only completeness check; it never enables execution. |
 | Execution enabled | false | Phase 33 diagnostics must keep `executionEnabled: false`. |
 | Current decision | NO-GO | Do not enable live refund/void execution from this example. |
+
+## Evidence packet validation fields
+
+The read-only evidence-packet validation helper requires all of the following for Stripe or ZarinPal packets before a packet is considered complete for review:
+
+- endpoint mapping evidence captured;
+- live/staging provider validation captured;
+- credential-source evidence captured without secret values;
+- idempotency evidence captured;
+- provider response examples captured;
+- dashboard evidence captured without secrets.
+
+A complete evidence packet still reports `executionEnabled: false`. Manual provider packets remain operator-review only, and unsupported provider packets remain unavailable.
 
 ## Stripe evidence example
 
