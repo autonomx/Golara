@@ -2,6 +2,21 @@ import type { PaymentOperationRecordRow } from './payment-operation-record-repos
 
 export type PaymentOperationHistoryTone = 'neutral' | 'success' | 'warning' | 'danger';
 
+export type PaymentOperationHistorySummaryRow = {
+  label: string;
+  value: string;
+};
+
+export type PaymentOperationHistoryFilterLabel = {
+  label: string;
+  value: string;
+};
+
+export type PaymentOperationHistoryViewOptions = {
+  orderId?: string | null;
+  limit?: number | null;
+};
+
 export type PaymentOperationHistoryRow = {
   id: string;
   title: string;
@@ -21,6 +36,8 @@ export type PaymentOperationHistoryView = {
   status: 'empty' | 'ready';
   heading: string;
   summary: string;
+  summaryRows: PaymentOperationHistorySummaryRow[];
+  filterLabels: PaymentOperationHistoryFilterLabel[];
   rows: PaymentOperationHistoryRow[];
 };
 
@@ -55,6 +72,28 @@ function requestedBy(record: PaymentOperationRecordRow) {
   return label(record.operatorLabel ?? record.operatorEmail ?? record.operatorId, 'Operator not recorded');
 }
 
+function countWhere(records: PaymentOperationRecordRow[], predicate: (record: PaymentOperationRecordRow) => boolean) {
+  return records.filter(predicate).length;
+}
+
+function buildSummaryRows(records: PaymentOperationRecordRow[]): PaymentOperationHistorySummaryRow[] {
+  const reviewCount = countWhere(records, (record) => record.status === 'manual_review' || record.status === 'submitted');
+  return [
+    { label: 'Loaded records', value: String(records.length) },
+    { label: 'Succeeded', value: String(countWhere(records, (record) => record.status === 'succeeded')) },
+    { label: 'Needs review', value: String(reviewCount) },
+    { label: 'Retryable', value: String(countWhere(records, (record) => record.retryable)) }
+  ];
+}
+
+function buildFilterLabels(options: PaymentOperationHistoryViewOptions): PaymentOperationHistoryFilterLabel[] {
+  return [
+    { label: 'Order filter', value: label(options.orderId, 'No order selected') },
+    { label: 'Display limit', value: options.limit ? `Latest ${options.limit}` : 'Default latest records' },
+    { label: 'Mode', value: 'Read-only history review' }
+  ];
+}
+
 export function buildPaymentOperationHistoryRow(record: PaymentOperationRecordRow): PaymentOperationHistoryRow {
   const title = `${titleCase(record.operationKind)} ${money(record.requestedAmountCents, record.currency)}`;
   return {
@@ -82,14 +121,19 @@ export function buildPaymentOperationHistoryRow(record: PaymentOperationRecordRo
   };
 }
 
-export function buildPaymentOperationHistoryView(records: PaymentOperationRecordRow[]): PaymentOperationHistoryView {
+export function buildPaymentOperationHistoryView(
+  records: PaymentOperationRecordRow[],
+  options: PaymentOperationHistoryViewOptions = {}
+): PaymentOperationHistoryView {
   const rows = records.map(buildPaymentOperationHistoryRow);
   return {
     status: rows.length > 0 ? 'ready' : 'empty',
     heading: 'Payment operation history',
     summary: rows.length > 0
       ? 'Read-only refund and void operation records for operator review. This view does not execute provider operations.'
-      : 'No payment operation records are available for this order yet.',
+      : 'No payment operation records are available for this order yet. Confirm the migration gate before expecting persisted history rows.',
+    summaryRows: buildSummaryRows(records),
+    filterLabels: buildFilterLabels(options),
     rows
   };
 }
