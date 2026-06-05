@@ -15,15 +15,19 @@ function migrationFiles(root = 'prisma/migrations') {
     .filter((entry) => entry.isDirectory())
     .flatMap((entry) => {
       const migrationPath = join(root, entry.name, 'migration.sql');
-      return existsSync(migrationPath) ? [migrationPath] : [];
+      return existsSync(migrationPath) ? [migrationPath, source(migrationPath)] as const : [];
     });
 }
 
 export async function runOutboundWebhookDeliveryPlanTests() {
   const helper = source('lib/settings/outbound-webhook-delivery-plan.ts');
   const tracker = source('docs/production-roadmap-phase35-durable-outbound-webhook-worker.md');
+  const migrationNote = source('docs/production-roadmap-phase35-outbound-delivery-migration.md');
   const schema = source('prisma/schema.prisma');
-  const migrations = migrationFiles().map((path) => [path, source(path)] as const);
+  const migrations = migrationFiles();
+  const outboundDeliveryMigration = migrations.find(([path, content]) =>
+    path.includes('add_outbound_webhook_delivery') && content.includes('OutboundWebhookDelivery')
+  );
 
   assert.match(helper, /buildOutboundWebhookDeliveryPlan/);
   assert.match(helper, /dispatcherEnabled: false/);
@@ -140,12 +144,29 @@ export async function runOutboundWebhookDeliveryPlanTests() {
   assert.match(tracker, /No retry execution is added here/);
   assert.match(tracker, /The dispatcher remains deferred/);
 
+  assert.ok(outboundDeliveryMigration);
+  assert.match(outboundDeliveryMigration[1], /CREATE TABLE IF NOT EXISTS "OutboundWebhookDelivery"/);
+  assert.match(outboundDeliveryMigration[1], /"configurationKey" TEXT NOT NULL/);
+  assert.match(outboundDeliveryMigration[1], /"eventType" TEXT NOT NULL/);
+  assert.match(outboundDeliveryMigration[1], /"eventRef" TEXT NOT NULL/);
+  assert.match(outboundDeliveryMigration[1], /"payloadDigest" TEXT NOT NULL/);
+  assert.match(outboundDeliveryMigration[1], /"idempotencyKey" TEXT NOT NULL/);
+  assert.match(outboundDeliveryMigration[1], /"attemptCount" INTEGER NOT NULL DEFAULT 0/);
+  assert.match(outboundDeliveryMigration[1], /"nextEligibleAttemptAt" TIMESTAMP\(3\)/);
+  assert.match(outboundDeliveryMigration[1], /"deadLetterSummary" TEXT/);
+  assert.match(outboundDeliveryMigration[1], /OutboundWebhookDelivery_idempotencyKey_key/);
+  assert.match(outboundDeliveryMigration[1], /OutboundWebhookDelivery_status_nextEligibleAttemptAt_idx/);
+  assert.match(outboundDeliveryMigration[1], /OutboundWebhookDelivery_attemptCount_nonnegative_check/);
+  assert.match(outboundDeliveryMigration[1], /OutboundWebhookDelivery_status_check/);
+
+  assert.match(migrationNote, /additive migration slice/);
+  assert.match(migrationNote, /repository\/service write path/);
+  assert.match(migrationNote, /does not make outbound delivery operational/);
+
   assert.equal(schema.includes('model OutboundWebhookDelivery'), false);
-  assert.equal(
-    migrations.some(([path, content]) => /outbound[-_ ]?webhook[-_ ]?delivery/i.test(path) || /OutboundWebhookDelivery/.test(content)),
-    false
-  );
-  assert.equal(migrations.some(([, content]) => /CREATE TABLE[^;]+OutboundWebhookDelivery/s.test(content)), false);
+  assert.equal(helper.includes('fetch('), false);
+  assert.equal(helper.includes('setInterval'), false);
+  assert.equal(helper.includes('crypto'), false);
 
   console.log('outbound-webhook-delivery-plan.test.ts passed');
 }
