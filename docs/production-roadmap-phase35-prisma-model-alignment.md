@@ -1,6 +1,6 @@
 # Phase 35 Prisma Model Alignment
 
-Status: model alignment planning and source coverage only; no Prisma schema model is added in this slice.
+Status: model alignment planning, source coverage, and schema-update preflight only; no Prisma schema model is added in this slice.
 
 Last updated: 2026-06-05
 
@@ -72,6 +72,23 @@ Expected schema indexes:
 
 Generated-client validation must run on the exact PR head before merging the future schema model slice. CI's `Generate Prisma client` step is enough evidence if it completes on the exact head.
 
+## Schema update preflight
+
+The schema file is long enough that connector edits must not be made from a partial/truncated response. The actual Prisma model slice should only update `prisma/schema.prisma` after the full file has been reconstructed from complete, ordered chunks or another verified full-file source.
+
+Preflight rules for the future schema model slice:
+
+- Record the source schema blob SHA before editing.
+- Read the entire file in ordered chunks and confirm the final chunk reaches the end of `schema.prisma`.
+- Preserve all existing models, generators, datasource configuration, relations, indexes, and formatting outside the new passive model block.
+- Insert only one `model OutboundWebhookDelivery` block.
+- Do not alter the existing outbound delivery migration SQL unless the PR explicitly documents a migration correction.
+- After the schema update, inspect the PR diff and confirm the schema diff contains only the intended additive model block.
+- Treat any truncated schema read as a blocker and switch back to documentation/source-guard work rather than replacing the schema.
+- Use exact-head GitHub Actions as the source of truth for generated-client validation.
+
+A future schema model PR should document that the `Generate Prisma client` job passed on the exact PR head before merging.
+
 ## Runtime boundary
 
 Adding a Prisma model must not introduce:
@@ -105,5 +122,6 @@ The actual model-alignment slice should:
 3. Run `npm run db:generate` or the CI `Generate Prisma client` step on the exact PR head.
 4. Keep source coverage verifying the model exists and runtime behavior remains deferred.
 5. Avoid repository/service write paths until a dedicated persistence-access slice.
+6. Confirm the schema diff is additive and limited to the passive model block.
 
 This note is intentionally planning-only and does not make outbound delivery operational.
