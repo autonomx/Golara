@@ -253,6 +253,15 @@ export async function runOutboundWebhookDeliveryPlanTests() {
   assert.match(adminReadModelNote, /raw payload/);
   assert.match(adminReadModelNote, /secret values/);
   assert.match(adminReadModelNote, /implementation deferral/i);
+  assert.match(adminReadModelNote, /Pure helper contract planning/);
+  assert.match(adminReadModelNote, /normalizeOutboundDeliveryAdminFilters/);
+  assert.match(adminReadModelNote, /buildOutboundDeliveryListItemDto/);
+  assert.match(adminReadModelNote, /deterministic outputs/);
+  assert.match(adminReadModelNote, /no Prisma imports/);
+  assert.match(adminReadModelNote, /no repository access/);
+  assert.match(adminReadModelNote, /no route handler dependency/);
+  assert.match(adminReadModelNote, /no UI dependency/);
+  assert.match(adminReadModelNote, /redaction audit labels/);
   assert.match(adminReadModelNote, /does not make outbound delivery operational/);
 
   assert.match(schema, /model AdminAuditLog \{/);
