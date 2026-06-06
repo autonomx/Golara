@@ -178,13 +178,14 @@ export async function runPaymentOperationRecordRepositoryTests() {
     currency: ' irr ',
     metadata: { dropped: undefined, bool: false }
   });
+  const fallbackMetadata = fallbackEntityAudit.metadata as Record<string, unknown>;
   assert.equal(fallbackEntityAudit.action, 'payment_operation.record.failed');
   assert.equal(fallbackEntityAudit.entityId, 'order_456');
-  assert.equal(fallbackEntityAudit.metadata.currency, 'IRR');
-  assert.deepEqual(fallbackEntityAudit.metadata.previewReasons, []);
-  assert.deepEqual(fallbackEntityAudit.metadata.conflicts, []);
-  assert.equal((fallbackEntityAudit.metadata as Record<string, unknown>).dropped, undefined);
-  assert.equal((fallbackEntityAudit.metadata as Record<string, unknown>).bool, false);
+  assert.equal(fallbackMetadata.currency, 'IRR');
+  assert.deepEqual(fallbackMetadata.previewReasons, []);
+  assert.deepEqual(fallbackMetadata.conflicts, []);
+  assert.equal(fallbackMetadata.dropped, undefined);
+  assert.equal(fallbackMetadata.bool, false);
 
   assert.equal(paymentOperationRecordService.createPending, createPendingPaymentOperationRecordIfConfirmed);
   assert.equal(paymentOperationRecordService.markSubmitted, markPaymentOperationRecordSubmittedIfConfirmed);
