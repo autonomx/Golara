@@ -94,6 +94,7 @@ function runSuite() {
   mkdirSync(v8Dir, { recursive: true });
 
   const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+  // Coverage wraps the same suite as npm run test:all.
   const result = spawnSync(npm, ['run', 'test:all'], {
     cwd: root,
     env: { ...process.env, NODE_V8_COVERAGE: v8Dir },
