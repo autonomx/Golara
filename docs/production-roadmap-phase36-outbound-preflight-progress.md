@@ -18,10 +18,15 @@ Status: Phase 36 outbound-delivery preflight foundations are in progress. This d
 - PR 337: route-core and admin read-only preflight.
 - PR 338: signing and recovery preflight.
 - PR 339: outbound preflight progress tracker and guard.
+- PR 340: preflight summary helper and guard.
 
 ## Summary coverage
 
-The current helper coverage now spans storage boundary, read contract, admin visibility, model alignment, read adapter, route-core, read-only admin visibility, signing, recovery, and progress tracking checkpoints.
+The current helper coverage now spans storage boundary, read contract, admin visibility, model alignment, read adapter, route-core, read-only admin visibility, signing, recovery, progress tracking, and preflight summary checkpoints.
+
+## Handoff criteria
+
+The preflight handoff is ready when this tracker lists PR 326 through PR 340, the summary helper reports runtime disabled, and guard coverage keeps the preflight-only boundary visible.
 
 ## Current boundary
 
@@ -29,4 +34,4 @@ The current Phase 36 outbound work remains preflight-only. The merged helpers an
 
 ## Next safe work
 
-Continue with compact contract and guard slices until the storage/model/read adapter path is ready for an explicit implementation PR. Do not bundle implementation of persistence, route behavior, signing runtime, recovery actions, background processing, and external delivery into one change.
+Continue with compact planning and guard slices. Do not bundle implementation of persistence, route behavior, signing runtime, recovery actions, background processing, and external delivery into one change.
