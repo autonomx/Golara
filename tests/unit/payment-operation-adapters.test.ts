@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import {
   buildStripePaymentOperationRequest,
   buildZarinPalPaymentOperationRequest,
+  createManualReviewPaymentOperationAdapter,
   createMockPaymentOperationAdapter,
   createMockPaymentOperationAdapters,
   createStripePaymentOperationHttpAdapter,
@@ -40,6 +41,7 @@ export async function runPaymentOperationAdaptersTests() {
   assert.equal(normalizePaymentOperationAdapterProvider(' Stripe '), 'stripe');
   assert.equal(normalizePaymentOperationAdapterProvider('zarin-pal'), 'zarinpal');
   assert.equal(normalizePaymentOperationAdapterProvider('assisted'), 'manual');
+  assert.equal(normalizePaymentOperationAdapterProvider('inquiry'), 'manual');
   assert.equal(normalizePaymentOperationAdapterProvider('other'), 'unknown');
 
   const stripe = createMockPaymentOperationAdapter('stripe');
@@ -65,11 +67,18 @@ export async function runPaymentOperationAdaptersTests() {
   assert.equal(manualResult.status, 'manual_review');
   assert.equal(manualResult.providerStatus, 'manual_review_required');
 
-  const unavailable = createUnavailablePaymentOperationAdapter('unknown');
+  const explicitManual = await createManualReviewPaymentOperationAdapter().execute(operation);
+  assert.equal(explicitManual.provider, 'manual');
+  assert.equal(explicitManual.status, 'manual_review');
+  assert.equal(explicitManual.providerOperationReference, 'manual:refund:op_123');
+  assert.equal(explicitManual.metadata.reason, 'Customer request');
+
+  const unavailable = createUnavailablePaymentOperationAdapter('unknown', 'Custom unavailable message.');
   const unavailableResult = await unavailable.execute(operation);
   assert.equal(unavailableResult.provider, 'unknown');
   assert.equal(unavailableResult.status, 'unavailable');
   assert.equal(unavailableResult.errorCategory, 'provider_operation_not_configured');
+  assert.equal(unavailableResult.message, 'Custom unavailable message.');
 
   const adapters = createMockPaymentOperationAdapters();
   const routed = await executePaymentOperationAdapter({ provider: 'zarinpal', operation, adapters });
@@ -84,15 +93,22 @@ export async function runPaymentOperationAdaptersTests() {
   assert.equal('status' in missingStripeCredentials && missingStripeCredentials.status, 'unavailable');
   assert.equal('errorCategory' in missingStripeCredentials && missingStripeCredentials.errorCategory, 'provider_credentials_missing');
 
+  const missingStripeReference = buildStripePaymentOperationRequest({ ...operation, providerReference: '   ' }, 'configured-secret');
+  assert.equal('status' in missingStripeReference && missingStripeReference.status, 'failed');
+  assert.equal('errorCategory' in missingStripeReference && missingStripeReference.errorCategory, 'provider_reference_required');
+  assert.equal('retryable' in missingStripeReference && missingStripeReference.retryable, false);
+
   const stripeRequest = buildStripePaymentOperationRequest(operation, 'configured-secret');
   assert.equal('method' in stripeRequest && stripeRequest.method, 'POST');
   assert.equal('endpoint' in stripeRequest && stripeRequest.endpoint, 'stripe.refunds.create');
   assert.ok('body' in stripeRequest && stripeRequest.body.includes('payment_intent=pi_123'));
   assert.ok('body' in stripeRequest && stripeRequest.body.includes('amount=4200'));
+  assert.ok('body' in stripeRequest && stripeRequest.body.includes('metadata%5Bgolara_reason%5D=Customer+request'));
   assert.equal('headers' in stripeRequest && stripeRequest.headers['Idempotency-Key'], 'payment-operation:op_123');
 
   const stripeVoidRequest = buildStripePaymentOperationRequest({ ...operation, operationKind: 'void' }, 'configured-secret');
   assert.equal('endpoint' in stripeVoidRequest && stripeVoidRequest.endpoint, 'stripe.payment_intents.cancel');
+  assert.equal('body' in stripeVoidRequest && stripeVoidRequest.body.includes('payment_intent='), false);
 
   const stripeSuccess = normalizeStripePaymentOperationResponse(operation, { ok: true, status: 200, body: { id: 're_123', status: 'succeeded' } });
   assert.equal(stripeSuccess.status, 'succeeded');
@@ -104,10 +120,23 @@ export async function runPaymentOperationAdaptersTests() {
   assert.equal(stripeRetryable.status, 'failed');
   assert.equal(stripeRetryable.errorCategory, 'provider_retryable_error');
   assert.equal(stripeRetryable.retryable, true);
+  assert.equal(stripeRetryable.message, 'Temporarily unavailable');
+
+  const stripeRejectedFallback = normalizeStripePaymentOperationResponse(operation, { ok: false, status: 402, body: { status: 'requires_action' } });
+  assert.equal(stripeRejectedFallback.status, 'failed');
+  assert.equal(stripeRejectedFallback.errorCategory, 'provider_rejected_operation');
+  assert.equal(stripeRejectedFallback.providerStatus, 'requires_action');
+  assert.equal(stripeRejectedFallback.retryable, false);
+  assert.equal(stripeRejectedFallback.message, 'Stripe returned HTTP 402.');
 
   const missingZarinPalCredentials = buildZarinPalPaymentOperationRequest(operation);
   assert.equal('status' in missingZarinPalCredentials && missingZarinPalCredentials.status, 'unavailable');
   assert.equal('errorCategory' in missingZarinPalCredentials && missingZarinPalCredentials.errorCategory, 'provider_credentials_missing');
+
+  const missingZarinPalReference = buildZarinPalPaymentOperationRequest({ ...operation, providerReference: '' }, 'merchant-123');
+  assert.equal('status' in missingZarinPalReference && missingZarinPalReference.status, 'failed');
+  assert.equal('errorCategory' in missingZarinPalReference && missingZarinPalReference.errorCategory, 'provider_reference_required');
+  assert.equal('retryable' in missingZarinPalReference && missingZarinPalReference.retryable, false);
 
   const zarinpalRequest = buildZarinPalPaymentOperationRequest(operation, 'merchant-123');
   assert.equal('method' in zarinpalRequest && zarinpalRequest.method, 'POST');
@@ -116,8 +145,9 @@ export async function runPaymentOperationAdaptersTests() {
   assert.ok('body' in zarinpalRequest && zarinpalRequest.body.includes('pi_123'));
   assert.equal('headers' in zarinpalRequest && zarinpalRequest.headers['Idempotency-Key'], 'payment-operation:op_123');
 
-  const zarinpalVoidRequest = buildZarinPalPaymentOperationRequest({ ...operation, operationKind: 'void' }, 'merchant-123');
+  const zarinpalVoidRequest = buildZarinPalPaymentOperationRequest({ ...operation, operationKind: 'void', reason: '  ' }, 'merchant-123');
   assert.equal('endpoint' in zarinpalVoidRequest && zarinpalVoidRequest.endpoint, 'zarinpal.payment.reverse');
+  assert.ok('body' in zarinpalVoidRequest && zarinpalVoidRequest.body.includes('Golara void op_123'));
 
   const zarinpalSuccess = normalizeZarinPalPaymentOperationResponse(operation, { ok: true, status: 200, body: { data: { ref_id: 'zp_ref_123', code: 100 } } });
   assert.equal(zarinpalSuccess.status, 'succeeded');
@@ -125,10 +155,27 @@ export async function runPaymentOperationAdaptersTests() {
   assert.equal(zarinpalSuccess.providerStatus, '100');
   assert.equal(zarinpalSuccess.retryable, false);
 
+  const zarinpalAlreadySettled = normalizeZarinPalPaymentOperationResponse(operation, { ok: true, status: 200, body: { data: { refId: 'zp_ref_101', code: 101 } } });
+  assert.equal(zarinpalAlreadySettled.status, 'succeeded');
+  assert.equal(zarinpalAlreadySettled.providerOperationReference, 'zp_ref_101');
+  assert.equal(zarinpalAlreadySettled.providerStatus, '101');
+
+  const zarinpalOkStatus = normalizeZarinPalPaymentOperationResponse(operation, { ok: true, status: 200, body: { data: { authority: 'zp_auth_123', status: 'ok' } } });
+  assert.equal(zarinpalOkStatus.status, 'succeeded');
+  assert.equal(zarinpalOkStatus.providerOperationReference, 'zp_auth_123');
+  assert.equal(zarinpalOkStatus.providerStatus, 'ok');
+
   const zarinpalRejected = normalizeZarinPalPaymentOperationResponse(operation, { ok: false, status: 400, body: { message: 'Rejected' } });
   assert.equal(zarinpalRejected.status, 'failed');
   assert.equal(zarinpalRejected.errorCategory, 'provider_rejected_operation');
   assert.equal(zarinpalRejected.retryable, false);
+  assert.equal(zarinpalRejected.message, 'Rejected');
+
+  const zarinpalRetryableFallback = normalizeZarinPalPaymentOperationResponse(operation, { ok: false, status: 502, body: null });
+  assert.equal(zarinpalRetryableFallback.status, 'failed');
+  assert.equal(zarinpalRetryableFallback.errorCategory, 'provider_retryable_error');
+  assert.equal(zarinpalRetryableFallback.retryable, true);
+  assert.equal(zarinpalRetryableFallback.message, 'ZarinPal returned HTTP 502.');
 
   const stripeHttpMissing = await createStripePaymentOperationHttpAdapter({ secretKey: 'configured-secret' }).execute(operation);
   assert.equal(stripeHttpMissing.status, 'unavailable');
@@ -148,6 +195,10 @@ export async function runPaymentOperationAdaptersTests() {
   assert.equal(stripeHttpRequests.length, 1);
   assert.equal(stripeHttpRequests[0].endpoint, 'stripe.refunds.create');
 
+  const stripeHttpNoCredentials = await createStripePaymentOperationHttpAdapter({ httpClient: async () => ({ ok: true, status: 200, body: { id: 'unused' } }) }).execute(operation);
+  assert.equal(stripeHttpNoCredentials.status, 'unavailable');
+  assert.equal(stripeHttpNoCredentials.errorCategory, 'provider_credentials_missing');
+
   const zarinpalHttpMissing = await createZarinPalPaymentOperationHttpAdapter({ merchantId: 'merchant-123' }).execute(operation);
   assert.equal(zarinpalHttpMissing.status, 'unavailable');
   assert.equal(zarinpalHttpMissing.errorCategory, 'provider_http_client_missing');
@@ -165,6 +216,10 @@ export async function runPaymentOperationAdaptersTests() {
   assert.equal(zarinpalHttpResult.providerOperationReference, 'zp_http_123');
   assert.equal(zarinpalHttpRequests.length, 1);
   assert.equal(zarinpalHttpRequests[0].endpoint, 'zarinpal.payment.refund');
+
+  const zarinpalHttpNoCredentials = await createZarinPalPaymentOperationHttpAdapter({ httpClient: async () => ({ ok: true, status: 200, body: { data: { code: 100 } } }) }).execute(operation);
+  assert.equal(zarinpalHttpNoCredentials.status, 'unavailable');
+  assert.equal(zarinpalHttpNoCredentials.errorCategory, 'provider_credentials_missing');
 
   assert.ok(adapterSource.includes('PaymentOperationAdapter'));
   assert.ok(adapterSource.includes('PaymentOperationAdapterResult'));
