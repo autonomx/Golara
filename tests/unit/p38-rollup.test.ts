@@ -5,6 +5,7 @@ export async function runP38RollupTests() {
   const rollupDoc = readFileSync('docs/phase38-rollup.md', 'utf8');
   const closeoutDoc = readFileSync('docs/phase38-closeout.md', 'utf8');
   const implementationPlanDoc = readFileSync('docs/phase38-implementation-plan.md', 'utf8');
+  const structuredLoggingDoc = readFileSync('docs/phase38-structured-logging-plan.md', 'utf8');
 
   for (const marker of ['PR 351', 'PR 352', 'PR 354', 'PR 355', 'phase: 38', 'runtime: false', 'storage: false', 'delivery: false', 'external_calls: false']) {
     assert.ok(rollupDoc.includes(marker), `rollup doc must include ${marker}`);
@@ -45,6 +46,23 @@ export async function runP38RollupTests() {
     'live behavior changes',
   ]) {
     assert.ok(implementationPlanDoc.includes(marker), `implementation plan doc must include ${marker}`);
+  }
+
+  for (const marker of [
+    'planning-only logging handoff',
+    'checkout',
+    'payments',
+    'webhooks',
+    'notifications',
+    'admin writes',
+    'event_name_required: true',
+    'request_correlation_required: true',
+    'secret_values_allowed: false',
+    'customer_pii_allowed: false',
+    'payment_sensitive_data_allowed: false',
+    'live log emission',
+  ]) {
+    assert.ok(structuredLoggingDoc.includes(marker), `structured logging doc must include ${marker}`);
   }
 
   console.log('p38-rollup.test.ts passed');
