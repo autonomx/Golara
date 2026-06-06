@@ -203,7 +203,7 @@ export async function runP38RollupTests() {
     assert.ok(fullSuite.includes(command), `full suite must run ${command}`);
   }
 
-  for (const marker of ['NODE_V8_COVERAGE', 'coverage-summary.json', 'coverage-summary.md', 'npm run test:all']) {
+  for (const marker of ['NODE_V8_COVERAGE', 'coverage-summary.json', 'coverage-summary.md', 'npm run test:all', 'process.execPath', 'Coverage suite failed to start']) {
     assert.ok(coverageRunner.includes(marker), `coverage runner must include ${marker}`);
   }
 
