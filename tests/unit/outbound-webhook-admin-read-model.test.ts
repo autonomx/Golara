@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 import {
   buildOutboundDeliveryDetailDto,
@@ -36,7 +38,36 @@ const baseRecord: OutboundWebhookAdminRecordSnapshot = {
   updatedAt: '2026-06-05T09:30:00.000Z'
 };
 
+function assertPhase35ReadHelperContractNote() {
+  const note = readFileSync(join(process.cwd(), 'docs/production-roadmap-phase35-admin-read-helper-contract.md'), 'utf8');
+  const requiredPhrases = [
+    'lib/settings/outbound-webhook-admin-read-model.ts',
+    'lib/settings/outbound-webhook-admin-read-query.ts',
+    'lib/settings/outbound-webhook-admin-read-plan.ts',
+    'lib/settings/outbound-webhook-admin-read-memory.ts',
+    'pure helper',
+    'storage access',
+    'endpoint handlers',
+    'admin pages',
+    'state mutation',
+    'external calls',
+    'signing',
+    'retry',
+    'recovery controls',
+    'cursor',
+    'hasNextPage',
+    'nextCursor',
+    'afterCursor'
+  ];
+
+  for (const phrase of requiredPhrases) {
+    assert.ok(note.includes(phrase), `Phase 35 read helper contract note must mention ${phrase}`);
+  }
+}
+
 export async function runOutboundWebhookAdminReadModelTests() {
+  assertPhase35ReadHelperContractNote();
+
   const filters = normalizeOutboundDeliveryAdminFilters({
     status: 'retry_wait',
     configurationKey: ' default-webhook-configuration ',
