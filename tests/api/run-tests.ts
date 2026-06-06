@@ -26,14 +26,33 @@ function runRouteSmokeContractTests() {
   assert.match(smoke, /redirect: 'manual'/);
 }
 
+function isProtectedWriteRoute(content: string) {
+  return /auth|admin|session|csrf|rate/i.test(content) || /verifyPaymentWebhookSignature/.test(content);
+}
+
 function runApiRouteInventoryTests() {
   const routeFiles = walk('app').filter((file) => file.endsWith('/route.ts') || file.endsWith('/route.tsx'));
   const unsafeWriteRoutes = routeFiles.filter((file) => {
     const content = source(file);
-    return /export\s+async\s+function\s+(POST|PUT|PATCH|DELETE)\b/.test(content) && !/auth|admin|session|csrf|rate/i.test(content);
+    return /export\s+async\s+function\s+(POST|PUT|PATCH|DELETE)\b/.test(content) && !isProtectedWriteRoute(content);
   });
 
-  assert.deepEqual(unsafeWriteRoutes, [], `Write API routes should include visible auth/session/csrf/rate protections: ${unsafeWriteRoutes.join(', ')}`);
+  assert.deepEqual(unsafeWriteRoutes, [], `Write API routes should include visible auth/session/csrf/rate protections or webhook signature verification: ${unsafeWriteRoutes.join(', ')}`);
+}
+
+function runPaymentWebhookRouteContractTests() {
+  const stripe = source('app/api/webhooks/payments/stripe/route.ts');
+  const zarinpal = source('app/api/webhooks/payments/zarinpal/route.ts');
+
+  for (const [provider, route] of [['stripe', stripe], ['zarinpal', zarinpal]] as const) {
+    assert.match(route, /export async function POST/);
+    assert.match(route, /request\.text\(\)/);
+    assert.match(route, /verifyPaymentWebhookSignature/);
+    assert.match(route, new RegExp(`provider: '${provider}'`));
+    assert.match(route, /invalid_signature/);
+    assert.match(route, /handlePaymentWebhookRoute/);
+    assert.match(route, /paymentWebhookService\.record/);
+  }
 }
 
 function runServerActionBoundaryTests() {
@@ -71,6 +90,7 @@ function runApiSuiteScriptTests() {
 async function main() {
   runRouteSmokeContractTests();
   runApiRouteInventoryTests();
+  runPaymentWebhookRouteContractTests();
   runServerActionBoundaryTests();
   runPublicApiFallbackContractTests();
   runApiSuiteScriptTests();
