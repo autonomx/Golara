@@ -7,6 +7,10 @@ Purpose:
 - Convert the Phase 38 closeout into a safe next implementation slice plan.
 - Keep this document non-runtime and non-operator-actionable until a later implementation PR explicitly scopes behavior.
 
+Planning sequence:
+
+- PR 359: implementation-plan handoff and guard.
+
 Allowed next implementation categories:
 
 - structured logging plan for checkout, payments, webhooks, notifications, and admin writes
