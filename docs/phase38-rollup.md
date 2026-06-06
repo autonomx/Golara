@@ -7,6 +7,7 @@ Validated sequence:
 - PR 351: kickoff helper and test.
 - PR 352: kickoff document rollup.
 - PR 354: note guard and aggregate unit runner wiring.
+- PR 355: rollup guard and aggregate unit runner wiring.
 
 Boundaries:
 
