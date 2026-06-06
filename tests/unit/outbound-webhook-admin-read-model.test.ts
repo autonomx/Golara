@@ -235,7 +235,7 @@ export async function runOutboundWebhookAdminReadModelTests() {
   assert.equal(memoryList.hasNextPage, false);
   assert.equal(memoryList.nextCursor, null);
   assert.deepEqual(memoryList.rejected, []);
-  assert.deepEqual(memoryList.auditLabels.slice(0, 5), ['memory-read', 'matched:2', 'returned:2', 'hasNext:false', 'kind:list']);
+  assert.deepEqual(memoryList.auditLabels.slice(0, 6), ['memory-read', 'matched:2', 'afterCursor:2', 'returned:2', 'hasNext:false', 'kind:list']);
 
   const pagedQuerySpec = buildOutboundWebhookAdminReadQuerySpec({
     filters: normalizeOutboundDeliveryAdminFilters({
@@ -257,7 +257,42 @@ export async function runOutboundWebhookAdminReadModelTests() {
   assert.equal(pagedMemory.items[1].id, 'delivery_456');
   assert.equal(pagedMemory.hasNextPage, true);
   assert.equal(pagedMemory.nextCursor, 'delivery_789');
-  assert.deepEqual(pagedMemory.auditLabels.slice(0, 5), ['memory-read', 'matched:3', 'returned:2', 'hasNext:true', 'kind:list']);
+  assert.deepEqual(pagedMemory.auditLabels.slice(0, 6), ['memory-read', 'matched:3', 'afterCursor:3', 'returned:2', 'hasNext:true', 'kind:list']);
+
+  const continuedQuerySpec = buildOutboundWebhookAdminReadQuerySpec({
+    filters: normalizeOutboundDeliveryAdminFilters({
+      status: 'retry_wait',
+      configurationKey: 'default-webhook-configuration',
+      eventType: 'order.created',
+      payloadDigest: 'sha256:abc'
+    }),
+    sort: normalizeOutboundDeliveryAdminSort({ field: 'updatedAt', direction: 'asc' }),
+    pagination: normalizeOutboundDeliveryAdminPagination({ pageSize: 2, cursor: 'delivery_456' })
+  });
+  const continuedMemory = readOutboundWebhookAdminMemory({
+    records: [thirdRecord, secondRecord, baseRecord],
+    plan: buildOutboundWebhookAdminListReadPlan(continuedQuerySpec),
+    now: '2026-06-05T11:00:00.000Z'
+  });
+  assert.equal(continuedMemory.items.length, 1);
+  assert.equal(continuedMemory.items[0].id, 'delivery_789');
+  assert.equal(continuedMemory.hasNextPage, false);
+  assert.equal(continuedMemory.nextCursor, null);
+  assert.deepEqual(continuedMemory.auditLabels.slice(0, 6), ['memory-read', 'matched:3', 'afterCursor:1', 'returned:1', 'hasNext:false', 'kind:list']);
+
+  const missingCursorQuerySpec = buildOutboundWebhookAdminReadQuerySpec({
+    filters: normalizeOutboundDeliveryAdminFilters({ status: 'retry_wait' }),
+    sort: normalizeOutboundDeliveryAdminSort({ field: 'updatedAt', direction: 'asc' }),
+    pagination: normalizeOutboundDeliveryAdminPagination({ pageSize: 2, cursor: 'delivery_missing' })
+  });
+  const missingCursorMemory = readOutboundWebhookAdminMemory({
+    records: [thirdRecord, secondRecord, baseRecord],
+    plan: buildOutboundWebhookAdminListReadPlan(missingCursorQuerySpec),
+    now: '2026-06-05T11:00:00.000Z'
+  });
+  assert.equal(missingCursorMemory.items.length, 0);
+  assert.equal(missingCursorMemory.hasNextPage, false);
+  assert.deepEqual(missingCursorMemory.auditLabels.slice(0, 6), ['memory-read', 'matched:3', 'afterCursor:0', 'returned:0', 'hasNext:false', 'kind:list']);
 
   const memoryDetail = readOutboundWebhookAdminMemory({
     records: [secondRecord, baseRecord],
