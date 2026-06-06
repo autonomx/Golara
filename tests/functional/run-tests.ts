@@ -46,6 +46,20 @@ function runAdminOverviewFunctionalCoverageTests() {
   assert.match(consolePage, /overview/);
 }
 
+function runCheckoutPaymentFunctionalCoverageTests() {
+  const checkoutStateMachine = source('lib/checkout/checkout-state-machine.ts');
+  const paymentAdapters = source('lib/checkout/payment-gateway-adapters.ts');
+  const returnCore = source('lib/checkout/order-return-route-core.ts');
+  const providerReadinessPage = source('app/admin/payments/operations/providers/page.tsx');
+  const providerReadinessPanel = source('components/admin/AdminPaymentOperationProviderReadinessPanel.tsx');
+
+  for (const marker of ['paid', 'failed', 'cancelled']) assert.match(checkoutStateMachine, new RegExp(marker));
+  for (const marker of ['createStripeCheckoutSessionAdapter', 'zarinpal', 'idempotency']) assert.match(paymentAdapters, new RegExp(marker, 'i'));
+  for (const marker of ['normalizeHostedCheckoutReturnStatus', 'normalizeZarinpalReturnStatus', 'checkoutReturnApplyInput', 'checkoutReturnSuccessUrl']) assert.match(returnCore, new RegExp(marker));
+  for (const marker of ['Payment provider readiness', 'Execution remains disabled', 'does not submit refunds', 'provider requests', 'order/payment mutations']) assert.match(providerReadinessPage, new RegExp(marker));
+  for (const marker of ['executionEnabled', 'credential', 'evidence', 'NO-GO']) assert.match(providerReadinessPanel, new RegExp(marker, 'i'));
+}
+
 function runGracefulDatabaseDriftFallbackTests() {
   const catalogFallback = source('lib/cms/repository-fallback-policy.ts');
   const storefrontNavigation = source('lib/settings/storefront-navigation-menu.ts');
@@ -117,6 +131,7 @@ function runFunctionalSuiteStructureTests() {
 
 async function main() {
   runAdminOverviewFunctionalCoverageTests();
+  runCheckoutPaymentFunctionalCoverageTests();
   runGracefulDatabaseDriftFallbackTests();
   runProductionReadinessFunctionalCoverageTests();
   runMigrationCoverageFunctionalTests();
