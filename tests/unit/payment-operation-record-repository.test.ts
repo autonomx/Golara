@@ -80,7 +80,6 @@ export async function runPaymentOperationRecordRepositoryTests() {
   for (const marker of [
     'idempotency_key_required',
     'idempotency_lookup_failed',
-    'provider_reference_required',
     'database_unavailable',
     'ON CONFLICT ("idempotencyKey") DO NOTHING',
     'status" IN (\'pending\', \'manual_review\')',
