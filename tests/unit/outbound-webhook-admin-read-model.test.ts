@@ -142,6 +142,32 @@ export async function runOutboundWebhookAdminReadModelTests() {
   assert.equal(Object.prototype.hasOwnProperty.call(querySpec.select, 'rawPayload'), false);
   assert.equal(Object.prototype.hasOwnProperty.call(querySpec.select, 'secretValue'), false);
 
+  const blankCursorSpec = buildOutboundWebhookAdminReadQuerySpec({
+    filters: normalizeOutboundDeliveryAdminFilters(),
+    sort: normalizeOutboundDeliveryAdminSort(),
+    pagination: normalizeOutboundDeliveryAdminPagination({ pageSize: 5, cursor: '   ' })
+  });
+  assert.equal(blankCursorSpec.cursor, null);
+  assert.deepEqual(blankCursorSpec.rejected, []);
+  assert.ok(blankCursorSpec.auditLabels.includes('cursor:absent'));
+
+  const invalidCursorSpec = buildOutboundWebhookAdminReadQuerySpec({
+    filters: normalizeOutboundDeliveryAdminFilters(),
+    sort: normalizeOutboundDeliveryAdminSort(),
+    pagination: normalizeOutboundDeliveryAdminPagination({ pageSize: 5, cursor: 'bad cursor!' })
+  });
+  assert.equal(invalidCursorSpec.cursor, null);
+  assert.deepEqual(invalidCursorSpec.rejected, ['cursor']);
+  assert.ok(invalidCursorSpec.auditLabels.includes('cursor:absent'));
+
+  const longCursorSpec = buildOutboundWebhookAdminReadQuerySpec({
+    filters: normalizeOutboundDeliveryAdminFilters(),
+    sort: normalizeOutboundDeliveryAdminSort(),
+    pagination: normalizeOutboundDeliveryAdminPagination({ pageSize: 5, cursor: 'a'.repeat(161) })
+  });
+  assert.equal(longCursorSpec.cursor, null);
+  assert.deepEqual(longCursorSpec.rejected, ['cursor']);
+
   const rejectedSpec = buildOutboundWebhookAdminReadQuerySpec({
     filters: normalizeOutboundDeliveryAdminFilters({ status: 'unsupported', createdTo: 'bad-date' }),
     sort: normalizeOutboundDeliveryAdminSort({ field: 'unsupported', direction: 'sideways' }),
