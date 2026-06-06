@@ -17,7 +17,7 @@ function source(path: string) {
 
 export async function runPaymentOperationRecordRepositoryTests() {
   const repositorySource = source('lib/checkout/payment-operation-record-repository.ts');
-  const migrationSource = source('prisma/migrations/20260604120000_add_payment_operation_records/migration.sql');
+  const migrationSource = source('prisma/migrations/20260604200000_add_payment_operation_records/migration.sql');
 
   const unavailableCreate = await createPendingPaymentOperationRecord({
     orderId: 'order_123',
@@ -94,7 +94,7 @@ export async function runPaymentOperationRecordRepositoryTests() {
     'CREATE TABLE IF NOT EXISTS "PaymentOperationRecord"',
     '"idempotencyKey" TEXT NOT NULL',
     'PaymentOperationRecord_idempotencyKey_key',
-    'PaymentOperationRecord_orderId_createdAt_idx',
+    'PaymentOperationRecord_orderId_idx',
     'PaymentOperationRecord_paymentAttemptId_idx'
   ]) {
     assert.ok(migrationSource.includes(marker), `payment operation record migration must include ${marker}`);
