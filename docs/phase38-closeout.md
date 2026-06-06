@@ -15,6 +15,7 @@ Validated sequence:
 - PR 354: note guard and aggregate unit runner wiring.
 - PR 355: rollup guard and aggregate unit runner wiring.
 - PR 356: rollup marker for PR 355.
+- PR 357: closeout document and rollup guard.
 
 Readiness handoff:
 
