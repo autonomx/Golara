@@ -74,6 +74,31 @@ export async function runNotificationProviderSettingsTests() {
   assert.equal(normalized.defaultFromPhone, '+15551234567');
   assert.equal(normalized.replyToEmail, 'support@example.com');
 
+  const fallbackNormalized = normalizeNotificationProviderSettingInput({
+    key: ' !!! ',
+    label: '   ',
+    description: '   ',
+    emailProvider: 'mailgun',
+    smsProvider: 'sms-unknown',
+    defaultFromEmail: '   ',
+    defaultFromPhone: null,
+    replyToEmail: undefined,
+    enableOrderEmail: false,
+    enableOrderSms: false,
+    requireEmailProviderEnv: false,
+    requireSmsProviderEnv: false,
+    isDefault: false,
+    isActive: false
+  });
+  assert.equal(fallbackNormalized.key, DEFAULT_NOTIFICATION_PROVIDER_SETTING.key);
+  assert.equal(fallbackNormalized.label, DEFAULT_NOTIFICATION_PROVIDER_SETTING.label);
+  assert.equal(fallbackNormalized.description, null);
+  assert.equal(fallbackNormalized.emailProvider, 'manual');
+  assert.equal(fallbackNormalized.smsProvider, 'manual');
+  assert.equal(fallbackNormalized.defaultFromEmail, null);
+  assert.equal(fallbackNormalized.defaultFromPhone, null);
+  assert.equal(fallbackNormalized.replyToEmail, null);
+
   const setting = {
     ...DEFAULT_NOTIFICATION_PROVIDER_SETTING,
     emailProvider: 'resend' as const,
@@ -91,9 +116,24 @@ export async function runNotificationProviderSettingsTests() {
     'TWILIO_FROM_NUMBER'
   ]);
 
+  assert.deepEqual(listRequiredNotificationProviderEnvironmentVariables({
+    ...DEFAULT_NOTIFICATION_PROVIDER_SETTING,
+    emailProvider: 'smtp',
+    smsProvider: 'manual',
+    requireEmailProviderEnv: false,
+    requireSmsProviderEnv: true
+  }), ['SMTP_HOST', 'SMTP_PASSWORD', 'SMTP_USER']);
+
+  assert.deepEqual(listRequiredNotificationProviderEnvironmentVariables({
+    ...DEFAULT_NOTIFICATION_PROVIDER_SETTING,
+    emailProvider: 'sendgrid',
+    smsProvider: 'manual'
+  }), ['SENDGRID_API_KEY']);
+
   const blockedReadiness = buildNotificationProviderReadinessSummary(setting, {});
   assert.equal(blockedReadiness.ready, false);
   assert.deepEqual(blockedReadiness.channels, ['email', 'sms']);
+  assert.deepEqual(blockedReadiness.providers, ['resend', 'twilio']);
   assert.deepEqual(blockedReadiness.blockers.map((issue) => issue.code), [
     'resend_api_key_missing',
     'twilio_account_sid_missing',
@@ -109,10 +149,29 @@ export async function runNotificationProviderSettingsTests() {
   });
   assert.equal(readySummary.ready, true);
   assert.deepEqual(readySummary.blockers, []);
+  assert.deepEqual(readySummary.warnings, []);
 
   const manualSummary = buildNotificationProviderReadinessSummary(DEFAULT_NOTIFICATION_PROVIDER_SETTING, {});
   assert.equal(manualSummary.ready, true);
   assert.deepEqual(manualSummary.warnings.map((issue) => issue.code), ['email_manual_provider']);
+
+  const manualSmsSummary = buildNotificationProviderReadinessSummary({
+    ...DEFAULT_NOTIFICATION_PROVIDER_SETTING,
+    enableOrderEmail: false,
+    enableOrderSms: true
+  }, {});
+  assert.equal(manualSmsSummary.ready, true);
+  assert.deepEqual(manualSmsSummary.channels, ['sms']);
+  assert.deepEqual(manualSmsSummary.warnings.map((issue) => issue.code), ['sms_manual_provider']);
+
+  const disabledSummary = buildNotificationProviderReadinessSummary({
+    ...DEFAULT_NOTIFICATION_PROVIDER_SETTING,
+    enableOrderEmail: false,
+    enableOrderSms: false
+  }, {});
+  assert.equal(disabledSummary.ready, true);
+  assert.deepEqual(disabledSummary.channels, []);
+  assert.ok(disabledSummary.warnings.map((issue) => issue.code).includes('order_notifications_disabled'));
 
   const inactiveSummary = buildNotificationProviderReadinessSummary({ ...setting, isActive: false }, {
     RESEND_API_KEY: 're_example',
@@ -121,6 +180,7 @@ export async function runNotificationProviderSettingsTests() {
     TWILIO_FROM_NUMBER: '+15551234567'
   });
   assert.equal(inactiveSummary.ready, false);
+  assert.deepEqual(inactiveSummary.warnings.map((issue) => issue.code), ['notification_settings_inactive']);
 
   assert.match(panel, /export function AdminNotificationProviderSettingsPanel/);
   assert.match(panel, /updateNotificationProviderSettingAction/);
