@@ -56,7 +56,7 @@ function runCheckoutPaymentFunctionalCoverageTests() {
   for (const marker of ['paid', 'failed', 'cancelled']) assert.match(checkoutStateMachine, new RegExp(marker));
   for (const marker of ['createStripeCheckoutSessionAdapter', 'zarinpal', 'idempotency']) assert.match(paymentAdapters, new RegExp(marker, 'i'));
   for (const marker of ['normalizeHostedCheckoutReturnStatus', 'normalizeZarinpalReturnStatus', 'checkoutReturnApplyInput', 'checkoutReturnSuccessUrl']) assert.match(returnCore, new RegExp(marker));
-  for (const marker of ['Payment provider readiness', 'Execution remains disabled', 'does not submit refunds', 'provider requests', 'order/payment mutations']) assert.match(providerReadinessPage, new RegExp(marker));
+  for (const marker of ['Payment provider readiness', 'Execution remains disabled', 'do not submit refunds', 'provider requests', 'order/payment mutations']) assert.match(providerReadinessPage, new RegExp(marker));
   for (const marker of ['executionEnabled', 'credential', 'evidence', 'NO-GO']) assert.match(providerReadinessPanel, new RegExp(marker, 'i'));
 }
 
