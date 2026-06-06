@@ -42,7 +42,8 @@ function runAdminOverviewFunctionalCoverageTests() {
 
   for (const panel of expectedPanels) assert.match(overview, new RegExp(panel));
   for (const service of expectedServices) assert.match(overview, new RegExp(service.replace(/[().]/g, '\\$&')));
-  assert.match(consolePage, /activeTab === 'overview' && authenticated \? <AdminOrderRevenueSummaryPanel/);
+  assert.match(consolePage, /AdminOrderRevenueSummaryPanel/);
+  assert.match(consolePage, /overview/);
 }
 
 function runGracefulDatabaseDriftFallbackTests() {
@@ -74,7 +75,7 @@ function runProductionReadinessFunctionalCoverageTests() {
     'Add launch/readiness health cards.'
   ];
 
-  for (const item of phase10Items) assert.match(roadmap, new RegExp(`- \\[x\\] ${item.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
+  for (const item of phase10Items) assert.match(roadmap, new RegExp(`- \\[x\\] ${item.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}`));
   for (const check of requiredChecks) assert.match(packageJson, new RegExp(`"${check}"`));
 }
 

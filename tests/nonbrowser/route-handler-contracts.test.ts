@@ -16,6 +16,10 @@ function walk(dir: string): string[] {
   });
 }
 
+function hasWriteBoundaryProtection(content: string) {
+  return /auth|session|admin|rate|csrf/i.test(content) || /verifyPaymentWebhookSignature/.test(content);
+}
+
 export async function runRouteHandlerContractTests() {
   const routes = walk('app').filter((file) => file.endsWith('/route.ts') || file.endsWith('/route.tsx'));
   assert.ok(routes.length > 0, 'route handler files should exist');
@@ -24,7 +28,7 @@ export async function runRouteHandlerContractTests() {
     const content = source(file);
     assert.match(content, /export\s+async\s+function\s+(GET|POST|PUT|PATCH|DELETE)/, `${file} should export at least one route handler`);
     if (/export\s+async\s+function\s+(POST|PUT|PATCH|DELETE)/.test(content)) {
-      assert.match(content, /auth|session|admin|rate|csrf/i, `${file} write handler should include visible boundary protection`);
+      assert.ok(hasWriteBoundaryProtection(content), `${file} write handler should include visible boundary protection or webhook signature verification`);
     }
   }
 

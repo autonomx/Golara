@@ -16,6 +16,7 @@ export async function runP38RollupTests() {
   const functionalRunner = readFileSync('tests/functional/run-tests.ts', 'utf8');
   const apiRunner = readFileSync('tests/api/run-tests.ts', 'utf8');
   const e2eRunner = readFileSync('tests/e2e/run-tests.ts', 'utf8');
+  const ciWorkflow = readFileSync('.github/workflows/ci.yml', 'utf8');
 
   for (const marker of [
     'PR 351',
@@ -199,6 +200,14 @@ export async function runP38RollupTests() {
 
   for (const command of ['npm run typecheck', 'npm run test:unit', 'npm run test:functional', 'npm run test:api', 'npm run test:nonbrowser', 'npm run test:e2e']) {
     assert.ok(fullSuite.includes(command), `full suite must run ${command}`);
+  }
+
+  for (const step of ['Functional tests', 'API tests', 'Nonbrowser tests', 'E2E contract tests', 'Full-suite summary']) {
+    assert.ok(ciWorkflow.includes(`name: ${step}`), `CI workflow must include ${step}`);
+  }
+
+  for (const command of ['npm run test:functional', 'npm run test:api', 'npm run test:nonbrowser', 'npm run test:e2e', 'npm run test:all']) {
+    assert.ok(ciWorkflow.includes(command), `CI workflow must run ${command}`);
   }
 
   for (const guard of [
