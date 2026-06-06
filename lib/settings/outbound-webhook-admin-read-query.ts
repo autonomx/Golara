@@ -41,12 +41,22 @@ function addDateRange(target: Record<string, string | { gte?: string; lte?: stri
   if (from || to) target[key] = { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) };
 }
 
+function normalizedCursor(cursor: string | null) {
+  if (!cursor) return { cursor: null, rejected: [] as string[] };
+  const normalized = cursor.trim();
+  if (!normalized) return { cursor: null, rejected: [] as string[] };
+  if (normalized.length > 160) return { cursor: null, rejected: ['cursor'] };
+  if (!/^[A-Za-z0-9:_-]+$/.test(normalized)) return { cursor: null, rejected: ['cursor'] };
+  return { cursor: normalized, rejected: [] as string[] };
+}
+
 export function buildOutboundWebhookAdminReadQuerySpec(input: {
   filters: OutboundWebhookAdminNormalizedFilters;
   sort: OutboundWebhookAdminNormalizedSort;
   pagination: OutboundWebhookAdminPagination;
 }): OutboundWebhookAdminReadQuerySpec {
   const where: OutboundWebhookAdminReadQuerySpec['where'] = {};
+  const cursor = normalizedCursor(input.pagination.cursor);
   addStringFilter(where, 'status', input.filters.status);
   addStringFilter(where, 'configurationKey', input.filters.configurationKey);
   addStringFilter(where, 'eventType', input.filters.eventType);
@@ -60,17 +70,17 @@ export function buildOutboundWebhookAdminReadQuerySpec(input: {
     where,
     orderBy: { field: input.sort.field, direction: input.sort.direction },
     take: input.pagination.pageSize + 1,
-    cursor: input.pagination.cursor,
+    cursor: cursor.cursor,
     select: OUTBOUND_WEBHOOK_ADMIN_SAFE_FIELDS.reduce(
       (selection, field) => ({ ...selection, [field]: true }),
       {} as Record<OutboundWebhookAdminSafeField, true>
     ),
-    rejected: [...input.filters.rejected, ...input.sort.rejected, ...input.pagination.rejected],
+    rejected: [...input.filters.rejected, ...input.sort.rejected, ...input.pagination.rejected, ...cursor.rejected],
     auditLabels: [
       `filters:${Object.keys(where).length}`,
       `sort:${input.sort.field}:${input.sort.direction}`,
       `take:${input.pagination.pageSize + 1}`,
-      `cursor:${input.pagination.cursor ? 'present' : 'absent'}`
+      `cursor:${cursor.cursor ? 'present' : 'absent'}`
     ]
   };
 }
