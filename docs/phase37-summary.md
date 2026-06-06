@@ -11,6 +11,7 @@ Merged sequence:
 - PR 346: chain.
 - PR 347: summary.
 - PR 348: doc summary.
+- PR 349: doc rollup.
 
 Current values:
 
