@@ -12,6 +12,7 @@ export async function runP38RollupTests() {
   const productionTestMatrixDoc = readFileSync('docs/production-test-matrix.md', 'utf8');
   const packageJson = readFileSync('package.json', 'utf8');
   const fullSuite = readFileSync('tools/run-full-test-suite.mjs', 'utf8');
+  const coverageRunner = readFileSync('tools/run-coverage-suite.mjs', 'utf8');
   const unitRunner = readFileSync('tests/unit/run-tests.ts', 'utf8');
   const functionalRunner = readFileSync('tests/functional/run-tests.ts', 'utf8');
   const apiRunner = readFileSync('tests/api/run-tests.ts', 'utf8');
@@ -194,7 +195,7 @@ export async function runP38RollupTests() {
     assert.ok(productionTestMatrixDoc.includes(marker), `production test matrix must include ${marker}`);
   }
 
-  for (const script of ['test:unit', 'test:functional', 'test:api', 'test:nonbrowser', 'test:e2e', 'test:e2e:routes', 'test:all']) {
+  for (const script of ['test:unit', 'test:functional', 'test:api', 'test:nonbrowser', 'test:e2e', 'test:e2e:routes', 'test:all', 'test:coverage']) {
     assert.ok(packageJson.includes(`"${script}"`), `package.json must expose ${script}`);
   }
 
@@ -202,13 +203,19 @@ export async function runP38RollupTests() {
     assert.ok(fullSuite.includes(command), `full suite must run ${command}`);
   }
 
-  for (const step of ['Functional tests', 'API tests', 'Nonbrowser tests', 'E2E contract tests', 'Full-suite summary']) {
+  for (const marker of ['NODE_V8_COVERAGE', 'coverage-summary.json', 'coverage-summary.md', 'npm run test:all']) {
+    assert.ok(coverageRunner.includes(marker), `coverage runner must include ${marker}`);
+  }
+
+  for (const step of ['Functional tests', 'API tests', 'Nonbrowser tests', 'E2E contract tests', 'Full-suite summary', 'Coverage summary']) {
     assert.ok(ciWorkflow.includes(`name: ${step}`), `CI workflow must include ${step}`);
   }
 
-  for (const command of ['npm run test:functional', 'npm run test:api', 'npm run test:nonbrowser', 'npm run test:e2e', 'npm run test:all']) {
+  for (const command of ['npm run test:functional', 'npm run test:api', 'npm run test:nonbrowser', 'npm run test:e2e', 'npm run test:all', 'npm run test:coverage']) {
     assert.ok(ciWorkflow.includes(command), `CI workflow must run ${command}`);
   }
+
+  assert.ok(ciWorkflow.includes('coverage-summary'), 'CI workflow must upload coverage summary artifacts');
 
   for (const guard of [
     'runCheckoutStateMachineTests',
