@@ -77,6 +77,7 @@ import { runPaymentOperationPhase33CloseoutTests } from './payment-operation-pha
 import { runPaymentOperationPlanTests } from './payment-operation-plan.test';
 import { runPaymentOperationProviderEvidencePacketTests } from './payment-operation-provider-evidence-packet.test';
 import { runPaymentOperationProviderReadinessTests } from './payment-operation-provider-readiness.test';
+import { runPaymentOperationRecordRepositoryTests } from './payment-operation-record-repository.test';
 import { runPaymentOperationTransitionPlanTests } from './payment-operation-transition-plan.test';
 import { runPaymentProviderAliasCoreTests } from './payment-provider-alias-core.test';
 import { runPaymentProviderModeTests } from './payment-provider-mode.test';
@@ -130,6 +131,8 @@ import { runVariantStockStatusTests } from './variant-stock-status.test';
 import { runWarehouseLocationModelTests } from './warehouse-location-model.test';
 import { runWebhookConfigurationTests } from './webhook-configuration.test';
 import { runWebhookEventLogTests } from './webhook-event-log.test';
+
+const runPromotionOrderMinimumsTests = runPromotionOrderMinimumsModelTests;
 
 async function main() {
   await runRuntimeModeTests();
@@ -202,6 +205,7 @@ async function main() {
   await runPaymentOperationProviderEvidencePacketTests();
   await runPaymentOperationTransitionPlanTests();
   await runPaymentOperationAdaptersTests();
+  await runPaymentOperationRecordRepositoryTests();
   await runPaymentWebhookValidationEvidenceDocsTests();
   await runPaymentProviderSettingsTests();
   await runPaymentWebhookServiceTests();
@@ -239,7 +243,7 @@ async function main() {
   await runPromotionValidityWindowsModelTests();
   await runPromotionUsageLimitsModelTests();
   await runPromotionEligibilityRulesModelTests();
-  await runPromotionOrderMinimumsModelTests();
+  await runPromotionOrderMinimumsTests();
   await runPromotionStoreCreditFoundationModelTests();
   await runPromotionAuditLogsModelTests();
   await runPromotionSchemaParityTests();
@@ -264,7 +268,7 @@ async function main() {
   await runFulfillmentShipmentRecordsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (132 files)');
+  console.log('unit tests passed (133 files)');
 }
 
 main().catch((error) => {
