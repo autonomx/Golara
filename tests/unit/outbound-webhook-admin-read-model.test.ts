@@ -177,6 +177,13 @@ export async function runOutboundWebhookAdminReadModelTests() {
     idempotencyKey: 'idem-456',
     updatedAt: '2026-06-05T09:45:00.000Z'
   };
+  const thirdRecord: OutboundWebhookAdminRecordSnapshot = {
+    ...baseRecord,
+    id: 'delivery_789',
+    eventRef: 'order_789',
+    idempotencyKey: 'idem-789',
+    updatedAt: '2026-06-05T10:00:00.000Z'
+  };
   const memoryQuerySpec = buildOutboundWebhookAdminReadQuerySpec({
     filters: normalizeOutboundDeliveryAdminFilters({
       status: 'retry_wait',
@@ -199,8 +206,32 @@ export async function runOutboundWebhookAdminReadModelTests() {
   assert.equal(memoryList.items.length, 2);
   assert.equal(memoryList.items[0].id, 'delivery_123');
   assert.equal(memoryList.detail, null);
+  assert.equal(memoryList.hasNextPage, false);
+  assert.equal(memoryList.nextCursor, null);
   assert.deepEqual(memoryList.rejected, []);
-  assert.deepEqual(memoryList.auditLabels.slice(0, 4), ['memory-read', 'matched:2', 'returned:2', 'kind:list']);
+  assert.deepEqual(memoryList.auditLabels.slice(0, 5), ['memory-read', 'matched:2', 'returned:2', 'hasNext:false', 'kind:list']);
+
+  const pagedQuerySpec = buildOutboundWebhookAdminReadQuerySpec({
+    filters: normalizeOutboundDeliveryAdminFilters({
+      status: 'retry_wait',
+      configurationKey: 'default-webhook-configuration',
+      eventType: 'order.created',
+      payloadDigest: 'sha256:abc'
+    }),
+    sort: normalizeOutboundDeliveryAdminSort({ field: 'updatedAt', direction: 'asc' }),
+    pagination: normalizeOutboundDeliveryAdminPagination({ pageSize: 2 })
+  });
+  const pagedMemory = readOutboundWebhookAdminMemory({
+    records: [thirdRecord, secondRecord, baseRecord],
+    plan: buildOutboundWebhookAdminListReadPlan(pagedQuerySpec),
+    now: '2026-06-05T11:00:00.000Z'
+  });
+  assert.equal(pagedMemory.items.length, 2);
+  assert.equal(pagedMemory.items[0].id, 'delivery_123');
+  assert.equal(pagedMemory.items[1].id, 'delivery_456');
+  assert.equal(pagedMemory.hasNextPage, true);
+  assert.equal(pagedMemory.nextCursor, 'delivery_789');
+  assert.deepEqual(pagedMemory.auditLabels.slice(0, 5), ['memory-read', 'matched:3', 'returned:2', 'hasNext:true', 'kind:list']);
 
   const memoryDetail = readOutboundWebhookAdminMemory({
     records: [secondRecord, baseRecord],
