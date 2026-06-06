@@ -8,6 +8,7 @@ export async function runP38RollupTests() {
   const structuredLoggingDoc = readFileSync('docs/phase38-structured-logging-plan.md', 'utf8');
   const incidentRunbookDoc = readFileSync('docs/phase38-incident-runbook-plan.md', 'utf8');
   const healthCheckDoc = readFileSync('docs/phase38-health-check-inventory-plan.md', 'utf8');
+  const performancePassDoc = readFileSync('docs/phase38-performance-pass-plan.md', 'utf8');
 
   for (const marker of ['PR 351', 'PR 352', 'PR 354', 'PR 355', 'phase: 38', 'runtime: false', 'storage: false', 'delivery: false', 'external_calls: false']) {
     assert.ok(rollupDoc.includes(marker), `rollup doc must include ${marker}`);
@@ -99,6 +100,22 @@ export async function runP38RollupTests() {
     'live health probes',
   ]) {
     assert.ok(healthCheckDoc.includes(marker), `health-check doc must include ${marker}`);
+  }
+
+  for (const marker of [
+    'planning-only performance pass handoff',
+    'homepage',
+    'product listing',
+    'admin media',
+    'checkout',
+    'performance_domain_required: true',
+    'user_path_required: true',
+    'baseline_signal_required: true',
+    'secret_values_allowed: false',
+    'live_probe_allowed: false',
+    'live performance probes',
+  ]) {
+    assert.ok(performancePassDoc.includes(marker), `performance-pass doc must include ${marker}`);
   }
 
   console.log('p38-rollup.test.ts passed');
