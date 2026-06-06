@@ -16,6 +16,7 @@ export async function runP38RollupTests() {
     'PR 354',
     'PR 355',
     'PR 356',
+    'PR 357',
     'next_phase_planning_required: true',
     'implementation_plan_required: true',
     'runtime_enabled: false',
