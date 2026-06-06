@@ -29,10 +29,20 @@ jobs:
         run: npm run typecheck > ci-results/06-typecheck.log 2>&1
       - name: Unit tests
         run: npm run test:unit > ci-results/07-test-unit.log 2>&1
+      - name: Functional tests
+        run: npm run test:functional > ci-results/08-test-functional.log 2>&1
+      - name: API tests
+        run: npm run test:api > ci-results/09-test-api.log 2>&1
+      - name: Nonbrowser tests
+        run: npm run test:nonbrowser > ci-results/10-test-nonbrowser.log 2>&1
+      - name: E2E contract tests
+        run: npm run test:e2e > ci-results/11-test-e2e.log 2>&1
+      - name: Full-suite summary
+        run: npm run test:all > ci-results/12-test-all.log 2>&1
       - name: Build
-        run: npm run build > ci-results/08-build.log 2>&1
+        run: npm run build > ci-results/13-build.log 2>&1
       - name: Route smoke
-        run: npm run smoke:routes:local > ci-results/09-smoke-routes-local.log 2>&1
+        run: npm run smoke:routes:local > ci-results/14-smoke-routes-local.log 2>&1
       - name: Upload CI command logs
         if: always()
         uses: actions/upload-artifact@v4
