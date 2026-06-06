@@ -1,4 +1,14 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+
+import {
+  assertAdminAuthenticated as assertAdminAuthenticatedWrapper,
+  assertAdminRole as assertAdminRoleWrapper,
+  createAdminSession as createAdminSessionWrapper,
+  getAdminIdentity as getAdminIdentityWrapper,
+  isAdminAuthenticated as isAdminAuthenticatedWrapper,
+  isAdminAuthConfigured as isAdminAuthConfiguredWrapper
+} from '../../lib/admin-auth';
 import {
   ADMIN_SESSION_COOKIE_NAME,
   ADMIN_SESSION_MAX_AGE_SECONDS,
@@ -15,6 +25,10 @@ import {
   verifyAdminPassword,
   type AdminRole
 } from '../../lib/admin-auth-core';
+
+function source(path: string) {
+  return readFileSync(path, 'utf8');
+}
 
 export async function runAdminAuthCoreTests() {
   assert.equal(ADMIN_SESSION_COOKIE_NAME, 'golara_admin_session');
@@ -106,6 +120,71 @@ export async function runAdminAuthCoreTests() {
         `${actualRole} requiring ${requiredRole}`
       );
     }
+  }
+
+  const originalAdminEnv = {
+    ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
+    ADMIN_SESSION_SECRET: process.env.ADMIN_SESSION_SECRET,
+    ADMIN_LABEL: process.env.ADMIN_LABEL,
+    ADMIN_EMAIL: process.env.ADMIN_EMAIL,
+    ADMIN_ROLE: process.env.ADMIN_ROLE,
+    ADMIN_IDENTITY_PROVIDER: process.env.ADMIN_IDENTITY_PROVIDER
+  };
+
+  try {
+    delete process.env.ADMIN_PASSWORD;
+    delete process.env.ADMIN_SESSION_SECRET;
+    delete process.env.ADMIN_LABEL;
+    delete process.env.ADMIN_EMAIL;
+    delete process.env.ADMIN_ROLE;
+    delete process.env.ADMIN_IDENTITY_PROVIDER;
+
+    assert.equal(isAdminAuthConfiguredWrapper(), false);
+    assert.equal(await isAdminAuthenticatedWrapper(), false);
+    assert.deepEqual(await getAdminIdentityWrapper(), {
+      authenticated: false,
+      type: 'password',
+      label: 'Admin',
+      email: undefined,
+      role: 'owner',
+      provider: 'password'
+    });
+    await assert.rejects(assertAdminAuthenticatedWrapper, /Admin authentication is required for this CMS action\./);
+    await assert.rejects(() => assertAdminRoleWrapper('owner'), /Admin authentication is required for this CMS action\./);
+    assert.deepEqual(await createAdminSessionWrapper('anything'), { ok: false, error: 'Admin auth is not configured.' });
+
+    process.env.ADMIN_PASSWORD = 'secret-password';
+    process.env.ADMIN_SESSION_SECRET = 'session-secret';
+    process.env.ADMIN_LABEL = ' Owner User ';
+    process.env.ADMIN_EMAIL = ' owner@example.invalid ';
+    process.env.ADMIN_ROLE = ' staff ';
+    process.env.ADMIN_IDENTITY_PROVIDER = ' password ';
+
+    assert.equal(isAdminAuthConfiguredWrapper(), true);
+    assert.deepEqual(await createAdminSessionWrapper('wrong-password'), { ok: false, error: 'Invalid admin password.' });
+  } finally {
+    for (const [key, value] of Object.entries(originalAdminEnv)) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+  }
+
+  const adminAuthSource = source('lib/admin-auth.ts');
+  for (const marker of [
+    'cookieStore.get(ADMIN_SESSION_COOKIE_NAME)?.value',
+    'cookieStore.set(ADMIN_SESSION_COOKIE_NAME, createAdminSessionCookieValue(config)',
+    'httpOnly: true',
+    "sameSite: 'lax'",
+    "secure: process.env.NODE_ENV === 'production'",
+    "path: '/'",
+    'maxAge: ADMIN_SESSION_MAX_AGE_SECONDS',
+    'cookieStore.delete(ADMIN_SESSION_COOKIE_NAME)',
+    'adminRoleMeetsRequirement(identity.role, requiredRole)'
+  ]) {
+    assert.ok(adminAuthSource.includes(marker), `admin-auth source must include ${marker}`);
   }
 
   console.log('admin-auth-core.test.ts passed');
