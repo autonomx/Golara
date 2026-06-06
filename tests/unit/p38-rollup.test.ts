@@ -6,6 +6,7 @@ export async function runP38RollupTests() {
   const closeoutDoc = readFileSync('docs/phase38-closeout.md', 'utf8');
   const implementationPlanDoc = readFileSync('docs/phase38-implementation-plan.md', 'utf8');
   const structuredLoggingDoc = readFileSync('docs/phase38-structured-logging-plan.md', 'utf8');
+  const incidentRunbookDoc = readFileSync('docs/phase38-incident-runbook-plan.md', 'utf8');
 
   for (const marker of ['PR 351', 'PR 352', 'PR 354', 'PR 355', 'phase: 38', 'runtime: false', 'storage: false', 'delivery: false', 'external_calls: false']) {
     assert.ok(rollupDoc.includes(marker), `rollup doc must include ${marker}`);
@@ -63,6 +64,23 @@ export async function runP38RollupTests() {
     'live log emission',
   ]) {
     assert.ok(structuredLoggingDoc.includes(marker), `structured logging doc must include ${marker}`);
+  }
+
+  for (const marker of [
+    'planning-only incident response handoff',
+    'payment failure',
+    'provider outage',
+    'webhook backlog',
+    'notification outage',
+    'migration rollback',
+    'incident_domain_required: true',
+    'severity_required: true',
+    'detection_signal_required: true',
+    'secret_values_allowed: false',
+    'live_operator_action_allowed: false',
+    'live incident execution',
+  ]) {
+    assert.ok(incidentRunbookDoc.includes(marker), `incident runbook doc must include ${marker}`);
   }
 
   console.log('p38-rollup.test.ts passed');
