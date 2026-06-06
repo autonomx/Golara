@@ -17,6 +17,11 @@ Status: Phase 36 outbound-delivery preflight foundations are in progress. This d
 - PR 336: read adapter and visibility preflight.
 - PR 337: route-core and admin read-only preflight.
 - PR 338: signing and recovery preflight.
+- PR 339: outbound preflight progress tracker and guard.
+
+## Summary coverage
+
+The current helper coverage now spans storage boundary, read contract, admin visibility, model alignment, read adapter, route-core, read-only admin visibility, signing, recovery, and progress tracking checkpoints.
 
 ## Current boundary
 
