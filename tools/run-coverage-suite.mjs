@@ -8,6 +8,7 @@ const coverageRoot = join(root, 'coverage');
 const v8Dir = join(coverageRoot, 'v8');
 const summaryJson = join(coverageRoot, 'coverage-summary.json');
 const summaryMarkdown = join(coverageRoot, 'coverage-summary.md');
+const LOW_COVERAGE_LIMIT = 25;
 
 function normalizePath(path) {
   return path.split(sep).join('/');
@@ -63,6 +64,18 @@ function mergeBucket(target, delta) {
 function pct(covered, total) {
   if (!total) return 100;
   return Math.round((covered / total) * 10000) / 100;
+}
+
+function formatCoverage(data) {
+  return {
+    files: data.files,
+    functions: data.functions,
+    coveredFunctions: data.coveredFunctions,
+    functionCoverage: pct(data.coveredFunctions, data.functions),
+    bytes: data.bytes,
+    coveredBytes: data.coveredBytes,
+    byteCoverage: pct(data.coveredBytes, data.bytes)
+  };
 }
 
 function analyzeScript(script) {
@@ -150,19 +163,28 @@ function buildSummary() {
     byBucket.set(bucket, current);
   }
 
+  const filesByPath = Object.fromEntries([...byFile.entries()].sort().map(([path, data]) => [path, formatCoverage(data)]));
   const buckets = Object.fromEntries([...byBucket.entries()].sort().map(([name, data]) => [name, {
     files: data.files,
     functionCoverage: pct(data.coveredFunctions, data.functions),
     byteCoverage: pct(data.coveredBytes, data.bytes)
   }]));
+  const lowCoverageLibFiles = Object.entries(filesByPath)
+    .filter(([path]) => path.startsWith('lib/'))
+    .sort(([, a], [, b]) => a.functionCoverage - b.functionCoverage || a.byteCoverage - b.byteCoverage)
+    .slice(0, LOW_COVERAGE_LIMIT)
+    .map(([path, data]) => ({ path, ...data }));
 
   return {
     generatedAt: new Date().toISOString(),
+    uniqueFiles: byFile.size,
     files: byFile.size,
     functionCoverage: pct(total.coveredFunctions, total.functions),
     byteCoverage: pct(total.coveredBytes, total.bytes),
     totals: total,
-    buckets
+    buckets,
+    lowCoverageLibFiles,
+    filesByPath
   };
 }
 
@@ -175,7 +197,7 @@ function writeSummary(summary) {
     '',
     `Generated: ${summary.generatedAt}`,
     '',
-    `- Files: ${summary.files}`,
+    `- Unique files: ${summary.uniqueFiles}`,
     `- Function coverage: ${summary.functionCoverage}%`,
     `- Byte coverage: ${summary.byteCoverage}%`,
     '',
@@ -187,6 +209,11 @@ function writeSummary(summary) {
 
   for (const [bucket, data] of Object.entries(summary.buckets)) {
     lines.push(`| ${bucket} | ${data.files} | ${data.functionCoverage}% | ${data.byteCoverage}% |`);
+  }
+
+  lines.push('', '## Lowest covered lib files', '', '| File | Functions | Function coverage | Byte coverage |', '| --- | ---: | ---: | ---: |');
+  for (const file of summary.lowCoverageLibFiles) {
+    lines.push(`| ${file.path} | ${file.coveredFunctions}/${file.functions} | ${file.functionCoverage}% | ${file.byteCoverage}% |`);
   }
 
   writeFileSync(summaryMarkdown, `${lines.join('\n')}\n`);
