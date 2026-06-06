@@ -132,6 +132,8 @@ import { runWarehouseLocationModelTests } from './warehouse-location-model.test'
 import { runWebhookConfigurationTests } from './webhook-configuration.test';
 import { runWebhookEventLogTests } from './webhook-event-log.test';
 
+const runPromotionOrderMinimumsTests = runPromotionOrderMinimumsModelTests;
+
 async function main() {
   await runRuntimeModeTests();
   await runRepositoryFallbackPolicyTests();
