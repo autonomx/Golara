@@ -10,7 +10,33 @@ export async function runP38RollupTests() {
   const healthCheckDoc = readFileSync('docs/phase38-health-check-inventory-plan.md', 'utf8');
   const performancePassDoc = readFileSync('docs/phase38-performance-pass-plan.md', 'utf8');
 
-  for (const marker of ['PR 351', 'PR 352', 'PR 354', 'PR 355', 'phase: 38', 'runtime: false', 'storage: false', 'delivery: false', 'external_calls: false']) {
+  for (const marker of [
+    'PR 351',
+    'PR 352',
+    'PR 354',
+    'PR 355',
+    'PR 356',
+    'PR 357',
+    'PR 358',
+    'PR 359',
+    'PR 360',
+    'PR 361',
+    'PR 362',
+    'PR 363',
+    'PR 364',
+    'PR 365',
+    'docs/phase38-structured-logging-plan.md',
+    'docs/phase38-incident-runbook-plan.md',
+    'docs/phase38-health-check-inventory-plan.md',
+    'docs/phase38-performance-pass-plan.md',
+    'phase: 38',
+    'runtime: false',
+    'storage: false',
+    'delivery: false',
+    'external_calls: false',
+    'operator_actions: false',
+    'live_behavior: false',
+  ]) {
     assert.ok(rollupDoc.includes(marker), `rollup doc must include ${marker}`);
   }
 
