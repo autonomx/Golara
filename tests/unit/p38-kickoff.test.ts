@@ -14,7 +14,7 @@ export async function runP38KickoffTests() {
   assert.equal(kickoff.delivery, false);
   assert.equal(kickoff.source, 'phase37');
 
-  for (const marker of ['phase: 38', 'planning: true', 'runtime: false', 'storage: false', 'delivery: false', 'source: phase37']) {
+  for (const marker of ['PR 351', 'phase: 38', 'planning: true', 'runtime: false', 'storage: false', 'delivery: false', 'source: phase37']) {
     assert.ok(doc.includes(marker), `doc must include ${marker}`);
   }
 

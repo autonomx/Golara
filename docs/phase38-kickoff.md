@@ -5,8 +5,11 @@ Status: planning kickoff only.
 Scope:
 
 - Continue from Phase 37 outbound QA readiness.
-- Keep the first Phase 38 slice documentation and pure helpers only.
-- Do not add runtime, storage, routes, workers, signing, delivery, recovery controls, migrations, admin UI, or external calls.
+- Keep this first Phase 38 slice documentation and pure helpers only.
+
+Merged sequence:
+
+- PR 351: kickoff helper and test.
 
 Readiness gates:
 
