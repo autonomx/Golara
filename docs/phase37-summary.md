@@ -10,6 +10,7 @@ Merged sequence:
 - PR 345: review.
 - PR 346: chain.
 - PR 347: summary.
+- PR 348: doc summary.
 
 Current values:
 
