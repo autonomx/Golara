@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 export async function runP37DocSummaryTests() {
   const doc = readFileSync('docs/phase37-summary.md', 'utf8');
 
-  for (const pr of ['PR 342', 'PR 343', 'PR 344', 'PR 345', 'PR 346', 'PR 347', 'PR 348']) {
+  for (const pr of ['PR 342', 'PR 343', 'PR 344', 'PR 345', 'PR 346', 'PR 347', 'PR 348', 'PR 349']) {
     assert.ok(doc.includes(pr), `doc must include ${pr}`);
   }
 
