@@ -10,6 +10,7 @@ Purpose:
 Planning sequence:
 
 - PR 359: implementation-plan handoff and guard.
+- PR 360: implementation-plan sequence note.
 
 Allowed next implementation categories:
 
