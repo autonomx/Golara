@@ -39,6 +39,12 @@ function sortedRecords(records: OutboundWebhookAdminRecordSnapshot[], plan: Outb
   });
 }
 
+function recordsAfterCursor(records: OutboundWebhookAdminRecordSnapshot[], cursor: string | null) {
+  if (!cursor) return records;
+  const cursorIndex = records.findIndex((record) => record.id === cursor);
+  return cursorIndex >= 0 ? records.slice(cursorIndex + 1) : [];
+}
+
 function pageFrom(records: OutboundWebhookAdminRecordSnapshot[], take: number) {
   const pageSize = Math.max(0, take - 1);
   const hasNextPage = records.length > pageSize;
@@ -53,7 +59,8 @@ export function readOutboundWebhookAdminMemory(input: {
   now: string | Date;
 }): OutboundWebhookAdminMemoryReadResult {
   const filtered = sortedRecords(input.records.filter((record) => matchesRecord(record, input.plan.query.where)), input.plan);
-  const page = pageFrom(filtered, input.plan.query.take);
+  const continued = recordsAfterCursor(filtered, input.plan.query.cursor);
+  const page = pageFrom(continued, input.plan.query.take);
   const listItems = page.visible.map((record) => buildOutboundDeliveryListItemDto(record, { now: input.now }));
   const detailRecord = input.plan.kind === 'detail' && input.plan.deliveryId ? filtered.find((record) => record.id === input.plan.deliveryId) ?? null : null;
 
@@ -62,7 +69,14 @@ export function readOutboundWebhookAdminMemory(input: {
     detail: detailRecord ? buildOutboundDeliveryDetailDto(detailRecord, { now: input.now }) : null,
     nextCursor: page.nextCursor,
     hasNextPage: page.hasNextPage,
-    auditLabels: ['memory-read', `matched:${filtered.length}`, `returned:${page.visible.length}`, `hasNext:${page.hasNextPage}`, ...input.plan.auditLabels],
+    auditLabels: [
+      'memory-read',
+      `matched:${filtered.length}`,
+      `afterCursor:${continued.length}`,
+      `returned:${page.visible.length}`,
+      `hasNext:${page.hasNextPage}`,
+      ...input.plan.auditLabels
+    ],
     rejected: [...input.plan.rejected]
   };
 }
