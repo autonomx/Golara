@@ -5,6 +5,8 @@ import type { OutboundWebhookAdminReadPlan } from './outbound-webhook-admin-read
 export type OutboundWebhookAdminMemoryReadResult = {
   items: OutboundWebhookAdminListItemDto[];
   detail: ReturnType<typeof buildOutboundDeliveryDetailDto> | null;
+  nextCursor: string | null;
+  hasNextPage: boolean;
   auditLabels: string[];
   rejected: string[];
 };
@@ -37,20 +39,30 @@ function sortedRecords(records: OutboundWebhookAdminRecordSnapshot[], plan: Outb
   });
 }
 
+function pageFrom(records: OutboundWebhookAdminRecordSnapshot[], take: number) {
+  const pageSize = Math.max(0, take - 1);
+  const hasNextPage = records.length > pageSize;
+  const visible = records.slice(0, pageSize || records.length);
+  const nextCursor = hasNextPage ? records[pageSize]?.id ?? null : null;
+  return { visible, hasNextPage, nextCursor };
+}
+
 export function readOutboundWebhookAdminMemory(input: {
   records: OutboundWebhookAdminRecordSnapshot[];
   plan: OutboundWebhookAdminReadPlan;
   now: string | Date;
 }): OutboundWebhookAdminMemoryReadResult {
   const filtered = sortedRecords(input.records.filter((record) => matchesRecord(record, input.plan.query.where)), input.plan);
-  const selected = filtered.slice(0, input.plan.query.take);
-  const listItems = selected.map((record) => buildOutboundDeliveryListItemDto(record, { now: input.now }));
+  const page = pageFrom(filtered, input.plan.query.take);
+  const listItems = page.visible.map((record) => buildOutboundDeliveryListItemDto(record, { now: input.now }));
   const detailRecord = input.plan.kind === 'detail' && input.plan.deliveryId ? filtered.find((record) => record.id === input.plan.deliveryId) ?? null : null;
 
   return {
     items: input.plan.kind === 'list' ? listItems : [],
     detail: detailRecord ? buildOutboundDeliveryDetailDto(detailRecord, { now: input.now }) : null,
-    auditLabels: ['memory-read', `matched:${filtered.length}`, `returned:${selected.length}`, ...input.plan.auditLabels],
+    nextCursor: page.nextCursor,
+    hasNextPage: page.hasNextPage,
+    auditLabels: ['memory-read', `matched:${filtered.length}`, `returned:${page.visible.length}`, `hasNext:${page.hasNextPage}`, ...input.plan.auditLabels],
     rejected: [...input.plan.rejected]
   };
 }
