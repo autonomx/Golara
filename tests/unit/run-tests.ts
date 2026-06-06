@@ -61,6 +61,7 @@ import { runOrderRevenueSummaryTests } from './order-revenue-summary.test';
 import { runOutboundWebhookAdminReadModelTests } from './outbound-webhook-admin-read-model.test';
 import { runOutboundWebhookDeliveryPlanTests } from './outbound-webhook-delivery-plan.test';
 import { runOtpRateLimitTests } from './otp-rate-limit.test';
+import { runP38NoteTests } from './p38-note.test';
 import { runPaymentAttemptTimelineFlowTests } from './payment-attempt-timeline-flow.test';
 import { runPaymentGatewayAdaptersTests } from './payment-gateway-adapters.test';
 import { runPaymentGatewayConfigTests } from './payment-gateway-config.test';
@@ -221,6 +222,7 @@ async function main() {
   await runWebhookConfigurationTests();
   await runOutboundWebhookDeliveryPlanTests();
   await runOutboundWebhookAdminReadModelTests();
+  await runP38NoteTests();
   await runWebhookEventLogTests();
   await runIntegrationAppRegistryTests();
   await runApiTokenManagementTests();
@@ -260,7 +262,7 @@ async function main() {
   await runFulfillmentShipmentRecordsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (130 files)');
+  console.log('unit tests passed (131 files)');
 }
 
 main().catch((error) => {
