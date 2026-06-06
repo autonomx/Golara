@@ -1,5 +1,13 @@
 import assert from 'node:assert/strict';
 import {
+  getCurrentInquiryNotificationReadiness,
+  getCurrentInquiryNotificationRetryRunbook,
+  getInquiryNotificationConfig as getInquiryNotificationConfigFromWrapper,
+  getInquiryNotificationReadiness as getInquiryNotificationReadinessFromWrapper,
+  getInquiryNotificationRetryRunbook as getInquiryNotificationRetryRunbookFromWrapper,
+  notifyNewInquiry
+} from '../../lib/notifications/inquiry-notifications';
+import {
   createInquiryNotificationService,
   getInquiryNotificationConfig,
   getInquiryNotificationReadiness,
@@ -61,6 +69,62 @@ export async function runInquiryNotificationsCoreTests() {
       }
     }
   );
+
+  assert.equal(getInquiryNotificationConfigFromWrapper, getInquiryNotificationConfig);
+  assert.equal(getInquiryNotificationReadinessFromWrapper, getInquiryNotificationReadiness);
+  assert.equal(getInquiryNotificationRetryRunbookFromWrapper, getInquiryNotificationRetryRunbook);
+
+  const originalInquiryNotificationEnv = {
+    INQUIRY_NOTIFICATION_MODE: process.env.INQUIRY_NOTIFICATION_MODE,
+    INQUIRY_NOTIFICATION_EMAIL: process.env.INQUIRY_NOTIFICATION_EMAIL,
+    INQUIRY_NOTIFICATION_WHATSAPP: process.env.INQUIRY_NOTIFICATION_WHATSAPP,
+    INQUIRY_NOTIFICATION_WEBHOOK_URL: process.env.INQUIRY_NOTIFICATION_WEBHOOK_URL
+  };
+
+  const originalConsoleInfo = console.info;
+  try {
+    process.env.INQUIRY_NOTIFICATION_MODE = ' log ';
+    process.env.INQUIRY_NOTIFICATION_EMAIL = ' staff@example.test ';
+    process.env.INQUIRY_NOTIFICATION_WHATSAPP = '';
+    process.env.INQUIRY_NOTIFICATION_WEBHOOK_URL = '';
+
+    const currentReadiness = getCurrentInquiryNotificationReadiness();
+    assert.equal(currentReadiness.mode, 'log');
+    assert.equal(currentReadiness.ready, true);
+    assert.equal(currentReadiness.warnings[0]?.code, 'notification_log_only');
+    assert.deepEqual(getCurrentInquiryNotificationRetryRunbook(), getInquiryNotificationRetryRunbook(currentReadiness));
+
+    let logged: unknown[] | null = null;
+    console.info = (...args: unknown[]) => {
+      logged = args;
+    };
+
+    const wrapperResult = await notifyNewInquiry({
+      ...payload,
+      inquiryId: 'wrapper-inquiry',
+      message: 'x'.repeat(200)
+    });
+    assert.deepEqual(wrapperResult, {
+      status: 'logged',
+      mode: 'log',
+      channel: 'log',
+      inquiryId: 'wrapper-inquiry',
+      fallbackLogged: false,
+      detail: 'Inquiry notification was written to structured logs.'
+    });
+    assert.equal(logged?.[0], '[notifications] new customer inquiry');
+    assert.equal((logged?.[1] as { inquiryId: string }).inquiryId, 'wrapper-inquiry');
+    assert.equal((logged?.[1] as { messagePreview: string }).messagePreview.length, 160);
+  } finally {
+    console.info = originalConsoleInfo;
+    for (const [key, value] of Object.entries(originalInquiryNotificationEnv)) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+  }
 
   const logReadiness = getInquiryNotificationReadiness({ mode: 'log', recipients: defaultRecipients() });
   assert.deepEqual(logReadiness, {
