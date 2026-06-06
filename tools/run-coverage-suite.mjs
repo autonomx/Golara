@@ -93,16 +93,29 @@ function runSuite() {
   rmSync(coverageRoot, { recursive: true, force: true });
   mkdirSync(v8Dir, { recursive: true });
 
-  const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+  console.log('Running coverage suite with NODE_V8_COVERAGE enabled...');
   // Coverage wraps the same suite as npm run test:all.
-  const result = spawnSync(npm, ['run', 'test:all'], {
+  const result = spawnSync(process.execPath, ['tools/run-full-test-suite.mjs'], {
     cwd: root,
     env: { ...process.env, NODE_V8_COVERAGE: v8Dir },
     stdio: 'inherit',
     shell: false
   });
 
-  if (result.status !== 0) process.exit(result.status ?? 1);
+  if (result.error) {
+    console.error(`Coverage suite failed to start: ${result.error.message}`);
+    process.exit(1);
+  }
+
+  if (result.signal) {
+    console.error(`Coverage suite terminated by signal: ${result.signal}`);
+    process.exit(1);
+  }
+
+  if (result.status !== 0) {
+    console.error(`Coverage suite failed with exit code ${result.status ?? 'unknown'}`);
+    process.exit(result.status ?? 1);
+  }
 }
 
 function buildSummary() {
