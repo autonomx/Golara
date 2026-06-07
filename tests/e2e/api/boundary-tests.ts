@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import { createHash, createHmac } from 'node:crypto';
 import { spawn, type ChildProcess } from 'node:child_process';
 import { PrismaClient } from '@prisma/client';
-import { CART_COOKIE_NAME } from '@/lib/cart/cart-cookie';
 import { CUSTOMER_SESSION_COOKIE_NAME } from '@/lib/customers/customer-session-cookie';
 import {
   createLifecycleCategory,
