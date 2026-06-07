@@ -52,7 +52,7 @@ function runE2eApiHarnessContractTests() {
   assertContains('tests/e2e/api/shared.ts', ['E2E_DATABASE_URL', 'DATABASE_URL', 'CookieJar', 'submitServerAction']);
   assertContains('tests/e2e/api/storefront-account-tests.ts', ['API checkout action order', 'API E2E Inquiry Customer']);
   assertContains('tests/e2e/api/cart-boundary-tests.ts', ['api-e2e-zero-quantity-cart', 'api-e2e-remove-line-cart', 'api-e2e-unknown-cart-token', 'api-e2e-inactive-line-cart', 'API Boundary Deluxe']);
-  assertContains('tests/e2e/api/locale-currency-tests.ts', ['api-e2e-locale-currency-cart', 'en-CA', 'CAD', 'API E2E Locale Customer']);
+  assertContains('tests/e2e/api/locale-currency-tests.ts', ['api-e2e-locale-currency-cart', 'en-CA', 'CAD', 'API E2E Locale Customer', 'API E2E CAD checkout order']);
   assertContains('tests/e2e/api/cart-checkout-negative-tests.ts', ['API negative checkout should not create order', 'api-e2e-missing-phone-checkout-cart', 'api-e2e-invalid-delivery-date-cart', 'API inactive variant checkout should release cart', 'API insufficient stock checkout should release cart', 'API concurrent checkout guard', 'api-e2e-empty-checkout-cart']);
   assertContains('tests/e2e/api/account-webhook-negative-tests.ts', ['api-other-customer', 'cs_api_e2e_unknown_reference', 'A000000000000000000000000gapapi']);
   assertContains('tests/e2e/api/admin-auth-boundary-tests.ts', ['tampered-admin-session-cookie', '/admin/products/export', '/admin/orders/csv']);
