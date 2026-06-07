@@ -1,7 +1,16 @@
 import assert from 'node:assert/strict';
 import { CART_COOKIE_NAME } from '@/lib/cart/cart-cookie';
 import { CUSTOMER_SESSION_COOKIE_NAME } from '@/lib/customers/customer-session-cookie';
-import { CookieJar, hashToken, request, type ApiFixture } from './shared';
+import {
+  CookieJar,
+  appendServerActionFields,
+  assertRedirect,
+  hashToken,
+  request,
+  responseText,
+  submitServerAction,
+  type ApiFixture
+} from './shared';
 
 export async function runLocaleCurrencyMatrixTests(fixture: ApiFixture) {
   const customer = await fixture.prisma.customerProfile.create({
@@ -56,6 +65,38 @@ export async function runLocaleCurrencyMatrixTests(fixture: ApiFixture) {
   assert.match(html, /Delivery and payment/);
   assert.match(html, /Recipient details/);
   assert.match(html, /Order summary/);
+  assert.match(html, /\$1,250\.00/);
   assert.match(html, /API E2E Locale Customer/);
   assert.match(html, /610 Locale Currency Lane/);
+
+  const note = 'API E2E CAD checkout order.';
+  const checkoutForm = new FormData();
+  appendServerActionFields(checkoutForm, html, 'name="addressLine1"');
+  checkoutForm.set('name', 'API E2E Locale Customer');
+  checkoutForm.set('phone', '+16045559610');
+  checkoutForm.set('email', 'api-locale-customer.e2e@golara.test');
+  checkoutForm.set('city', 'Vancouver');
+  checkoutForm.set('addressLine1', '610 Locale Currency Lane');
+  checkoutForm.set('deliveryDate', '2026-07-05');
+  checkoutForm.set('deliveryWindow', '10:00-12:00');
+  checkoutForm.set('customerNote', note);
+  const checkoutResponse = await submitServerAction('/cart/checkout', checkoutForm, jar);
+  assertRedirect(checkoutResponse, '/orders/');
+
+  const order = await fixture.prisma.checkoutOrder.findFirstOrThrow({
+    where: { customerNote: note },
+    include: { items: true, paymentAttempts: true }
+  });
+  assert.equal(order.customerId, customer.id);
+  assert.equal(order.currency, 'CAD');
+  assert.equal(order.totalCents, 125000);
+  assert.equal(order.items.length, 1);
+  assert.equal(order.paymentAttempts[0]?.currency, 'CAD');
+  assert.equal(order.paymentAttempts[0]?.amountCents, 125000);
+  assert.equal((await fixture.prisma.cartSession.findUniqueOrThrow({ where: { id: cart.id } })).status, 'checked_out');
+
+  const ordersHtml = await responseText(await request('/account/orders', { headers: { cookie: jar.header() } }));
+  assert.match(ordersHtml, new RegExp(order.orderNumber));
+  assert.match(ordersHtml, /\$1,250\.00/);
+  assert.match(ordersHtml, /pending payment/);
 }
