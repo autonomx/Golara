@@ -22,6 +22,8 @@ import {
   isValidAdminSessionCookie,
   normalizeAdminIdentityProvider,
   normalizeAdminRole,
+  safeAdminEqual,
+  signAdminSessionPayload,
   verifyAdminPassword,
   type AdminRole
 } from '../../lib/admin-auth-core';
@@ -76,6 +78,12 @@ export async function runAdminAuthCoreTests() {
   assert.equal(isAdminAuthConfigured({ ...config, password: '' }), false);
   assert.equal(isAdminAuthConfigured({ ...config, sessionSecret: '' }), false);
 
+  assert.equal(signAdminSessionPayload(ADMIN_SESSION_PAYLOAD, config), signAdminSessionPayload(ADMIN_SESSION_PAYLOAD, config));
+  assert.equal(signAdminSessionPayload('other-payload', config) === signAdminSessionPayload(ADMIN_SESSION_PAYLOAD, config), false);
+  assert.equal(safeAdminEqual('same', 'same'), true);
+  assert.equal(safeAdminEqual('same', 'different'), false);
+  assert.equal(safeAdminEqual('same', 'longer-value'), false);
+
   assert.equal(verifyAdminPassword('password', config), true);
   assert.equal(verifyAdminPassword('wrong-password', config), false);
   assert.equal(verifyAdminPassword('password', { ...config, sessionSecret: '' }), false);
@@ -86,6 +94,9 @@ export async function runAdminAuthCoreTests() {
   assert.equal(isValidAdminSessionCookie(undefined, config), false);
   assert.equal(isValidAdminSessionCookie('', config), false);
   assert.equal(isValidAdminSessionCookie('bad-payload.bad-signature', config), false);
+  assert.equal(isValidAdminSessionCookie(`${ADMIN_SESSION_PAYLOAD}.`, config), false);
+  assert.equal(isValidAdminSessionCookie(`${ADMIN_SESSION_PAYLOAD}.${signAdminSessionPayload('other-payload', config)}`, config), false);
+  assert.equal(isValidAdminSessionCookie(`${ADMIN_SESSION_PAYLOAD}.${signAdminSessionPayload(ADMIN_SESSION_PAYLOAD, config)}.extra`, config), true);
   assert.equal(isValidAdminSessionCookie(cookieValue, { ...config, sessionSecret: 'other-secret' }), false);
 
   assert.deepEqual(createAdminIdentity({ authenticated: true, label: 'Provider User', role: 'owner', provider: 'password' }), {
@@ -94,6 +105,14 @@ export async function runAdminAuthCoreTests() {
     label: 'Provider User',
     email: undefined,
     role: 'owner',
+    provider: 'password'
+  });
+  assert.deepEqual(createAdminIdentity({ authenticated: false, label: 'Staff User', email: 'staff@example.invalid', role: 'staff', provider: 'password' }), {
+    authenticated: false,
+    type: 'password',
+    label: 'Staff User',
+    email: 'staff@example.invalid',
+    role: 'staff',
     provider: 'password'
   });
 

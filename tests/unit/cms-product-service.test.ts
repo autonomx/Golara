@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { createCmsProductService, type CmsProductRecord, type CmsProductTranslationRecord } from '../../lib/cms/product-service-core';
+import { getSeedProductImagePath, renderSeedProductImageSvg, renderSeedProductPhotoSvg } from '../../lib/seed-product-images';
 
 function source(path: string) {
   return readFileSync(path, 'utf8');
@@ -134,6 +135,18 @@ export async function runCmsProductServiceTests() {
     summary: 'Saved product translation: fa-IR',
     metadata: { locale: 'fa-IR', translationId: 'product-translation-1', isPublished: true }
   });
+
+  assert.equal(getSeedProductImagePath('vip-box-blue'), '/seed-images/real-photo/vip-box-blue');
+  assert.equal(getSeedProductImagePath('teddy-bouquet'), '/real-images/teddy-bouquet.png');
+  assert.equal(getSeedProductImagePath('unknown-slug'), '/seed-images/catalog/unknown-slug');
+  const catalogSvg = renderSeedProductImageSvg('autumn-design-2');
+  assert.ok(catalogSvg?.includes('GOLARA SEED CATALOG'));
+  assert.ok(catalogSvg?.includes('daily arrangement'));
+  assert.equal(renderSeedProductImageSvg('missing-slug'), null);
+  const photoSvg = renderSeedProductPhotoSvg('vip-box-blue');
+  assert.ok(photoSvg?.includes('ORIGINAL GOLARA TEST IMAGE'));
+  assert.equal(renderSeedProductPhotoSvg('autumn-design-2'), null);
+  assert.equal(renderSeedProductPhotoSvg('missing-slug'), null);
 
   const repository = source('lib/cms/catalog-repository.ts');
   assert.ok(repository.includes('function buildInquiryWhere(status?: string, search?: string)'));
