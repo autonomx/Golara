@@ -242,3 +242,256 @@ export async function updateOrderDiscountAction(orderId: string, formData: FormD
   revalidatePath(`/admin/orders/${orderId}`);
   redirect(orderDetailPath(orderId, 'order-discount-updated'));
 }
+
+export async function updateOrderCustomerAssignmentAction(orderId: string, formData: FormData) {
+  const actor = await assertAdminRole('staff');
+  const customerId = stringFormValue(formData, 'customerId');
+  const addressId = stringFormValue(formData, 'addressId');
+  const order = await assignAdminOrderCustomer(orderId, {
+    customerId,
+    addressId,
+    actorLabel: actor.label,
+    actorRole: actor.role
+  });
+
+  await recordAdminAuditLog({
+    action: 'order.customer.assign',
+    entity: 'checkoutOrder',
+    entityId: order.id,
+    summary: `Updated customer assignment for order ${order.orderNumber}`,
+    metadata: {
+      customerId: order.customerId,
+      addressId: order.addressId
+    }
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/orders');
+  revalidatePath(`/admin/orders/${orderId}`);
+  redirect(orderDetailPath(orderId, 'order-customer-assigned'));
+}
+
+export async function markOrderManualPaymentAction(orderId: string, formData: FormData) {
+  const actor = await assertAdminRole('staff');
+  const amountCents = integerFormValue(formData, 'amountCents', 0);
+  const providerReference = stringFormValue(formData, 'providerReference');
+  const note = stringFormValue(formData, 'note');
+  const attempt = await markOrderManualPayment(orderId, {
+    amountCents,
+    providerReference,
+    note,
+    actorLabel: actor.label,
+    actorRole: actor.role
+  });
+
+  await recordAdminAuditLog({
+    action: 'order.payment.manual.mark_paid',
+    entity: 'checkoutOrder',
+    entityId: attempt.order.id,
+    summary: `Marked manual payment paid for order ${attempt.order.orderNumber}`,
+    metadata: {
+      paymentAttemptId: attempt.id,
+      amountCents: attempt.amountCents,
+      providerReference: attempt.providerReference
+    }
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/orders');
+  revalidatePath(`/admin/orders/${orderId}`);
+  redirect(orderDetailPath(orderId, 'manual-payment-marked'));
+}
+
+async function transitionManualPaymentAttemptAction(orderId: string, paymentAttemptId: string, to: 'refunded' | 'cancelled', status: string, formData?: FormData) {
+  const actor = await assertAdminRole('staff');
+  if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
+
+  const attempt = await prisma.checkoutPaymentAttempt.findFirst({
+    where: { id: paymentAttemptId, orderId },
+    select: { id: true, provider: true, status: true, order: { select: { id: true, orderNumber: true } } }
+  });
+  if (!attempt) throw new Error('Payment attempt not found.');
+  if (attempt.provider !== 'manual') throw new Error('Only manual payment attempts can be adjusted from admin.');
+
+  const updated = await transitionCheckoutPaymentStatus({
+    paymentAttemptId,
+    to,
+    note: formData ? stringFormValue(formData, 'note') : undefined,
+    actorLabel: actor.label,
+    actorRole: actor.role
+  });
+
+  await recordAdminAuditLog({
+    action: to === 'refunded' ? 'order.payment.manual.refund' : 'order.payment.manual.void',
+    entity: 'checkoutOrder',
+    entityId: attempt.order.id,
+    summary: `${to === 'refunded' ? 'Refunded' : 'Voided'} manual payment attempt for order ${attempt.order.orderNumber}`,
+    metadata: {
+      paymentAttemptId: updated.id,
+      from: attempt.status,
+      to
+    }
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/orders');
+  revalidatePath(`/admin/orders/${orderId}`);
+  redirect(orderDetailPath(orderId, status));
+}
+
+export async function refundManualPaymentAttemptAction(orderId: string, paymentAttemptId: string, formData?: FormData) {
+  await transitionManualPaymentAttemptAction(orderId, paymentAttemptId, 'refunded', 'manual-payment-refunded', formData);
+}
+
+export async function voidManualPaymentAttemptAction(orderId: string, paymentAttemptId: string, formData?: FormData) {
+  await transitionManualPaymentAttemptAction(orderId, paymentAttemptId, 'cancelled', 'manual-payment-voided', formData);
+}
+
+export async function addOrderTimelineNoteAction(orderId: string, formData: FormData) {
+  const actor = await assertAdminRole('staff');
+  if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
+
+  const note = stringFormValue(formData, 'note');
+  if (note.length < 2) throw new Error('Timeline note is required.');
+
+  const order = await prisma.checkoutOrder.update({
+    where: { id: orderId },
+    data: {
+      staffNotes: note,
+      timelineEvents: {
+        create: {
+          type: 'staff_note',
+          title: 'Staff note added',
+          note,
+          actorLabel: actor.label,
+          actorRole: actor.role
+        }
+      }
+    }
+  });
+
+  await recordAdminAuditLog({
+    action: 'order.timeline.note.create',
+    entity: 'checkoutOrder',
+    entityId: order.id,
+    summary: `Added staff note to order ${order.orderNumber}`,
+    metadata: { noteLength: note.length }
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/orders');
+  revalidatePath(`/admin/orders/${orderId}`);
+  redirect(orderDetailPath(orderId, 'order-note-added'));
+}
+
+export async function updateOrderFulfillmentAction(orderId: string, formData: FormData) {
+  const actor = await assertAdminRole('staff');
+  if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
+
+  const fulfillmentStatus = assertCheckoutFulfillmentStatus(stringFormValue(formData, 'fulfillmentStatus'));
+  const fulfillmentNote = stringFormValue(formData, 'fulfillmentNote');
+  const courierName = stringFormValue(formData, 'courierName');
+  const courierPhone = stringFormValue(formData, 'courierPhone');
+  const existingOrder = await prisma.checkoutOrder.findUnique({
+    where: { id: orderId },
+    select: { fulfillmentStatus: true, orderNumber: true }
+  });
+  if (!existingOrder) throw new Error('Order not found.');
+
+  const order = await transitionCheckoutFulfillmentStatus({
+    orderId,
+    to: fulfillmentStatus,
+    note: fulfillmentNote,
+    actorLabel: actor.label,
+    actorRole: actor.role
+  });
+
+  await prisma.checkoutOrder.update({
+    where: { id: orderId },
+    data: {
+      fulfillmentNote: fulfillmentNote || undefined,
+      courierName: courierName || undefined,
+      courierPhone: courierPhone || undefined
+    }
+  });
+
+  await recordAdminAuditLog({
+    action: 'order.fulfillment.update',
+    entity: 'checkoutOrder',
+    entityId: order.id,
+    summary: `Updated fulfillment for order ${existingOrder.orderNumber} from ${existingOrder.fulfillmentStatus} to ${fulfillmentStatus}`,
+    metadata: {
+      previousFulfillmentStatus: existingOrder.fulfillmentStatus,
+      fulfillmentStatus,
+      courierUpdated: Boolean(courierName || courierPhone)
+    }
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/orders');
+  revalidatePath(`/admin/orders/${orderId}`);
+  redirect(orderDetailPath(orderId, 'fulfillment-updated'));
+}
+
+export async function queueOrderNotificationAction(orderId: string, formData: FormData) {
+  const actor = await assertAdminRole('staff');
+  const result = await queueAdminOrderNotificationAction(orderId, {
+    channel: stringFormValue(formData, 'channel'),
+    templateKey: stringFormValue(formData, 'templateKey'),
+    recipient: stringFormValue(formData, 'recipient'),
+    subject: stringFormValue(formData, 'subject'),
+    body: stringFormValue(formData, 'body'),
+    maxAttempts: integerFormValue(formData, 'maxAttempts', 3),
+    actorLabel: actor.label,
+    actorRole: actor.role
+  });
+
+  await recordAdminAuditLog({
+    action: 'order.notification.queue',
+    entity: 'checkoutOrder',
+    entityId: result.order.id,
+    summary: `Queued ${result.notification.channel} notification for order ${result.order.orderNumber}`,
+    metadata: {
+      notificationId: result.notification.id,
+      channel: result.notification.channel,
+      templateKey: result.notification.templateKey,
+      maxAttempts: result.notification.maxAttempts
+    }
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/orders');
+  revalidatePath(`/admin/orders/${orderId}`);
+  redirect(orderDetailPath(orderId, 'order-notification-queued'));
+}
+
+export async function recordOrderNotificationAttemptAction(orderId: string, notificationId: string, status: 'delivered' | 'failed', formData?: FormData) {
+  const actor = await assertAdminRole('staff');
+  const notification = await recordAdminOrderNotificationAttempt(notificationId, {
+    status,
+    errorCode: formData ? stringFormValue(formData, 'errorCode') : undefined,
+    errorMessage: formData ? stringFormValue(formData, 'errorMessage') : undefined,
+    retryDelayMinutes: formData ? integerFormValue(formData, 'retryDelayMinutes', 15) : 15,
+    actorLabel: actor.label,
+    actorRole: actor.role
+  });
+
+  await recordAdminAuditLog({
+    action: status === 'delivered' ? 'order.notification.deliver' : 'order.notification.fail',
+    entity: 'checkoutOrder',
+    entityId: orderId,
+    summary: `Recorded ${notification.channel} notification attempt as ${notification.status}`,
+    metadata: {
+      notificationId: notification.id,
+      channel: notification.channel,
+      status: notification.status,
+      attemptCount: notification.attemptCount,
+      nextRetryAt: notification.nextRetryAt?.toISOString() ?? null
+    }
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/orders');
+  revalidatePath(`/admin/orders/${orderId}`);
+  redirect(orderDetailPath(orderId, status === 'delivered' ? 'order-notification-delivered' : 'order-notification-failed'));
+}
