@@ -83,8 +83,8 @@ function runE2eLifecycleDbHarnessContractTests() {
   const dbHarness = source('tests/e2e/lifecycle/test-db.ts');
 
   assert.match(pkg, /"test:e2e:lifecycle":\s*"node --require \.\/tests\/setup\/server-only-register\.cjs --import tsx tests\/e2e\/lifecycle\/run-tests\.ts"/);
-  assert.match(runner, /E2E_DATABASE_URL/);
-  assert.match(runner, /skipping local database lifecycle E2E suite/);
+  assert.match(dbHarness, /E2E_DATABASE_URL/);
+  assert.match(dbHarness, /skipping local database lifecycle E2E suite/);
   assert.match(runner, /resetLifecycleDatabase/);
   assert.match(runner, /SELECT 1 AS ok/);
   assert.match(dbHarness, /assertSafeLifecycleDatabaseUrl/);
