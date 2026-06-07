@@ -38,7 +38,7 @@ export async function runE2eDbSafetyContractTests() {
   assert.match(harness, /Missing required tables/);
   assert.match(harness, /npm run db:push/);
   assert.match(harness, /\$env:DATABASE_URL=\$env:E2E_DATABASE_URL/);
-  assert.match(harness, /resetLifecycleDatabase\(prisma: PrismaClient\) \{\n  await assertLifecycleSchemaReady\(prisma\)/);
+  assert.match(harness, /resetLifecycleDatabase\(prisma: PrismaClient\) \{\r?\n  await assertLifecycleSchemaReady\(prisma\)/);
 
   console.log('e2e-db-safety-contract.test.ts passed');
 }
