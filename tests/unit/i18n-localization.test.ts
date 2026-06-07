@@ -1,14 +1,26 @@
 import assert from 'node:assert/strict';
-import { fallbackLocaleOrder, localeDirection, normalizeLocale } from '../../lib/i18n/locales';
+import { DEFAULT_LOCALE, FALLBACK_LOCALE, SUPPORTED_LOCALES, fallbackLocaleOrder, isSupportedLocale, localeDirection, normalizeLocale } from '../../lib/i18n/locales';
 import { localizedField, selectPublishedTranslation, selectTranslatedContent } from '../../lib/i18n/translated-content';
 
 export async function runI18nLocalizationTests() {
+  assert.equal(DEFAULT_LOCALE, 'fa-IR');
+  assert.equal(FALLBACK_LOCALE, 'en-CA');
+  assert.deepEqual([...SUPPORTED_LOCALES], ['fa-IR', 'en-CA']);
+  assert.equal(isSupportedLocale('fa-IR'), true);
+  assert.equal(isSupportedLocale('en-CA'), true);
+  assert.equal(isSupportedLocale('fa'), false);
+  assert.equal(isSupportedLocale('english'), false);
+
   assert.equal(normalizeLocale(undefined), 'fa-IR');
+  assert.equal(normalizeLocale(null), 'fa-IR');
+  assert.equal(normalizeLocale('  '), 'fa-IR');
   assert.equal(normalizeLocale('fa'), 'fa-IR');
   assert.equal(normalizeLocale('FA-ir'), 'fa-IR');
+  assert.equal(normalizeLocale('persian'), 'fa-IR');
   assert.equal(normalizeLocale('farsi'), 'fa-IR');
   assert.equal(normalizeLocale('en'), 'en-CA');
   assert.equal(normalizeLocale('EN-ca'), 'en-CA');
+  assert.equal(normalizeLocale('english'), 'en-CA');
   assert.equal(normalizeLocale('unknown'), 'fa-IR');
 
   assert.equal(localeDirection('fa-IR'), 'rtl');
@@ -16,6 +28,8 @@ export async function runI18nLocalizationTests() {
 
   assert.deepEqual(fallbackLocaleOrder('fa-IR'), ['fa-IR', 'en-CA']);
   assert.deepEqual(fallbackLocaleOrder('en-CA'), ['en-CA', 'fa-IR']);
+  assert.deepEqual(fallbackLocaleOrder('english'), ['en-CA', 'fa-IR']);
+  assert.deepEqual(fallbackLocaleOrder(undefined), ['fa-IR', 'en-CA']);
   assert.deepEqual(fallbackLocaleOrder('bad'), ['fa-IR', 'en-CA']);
 
   const translations = [
