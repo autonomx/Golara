@@ -9,6 +9,27 @@ export type LifecycleTestDbConfig = {
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
 const SAFE_NAME_MARKERS = ['golara_e2e', 'golara-e2e', 'e2e', 'test'];
 const BLOCKED_NAME_MARKERS = ['prod', 'production', 'live', 'staging'];
+const REQUIRED_LIFECYCLE_TABLES = [
+  'AdminAuditLog',
+  'CartItem',
+  'CartSession',
+  'Category',
+  'CheckoutOrder',
+  'CheckoutOrderItem',
+  'CheckoutPaymentAttempt',
+  'CheckoutPaymentEvent',
+  'CustomerAddress',
+  'CustomerOtpChallenge',
+  'CustomerProfile',
+  'CustomerSession',
+  'InventoryStockReservation',
+  'Product',
+  'ProductType',
+  'ProductVariant',
+  'ProductVariantLocationStock',
+  'StorefrontChannel',
+  'WarehouseLocation'
+];
 
 function normalizeDatabaseUrlForComparison(databaseUrl?: string) {
   if (!databaseUrl?.trim()) return '';
@@ -79,7 +100,28 @@ export function createLifecyclePrismaClient(databaseUrl: string) {
   });
 }
 
+export async function assertLifecycleSchemaReady(prisma: PrismaClient) {
+  const rows = await prisma.$queryRaw<Array<{ table_name: string }>>`
+    SELECT table_name
+    FROM information_schema.tables
+    WHERE table_schema = 'public'
+  `;
+  const existing = new Set(rows.map((row) => row.table_name));
+  const missing = REQUIRED_LIFECYCLE_TABLES.filter((table) => !existing.has(table));
+  if (missing.length === 0) return;
+
+  throw new Error([
+    'E2E database schema is not ready. Missing required tables: ' + missing.join(', ') + '.',
+    'Run Prisma schema setup against E2E_DATABASE_URL before starting the API E2E suite.',
+    'PowerShell:',
+    '  $env:DATABASE_URL=$env:E2E_DATABASE_URL',
+    '  npm run db:push',
+    'Then restore your normal DATABASE_URL before running the app outside tests.'
+  ].join('\n'));
+}
+
 export async function resetLifecycleDatabase(prisma: PrismaClient) {
+  await assertLifecycleSchemaReady(prisma);
   await prisma.$executeRawUnsafe(`
     DO $$
     BEGIN
