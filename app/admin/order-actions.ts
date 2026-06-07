@@ -33,13 +33,38 @@ function orderDetailPath(orderId: string, status: string) {
   return `/admin/orders/${orderId}?${params.toString()}`;
 }
 
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : '';
+}
+
 function orderLineAddFailureStatus(error: unknown) {
-  const message = error instanceof Error ? error.message : '';
+  const message = errorMessage(error);
   if (message.includes('Product selection is required')) return 'order-line-product-required';
   if (message.includes('Product is unavailable')) return 'order-line-product-unavailable';
   if (message.includes('Product variant is unavailable')) return 'order-line-variant-unavailable';
   if (message.includes('Order not found')) return 'order-not-found';
   if (message.includes('Order line items can only be edited')) return 'order-line-not-editable';
+  return undefined;
+}
+
+function orderStatusFailureStatus(error: unknown) {
+  const message = errorMessage(error);
+  if (message.includes('Invalid checkout order status')) return 'order-status-invalid';
+  if (message.includes('Order not found')) return 'order-not-found';
+  return undefined;
+}
+
+function fulfillmentFailureStatus(error: unknown) {
+  const message = errorMessage(error);
+  if (message.includes('Invalid checkout fulfillment status')) return 'fulfillment-status-invalid';
+  if (message.includes('Order not found')) return 'order-not-found';
+  return undefined;
+}
+
+function manualPaymentFailureStatus(error: unknown) {
+  const message = errorMessage(error);
+  if (message.includes('Payment attempt not found')) return 'manual-payment-not-found';
+  if (message.includes('Only manual payment attempts')) return 'manual-payment-not-adjustable';
   return undefined;
 }
 
@@ -76,24 +101,35 @@ export async function updateOrderStatusAction(orderId: string, formData: FormDat
   const actor = await assertAdminRole('staff');
   if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
 
-  const status = assertCheckoutOrderStatus(stringFormValue(formData, 'status'));
   const staffNotes = stringFormValue(formData, 'staffNotes');
-  const existingOrder = await prisma.checkoutOrder.findUnique({
-    where: { id: orderId },
-    select: { status: true, orderNumber: true }
-  });
-  if (!existingOrder) throw new Error('Order not found.');
+  let status: ReturnType<typeof assertCheckoutOrderStatus>;
+  let existingOrder: { status: string; orderNumber: string };
+  let order: Awaited<ReturnType<typeof transitionCheckoutOrderStatus>>;
 
-  const order = await transitionCheckoutOrderStatus({
-    orderId,
-    to: status,
-    note: staffNotes,
-    actorLabel: actor.label,
-    actorRole: actor.role
-  });
+  try {
+    status = assertCheckoutOrderStatus(stringFormValue(formData, 'status'));
+    const existing = await prisma.checkoutOrder.findUnique({
+      where: { id: orderId },
+      select: { status: true, orderNumber: true }
+    });
+    if (!existing) throw new Error('Order not found.');
+    existingOrder = existing;
 
-  if (staffNotes) {
-    await prisma.checkoutOrder.update({ where: { id: orderId }, data: { staffNotes } });
+    order = await transitionCheckoutOrderStatus({
+      orderId,
+      to: status,
+      note: staffNotes,
+      actorLabel: actor.label,
+      actorRole: actor.role
+    });
+
+    if (staffNotes) {
+      await prisma.checkoutOrder.update({ where: { id: orderId }, data: { staffNotes } });
+    }
+  } catch (error) {
+    const status = orderStatusFailureStatus(error);
+    if (status) redirect(orderDetailPath(orderId, status));
+    throw error;
   }
 
   await recordAdminAuditLog({
@@ -306,20 +342,30 @@ async function transitionManualPaymentAttemptAction(orderId: string, paymentAtte
   const actor = await assertAdminRole('staff');
   if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
 
-  const attempt = await prisma.checkoutPaymentAttempt.findFirst({
-    where: { id: paymentAttemptId, orderId },
-    select: { id: true, provider: true, status: true, order: { select: { id: true, orderNumber: true } } }
-  });
-  if (!attempt) throw new Error('Payment attempt not found.');
-  if (attempt.provider !== 'manual') throw new Error('Only manual payment attempts can be adjusted from admin.');
+  let updated: Awaited<ReturnType<typeof transitionCheckoutPaymentStatus>>;
+  let attempt: { id: string; provider: string; status: string; order: { id: string; orderNumber: string } };
 
-  const updated = await transitionCheckoutPaymentStatus({
-    paymentAttemptId,
-    to,
-    note: formData ? stringFormValue(formData, 'note') : undefined,
-    actorLabel: actor.label,
-    actorRole: actor.role
-  });
+  try {
+    const existingAttempt = await prisma.checkoutPaymentAttempt.findFirst({
+      where: { id: paymentAttemptId, orderId },
+      select: { id: true, provider: true, status: true, order: { select: { id: true, orderNumber: true } } }
+    });
+    if (!existingAttempt) throw new Error('Payment attempt not found.');
+    if (existingAttempt.provider !== 'manual') throw new Error('Only manual payment attempts can be adjusted from admin.');
+    attempt = existingAttempt;
+
+    updated = await transitionCheckoutPaymentStatus({
+      paymentAttemptId,
+      to,
+      note: formData ? stringFormValue(formData, 'note') : undefined,
+      actorLabel: actor.label,
+      actorRole: actor.role
+    });
+  } catch (error) {
+    const status = manualPaymentFailureStatus(error);
+    if (status) redirect(orderDetailPath(orderId, status));
+    throw error;
+  }
 
   await recordAdminAuditLog({
     action: to === 'refunded' ? 'order.payment.manual.refund' : 'order.payment.manual.void',
@@ -352,7 +398,7 @@ export async function addOrderTimelineNoteAction(orderId: string, formData: Form
   if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
 
   const note = stringFormValue(formData, 'note');
-  if (note.length < 2) throw new Error('Timeline note is required.');
+  if (note.length < 2) redirect(orderDetailPath(orderId, 'order-note-required'));
 
   const order = await prisma.checkoutOrder.update({
     where: { id: orderId },
@@ -388,23 +434,34 @@ export async function updateOrderFulfillmentAction(orderId: string, formData: Fo
   const actor = await assertAdminRole('staff');
   if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
 
-  const fulfillmentStatus = assertCheckoutFulfillmentStatus(stringFormValue(formData, 'fulfillmentStatus'));
   const fulfillmentNote = stringFormValue(formData, 'fulfillmentNote');
   const courierName = stringFormValue(formData, 'courierName');
   const courierPhone = stringFormValue(formData, 'courierPhone');
-  const existingOrder = await prisma.checkoutOrder.findUnique({
-    where: { id: orderId },
-    select: { fulfillmentStatus: true, orderNumber: true }
-  });
-  if (!existingOrder) throw new Error('Order not found.');
+  let fulfillmentStatus: ReturnType<typeof assertCheckoutFulfillmentStatus>;
+  let existingOrder: { fulfillmentStatus: string; orderNumber: string };
+  let order: Awaited<ReturnType<typeof transitionCheckoutFulfillmentStatus>>;
 
-  const order = await transitionCheckoutFulfillmentStatus({
-    orderId,
-    to: fulfillmentStatus,
-    note: fulfillmentNote,
-    actorLabel: actor.label,
-    actorRole: actor.role
-  });
+  try {
+    fulfillmentStatus = assertCheckoutFulfillmentStatus(stringFormValue(formData, 'fulfillmentStatus'));
+    const existing = await prisma.checkoutOrder.findUnique({
+      where: { id: orderId },
+      select: { fulfillmentStatus: true, orderNumber: true }
+    });
+    if (!existing) throw new Error('Order not found.');
+    existingOrder = existing;
+
+    order = await transitionCheckoutFulfillmentStatus({
+      orderId,
+      to: fulfillmentStatus,
+      note: fulfillmentNote,
+      actorLabel: actor.label,
+      actorRole: actor.role
+    });
+  } catch (error) {
+    const status = fulfillmentFailureStatus(error);
+    if (status) redirect(orderDetailPath(orderId, status));
+    throw error;
+  }
 
   await prisma.checkoutOrder.update({
     where: { id: orderId },
