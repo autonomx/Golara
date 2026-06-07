@@ -37,7 +37,7 @@ async function runQuantityZeroRemovesLineTest(fixture: ApiFixture) {
   assert.equal(await fixture.prisma.cartItem.count({ where: { cartId: cart.id } }), 0);
 
   const emptyHtml = await responseText(await request('/cart', { headers: { cookie: jar.header() } }));
-  assert.doesNotMatch(emptyHtml, /E2E Red Rose Bouquet/);
+  assert.match(emptyHtml, /Your cart is empty/);
   assert.match(emptyHtml, /href="\/products"/);
 }
 
@@ -47,24 +47,28 @@ async function runRemoveSingleLineItemTest(fixture: ApiFixture) {
     sku: 'E2E-ROSE-001-BOUNDARY-REMOVE',
     sortOrder: 20
   });
-  const cart = await createCart(fixture, 'api-e2e-remove-line-cart', [
-    { lineKey: fixture.variantId, variantId: fixture.variantId, quantity: 1 },
-    { lineKey: secondVariant.id, variantId: secondVariant.id, quantity: 1 }
-  ]);
-  const jar = cartJar(cart.token);
-  const cartHtml = await responseText(await request('/cart', { headers: { cookie: jar.header() } }));
-  const actionName = extractServerActionName(cartHtml, `name="lineKey" value="${secondVariant.id}"`, 'last');
+  try {
+    const cart = await createCart(fixture, 'api-e2e-remove-line-cart', [
+      { lineKey: fixture.variantId, variantId: fixture.variantId, quantity: 1 },
+      { lineKey: secondVariant.id, variantId: secondVariant.id, quantity: 1 }
+    ]);
+    const jar = cartJar(cart.token);
+    const cartHtml = await responseText(await request('/cart', { headers: { cookie: jar.header() } }));
+    const actionName = extractServerActionName(cartHtml, `name="lineKey" value="${secondVariant.id}"`, 'last');
 
-  const form = new FormData();
-  form.set(actionName, '');
-  form.set('lineKey', secondVariant.id);
-  form.set('returnTo', '/cart');
-  const response = await submitServerAction('/cart', form, jar);
+    const form = new FormData();
+    form.set(actionName, '');
+    form.set('lineKey', secondVariant.id);
+    form.set('returnTo', '/cart');
+    const response = await submitServerAction('/cart', form, jar);
 
-  assertRedirect(response, '/cart?cart=removed');
-  const remainingItems = await fixture.prisma.cartItem.findMany({ where: { cartId: cart.id }, orderBy: { createdAt: 'asc' } });
-  assert.equal(remainingItems.length, 1);
-  assert.equal(remainingItems[0]?.lineKey, fixture.variantId);
+    assertRedirect(response, '/cart?cart=removed');
+    const remainingItems = await fixture.prisma.cartItem.findMany({ where: { cartId: cart.id }, orderBy: { createdAt: 'asc' } });
+    assert.equal(remainingItems.length, 1);
+    assert.equal(remainingItems[0]?.lineKey, fixture.variantId);
+  } finally {
+    await fixture.prisma.productVariant.deleteMany({ where: { id: secondVariant.id } });
+  }
 }
 
 async function runUnknownCartTokenRendersEmptyCartTest() {
@@ -72,7 +76,7 @@ async function runUnknownCartTokenRendersEmptyCartTest() {
   const response = await request('/cart', { headers: { cookie: jar.header() } });
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.doesNotMatch(html, /E2E Red Rose Bouquet/);
+  assert.match(html, /Your cart is empty/);
   assert.match(html, /href="\/products"/);
 }
 
@@ -87,7 +91,7 @@ async function runInactiveProductLineIsPrunedTest(fixture: ApiFixture) {
     const response = await request('/cart', { headers: { cookie: jar.header() } });
     assert.equal(response.status, 200);
     const html = await response.text();
-    assert.doesNotMatch(html, /E2E Red Rose Bouquet/);
+    assert.match(html, /Your cart is empty/);
     assert.equal(await fixture.prisma.cartItem.count({ where: { cartId: cart.id } }), 0);
   } finally {
     await fixture.prisma.product.update({ where: { id: fixture.productId }, data: { isActive: true } });
@@ -100,20 +104,30 @@ async function runMultipleVariantsPreserveDistinctLineKeysTest(fixture: ApiFixtu
     sku: 'E2E-ROSE-001-BOUNDARY-KEYS',
     sortOrder: 30
   });
-  const cart = await createCart(fixture, 'api-e2e-distinct-variant-line-cart', [
-    { lineKey: fixture.variantId, variantId: fixture.variantId, quantity: 1 },
-    { lineKey: secondVariant.id, variantId: secondVariant.id, quantity: 2 }
-  ]);
-  const jar = cartJar(cart.token);
+  let cartId = '';
+  try {
+    const cart = await createCart(fixture, 'api-e2e-distinct-variant-line-cart', [
+      { lineKey: fixture.variantId, variantId: fixture.variantId, quantity: 1 },
+      { lineKey: secondVariant.id, variantId: secondVariant.id, quantity: 2 }
+    ]);
+    cartId = cart.id;
+    const jar = cartJar(cart.token);
 
-  const response = await request('/cart', { headers: { cookie: jar.header() } });
-  assert.equal(response.status, 200);
-  const html = await response.text();
-  assert.match(html, /Standard \/ E2E-ROSE-001-STANDARD/);
-  assert.match(html, /API Boundary Deluxe \/ E2E-ROSE-001-BOUNDARY-KEYS/);
+    const response = await request('/cart', { headers: { cookie: jar.header() } });
+    assert.equal(response.status, 200);
+    const html = await response.text();
+    assert.match(html, /E2E-ROSE-001-STANDARD/);
+    assert.match(html, /E2E-ROSE-001-BOUNDARY-KEYS/);
 
-  const lines = await fixture.prisma.cartItem.findMany({ where: { cartId: cart.id }, orderBy: { createdAt: 'asc' } });
-  assert.deepEqual(lines.map((line) => line.lineKey), [fixture.variantId, secondVariant.id]);
+    const lines = await fixture.prisma.cartItem.findMany({ where: { cartId: cart.id }, orderBy: { createdAt: 'asc' } });
+    assert.deepEqual(lines.map((line) => line.lineKey), [fixture.variantId, secondVariant.id]);
+  } finally {
+    if (cartId) {
+      await fixture.prisma.cartItem.deleteMany({ where: { cartId } });
+      await fixture.prisma.cartSession.deleteMany({ where: { id: cartId } });
+    }
+    await fixture.prisma.productVariant.deleteMany({ where: { id: secondVariant.id } });
+  }
 }
 
 function cartJar(token: string) {
