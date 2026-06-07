@@ -52,14 +52,15 @@ async function runUnavailableVariantLineAddDoesNotMutateTest(fixture: ApiFixture
 async function runInvalidOrderStatusDoesNotMutateTest(fixture: ApiFixture) {
   const order = await createEditableOrder(fixture, 'API-E2E-ADMIN-BOUNDARY-1004');
   const detailPath = `/admin/orders/${order.id}`;
+  const listPath = `/admin/orders?orderSearch=${encodeURIComponent(order.orderNumber)}`;
   const jar = createAdminCookieJar();
-  const html = await responseText(await request(detailPath, { headers: { cookie: jar.header() } }));
+  const html = await responseText(await request(listPath, { headers: { cookie: jar.header() } }));
   const form = new FormData();
   appendServerActionFields(form, html, 'name="status"');
   form.set('status', 'not-a-real-status');
   form.set('staffNotes', 'Invalid order status should not mutate.');
 
-  const response = await submitServerAction(detailPath, form, jar);
+  const response = await submitServerAction(listPath, form, jar);
   assertRedirect(response, `${detailPath}?status=order-status-invalid`);
   assert.equal((await fixture.prisma.checkoutOrder.findUniqueOrThrow({ where: { id: order.id } })).status, 'draft');
   assert.equal(await fixture.prisma.adminAuditLog.count({ where: { entityId: order.id, action: 'order.status.update' } }), 0);
