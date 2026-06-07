@@ -496,6 +496,8 @@ model CheckoutOrder {
   staffNotes           String?
   items                CheckoutOrderItem[]
   paymentAttempts      CheckoutPaymentAttempt[]
+  paymentSettlements   PaymentSettlementReconciliation[]
+  fulfillmentShipments CheckoutFulfillmentShipment[]
   timelineEvents       CheckoutOrderTimelineEvent[]
   createdAt            DateTime                         @default(now())
   updatedAt            DateTime                         @updatedAt
@@ -561,6 +563,7 @@ model CheckoutPaymentAttempt {
   redirectUrl       String?
   metadata          Json?
   events            CheckoutPaymentEvent[]
+  settlements        PaymentSettlementReconciliation[]
   createdAt         DateTime               @default(now())
   updatedAt         DateTime               @updatedAt
 
@@ -578,12 +581,41 @@ model CheckoutPaymentEvent {
   status           String?
   metadata         Json?
   processedAt      DateTime?
+  settlement        PaymentSettlementReconciliation?
   createdAt        DateTime               @default(now())
 
   @@unique([provider, idempotencyKey])
   @@index([paymentAttemptId, createdAt])
   @@index([provider, eventType, createdAt])
   @@index([processedAt])
+}
+
+model PaymentSettlementReconciliation {
+  id                  String                 @id @default(dbgenerated("gen_random_uuid()::text"))
+  paymentEventId      String                 @unique
+  paymentEvent        CheckoutPaymentEvent   @relation(fields: [paymentEventId], references: [id], onDelete: Cascade)
+  paymentAttemptId    String
+  paymentAttempt      CheckoutPaymentAttempt @relation(fields: [paymentAttemptId], references: [id], onDelete: Cascade)
+  orderId             String
+  order               CheckoutOrder          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider            String
+  providerReference   String?
+  orderNumber         String?
+  status              String                 @default("pending")
+  expectedAmountCents Int?
+  actualAmountCents   Int?
+  expectedCurrency    String?
+  actualCurrency      String?
+  needsAttention      Boolean                @default(false)
+  metadata            Json                   @default("{}")
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @default(now()) @updatedAt
+
+  @@index([paymentAttemptId])
+  @@index([orderId])
+  @@index([provider, status])
+  @@index([status, createdAt])
+  @@index([needsAttention, createdAt])
 }
 
 model FulfillmentCapacityBucket {
@@ -633,6 +665,30 @@ model FulfillmentMethodSetting {
 
   @@index([isActive, sortOrder])
   @@index([isDefault])
+}
+
+model CheckoutFulfillmentShipment {
+  id              String        @id
+  orderId         String
+  order           CheckoutOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status          String        @default("created")
+  fulfillmentType String        @default("delivery")
+  carrierName     String?
+  trackingNumber  String?
+  trackingUrl     String?
+  deliveryDate    DateTime?
+  deliveryWindow  String?
+  recipientName   String?
+  recipientPhone  String?
+  addressSummary  String?
+  note            String?
+  metadata        Json?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @default(now()) @updatedAt
+
+  @@index([orderId, createdAt])
+  @@index([status, createdAt])
+  @@index([trackingNumber])
 }
 
 model CheckoutOrderTimelineEvent {

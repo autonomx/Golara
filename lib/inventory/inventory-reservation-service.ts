@@ -41,10 +41,16 @@ export async function reserveOrderInventory(orderId: string, tx: InventoryTx = p
       throw new Error(`Insufficient inventory for ${item.variant.sku}. Requested ${item.quantity}.`);
     }
 
-    await tx.productVariantLocationStock.update({
-      where: { id: stock.id },
-      data: { reservedQuantity: stock.reservedQuantity + item.quantity }
+    const reserved = await tx.productVariantLocationStock.updateMany({
+      where: {
+        id: stock.id,
+        reservedQuantity: { lte: stock.quantity - item.quantity }
+      },
+      data: { reservedQuantity: { increment: item.quantity } }
     });
+    if (reserved.count !== 1) {
+      throw new Error(`Insufficient inventory for ${item.variant.sku}. Requested ${item.quantity}.`);
+    }
     await tx.inventoryStockReservation.create({
       data: {
         orderItemId: item.id,

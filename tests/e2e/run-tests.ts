@@ -79,20 +79,141 @@ function runE2ePaymentContractCoverageTests() {
 
 function runE2eLifecycleDbHarnessContractTests() {
   const pkg = source('package.json');
+  const schema = source('prisma/schema.prisma');
   const runner = source('tests/e2e/lifecycle/run-tests.ts');
   const dbHarness = source('tests/e2e/lifecycle/test-db.ts');
+  const catalogFixtures = source('tests/e2e/lifecycle/fixtures/catalog-fixtures.ts');
+  const cartFixtures = source('tests/e2e/lifecycle/fixtures/cart-fixtures.ts');
+  const customerFixtures = source('tests/e2e/lifecycle/fixtures/customer-fixtures.ts');
+  const orderFixtures = source('tests/e2e/lifecycle/fixtures/order-fixtures.ts');
+  const paymentFulfillmentFixtures = source('tests/e2e/lifecycle/fixtures/payment-fulfillment-fixtures.ts');
+  const serviceLifecycleFixtures = [
+    'tests/e2e/lifecycle/fixtures/service-lifecycle-fixtures.ts',
+    'tests/e2e/lifecycle/fixtures/service-lifecycle-context.ts',
+    'tests/e2e/lifecycle/fixtures/service-catalog-cart-flow.ts',
+    'tests/e2e/lifecycle/fixtures/service-primary-order-flow.ts',
+    'tests/e2e/lifecycle/fixtures/service-auth-stock-flow.ts',
+    'tests/e2e/lifecycle/fixtures/service-cancellation-admin-flow.ts',
+    'tests/e2e/lifecycle/fixtures/service-webhook-flow.ts'
+  ].map(source).join('\n');
 
   assert.match(pkg, /"test:e2e:lifecycle":\s*"node --require \.\/tests\/setup\/server-only-register\.cjs --import tsx tests\/e2e\/lifecycle\/run-tests\.ts"/);
   assert.match(dbHarness, /E2E_DATABASE_URL/);
   assert.match(dbHarness, /skipping local database lifecycle E2E suite/);
   assert.match(runner, /resetLifecycleDatabase/);
   assert.match(runner, /SELECT 1 AS ok/);
+  assert.match(runner, /createLifecycleChannel/);
+  assert.match(runner, /createLifecycleCustomer/);
+  assert.match(runner, /createLifecycleCartWithItem/);
+  assert.match(runner, /createLifecycleCheckoutOrderFromCart/);
+  assert.match(runner, /markLifecyclePaymentSucceeded/);
+  assert.match(runner, /scheduleLifecycleFulfillment/);
+  assert.match(runner, /runLifecycleServiceRepositoryScenario/);
+  assert.match(runner, /must not match DATABASE_URL/);
+  assert.match(runner, /reservedQuantity/);
   assert.match(dbHarness, /assertSafeLifecycleDatabaseUrl/);
   assert.match(dbHarness, /Refusing to run lifecycle E2E/);
   assert.match(dbHarness, /createLifecyclePrismaClient/);
   assert.match(dbHarness, /resetLifecycleDatabase/);
   assert.match(dbHarness, /postgresql?:/);
   assert.match(dbHarness, /golara_e2e/);
+  assert.match(schema, /model CheckoutFulfillmentShipment/);
+  assert.match(schema, /model PaymentSettlementReconciliation/);
+  for (const marker of [
+    'createLifecycleChannel',
+    'createLifecycleCategory',
+    'createLifecycleProductType',
+    'createLifecycleProductWithVariantAndStock',
+    'e2e-default',
+    'e2e-roses',
+    'E2E-ROSE-001-STANDARD'
+  ]) {
+    assert.match(catalogFixtures, new RegExp(marker));
+  }
+  for (const marker of ['createLifecycleCustomer', '+16045559001', 'customer.e2e@golara.test']) {
+    assert.match(customerFixtures, new RegExp(marker.replace('+', '\\+')));
+  }
+  for (const marker of ['createLifecycleCartWithItem', 'e2e-cart-token', 'cartItem']) {
+    assert.match(cartFixtures, new RegExp(marker));
+  }
+  for (const marker of [
+    'createLifecycleCheckoutOrderFromCart',
+    'E2E-ORDER-1001',
+    'checkoutPaymentAttempt',
+    'order.created',
+    'inventoryStockReservation',
+    'reservedQuantity'
+  ]) {
+    assert.match(orderFixtures, new RegExp(marker));
+  }
+  for (const marker of [
+    'ensureLifecycleShipmentTable',
+    'simulateLifecyclePaymentFailure',
+    'markLifecyclePaymentSucceeded',
+    'scheduleLifecycleFulfillment',
+    'CheckoutFulfillmentShipment',
+    'payment.failed',
+    'payment.succeeded',
+    'fulfillment.scheduled',
+    'adminAuditLog',
+    'fulfillmentMethodSetting',
+    'fulfillmentCapacityReservation'
+  ]) {
+    assert.match(paymentFulfillmentFixtures, new RegExp(marker));
+  }
+  for (const marker of [
+    'runLifecycleServiceRepositoryScenario',
+    'addCartItem',
+    'updateCartItem',
+    'createOrderDraft',
+    'createCheckoutPaymentAttempt',
+    'reserveFulfillmentCapacity',
+    'transitionCheckoutOrderStatus',
+    'transitionCheckoutFulfillmentStatus',
+    'createAdminFulfillmentShipment',
+    'handlePaymentWebhookRoute',
+    'recordPaymentWebhookEvent',
+    'linkCustomerAccount',
+    'createCustomerSession',
+    'verifyCustomerOtp',
+    'assignAdminOrderCustomer',
+    'updateAdminOrderLineItemQuantity',
+    'listAdminCheckoutOrderPage',
+    'getAdminCheckoutOrder',
+    'getAdminCustomerDetail',
+    'markOrderManualPayment',
+    'canTransitionCheckoutPaymentStatus',
+    'checkoutAttemptStatusForResult',
+    'clearCart',
+    'hashCustomerSessionToken',
+    'Insufficient inventory',
+    'Insufficient fulfillment capacity',
+    'Address does not belong',
+    'before confirmation',
+    'missing_or_expired',
+    'too_many_attempts',
+    'e2e-white-lily-bouquet',
+    'e2e-boundary-stock',
+    'e2e-non-tracked-stock',
+    'e2e-race-stock',
+    'Promise.allSettled',
+    'e2e-cad-checkout',
+    'en-CA',
+    'CAD',
+    'trackInventory: false',
+    'to_regclass',
+    'record should not be called for invalid payload',
+    'duplicate',
+    'verified_paid',
+    'refunded',
+    'cancelled',
+    'released',
+    'manual_pending',
+    'pending_payment',
+    'committed'
+  ]) {
+    assert.match(serviceLifecycleFixtures, new RegExp(marker));
+  }
 }
 
 function runE2eScriptContractTests() {
@@ -103,6 +224,18 @@ function runE2eScriptContractTests() {
   assert.equal(existsSync('tests/e2e/run-tests.ts'), true);
   assert.equal(existsSync('tests/e2e/lifecycle/run-tests.ts'), true);
   assert.equal(existsSync('tests/e2e/lifecycle/test-db.ts'), true);
+  assert.equal(existsSync('tests/e2e/lifecycle/fixtures/catalog-fixtures.ts'), true);
+  assert.equal(existsSync('tests/e2e/lifecycle/fixtures/cart-fixtures.ts'), true);
+  assert.equal(existsSync('tests/e2e/lifecycle/fixtures/customer-fixtures.ts'), true);
+  assert.equal(existsSync('tests/e2e/lifecycle/fixtures/order-fixtures.ts'), true);
+  assert.equal(existsSync('tests/e2e/lifecycle/fixtures/payment-fulfillment-fixtures.ts'), true);
+  assert.equal(existsSync('tests/e2e/lifecycle/fixtures/service-lifecycle-fixtures.ts'), true);
+  assert.equal(existsSync('tests/e2e/lifecycle/fixtures/service-lifecycle-context.ts'), true);
+  assert.equal(existsSync('tests/e2e/lifecycle/fixtures/service-catalog-cart-flow.ts'), true);
+  assert.equal(existsSync('tests/e2e/lifecycle/fixtures/service-primary-order-flow.ts'), true);
+  assert.equal(existsSync('tests/e2e/lifecycle/fixtures/service-auth-stock-flow.ts'), true);
+  assert.equal(existsSync('tests/e2e/lifecycle/fixtures/service-cancellation-admin-flow.ts'), true);
+  assert.equal(existsSync('tests/e2e/lifecycle/fixtures/service-webhook-flow.ts'), true);
 }
 
 async function main() {

@@ -10,6 +10,17 @@ const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
 const SAFE_NAME_MARKERS = ['golara_e2e', 'golara-e2e', 'e2e', 'test'];
 const BLOCKED_NAME_MARKERS = ['prod', 'production', 'live', 'staging'];
 
+function normalizeDatabaseUrlForComparison(databaseUrl?: string) {
+  if (!databaseUrl?.trim()) return '';
+  try {
+    const parsed = new URL(databaseUrl.trim());
+    parsed.searchParams.sort();
+    return parsed.toString();
+  } catch {
+    return databaseUrl.trim();
+  }
+}
+
 export function getLifecycleTestDbConfig(env: Record<string, string | undefined> = process.env): LifecycleTestDbConfig {
   const databaseUrl = env.E2E_DATABASE_URL?.trim() || '';
   if (!databaseUrl) {
@@ -20,11 +31,11 @@ export function getLifecycleTestDbConfig(env: Record<string, string | undefined>
     };
   }
 
-  assertSafeLifecycleDatabaseUrl(databaseUrl);
+  assertSafeLifecycleDatabaseUrl(databaseUrl, env.DATABASE_URL);
   return { databaseUrl, shouldRun: true };
 }
 
-export function assertSafeLifecycleDatabaseUrl(databaseUrl: string) {
+export function assertSafeLifecycleDatabaseUrl(databaseUrl: string, appDatabaseUrl?: string) {
   let parsed: URL;
   try {
     parsed = new URL(databaseUrl);
@@ -42,6 +53,13 @@ export function assertSafeLifecycleDatabaseUrl(databaseUrl: string) {
   const isLocal = LOCAL_HOSTS.has(host);
   const hasSafeMarker = SAFE_NAME_MARKERS.some((marker) => databaseName.includes(marker) || fullUrl.includes(marker));
   const hasBlockedMarker = BLOCKED_NAME_MARKERS.some((marker) => databaseName.includes(marker));
+
+  if (
+    normalizeDatabaseUrlForComparison(databaseUrl) &&
+    normalizeDatabaseUrlForComparison(databaseUrl) === normalizeDatabaseUrlForComparison(appDatabaseUrl)
+  ) {
+    throw new Error('E2E_DATABASE_URL must not match DATABASE_URL. Refusing destructive lifecycle E2E against the app database.');
+  }
 
   if (hasBlockedMarker) {
     throw new Error('Refusing to run lifecycle E2E against a database name that looks like production or staging.');
@@ -62,16 +80,38 @@ export function createLifecyclePrismaClient(databaseUrl: string) {
 }
 
 export async function resetLifecycleDatabase(prisma: PrismaClient) {
+  await prisma.$executeRawUnsafe(`
+    DO $$
+    BEGIN
+      IF to_regclass('"PaymentSettlementReconciliation"') IS NOT NULL THEN
+        DELETE FROM "PaymentSettlementReconciliation";
+      END IF;
+    END $$;
+  `);
+  await prisma.$executeRawUnsafe(`
+    DO $$
+    BEGIN
+      IF to_regclass('"CheckoutFulfillmentShipment"') IS NOT NULL THEN
+        DELETE FROM "CheckoutFulfillmentShipment";
+      END IF;
+    END $$;
+  `);
   await prisma.$transaction([
+    prisma.adminAuditLog.deleteMany(),
     prisma.inventoryStockReservation.deleteMany(),
     prisma.checkoutPaymentEvent.deleteMany(),
     prisma.checkoutPaymentAttempt.deleteMany(),
     prisma.checkoutOrderTimelineEvent.deleteMany(),
     prisma.checkoutOrderItem.deleteMany(),
     prisma.checkoutOrder.deleteMany(),
+    prisma.fulfillmentCapacityReservation.deleteMany(),
+    prisma.fulfillmentCapacityBucket.deleteMany(),
+    prisma.fulfillmentMethodSetting.deleteMany(),
     prisma.cartItem.deleteMany(),
     prisma.cartSession.deleteMany(),
     prisma.customerSession.deleteMany(),
+    prisma.customerOtpChallenge.deleteMany(),
+    prisma.customerAuthEvent.deleteMany(),
     prisma.customerAccount.deleteMany(),
     prisma.customerAddress.deleteMany(),
     prisma.customerProfile.deleteMany(),
