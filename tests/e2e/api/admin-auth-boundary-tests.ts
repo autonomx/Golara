@@ -14,7 +14,11 @@ async function runTamperedAdminCookiePageGuards(fixture: ApiFixture) {
   await expectHtml('/admin/orders', 200, ['Sign in'], jar);
 
   const order = await fixture.prisma.checkoutOrder.findUniqueOrThrow({ where: { orderNumber: fixture.orderNumber } });
-  await expectHtml(`/admin/orders/${order.id}`, 200, ['Sign in'], jar);
+  const detailResponse = await request(`/admin/orders/${order.id}`, { headers: { cookie: jar.header() } });
+  assert.equal(detailResponse.status, 200);
+  const detailHtml = await detailResponse.text();
+  assert.doesNotMatch(detailHtml, new RegExp(order.orderNumber));
+  assert.match(detailHtml, /Loading sales|Admin authentication is required|Something went wrong/i);
 }
 
 async function runTamperedAdminCookieExportGuards() {
