@@ -33,6 +33,16 @@ function orderDetailPath(orderId: string, status: string) {
   return `/admin/orders/${orderId}?${params.toString()}`;
 }
 
+function orderLineAddFailureStatus(error: unknown) {
+  const message = error instanceof Error ? error.message : '';
+  if (message.includes('Product selection is required')) return 'order-line-product-required';
+  if (message.includes('Product is unavailable')) return 'order-line-product-unavailable';
+  if (message.includes('Product variant is unavailable')) return 'order-line-variant-unavailable';
+  if (message.includes('Order not found')) return 'order-not-found';
+  if (message.includes('Order line items can only be edited')) return 'order-line-not-editable';
+  return undefined;
+}
+
 export async function createStaffDraftOrderAction(formData: FormData) {
   const actor = await assertAdminRole('staff');
 
@@ -106,12 +116,21 @@ export async function updateOrderStatusAction(orderId: string, formData: FormDat
 export async function addOrderLineItemAction(orderId: string, formData: FormData) {
   const actor = await assertAdminRole('staff');
   const selection = parseAdminOrderLineSelection(stringFormValue(formData, 'lineOption'));
-  const order = await addAdminOrderLineItem(orderId, {
-    ...selection,
-    quantity: integerFormValue(formData, 'quantity'),
-    actorLabel: actor.label,
-    actorRole: actor.role
-  });
+  const requestedQuantity = integerFormValue(formData, 'quantity');
+  let order: Awaited<ReturnType<typeof addAdminOrderLineItem>>;
+
+  try {
+    order = await addAdminOrderLineItem(orderId, {
+      ...selection,
+      quantity: requestedQuantity,
+      actorLabel: actor.label,
+      actorRole: actor.role
+    });
+  } catch (error) {
+    const status = orderLineAddFailureStatus(error);
+    if (status) redirect(orderDetailPath(orderId, status));
+    throw error;
+  }
 
   await recordAdminAuditLog({
     action: 'order.line_item.add',
@@ -121,7 +140,7 @@ export async function addOrderLineItemAction(orderId: string, formData: FormData
     metadata: {
       productId: selection.productId,
       variantId: selection.variantId ?? null,
-      quantity: integerFormValue(formData, 'quantity')
+      quantity: requestedQuantity
     }
   });
 
