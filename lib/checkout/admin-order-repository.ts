@@ -176,7 +176,7 @@ export async function getAdminCheckoutOrder(orderId: string) {
       },
       paymentAttempts: {
         orderBy: { createdAt: 'desc' },
-        include: { events: { orderBy: { receivedAt: 'desc' } } }
+        include: { events: { orderBy: { createdAt: 'desc' } } }
       },
       timelineEvents: { orderBy: { createdAt: 'desc' } },
       notifications: { orderBy: { createdAt: 'desc' }, include: { attempts: { orderBy: { attemptedAt: 'desc' } } } }
