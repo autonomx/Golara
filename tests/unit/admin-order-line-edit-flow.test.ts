@@ -70,14 +70,14 @@ export async function runAdminOrderLineEditFlowTests() {
     status: ' pending ',
     paymentStatus: ' paid ',
     fulfillmentStatus: ' unfulfilled ',
-    search: ' G-1001 '
+    search: ' unit-never-match-order '
   }, Number.NaN), []);
-  assert.deepEqual(await listAdminCheckoutOrdersForExport({ search: ' guest@example.invalid ' }), []);
+  assert.deepEqual(await listAdminCheckoutOrdersForExport({ search: ' unit-never-match-export ' }), []);
   assert.deepEqual(await getAdminCheckoutOrder('order_123'), null);
-  assert.deepEqual(await listAdminCheckoutOrderPage({ paymentStatus: 'failed' }, Number.NaN, 250), {
+  assert.deepEqual(await listAdminCheckoutOrderPage({ paymentStatus: 'failed', search: ' unit-never-match-page ' }, Number.NaN, 250), {
     orders: [],
     page: 1,
-    pageSize: 250,
+    pageSize: 50,
     totalCount: 0,
     totalPages: 1
   });
@@ -85,6 +85,7 @@ export async function runAdminOrderLineEditFlowTests() {
   for (const marker of [
     'function optionalText(value?: string)',
     'function safePage(value = 1)',
+    'function safePageSize(value = 12)',
     'function buildOrderWhere(filters: AdminOrderFilters = {})',
     'where.paymentAttempts = { some: { status: paymentStatus } }',
     'orderNumber: { contains: search, mode: \'insensitive\' }',
@@ -94,9 +95,9 @@ export async function runAdminOrderLineEditFlowTests() {
     'function mapOrderSummary(order: DbOrderSummary)',
     'latestPaymentStatus: order.paymentAttempts[0]?.status',
     'latestTimelineTitle: order.timelineEvents[0]?.title',
-    'Math.max(1, Math.min(50, Math.floor(limit)))',
-    'Math.max(1, Math.min(50, Math.floor(pageSize)))',
-    'Math.max(1, Math.ceil(totalCount / safePageSize))',
+    'Number.isFinite(value) ? Math.max(1, Math.min(50, Math.floor(value))) : 12',
+    'const safePageSizeValue = safePageSize(pageSize)',
+    'Math.max(1, Math.ceil(totalCount / safePageSizeValue))',
     'page: Math.min(currentPage, totalPages)',
     'mapAdminOrderActivityTimeline(order.timelineEvents)'
   ]) {
