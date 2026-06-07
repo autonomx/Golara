@@ -13,6 +13,7 @@ import {
   runAdminSettingsContentActionTests
 } from './admin-content-tests';
 import { runAdminExportBoundaryTests } from './admin-export-boundary-tests';
+import { runAdminBoundaryPostTests } from './admin-mutation-boundary-tests';
 import { runAdminProductCatalogActionTests } from './admin-catalog-tests';
 import { runAdminOrderOperationsActionTests } from './admin-order-tests';
 import { runCartBoundaryTests } from './cart-boundary-tests';
@@ -60,6 +61,7 @@ async function main() {
     await runAdminAuthBoundaryTests(fixture);
     await runAdminProtectedRouteAndActionTests(fixture);
     await runAdminExportBoundaryTests(fixture);
+    await runAdminBoundaryPostTests(fixture);
     await runAdminSettingsContentActionTests(fixture);
     await runAdminHomepageContentActionTests(fixture);
     await runAdminMediaLibraryActionTests(fixture);
