@@ -15,6 +15,7 @@
     "test:api": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/api/run-tests.ts",
     "test:nonbrowser": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/nonbrowser/run-tests.ts",
     "test:e2e": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/e2e/run-tests.ts",
+    "test:e2e:lifecycle": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/e2e/lifecycle/run-tests.ts",
     "test:e2e:routes": "npm run smoke:routes:local",
     "test:all": "node tools/run-full-test-suite.mjs",
     "test:coverage": "node tools/run-coverage-suite.mjs",

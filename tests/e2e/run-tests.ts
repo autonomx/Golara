@@ -77,12 +77,32 @@ function runE2ePaymentContractCoverageTests() {
   for (const marker of ['AdminPaymentOperationProviderReadinessPanel', 'Execution remains disabled', 'order/payment mutations']) assert.match(providerReadinessPage, new RegExp(marker));
 }
 
+function runE2eLifecycleDbHarnessContractTests() {
+  const pkg = source('package.json');
+  const runner = source('tests/e2e/lifecycle/run-tests.ts');
+  const dbHarness = source('tests/e2e/lifecycle/test-db.ts');
+
+  assert.match(pkg, /"test:e2e:lifecycle":\s*"node --require \.\/tests\/setup\/server-only-register\.cjs --import tsx tests\/e2e\/lifecycle\/run-tests\.ts"/);
+  assert.match(dbHarness, /E2E_DATABASE_URL/);
+  assert.match(dbHarness, /skipping local database lifecycle E2E suite/);
+  assert.match(runner, /resetLifecycleDatabase/);
+  assert.match(runner, /SELECT 1 AS ok/);
+  assert.match(dbHarness, /assertSafeLifecycleDatabaseUrl/);
+  assert.match(dbHarness, /Refusing to run lifecycle E2E/);
+  assert.match(dbHarness, /createLifecyclePrismaClient/);
+  assert.match(dbHarness, /resetLifecycleDatabase/);
+  assert.match(dbHarness, /postgresql?:/);
+  assert.match(dbHarness, /golara_e2e/);
+}
+
 function runE2eScriptContractTests() {
   const pkg = source('package.json');
   assert.match(pkg, /"test:e2e":\s*"node --require \.\/tests\/setup\/server-only-register\.cjs --import tsx tests\/e2e\/run-tests\.ts"/);
   assert.match(pkg, /"test:e2e:routes":\s*"npm run smoke:routes:local"/);
   assert.match(pkg, /"test:all"/);
   assert.equal(existsSync('tests/e2e/run-tests.ts'), true);
+  assert.equal(existsSync('tests/e2e/lifecycle/run-tests.ts'), true);
+  assert.equal(existsSync('tests/e2e/lifecycle/test-db.ts'), true);
 }
 
 async function main() {
@@ -90,6 +110,7 @@ async function main() {
   runE2eLocalHarnessTests();
   runE2eCriticalPathCoverageTests();
   runE2ePaymentContractCoverageTests();
+  runE2eLifecycleDbHarnessContractTests();
   runE2eScriptContractTests();
   console.log('e2e smoke tests passed');
 }
