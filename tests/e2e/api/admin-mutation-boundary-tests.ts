@@ -8,7 +8,7 @@ import {
   type ApiFixture
 } from './shared';
 
-export async function runAdminMutationBoundaryTests(fixture: ApiFixture) {
+export async function runAdminBoundaryPostTests(fixture: ApiFixture) {
   await runUnavailableProductLineAddDoesNotMutateTest(fixture);
   await runUnavailableVariantLineAddDoesNotMutateTest(fixture);
   await runMissingServerActionFieldsDoNotMutateTest(fixture);
@@ -25,7 +25,7 @@ async function runUnavailableProductLineAddDoesNotMutateTest(fixture: ApiFixture
   form.set('quantity', '2');
 
   const response = await submitServerAction(detailPath, form, jar);
-  assertMutationRejected(response, 'order-line-added');
+  assertPostRejected(response, 'order-line-added');
   assert.equal(await fixture.prisma.checkoutOrderItem.count({ where: { orderId: order.id } }), 0);
   assert.equal(await fixture.prisma.adminAuditLog.count({ where: { entityId: order.id, action: 'order.line_item.add' } }), 0);
 }
@@ -41,7 +41,7 @@ async function runUnavailableVariantLineAddDoesNotMutateTest(fixture: ApiFixture
   form.set('quantity', '2');
 
   const response = await submitServerAction(detailPath, form, jar);
-  assertMutationRejected(response, 'order-line-added');
+  assertPostRejected(response, 'order-line-added');
   assert.equal(await fixture.prisma.checkoutOrderItem.count({ where: { orderId: order.id } }), 0);
   assert.equal(await fixture.prisma.adminAuditLog.count({ where: { entityId: order.id, action: 'order.line_item.add' } }), 0);
 }
@@ -55,7 +55,7 @@ async function runMissingServerActionFieldsDoNotMutateTest(fixture: ApiFixture) 
   form.set('quantity', '2');
 
   const response = await submitServerAction(detailPath, form, jar);
-  assertMutationRejected(response, 'order-line-added');
+  assertPostRejected(response, 'order-line-added');
   assert.equal(await fixture.prisma.checkoutOrderItem.count({ where: { orderId: order.id } }), 0);
   assert.equal(await fixture.prisma.adminAuditLog.count({ where: { entityId: order.id, action: 'order.line_item.add' } }), 0);
 }
@@ -74,7 +74,7 @@ async function createEditableOrder(fixture: ApiFixture, orderNumber: string) {
   });
 }
 
-function assertMutationRejected(response: Response, successStatus: string) {
+function assertPostRejected(response: Response, successStatus: string) {
   const location = response.headers.get('location') ?? '';
   assert.doesNotMatch(location, new RegExp(successStatus));
   assert.equal([200, 400, 404, 500].includes(response.status), true);
