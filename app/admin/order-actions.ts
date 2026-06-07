@@ -49,14 +49,14 @@ function orderLineAddFailureStatus(error: unknown) {
 
 function orderStatusFailureStatus(error: unknown) {
   const message = errorMessage(error);
-  if (message.includes('Invalid checkout order status')) return 'order-status-invalid';
+  if (message.includes('Unknown checkout order status')) return 'order-status-invalid';
   if (message.includes('Order not found')) return 'order-not-found';
   return undefined;
 }
 
 function fulfillmentFailureStatus(error: unknown) {
   const message = errorMessage(error);
-  if (message.includes('Invalid checkout fulfillment status')) return 'fulfillment-status-invalid';
+  if (message.includes('Unknown checkout fulfillment status')) return 'fulfillment-status-invalid';
   if (message.includes('Order not found')) return 'order-not-found';
   return undefined;
 }
