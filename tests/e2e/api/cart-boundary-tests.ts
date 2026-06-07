@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { CART_COOKIE_NAME } from '@/lib/cart/cart-cookie';
 import {
   CookieJar,
+  assertRedirect,
   extractServerActionName,
   request,
   responseText,
@@ -32,7 +33,7 @@ async function runQuantityZeroRemovesLineTest(fixture: ApiFixture) {
   form.set('quantity', '0');
   const response = await submitServerAction('/cart', form, jar);
 
-  assertRedirectLocation(response, '/cart?cart=updated');
+  assertRedirect(response, '/cart?cart=updated');
   assert.equal(await fixture.prisma.cartItem.count({ where: { cartId: cart.id } }), 0);
 
   const emptyHtml = await responseText(await request('/cart', { headers: { cookie: jar.header() } }));
@@ -60,7 +61,7 @@ async function runRemoveSingleLineItemTest(fixture: ApiFixture) {
   form.set('returnTo', '/cart');
   const response = await submitServerAction('/cart', form, jar);
 
-  assertRedirectLocation(response, '/cart?cart=removed');
+  assertRedirect(response, '/cart?cart=removed');
   const remainingItems = await fixture.prisma.cartItem.findMany({ where: { cartId: cart.id }, orderBy: { createdAt: 'asc' } });
   assert.equal(remainingItems.length, 1);
   assert.equal(remainingItems[0]?.lineKey, fixture.variantId);
@@ -163,9 +164,4 @@ async function createVariant(
       sortOrder: input.sortOrder
     }
   });
-}
-
-function assertRedirectLocation(response: Response, expectedLocation: string) {
-  assert.equal([302, 303, 307, 308].includes(response.status), true);
-  assert.equal(response.headers.get('location'), expectedLocation);
 }
