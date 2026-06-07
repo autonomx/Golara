@@ -47,6 +47,10 @@ function safePage(value = 1) {
   return Number.isFinite(value) ? Math.max(1, Math.floor(value)) : 1;
 }
 
+function safePageSize(value = 12) {
+  return Number.isFinite(value) ? Math.max(1, Math.min(50, Math.floor(value))) : 12;
+}
+
 function buildOrderWhere(filters: AdminOrderFilters = {}): Prisma.CheckoutOrderWhereInput {
   const status = optionalText(filters.status);
   const paymentStatus = optionalText(filters.paymentStatus);
@@ -115,8 +119,7 @@ async function readOrderSummaries(where: Prisma.CheckoutOrderWhereInput, take: n
 export async function listAdminCheckoutOrders(filters: AdminOrderFilters = {}, limit = 12): Promise<CheckoutOrderSummary[]> {
   if (!hasDatabase()) return [];
 
-  const safeLimit = Math.max(1, Math.min(50, Math.floor(limit)));
-  const orders = await readOrderSummaries(buildOrderWhere(filters), safeLimit);
+  const orders = await readOrderSummaries(buildOrderWhere(filters), safePageSize(limit));
   return orders.map(mapOrderSummary);
 }
 
@@ -125,19 +128,19 @@ export async function listAdminCheckoutOrderPage(filters: AdminOrderFilters = {}
     return { orders: [], page: 1, pageSize, totalCount: 0, totalPages: 1 };
   }
 
-  const safePageSize = Math.max(1, Math.min(50, Math.floor(pageSize)));
+  const safePageSizeValue = safePageSize(pageSize);
   const currentPage = safePage(page);
   const where = buildOrderWhere(filters);
   const [totalCount, orders] = await Promise.all([
     prisma.checkoutOrder.count({ where }),
-    readOrderSummaries(where, safePageSize, (currentPage - 1) * safePageSize)
+    readOrderSummaries(where, safePageSizeValue, (currentPage - 1) * safePageSizeValue)
   ]);
-  const totalPages = Math.max(1, Math.ceil(totalCount / safePageSize));
+  const totalPages = Math.max(1, Math.ceil(totalCount / safePageSizeValue));
 
   return {
     orders: orders.map(mapOrderSummary),
     page: Math.min(currentPage, totalPages),
-    pageSize: safePageSize,
+    pageSize: safePageSizeValue,
     totalCount,
     totalPages
   };
@@ -173,9 +176,10 @@ export async function getAdminCheckoutOrder(orderId: string) {
       },
       paymentAttempts: {
         orderBy: { createdAt: 'desc' },
-        include: { events: { orderBy: { createdAt: 'desc' } } }
+        include: { events: { orderBy: { receivedAt: 'desc' } } }
       },
-      timelineEvents: { orderBy: { createdAt: 'desc' } }
+      timelineEvents: { orderBy: { createdAt: 'desc' } },
+      notifications: { orderBy: { createdAt: 'desc' }, include: { attempts: { orderBy: { attemptedAt: 'desc' } } } }
     }
   });
 
@@ -183,6 +187,6 @@ export async function getAdminCheckoutOrder(orderId: string) {
 
   return {
     ...order,
-    activityTimeline: mapAdminOrderActivityTimeline(order.timelineEvents)
+    timelineEvents: mapAdminOrderActivityTimeline(order.timelineEvents)
   };
 }
