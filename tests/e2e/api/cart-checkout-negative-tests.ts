@@ -14,7 +14,7 @@ export async function runCartCheckoutNegativeTests(fixture: ApiFixture) {
   await runMissingRecipientNameCheckoutTest(fixture);
   await runEmptyCartCheckoutGuardTest(fixture);
   await runMissingCartCookieGuardTest();
-  await runConcurrentCheckoutSubmitExposureTest(fixture);
+  await runConcurrentCheckoutSubmitGuardTest(fixture);
 }
 
 async function runMissingRecipientNameCheckoutTest(fixture: ApiFixture) {
@@ -70,7 +70,7 @@ async function runMissingCartCookieGuardTest() {
   if (response.status === 200) assert.doesNotMatch(await response.text(), /name="addressLine1"/);
 }
 
-async function runConcurrentCheckoutSubmitExposureTest(fixture: ApiFixture) {
+async function runConcurrentCheckoutSubmitGuardTest(fixture: ApiFixture) {
   const cart = await createCart(fixture, 'api-e2e-concurrent-checkout-cart', 1);
   const jar = new CookieJar();
   jar.set(CART_COOKIE_NAME, cart.token);
@@ -85,16 +85,14 @@ async function runConcurrentCheckoutSubmitExposureTest(fixture: ApiFixture) {
   form.set('addressLine1', '888 Concurrent Checkout Way');
   form.set('deliveryDate', '2026-07-04');
   form.set('deliveryWindow', '12:00-14:00');
-  form.set('customerNote', 'API concurrent checkout exposure.');
+  form.set('customerNote', 'API concurrent checkout guard.');
 
   const submit = () => submitCheckout('/cart/checkout', cloneFormData(form), jar);
   const results = await Promise.allSettled([submit(), submit()]);
   assert.equal(results.every((result) => result.status === 'fulfilled'), true);
-
-  const created = await fixture.prisma.checkoutOrder.count({ where: { customerNote: 'API concurrent checkout exposure.' } });
-  assert.equal(created >= 1, true);
-  assert.equal(created <= 2, true);
+  assert.equal(await fixture.prisma.checkoutOrder.count({ where: { customerNote: 'API concurrent checkout guard.' } }), 1);
   assert.equal(await fixture.prisma.cartItem.count({ where: { cartId: cart.id } }), 0);
+  assert.equal((await fixture.prisma.cartSession.findUniqueOrThrow({ where: { id: cart.id } })).status, 'checked_out');
 }
 
 async function submitCheckout(path: string, formData: FormData, jar: CookieJar) {
