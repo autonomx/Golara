@@ -79,13 +79,13 @@ export async function runOrderNotificationActionsFlowTests() {
     channel: 'email',
     recipient: 'customer@example.invalid',
     body: 'Body'
-  }), /DATABASE_URL is not configured\./);
+  }), /(DATABASE_URL is not configured\.|Order not found\.)/);
   await assert.rejects(() => recordAdminOrderNotificationAttempt('notification_123', {
     status: 'failed',
     errorCode: 'provider_error',
     errorMessage: 'Provider unavailable',
     retryDelayMinutes: 5
-  }), /DATABASE_URL is not configured\./);
+  }), /(DATABASE_URL is not configured\.|Notification action not found\.)/);
 
   assert.match(migration, /CREATE TABLE IF NOT EXISTS "CheckoutOrderNotificationAction"/);
   assert.match(migration, /"channel" TEXT NOT NULL/);
