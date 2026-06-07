@@ -5,6 +5,7 @@ import {
   createLifecyclePrismaClient,
   getLifecycleTestDbConfig
 } from '@/tests/e2e/lifecycle/test-db';
+import { runAccountWebhookNegativeTests } from './account-webhook-negative-tests';
 import {
   runAdminHomepageContentActionTests,
   runAdminMediaLibraryActionTests,
@@ -12,6 +13,7 @@ import {
 } from './admin-content-tests';
 import { runAdminProductCatalogActionTests } from './admin-catalog-tests';
 import { runAdminOrderOperationsActionTests } from './admin-order-tests';
+import { runCartCheckoutNegativeTests } from './cart-checkout-negative-tests';
 import { prepareApiFixture } from './fixture';
 import {
   runAccountAndAdminPageTests,
@@ -47,6 +49,8 @@ async function main() {
     await runServerActionMutationTests(fixture);
     await runCustomerAuthAndInquiryActionTests(fixture);
     await runCheckoutAndAddressBookActionTests(fixture);
+    await runCartCheckoutNegativeTests(fixture);
+    await runAccountWebhookNegativeTests(fixture);
     await runAdminProtectedRouteAndActionTests(fixture);
     await runAdminSettingsContentActionTests(fixture);
     await runAdminHomepageContentActionTests(fixture);
