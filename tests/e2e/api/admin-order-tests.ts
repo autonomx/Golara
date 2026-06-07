@@ -61,6 +61,18 @@ export async function runAdminOrderOperationsActionTests(fixture: ApiFixture) {
   assert.equal(lineItem.lineTotalCents, 375000);
   assert.equal(await fixture.prisma.inventoryStockReservation.count({ where: { orderItemId: lineItem.id, status: 'held' } }), 1);
 
+  const lowerBoundHtml = await responseText(await request(detailPath, { headers: { cookie: adminJar.header() } }));
+  const lowerBoundForm = new FormData();
+  appendServerActionFields(lowerBoundForm, lowerBoundHtml, `value="${lineItem.quantity}"`);
+  lowerBoundForm.set('quantity', '0');
+  const lowerBoundResponse = await submitServerAction(detailPath, lowerBoundForm, adminJar);
+  assertRedirect(lowerBoundResponse, `${detailPath}?status=order-line-updated`);
+
+  lineItem = await fixture.prisma.checkoutOrderItem.findUniqueOrThrow({ where: { id: lineItem.id } });
+  assert.equal(lineItem.quantity, 1);
+  assert.equal(lineItem.lineTotalCents, 125000);
+  assert.equal(await fixture.prisma.inventoryStockReservation.count({ where: { orderItemId: lineItem.id, status: 'held' } }), 1);
+
   const discountHtml = await responseText(await request(detailPath, { headers: { cookie: adminJar.header() } }));
   const discountForm = new FormData();
   appendServerActionFields(discountForm, discountHtml, 'name="discountCents"');
@@ -70,9 +82,21 @@ export async function runAdminOrderOperationsActionTests(fixture: ApiFixture) {
   assertRedirect(discountResponse, `${detailPath}?status=order-discount-updated`);
 
   let order = await fixture.prisma.checkoutOrder.findUniqueOrThrow({ where: { id: editableOrder.id } });
-  assert.equal(order.subtotalCents, 375000);
+  assert.equal(order.subtotalCents, 125000);
   assert.equal(order.discountCents, 25000);
-  assert.equal(order.totalCents, 350000);
+  assert.equal(order.totalCents, 100000);
+
+  const clampedDiscountHtml = await responseText(await request(detailPath, { headers: { cookie: adminJar.header() } }));
+  const clampedDiscountForm = new FormData();
+  appendServerActionFields(clampedDiscountForm, clampedDiscountHtml, 'name="discountCents"');
+  clampedDiscountForm.set('discountCents', '9999999');
+  clampedDiscountForm.set('discountNote', 'API E2E admin discount clamp');
+  const clampedDiscountResponse = await submitServerAction(detailPath, clampedDiscountForm, adminJar);
+  assertRedirect(clampedDiscountResponse, `${detailPath}?status=order-discount-updated`);
+
+  order = await fixture.prisma.checkoutOrder.findUniqueOrThrow({ where: { id: editableOrder.id } });
+  assert.equal(order.discountCents, 125000);
+  assert.equal(order.totalCents, 0);
 
   const noteHtml = await responseText(await request(detailPath, { headers: { cookie: adminJar.header() } }));
   const noteForm = new FormData();
@@ -147,7 +171,7 @@ export async function runAdminOrderOperationsActionTests(fixture: ApiFixture) {
   const manualPaymentHtml = await responseText(await request(detailPath, { headers: { cookie: adminJar.header() } }));
   const manualPaymentForm = new FormData();
   appendServerActionFields(manualPaymentForm, manualPaymentHtml, 'name="providerReference"');
-  manualPaymentForm.set('amountCents', '350000');
+  manualPaymentForm.set('amountCents', '0');
   manualPaymentForm.set('providerReference', 'api-e2e-admin-manual-paid');
   manualPaymentForm.set('note', 'API E2E admin paid receipt');
   const manualPaymentResponse = await submitServerAction(detailPath, manualPaymentForm, adminJar);
@@ -157,6 +181,7 @@ export async function runAdminOrderOperationsActionTests(fixture: ApiFixture) {
     where: { orderId: editableOrder.id, providerReference: 'api-e2e-admin-manual-paid' }
   });
   assert.equal(paidAttempt.status, 'paid');
+  assert.equal(paidAttempt.amountCents, 0);
 
   const refundHtml = await responseText(await request(detailPath, { headers: { cookie: adminJar.header() } }));
   const refundForm = new FormData();
@@ -193,10 +218,10 @@ export async function runAdminOrderOperationsActionTests(fixture: ApiFixture) {
   assert.equal(await fixture.prisma.checkoutOrderItem.count({ where: { orderId: editableOrder.id } }), 0);
   assert.equal(await fixture.prisma.inventoryStockReservation.count({ where: { orderItem: { orderId: editableOrder.id }, status: 'held' } }), 0);
 
-  for (const action of [
+  for (const entry of [
     'order.line_item.add',
-    'order.line_item.update',
-    'order.discount.update',
+    ['order.line_item.update', 2],
+    ['order.discount.update', 2],
     'order.timeline.note.create',
     'order.fulfillment.update',
     'order.customer.assign',
@@ -204,7 +229,9 @@ export async function runAdminOrderOperationsActionTests(fixture: ApiFixture) {
     'order.payment.manual.refund',
     'order.payment.manual.void',
     'order.line_item.remove'
-  ]) {
-    assert.equal(await fixture.prisma.adminAuditLog.count({ where: { action, entityId: editableOrder.id } }), 1, `${action} audit log`);
+  ] as Array<string | [string, number]>) {
+    const action = Array.isArray(entry) ? entry[0] : entry;
+    const expectedCount = Array.isArray(entry) ? entry[1] : 1;
+    assert.equal(await fixture.prisma.adminAuditLog.count({ where: { action, entityId: editableOrder.id } }), expectedCount, `${action} audit log`);
   }
 }
