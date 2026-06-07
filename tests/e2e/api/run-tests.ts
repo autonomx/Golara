@@ -6,6 +6,7 @@ import {
   getLifecycleTestDbConfig
 } from '@/tests/e2e/lifecycle/test-db';
 import { runAccountWebhookNegativeTests } from './account-webhook-negative-tests';
+import { runAdminAuthBoundaryTests } from './admin-auth-boundary-tests';
 import {
   runAdminHomepageContentActionTests,
   runAdminMediaLibraryActionTests,
@@ -53,6 +54,7 @@ async function main() {
     await runLocaleCurrencyMatrixTests(fixture);
     await runCartCheckoutNegativeTests(fixture);
     await runAccountWebhookNegativeTests(fixture);
+    await runAdminAuthBoundaryTests(fixture);
     await runAdminProtectedRouteAndActionTests(fixture);
     await runAdminSettingsContentActionTests(fixture);
     await runAdminHomepageContentActionTests(fixture);
