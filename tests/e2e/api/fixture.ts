@@ -100,6 +100,12 @@ export async function prepareApiFixture(prisma: PrismaClient): Promise<ApiFixtur
 }
 
 async function ensureApiRouteSupportTables(prisma: PrismaClient) {
+  await ensureNotificationActionTable(prisma);
+  await ensureStorefrontSettingsTables(prisma);
+  await ensureAdminSettingsReadModelTables(prisma);
+}
+
+async function ensureNotificationActionTable(prisma: PrismaClient) {
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS "CheckoutOrderNotificationAction" (
       "id" TEXT NOT NULL,
@@ -138,19 +144,12 @@ async function ensureApiRouteSupportTables(prisma: PrismaClient) {
       END IF;
     END $$;
   `);
-  await prisma.$executeRawUnsafe(`
-    CREATE INDEX IF NOT EXISTS "CheckoutOrderNotificationAction_orderId_createdAt_idx"
-    ON "CheckoutOrderNotificationAction"("orderId", "createdAt");
-  `);
-  await prisma.$executeRawUnsafe(`
-    CREATE INDEX IF NOT EXISTS "CheckoutOrderNotificationAction_status_nextRetryAt_idx"
-    ON "CheckoutOrderNotificationAction"("status", "nextRetryAt");
-  `);
-  await prisma.$executeRawUnsafe(`
-    CREATE INDEX IF NOT EXISTS "CheckoutOrderNotificationAction_channel_status_idx"
-    ON "CheckoutOrderNotificationAction"("channel", "status");
-  `);
+  await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "CheckoutOrderNotificationAction_orderId_createdAt_idx" ON "CheckoutOrderNotificationAction"("orderId", "createdAt");');
+  await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "CheckoutOrderNotificationAction_status_nextRetryAt_idx" ON "CheckoutOrderNotificationAction"("status", "nextRetryAt");');
+  await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "CheckoutOrderNotificationAction_channel_status_idx" ON "CheckoutOrderNotificationAction"("channel", "status");');
+}
 
+async function ensureStorefrontSettingsTables(prisma: PrismaClient) {
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS "StoreSetting" (
       "id" TEXT NOT NULL PRIMARY KEY DEFAULT gen_random_uuid()::text,
@@ -206,12 +205,8 @@ async function ensureApiRouteSupportTables(prisma: PrismaClient) {
       CONSTRAINT "StorefrontNavigationMenuItem_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "StorefrontNavigationMenuItem"("id") ON DELETE SET NULL
     );
   `);
-  await prisma.$executeRawUnsafe(
-    'CREATE UNIQUE INDEX IF NOT EXISTS "StorefrontNavigationMenu_key_locale_key" ON "StorefrontNavigationMenu" ("key", COALESCE("locale", \'\'));'
-  );
-  await prisma.$executeRawUnsafe(
-    'CREATE INDEX IF NOT EXISTS "StorefrontNavigationMenuItem_menuId_sortOrder_idx" ON "StorefrontNavigationMenuItem" ("menuId", "sortOrder");'
-  );
+  await prisma.$executeRawUnsafe('CREATE UNIQUE INDEX IF NOT EXISTS "StorefrontNavigationMenu_key_locale_key" ON "StorefrontNavigationMenu" ("key", COALESCE("locale", \'\'));');
+  await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "StorefrontNavigationMenuItem_menuId_sortOrder_idx" ON "StorefrontNavigationMenuItem" ("menuId", "sortOrder");');
   await prisma.$executeRawUnsafe(`
     WITH primary_menu AS (
       INSERT INTO "StorefrontNavigationMenu" ("key", "label", "locale", "isActive")
@@ -226,4 +221,25 @@ async function ensureApiRouteSupportTables(prisma: PrismaClient) {
     UNION ALL SELECT "id", 'Best sellers', '/#best-sellers', 40 FROM primary_menu
     ON CONFLICT DO NOTHING;
   `);
+}
+
+async function ensureAdminSettingsReadModelTables(prisma: PrismaClient) {
+  await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "HomepageBannerMediaSetting" ("id" TEXT NOT NULL PRIMARY KEY DEFAULT gen_random_uuid()::text, "key" TEXT NOT NULL, "locale" TEXT, "eyebrow" TEXT, "title" TEXT NOT NULL DEFAULT 'Fresh floral moments for every occasion', "subtitle" TEXT, "mediaId" TEXT, "imageUrl" TEXT, "imageAlt" TEXT, "ctaLabel" TEXT, "ctaHref" TEXT, "isActive" BOOLEAN NOT NULL DEFAULT true, "sortOrder" INTEGER NOT NULL DEFAULT 10, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);`);
+  await prisma.$executeRawUnsafe('CREATE UNIQUE INDEX IF NOT EXISTS "HomepageBannerMediaSetting_key_locale_key" ON "HomepageBannerMediaSetting" ("key", COALESCE("locale", \'\'));');
+
+  await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "ShippingDeliverySetting" ("id" TEXT NOT NULL PRIMARY KEY DEFAULT gen_random_uuid()::text, "key" TEXT NOT NULL UNIQUE, "label" TEXT NOT NULL, "description" TEXT, "deliveryFeeCents" INTEGER NOT NULL DEFAULT 0, "freeDeliveryMinimumCents" INTEGER, "minimumOrderCents" INTEGER, "deliveryRadiusKm" INTEGER, "deliveryPostalCodes" TEXT[] NOT NULL DEFAULT '{}', "pickupAddress" TEXT, "deliveryInstructions" TEXT, "sameDayCutoffMinutes" INTEGER, "timezone" TEXT NOT NULL DEFAULT 'America/Vancouver', "isActive" BOOLEAN NOT NULL DEFAULT true, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);`);
+  await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "TaxCategorySetting" ("id" TEXT NOT NULL PRIMARY KEY DEFAULT gen_random_uuid()::text, "key" TEXT NOT NULL UNIQUE, "label" TEXT NOT NULL, "description" TEXT, "taxRateBasisPoints" INTEGER NOT NULL DEFAULT 0, "countryCode" TEXT NOT NULL DEFAULT 'CA', "regionCode" TEXT, "appliesToShipping" BOOLEAN NOT NULL DEFAULT false, "isDefault" BOOLEAN NOT NULL DEFAULT false, "isActive" BOOLEAN NOT NULL DEFAULT true, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);`);
+  await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "PaymentProviderSetting" ("id" TEXT NOT NULL PRIMARY KEY DEFAULT gen_random_uuid()::text, "key" TEXT NOT NULL UNIQUE, "label" TEXT NOT NULL, "description" TEXT, "checkoutMode" TEXT NOT NULL DEFAULT 'inquiry', "domesticProvider" TEXT NOT NULL DEFAULT 'manual', "overseasProvider" TEXT, "domesticCurrency" TEXT NOT NULL DEFAULT 'TOMAN', "overseasCurrency" TEXT NOT NULL DEFAULT 'USD', "overseasFallback" TEXT NOT NULL DEFAULT 'whatsapp', "requireIranianGatewayMerchantId" BOOLEAN NOT NULL DEFAULT false, "requireStripeSecretKey" BOOLEAN NOT NULL DEFAULT false, "isDefault" BOOLEAN NOT NULL DEFAULT false, "isActive" BOOLEAN NOT NULL DEFAULT true, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);`);
+  await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "NotificationProviderSetting" ("id" TEXT NOT NULL PRIMARY KEY DEFAULT gen_random_uuid()::text, "key" TEXT NOT NULL UNIQUE, "label" TEXT NOT NULL, "description" TEXT, "emailProvider" TEXT NOT NULL DEFAULT 'manual', "smsProvider" TEXT NOT NULL DEFAULT 'manual', "defaultFromEmail" TEXT, "defaultFromPhone" TEXT, "replyToEmail" TEXT, "enableOrderEmail" BOOLEAN NOT NULL DEFAULT true, "enableOrderSms" BOOLEAN NOT NULL DEFAULT false, "requireEmailProviderEnv" BOOLEAN NOT NULL DEFAULT false, "requireSmsProviderEnv" BOOLEAN NOT NULL DEFAULT false, "isDefault" BOOLEAN NOT NULL DEFAULT false, "isActive" BOOLEAN NOT NULL DEFAULT true, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);`);
+
+  await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "WebhookConfiguration" ("id" TEXT NOT NULL PRIMARY KEY DEFAULT gen_random_uuid()::text, "key" TEXT NOT NULL UNIQUE, "label" TEXT NOT NULL, "description" TEXT, "targetUrl" TEXT NOT NULL DEFAULT 'https://example.com/webhook', "events" JSONB NOT NULL DEFAULT '[]'::jsonb, "secretEnvVar" TEXT, "headerNames" JSONB NOT NULL DEFAULT '[]'::jsonb, "isDefault" BOOLEAN NOT NULL DEFAULT false, "isActive" BOOLEAN NOT NULL DEFAULT true, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);`);
+  await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "WebhookEventLog" ("id" TEXT NOT NULL PRIMARY KEY DEFAULT gen_random_uuid()::text, "webhookConfigurationKey" TEXT NOT NULL, "eventName" TEXT NOT NULL, "targetUrl" TEXT NOT NULL, "payloadDigest" TEXT NOT NULL UNIQUE, "status" TEXT NOT NULL DEFAULT 'queued', "attemptCount" INTEGER NOT NULL DEFAULT 0, "lastStatusCode" INTEGER, "lastError" TEXT, "nextAttemptAt" TIMESTAMP(3), "deliveredAt" TIMESTAMP(3), "metadata" JSONB NOT NULL DEFAULT '{}'::jsonb, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);`);
+  await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "IntegrationAppRegistry" ("id" TEXT NOT NULL PRIMARY KEY DEFAULT gen_random_uuid()::text, "key" TEXT NOT NULL UNIQUE, "label" TEXT NOT NULL, "description" TEXT, "category" TEXT NOT NULL DEFAULT 'custom', "provider" TEXT, "status" TEXT NOT NULL DEFAULT 'active', "homepageUrl" TEXT, "docsUrl" TEXT, "webhookConfigurationKey" TEXT, "permissions" JSONB NOT NULL DEFAULT '[]'::jsonb, "requiredEnvVars" JSONB NOT NULL DEFAULT '[]'::jsonb, "isInternal" BOOLEAN NOT NULL DEFAULT false, "isActive" BOOLEAN NOT NULL DEFAULT true, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);`);
+  await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "ApiTokenCredential" ("id" TEXT NOT NULL PRIMARY KEY DEFAULT gen_random_uuid()::text, "key" TEXT NOT NULL UNIQUE, "label" TEXT NOT NULL, "description" TEXT, "tokenPrefix" TEXT, "tokenDigest" TEXT, "scopes" JSONB NOT NULL DEFAULT '[]'::jsonb, "integrationAppKey" TEXT, "expiresAt" TIMESTAMP(3), "lastUsedAt" TIMESTAMP(3), "isRevoked" BOOLEAN NOT NULL DEFAULT false, "isActive" BOOLEAN NOT NULL DEFAULT true, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);`);
+  await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "DashboardExtensionMountPoint" ("id" TEXT NOT NULL PRIMARY KEY DEFAULT gen_random_uuid()::text, "key" TEXT NOT NULL UNIQUE, "label" TEXT NOT NULL, "description" TEXT, "mountLocation" TEXT NOT NULL DEFAULT 'dashboard', "integrationAppKey" TEXT, "requiredRoles" JSONB NOT NULL DEFAULT '[]'::jsonb, "requiredPermissions" JSONB NOT NULL DEFAULT '[]'::jsonb, "isInternal" BOOLEAN NOT NULL DEFAULT false, "isActive" BOOLEAN NOT NULL DEFAULT true, "sortOrder" INTEGER NOT NULL DEFAULT 100, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);`);
+  await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "ImportExportJob" ("id" TEXT NOT NULL PRIMARY KEY DEFAULT gen_random_uuid()::text, "key" TEXT NOT NULL UNIQUE, "label" TEXT NOT NULL, "description" TEXT, "kind" TEXT NOT NULL DEFAULT 'export', "target" TEXT NOT NULL DEFAULT 'products', "status" TEXT NOT NULL DEFAULT 'queued', "requestedBy" TEXT, "sourceFilename" TEXT, "sourceMimeType" TEXT, "inputDigest" TEXT, "outputUrl" TEXT, "outputDigest" TEXT, "totalRows" INTEGER NOT NULL DEFAULT 0, "processedRows" INTEGER NOT NULL DEFAULT 0, "failedRows" INTEGER NOT NULL DEFAULT 0, "errorMessage" TEXT, "metadata" JSONB NOT NULL DEFAULT '{}'::jsonb, "startedAt" TIMESTAMP(3), "completedAt" TIMESTAMP(3), "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);`);
+
+  await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "AdminPermissionGroup" ("id" TEXT NOT NULL PRIMARY KEY DEFAULT gen_random_uuid()::text, "key" TEXT NOT NULL UNIQUE, "label" TEXT NOT NULL, "description" TEXT, "role" TEXT NOT NULL DEFAULT 'owner', "permissions" JSONB NOT NULL DEFAULT '[]'::jsonb, "isDefault" BOOLEAN NOT NULL DEFAULT false, "isActive" BOOLEAN NOT NULL DEFAULT true, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);`);
+  await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "AdminStaffAccount" ("id" TEXT NOT NULL PRIMARY KEY DEFAULT gen_random_uuid()::text, "provider" TEXT NOT NULL DEFAULT 'password', "providerAccountId" TEXT NOT NULL, "label" TEXT NOT NULL, "email" TEXT, "role" TEXT NOT NULL DEFAULT 'owner', "permissionGroupKey" TEXT, "isActive" BOOLEAN NOT NULL DEFAULT true, "metadata" JSONB NOT NULL DEFAULT '{}'::jsonb, "lastLoginAt" TIMESTAMP(3), "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);`);
+  await prisma.$executeRawUnsafe('CREATE UNIQUE INDEX IF NOT EXISTS "AdminStaffAccount_provider_providerAccountId_key" ON "AdminStaffAccount" ("provider", "providerAccountId");');
 }
