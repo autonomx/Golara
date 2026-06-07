@@ -7,10 +7,32 @@ export async function runAdminExportBoundaryTests(fixture: ApiFixture) {
 }
 
 async function runOrderCsvEscapingAndFilterTest(fixture: ApiFixture) {
+  const customer = await fixture.prisma.customerProfile.create({
+    data: {
+      phone: '+16045559710',
+      displayName: 'CSV "Quoted", Customer',
+      email: 'api-csv-customer.e2e@golara.test',
+      locale: 'en-CA',
+      addresses: {
+        create: {
+          label: 'API CSV Address',
+          recipient: 'CSV "Quoted", Customer',
+          phone: '+16045559710',
+          city: 'Vancouver',
+          line1: '710 CSV Export Way',
+          isDefault: true
+        }
+      }
+    },
+    include: { addresses: true }
+  });
+
   const order = await fixture.prisma.checkoutOrder.create({
     data: {
       orderNumber: 'API-E2E-CSV-1001',
       publicLookupToken: 'api-e2e-csv-token',
+      customerId: customer.id,
+      addressId: customer.addresses[0]?.id,
       status: 'paid',
       checkoutMode: 'staff',
       currency: 'TOMAN',
@@ -53,6 +75,7 @@ async function runOrderCsvEscapingAndFilterTest(fixture: ApiFixture) {
   assert.match(csv, /"Created","Order","Customer"/);
   assert.match(csv, /"API-E2E-CSV-1001"/);
   assert.match(csv, /"CSV ""Quoted"", Customer"/);
+  assert.match(csv, /"\+16045559710"/);
   assert.doesNotMatch(csv, new RegExp(fixture.orderNumber));
   assert.ok(order.id, 'csv fixture order should be created');
 }
