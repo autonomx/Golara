@@ -1,5 +1,11 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+
 import { createCmsProductService, type CmsProductRecord, type CmsProductTranslationRecord } from '../../lib/cms/product-service-core';
+
+function source(path: string) {
+  return readFileSync(path, 'utf8');
+}
 
 type AuditRecord = {
   action: string;
@@ -128,6 +134,18 @@ export async function runCmsProductServiceTests() {
     summary: 'Saved product translation: fa-IR',
     metadata: { locale: 'fa-IR', translationId: 'product-translation-1', isPublished: true }
   });
+
+  const repository = source('lib/cms/catalog-repository.ts');
+  assert.ok(repository.includes('function buildInquiryWhere(status?: string, search?: string)'));
+  assert.ok(repository.includes('function buildAuditLogWhere(filters: AdminAuditLogFilters = {})'));
+  assert.ok(repository.includes('function mapProductVariantLocationStocks(stocks?: DbProductVariantLocationStock[])'));
+  assert.ok(repository.includes('availableQuantity: Math.max(0, stock.quantity - stock.reservedQuantity)'));
+  assert.ok(repository.includes('function stringArrayFromJson(value: Prisma.JsonValue | null | undefined)'));
+  assert.ok(repository.includes('function mapProduct(product: DbProduct, options: CatalogReadOptions = {}): Product'));
+  assert.ok(repository.includes('const image = product.imageUrl || product.images?.[0]?.url || FALLBACK_IMAGE'));
+  assert.ok(repository.includes('requiresQuote: product.requiresQuote || product.priceCents <= 0'));
+  assert.ok(repository.includes('function mapInquiry(inquiry: DbInquiry): CustomerInquiry'));
+  assert.ok(repository.includes('function localizedHomepageContent(section: DbHomepageSection, options: CatalogReadOptions = {}): HomepageContent'));
 
   console.log('cms-product-service.test.ts passed');
 }
