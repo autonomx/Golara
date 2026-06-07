@@ -42,6 +42,17 @@ const categoryInput = {
   isActive: true
 };
 
+async function withoutDatabaseUrl<T>(run: () => Promise<T>) {
+  const originalDatabaseUrl = process.env.DATABASE_URL;
+  delete process.env.DATABASE_URL;
+  try {
+    return await run();
+  } finally {
+    if (originalDatabaseUrl) process.env.DATABASE_URL = originalDatabaseUrl;
+    else delete process.env.DATABASE_URL;
+  }
+}
+
 export async function runCmsCategoryServiceTests() {
   const audits: AuditRecord[] = [];
   const creates: unknown[] = [];
@@ -147,49 +158,51 @@ export async function runCmsCategoryServiceTests() {
     metadata: { locale: 'fa-IR', translationId: 'translation-1', isPublished: true }
   });
 
-  const categories = await listCategories();
-  assert.ok(categories.length > 0);
-  assert.equal(categories[0]?.slug, 'available-today');
-  assert.ok(categories.every((category) => category.isActive !== false));
-  assert.equal((await getCategoryBySlug('available-today'))?.slug, 'available-today');
-  assert.equal(await getCategoryBySlug('missing-category'), undefined);
-  assert.ok((await listHomepageCategories()).every((category) => category.showOnHomepage !== false));
-  assert.ok((await listAdminCategories()).some((category) => category.slug === 'woshe-distance'));
+  await withoutDatabaseUrl(async () => {
+    const categories = await listCategories();
+    assert.ok(categories.length > 0);
+    assert.equal(categories[0]?.slug, 'available-today');
+    assert.ok(categories.every((category) => category.isActive !== false));
+    assert.equal((await getCategoryBySlug('available-today'))?.slug, 'available-today');
+    assert.equal(await getCategoryBySlug('missing-category'), undefined);
+    assert.ok((await listHomepageCategories()).every((category) => category.showOnHomepage !== false));
+    assert.ok((await listAdminCategories()).some((category) => category.slug === 'woshe-distance'));
 
-  const products = await listProducts();
-  assert.ok(products.length > 0);
-  assert.equal(products[0]?.isActive, true);
-  assert.equal((await getProductBySlug('vip-box-blue'))?.slug, 'vip-box-blue');
-  assert.equal(await getProductBySlug('missing-product'), undefined);
-  assert.ok((await listProductsByCategorySlug('vip-boxes')).every((product) => product.category === 'vip-boxes'));
-  assert.ok((await listAdminProducts()).some((product) => product.slug === 'vip-box-blue'));
+    const products = await listProducts();
+    assert.ok(products.length > 0);
+    assert.equal(products[0]?.isActive, true);
+    assert.equal((await getProductBySlug('vip-box-blue'))?.slug, 'vip-box-blue');
+    assert.equal(await getProductBySlug('missing-product'), undefined);
+    assert.ok((await listProductsByCategorySlug('vip-boxes')).every((product) => product.category === 'vip-boxes'));
+    assert.ok((await listAdminProducts()).some((product) => product.slug === 'vip-box-blue'));
 
-  const homepage = await getHomepageContent();
-  assert.equal(homepage.title, 'Flowers for moments worth keeping.');
-  const media = await listMedia();
-  assert.ok(media.length > 0);
-  assert.ok(media.every((item) => item.url && item.alt));
-  assert.deepEqual(await listAdminAuditLogs({ search: 'anything' }, 500), []);
-  assert.deepEqual(await listInquiries('new', 'customer'), []);
-  assert.deepEqual(await listInquiryStatusCounts('customer'), [
-    { status: 'new', count: 0 },
-    { status: 'contacted', count: 0 },
-    { status: 'confirmed', count: 0 },
-    { status: 'fulfilled', count: 0 },
-    { status: 'cancelled', count: 0 }
-  ]);
-  assert.deepEqual(await listInquiryPage('new', Number.NaN, 500, 'customer'), {
-    inquiries: [],
-    total: 0,
-    page: 1,
-    pageSize: 50,
-    pageCount: 1
+    const homepage = await getHomepageContent();
+    assert.equal(homepage.title, 'Flowers for moments worth keeping.');
+    const media = await listMedia();
+    assert.ok(media.length > 0);
+    assert.ok(media.every((item) => item.url && item.alt));
+    assert.deepEqual(await listAdminAuditLogs({ search: 'anything' }, 500), []);
+    assert.deepEqual(await listInquiries('new', 'customer'), []);
+    assert.deepEqual(await listInquiryStatusCounts('customer'), [
+      { status: 'new', count: 0 },
+      { status: 'contacted', count: 0 },
+      { status: 'confirmed', count: 0 },
+      { status: 'fulfilled', count: 0 },
+      { status: 'cancelled', count: 0 }
+    ]);
+    assert.deepEqual(await listInquiryPage('new', Number.NaN, 500, 'customer'), {
+      inquiries: [],
+      total: 0,
+      page: 1,
+      pageSize: 50,
+      pageCount: 1
+    });
+    assert.deepEqual(await listAdminProductTypes(), []);
+    assert.deepEqual(await listAdminProductAttributes(), []);
+    assert.deepEqual(await listAdminCollections(), []);
+    assert.deepEqual(await listAdminWarehouseLocations(), []);
+    assert.ok((await listAdminFulfillmentMethodSettings()).length > 0);
   });
-  assert.deepEqual(await listAdminProductTypes(), []);
-  assert.deepEqual(await listAdminProductAttributes(), []);
-  assert.deepEqual(await listAdminCollections(), []);
-  assert.deepEqual(await listAdminWarehouseLocations(), []);
-  assert.ok((await listAdminFulfillmentMethodSettings()).length > 0);
 
   console.log('cms-category-service.test.ts passed');
 }
