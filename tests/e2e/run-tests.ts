@@ -41,7 +41,7 @@ function runE2ePaymentContractCoverageTests() {
 function runE2eLifecycleDbHarnessContractTests() {
   const scripts = pkgScripts();
   assert.equal(scripts['test:e2e:lifecycle']?.includes('tests/e2e/lifecycle/run-tests.ts'), true);
-  assertContains('tests/e2e/lifecycle/test-db.ts', ['assertSafeLifecycleDatabaseUrl', 'resetLifecycleDatabase']);
+  assertContains('tests/e2e/lifecycle/test-db.ts', ['assertSafeLifecycleDatabaseUrl', 'assertLifecycleSchemaReady', 'resetLifecycleDatabase', 'E2E database schema is not ready', 'npm run db:push']);
   assertContains('tests/e2e/lifecycle/run-tests.ts', ['resetLifecycleDatabase', 'runLifecycleServiceRepositoryScenario']);
 }
 
