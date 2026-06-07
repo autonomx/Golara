@@ -15,7 +15,11 @@ function checkoutMessage(status?: string) {
   if (status === 'cart-empty') return 'Your cart is empty. Add products before checkout.';
   if (status === 'cart-missing') return 'Your cart session was not found.';
   if (status === 'name-required') return 'Please enter a recipient name.';
+  if (status === 'phone-required') return 'Please enter a recipient phone number.';
+  if (status === 'city-required') return 'Please enter a delivery city.';
   if (status === 'address-required') return 'Please enter a delivery address.';
+  if (status === 'delivery-date-invalid') return 'Please enter a valid delivery date.';
+  if (status === 'delivery-window-invalid') return 'Please enter a delivery window like 10:00-12:00.';
   if (status === 'database-required') return 'Checkout requires a configured database.';
   if (status === 'failed') return 'We could not create checkout. Please try again.';
   return undefined;

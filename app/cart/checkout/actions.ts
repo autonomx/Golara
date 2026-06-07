@@ -19,6 +19,21 @@ function checkoutPath(status: string) {
   return `/cart/checkout?checkout=${encodeURIComponent(status)}`;
 }
 
+function optionalDeliveryDate(formData: FormData) {
+  const raw = stringField(formData, 'deliveryDate');
+  if (!raw) return undefined;
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) redirect(checkoutPath('delivery-date-invalid'));
+  return date;
+}
+
+function deliveryWindowField(formData: FormData) {
+  const value = stringField(formData, 'deliveryWindow');
+  if (!value) return '';
+  if (!/^\d{2}:\d{2}-\d{2}:\d{2}$/.test(value)) redirect(checkoutPath('delivery-window-invalid'));
+  return value;
+}
+
 export async function createCartCheckoutAction(formData: FormData) {
   if (!hasDatabase()) redirect(checkoutPath('database-required'));
 
@@ -28,9 +43,14 @@ export async function createCartCheckoutAction(formData: FormData) {
   const name = stringField(formData, 'name');
   const phone = stringField(formData, 'phone');
   const email = stringField(formData, 'email');
+  const city = stringField(formData, 'city');
   const line1 = stringField(formData, 'addressLine1');
+  const deliveryDate = optionalDeliveryDate(formData);
+  const deliveryWindow = deliveryWindowField(formData);
 
   if (name.length < 2) redirect(checkoutPath('name-required'));
+  if (phone.length < 7) redirect(checkoutPath('phone-required'));
+  if (city.length < 2) redirect(checkoutPath('city-required'));
   if (line1.length < 4) redirect(checkoutPath('address-required'));
 
   let redirectTarget = '';
@@ -55,7 +75,7 @@ export async function createCartCheckoutAction(formData: FormData) {
         label: 'Cart checkout delivery address',
         recipient: name,
         phone,
-        city: stringField(formData, 'city'),
+        city,
         line1,
         line2: stringField(formData, 'addressLine2'),
         notes: stringField(formData, 'deliveryNotes'),
@@ -66,8 +86,8 @@ export async function createCartCheckoutAction(formData: FormData) {
         addressId: address.id,
         checkoutMode: process.env.CHECKOUT_MODE || 'cart',
         currency: cart?.currency || process.env.CHECKOUT_DOMESTIC_CURRENCY || 'TOMAN',
-        deliveryDate: stringField(formData, 'deliveryDate') ? new Date(stringField(formData, 'deliveryDate')) : undefined,
-        deliveryWindow: stringField(formData, 'deliveryWindow'),
+        deliveryDate,
+        deliveryWindow,
         recipientName: name,
         recipientPhone: phone,
         customerNote: stringField(formData, 'customerNote'),
