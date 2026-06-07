@@ -24,10 +24,6 @@ const IGNORED_DIRECTORIES = new Set([
 const IGNORED_FILES = new Set([
   'package-lock.json'
 ]);
-const LEGACY_OVERSIZED_FILES = new Set([
-  // Existing HTTP API lifecycle harness; new API E2E coverage should live in focused modules.
-  'tests/e2e/api/run-tests.ts'
-]);
 
 function relativePath(filePath) {
   return path.relative(ROOT, filePath).replaceAll(path.sep, '/');
@@ -67,7 +63,6 @@ function countLines(content) {
 
 const files = await walk(ROOT);
 const oversized = [];
-const legacyOversized = [];
 const largest = [];
 
 for (const filePath of files) {
@@ -76,11 +71,7 @@ for (const filePath of files) {
   const relative = relativePath(filePath);
   largest.push({ relative, lines });
   if (lines > MAX_LINES) {
-    if (LEGACY_OVERSIZED_FILES.has(relative)) {
-      legacyOversized.push({ relative, lines });
-    } else {
-      oversized.push({ relative, lines });
-    }
+    oversized.push({ relative, lines });
   }
 }
 
@@ -90,14 +81,6 @@ console.log(`Checked ${files.length} files. Maximum allowed lines per file: ${MA
 console.log('Largest files:');
 for (const item of largest.slice(0, 10)) {
   console.log(`- ${item.relative}: ${item.lines}`);
-}
-
-if (legacyOversized.length > 0) {
-  console.warn('\nLegacy files over the line-count budget:');
-  for (const item of legacyOversized) {
-    console.warn(`- ${item.relative}: ${item.lines} lines`);
-  }
-  console.warn('\nThese files are grandfathered only so focused follow-up modules can land safely.');
 }
 
 if (oversized.length > 0) {
