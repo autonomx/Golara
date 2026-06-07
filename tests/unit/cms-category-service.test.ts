@@ -22,7 +22,6 @@ import {
 } from '../../lib/cms/catalog-repository';
 import { createCmsCategoryService, type CmsCategoryRecord, type CmsCategoryTranslationRecord } from '../../lib/cms/category-service-core';
 
-
 type AuditRecord = {
   action: string;
   entity: string;
@@ -167,7 +166,9 @@ export async function runCmsCategoryServiceTests() {
 
   const homepage = await getHomepageContent();
   assert.equal(homepage.title, 'Flowers for moments worth keeping.');
-  assert.ok((await listMedia()).some((media) => media.url.includes('/images/products/')));
+  const media = await listMedia();
+  assert.ok(media.length > 0);
+  assert.ok(media.every((item) => item.url && item.alt));
   assert.deepEqual(await listAdminAuditLogs({ search: 'anything' }, 500), []);
   assert.deepEqual(await listInquiries('new', 'customer'), []);
   assert.deepEqual(await listInquiryStatusCounts('customer'), [
