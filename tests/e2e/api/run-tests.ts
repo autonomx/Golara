@@ -14,6 +14,7 @@ import {
 } from './admin-content-tests';
 import { runAdminProductCatalogActionTests } from './admin-catalog-tests';
 import { runAdminOrderOperationsActionTests } from './admin-order-tests';
+import { runCartBoundaryTests } from './cart-boundary-tests';
 import { runCartCheckoutNegativeTests } from './cart-checkout-negative-tests';
 import { prepareApiFixture } from './fixture';
 import { runLocaleCurrencyMatrixTests } from './locale-currency-tests';
@@ -47,6 +48,7 @@ async function main() {
 
     await runPublicReadRouteTests();
     await runCartAndCheckoutPageTests(fixture);
+    await runCartBoundaryTests(fixture);
     await runAccountAndAdminPageTests(fixture);
     await runServerActionMutationTests(fixture);
     await runCustomerAuthAndInquiryActionTests(fixture);

@@ -48,9 +48,10 @@ function runE2eLifecycleDbHarnessContractTests() {
 function runE2eApiHarnessContractTests() {
   const scripts = pkgScripts();
   assert.equal(scripts['test:e2e:api']?.includes('tests/e2e/api/run-tests.ts'), true);
-  assertContains('tests/e2e/api/run-tests.ts', ['prepareApiFixture', 'startNextServer', 'runPublicReadRouteTests', 'runLocaleCurrencyMatrixTests', 'runCartCheckoutNegativeTests', 'runAccountWebhookNegativeTests', 'runAdminAuthBoundaryTests', 'runWebhookRouteTests']);
+  assertContains('tests/e2e/api/run-tests.ts', ['prepareApiFixture', 'startNextServer', 'runPublicReadRouteTests', 'runCartBoundaryTests', 'runLocaleCurrencyMatrixTests', 'runCartCheckoutNegativeTests', 'runAccountWebhookNegativeTests', 'runAdminAuthBoundaryTests', 'runWebhookRouteTests']);
   assertContains('tests/e2e/api/shared.ts', ['E2E_DATABASE_URL', 'DATABASE_URL', 'CookieJar', 'submitServerAction']);
   assertContains('tests/e2e/api/storefront-account-tests.ts', ['API checkout action order', 'API E2E Inquiry Customer']);
+  assertContains('tests/e2e/api/cart-boundary-tests.ts', ['api-e2e-zero-quantity-cart', 'api-e2e-remove-line-cart', 'api-e2e-unknown-cart-token', 'api-e2e-inactive-line-cart', 'API Boundary Deluxe']);
   assertContains('tests/e2e/api/locale-currency-tests.ts', ['api-e2e-locale-currency-cart', 'en-CA', 'CAD', 'API E2E Locale Customer']);
   assertContains('tests/e2e/api/cart-checkout-negative-tests.ts', ['API negative checkout should not create order', 'API concurrent checkout guard', 'api-e2e-empty-checkout-cart']);
   assertContains('tests/e2e/api/account-webhook-negative-tests.ts', ['api-other-customer', 'cs_api_e2e_unknown_reference', 'A000000000000000000000000gapapi']);
@@ -71,6 +72,7 @@ function runE2eScriptContractTests() {
     'tests/e2e/api/shared.ts',
     'tests/e2e/api/fixture.ts',
     'tests/e2e/api/storefront-account-tests.ts',
+    'tests/e2e/api/cart-boundary-tests.ts',
     'tests/e2e/api/locale-currency-tests.ts',
     'tests/e2e/api/cart-checkout-negative-tests.ts',
     'tests/e2e/api/account-webhook-negative-tests.ts',
