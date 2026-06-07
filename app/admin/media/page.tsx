@@ -15,9 +15,9 @@ const secondaryButtonClass = 'rounded-full border border-rosewood/15 bg-white px
 const mediaCategoryOptions = [
   { value: 'product', label: 'Product' },
   { value: 'category', label: 'Category' },
-  { value: 'homepageHero', label: 'Homepage hero' },
-  { value: 'homepageBestSeller', label: 'Homepage best seller' },
-  { value: 'homepageCategory', label: 'Homepage category' },
+  { value: 'homepage-banner', label: 'Homepage hero' },
+  { value: 'homepage-best-seller', label: 'Homepage best seller' },
+  { value: 'homepage-category', label: 'Homepage category' },
   { value: 'general', label: 'General / other' }
 ];
 

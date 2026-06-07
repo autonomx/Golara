@@ -38,41 +38,44 @@ export async function requestCustomerOtpAction(formData: FormData) {
   const returnTo = safeReturnTo(stringField(formData, 'returnTo', '/account'));
   if (!hasDatabase()) redirect(loginPath('database-required', undefined, returnTo));
 
+  let redirectTarget = loginPath('request-failed', undefined, returnTo);
   try {
     const phone = normalizeCustomerPhone(stringField(formData, 'phone'));
     const result = await issueCustomerOtp({ phone, purpose: 'login', ...(await requestContext()) });
-    if (!result.ok) redirect(loginPath(result.reason, phone, returnTo));
-    redirect(loginPath('code-sent', phone, returnTo));
+    redirectTarget = result.ok ? loginPath('code-sent', phone, returnTo) : loginPath(result.reason, phone, returnTo);
   } catch (error) {
     console.warn('[account-login] failed to request OTP', error);
-    redirect(loginPath('request-failed', undefined, returnTo));
   }
+  redirect(redirectTarget);
 }
 
 export async function verifyCustomerOtpAction(formData: FormData) {
   const returnTo = safeReturnTo(stringField(formData, 'returnTo', '/account'));
   if (!hasDatabase()) redirect(loginPath('database-required', undefined, returnTo));
 
+  let redirectTarget = loginPath('verify-failed', stringField(formData, 'phone'), returnTo);
   try {
     const phone = normalizeCustomerPhone(stringField(formData, 'phone'));
     const code = stringField(formData, 'code');
     const result = await verifyCustomerOtp({ phone, code, purpose: 'login', ...(await requestContext()) });
-    if (!result.ok) redirect(loginPath(result.reason, phone, returnTo));
-
-    const account = await linkCustomerAccount({
-      phone,
-      provider: 'phone',
-      providerAccountId: phone,
-      locale: 'fa-IR'
-    });
-    const { token } = await createCustomerSession({
-      customerId: account.customerId,
-      provider: 'phone-otp'
-    });
-    await setCustomerSessionCookie(token);
-    redirect(returnTo);
+    if (!result.ok) {
+      redirectTarget = loginPath(result.reason, phone, returnTo);
+    } else {
+      const account = await linkCustomerAccount({
+        phone,
+        provider: 'phone',
+        providerAccountId: phone,
+        locale: 'fa-IR'
+      });
+      const { token } = await createCustomerSession({
+        customerId: account.customerId,
+        provider: 'phone-otp'
+      });
+      await setCustomerSessionCookie(token);
+      redirectTarget = returnTo;
+    }
   } catch (error) {
     console.warn('[account-login] failed to verify OTP', error);
-    redirect(loginPath('verify-failed', stringField(formData, 'phone'), returnTo));
   }
+  redirect(redirectTarget);
 }

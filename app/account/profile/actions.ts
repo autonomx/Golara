@@ -27,6 +27,7 @@ async function requireCustomerId() {
 
 export async function updateAccountProfileAction(formData: FormData) {
   const customerId = await requireCustomerId();
+  let redirectTarget = '';
   try {
     await updateCustomerProfile(customerId, {
       displayName: stringField(formData, 'displayName'),
@@ -36,9 +37,10 @@ export async function updateAccountProfileAction(formData: FormData) {
     revalidatePath('/account');
     revalidatePath('/account/profile');
     revalidatePath('/cart/checkout');
-    redirect(profilePath('updated'));
+    redirectTarget = profilePath('updated');
   } catch (error) {
     console.warn('[account] failed to update profile', error);
-    redirect(profilePath('failed'));
+    redirectTarget = profilePath('failed');
   }
+  redirect(redirectTarget);
 }

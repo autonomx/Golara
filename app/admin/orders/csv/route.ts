@@ -13,7 +13,11 @@ function csvCell(value: unknown) {
 }
 
 export async function GET(request: Request) {
-  await assertAdminRole('staff');
+  try {
+    await assertAdminRole('staff');
+  } catch {
+    return NextResponse.json({ status: 'unauthorized' }, { status: 401 });
+  }
 
   const url = new URL(request.url);
   const orders = await listAdminCheckoutOrdersForExport({

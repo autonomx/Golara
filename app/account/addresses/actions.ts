@@ -44,52 +44,60 @@ function addressInput(formData: FormData) {
 
 export async function addAccountAddressAction(formData: FormData) {
   const customerId = await requireCustomerId();
+  let redirectTarget = '';
   try {
     await addCustomerAddress(customerId, addressInput(formData));
     revalidatePath('/account');
     revalidatePath('/account/addresses');
-    redirect(addressPath('added'));
+    redirectTarget = addressPath('added');
   } catch (error) {
     console.warn('[account] failed to add address', error);
-    redirect(addressPath('failed'));
+    redirectTarget = addressPath('failed');
   }
+  redirect(redirectTarget);
 }
 
 export async function updateAccountAddressAction(formData: FormData) {
   const customerId = await requireCustomerId();
+  let redirectTarget = '';
   try {
     await updateCustomerAddress(customerId, stringField(formData, 'addressId'), addressInput(formData));
     revalidatePath('/account');
     revalidatePath('/account/addresses');
-    redirect(addressPath('updated'));
+    redirectTarget = addressPath('updated');
   } catch (error) {
     console.warn('[account] failed to update address', error);
-    redirect(addressPath('failed'));
+    redirectTarget = addressPath('failed');
   }
+  redirect(redirectTarget);
 }
 
 export async function setDefaultAccountAddressAction(formData: FormData) {
   const customerId = await requireCustomerId();
+  let redirectTarget = '';
   try {
     await setDefaultCustomerAddress(customerId, stringField(formData, 'addressId'));
     revalidatePath('/account');
     revalidatePath('/account/addresses');
-    redirect(addressPath('default-updated'));
+    redirectTarget = addressPath('default-updated');
   } catch (error) {
     console.warn('[account] failed to set default address', error);
-    redirect(addressPath('failed'));
+    redirectTarget = addressPath('failed');
   }
+  redirect(redirectTarget);
 }
 
 export async function deleteAccountAddressAction(formData: FormData) {
   const customerId = await requireCustomerId();
+  let redirectTarget = '';
   try {
     await deleteCustomerAddress(customerId, stringField(formData, 'addressId'));
     revalidatePath('/account');
     revalidatePath('/account/addresses');
-    redirect(addressPath('deleted'));
+    redirectTarget = addressPath('deleted');
   } catch (error) {
     console.warn('[account] failed to delete address', error);
-    redirect(addressPath('failed'));
+    redirectTarget = addressPath('failed');
   }
+  redirect(redirectTarget);
 }

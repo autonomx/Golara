@@ -42,6 +42,7 @@ export async function addToCartAction(formData: FormData) {
   const returnTo = safeReturnPath(stringField(formData, 'returnTo', '/cart'));
   if (!hasDatabase()) redirect(statusPath(returnTo, 'database-required'));
 
+  let redirectTarget = '';
   try {
     const cart = await addCartItem({
       token: await getCartTokenCookie(),
@@ -53,11 +54,12 @@ export async function addToCartAction(formData: FormData) {
     });
     if (cart?.token) await setCartTokenCookie(cart.token);
     revalidateCartSurfaces(returnTo);
-    redirect(statusPath(returnTo, 'added'));
+    redirectTarget = statusPath(returnTo, 'added');
   } catch (error) {
     console.warn('[cart] failed to add item', error);
-    redirect(statusPath(returnTo, 'failed'));
+    redirectTarget = statusPath(returnTo, 'failed');
   }
+  redirect(redirectTarget);
 }
 
 export async function updateCartItemAction(formData: FormData) {
@@ -65,6 +67,7 @@ export async function updateCartItemAction(formData: FormData) {
   const token = await getCartTokenCookie();
   if (!hasDatabase() || !token) redirect(statusPath(returnTo, 'missing'));
 
+  let redirectTarget = '';
   try {
     await updateCartItem({
       token,
@@ -72,11 +75,12 @@ export async function updateCartItemAction(formData: FormData) {
       quantity: intField(formData, 'quantity', 1)
     });
     revalidateCartSurfaces(returnTo);
-    redirect(statusPath(returnTo, 'updated'));
+    redirectTarget = statusPath(returnTo, 'updated');
   } catch (error) {
     console.warn('[cart] failed to update item', error);
-    redirect(statusPath(returnTo, 'failed'));
+    redirectTarget = statusPath(returnTo, 'failed');
   }
+  redirect(redirectTarget);
 }
 
 export async function removeCartItemAction(formData: FormData) {
@@ -84,14 +88,16 @@ export async function removeCartItemAction(formData: FormData) {
   const token = await getCartTokenCookie();
   if (!hasDatabase() || !token) redirect(statusPath(returnTo, 'missing'));
 
+  let redirectTarget = '';
   try {
     await removeCartItem(token, stringField(formData, 'lineKey'));
     revalidateCartSurfaces(returnTo);
-    redirect(statusPath(returnTo, 'removed'));
+    redirectTarget = statusPath(returnTo, 'removed');
   } catch (error) {
     console.warn('[cart] failed to remove item', error);
-    redirect(statusPath(returnTo, 'failed'));
+    redirectTarget = statusPath(returnTo, 'failed');
   }
+  redirect(redirectTarget);
 }
 
 export async function clearCartAction(formData: FormData) {
@@ -99,13 +105,15 @@ export async function clearCartAction(formData: FormData) {
   const token = await getCartTokenCookie();
   if (!hasDatabase() || !token) redirect(statusPath(returnTo, 'missing'));
 
+  let redirectTarget = '';
   try {
     await clearCart(token);
     await clearCartTokenCookie();
     revalidateCartSurfaces(returnTo);
-    redirect(statusPath(returnTo, 'cleared'));
+    redirectTarget = statusPath(returnTo, 'cleared');
   } catch (error) {
     console.warn('[cart] failed to clear cart', error);
-    redirect(statusPath(returnTo, 'failed'));
+    redirectTarget = statusPath(returnTo, 'failed');
   }
+  redirect(redirectTarget);
 }

@@ -78,7 +78,7 @@ function AdminSidebar({ authenticated, authConfigured }: { authenticated: boolea
 }
 
 function CategoryTileEditor({ category, categories, media, disabled, occasionPage }: { category: Category; categories: Category[]; media: MediaItem[]; disabled: boolean; occasionPage: number }) {
-  const categoryMedia = media.filter((item) => item.mediaCategory === 'category' || item.mediaCategory === 'homepageCategory' || item.mediaCategory === 'general' || item.url === category.image);
+  const categoryMedia = media.filter((item) => item.mediaCategory === 'category' || item.mediaCategory === 'homepage-category' || item.mediaCategory === 'general' || item.url === category.image);
   return (
     <details className="rounded-lg border border-rosewood/10 bg-[#fffdfb] p-4 shadow-sm">
       <summary className="cursor-pointer list-none"><div className="grid gap-4 md:grid-cols-[160px_1fr_auto] md:items-center"><div className="relative h-28 overflow-hidden rounded-lg bg-blush">{category.image ? <Image src={category.image} alt={category.title} fill className="object-cover" sizes="160px" /> : null}</div><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-olive">{category.eyebrow}</p><h4 className="font-display text-2xl text-rosewood">{category.title}</h4><p className="mt-1 line-clamp-2 text-sm text-stone-600">{category.description}</p></div><span className="rounded-full border border-rosewood/15 bg-white px-4 py-2 text-sm font-semibold text-rosewood">Edit tile</span></div></summary>
@@ -179,7 +179,7 @@ export default async function AdminHomepagePage({ searchParams }: { searchParams
   const disabled = !authenticated;
   const fallbackHeroImage = homepageBannerSlides[0]?.image ?? '';
   const heroImage = homepage.heroImage || fallbackHeroImage;
-  const heroMedia = media.filter((item) => item.mediaCategory === 'homepageHero' || item.mediaCategory === 'general' || item.url === heroImage);
+  const heroMedia = media.filter((item) => item.mediaCategory === 'homepage-banner' || item.mediaCategory === 'general' || item.url === heroImage);
   const parsedOccasionPage = parsePage(occasionPage);
   const parsedFeaturedPage = parsePage(featuredPage);
 

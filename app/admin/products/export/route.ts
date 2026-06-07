@@ -12,7 +12,11 @@ function csvRow(values: unknown[]) {
 }
 
 export async function GET() {
-  await assertAdminRole('staff');
+  try {
+    await assertAdminRole('staff');
+  } catch {
+    return NextResponse.json({ status: 'unauthorized' }, { status: 401 });
+  }
 
   const products = await listAdminProducts();
   const header = csvRow([

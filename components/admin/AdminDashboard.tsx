@@ -110,9 +110,9 @@ type MediaColumn = (typeof mediaColumnOptions)[number]['key'];
 const mediaCategoryOptions = [
   { value: 'product', label: 'Product' },
   { value: 'category', label: 'Category' },
-  { value: 'homepageHero', label: 'Homepage hero' },
-  { value: 'homepageBestSeller', label: 'Homepage best seller' },
-  { value: 'homepageCategory', label: 'Homepage category' },
+  { value: 'homepage-banner', label: 'Homepage hero' },
+  { value: 'homepage-best-seller', label: 'Homepage best seller' },
+  { value: 'homepage-category', label: 'Homepage category' },
   { value: 'general', label: 'General / other' }
 ];
 
@@ -428,9 +428,9 @@ function buildMediaUsageMap(categories: Category[], products: Product[]) {
 }
 
 function inferredMediaUsage(item: MediaItem): MediaUsage[] {
-  if (item.mediaCategory === 'homepageHero') return [{ type: 'Homepage hero', label: item.alt }];
-  if (item.mediaCategory === 'homepageBestSeller') return [{ type: 'Homepage best seller', label: item.alt }];
-  if (item.mediaCategory === 'homepageCategory') return [{ type: 'Homepage category', label: item.alt }];
+  if (item.mediaCategory === 'homepage-banner') return [{ type: 'Homepage hero', label: item.alt }];
+  if (item.mediaCategory === 'homepage-best-seller') return [{ type: 'Homepage best seller', label: item.alt }];
+  if (item.mediaCategory === 'homepage-category') return [{ type: 'Homepage category', label: item.alt }];
   if (item.mediaCategory === 'category') return [{ type: 'Category', label: item.alt }];
   if (item.mediaCategory === 'product') return [{ type: 'Product', label: item.alt }];
   return [{ type: 'Unassigned', label: item.alt }];
