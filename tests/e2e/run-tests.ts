@@ -59,7 +59,7 @@ function runE2eApiHarnessContractTests() {
   assertContains('tests/e2e/api/admin-content-tests.ts', ['store-settings-updated', 'homepage-updated', 'media-created']);
   assertContains('tests/e2e/api/admin-catalog-tests.ts', ['API-E2E-PREMIUM-001', 'variant-location-stock-updated']);
   assertContains('tests/e2e/api/admin-order-tests.ts', ['API-E2E-ADMIN-EDIT-1001', 'manual-payment-refunded']);
-  assertContains('tests/e2e/api/webhook-tests.ts', ['invalid_signature', 'duplicate', 'verified_paid']);
+  assertContains('tests/e2e/api/webhook-tests.ts', ['invalid_signature', 'duplicate', 'verified_paid', 'api-e2e-invalid-zarinpal-signature', 'evt_api_e2e_missing_reference', 'amount_mismatch', 'currency_mismatch']);
   assertContains('tests/e2e/api/boundary-tests.ts', ['invalid_code', 'expired-customer-session', 'failed_after_paid']);
 }
 
