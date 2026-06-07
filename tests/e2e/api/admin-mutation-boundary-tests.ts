@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   appendServerActionFields,
+  assertRedirect,
   createAdminCookieJar,
   request,
   responseText,
@@ -25,9 +26,8 @@ async function runUnavailableProductLineAddDoesNotMutateTest(fixture: ApiFixture
   form.set('quantity', '2');
 
   const response = await submitServerAction(detailPath, form, jar);
-  assertPostRejected(response, 'order-line-added');
-  assert.equal(await fixture.prisma.checkoutOrderItem.count({ where: { orderId: order.id } }), 0);
-  assert.equal(await fixture.prisma.adminAuditLog.count({ where: { entityId: order.id, action: 'order.line_item.add' } }), 0);
+  assertRedirect(response, `${detailPath}?status=order-line-product-unavailable`);
+  await assertNoLineAddMutation(fixture, order.id);
 }
 
 async function runUnavailableVariantLineAddDoesNotMutateTest(fixture: ApiFixture) {
@@ -41,9 +41,8 @@ async function runUnavailableVariantLineAddDoesNotMutateTest(fixture: ApiFixture
   form.set('quantity', '2');
 
   const response = await submitServerAction(detailPath, form, jar);
-  assertPostRejected(response, 'order-line-added');
-  assert.equal(await fixture.prisma.checkoutOrderItem.count({ where: { orderId: order.id } }), 0);
-  assert.equal(await fixture.prisma.adminAuditLog.count({ where: { entityId: order.id, action: 'order.line_item.add' } }), 0);
+  assertRedirect(response, `${detailPath}?status=order-line-variant-unavailable`);
+  await assertNoLineAddMutation(fixture, order.id);
 }
 
 async function runMissingServerActionFieldsDoNotMutateTest(fixture: ApiFixture) {
@@ -55,9 +54,10 @@ async function runMissingServerActionFieldsDoNotMutateTest(fixture: ApiFixture) 
   form.set('quantity', '2');
 
   const response = await submitServerAction(detailPath, form, jar);
-  assertPostRejected(response, 'order-line-added');
-  assert.equal(await fixture.prisma.checkoutOrderItem.count({ where: { orderId: order.id } }), 0);
-  assert.equal(await fixture.prisma.adminAuditLog.count({ where: { entityId: order.id, action: 'order.line_item.add' } }), 0);
+  const location = response.headers.get('location') ?? '';
+  assert.doesNotMatch(location, /order-line-added/);
+  assert.equal([400, 404, 500].includes(response.status), true);
+  await assertNoLineAddMutation(fixture, order.id);
 }
 
 async function createEditableOrder(fixture: ApiFixture, orderNumber: string) {
@@ -74,8 +74,7 @@ async function createEditableOrder(fixture: ApiFixture, orderNumber: string) {
   });
 }
 
-function assertPostRejected(response: Response, successStatus: string) {
-  const location = response.headers.get('location') ?? '';
-  assert.doesNotMatch(location, new RegExp(successStatus));
-  assert.equal([200, 400, 404, 500].includes(response.status), true);
+async function assertNoLineAddMutation(fixture: ApiFixture, orderId: string) {
+  assert.equal(await fixture.prisma.checkoutOrderItem.count({ where: { orderId } }), 0);
+  assert.equal(await fixture.prisma.adminAuditLog.count({ where: { entityId: orderId, action: 'order.line_item.add' } }), 0);
 }
