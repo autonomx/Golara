@@ -186,6 +186,6 @@ export async function getAdminCheckoutOrder(orderId: string) {
 
   return {
     ...order,
-    timelineEvents: mapAdminOrderActivityTimeline(order.timelineEvents)
+    activityTimeline: mapAdminOrderActivityTimeline(order.timelineEvents)
   };
 }
