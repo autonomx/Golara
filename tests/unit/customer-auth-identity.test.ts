@@ -10,10 +10,14 @@ import {
   normalizeUserAgentForAuth
 } from '../../lib/customer-auth/identity';
 
-const ORIGINAL_ENV = { ...process.env };
+function restoreEnv(snapshot: NodeJS.ProcessEnv) {
+  for (const key of Object.keys(process.env)) delete process.env[key];
+  Object.assign(process.env, snapshot);
+}
 
 async function withEnv<T>(env: Record<string, string | undefined>, run: () => Promise<T> | T) {
-  process.env = { ...ORIGINAL_ENV };
+  const originalEnv = { ...process.env };
+  restoreEnv(originalEnv);
   for (const [key, value] of Object.entries(env)) {
     if (value === undefined) delete process.env[key];
     else process.env[key] = value;
@@ -22,7 +26,7 @@ async function withEnv<T>(env: Record<string, string | undefined>, run: () => Pr
   try {
     return await run();
   } finally {
-    process.env = { ...ORIGINAL_ENV };
+    restoreEnv(originalEnv);
   }
 }
 
