@@ -18,13 +18,50 @@ function assertContains(path: string, markers: string[]) {
   for (const marker of markers) assert.match(content, new RegExp(marker.replaceAll('+', '\\+')), `${path} should contain ${marker}`);
 }
 
-function main() {
+function runE2eSmokeRouteCoverageTests() {
+  assertContains('tools/smoke-routes.mjs', ['homepage', 'product listing', 'account login', 'SMOKE_BASE_URL']);
+}
+
+function runE2eLocalHarnessTests() {
+  assertContains('tools/run-smoke-routes-local.mjs', ['npm run smoke:routes', 'SMOKE_BASE_URL']);
+}
+
+function runE2eCriticalPathCoverageTests() {
+  assertContains('tests/unit/run-tests.ts', ['runCheckoutStateMachineTests', 'runCheckoutPaymentProviderTests']);
+  assertContains('tests/functional/run-tests.ts', ['runCheckoutPaymentFunctionalCoverageTests']);
+  assertContains('tests/api/run-tests.ts', ['runApiRouteInventoryTests']);
+}
+
+function runE2ePaymentContractCoverageTests() {
+  assertContains('lib/checkout/payment-result-core.ts', ['paid', 'failed', 'cancelled']);
+  assertContains('app/api/webhooks/payments/stripe/route.ts', ['request.text', 'verifyPaymentWebhookSignature']);
+  assertContains('app/api/webhooks/payments/zarinpal/route.ts', ['request.text', 'verifyPaymentWebhookSignature']);
+}
+
+function runE2eLifecycleDbHarnessContractTests() {
+  const scripts = pkgScripts();
+  assert.equal(scripts['test:e2e:lifecycle']?.includes('tests/e2e/lifecycle/run-tests.ts'), true);
+  assertContains('tests/e2e/lifecycle/test-db.ts', ['assertSafeLifecycleDatabaseUrl', 'resetLifecycleDatabase']);
+  assertContains('tests/e2e/lifecycle/run-tests.ts', ['resetLifecycleDatabase', 'runLifecycleServiceRepositoryScenario']);
+}
+
+function runE2eApiHarnessContractTests() {
+  const scripts = pkgScripts();
+  assert.equal(scripts['test:e2e:api']?.includes('tests/e2e/api/run-tests.ts'), true);
+  assertContains('tests/e2e/api/run-tests.ts', ['prepareApiFixture', 'startNextServer', 'runPublicReadRouteTests', 'runWebhookRouteTests']);
+  assertContains('tests/e2e/api/shared.ts', ['E2E_DATABASE_URL', 'DATABASE_URL', 'CookieJar', 'submitServerAction']);
+  assertContains('tests/e2e/api/storefront-account-tests.ts', ['API checkout action order', 'API E2E Inquiry Customer']);
+  assertContains('tests/e2e/api/admin-content-tests.ts', ['store-settings-updated', 'homepage-updated', 'media-created']);
+  assertContains('tests/e2e/api/admin-catalog-tests.ts', ['API-E2E-PREMIUM-001', 'variant-location-stock-updated']);
+  assertContains('tests/e2e/api/admin-order-tests.ts', ['API-E2E-ADMIN-EDIT-1001', 'manual-payment-refunded']);
+  assertContains('tests/e2e/api/webhook-tests.ts', ['invalid_signature', 'duplicate', 'verified_paid']);
+  assertContains('tests/e2e/api/boundary-tests.ts', ['invalid_code', 'expired-customer-session', 'failed_after_paid']);
+}
+
+function runE2eScriptContractTests() {
   const scripts = pkgScripts();
   assert.equal(scripts['test:e2e']?.includes('tests/e2e/run-tests.ts'), true);
-  assert.equal(scripts['test:e2e:api']?.includes('tests/e2e/api/run-tests.ts'), true);
-  assert.equal(scripts['test:e2e:lifecycle']?.includes('tests/e2e/lifecycle/run-tests.ts'), true);
   assert.equal(scripts['test:e2e:routes'], 'npm run smoke:routes:local');
-
   for (const path of [
     'tests/e2e/api/run-tests.ts',
     'tests/e2e/api/shared.ts',
@@ -42,19 +79,16 @@ function main() {
   ]) {
     assertExists(path);
   }
+}
 
-  assertContains('tools/smoke-routes.mjs', ['homepage', 'product listing', 'account login', 'SMOKE_BASE_URL']);
-  assertContains('tools/run-smoke-routes-local.mjs', ['npm run smoke:routes', 'SMOKE_BASE_URL']);
-  assertContains('tests/e2e/api/run-tests.ts', ['prepareApiFixture', 'startNextServer', 'runPublicReadRouteTests', 'runWebhookRouteTests']);
-  assertContains('tests/e2e/api/shared.ts', ['E2E_DATABASE_URL', 'DATABASE_URL', 'CookieJar', 'submitServerAction']);
-  assertContains('tests/e2e/api/storefront-account-tests.ts', ['API checkout action order', 'API E2E Inquiry Customer']);
-  assertContains('tests/e2e/api/admin-content-tests.ts', ['store-settings-updated', 'homepage-updated', 'media-created']);
-  assertContains('tests/e2e/api/admin-catalog-tests.ts', ['API-E2E-PREMIUM-001', 'variant-location-stock-updated']);
-  assertContains('tests/e2e/api/admin-order-tests.ts', ['API-E2E-ADMIN-EDIT-1001', 'manual-payment-refunded']);
-  assertContains('tests/e2e/api/webhook-tests.ts', ['invalid_signature', 'duplicate', 'verified_paid']);
-  assertContains('tests/e2e/api/boundary-tests.ts', ['invalid_code', 'expired-customer-session', 'failed_after_paid']);
-  assertContains('tests/e2e/lifecycle/test-db.ts', ['assertSafeLifecycleDatabaseUrl', 'resetLifecycleDatabase']);
-
+function main() {
+  runE2eSmokeRouteCoverageTests();
+  runE2eLocalHarnessTests();
+  runE2eCriticalPathCoverageTests();
+  runE2ePaymentContractCoverageTests();
+  runE2eLifecycleDbHarnessContractTests();
+  runE2eApiHarnessContractTests();
+  runE2eScriptContractTests();
   console.log('e2e smoke tests passed');
 }
 
