@@ -10,7 +10,7 @@ export async function runManualPaymentAdjustmentFlowTests() {
   const detail = source('app/admin/orders/[orderId]/page.tsx');
 
   assert.match(actions, /transitionManualPaymentAttemptAction/);
-  assert.match(actions, /attempt.provider !== 'manual'/);
+  assert.match(actions, /existingAttempt.provider !== 'manual'/);
   assert.match(actions, /Only manual payment attempts can be adjusted from admin/);
   assert.match(actions, /export async function refundManualPaymentAttemptAction/);
   assert.match(actions, /export async function voidManualPaymentAttemptAction/);
