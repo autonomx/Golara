@@ -5,6 +5,8 @@ import { hasDatabase, prisma } from '@/lib/prisma';
 
 const DEFAULT_CART_TTL_DAYS = 14;
 const MAX_CART_QUANTITY = 99;
+const CHECKOUT_PENDING_STATUS = 'checkout_pending';
+const CHECKED_OUT_STATUS = 'checked_out';
 
 type CartCurrency = string | undefined;
 
@@ -61,59 +63,39 @@ function makeCartToken() {
   return randomBytes(32).toString('base64url');
 }
 
-async function findActiveCart(token?: string) {
+function cartInclude() {
+  return {
+    items: {
+      orderBy: { createdAt: 'asc' as const },
+      include: {
+        product: {
+          include: { category: true }
+        },
+        variant: true
+      }
+    }
+  };
+}
+
+async function findCartByStatus(token: string | undefined, statuses: string[]) {
   const normalized = optionalText(token);
   if (!normalized || !hasDatabase()) return null;
 
   return prisma.cartSession.findFirst({
     where: {
       token: normalized,
-      status: 'active',
+      status: { in: statuses },
       expiresAt: { gt: new Date() }
     },
-    include: {
-      items: {
-        orderBy: { createdAt: 'asc' },
-        include: {
-          product: {
-            include: { category: true }
-          },
-          variant: true
-        }
-      }
-    }
+    include: cartInclude()
   });
 }
 
-async function createCart(input: CreateCartInput = {}) {
-  if (!hasDatabase()) throw new Error('DATABASE_URL is required for cart sessions.');
-
-  return prisma.cartSession.create({
-    data: {
-      token: makeCartToken(),
-      locale: normalizeLocale(input.locale),
-      currency: normalizeCurrency(input.currency),
-      expiresAt: expiresAt()
-    },
-    include: {
-      items: {
-        include: {
-          product: {
-            include: { category: true }
-          },
-          variant: true
-        }
-      }
-    }
-  });
+async function findActiveCart(token?: string) {
+  return findCartByStatus(token, ['active']);
 }
 
-async function getOrCreateCart(input: CreateCartInput & { token?: string } = {}) {
-  return (await findActiveCart(input.token)) ?? createCart(input);
-}
-
-export async function getCartByToken(token?: string) {
-  const cart = await findActiveCart(token);
+async function removeInactiveCartItems(cart: Awaited<ReturnType<typeof findActiveCart>>) {
   if (!cart) return null;
 
   const activeItems = cart.items.filter((item) => item.product.isActive && item.product.category.isActive && (!item.variantId || item.variant?.isActive));
@@ -126,7 +108,79 @@ export async function getCartByToken(token?: string) {
     }
   });
 
-  return findActiveCart(cart.token);
+  return findCartByStatus(cart.token, [cart.status]);
+}
+
+async function createCart(input: CreateCartInput = {}) {
+  if (!hasDatabase()) throw new Error('DATABASE_URL is required for cart sessions.');
+
+  return prisma.cartSession.create({
+    data: {
+      token: makeCartToken(),
+      locale: normalizeLocale(input.locale),
+      currency: normalizeCurrency(input.currency),
+      expiresAt: expiresAt()
+    },
+    include: cartInclude()
+  });
+}
+
+async function getOrCreateCart(input: CreateCartInput & { token?: string } = {}) {
+  return (await findActiveCart(input.token)) ?? createCart(input);
+}
+
+export async function getCartByToken(token?: string) {
+  return removeInactiveCartItems(await findActiveCart(token));
+}
+
+export async function claimCartForCheckout(token: string) {
+  if (!hasDatabase()) throw new Error('DATABASE_URL is required for cart sessions.');
+  const normalized = optionalText(token);
+  if (!normalized) return null;
+
+  const claimed = await prisma.cartSession.updateMany({
+    where: {
+      token: normalized,
+      status: 'active',
+      expiresAt: { gt: new Date() }
+    },
+    data: {
+      status: CHECKOUT_PENDING_STATUS,
+      expiresAt: expiresAt()
+    }
+  });
+  if (claimed.count !== 1) return null;
+
+  return removeInactiveCartItems(await findCartByStatus(normalized, [CHECKOUT_PENDING_STATUS]));
+}
+
+export async function releaseCartCheckoutClaim(token: string) {
+  if (!hasDatabase()) throw new Error('DATABASE_URL is required for cart sessions.');
+  const normalized = optionalText(token);
+  if (!normalized) return null;
+
+  await prisma.cartSession.updateMany({
+    where: { token: normalized, status: CHECKOUT_PENDING_STATUS },
+    data: { status: 'active', expiresAt: expiresAt() }
+  });
+  return getCartByToken(normalized);
+}
+
+export async function completeCartCheckout(token: string) {
+  if (!hasDatabase()) throw new Error('DATABASE_URL is required for cart sessions.');
+  const normalized = optionalText(token);
+  if (!normalized) return null;
+
+  const cart = await findCartByStatus(normalized, [CHECKOUT_PENDING_STATUS, 'active']);
+  if (!cart) return null;
+
+  await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
+  await prisma.cartSession.update({
+    where: { id: cart.id },
+    data: { status: CHECKED_OUT_STATUS, expiresAt: new Date() }
+  });
+
+  return null;
 }
 
 export async function createCartSession(input: CreateCartInput = {}) {
