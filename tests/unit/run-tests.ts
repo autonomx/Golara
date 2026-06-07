@@ -28,6 +28,7 @@ import { runCustomerPrivacyTests } from './customer-privacy.test';
 import { runDashboardExtensionMountPointsTests } from './dashboard-extension-mount-points.test';
 import { runDataSafetyReadinessTests } from './data-safety-readiness.test';
 import { runDeployReadinessTests } from './deploy-readiness.test';
+import { runE2eDbSafetyContractTests } from './e2e-db-safety-contract.test';
 import { runFailedPaymentNotificationAlertsTests } from './failed-payment-notification-alerts.test';
 import { runFulfillmentMethodSettingsModelTests } from './fulfillment-method-settings-model.test';
 import { runFulfillmentQueueSummaryTests } from './fulfillment-queue-summary.test';
@@ -141,6 +142,7 @@ async function main() {
   await runMediaStorageReadinessTests();
   await runDataSafetyReadinessTests();
   await runDeployReadinessTests();
+  await runE2eDbSafetyContractTests();
   await runAdminActionBoundaryGuardTests();
   await runAdminAuthCoreTests();
   await runAdminAccountCoreTests();
@@ -268,7 +270,7 @@ async function main() {
   await runFulfillmentShipmentRecordsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
-  console.log('unit tests passed (133 files)');
+  console.log('unit tests passed (134 files)');
 }
 
 main().catch((error) => {
