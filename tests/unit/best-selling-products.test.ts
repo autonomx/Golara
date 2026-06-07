@@ -20,6 +20,7 @@ export async function runBestSellingProductsTests() {
   assert.equal(isBestSellingSalesEligibleStatus('cancelled'), false);
   assert.equal(isBestSellingSalesEligibleStatus('refunded'), false);
   assert.equal(formatBestSellingRevenue(12345, 'CAD'), '$123.45');
+  assert.equal(formatBestSellingRevenue(250000, 'TOMAN'), '2500.00 TOMAN');
 
   const now = new Date('2026-06-02T12:00:00Z');
   const summary = buildBestSellingProductsSummary([

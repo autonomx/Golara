@@ -79,7 +79,13 @@ export function isCancelledOrderStatus(status: string) {
 
 export function formatRevenueCents(value: number, currency = 'CAD') {
   const amount = normalizeRevenueCents(value) / 100;
-  return new Intl.NumberFormat('en-CA', { style: 'currency', currency: normalizeCurrency(currency) }).format(amount);
+  const normalizedCurrency = normalizeCurrency(currency);
+  try {
+    return new Intl.NumberFormat('en-CA', { style: 'currency', currency: normalizedCurrency }).format(amount);
+  } catch (error) {
+    if (error instanceof RangeError) return `${amount.toFixed(2)} ${normalizedCurrency}`;
+    throw error;
+  }
 }
 
 export function buildOrderRevenueSummary(rows: OrderRevenueSourceRow[], now = new Date()): OrderRevenueSummary {

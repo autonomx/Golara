@@ -216,6 +216,28 @@ function runE2eLifecycleDbHarnessContractTests() {
   }
 }
 
+function runE2eApiHarnessContractTests() {
+  const pkg = source('package.json');
+  const apiRunner = source('tests/e2e/api/run-tests.ts');
+
+  assert.match(pkg, /"test:e2e:api":\s*"node --require \.\/tests\/setup\/server-only-register\.cjs --import tsx tests\/e2e\/api\/run-tests\.ts"/);
+  assert.match(apiRunner, /startNextServer/);
+  assert.match(apiRunner, /E2E_DATABASE_URL/);
+  assert.match(apiRunner, /DATABASE_URL/);
+  assert.match(apiRunner, /CookieJar/);
+  assert.match(apiRunner, /runPublicReadRouteTests/);
+  assert.match(apiRunner, /runCartAndCheckoutPageTests/);
+  assert.match(apiRunner, /runAccountAndAdminPageTests/);
+  assert.match(apiRunner, /runOrderReturnRouteTests/);
+  assert.match(apiRunner, /runWebhookRouteTests/);
+  assert.match(apiRunner, /stripe-signature/);
+  assert.match(apiRunner, /x-zarinpal-signature/);
+  assert.match(apiRunner, /invalid_signature/);
+  assert.match(apiRunner, /duplicate/);
+  assert.match(apiRunner, /verified_paid/);
+  assert.equal(existsSync('tests/e2e/api/run-tests.ts'), true);
+}
+
 function runE2eScriptContractTests() {
   const pkg = source('package.json');
   assert.match(pkg, /"test:e2e":\s*"node --require \.\/tests\/setup\/server-only-register\.cjs --import tsx tests\/e2e\/run-tests\.ts"/);
@@ -244,6 +266,7 @@ async function main() {
   runE2eCriticalPathCoverageTests();
   runE2ePaymentContractCoverageTests();
   runE2eLifecycleDbHarnessContractTests();
+  runE2eApiHarnessContractTests();
   runE2eScriptContractTests();
   console.log('e2e smoke tests passed');
 }

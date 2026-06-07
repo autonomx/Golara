@@ -27,6 +27,7 @@ export async function runOrderRevenueSummaryTests() {
   assert.equal(isCompletedOrderStatus('Delivered'), true);
   assert.equal(isCancelledOrderStatus('Canceled'), true);
   assert.equal(formatRevenueCents(12345, 'CAD'), '$123.45');
+  assert.equal(formatRevenueCents(250000, 'TOMAN'), '2500.00 TOMAN');
 
   const now = new Date('2026-06-02T12:00:00Z');
   const summary = buildOrderRevenueSummary([

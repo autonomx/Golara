@@ -77,7 +77,14 @@ export function isBestSellingSalesEligibleStatus(status: string) {
 }
 
 export function formatBestSellingRevenue(value: number, currency = 'CAD') {
-  return new Intl.NumberFormat('en-CA', { style: 'currency', currency: normalizeCurrency(currency) }).format(normalizeCents(value) / 100);
+  const amount = normalizeCents(value) / 100;
+  const normalizedCurrency = normalizeCurrency(currency);
+  try {
+    return new Intl.NumberFormat('en-CA', { style: 'currency', currency: normalizedCurrency }).format(amount);
+  } catch (error) {
+    if (error instanceof RangeError) return `${amount.toFixed(2)} ${normalizedCurrency}`;
+    throw error;
+  }
 }
 
 export function buildBestSellingProductsSummary(rows: BestSellingProductSourceRow[], now = new Date(), limit = 5): BestSellingProductsSummary {
