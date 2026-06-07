@@ -141,7 +141,6 @@ async function main() {
   await runRuntimeReadinessTests();
   await runMediaStorageReadinessTests();
   await runDataSafetyReadinessTests();
-  await runDeployReadinessTests();
   await runE2eDbSafetyContractTests();
   await runAdminActionBoundaryGuardTests();
   await runAdminAuthCoreTests();
@@ -270,6 +269,7 @@ async function main() {
   await runFulfillmentShipmentRecordsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
+  await runDeployReadinessTests();
   console.log('unit tests passed (134 files)');
 }
 
