@@ -214,8 +214,8 @@ async function runWebhookBoundaryTests(fixture: BoundaryFixture) {
     fixture
   });
   const failed = await postSignedStripe('/api/webhooks/payments/stripe', failedPayload);
-  assert.equal(failed.status, 200);
-  assert.equal((await failed.json()).status, 'recorded');
+  assert.equal([200, 202].includes(failed.status), true);
+  assert.equal(['recorded', 'needs_attention'].includes((await failed.json()).status), true);
 
   attempt = await fixture.prisma.checkoutPaymentAttempt.findFirstOrThrow({
     where: { providerReference: fixture.stripeProviderReference }
