@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
+import { buildAdminOrderActivityAttribution, mapAdminOrderActivityTimeline } from '../../lib/checkout/admin-order-activity-timeline';
 import {
   getAdminCheckoutOrder,
   listAdminCheckoutOrderPage,
@@ -18,6 +19,41 @@ export async function runAdminOrderLineEditFlowTests() {
   const actions = source('app/admin/order-actions.ts');
   const detail = source('app/admin/orders/[orderId]/page.tsx');
   const inventoryReservations = source('lib/inventory/inventory-reservation-service.ts');
+  const now = new Date('2026-06-06T12:00:00.000Z');
+
+  assert.deepEqual(buildAdminOrderActivityAttribution({ actorLabel: null, actorRole: null }), {
+    actor: { label: null, role: null },
+    source: 'system',
+    attributionLabel: 'System activity'
+  });
+  assert.deepEqual(buildAdminOrderActivityAttribution({ actorLabel: ' Mina ', actorRole: ' staff ' }), {
+    actor: { label: 'Mina', role: 'staff' },
+    source: 'staff',
+    attributionLabel: 'Mina / staff'
+  });
+  assert.deepEqual(buildAdminOrderActivityAttribution({ actorLabel: null, actorRole: ' owner ' }), {
+    actor: { label: null, role: 'owner' },
+    source: 'staff',
+    attributionLabel: 'Admin / owner'
+  });
+  assert.deepEqual(mapAdminOrderActivityTimeline([{
+    id: 'event_1',
+    type: 'order.note',
+    title: 'Staff note added',
+    note: 'Left voicemail.',
+    actorLabel: ' Admin ',
+    actorRole: ' staff ',
+    createdAt: now
+  }]), [{
+    id: 'event_1',
+    type: 'order.note',
+    title: 'Staff note added',
+    note: 'Left voicemail.',
+    actor: { label: 'Admin', role: 'staff' },
+    source: 'staff',
+    attributionLabel: 'Admin / staff',
+    createdAt: now
+  }]);
 
   assert.match(repository, /const EDITABLE_ORDER_STATUSES = new Set\(\['draft', 'pending'\]\)/);
   assert.match(repository, /export async function listAdminOrderLineProductOptions/);
