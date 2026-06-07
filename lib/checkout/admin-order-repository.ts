@@ -178,8 +178,7 @@ export async function getAdminCheckoutOrder(orderId: string) {
         orderBy: { createdAt: 'desc' },
         include: { events: { orderBy: { createdAt: 'desc' } } }
       },
-      timelineEvents: { orderBy: { createdAt: 'desc' } },
-      notifications: { orderBy: { createdAt: 'desc' }, include: { attempts: { orderBy: { attemptedAt: 'desc' } } } }
+      timelineEvents: { orderBy: { createdAt: 'desc' } }
     }
   });
 
