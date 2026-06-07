@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { clearCartTokenCookie, getCartTokenCookie } from '@/lib/cart/cart-cookie';
-import { clearCart, getCartByToken } from '@/lib/cart/cart-repository';
+import { claimCartForCheckout, completeCartCheckout, releaseCartCheckoutClaim } from '@/lib/cart/cart-repository';
 import { checkoutActionNextPath } from '@/lib/checkout/checkout-action-next-path';
 import { createOrderDraft } from '@/lib/checkout/order-draft-repository';
 import { createCheckoutPaymentAttempt } from '@/lib/checkout/payment-provider';
@@ -25,23 +25,25 @@ export async function createCartCheckoutAction(formData: FormData) {
   const token = await getCartTokenCookie();
   if (!token) redirect(checkoutPath('cart-missing'));
 
+  const name = stringField(formData, 'name');
+  const phone = stringField(formData, 'phone');
+  const email = stringField(formData, 'email');
+  const line1 = stringField(formData, 'addressLine1');
+
+  if (name.length < 2) redirect(checkoutPath('name-required'));
+  if (line1.length < 4) redirect(checkoutPath('address-required'));
+
   let redirectTarget = '';
-  let shouldClearCart = false;
+  let claimAcquired = false;
+  let checkoutCompleted = false;
 
   try {
-    const cart = await getCartByToken(token);
+    const cart = await claimCartForCheckout(token);
+    claimAcquired = Boolean(cart);
     const items = cart?.items ?? [];
-    const name = stringField(formData, 'name');
-    const phone = stringField(formData, 'phone');
-    const email = stringField(formData, 'email');
-    const line1 = stringField(formData, 'addressLine1');
 
     if (items.length === 0) {
-      redirectTarget = checkoutPath('cart-empty');
-    } else if (name.length < 2) {
-      redirectTarget = checkoutPath('name-required');
-    } else if (line1.length < 4) {
-      redirectTarget = checkoutPath('address-required');
+      redirectTarget = checkoutPath(claimAcquired ? 'cart-empty' : 'cart-processing');
     } else {
       const customer = await upsertCustomerProfile({
         phone,
@@ -73,7 +75,9 @@ export async function createCartCheckoutAction(formData: FormData) {
       });
 
       const attempt = await createCheckoutPaymentAttempt({ orderId: order.id });
-      shouldClearCart = true;
+      await completeCartCheckout(token);
+      await clearCartTokenCookie();
+      checkoutCompleted = true;
       redirectTarget = checkoutActionNextPath(order, attempt);
     }
   } catch (error) {
@@ -81,9 +85,8 @@ export async function createCartCheckoutAction(formData: FormData) {
     redirectTarget = checkoutPath('failed');
   }
 
-  if (shouldClearCart && token) {
-    await clearCart(token);
-    await clearCartTokenCookie();
+  if (claimAcquired && !checkoutCompleted) {
+    await releaseCartCheckoutClaim(token);
   }
 
   redirect(redirectTarget);

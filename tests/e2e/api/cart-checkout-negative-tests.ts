@@ -90,8 +90,9 @@ async function runConcurrentCheckoutSubmitGuardTest(fixture: ApiFixture) {
   const submit = () => submitCheckout('/cart/checkout', cloneFormData(form), jar);
   const results = await Promise.allSettled([submit(), submit()]);
   assert.equal(results.every((result) => result.status === 'fulfilled'), true);
-  assert.equal((await fixture.prisma.checkoutOrder.count({ where: { customerNote: 'API concurrent checkout guard.' } })) <= 1, true);
+  assert.equal(await fixture.prisma.checkoutOrder.count({ where: { customerNote: 'API concurrent checkout guard.' } }), 1);
   assert.equal(await fixture.prisma.cartItem.count({ where: { cartId: cart.id } }), 0);
+  assert.equal((await fixture.prisma.cartSession.findUniqueOrThrow({ where: { id: cart.id } })).status, 'checked_out');
 }
 
 async function submitCheckout(path: string, formData: FormData, jar: CookieJar) {

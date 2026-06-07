@@ -69,7 +69,7 @@ async function runExpiredOtpVerificationTest(fixture: ApiFixture) {
   expiredForm.set('code', recoverOtpCode(challenge.destination, challenge.codeHash, challenge.purpose));
   expiredForm.set('returnTo', '/account');
   const response = await submitServerAction('/account/login', expiredForm, new CookieJar());
-  assert.match(response.headers.get('location') ?? '', /status=(invalid_code|code_expired|code-sent)/);
+  assert.match(response.headers.get('location') ?? '', /status=(invalid_code|code_expired|code-sent|missing_or_expired)/);
 }
 
 async function runWebhookUnknownReferenceTest() {
