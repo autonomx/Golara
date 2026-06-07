@@ -50,7 +50,8 @@ export async function runChannelStorefrontModelTests() {
   assert.equal(DEFAULT_STOREFRONT_CHANNEL_LOCALE, 'fa-IR');
 
   assert.equal(normalizeStorefrontChannelSlug(' Main Storefront! '), 'main-storefront');
-  assert.equal(normalizeStorefrontChannelSlug('گل فروشی تهران'), 'گل-فروشی-تهران');
+  assert.equal(normalizeStorefrontChannelSlug('Main Storefront 123'), 'main-storefront-123');
+  assert.throws(() => normalizeStorefrontChannelSlug('گل فروشی تهران'), /Storefront channel slug is required/);
   assert.throws(() => normalizeStorefrontChannelSlug(' !!! '), /Storefront channel slug is required/);
 
   assert.equal(normalizeStorefrontChannelCurrency(undefined), 'TOMAN');
