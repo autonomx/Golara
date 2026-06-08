@@ -6,7 +6,7 @@ type AdminLocale = 'en' | 'fa';
 const copy = {
   en: {
     eyebrow: 'Analytics',
-    title: 'Inventory alerts',
+    title: 'Low-stock alerts',
     body: 'Operational inventory alerts for active tracked variants that need stock review.',
     alerts: 'alerts',
     trackedVariants: 'Tracked variants',
