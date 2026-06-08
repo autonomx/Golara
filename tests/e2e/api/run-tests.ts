@@ -45,6 +45,7 @@ import { runCartBoundaryTests } from './cart-boundary-tests';
 import { runCartCheckoutNegativeTests } from './cart-checkout-negative-tests';
 import { prepareApiFixture } from './fixture';
 import { runLocaleCurrencyMatrixTests } from './locale-currency-tests';
+import { runExtraPublicRouteApiTests } from './public-route-extra-tests';
 import {
   runAccountAndAdminPageTests,
   runAdminProtectedRouteAndActionTests,
@@ -74,6 +75,7 @@ async function main() {
     server = await startNextServer(config.databaseUrl);
 
     await runPublicReadRouteTests();
+    await runExtraPublicRouteApiTests();
     await runCartAndCheckoutPageTests(fixture);
     await runCartBoundaryTests(fixture);
     await runAccountAndAdminPageTests(fixture);
