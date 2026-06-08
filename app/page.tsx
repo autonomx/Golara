@@ -49,7 +49,7 @@ export default async function HomePage() {
       <SiteHeader returnTo="/" locale={locale} />
 
       <HomepageBannerSlideshow slides={homepageBannerSlides} homepage={homepage} />
-      <HomepageOccasionRail occasions={occasionRailItems} />
+      <HomepageOccasionRail occasions={occasionRailItems} locale={locale} />
 
       <BestSellersCarousel products={bestSellers} locale={locale} />
 
@@ -70,7 +70,7 @@ export default async function HomePage() {
             <Link href={firstNonEmpty(homepage.collectionsCtaHref, '/categories')} className="inline-flex rounded-full border border-rosewood/15 bg-white px-5 py-2.5 text-sm font-semibold text-rosewood shadow-[0_12px_28px_rgba(111,36,56,0.08)] transition hover:-translate-y-0.5 hover:border-rosewood hover:bg-rosewood hover:text-white">{firstNonEmpty(homepage.collectionsCtaLabel, copy('home.collectionsCtaLabel'))}</Link>
           </div>
           <div className="grid gap-5 md:grid-cols-2">
-            {featuredOccasions.map((category, index) => <HomepageCategoryTileCard key={category.slug} category={category} priority={index < 4} />)}
+            {featuredOccasions.map((category, index) => <HomepageCategoryTileCard key={category.slug} category={category} priority={index < 4} locale={locale} />)}
           </div>
         </div>
       </section>
