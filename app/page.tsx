@@ -44,7 +44,7 @@ export default async function HomePage() {
       data-page="home"
       className="bg-[linear-gradient(180deg,#fffdfb_0%,#ffffff_42%,#fbf8f5_100%)]"
     >
-      <SiteHeader returnTo="/" />
+      <SiteHeader returnTo="/" locale={locale} />
 
       <HomepageBannerSlideshow slides={homepageBannerSlides} homepage={homepage} />
       <HomepageOccasionRail occasions={occasionRailItems} />

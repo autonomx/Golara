@@ -239,6 +239,29 @@ type AuditLogWhere = Prisma.AdminAuditLogWhereInput;
 
 const categoryInclude = { parent: { select: { slug: true, title: true, translations: true } }, translations: true } satisfies Prisma.CategoryInclude;
 const productInclude = { category: { include: categoryInclude }, productType: true, images: true, attributeValues: true, collections: { include: { collection: true } }, variants: { include: { attributeValues: true, locationStocks: { include: { location: true }, orderBy: [{ locationId: 'asc' }] } }, orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] }, translations: true } satisfies Prisma.ProductInclude;
+const publicProductInclude = {
+  category: { include: categoryInclude },
+  images: { take: 1, orderBy: { createdAt: 'asc' as const } },
+  variants: {
+    where: { isActive: true },
+    orderBy: [{ sortOrder: 'asc' as const }, { name: 'asc' as const }],
+    select: {
+      id: true,
+      productId: true,
+      sku: true,
+      name: true,
+      priceCents: true,
+      currency: true,
+      imageUrl: true,
+      stockQuantity: true,
+      trackInventory: true,
+      lowStockThreshold: true,
+      isActive: true,
+      sortOrder: true
+    }
+  },
+  translations: true
+} satisfies Prisma.ProductInclude;
 
 function bySortThenTitle(a: Category, b: Category) {
   return (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.title.localeCompare(b.title);
@@ -718,7 +741,7 @@ export async function getCategoryBySlug(slug: string, options: CatalogReadOption
 
 export async function listProducts(options: CatalogReadOptions = {}): Promise<Product[]> {
   return readWithFallback(async () => {
-    const products = await prisma.product.findMany({ where: { isActive: true, category: { isActive: true } }, include: productInclude, orderBy: [{ bestSeller: 'desc' }, { title: 'asc' }] });
+    const products = await prisma.product.findMany({ where: { isActive: true, category: { isActive: true } }, include: publicProductInclude, orderBy: [{ bestSeller: 'desc' }, { title: 'asc' }] });
     return products.map((product) => mapProduct(product, options));
   }, () => seedProducts.filter((product) => product.isActive !== false));
 }

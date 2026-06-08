@@ -4,6 +4,7 @@ import { HeaderSearchControl } from '@/components/HeaderSearchControl';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { getCartTokenCookie } from '@/lib/cart/cart-cookie';
 import { getCartByToken } from '@/lib/cart/cart-repository';
+import type { SupportedLocale } from '@/lib/i18n/locales';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { getStorefrontCopy } from '@/lib/localization/storefront-copy';
 import { hasDatabase } from '@/lib/prisma';
@@ -15,16 +16,19 @@ const iconLinkClass = 'relative rounded-full p-2 outline-none transition hover:b
 async function cartItemCount() {
   if (!hasDatabase()) return 0;
   const token = await getCartTokenCookie();
+  if (!token) return 0;
   const cart = await getCartByToken(token);
   return cart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
 }
 
-export async function SiteHeader({ returnTo = '/', compact = false }: { returnTo?: string; compact?: boolean } = {}) {
-  const locale = await resolveStorefrontLocale();
-  const itemCount = await cartItemCount();
-  const navigationMenu = await storefrontNavigationMenuService.get('primary', locale);
-  const navigationItems = visibleStorefrontNavigationItems(navigationMenu.items, locale);
-  const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key, locale);
+export async function SiteHeader({ returnTo = '/', compact = false, locale }: { returnTo?: string; compact?: boolean; locale?: SupportedLocale | null } = {}) {
+  const resolvedLocale = locale ?? await resolveStorefrontLocale();
+  const [itemCount, navigationMenu] = await Promise.all([
+    cartItemCount(),
+    storefrontNavigationMenuService.get('primary', resolvedLocale)
+  ]);
+  const navigationItems = visibleStorefrontNavigationItems(navigationMenu.items, resolvedLocale);
+  const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key, resolvedLocale);
 
   return (
     <header className="sticky top-0 z-20 border-b border-rosewood/10 bg-cream/90 backdrop-blur-xl">
@@ -39,7 +43,7 @@ export async function SiteHeader({ returnTo = '/', compact = false }: { returnTo
         </nav>
         <Link href="/" className={`rounded-full font-display tracking-tight text-rosewood outline-none focus-visible:ring-4 focus-visible:ring-olive/20 ${compact ? 'text-2xl' : 'text-3xl'}`}>Golara</Link>
         <div className="flex items-center gap-1 text-rosewood">
-          <LanguageSwitcher locale={locale} returnTo={returnTo} />
+          <LanguageSwitcher locale={resolvedLocale} returnTo={returnTo} />
           <HeaderSearchControl />
           <Link href="/account" className={iconLinkClass} aria-label="Account"><UserRound className="h-5 w-5" aria-hidden="true" /></Link>
           <Link href="/cart" className={iconLinkClass} aria-label={`Cart${itemCount > 0 ? ` with ${itemCount} item${itemCount === 1 ? '' : 's'}` : ''}`}>

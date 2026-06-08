@@ -111,6 +111,7 @@ function runE2eScriptContractTests() {
     'tests/browser/api-journeys.spec.mjs',
     'tools/run-playwright-api-journeys.mjs',
     'tools/run-k6-api-smoke.mjs',
+    'tests/K6LoadTest/src/test/golaraApiLoadTest.js',
     'tests/K6LoadTest/src/test/golaraApiSmokeTest.js',
     'tests/e2e/api/admin-content-tests.ts',
     'tests/e2e/api/admin-catalog-tests.ts',

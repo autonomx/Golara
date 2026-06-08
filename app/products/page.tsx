@@ -29,7 +29,7 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
 
   return (
     <main dir={getStorefrontCopyDirection(locale)}>
-      <SiteHeader returnTo={search ? `/products?q=${encodeURIComponent(search)}` : '/products'} />
+      <SiteHeader returnTo={search ? `/products?q=${encodeURIComponent(search)}` : '/products'} locale={locale} />
       <section className="mx-auto max-w-7xl px-5 py-14">
         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">{getStorefrontCopy('catalog.eyebrow', locale)}</p>
         <h1 className="mt-3 font-display text-6xl text-rosewood">{getStorefrontCopy('catalog.title', locale)}</h1>
