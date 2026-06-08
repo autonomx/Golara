@@ -37,6 +37,15 @@ function includes(content: string, expected: string, message: string) {
 }
 
 {
+  const content = source('components/admin/AdminCustomerPanel.tsx');
+
+  includes(content, 'fa:', 'AdminCustomerPanel should expose Farsi copy');
+  includes(content, 'resolveStorefrontLocale', 'AdminCustomerPanel should resolve the active locale');
+  includes(content, 'export async function AdminCustomerPanel', 'AdminCustomerPanel should stay async for locale resolution');
+  includes(content, 'پروفایل‌های مشتری', 'AdminCustomerPanel should include Farsi customer copy');
+}
+
+{
   const files = [
     'components/admin/InquiryContactActions.tsx',
     'components/admin/InquiryDeliveryBadge.tsx',
