@@ -22,7 +22,7 @@ const copy = {
     notSet: 'Not set',
     yes: 'Yes',
     no: 'No',
-    empty: 'No tracked variants need attention right now.'
+    empty: 'No low-stock or out-of-stock tracked variants need attention right now.'
   },
   fa: {
     eyebrow: 'تحلیل‌ها',
