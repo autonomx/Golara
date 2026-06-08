@@ -13,6 +13,53 @@ import { launchReadinessHealthService } from '@/lib/analytics/launch-readiness-h
 import { lowStockAlertsService } from '@/lib/analytics/low-stock-alerts';
 import { formatRevenueCents, type OrderRevenueSummary } from '@/lib/analytics/order-revenue-summary';
 import { recentActivitySummaryService } from '@/lib/analytics/recent-activity-summary';
+import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
+import type { SupportedLocale } from '@/lib/i18n/locales';
+
+type AdminLocale = 'en' | 'fa';
+
+const copy = {
+  en: {
+    eyebrow: 'Analytics',
+    title: 'Order count and revenue',
+    body: 'Daily operations snapshot for order volume, eligible revenue, recent activity, and open order load.',
+    totalOrders: 'Total orders',
+    revenue: 'Revenue',
+    excludesCancelledRefunded: 'excludes cancelled/refunded',
+    averageOrderValue: 'Average order value',
+    openOrders: 'Open orders',
+    recentOrders: 'Recent orders',
+    recentRevenue: 'Recent revenue',
+    last30Days: 'last 30 days',
+    completed: 'Completed',
+    cancelled: 'Cancelled',
+    currency: 'Currency',
+    orders: 'Orders',
+    aov: 'AOV'
+  },
+  fa: {
+    eyebrow: 'تحلیل‌ها',
+    title: 'تعداد سفارش و درآمد',
+    body: 'نمای روزانه عملیات برای حجم سفارش، درآمد قابل محاسبه، فعالیت اخیر و بار سفارش‌های باز.',
+    totalOrders: 'کل سفارش‌ها',
+    revenue: 'درآمد',
+    excludesCancelledRefunded: 'بدون سفارش‌های لغوشده یا بازپرداخت‌شده',
+    averageOrderValue: 'میانگین ارزش سفارش',
+    openOrders: 'سفارش‌های باز',
+    recentOrders: 'سفارش‌های اخیر',
+    recentRevenue: 'درآمد اخیر',
+    last30Days: '۳۰ روز گذشته',
+    completed: 'تکمیل‌شده',
+    cancelled: 'لغوشده',
+    currency: 'ارز',
+    orders: 'سفارش‌ها',
+    aov: 'میانگین سفارش'
+  }
+} as const;
+
+function localeKey(locale?: SupportedLocale | string | null): AdminLocale {
+  return locale?.toLowerCase().startsWith('fa') ? 'fa' : 'en';
+}
 
 function Metric({ label, value, detail }: { label: string; value: string | number; detail?: string }) {
   return (
@@ -25,6 +72,8 @@ function Metric({ label, value, detail }: { label: string; value: string | numbe
 }
 
 export async function AdminOrderRevenueSummaryPanel({ summary }: { summary: OrderRevenueSummary }) {
+  const locale = await resolveStorefrontLocale();
+  const labels = copy[localeKey(locale)];
   const primaryCurrency = summary.primaryCurrency;
   const [inquiryOperationsSummary, bestSellingProductsSummary, lowStockAlertsSummary, fulfillmentQueueSummary, recentActivitySummary, failedPaymentNotificationAlertsSummary, launchReadinessHealthSummary] = await Promise.all([
     inquiryOperationsSummaryService.summary(),
@@ -41,35 +90,35 @@ export async function AdminOrderRevenueSummaryPanel({ summary }: { summary: Orde
       <section className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Analytics</p>
-            <h2 className="mt-1 text-2xl font-bold text-stone-950">Order count and revenue</h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">Daily operations snapshot for order volume, eligible revenue, recent activity, and open order load.</p>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">{labels.eyebrow}</p>
+            <h2 className="mt-1 text-2xl font-bold text-stone-950">{labels.title}</h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">{labels.body}</p>
           </div>
           <span className="rounded-full bg-olive/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-olive">
             {primaryCurrency}
           </span>
         </div>
         <div className="mt-6 grid gap-3 md:grid-cols-4">
-          <Metric label="Total orders" value={summary.totalOrders} />
-          <Metric label="Revenue" value={formatRevenueCents(summary.totalRevenueCents, primaryCurrency)} detail="excludes cancelled/refunded" />
-          <Metric label="Average order value" value={formatRevenueCents(summary.averageOrderValueCents, primaryCurrency)} />
-          <Metric label="Open orders" value={summary.openOrders} />
+          <Metric label={labels.totalOrders} value={summary.totalOrders} />
+          <Metric label={labels.revenue} value={formatRevenueCents(summary.totalRevenueCents, primaryCurrency)} detail={labels.excludesCancelledRefunded} />
+          <Metric label={labels.averageOrderValue} value={formatRevenueCents(summary.averageOrderValueCents, primaryCurrency)} />
+          <Metric label={labels.openOrders} value={summary.openOrders} />
         </div>
         <div className="mt-3 grid gap-3 md:grid-cols-4">
-          <Metric label="Recent orders" value={summary.recentOrders} detail="last 30 days" />
-          <Metric label="Recent revenue" value={formatRevenueCents(summary.recentRevenueCents, primaryCurrency)} detail="last 30 days" />
-          <Metric label="Completed" value={summary.completedOrders} />
-          <Metric label="Cancelled" value={summary.cancelledOrders} />
+          <Metric label={labels.recentOrders} value={summary.recentOrders} detail={labels.last30Days} />
+          <Metric label={labels.recentRevenue} value={formatRevenueCents(summary.recentRevenueCents, primaryCurrency)} detail={labels.last30Days} />
+          <Metric label={labels.completed} value={summary.completedOrders} />
+          <Metric label={labels.cancelled} value={summary.cancelledOrders} />
         </div>
         {summary.byCurrency.length ? (
           <div className="mt-6 overflow-hidden rounded-md border border-stone-200">
             <table className="w-full border-collapse text-left text-sm">
               <thead className="bg-stone-50 text-xs font-bold uppercase tracking-[0.14em] text-stone-500">
                 <tr>
-                  <th className="px-3 py-2">Currency</th>
-                  <th className="px-3 py-2">Orders</th>
-                  <th className="px-3 py-2">Revenue</th>
-                  <th className="px-3 py-2">AOV</th>
+                  <th className="px-3 py-2">{labels.currency}</th>
+                  <th className="px-3 py-2">{labels.orders}</th>
+                  <th className="px-3 py-2">{labels.revenue}</th>
+                  <th className="px-3 py-2">{labels.aov}</th>
                 </tr>
               </thead>
               <tbody>
@@ -86,7 +135,7 @@ export async function AdminOrderRevenueSummaryPanel({ summary }: { summary: Orde
           </div>
         ) : null}
       </section>
-      <AdminInquiryOperationsSummaryPanel summary={inquiryOperationsSummary} />
+      <AdminInquiryOperationsSummaryPanel summary={inquiryOperationsSummary} locale={locale} />
       <AdminBestSellingProductsPanel summary={bestSellingProductsSummary} />
       <AdminLowStockAlertsPanel summary={lowStockAlertsSummary} />
       <AdminFulfillmentQueueSummaryPanel summary={fulfillmentQueueSummary} />
