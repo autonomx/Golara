@@ -21,7 +21,7 @@ const IGNORED_DIRECTORIES = new Set([
   'node_modules',
   'public/uploads'
 ]);
-const IGNORED_FILES = new Set([
+const IGNORED_FILE_NAMES = new Set([
   'package-lock.json'
 ]);
 
@@ -35,8 +35,7 @@ function shouldIgnoreDirectory(dirPath) {
 }
 
 function shouldCheckFile(filePath) {
-  const relative = relativePath(filePath);
-  return !IGNORED_FILES.has(relative) && CHECKED_EXTENSIONS.has(path.extname(filePath));
+  return !IGNORED_FILE_NAMES.has(path.basename(filePath)) && CHECKED_EXTENSIONS.has(path.extname(filePath));
 }
 
 async function walk(dirPath, files = []) {
