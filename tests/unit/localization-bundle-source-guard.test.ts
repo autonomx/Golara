@@ -1,61 +1,63 @@
-import { describe, expect, it } from 'vitest';
+import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 function source(path: string) {
   return readFileSync(path, 'utf8');
 }
 
-describe('localization bundle source guard', () => {
-  it('keeps admin overview summary panels locale-aware', () => {
-    const files = [
-      'components/admin/AdminBestSellingProductsPanel.tsx',
-      'components/admin/AdminLowStockAlertsPanel.tsx',
-      'components/admin/AdminFulfillmentQueueSummaryPanel.tsx',
-      'components/admin/AdminFailedPaymentNotificationAlertsPanel.tsx',
-      'components/admin/AdminLaunchReadinessHealthPanel.tsx'
-    ];
+function includes(content: string, expected: string, message: string) {
+  assert.ok(content.includes(expected), message);
+}
 
-    for (const file of files) {
-      const content = source(file);
-      expect(content, `${file} should expose Farsi copy`).toContain('fa:');
-      expect(content, `${file} should accept a locale prop`).toContain('locale?: SupportedLocale');
-      expect(content, `${file} should resolve copy through localeKey`).toContain('localeKey(locale)');
-    }
-  });
+{
+  const files = [
+    'components/admin/AdminBestSellingProductsPanel.tsx',
+    'components/admin/AdminLowStockAlertsPanel.tsx',
+    'components/admin/AdminFulfillmentQueueSummaryPanel.tsx',
+    'components/admin/AdminFailedPaymentNotificationAlertsPanel.tsx',
+    'components/admin/AdminLaunchReadinessHealthPanel.tsx'
+  ];
 
-  it('keeps admin orders locale-aware', () => {
-    const content = source('components/admin/AdminOrderPanel.tsx');
+  for (const file of files) {
+    const content = source(file);
+    includes(content, 'fa:', `${file} should expose Farsi copy`);
+    includes(content, 'locale?: SupportedLocale', `${file} should accept a locale prop`);
+    includes(content, 'localeKey(locale)', `${file} should resolve copy through localeKey`);
+  }
+}
 
-    expect(content).toContain('fa:');
-    expect(content).toContain('resolveStorefrontLocale');
-    expect(content).toContain('export async function AdminOrderPanel');
-    expect(content).toContain('activeLocale');
-    expect(content).toContain('عملیات سفارش');
-  });
+{
+  const content = source('components/admin/AdminOrderPanel.tsx');
 
-  it('keeps inquiry subcomponents locale-aware', () => {
-    const files = [
-      'components/admin/InquiryContactActions.tsx',
-      'components/admin/InquiryDeliveryBadge.tsx',
-      'components/admin/InquiryEmptyState.tsx',
-      'components/admin/InquiryFollowUpSummary.tsx'
-    ];
+  includes(content, 'fa:', 'AdminOrderPanel should expose Farsi copy');
+  includes(content, 'resolveStorefrontLocale', 'AdminOrderPanel should resolve the active locale');
+  includes(content, 'export async function AdminOrderPanel', 'AdminOrderPanel should stay async for locale resolution');
+  includes(content, 'activeLocale', 'AdminOrderPanel should use the resolved active locale');
+  includes(content, 'عملیات سفارش', 'AdminOrderPanel should include Farsi order copy');
+}
 
-    for (const file of files) {
-      const content = source(file);
-      expect(content, `${file} should expose Farsi copy`).toContain('fa:');
-      expect(content, `${file} should resolve the active locale`).toContain('resolveStorefrontLocale');
-      expect(content, `${file} should accept a locale prop`).toContain('locale?: SupportedLocale');
-    }
-  });
+{
+  const files = [
+    'components/admin/InquiryContactActions.tsx',
+    'components/admin/InquiryDeliveryBadge.tsx',
+    'components/admin/InquiryEmptyState.tsx',
+    'components/admin/InquiryFollowUpSummary.tsx'
+  ];
 
-  it('keeps public seed catalog fallback localization available', () => {
-    const content = source('lib/localization/catalog-seed-fallback.ts');
+  for (const file of files) {
+    const content = source(file);
+    includes(content, 'fa:', `${file} should expose Farsi copy`);
+    includes(content, 'resolveStorefrontLocale', `${file} should resolve the active locale`);
+    includes(content, 'locale?: SupportedLocale', `${file} should accept a locale prop`);
+  }
+}
 
-    expect(content).toContain('localizeSeedCategories');
-    expect(content).toContain('localizeSeedProducts');
-    expect(content).toContain('باکس گل');
-    expect(content).toContain('دسته‌گل');
-    expect(content).toContain('چیدمان');
-  });
-});
+{
+  const content = source('lib/localization/catalog-seed-fallback.ts');
+
+  includes(content, 'localizeSeedCategories', 'seed fallback helper should expose category localization');
+  includes(content, 'localizeSeedProducts', 'seed fallback helper should expose product localization');
+  includes(content, 'باکس گل', 'seed fallback helper should include Farsi category copy');
+  includes(content, 'دسته‌گل', 'seed fallback helper should include Farsi bouquet copy');
+  includes(content, 'چیدمان', 'seed fallback helper should include Farsi product copy');
+}
