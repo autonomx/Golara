@@ -10,7 +10,7 @@ const copy = {
     body: 'Operational inventory alerts for active tracked variants that need stock review.',
     alerts: 'alerts',
     trackedVariants: 'Tracked variants',
-    unavailable: 'Unavailable',
+    unavailable: 'Out of stock',
     lowStock: 'Low stock',
     untracked: 'Untracked',
     inactive: 'Inactive',
