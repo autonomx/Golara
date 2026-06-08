@@ -12,8 +12,54 @@ const paymentStatuses = [...CHECKOUT_PAYMENT_STATUSES];
 const fulfillmentStatuses = [...CHECKOUT_FULFILLMENT_STATUSES];
 
 type AdminLocale = 'en' | 'fa';
+type AdminOrderPanelCopy = {
+  any: string;
+  updateStatus: string;
+  staffNoteOptional: string;
+  internalNote: string;
+  saveOrder: string;
+  eyebrow: string;
+  title: string;
+  body: string;
+  recipient: string;
+  customerName: string;
+  phone: string;
+  currency: string;
+  staffNote: string;
+  internalContext: string;
+  createDraftOrder: string;
+  orderStatus: string;
+  paymentStatus: string;
+  fulfillmentStatus: string;
+  search: string;
+  searchPlaceholder: string;
+  filterOrders: string;
+  clearFilters: string;
+  exportCsv: string;
+  printView: string;
+  showingPage: string;
+  of: string;
+  orderSingular: string;
+  orderPlural: string;
+  noFiltered: string;
+  noOrders: string;
+  created: string;
+  order: string;
+  customer: string;
+  status: string;
+  total: string;
+  itemSingular: string;
+  itemPlural: string;
+  latest: string;
+  guestDraft: string;
+  fulfillment: string;
+  payment: string;
+  previous: string;
+  next: string;
+  page: string;
+};
 
-const copy = {
+const copy: Record<AdminLocale, AdminOrderPanelCopy> = {
   en: {
     any: 'Any',
     updateStatus: 'Update status',
@@ -106,7 +152,7 @@ const copy = {
     next: 'بعدی',
     page: 'صفحه'
   }
-} as const;
+};
 
 function localeKey(locale?: SupportedLocale | string | null): AdminLocale {
   return locale?.toLowerCase().startsWith('fa') ? 'fa' : 'en';
@@ -165,7 +211,7 @@ function FilterSelect({ label, name, defaultValue, values, anyLabel }: { label: 
   );
 }
 
-function OrderStatusForm({ order, labels }: { order: CheckoutOrderSummary; labels: (typeof copy)['en'] }) {
+function OrderStatusForm({ order, labels }: { order: CheckoutOrderSummary; labels: AdminOrderPanelCopy }) {
   const updateAction = updateOrderStatusAction.bind(null, order.id);
 
   return (
