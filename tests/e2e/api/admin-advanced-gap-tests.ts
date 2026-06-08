@@ -137,7 +137,7 @@ export async function runBolaObjectAuthorizationAdvancedTests(fixture: ApiFixtur
     data: {
       customerId: fixture.customerId,
       label: 'API E2E BOLA Hidden Address',
-      recipientName: 'API E2E Owner',
+      recipient: 'API E2E Owner',
       phone: '+16045559801',
       line1: '801 Hidden Boundary Lane',
       city: 'Vancouver',
