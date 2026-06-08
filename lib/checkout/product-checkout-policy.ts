@@ -18,83 +18,143 @@ type ProductCheckoutPolicyInput = {
   product: Product;
   dbReady: boolean;
   checkoutReadiness: PaymentGatewayReadiness;
+  locale?: string | null;
+};
+
+type CheckoutPolicyReasonCode =
+  | 'product_requires_quote'
+  | 'database_or_product_id_missing'
+  | 'checkout_mode_inquiry'
+  | 'gateway_not_ready'
+  | 'gateway_ready'
+  | 'checkout_mode_assisted';
+
+const policyCopy: Record<'en' | 'fa', Record<CheckoutPolicyReasonCode, { summary: string; detail: string }>> = {
+  en: {
+    product_requires_quote: {
+      summary: 'Inquiry required',
+      detail: 'This product requires staff confirmation before ordering.'
+    },
+    database_or_product_id_missing: {
+      summary: 'Inquiry available',
+      detail: 'Order drafts require a database-backed product record. Customers can still send an inquiry.'
+    },
+    checkout_mode_inquiry: {
+      summary: 'Inquiry-first checkout',
+      detail: 'This storefront is currently configured for inquiry-first customer follow-up.'
+    },
+    gateway_not_ready: {
+      summary: 'Gateway checkout not ready',
+      detail: 'Gateway checkout has readiness blockers, so this product falls back to inquiry.'
+    },
+    gateway_ready: {
+      summary: 'Gateway-capable checkout',
+      detail: 'This product can start checkout while inquiry remains available as a fallback.'
+    },
+    checkout_mode_assisted: {
+      summary: 'Assisted checkout',
+      detail: 'This product can start a staff-visible order draft while inquiry remains available as a fallback.'
+    }
+  },
+  fa: {
+    product_requires_quote: {
+      summary: 'نیازمند درخواست',
+      detail: 'این محصول پیش از سفارش به تأیید تیم فروش نیاز دارد.'
+    },
+    database_or_product_id_missing: {
+      summary: 'امکان ارسال درخواست',
+      detail: 'ثبت پیش‌نویس سفارش به رکورد محصول در پایگاه داده نیاز دارد. مشتری همچنان می‌تواند درخواست ارسال کند.'
+    },
+    checkout_mode_inquiry: {
+      summary: 'پرداخت مبتنی بر درخواست',
+      detail: 'این فروشگاه اکنون برای پیگیری مشتری از طریق درخواست تنظیم شده است.'
+    },
+    gateway_not_ready: {
+      summary: 'درگاه پرداخت آماده نیست',
+      detail: 'درگاه پرداخت هنوز مانع آماده‌سازی دارد؛ بنابراین این محصول به درخواست تبدیل می‌شود.'
+    },
+    gateway_ready: {
+      summary: 'آماده پرداخت از درگاه',
+      detail: 'این محصول می‌تواند فرایند پرداخت را آغاز کند و درخواست همچنان به عنوان جایگزین در دسترس است.'
+    },
+    checkout_mode_assisted: {
+      summary: 'پرداخت با راهنمایی تیم فروش',
+      detail: 'این محصول می‌تواند پیش‌نویس سفارش قابل مشاهده برای تیم فروش ایجاد کند و درخواست همچنان در دسترس است.'
+    }
+  }
 };
 
 function productHasPersistentId(product: Product) {
   return Boolean(product.id?.trim());
 }
 
+function localizedPolicyText(reasonCode: CheckoutPolicyReasonCode, locale?: string | null) {
+  return policyCopy[locale?.toLowerCase().startsWith('fa') ? 'fa' : 'en'][reasonCode];
+}
+
+function buildPolicy(reasonCode: CheckoutPolicyReasonCode, locale: string | null | undefined, policy: Omit<ProductCheckoutPolicy, 'summary' | 'detail' | 'reasonCode'>): ProductCheckoutPolicy {
+  const text = localizedPolicyText(reasonCode, locale);
+  return {
+    ...policy,
+    summary: text.summary,
+    detail: text.detail,
+    reasonCode
+  };
+}
+
 export function getProductCheckoutPolicy(input: ProductCheckoutPolicyInput): ProductCheckoutPolicy {
-  const { product, dbReady, checkoutReadiness } = input;
+  const { product, dbReady, checkoutReadiness, locale } = input;
   const hasProductId = productHasPersistentId(product);
 
   if (productRequiresQuote(product)) {
-    return {
+    return buildPolicy('product_requires_quote', locale, {
       experience: 'inquiry-only',
       canAddToCart: false,
       showOrderDraftForm: false,
-      showInquiryForm: true,
-      summary: 'Inquiry required',
-      detail: 'This product requires staff confirmation before ordering.',
-      reasonCode: 'product_requires_quote'
-    };
+      showInquiryForm: true
+    });
   }
 
   if (!dbReady || !hasProductId) {
-    return {
+    return buildPolicy('database_or_product_id_missing', locale, {
       experience: 'inquiry-only',
       canAddToCart: false,
       showOrderDraftForm: false,
-      showInquiryForm: true,
-      summary: 'Inquiry available',
-      detail: 'Order drafts require a database-backed product record. Customers can still send an inquiry.',
-      reasonCode: 'database_or_product_id_missing'
-    };
+      showInquiryForm: true
+    });
   }
 
   if (checkoutReadiness.mode === 'inquiry') {
-    return {
+    return buildPolicy('checkout_mode_inquiry', locale, {
       experience: 'inquiry-only',
       canAddToCart: false,
       showOrderDraftForm: false,
-      showInquiryForm: true,
-      summary: 'Inquiry-first checkout',
-      detail: 'This storefront is currently configured for inquiry-first customer follow-up.',
-      reasonCode: 'checkout_mode_inquiry'
-    };
+      showInquiryForm: true
+    });
   }
 
   if (checkoutReadiness.mode === 'gateway' && checkoutReadiness.blockers.length > 0) {
-    return {
+    return buildPolicy('gateway_not_ready', locale, {
       experience: 'inquiry-only',
       canAddToCart: false,
       showOrderDraftForm: false,
-      showInquiryForm: true,
-      summary: 'Gateway checkout not ready',
-      detail: 'Gateway checkout has readiness blockers, so this product falls back to inquiry.',
-      reasonCode: 'gateway_not_ready'
-    };
+      showInquiryForm: true
+    });
   }
 
   if (checkoutReadiness.mode === 'gateway') {
-    return {
+    return buildPolicy('gateway_ready', locale, {
       experience: 'gateway-capable',
       canAddToCart: true,
       showOrderDraftForm: true,
-      showInquiryForm: true,
-      summary: 'Gateway-capable checkout',
-      detail: 'This product can start checkout while inquiry remains available as a fallback.',
-      reasonCode: 'gateway_ready'
-    };
+      showInquiryForm: true
+    });
   }
 
-  return {
+  return buildPolicy('checkout_mode_assisted', locale, {
     experience: 'assisted-draft',
     canAddToCart: true,
     showOrderDraftForm: true,
-    showInquiryForm: true,
-    summary: 'Assisted checkout',
-    detail: 'This product can start a staff-visible order draft while inquiry remains available as a fallback.',
-    reasonCode: 'checkout_mode_assisted'
-  };
+    showInquiryForm: true
+  });
 }
