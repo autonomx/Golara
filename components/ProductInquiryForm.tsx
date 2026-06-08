@@ -18,6 +18,8 @@ type InquiryMessageConfig = {
   field?: InquiryField;
 };
 
+type InquiryMessageMap = Record<string, InquiryMessageConfig>;
+
 const copy = {
   en: {
     eyebrow: 'Request this arrangement',
@@ -41,7 +43,7 @@ const copy = {
       'phone-invalid': { tone: 'warning', text: 'Please enter a valid phone number.', field: 'phone' },
       'email-invalid': { tone: 'warning', text: 'Please enter a valid email address or leave it blank.', field: 'email' },
       'message-short': { tone: 'warning', text: 'Please include a message with at least 10 characters.', field: 'message' }
-    }
+    } satisfies InquiryMessageMap
   },
   fa: {
     eyebrow: 'درخواست این چیدمان',
@@ -65,7 +67,7 @@ const copy = {
       'phone-invalid': { tone: 'warning', text: 'لطفاً شماره تلفن معتبر وارد کنید.', field: 'phone' },
       'email-invalid': { tone: 'warning', text: 'لطفاً ایمیل معتبر وارد کنید یا آن را خالی بگذارید.', field: 'email' },
       'message-short': { tone: 'warning', text: 'لطفاً پیامی با حداقل ۱۰ نویسه وارد کنید.', field: 'message' }
-    }
+    } satisfies InquiryMessageMap
   }
 } as const;
 
@@ -78,9 +80,9 @@ function localeKey(locale?: SupportedLocale) {
   return locale?.toLowerCase().startsWith('fa') ? 'fa' : 'en';
 }
 
-function messageForInquiry(messages: typeof copy.en.messages, inquiry?: string) {
+function messageForInquiry(messages: InquiryMessageMap, inquiry?: string) {
   if (!inquiry) return undefined;
-  return messages[inquiry as keyof typeof messages] as InquiryMessageConfig | undefined;
+  return messages[inquiry];
 }
 
 function InquiryMessage({ message }: { message?: InquiryMessageConfig }) {
