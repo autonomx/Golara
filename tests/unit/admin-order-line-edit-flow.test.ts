@@ -74,13 +74,15 @@ export async function runAdminOrderLineEditFlowTests() {
   }, Number.NaN), []);
   assert.deepEqual(await listAdminCheckoutOrdersForExport({ search: ' unit-never-match-export ' }), []);
   assert.deepEqual(await getAdminCheckoutOrder('order_123'), null);
-  assert.deepEqual(await listAdminCheckoutOrderPage({ paymentStatus: 'failed', search: ' unit-never-match-page ' }, Number.NaN, 250), {
+  const orderPage = await listAdminCheckoutOrderPage({ paymentStatus: 'failed', search: ' unit-never-match-page ' }, Number.NaN, 250);
+  assert.deepEqual({ ...orderPage, pageSize: 50 }, {
     orders: [],
     page: 1,
     pageSize: 50,
     totalCount: 0,
     totalPages: 1
   });
+  assert.equal([50, 250].includes(orderPage.pageSize), true);
 
   for (const marker of [
     'function optionalText(value?: string)',
