@@ -45,6 +45,7 @@ import { runInquiryWorkflowTests } from './inquiry-workflow.test';
 import { runIntegrationAppRegistryTests } from './integration-app-registry.test';
 import { runInventoryStockReservationModelTests } from './inventory-stock-reservation-model.test';
 import { runLaunchReadinessHealthTests } from './launch-readiness-health.test';
+import { runLocalizationBundleSourceGuardTests } from './localization-bundle-source-guard.test';
 import { runLocaleAwareMediaAltTextTests } from './locale-aware-media-alt-text.test';
 import { runLocalizedSeoMetadataModelTests } from './localized-seo-metadata-model.test';
 import { runLowStockAlertsTests } from './low-stock-alerts.test';
@@ -269,8 +270,9 @@ async function main() {
   await runFulfillmentShipmentRecordsModelTests();
   await runInventoryStockReservationModelTests();
   await runI18nLocalizationTests();
+  await runLocalizationBundleSourceGuardTests();
   await runDeployReadinessTests();
-  console.log('unit tests passed (134 files)');
+  console.log('unit tests passed (135 files)');
 }
 
 main().catch((error) => {

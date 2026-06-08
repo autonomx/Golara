@@ -9,6 +9,7 @@ function includes(content: string, expected: string, message: string) {
   assert.ok(content.includes(expected), message);
 }
 
+export function runLocalizationBundleSourceGuardTests() {
 {
   const files = [
     'components/admin/AdminBestSellingProductsPanel.tsx',
@@ -74,4 +75,19 @@ function includes(content: string, expected: string, message: string) {
   includes(content, 'باکس گل', 'seed fallback helper should include Farsi category copy');
   includes(content, 'دسته‌گل', 'seed fallback helper should include Farsi bouquet copy');
   includes(content, 'چیدمان', 'seed fallback helper should include Farsi product copy');
+}
+
+{
+  const content = source('lib/cms/catalog-repository.ts');
+  includes(content, "import { localizeSeedCategories, localizeSeedProducts } from '@/lib/localization/catalog-seed-fallback';", 'catalog repository should import seed fallback localization helpers');
+  includes(content, 'localizeSeedCategories([...seedCategories].filter((category) => category.isActive !== false).sort(bySortThenTitle), options.locale)', 'public category fallback should localize seed categories');
+  includes(content, 'localizeSeedCategories([...seedCategories].filter((category) => category.isActive !== false && category.showOnHomepage !== false).sort(bySortThenTitle), options.locale)', 'public homepage category fallback should localize seed categories');
+  includes(content, 'localizeSeedProducts(seedProducts.filter((product) => product.isActive !== false), options.locale, seedCategories)', 'public product fallback should localize seed products');
+  includes(content, 'localizeSeedProducts(seedProducts.filter((product) => product.slug === slug && product.isActive !== false), options.locale, seedCategories)[0]', 'public product detail fallback should localize seed products');
+  includes(content, 'localizeSeedProducts(seedProducts.filter((product) => product.category === slug && product.isActive !== false), options.locale, seedCategories)', 'public category product fallback should localize seed products');
+  includes(content, '}, () => [...seedCategories].sort(bySortThenTitle));', 'admin category fallback should remain raw seed categories');
+  includes(content, '}, () => seedProducts);', 'admin product fallback should remain raw seed products');
+}
+
+  console.log('localization-bundle-source-guard.test.ts passed');
 }
