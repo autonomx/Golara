@@ -166,7 +166,7 @@ export type WarehouseLocation = {
   postalCode?: string;
   phone?: string;
   isActive: boolean;
-  sortOrder?: number;
+  sortOrder: number;
   updatedAt?: Date;
 };
 
@@ -218,4 +218,89 @@ export type StoreSetting = {
   storeName: string;
   legalName?: string;
   supportEmail?: string;
+  supportPhone?: string;
+  defaultLocale: string;
+  defaultCurrency: string;
+  timezone: string;
+  storefrontBaseUrl?: string;
+  isMaintenanceMode: boolean;
+  updatedAt?: Date;
+};
+
+export type FulfillmentMethodSetting = {
+  id?: string;
+  key: string;
+  label: string;
+  description?: string;
+  isActive: boolean;
+  isDefault: boolean;
+  requiresAddress: boolean;
+  requiresScheduling: boolean;
+  sortOrder: number;
+  updatedAt?: Date;
+};
+
+export type MediaSourceType = 'external' | 'upload' | 'seed' | 'generated';
+
+export type MediaItem = any;
+
+export type CustomerInquiryFollowUp = {
+  id: string;
+  note: string;
+  channel: string;
+  createdAt: Date;
+};
+
+export type CustomerInquiryAssignee = {
+  adminId?: string;
+  label?: string;
+  email?: string;
+  role?: string;
+  assignedAt?: Date;
+};
+
+export type CustomerInquiry = {
+  id: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  message: string;
+  productId?: string;
+  productTitle?: string;
+  deliveryDate?: Date;
+  deliveryNotes?: string;
+  staffNotes?: string;
+  assignee?: CustomerInquiryAssignee;
+  followUps?: CustomerInquiryFollowUp[];
+  status: string;
+  createdAt: Date;
+};
+
+export type CheckoutOrderSummary = {
+  id: string;
+  orderNumber: string;
+  status: string;
+  checkoutMode: string;
+  fulfillmentStatus?: string;
+  currency: string;
+  totalCents: number;
+  customerPhone?: string;
+  customerName?: string;
+  itemCount: number;
+  latestPaymentStatus?: string;
+  latestTimelineTitle?: string;
+  createdAt: Date;
+};
+
+export type AdminAuditLogEntry = {
+  id: string;
+  action: string;
+  entity: string;
+  entityId?: string;
+  summary: string;
+  actorLabel: string;
+  actorEmail?: string;
+  actorRole: string;
+  actorProvider: string;
+  createdAt: Date;
 };
