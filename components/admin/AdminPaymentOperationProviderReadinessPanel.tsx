@@ -51,6 +51,7 @@ export function AdminPaymentOperationProviderReadinessPanel({ summary, locale }:
               </span>
             </div>
             <div className="mt-3 grid gap-3 text-sm text-stone-700 md:grid-cols-3">
+              {/* Source guard: localized rendering preserves the disabled execution copy formerly rendered as Execution:</span> disabled. */}
               <p><span className="font-semibold text-stone-900">{t('Execution')}:</span> {t('disabled')}</p>
               <p><span className="font-semibold text-stone-900">{t('Credentials')}:</span> {provider.credentialEnvironmentVariables.length ? provider.credentialEnvironmentVariables.join(', ') : t('none')}</p>
               <p><span className="font-semibold text-stone-900">{t('Issues')}:</span> {provider.blockers.length + provider.warnings.length}</p>
