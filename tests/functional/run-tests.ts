@@ -35,7 +35,7 @@ function runAdminOverviewFunctionalCoverageTests() {
     'bestSellingProductsService.summary()',
     'lowStockAlertsService.summary()',
     'fulfillmentQueueSummaryService.summary()',
-    'recentActivitySummaryService.summary()',
+    'recentActivityService.summary()',
     'failedPaymentNotificationAlertsService.summary()',
     'launchReadinessHealthService.summary()'
   ];
@@ -68,7 +68,8 @@ function runGracefulDatabaseDriftFallbackTests() {
   assert.match(catalogFallback, /readWithSeedFallback/);
   assert.match(storefrontNavigation, /DEFAULT_STOREFRONT_NAVIGATION_MENU/);
   assert.match(storefrontNavigation, /isMissingStorefrontNavigationTableError/);
-  assert.match(storefrontNavigation, /return DEFAULT_STOREFRONT_NAVIGATION_MENU/);
+  assert.match(storefrontNavigation, /localizedDefaultMenu\(locale\)/);
+  assert.match(storefrontNavigation, /localizeDefaultNavigationItem/);
   assert.match(storeSettings, /DEFAULT_STORE_SETTING/);
   assert.match(storeSettings, /isMissingStoreSettingTableError/);
   assert.match(storeSettings, /return DEFAULT_STORE_SETTING/);
