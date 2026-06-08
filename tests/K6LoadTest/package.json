@@ -1,0 +1,22 @@
+{
+  "name": "k6-load-tests",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "K6 is a tool for Performance Tests, it supports Javascript code as test scripts.",
+  "main": "index.js",
+  "directories": {
+    "src": "src"
+  },
+  "scripts": {
+    "dev": "config_env=dev node src/setup/lambda-setup.js",
+    "qa": "config_env=qa node src/setup/lambda-setup.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-lambda": "^3.592.0",
+    "@aws-sdk/client-ssm": "^3.592.0",
+    "@types/k6": "^0.50.0"
+  }
+}
