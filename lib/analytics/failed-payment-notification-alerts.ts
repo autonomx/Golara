@@ -93,7 +93,13 @@ function isMissingNotificationActionTableError(error: unknown) {
 }
 
 export function formatFailureAlertAmount(value: number, currency: string) {
-  return new Intl.NumberFormat('en-CA', { style: 'currency', currency: normalizeCurrency(currency) }).format(normalizeCents(value) / 100);
+  const code = normalizeCurrency(currency);
+  const amount = normalizeCents(value) / 100;
+  try {
+    return new Intl.NumberFormat('en-CA', { style: 'currency', currency: code }).format(amount);
+  } catch {
+    return `${amount.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${code}`;
+  }
 }
 
 export function isFailedPaymentStatus(status: string) {
@@ -179,64 +185,75 @@ export function buildFailedPaymentNotificationAlertsSummary(
   };
 }
 
-async function listFailedNotificationRows() {
+export type FailedPaymentNotificationAlertRepository = {
+  payments: FailedPaymentAlertSourceRow[];
+  notifications: FailedNotificationAlertSourceRow[];
+};
+
+async function readFailedPaymentNotificationAlertSources(): Promise<FailedPaymentNotificationAlertRepository> {
+  if (!hasDatabase()) return { payments: [], notifications: [] };
+
   try {
-    return await prisma.$queryRaw<FailedNotificationAlertSourceRow[]>`
-      SELECT
-        n."id",
-        n."orderId",
-        o."orderNumber",
-        n."channel",
-        n."templateKey",
-        n."recipient",
-        n."status",
-        n."attemptCount",
-        n."maxAttempts",
-        n."nextRetryAt",
-        n."failedAt",
-        n."errorCode",
-        n."errorMessage",
-        n."updatedAt"
-      FROM "CheckoutOrderNotificationAction" n
-      INNER JOIN "CheckoutOrder" o ON o."id" = n."orderId"
-      WHERE n."status" IN ('failed', 'retry_scheduled')
-      ORDER BY n."updatedAt" DESC
-      LIMIT 50
-    `;
-  } catch (error) {
-    if (isMissingNotificationActionTableError(error)) return [];
-    throw error;
+    const payments = await prisma.checkoutPaymentAttempt.findMany({
+      where: { status: { in: Array.from(PAYMENT_FAILURE_STATUSES) } },
+      orderBy: { updatedAt: 'desc' },
+      take: 50,
+      select: {
+        id: true,
+        orderId: true,
+        provider: true,
+        status: true,
+        amountCents: true,
+        currency: true,
+        providerReference: true,
+        createdAt: true,
+        updatedAt: true,
+        order: { select: { orderNumber: true } }
+      }
+    });
+    let notifications: Array<FailedNotificationAlertSourceRow & { order: { orderNumber: string } }> = [];
+    try {
+      notifications = await prisma.checkoutOrderNotificationAction.findMany({
+        where: { status: { in: [...Array.from(NOTIFICATION_FAILURE_STATUSES), ...Array.from(NOTIFICATION_RETRY_STATUSES)] } },
+        orderBy: { updatedAt: 'desc' },
+        take: 50,
+        include: { order: { select: { orderNumber: true } } }
+      });
+    } catch (error) {
+      if (!isMissingNotificationActionTableError(error)) throw error;
+      notifications = [];
+    }
+
+    return {
+      payments: payments.map((payment) => ({
+        ...payment,
+        orderNumber: payment.order.orderNumber
+      })),
+      notifications: notifications.map((notification) => ({
+        id: notification.id,
+        orderId: notification.orderId,
+        orderNumber: notification.order.orderNumber,
+        channel: notification.channel,
+        templateKey: notification.templateKey,
+        recipient: notification.recipient,
+        status: notification.status,
+        attemptCount: notification.attemptCount,
+        maxAttempts: notification.maxAttempts,
+        nextRetryAt: notification.nextRetryAt,
+        failedAt: notification.failedAt,
+        errorCode: notification.errorCode,
+        errorMessage: notification.errorMessage,
+        updatedAt: notification.updatedAt
+      }))
+    };
+  } catch {
+    return { payments: [], notifications: [] };
   }
 }
 
-export const failedPaymentNotificationAlertsService = {
-  async summary(): Promise<FailedPaymentNotificationAlertsSummary> {
-    if (!hasDatabase()) return { ...EMPTY_FAILED_PAYMENT_NOTIFICATION_ALERTS_SUMMARY, generatedAt: new Date() };
-
-    const [payments, notifications] = await Promise.all([
-      prisma.checkoutPaymentAttempt.findMany({
-        where: { status: { in: Array.from(PAYMENT_FAILURE_STATUSES) } },
-        orderBy: { updatedAt: 'desc' },
-        take: 50,
-        select: {
-          id: true,
-          orderId: true,
-          provider: true,
-          status: true,
-          amountCents: true,
-          currency: true,
-          providerReference: true,
-          createdAt: true,
-          updatedAt: true,
-          order: { select: { orderNumber: true } }
-        }
-      }),
-      listFailedNotificationRows()
-    ]);
-
-    return buildFailedPaymentNotificationAlertsSummary(
-      payments.map((payment) => ({ ...payment, orderNumber: payment.order.orderNumber })),
-      notifications
-    );
+export const failedPaymentNotificationAlertRepository = {
+  async summary(now = new Date()) {
+    const sources = await readFailedPaymentNotificationAlertSources();
+    return buildFailedPaymentNotificationAlertsSummary(sources.payments, sources.notifications, now);
   }
 };
