@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
 
-export function runSimpleCoverageMarkerTest() {
-  assert.equal(1 + 1, 2);
+export function runApiCoverageMarkerTest() {
+  assert.equal(Boolean('api'), true);
 }
