@@ -1,9 +1,22 @@
 import { setStorefrontLocaleAction } from '@/app/locale/actions';
 import { SUPPORTED_LOCALES, type SupportedLocale } from '@/lib/i18n/locales';
 
-const localeLabels: Record<SupportedLocale, string> = {
-  'fa-IR': 'فارسی',
-  'en-CA': 'English'
+type LocaleLabelKey = 'fa' | 'en';
+
+const localeLabelKeys: Record<SupportedLocale, LocaleLabelKey> = {
+  'fa-IR': 'fa',
+  'en-CA': 'en'
+};
+
+const localizedLocaleLabels: Record<SupportedLocale, Record<LocaleLabelKey, string>> = {
+  'fa-IR': {
+    fa: 'فارسی',
+    en: 'انگلیسی'
+  },
+  'en-CA': {
+    fa: 'Persian',
+    en: 'English'
+  }
 };
 
 export function LanguageSwitcher({ locale, returnTo = '/' }: { locale: SupportedLocale; returnTo?: string }) {
@@ -19,7 +32,7 @@ export function LanguageSwitcher({ locale, returnTo = '/' }: { locale: Supported
           value={candidate}
           aria-pressed={candidate === locale}
         >
-          {localeLabels[candidate]}
+          {localizedLocaleLabels[locale][localeLabelKeys[candidate]]}
         </button>
       ))}
     </form>
