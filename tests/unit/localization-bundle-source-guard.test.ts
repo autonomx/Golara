@@ -33,6 +33,22 @@ describe('localization bundle source guard', () => {
     expect(content).toContain('عملیات سفارش');
   });
 
+  it('keeps inquiry subcomponents locale-aware', () => {
+    const files = [
+      'components/admin/InquiryContactActions.tsx',
+      'components/admin/InquiryDeliveryBadge.tsx',
+      'components/admin/InquiryEmptyState.tsx',
+      'components/admin/InquiryFollowUpSummary.tsx'
+    ];
+
+    for (const file of files) {
+      const content = source(file);
+      expect(content, `${file} should expose Farsi copy`).toContain('fa:');
+      expect(content, `${file} should resolve the active locale`).toContain('resolveStorefrontLocale');
+      expect(content, `${file} should accept a locale prop`).toContain('locale?: SupportedLocale');
+    }
+  });
+
   it('keeps public seed catalog fallback localization available', () => {
     const content = source('lib/localization/catalog-seed-fallback.ts');
 
