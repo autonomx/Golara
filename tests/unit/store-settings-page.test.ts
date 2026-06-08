@@ -74,7 +74,7 @@ export async function runStoreSettingsPageTests() {
   assert.match(adminConsole, /storeSettingsService/);
   assert.match(adminConsole, /storeSetting\] = await Promise\.all/);
   assert.match(adminConsole, /storeSettingsService\.get\(\)/);
-  assert.match(adminConsole, /<AdminStoreSettingsPanel setting=\{storeSetting\} databaseReady=\{runtimeReadiness\.databaseUrlPresent\} \/>/);
+  assert.match(adminConsole, /<AdminStoreSettingsPanel setting=\{storeSetting\} databaseReady=\{runtimeReadiness\.databaseUrlPresent\} locale=\{locale\} \/>/);
 
   assert.match(roadmap, /- \[x\] Add store settings page\./);
 

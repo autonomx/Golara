@@ -1,6 +1,8 @@
 import type { RuntimeReadiness } from '@/lib/runtime-readiness';
 import type { PaymentGatewayReadiness } from '@/lib/checkout/payment-gateway-config';
 import type { InquiryNotificationReadiness } from '@/lib/notifications/inquiry-notifications-core';
+import type { SupportedLocale } from '@/lib/i18n/locales';
+import { createAdminTranslator } from '@/lib/localization/admin-copy';
 
 export type ReadinessStatus = 'ready' | 'warning' | 'blocked';
 
@@ -19,6 +21,7 @@ type AdminReadinessPanelProps = {
   notificationReadiness: InquiryNotificationReadiness;
   notificationRetryRunbook: string[];
   checkoutReadiness: PaymentGatewayReadiness;
+  locale?: SupportedLocale | string | null;
 };
 
 const statusClasses: Record<ReadinessStatus, string> = {
@@ -27,11 +30,7 @@ const statusClasses: Record<ReadinessStatus, string> = {
   blocked: 'border-red-200 bg-red-50 text-red-800'
 };
 
-const statusLabels: Record<ReadinessStatus, string> = {
-  ready: 'Ready',
-  warning: 'Needs decision',
-  blocked: 'Blocked'
-};
+const statusLabels: Record<ReadinessStatus, string> = { ready: 'Ready', warning: 'Needs decision', blocked: 'Blocked' };
 
 function yesNo(value: boolean) {
   return value ? 'yes' : 'no';
@@ -111,17 +110,17 @@ function mediaStorageReadiness(runtimeReadiness: RuntimeReadiness): Pick<Readine
   return { status: 'warning', summary: mediaStorage.summary, detail: mediaStorage.detail };
 }
 
-function ReadinessCard({ item }: { item: ReadinessItem }) {
+function ReadinessCard({ item, t }: { item: ReadinessItem; t: (key: string) => string }) {
   return (
     <article className={`rounded-3xl border p-5 ${statusClasses[item.status]}`}>
       <div className="flex items-start justify-between gap-3">
-        <h3 className="font-display text-2xl text-rosewood">{item.label}</h3>
+        <h3 className="font-display text-2xl text-rosewood">{t(item.label)}</h3>
         <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em]">
-          {statusLabels[item.status]}
+          {t(statusLabels[item.status])}
         </span>
       </div>
-      <p className="mt-3 text-sm font-semibold">{item.summary}</p>
-      <p className="mt-2 text-sm leading-6 text-stone-700">{item.detail}</p>
+      <p className="mt-3 text-sm font-semibold">{t(item.summary)}</p>
+      <p className="mt-2 text-sm leading-6 text-stone-700">{t(item.detail)}</p>
       {item.extras?.length ? (
         <ul className="mt-3 grid gap-1 text-xs leading-5 text-stone-700">
           {item.extras.map((extra) => <li key={extra}>• {extra}</li>)}
@@ -131,7 +130,8 @@ function ReadinessCard({ item }: { item: ReadinessItem }) {
   );
 }
 
-export function AdminReadinessPanel({ runtimeReadiness, authConfigured, authenticated, notificationReadiness, notificationRetryRunbook, checkoutReadiness }: AdminReadinessPanelProps) {
+export function AdminReadinessPanel({ runtimeReadiness, authConfigured, authenticated, notificationReadiness, notificationRetryRunbook, checkoutReadiness, locale }: AdminReadinessPanelProps) {
+  const t = createAdminTranslator(locale);
   const notificationStatus = notificationReadinessStatus(notificationReadiness);
   const checkoutStatus = checkoutReadinessStatus(checkoutReadiness);
   const mediaStatus = mediaStorageReadiness(runtimeReadiness);
@@ -185,21 +185,21 @@ export function AdminReadinessPanel({ runtimeReadiness, authConfigured, authenti
     <section id="readiness" className="scroll-mt-8 rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Production readiness</p>
-          <h2 className="mt-2 font-display text-4xl text-rosewood">Launch checklist status</h2>
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">{t('Production readiness')}</p>
+          <h2 className="mt-2 font-display text-4xl text-rosewood">{t('Launch checklist status')}</h2>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-stone-600">
-            Operational checks based on <code>docs/PRODUCTION_CHECKLIST.md</code>. These cards are advisory and do not change CMS write permissions.
+            {t('Operational checks based on')} <code>docs/PRODUCTION_CHECKLIST.md</code>. {t('These cards are advisory and do not change CMS write permissions.')}
           </p>
         </div>
         <a href="/docs/PRODUCTION_CHECKLIST.md" className="rounded-full border border-rosewood/15 px-4 py-2 text-sm font-semibold text-rosewood">
-          Checklist doc
+          {t('Checklist doc')}
         </a>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
-        {items.map((item) => <ReadinessCard key={item.label} item={item} />)}
+        {items.map((item) => <ReadinessCard key={item.label} item={item} t={t} />)}
       </div>
       <div className="mt-5 rounded-3xl border border-olive/20 bg-cream p-5 text-sm text-stone-700">
-        <p className="font-semibold text-rosewood">Inquiry notification retry runbook</p>
+        <p className="font-semibold text-rosewood">{t('Inquiry notification retry runbook')}</p>
         <ol className="mt-3 grid gap-2 pl-5 list-decimal leading-6">
           {notificationRetryRunbook.map((step) => <li key={step}>{step}</li>)}
         </ol>

@@ -1,6 +1,7 @@
 import type { CatalogTranslation, Category, HomepageContent, HomepageTranslation, Product } from '@/lib/catalog';
 import { upsertCategoryTranslationAction, upsertHomepageTranslationAction, upsertProductTranslationAction } from '@/app/admin/actions';
 import { SUPPORTED_LOCALES, type SupportedLocale } from '@/lib/i18n/locales';
+import { createAdminTranslator } from '@/lib/localization/admin-copy';
 
 const inputClass = 'rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100';
 const textAreaClass = 'min-h-24 rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100';
@@ -43,9 +44,9 @@ function completionClass(label: string) {
   return 'border-stone-200 bg-white text-stone-600';
 }
 
-function LocaleBadge<TTranslation extends CompletenessTranslation>({ translation, requiredFields }: { translation?: TTranslation; requiredFields: Array<keyof TTranslation> }) {
+function LocaleBadge<TTranslation extends CompletenessTranslation>({ translation, requiredFields, t = (key: string) => key }: { translation?: TTranslation; requiredFields: Array<keyof TTranslation>; t?: (key: string) => string }) {
   const label = completionLabel(translation, requiredFields);
-  return <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${completionClass(label)}`}>{label}</span>;
+  return <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${completionClass(label)}`}>{t(label)}</span>;
 }
 
 function SummaryPill({ label, count }: { label: string; count: number }) {
@@ -150,7 +151,8 @@ function homepageCompletionCount(translations: HomepageTranslation[]) {
   return SUPPORTED_LOCALES.filter((locale) => requiredFieldsComplete(homepageTranslationFor(translations, locale), ['title', 'body'])).length;
 }
 
-export function AdminTranslationPanel({ homepage, homepageTranslations, categories, products, disabled }: { homepage: HomepageContent; homepageTranslations: HomepageTranslation[]; categories: Category[]; products: Product[]; disabled: boolean }) {
+export function AdminTranslationPanel({ homepage, homepageTranslations, categories, products, disabled, locale }: { homepage: HomepageContent; homepageTranslations: HomepageTranslation[]; categories: Category[]; products: Product[]; disabled: boolean; locale?: SupportedLocale | string | null }) {
+  const t = createAdminTranslator(locale);
   const visibleCategories = categories.filter((category) => category.id).slice(0, 6);
   const visibleProducts = products.filter((product) => product.id).slice(0, 6);
   const categoryComplete = entityCompletionCount(visibleCategories);
@@ -162,28 +164,28 @@ export function AdminTranslationPanel({ homepage, homepageTranslations, categori
     <section id="translations" className="scroll-mt-8 rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Localization</p>
-          <h2 className="mt-2 font-display text-4xl text-rosewood">Translation editor</h2>
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-stone-600">Edit Persian and English homepage, product, and category translations, see publish state, and spot missing required copy. Existing base CMS fields remain the legacy fallback.</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">{t('Localization')}</p>
+          <h2 className="mt-2 font-display text-4xl text-rosewood">{t('Translation editor')}</h2>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-stone-600">{t('Edit Persian and English homepage, product, and category translations, see publish state, and spot missing required copy. Existing base CMS fields remain the legacy fallback.')}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <SummaryPill label="Homepage slots complete" count={homepageComplete} />
-          <SummaryPill label="Category slots complete" count={categoryComplete} />
-          <SummaryPill label="Product slots complete" count={productComplete} />
+          <SummaryPill label={t('Homepage slots complete')} count={homepageComplete} />
+          <SummaryPill label={t('Category slots complete')} count={categoryComplete} />
+          <SummaryPill label={t('Product slots complete')} count={productComplete} />
         </div>
       </div>
       <div className="mb-8 grid gap-3">
-        <h3 className="font-display text-3xl text-rosewood">Homepage translations</h3>
+        <h3 className="font-display text-3xl text-rosewood">{t('Homepage translations')}</h3>
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">home.hero · {homepageComplete}/{localeSlots} complete</p>
         <div className="grid gap-4 lg:grid-cols-2">{SUPPORTED_LOCALES.map((locale) => <HomepageTranslationForm key={`homepage-${locale}`} homepage={homepage} translation={homepageTranslationFor(homepageTranslations, locale)} locale={locale} disabled={disabled} />)}</div>
       </div>
       <div className="grid gap-6 xl:grid-cols-2">
         <div>
-          <h3 className="mb-4 font-display text-3xl text-rosewood">Category translations</h3>
+          <h3 className="mb-4 font-display text-3xl text-rosewood">{t('Category translations')}</h3>
           <div className="grid gap-6">{visibleCategories.map((category) => <div key={category.id} className="grid gap-3"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">{category.slug} · {SUPPORTED_LOCALES.filter((locale) => requiredFieldsComplete(translationFor(category.translations, locale), ['title', 'description'])).length}/{localeSlots} complete</p>{SUPPORTED_LOCALES.map((locale) => <CategoryTranslationForm key={`${category.id}-${locale}`} category={category} locale={locale} disabled={disabled} />)}</div>)}</div>
         </div>
         <div>
-          <h3 className="mb-4 font-display text-3xl text-rosewood">Product translations</h3>
+          <h3 className="mb-4 font-display text-3xl text-rosewood">{t('Product translations')}</h3>
           <div className="grid gap-6">{visibleProducts.map((product) => <div key={product.id} className="grid gap-3"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">{product.code} · {SUPPORTED_LOCALES.filter((locale) => requiredFieldsComplete(translationFor(product.translations, locale), ['title', 'description'])).length}/{localeSlots} complete</p>{SUPPORTED_LOCALES.map((locale) => <ProductTranslationForm key={`${product.id}-${locale}`} product={product} locale={locale} disabled={disabled} />)}</div>)}</div>
         </div>
       </div>

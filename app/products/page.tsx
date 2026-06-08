@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import { Search } from 'lucide-react';
+import type { Metadata } from 'next';
 import { ProductCard } from '@/components/ProductCard';
 import { SiteHeader } from '@/components/SiteHeader';
 import { listProducts } from '@/lib/cms/catalog-repository';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { formatStorefrontCopy, getStorefrontCopy, getStorefrontCopyDirection } from '@/lib/localization/storefront-copy';
+import { buildPageMetadata } from '@/lib/site-metadata';
 
 type ProductsSearchParams = { q?: string };
 
@@ -18,6 +20,16 @@ function productMatchesSearch(product: Awaited<ReturnType<typeof listProducts>>[
   return [product.title, product.slug, product.code, product.description, product.category, product.categoryTitle]
     .filter(Boolean)
     .some((value) => value?.toLowerCase().includes(query));
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await resolveStorefrontLocale();
+
+  return buildPageMetadata({
+    title: `${getStorefrontCopy('catalog.title', locale)} | Golara`,
+    description: getStorefrontCopy('catalog.body', locale),
+    path: '/products'
+  });
 }
 
 export default async function ProductsPage({ searchParams }: { searchParams?: Promise<ProductsSearchParams> }) {

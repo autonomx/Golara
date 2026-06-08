@@ -7,11 +7,15 @@ import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { getStorefrontCopy, getStorefrontCopyDirection } from '@/lib/localization/storefront-copy';
 import { buildPageMetadata } from '@/lib/site-metadata';
 
-export const metadata: Metadata = buildPageMetadata({
-  title: 'Collections | Golara',
-  description: 'Browse Golara floral collections, bouquets, flower boxes, and premium gift categories.',
-  path: '/categories'
-});
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await resolveStorefrontLocale();
+
+  return buildPageMetadata({
+    title: `${getStorefrontCopy('categories.title', locale)} | Golara`,
+    description: getStorefrontCopy('categories.body', locale),
+    path: '/categories'
+  });
+}
 
 export default async function CategoriesPage() {
   const locale = await resolveStorefrontLocale();
@@ -30,7 +34,7 @@ export default async function CategoriesPage() {
         <h1 className="mt-3 font-display text-6xl text-rosewood">{getStorefrontCopy('categories.title', locale)}</h1>
         <p className="mt-4 max-w-2xl text-lg leading-8 text-stone-700">{getStorefrontCopy('categories.body', locale)}</p>
         <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-          {topLevelCategories.map((category, index) => <HomepageCategoryTileCard key={category.slug} category={category} priority={index < 4} />)}
+          {topLevelCategories.map((category, index) => <HomepageCategoryTileCard key={category.slug} category={category} priority={index < 4} locale={locale} />)}
         </div>
       </section>
     </main>

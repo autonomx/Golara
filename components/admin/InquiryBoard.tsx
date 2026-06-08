@@ -7,9 +7,11 @@ import { InquiryFollowUpSummary } from '@/components/admin/InquiryFollowUpSummar
 import { InquiryStatusShortcuts } from '@/components/admin/InquiryStatusShortcuts';
 import type { CustomerInquiry } from '@/lib/catalog';
 import type { InquiryPage, InquiryStatusCount } from '@/lib/cms/catalog-repository';
+import type { SupportedLocale } from '@/lib/i18n/locales';
 import { getInquiryAssigneeLabel, isInquiryAssigned } from '@/lib/inquiries/inquiry-assignment';
 import type { InquiryAssignmentQueueFilter, InquiryAssignmentQueueSummary } from '@/lib/inquiries/inquiry-assignment-queue';
 import { getInquiryWorkflowStep, getInquiryWorkflowSummary } from '@/lib/inquiries/inquiry-workflow';
+import { createAdminTranslator } from '@/lib/localization/admin-copy';
 
 const statuses = ['new', 'contacted', 'confirmed', 'fulfilled', 'cancelled'];
 const channels = ['internal', 'phone', 'email', 'whatsapp'];
@@ -339,16 +341,17 @@ function InquiryAssignmentControls({ inquiry, activeStatus, search, page, assign
   );
 }
 
-export function InquiryBoard({ inquiryPage, counts, assignmentSummary, activeStatus, search, assignmentFilter }: { inquiryPage: InquiryPage; counts: InquiryStatusCount[]; assignmentSummary: InquiryAssignmentQueueSummary; activeStatus?: string; search?: string; assignmentFilter?: InquiryAssignmentQueueFilter }) {
+export function InquiryBoard({ inquiryPage, counts, assignmentSummary, activeStatus, search, assignmentFilter, locale }: { inquiryPage: InquiryPage; counts: InquiryStatusCount[]; assignmentSummary: InquiryAssignmentQueueSummary; activeStatus?: string; search?: string; assignmentFilter?: InquiryAssignmentQueueFilter; locale?: SupportedLocale | string | null }) {
+  const t = createAdminTranslator(locale);
   const inquiries = inquiryPage.inquiries;
 
   return (
     <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
       <div className="mb-6">
-        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Customer requests</p>
-        <h2 className="mt-2 font-display text-4xl text-rosewood">Inquiry inbox</h2>
+        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">{t('Customer requests')}</p>
+        <h2 className="mt-2 font-display text-4xl text-rosewood">{t('Inquiry inbox')}</h2>
         <p className="mt-3 text-sm leading-6 text-stone-600">
-          Review incoming product requests, update their status, assign ownership, and keep a follow-up timeline.
+          {t('Review incoming product requests, update their status, assign ownership, and keep a follow-up timeline.')}
         </p>
         <InquirySummaryCards counts={counts} activeStatus={activeStatus} search={search} assignmentFilter={assignmentFilter} />
         <InquiryWorkflowOverview counts={counts} />
@@ -358,7 +361,7 @@ export function InquiryBoard({ inquiryPage, counts, assignmentSummary, activeSta
       </div>
 
       {inquiries.length === 0 ? (
-        <InquiryEmptyState activeStatus={activeStatus} search={search} assignmentFilter={assignmentFilter} />
+        <InquiryEmptyState activeStatus={activeStatus} search={search} assignmentFilter={assignmentFilter} locale={locale} />
       ) : (
         <>
           <div className="grid gap-4">
@@ -373,14 +376,14 @@ export function InquiryBoard({ inquiryPage, counts, assignmentSummary, activeSta
                       <p className="mt-1 text-xs uppercase tracking-[0.2em] text-rosewood/50">{formatDate(inquiry.createdAt)}</p>
                     </div>
                     <div className="flex flex-wrap justify-end gap-2">
-                      <InquiryDeliveryBadge deliveryDate={inquiry.deliveryDate} />
+                      <InquiryDeliveryBadge deliveryDate={inquiry.deliveryDate} locale={locale} />
                       <span className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${statusClass(inquiry.status)}`}>
                         {workflowStep.label}
                       </span>
                     </div>
                   </div>
                   <div className="mt-4 rounded-2xl border border-olive/20 bg-white p-4 text-sm text-stone-700">
-                    <p className="font-semibold text-rosewood">Recommended next action</p>
+                    <p className="font-semibold text-rosewood">{t('Recommended next action')}</p>
                     <p className="mt-1 leading-6">{workflowStep.recommendedAction}</p>
                     <p className="mt-2 text-xs uppercase tracking-[0.16em] text-olive">{workflowStep.description}</p>
                   </div>
@@ -391,8 +394,8 @@ export function InquiryBoard({ inquiryPage, counts, assignmentSummary, activeSta
                     <p><strong>Delivery:</strong> {formatDateOnly(inquiry.deliveryDate)}</p>
                   </div>
                   <InquiryAssignmentControls inquiry={inquiry} activeStatus={activeStatus} search={search} page={inquiryPage.page} assignmentFilter={assignmentFilter} />
-                  <InquiryContactActions inquiry={inquiry} />
-                  <InquiryFollowUpSummary inquiry={inquiry} />
+                  <InquiryContactActions inquiry={inquiry} locale={locale} />
+                  <InquiryFollowUpSummary inquiry={inquiry} locale={locale} />
                   <InquiryStatusShortcuts inquiry={inquiry} activeStatus={activeStatus} search={search} page={inquiryPage.page} assignmentFilter={assignmentFilter} />
                   {inquiry.deliveryNotes ? (
                     <p className="mt-3 text-sm leading-6 text-stone-700"><strong>Delivery notes:</strong> {inquiry.deliveryNotes}</p>

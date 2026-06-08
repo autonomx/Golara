@@ -1,14 +1,17 @@
 import type { Metadata } from 'next';
 import { SkipLink } from '@/components/SkipLink';
+import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { buildPageMetadata } from '@/lib/site-metadata';
 import { buildOrganizationJsonLd, buildWebSiteJsonLd, JsonLdScript } from '@/lib/structured-data';
 import './globals.css';
 
 export const metadata: Metadata = buildPageMetadata();
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await resolveStorefrontLocale();
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body>
         <SkipLink />
         <JsonLdScript data={buildOrganizationJsonLd()} />

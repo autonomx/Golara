@@ -20,12 +20,12 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug } = await params;
-  const product = await getProductBySlug(slug);
+  const [{ slug }, locale] = await Promise.all([params, resolveStorefrontLocale()]);
+  const product = await getProductBySlug(slug, { locale });
   if (!product) {
     return buildPageMetadata({
-      title: 'Product not found | Golara',
-      description: 'This Golara product is no longer available.',
+      title: `${getStorefrontCopy('catalog.title', locale)} | Golara`,
+      description: getStorefrontCopy('catalog.body', locale),
       path: `/products/${slug}`
     });
   }

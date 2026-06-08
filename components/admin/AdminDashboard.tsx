@@ -24,6 +24,8 @@ import type { CustomerAuthEventSummary } from '@/lib/customers/customer-auth-eve
 import type { PaymentGatewayReadiness } from '@/lib/checkout/payment-gateway-config';
 import type { InquiryNotificationReadiness } from '@/lib/notifications/inquiry-notifications-core';
 import type { RuntimeReadiness } from '@/lib/runtime-readiness';
+import type { SupportedLocale } from '@/lib/i18n/locales';
+import { createAdminTranslator } from '@/lib/localization/admin-copy';
 
 type Workspace = 'overview' | 'catalog' | 'content' | 'sales';
 
@@ -55,6 +57,7 @@ type AdminDashboardProps = {
   mediaColumns?: string | string[];
   status?: string;
   message?: string;
+  locale?: SupportedLocale | string | null;
 };
 
 const statusLabels: Record<string, string> = {
@@ -253,42 +256,42 @@ function columnParam<T extends string>(columns: T[], options: readonly { key: T;
   return columns.length === defaults.length && columns.every((column) => defaults.includes(column)) ? undefined : columns.join(',');
 }
 
-function ColumnVisibilityControls<T extends string>({ path, paramName, title, options, selected, hiddenInputs }: { path: string; paramName: string; title: string; options: readonly { key: T; label: string }[]; selected: T[]; hiddenInputs: Record<string, string | undefined> }) {
+function ColumnVisibilityControls<T extends string>({ path, paramName, title, options, selected, hiddenInputs, t = (key: string) => key }: { path: string; paramName: string; title: string; options: readonly { key: T; label: string }[]; selected: T[]; hiddenInputs: Record<string, string | undefined>; t?: (key: string) => string }) {
   const selectedSet = new Set(selected);
   return (
     <details className="rounded-lg border border-stone-200 bg-white p-4">
-      <summary className="cursor-pointer text-sm font-bold text-stone-950">{title}</summary>
+      <summary className="cursor-pointer text-sm font-bold text-stone-950">{t(title)}</summary>
       <form action={path} className="mt-4 grid gap-3">
         {Object.entries(hiddenInputs).map(([name, value]) => value ? <input key={name} type="hidden" name={name} value={value} /> : null)}
         <div className="flex flex-wrap gap-2">
           {options.map((option) => (
             <label key={option.key} className="inline-flex items-center gap-2 rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm font-semibold text-stone-700">
               <input type="checkbox" name={paramName} value={option.key} defaultChecked={selectedSet.has(option.key)} />
-              {option.label}
+              {t(option.label)}
             </label>
           ))}
         </div>
-        <button type="submit" className="w-fit rounded-md bg-rosewood px-4 py-2 text-sm font-semibold text-white">Apply columns</button>
+        <button type="submit" className="w-fit rounded-md bg-rosewood px-4 py-2 text-sm font-semibold text-white">{t('Apply columns')}</button>
       </form>
     </details>
   );
 }
 
-function PaginationControls({ path, pageParam, currentPage, pageCount, total, start, end, params }: { path: string; pageParam: string; currentPage: number; pageCount: number; total: number; start: number; end: number; params: Record<string, string | undefined> }) {
+function PaginationControls({ path, pageParam, currentPage, pageCount, total, start, end, params, t = (key: string) => key }: { path: string; pageParam: string; currentPage: number; pageCount: number; total: number; start: number; end: number; params: Record<string, string | undefined>; t?: (key: string) => string }) {
   if (total <= catalogPageSize) {
-    return <p className="text-sm font-semibold text-stone-600">Showing {total} {total === 1 ? 'item' : 'items'}.</p>;
+    return <p className="text-sm font-semibold text-stone-600">{t('Showing')} {total} {total === 1 ? t('item') : t('items')}.</p>;
   }
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
-      <p className="font-semibold text-stone-600">Showing {start}-{end} of {total}.</p>
+      <p className="font-semibold text-stone-600">{t('Showing')} {start}-{end} {t('of')} {total}.</p>
       <div className="flex items-center gap-2">
         <Link aria-disabled={currentPage <= 1} href={paginationHref(path, pageParam, Math.max(1, currentPage - 1), params)} className={`rounded-md border px-3 py-2 font-semibold ${currentPage <= 1 ? 'pointer-events-none border-stone-200 text-stone-300' : 'border-rosewood/20 text-rosewood hover:border-rosewood'}`}>
-          Previous
+          {t('Previous')}
         </Link>
-        <span className="rounded-md border border-stone-200 bg-stone-50 px-3 py-2 font-semibold text-stone-700">Page {currentPage} of {pageCount}</span>
+        <span className="rounded-md border border-stone-200 bg-stone-50 px-3 py-2 font-semibold text-stone-700">{t('Page')} {currentPage} {t('of')} {pageCount}</span>
         <Link aria-disabled={currentPage >= pageCount} href={paginationHref(path, pageParam, Math.min(pageCount, currentPage + 1), params)} className={`rounded-md border px-3 py-2 font-semibold ${currentPage >= pageCount ? 'pointer-events-none border-stone-200 text-stone-300' : 'border-rosewood/20 text-rosewood hover:border-rosewood'}`}>
-          Next
+          {t('Next')}
         </Link>
       </div>
     </div>
@@ -304,13 +307,13 @@ function EmptyState({ title, body }: { title: string; body: string }) {
   );
 }
 
-function StatusBanner({ status, message }: { status?: string; message?: string }) {
+function StatusBanner({ status, message, t = (key: string) => key }: { status?: string; message?: string; t?: (key: string) => string }) {
   if (!status && !message) return null;
   const isError = status === 'error';
-  return <section className={`rounded-lg border p-5 text-sm font-semibold ${isError ? 'border-red-200 bg-red-50 text-red-800' : 'border-olive/20 bg-white text-olive'}`}>{message || statusLabels[status ?? ''] || status}</section>;
+  return <section className={`rounded-lg border p-5 text-sm font-semibold ${isError ? 'border-red-200 bg-red-50 text-red-800' : 'border-olive/20 bg-white text-olive'}`}>{message || t(statusLabels[status ?? ''] || status || '')}</section>;
 }
 
-function DashboardIntro({ workspace, productCount, categoryCount, mediaCount }: { workspace: Workspace; productCount: number; categoryCount: number; mediaCount: number }) {
+function DashboardIntro({ workspace, productCount, categoryCount, mediaCount, t = (key: string) => key }: { workspace: Workspace; productCount: number; categoryCount: number; mediaCount: number; t?: (key: string) => string }) {
   const copy = {
     catalog: ['Catalog workspace', 'Products, categories, subcategories, and media', 'Create and maintain the product catalog that powers the storefront. Assign products to any category or subcategory, manage homepage visibility, and update images from the media library.'],
     content: ['Content workspace', 'Homepage and translations', 'Edit storefront copy and localized content without touching code.'],
@@ -321,11 +324,11 @@ function DashboardIntro({ workspace, productCount, categoryCount, mediaCount }: 
   return (
     <section className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
       <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
-        <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">{copy[0]}</p><h2 className="mt-1 text-2xl font-bold text-stone-950">{copy[1]}</h2><p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">{copy[2]}</p></div>
+        <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">{t(copy[0])}</p><h2 className="mt-1 text-2xl font-bold text-stone-950">{t(copy[1])}</h2><p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">{t(copy[2])}</p></div>
         <div className="grid grid-cols-3 gap-2 text-center">
-          <Metric value={productCount} label="Products" />
-          <Metric value={categoryCount} label="Categories" />
-          <Metric value={mediaCount} label="Media" />
+          <Metric value={productCount} label={t('Products')} />
+          <Metric value={categoryCount} label={t('Categories')} />
+          <Metric value={mediaCount} label={t('Media')} />
         </div>
       </div>
     </section>
@@ -336,15 +339,15 @@ function Metric({ value, label }: { value: number; label: string }) {
   return <div className="rounded-md border border-stone-200 bg-stone-50 px-4 py-3"><div className="text-xl font-bold text-stone-950">{value}</div><div className="text-[11px] font-bold uppercase tracking-[0.14em] text-stone-500">{label}</div></div>;
 }
 
-function CatalogFilters({ categories, section, search, category, flag, columnParams }: { categories: Category[]; section: CatalogSection; search?: string; category?: string; flag?: string; columnParams?: Record<string, string | undefined> }) {
+function CatalogFilters({ categories, section, search, category, flag, columnParams, t = (key: string) => key }: { categories: Category[]; section: CatalogSection; search?: string; category?: string; flag?: string; columnParams?: Record<string, string | undefined>; t?: (key: string) => string }) {
   return (
     <form action={catalogPath(section)} className="mb-6 grid gap-3 rounded-lg border border-rosewood/10 bg-white p-4 md:grid-cols-[1.2fr_1fr_1fr_auto]">
       {section === 'all' ? <input type="hidden" name="tab" value="catalog" /> : null}
       {Object.entries(columnParams ?? {}).map(([name, value]) => value ? <input key={name} type="hidden" name={name} value={value} /> : null)}
-      <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-rosewood/70">Search<input name="catalogSearch" className={inputClass} defaultValue={search} placeholder="Title, code, slug..." /></label>
-      <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-rosewood/70">Category<select name="catalogCategory" className={inputClass} defaultValue={category ?? ''}><option value="">All categories</option>{categories.map((item) => <option key={item.slug} value={item.slug}>{item.parentTitle ? `${item.parentTitle} / ${item.title}` : item.title}</option>)}</select></label>
-      <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-rosewood/70">Product flag<select name="catalogFlag" className={inputClass} defaultValue={flag ?? ''}><option value="">All products</option><option value="best-seller">Best sellers</option><option value="available-today">Available today</option><option value="quote-only">Quote only</option><option value="inactive">Inactive</option><option value="missing-image">Missing image</option></select></label>
-      <button type="submit" className={primaryButtonClass}>Filter</button>
+      <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-rosewood/70">{t('Search')}<input name="catalogSearch" className={inputClass} defaultValue={search} placeholder={t('Title, code, slug...')} /></label>
+      <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-rosewood/70">{t('Category')}<select name="catalogCategory" className={inputClass} defaultValue={category ?? ''}><option value="">{t('All categories')}</option>{categories.map((item) => <option key={item.slug} value={item.slug}>{item.parentTitle ? `${item.parentTitle} / ${item.title}` : item.title}</option>)}</select></label>
+      <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-rosewood/70">{t('Product flag')}<select name="catalogFlag" className={inputClass} defaultValue={flag ?? ''}><option value="">{t('All products')}</option><option value="best-seller">{t('Best sellers')}</option><option value="available-today">{t('Available today')}</option><option value="quote-only">{t('Quote only')}</option><option value="inactive">{t('Inactive')}</option><option value="missing-image">{t('Missing image')}</option></select></label>
+      <button type="submit" className={primaryButtonClass}>{t('Filter')}</button>
     </form>
   );
 }
@@ -531,7 +534,8 @@ function MediaTable({ media, categories, products, disabled, columns }: { media:
   );
 }
 
-export function AdminDashboard({ activeWorkspace, catalogSection = 'all', categories, products, productTypes, homepage, homepageTranslations, media, authEventSummary, runtimeReadiness, authConfigured, authenticated, notificationReadiness, notificationRetryRunbook, checkoutReadiness, catalogSearch, catalogCategory, catalogFlag, productPage = 1, categoryPage = 1, mediaPage = 1, productColumns, mediaColumns, status, message }: AdminDashboardProps) {
+export function AdminDashboard({ activeWorkspace, catalogSection = 'all', categories, products, productTypes, homepage, homepageTranslations, media, authEventSummary, runtimeReadiness, authConfigured, authenticated, notificationReadiness, notificationRetryRunbook, checkoutReadiness, catalogSearch, catalogCategory, catalogFlag, productPage = 1, categoryPage = 1, mediaPage = 1, productColumns, mediaColumns, status, message, locale }: AdminDashboardProps) {
+  const t = createAdminTranslator(locale);
   const databaseReady = runtimeReadiness.databaseUrlPresent;
   const disabled = !databaseReady || !authenticated;
   const showOverview = activeWorkspace === 'overview';
@@ -563,18 +567,18 @@ export function AdminDashboard({ activeWorkspace, catalogSection = 'all', catego
 
   return (
     <div className="space-y-8">
-      <StatusBanner status={status} message={message} />
-      <DashboardIntro workspace={activeWorkspace} productCount={products.length} categoryCount={categories.length} mediaCount={media.length} />
+      <StatusBanner status={status} message={message} t={t} />
+      <DashboardIntro workspace={activeWorkspace} productCount={products.length} categoryCount={categories.length} mediaCount={media.length} t={t} />
       {showCatalog && catalogSection === 'all' ? <CatalogSectionNav /> : null}
-      {showCatalog ? <CatalogFilters categories={categories} section={catalogSection} search={catalogSearch} category={catalogCategory} flag={catalogFlag} columnParams={columnParams} /> : null}
-      {showOverview ? <AdminReadinessPanel runtimeReadiness={runtimeReadiness} authConfigured={authConfigured} authenticated={authenticated} notificationReadiness={notificationReadiness} notificationRetryRunbook={notificationRetryRunbook} checkoutReadiness={checkoutReadiness} /> : null}
-      {showOverview && authenticated ? <AdminSecurityPanel summary={authEventSummary} /> : null}
+      {showCatalog ? <CatalogFilters categories={categories} section={catalogSection} search={catalogSearch} category={catalogCategory} flag={catalogFlag} columnParams={columnParams} t={t} /> : null}
+      {showOverview ? <AdminReadinessPanel runtimeReadiness={runtimeReadiness} authConfigured={authConfigured} authenticated={authenticated} notificationReadiness={notificationReadiness} notificationRetryRunbook={notificationRetryRunbook} checkoutReadiness={checkoutReadiness} locale={locale} /> : null}
+      {showOverview && authenticated ? <AdminSecurityPanel summary={authEventSummary} locale={locale} /> : null}
       {showOverview ? <section className={`rounded-lg border p-6 ${databaseReady && authenticated ? 'border-olive/20 bg-white' : 'border-amber-300 bg-amber-50'}`}><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">CMS status</p><h2 className="mt-3 font-display text-3xl text-rosewood">{databaseReady && authenticated ? 'Editing enabled' : databaseReady ? 'Login required' : 'Seeded preview mode'}</h2><p className="mt-3 max-w-3xl text-sm leading-6 text-stone-700">{databaseReady && authenticated ? 'Admin forms are live. Changes write to Prisma, then revalidate storefront pages.' : databaseReady ? 'The database is connected, but CMS writes require admin authentication.' : 'The storefront is reading seeded fallback content. Add DATABASE_URL, run npm run db:push and npm run db:seed, then restart the app to enable editing.'}</p></div>{authenticated ? <form action={logoutAction}><button className={secondaryButtonClass} type="submit">Sign out</button></form> : null}</div></section> : null}
 
-      {showMediaSection ? <section id="media" className={panelClass}><div className="mb-6"><p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Media library</p><h2 className="mt-2 font-display text-4xl text-rosewood">Images</h2><p className="mt-3 text-sm leading-6 text-stone-600">Register external image URLs or upload local/dev images into <code>public/uploads</code>.</p></div><details className="rounded-lg border border-rosewood/10 bg-cream p-5"><summary className="cursor-pointer font-display text-3xl text-rosewood">Add image</summary><div className="mt-5 grid gap-6 lg:grid-cols-2"><form action={createMediaFromUrlAction} className={formCardClass}><h3 className="font-display text-3xl text-rosewood">Add image URL</h3><MediaCategorySelect disabled={disabled} /><Field label="Image URL" name="url" placeholder="https://..." disabled={disabled} /><Field label="Alt text" name="alt" placeholder="Blush rose bouquet" disabled={disabled} /><SubmitButton disabled={disabled}>Add media</SubmitButton></form><form action={uploadMediaAction} className={formCardClass}><h3 className="font-display text-3xl text-rosewood">Upload image</h3><MediaCategorySelect disabled={disabled} /><label className="grid gap-2 text-sm font-semibold text-rosewood">Image file<input className={inputClass} name="file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" required disabled={disabled} /></label><Field label="Alt text" name="alt" placeholder="Optional descriptive text" required={false} disabled={disabled} /><SubmitButton disabled={disabled}>Upload image</SubmitButton></form></div></details><div className="mt-4"><ColumnVisibilityControls path={path} paramName="mediaColumns" title="Media columns" options={mediaColumnOptions} selected={selectedMediaColumns} hiddenInputs={{ tab: catalogSection === 'all' ? 'catalog' : undefined, catalogSearch, catalogCategory, catalogFlag, productColumns: productColumnsParam }} /></div><MediaTable media={pagedMedia.items} categories={categories} products={products} disabled={disabled} columns={selectedMediaColumns} /><div className="mt-4"><PaginationControls path={path} pageParam="mediaPage" currentPage={pagedMedia.currentPage} pageCount={pagedMedia.pageCount} total={media.length} start={pagedMedia.start} end={pagedMedia.end} params={paginationParams} /></div></section> : null}
+      {showMediaSection ? <section id="media" className={panelClass}><div className="mb-6"><p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">{t('Media library')}</p><h2 className="mt-2 font-display text-4xl text-rosewood">{t('Images')}</h2><p className="mt-3 text-sm leading-6 text-stone-600">{t('Register external image URLs or upload local/dev images into')} <code>public/uploads</code>.</p></div><details className="rounded-lg border border-rosewood/10 bg-cream p-5"><summary className="cursor-pointer font-display text-3xl text-rosewood">{t('Add image')}</summary><div className="mt-5 grid gap-6 lg:grid-cols-2"><form action={createMediaFromUrlAction} className={formCardClass}><h3 className="font-display text-3xl text-rosewood">{t('Add image URL')}</h3><MediaCategorySelect disabled={disabled} /><Field label={t('Image URL')} name="url" placeholder="https://..." disabled={disabled} /><Field label={t('Alt text')} name="alt" placeholder="Blush rose bouquet" disabled={disabled} /><SubmitButton disabled={disabled}>{t('Add media')}</SubmitButton></form><form action={uploadMediaAction} className={formCardClass}><h3 className="font-display text-3xl text-rosewood">{t('Upload image')}</h3><MediaCategorySelect disabled={disabled} /><label className="grid gap-2 text-sm font-semibold text-rosewood">{t('Image file')}<input className={inputClass} name="file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" required disabled={disabled} /></label><Field label={t('Alt text')} name="alt" placeholder={t('Optional descriptive text')} required={false} disabled={disabled} /><SubmitButton disabled={disabled}>{t('Upload image')}</SubmitButton></form></div></details><div className="mt-4"><ColumnVisibilityControls path={path} paramName="mediaColumns" title="Media columns" options={mediaColumnOptions} selected={selectedMediaColumns} hiddenInputs={{ tab: catalogSection === 'all' ? 'catalog' : undefined, catalogSearch, catalogCategory, catalogFlag, productColumns: productColumnsParam }} t={t} /></div><MediaTable media={pagedMedia.items} categories={categories} products={products} disabled={disabled} columns={selectedMediaColumns} /><div className="mt-4"><PaginationControls path={path} pageParam="mediaPage" currentPage={pagedMedia.currentPage} pageCount={pagedMedia.pageCount} total={media.length} start={pagedMedia.start} end={pagedMedia.end} params={paginationParams} t={t} /></div></section> : null}
 
       {showContent ? <section id="homepage" className={panelClass}><div className="mb-6"><p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Homepage</p><h2 className="mt-2 font-display text-4xl text-rosewood">Hero content</h2></div><form action={updateHomepageAction} className="grid gap-4"><div className="grid gap-4 md:grid-cols-2"><Field label="Eyebrow" name="eyebrow" defaultValue={homepage.eyebrow} disabled={disabled} /><Field label="Title" name="title" defaultValue={homepage.title} disabled={disabled} /></div><TextArea label="Body" name="body" defaultValue={homepage.body} disabled={disabled} /><div className="grid gap-4 md:grid-cols-2"><Field label="Primary CTA label" name="primaryCtaLabel" defaultValue={homepage.primaryCtaLabel} disabled={disabled} /><Field label="Primary CTA URL" name="primaryCtaHref" defaultValue={homepage.primaryCtaHref} disabled={disabled} /><Field label="Secondary CTA label" name="secondaryCtaLabel" defaultValue={homepage.secondaryCtaLabel} disabled={disabled} /><Field label="Secondary CTA URL" name="secondaryCtaHref" defaultValue={homepage.secondaryCtaHref} disabled={disabled} /><Field label="Panel eyebrow" name="panelEyebrow" defaultValue={homepage.panelEyebrow} disabled={disabled} /><Field label="Panel title" name="panelTitle" defaultValue={homepage.panelTitle} disabled={disabled} /></div><TextArea label="Panel body" name="panelBody" defaultValue={homepage.panelBody} disabled={disabled} /><SubmitButton disabled={disabled}>Save homepage</SubmitButton></form></section> : null}
-      {showContent && authenticated ? <AdminTranslationPanel homepage={homepage} homepageTranslations={homepageTranslations} categories={categories} products={products} disabled={disabled} /> : null}
+      {showContent && authenticated ? <AdminTranslationPanel homepage={homepage} homepageTranslations={homepageTranslations} categories={categories} products={products} disabled={disabled} locale={locale} /> : null}
 
       {showCategorySection ? <section id="categories" className={panelClass}><div className="mb-6"><p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">Categories</p><h2 className="mt-2 font-display text-4xl text-rosewood">Categories and subcategories</h2><p className="mt-3 max-w-3xl text-sm leading-6 text-stone-600">Use parent category to create subcategories. Products can be assigned to either top-level categories or nested subcategories.</p></div><details className="rounded-lg border border-rosewood/10 bg-cream p-5"><summary className="cursor-pointer font-display text-3xl text-rosewood">Create category or subcategory</summary><form action={createCategoryAction} className="mt-5 grid gap-4"><CategoryFields categories={categories} media={media} disabled={disabled} /><SubmitButton disabled={disabled}>Create category</SubmitButton></form></details><div className="mt-8 flex items-center justify-between gap-4"><PaginationControls path={path} pageParam="categoryPage" currentPage={pagedCategories.currentPage} pageCount={pagedCategories.pageCount} total={filteredCategories.length} start={pagedCategories.start} end={pagedCategories.end} params={paginationParams} />{catalogSection === 'all' ? <a href="#products" className="text-sm font-semibold text-rosewood underline-offset-4 hover:underline">Jump to products</a> : null}</div>{pagedCategories.items.length === 0 ? <EmptyState title="No categories found" body="Create a category above, or adjust the current search filter." /> : <div className={`mt-4 grid gap-4 ${scrollListClass}`}>{pagedCategories.items.map((category) => <details key={category.slug} className="rounded-lg border border-rosewood/10 bg-[#fffdfb] p-5 shadow-sm"><summary className="cursor-pointer list-none"><div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-display text-2xl text-rosewood">{category.title}</h3><p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">{category.parentTitle ? `Subcategory of ${category.parentTitle}` : 'Top-level category'} - {category.productCount ?? 0} products</p></div><span className="rounded-full border border-rosewood/15 bg-white px-3 py-1 text-xs font-semibold text-rosewood">Edit</span></div></summary><form action={updateCategoryAction.bind(null, category.id ?? '')} className="mt-5 grid gap-4"><CategoryFields category={category} categories={categories} media={media} disabled={disabled || !category.id} /><SubmitButton disabled={disabled || !category.id}>Update category</SubmitButton></form></details>)}</div>}</section> : null}
 

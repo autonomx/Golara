@@ -27,12 +27,12 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug } = await params;
-  const category = await getCategoryBySlug(slug);
+  const [{ slug }, locale] = await Promise.all([params, resolveStorefrontLocale()]);
+  const category = await getCategoryBySlug(slug, { locale });
   if (!category) {
     return buildPageMetadata({
-      title: 'Collection not found | Golara',
-      description: 'This Golara collection is no longer available.',
+      title: `${getStorefrontCopy('categories.title', locale)} | Golara`,
+      description: getStorefrontCopy('categories.body', locale),
       path: `/categories/${slug}`
     });
   }
@@ -64,7 +64,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   return (
     <main id="main-content" tabIndex={-1} dir={getStorefrontCopyDirection(locale)}>
       <JsonLdScript data={buildCategoryBreadcrumbJsonLd(categoryWithCount)} />
-      <SiteHeader returnTo={`/categories/${slug}`} />
+      <SiteHeader returnTo={`/categories/${slug}`} locale={locale} />
       <section className="mx-auto max-w-7xl px-5 py-14">
         <PathTrail items={categoryTrail(categoryWithCount, categoriesWithCounts, locale)} />
         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">{categoryWithCount.eyebrow}</p>
@@ -78,7 +78,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
               <h2 className="mt-2 font-display text-4xl text-rosewood">{getStorefrontCopy('category.subcategoriesTitle', locale)}</h2>
             </div>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-              {childCategories.map((child, index) => <HomepageCategoryTileCard key={child.slug} category={child} priority={index < 4} />)}
+              {childCategories.map((child, index) => <HomepageCategoryTileCard key={child.slug} category={child} priority={index < 4} locale={locale} />)}
             </div>
           </section>
         ) : null}

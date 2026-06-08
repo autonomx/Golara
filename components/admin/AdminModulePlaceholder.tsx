@@ -1,10 +1,13 @@
 import { hasDatabase, prisma } from '@/lib/prisma';
+import type { SupportedLocale } from '@/lib/i18n/locales';
+import { createAdminTranslator } from '@/lib/localization/admin-copy';
 
 type AdminModulePlaceholderProps = {
   eyebrow: string;
   title: string;
   body: string;
   items: string[];
+  locale?: SupportedLocale | string | null;
 };
 
 type VoucherRow = {
@@ -151,7 +154,8 @@ async function listPromotionWorkspace(): Promise<PromotionWorkspace> {
   }
 }
 
-async function AdminDiscountWorkspace({ eyebrow, title, body, items }: AdminModulePlaceholderProps) {
+async function AdminDiscountWorkspace({ eyebrow, title, body, items, locale }: AdminModulePlaceholderProps) {
+  const t = createAdminTranslator(locale);
   const workspace = await listPromotionWorkspace();
   const voucherCount = workspace.discounts.reduce((total, discount) => total + discount.vouchers.length, 0);
   const activeCount = workspace.discounts.filter((discount) => discount.status === 'active' && discount.isActive).length;
@@ -167,22 +171,22 @@ async function AdminDiscountWorkspace({ eyebrow, title, body, items }: AdminModu
         <div className="grid grid-cols-3 gap-2 text-center text-xs font-bold uppercase tracking-[0.14em] text-stone-500">
           <div className="rounded-md border border-stone-200 bg-stone-50 px-4 py-3">
             <span className="block text-2xl font-black tracking-normal text-stone-950">{workspace.discounts.length}</span>
-            Campaigns
+            {t('Campaigns')}
           </div>
           <div className="rounded-md border border-stone-200 bg-stone-50 px-4 py-3">
             <span className="block text-2xl font-black tracking-normal text-stone-950">{voucherCount}</span>
-            Vouchers
+            {t('Vouchers')}
           </div>
           <div className="rounded-md border border-stone-200 bg-stone-50 px-4 py-3">
             <span className="block text-2xl font-black tracking-normal text-stone-950">{activeCount}</span>
-            Active
+            {t('Active')}
           </div>
         </div>
       </div>
 
       {!workspace.available ? (
         <div className="mt-6 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-          Promotion tables are not available in this database yet. Run Prisma setup and seed again to show demo discounts.
+          {t('Promotion tables are not available in this database yet. Run Prisma setup and seed again to show demo discounts.')}
         </div>
       ) : null}
 
@@ -196,19 +200,19 @@ async function AdminDiscountWorkspace({ eyebrow, title, body, items }: AdminModu
 
       <div className="mt-6 overflow-hidden rounded-lg border border-stone-200">
         <div className="border-b border-stone-200 bg-stone-50 px-4 py-3">
-          <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-stone-600">Seeded promotion campaigns</h3>
+          <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-stone-600">{t('Seeded promotion campaigns')}</h3>
         </div>
         {workspace.discounts.length ? (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-stone-200 text-sm">
               <thead className="bg-white text-left text-xs font-bold uppercase tracking-[0.14em] text-stone-500">
                 <tr>
-                  <th className="px-4 py-3">Campaign</th>
-                  <th className="px-4 py-3">Value</th>
-                  <th className="px-4 py-3">Vouchers</th>
-                  <th className="px-4 py-3">Usage</th>
-                  <th className="px-4 py-3">Window</th>
-                  <th className="px-4 py-3">Eligibility</th>
+                  <th className="px-4 py-3">{t('Campaign')}</th>
+                  <th className="px-4 py-3">{t('Value')}</th>
+                  <th className="px-4 py-3">{t('Vouchers')}</th>
+                  <th className="px-4 py-3">{t('Usage')}</th>
+                  <th className="px-4 py-3">{t('Window')}</th>
+                  <th className="px-4 py-3">{t('Eligibility')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100 bg-white">
@@ -254,7 +258,7 @@ async function AdminDiscountWorkspace({ eyebrow, title, body, items }: AdminModu
 
       <div className="mt-6 overflow-hidden rounded-lg border border-stone-200">
         <div className="border-b border-stone-200 bg-stone-50 px-4 py-3">
-          <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-stone-600">Store credits</h3>
+          <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-stone-600">{t('Store credits')}</h3>
         </div>
         {workspace.storeCredits.length ? (
           <div className="grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-3">
@@ -282,9 +286,9 @@ async function AdminDiscountWorkspace({ eyebrow, title, body, items }: AdminModu
   );
 }
 
-export async function AdminModulePlaceholder({ eyebrow, title, body, items }: AdminModulePlaceholderProps) {
+export async function AdminModulePlaceholder({ eyebrow, title, body, items, locale }: AdminModulePlaceholderProps) {
   if (eyebrow === 'Discounts' || title === 'Promotions workspace') {
-    return <AdminDiscountWorkspace eyebrow={eyebrow} title={title} body={body} items={items} />;
+    return <AdminDiscountWorkspace eyebrow={eyebrow} title={title} body={body} items={items} locale={locale} />;
   }
 
   return (

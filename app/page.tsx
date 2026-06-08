@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { HomepageBannerSlideshow } from '@/components/HomepageBannerSlideshow';
 import { HomepageCategoryTileCard } from '@/components/HomepageCategoryTileCard';
 import { HomepageOccasionRail } from '@/components/HomepageOccasionRail';
@@ -10,11 +11,24 @@ import { homepageBannerSlides } from '@/lib/homepage-assets';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { selectHomepageContentForLocale } from '@/lib/localization/homepage-content';
 import { getStorefrontCopy, getStorefrontCopyDirection } from '@/lib/localization/storefront-copy';
+import { buildPageMetadata } from '@/lib/site-metadata';
 
 const footerLinkClass = 'outline-none transition hover:text-rosewood focus-visible:ring-4 focus-visible:ring-olive/20';
 
 function firstNonEmpty(...values: Array<string | undefined>) {
   return values.find((value) => value?.trim()) ?? '';
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await resolveStorefrontLocale();
+  const homepageSource = await getHomepageContent({ locale });
+  const homepage = selectHomepageContentForLocale(homepageSource, locale);
+
+  return buildPageMetadata({
+    title: `${firstNonEmpty(homepage.title, 'Golara')} | Golara`,
+    description: firstNonEmpty(homepage.body, getStorefrontCopy('home.footerBody', locale)),
+    path: '/'
+  });
 }
 
 export default async function HomePage() {

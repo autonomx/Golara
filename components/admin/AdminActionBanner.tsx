@@ -1,3 +1,6 @@
+import type { SupportedLocale } from '@/lib/i18n/locales';
+import { createAdminTranslator } from '@/lib/localization/admin-copy';
+
 const statusMessages: Record<string, string> = {
   'inquiry-updated': 'Inquiry updated successfully.',
   'follow-up-added': 'Follow-up note added successfully.',
@@ -8,13 +11,14 @@ const statusMessages: Record<string, string> = {
   'fulfillment-method-updated': 'Fulfillment method saved successfully.'
 };
 
-export function AdminActionBanner({ status, message }: { status?: string; message?: string }) {
+export function AdminActionBanner({ status, message, locale }: { status?: string; message?: string; locale?: SupportedLocale | string | null }) {
+  const t = createAdminTranslator(locale);
   const text = message || (status ? statusMessages[status] : undefined);
   if (!text) return null;
 
   return (
     <div className="rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">
-      {text}
+      {message ? text : t(text)}
     </div>
   );
 }
