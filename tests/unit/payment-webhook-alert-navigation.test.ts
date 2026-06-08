@@ -12,8 +12,10 @@ export async function runPaymentWebhookAlertNavigationTests() {
   assert.match(adminConsole, /Bell/);
   assert.match(adminConsole, /href: '\/admin\/payments\/alerts'/);
   assert.match(adminConsole, /key: 'payment-alerts'/);
-  assert.match(adminConsole, /label: 'Payment alerts'/);
+  assert.match(adminConsole, /'payment-alerts': 'Payment alerts'/);
+  assert.match(adminConsole, /'payment-alerts': 'هشدارهای پرداخت'/);
   assert.match(adminConsole, /Payment webhook alerts/);
+  assert.match(adminConsole, /هشدارهای وبهوک پرداخت/);
   assert.match(alertPage, /AdminPaymentWebhookAlertsPanel/);
   assert.match(alertPage, /paymentWebhookAlertService\.summary\(50\)/);
   assert.match(alertPage, /href="\/admin\/payments\/settlement"/);

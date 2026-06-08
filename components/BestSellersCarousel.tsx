@@ -7,12 +7,39 @@ import { ChevronLeft, ChevronRight, MessageCircle, ShoppingBag } from 'lucide-re
 import type { Product } from '@/lib/catalog';
 import { formatPrice, productRequiresQuote } from '@/lib/catalog-pricing';
 import type { SupportedLocale } from '@/lib/i18n/locales';
-import { getStorefrontCopy } from '@/lib/localization/storefront-copy';
+import { formatStorefrontCopy, getStorefrontCopy } from '@/lib/localization/storefront-copy';
 import { homepageBestSellerImage } from '@/lib/homepage-assets';
 
 interface BestSellersCarouselProps {
   products: Product[];
   locale: SupportedLocale;
+}
+
+const carouselCopy = {
+  en: {
+    eyebrow: 'Best seller',
+    title: 'Featured picks',
+    body: 'A curated run of customer favorites, styled with real Golara homepage photography.',
+    previous: 'Previous best seller',
+    next: 'Next best seller',
+    contactToOrder: 'Contact to order',
+    messageSales: 'Message sales',
+    viewAndOrder: 'View and order'
+  },
+  fa: {
+    eyebrow: 'پرفروش',
+    title: 'انتخاب‌های ویژه',
+    body: 'مجموعه‌ای از محبوب‌ترین انتخاب‌های مشتریان با تصویرسازی اختصاصی گلارا.',
+    previous: 'پرفروش قبلی',
+    next: 'پرفروش بعدی',
+    contactToOrder: 'تماس برای سفارش',
+    messageSales: 'پیام به فروش',
+    viewAndOrder: 'مشاهده و سفارش'
+  }
+};
+
+function localeKey(locale?: SupportedLocale) {
+  return locale?.toLowerCase().startsWith('fa') ? 'fa' : 'en';
 }
 
 function chunkProducts(products: Product[], visibleCount: number) {
@@ -26,6 +53,8 @@ function chunkProducts(products: Product[], visibleCount: number) {
 export function BestSellersCarousel({ products, locale }: BestSellersCarouselProps) {
   const [activePage, setActivePage] = useState(0);
   const [visibleCount, setVisibleCount] = useState(4);
+  const activeLocale = localeKey(locale);
+  const labels = carouselCopy[activeLocale];
   const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key, locale);
   const pages = useMemo(() => chunkProducts(products, visibleCount), [products, visibleCount]);
   const maxPage = Math.max(0, pages.length - 1);
@@ -60,7 +89,7 @@ export function BestSellersCarousel({ products, locale }: BestSellersCarouselPro
 
   const goPrevious = () => setActivePage((current) => (current <= 0 ? maxPage : current - 1));
   const goNext = () => setActivePage((current) => (current >= maxPage ? 0 : current + 1));
-  const whatsappHref = (product: Product) => `https://wa.me/?text=${encodeURIComponent(`I am interested in ${product.title} (${product.code}).`)}`;
+  const whatsappHref = (product: Product) => `https://wa.me/?text=${encodeURIComponent(formatStorefrontCopy('product.interestedMessage', locale, { title: `${product.title} (${product.code})` }))}`;
 
   if (!products.length) {
     return null;
@@ -74,18 +103,18 @@ export function BestSellersCarousel({ products, locale }: BestSellersCarouselPro
       className="relative overflow-hidden bg-white py-20"
     >
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rosewood/15 to-transparent" />
-      <div dir="ltr" className="mx-auto max-w-7xl px-5 text-left">
+      <div dir={activeLocale === 'fa' ? 'rtl' : 'ltr'} className="mx-auto max-w-7xl px-5 text-start">
         <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">Best seller</p>
-            <h2 id="home-best-sellers-heading" className="mt-2 font-display text-4xl text-rosewood md:text-5xl">Featured picks</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-stone-600 md:text-base">A curated run of customer favorites, styled with real Golara homepage photography.</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">{labels.eyebrow}</p>
+            <h2 id="home-best-sellers-heading" className="mt-2 font-display text-4xl text-rosewood md:text-5xl">{labels.title}</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-stone-600 md:text-base">{labels.body}</p>
           </div>
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={goPrevious}
-              aria-label="Previous best seller"
+              aria-label={labels.previous}
               className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-rosewood/15 bg-white text-rosewood shadow-sm transition hover:border-rosewood hover:bg-rosewood hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/25"
             >
               <ChevronLeft aria-hidden="true" className="h-5 w-5" />
@@ -93,7 +122,7 @@ export function BestSellersCarousel({ products, locale }: BestSellersCarouselPro
             <button
               type="button"
               onClick={goNext}
-              aria-label="Next best seller"
+              aria-label={labels.next}
               className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-rosewood/15 bg-white text-rosewood shadow-sm transition hover:border-rosewood hover:bg-rosewood hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/25"
             >
               <ChevronRight aria-hidden="true" className="h-5 w-5" />
@@ -131,19 +160,19 @@ export function BestSellersCarousel({ products, locale }: BestSellersCarouselPro
                         <div className="text-xs uppercase tracking-[0.25em] text-rosewood/50">{product.code}</div>
                         <h3 className="line-clamp-1 font-display text-2xl text-rosewood">{product.title}</h3>
                         <p className="line-clamp-2 text-sm text-stone-600">{product.description}</p>
-                        <div className="pt-3 text-lg font-semibold text-rosewood">{productRequiresQuote(product) ? 'Contact to order' : formatPrice(product)}</div>
+                        <div className="pt-3 text-lg font-semibold text-rosewood">{productRequiresQuote(product) ? labels.contactToOrder : formatPrice(product, locale)}</div>
                       </div>
                       </Link>
                       <div className="flex items-center gap-2 px-5 pb-5">
                         {productRequiresQuote(product) ? (
                           <a href={whatsappHref(product)} className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-rosewood px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-stone-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
                             <MessageCircle aria-hidden="true" className="h-4 w-4" />
-                            Message sales
+                            {labels.messageSales}
                           </a>
                         ) : (
                           <Link href={`/products/${product.slug}`} className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-rosewood px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-stone-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
                             <ShoppingBag aria-hidden="true" className="h-4 w-4" />
-                            View and order
+                            {labels.viewAndOrder}
                           </Link>
                         )}
                       </div>
