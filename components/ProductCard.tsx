@@ -4,7 +4,7 @@ import { addToCartAction } from '@/app/cart/actions';
 import type { Product } from '@/lib/catalog';
 import { formatPrice, productRequiresQuote } from '@/lib/catalog-pricing';
 import type { SupportedLocale } from '@/lib/i18n/locales';
-import { getStorefrontCopy } from '@/lib/localization/storefront-copy';
+import { formatStorefrontCopy, getStorefrontCopy } from '@/lib/localization/storefront-copy';
 
 export function ProductCard({ product, priority = false, locale }: { product: Product; priority?: boolean; locale?: SupportedLocale }) {
   const requiresQuote = productRequiresQuote(product);
@@ -13,7 +13,7 @@ export function ProductCard({ product, priority = false, locale }: { product: Pr
 
   return (
     <article className="group overflow-hidden rounded-3xl border border-rosewood/10 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
-      <Link href={`/products/${product.slug}`} aria-label={`View ${product.title}`} className="block outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
+      <Link href={`/products/${product.slug}`} aria-label={formatStorefrontCopy('product.viewLabel', locale, { title: product.title })} className="block outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
         <div className="relative aspect-[4/5] overflow-hidden bg-blush">
           <Image
             src={product.image}
@@ -32,7 +32,7 @@ export function ProductCard({ product, priority = false, locale }: { product: Pr
           <div className="text-xs uppercase tracking-[0.25em] text-rosewood/50">{product.code}</div>
           <h3 className="font-display text-2xl text-rosewood">{product.title}</h3>
           <p className="line-clamp-2 text-sm text-stone-600">{product.description}</p>
-          <div className="pt-2 text-lg font-semibold text-rosewood">{formatPrice(product)}</div>
+          <div className="pt-2 text-lg font-semibold text-rosewood">{formatPrice(product, locale)}</div>
         </div>
       </Link>
       {requiresQuote ? (
