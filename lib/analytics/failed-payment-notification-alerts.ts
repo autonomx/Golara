@@ -5,6 +5,15 @@ import { hasDatabase, prisma } from '@/lib/prisma';
 type AlertKind = 'payment' | 'notification';
 type AlertSeverity = 'failed' | 'retry_scheduled';
 
+type OptionalNotificationActionDelegate = {
+  findMany(args: {
+    where: { status: { in: string[] } };
+    orderBy: { updatedAt: 'desc' };
+    take: number;
+    include: { order: { select: { orderNumber: true } } };
+  }): Promise<Array<FailedNotificationAlertSourceRow & { order: { orderNumber: string } }>>;
+};
+
 export type FailedPaymentAlertSourceRow = {
   id: string;
   orderId: string;
@@ -90,6 +99,10 @@ function isMissingNotificationActionTableError(error: unknown) {
   const meta = 'meta' in error ? (error as { meta?: { code?: string; message?: string } }).meta : undefined;
   const message = 'message' in error ? String((error as { message?: unknown }).message ?? '') : '';
   return meta?.code === '42P01' || meta?.message?.includes('CheckoutOrderNotificationAction') || message.includes('CheckoutOrderNotificationAction');
+}
+
+function notificationActionDelegate() {
+  return (prisma as unknown as { checkoutOrderNotificationAction?: OptionalNotificationActionDelegate }).checkoutOrderNotificationAction;
 }
 
 export function formatFailureAlertAmount(value: number, currency: string) {
@@ -212,16 +225,19 @@ async function readFailedPaymentNotificationAlertSources(): Promise<FailedPaymen
       }
     });
     let notifications: Array<FailedNotificationAlertSourceRow & { order: { orderNumber: string } }> = [];
-    try {
-      notifications = await prisma.checkoutOrderNotificationAction.findMany({
-        where: { status: { in: [...Array.from(NOTIFICATION_FAILURE_STATUSES), ...Array.from(NOTIFICATION_RETRY_STATUSES)] } },
-        orderBy: { updatedAt: 'desc' },
-        take: 50,
-        include: { order: { select: { orderNumber: true } } }
-      });
-    } catch (error) {
-      if (!isMissingNotificationActionTableError(error)) throw error;
-      notifications = [];
+    const delegate = notificationActionDelegate();
+    if (delegate) {
+      try {
+        notifications = await delegate.findMany({
+          where: { status: { in: [...Array.from(NOTIFICATION_FAILURE_STATUSES), ...Array.from(NOTIFICATION_RETRY_STATUSES)] } },
+          orderBy: { updatedAt: 'desc' },
+          take: 50,
+          include: { order: { select: { orderNumber: true } } }
+        });
+      } catch (error) {
+        if (!isMissingNotificationActionTableError(error)) throw error;
+        notifications = [];
+      }
     }
 
     return {
@@ -251,9 +267,11 @@ async function readFailedPaymentNotificationAlertSources(): Promise<FailedPaymen
   }
 }
 
-export const failedPaymentNotificationAlertRepository = {
+export const failedPaymentNotificationAlertsService = {
   async summary(now = new Date()) {
     const sources = await readFailedPaymentNotificationAlertSources();
     return buildFailedPaymentNotificationAlertsSummary(sources.payments, sources.notifications, now);
   }
 };
+
+export const failedPaymentNotificationAlertRepository = failedPaymentNotificationAlertsService;
