@@ -1,10 +1,32 @@
 import type { LaunchReadinessHealthSummary } from '@/lib/analytics/launch-readiness-health';
+import type { SupportedLocale } from '@/lib/i18n/locales';
 
-const statusLabels = {
-  ready: 'Ready',
-  warning: 'Warning',
-  blocked: 'Blocked'
+type AdminLocale = 'en' | 'fa';
+
+const copy = {
+  en: {
+    eyebrow: 'Analytics',
+    title: 'Launch readiness health cards',
+    body: 'Condensed production-readiness cards for blockers, warnings, and ready systems.',
+    ready: 'Ready',
+    warning: 'Warning',
+    warnings: 'Warnings',
+    blocked: 'Blocked'
+  },
+  fa: {
+    eyebrow: 'تحلیل‌ها',
+    title: 'کارت‌های سلامت آمادگی راه‌اندازی',
+    body: 'کارت‌های خلاصه آمادگی تولید برای موارد آماده، هشدارها و انسدادها.',
+    ready: 'آماده',
+    warning: 'هشدار',
+    warnings: 'هشدارها',
+    blocked: 'مسدود'
+  }
 } as const;
+
+function localeKey(locale?: SupportedLocale | string | null): AdminLocale {
+  return locale?.toLowerCase().startsWith('fa') ? 'fa' : 'en';
+}
 
 const statusClasses = {
   ready: 'border-olive/25 bg-olive/5 text-olive',
@@ -21,23 +43,30 @@ function Metric({ label, value }: { label: string; value: string | number }) {
   );
 }
 
-export function AdminLaunchReadinessHealthPanel({ summary }: { summary: LaunchReadinessHealthSummary }) {
+export function AdminLaunchReadinessHealthPanel({ summary, locale }: { summary: LaunchReadinessHealthSummary; locale?: SupportedLocale | string | null }) {
+  const labels = copy[localeKey(locale)];
+  const statusLabels = {
+    ready: labels.ready,
+    warning: labels.warning,
+    blocked: labels.blocked
+  } as const;
+
   return (
     <section className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Analytics</p>
-          <h2 className="mt-1 text-2xl font-bold text-stone-950">Launch readiness health cards</h2>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">Condensed production-readiness cards for blockers, warnings, and ready systems.</p>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">{labels.eyebrow}</p>
+          <h2 className="mt-1 text-2xl font-bold text-stone-950">{labels.title}</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">{labels.body}</p>
         </div>
         <span className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] ${summary.launchBlocked ? 'bg-rose-100 text-rose-700' : 'bg-olive/10 text-olive'}`}>
-          {summary.launchBlocked ? 'Blocked' : 'Ready'}
+          {summary.launchBlocked ? labels.blocked : labels.ready}
         </span>
       </div>
       <div className="mt-6 grid gap-3 md:grid-cols-3">
-        <Metric label="Ready" value={summary.readyCount} />
-        <Metric label="Warnings" value={summary.warningCount} />
-        <Metric label="Blocked" value={summary.blockedCount} />
+        <Metric label={labels.ready} value={summary.readyCount} />
+        <Metric label={labels.warnings} value={summary.warningCount} />
+        <Metric label={labels.blocked} value={summary.blockedCount} />
       </div>
       <div className="mt-6 grid gap-3 lg:grid-cols-3">
         {summary.cards.map((card) => (
