@@ -4,8 +4,20 @@ import type { SupportedLocale } from '@/lib/i18n/locales';
 import type { InquiryAssignmentQueueFilter } from '@/lib/inquiries/inquiry-assignment-queue';
 
 type AdminLocale = 'en' | 'fa';
+type InquiryEmptyStateCopy = {
+  assignedToYou: string;
+  assignedToAnotherOwner: string;
+  withoutOwner: string;
+  noMatches: string;
+  noInquiries: string;
+  noMatchingAssignment: (assignment: string) => string;
+  tryFilters: string;
+  newInquiries: string;
+  clearAssignment: string;
+  clearAll: string;
+};
 
-const copy = {
+const copy: Record<AdminLocale, InquiryEmptyStateCopy> = {
   en: {
     assignedToYou: 'assigned to you',
     assignedToAnotherOwner: 'assigned to another owner',
@@ -30,7 +42,7 @@ const copy = {
     clearAssignment: 'پاک کردن فیلتر مالک',
     clearAll: 'پاک کردن همه فیلترهای درخواست'
   }
-} as const;
+};
 
 function localeKey(locale?: SupportedLocale | string | null): AdminLocale {
   return locale?.toLowerCase().startsWith('fa') ? 'fa' : 'en';
@@ -45,7 +57,7 @@ function adminHref(status?: string, search?: string, assignmentFilter?: InquiryA
   return query ? `/admin?${query}` : '/admin';
 }
 
-function assignmentLabel(assignmentFilter: InquiryAssignmentQueueFilter | undefined, labels: (typeof copy)['en']) {
+function assignmentLabel(assignmentFilter: InquiryAssignmentQueueFilter | undefined, labels: InquiryEmptyStateCopy) {
   if (assignmentFilter === 'mine') return labels.assignedToYou;
   if (assignmentFilter === 'assigned') return labels.assignedToAnotherOwner;
   if (assignmentFilter === 'unassigned') return labels.withoutOwner;
