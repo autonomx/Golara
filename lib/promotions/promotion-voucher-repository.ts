@@ -216,7 +216,8 @@ export async function createPromotionVoucher(input: PromotionVoucherInput) {
       "endsAt",
       "usageLimit",
       "minimumSubtotalCents",
-      "metadata"
+      "metadata",
+      "updatedAt"
     ) VALUES (
       ${id},
       ${voucher.code},
@@ -227,7 +228,8 @@ export async function createPromotionVoucher(input: PromotionVoucherInput) {
       ${voucher.endsAt},
       ${voucher.usageLimit},
       ${voucher.minimumSubtotalCents},
-      ${JSON.stringify(metadata)}::jsonb
+      ${JSON.stringify(metadata)}::jsonb,
+      CURRENT_TIMESTAMP
     )
     RETURNING
       "id",

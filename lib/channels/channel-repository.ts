@@ -160,7 +160,8 @@ export async function createStorefrontChannel(input: StorefrontChannelInput) {
       "locale",
       "isActive",
       "isDefault",
-      "metadata"
+      "metadata",
+      "updatedAt"
     ) VALUES (
       ${id},
       ${channel.slug},
@@ -169,7 +170,8 @@ export async function createStorefrontChannel(input: StorefrontChannelInput) {
       ${channel.locale},
       ${channel.isActive},
       ${channel.isDefault},
-      ${JSON.stringify(channel.metadata)}::jsonb
+      ${JSON.stringify(channel.metadata)}::jsonb,
+      CURRENT_TIMESTAMP
     )
     RETURNING
       "id",

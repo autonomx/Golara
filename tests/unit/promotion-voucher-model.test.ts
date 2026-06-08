@@ -26,6 +26,24 @@ function source(path: string) {
   return readFileSync(path, 'utf8');
 }
 
+async function withEnv<T>(overrides: Record<string, string | undefined>, callback: () => Promise<T> | T) {
+  const previous = new Map<string, string | undefined>();
+  for (const [key, value] of Object.entries(overrides)) {
+    previous.set(key, process.env[key]);
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+  }
+
+  try {
+    return await callback();
+  } finally {
+    for (const [key, value] of previous) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+}
+
 function voucherRecord(overrides: Partial<PromotionVoucherRecord> = {}): PromotionVoucherRecord {
   const now = new Date('2026-06-06T12:00:00.000Z');
   return {
@@ -123,13 +141,15 @@ export async function runPromotionVoucherModelTests() {
   assert.equal(isPromotionVoucherActiveForOrder(voucherRecord({ usageCount: 10, usageLimit: 10 }), 5000, now), false);
   assert.equal(isPromotionVoucherActiveForOrder(voucherRecord(), 4999, now), false);
 
-  assert.deepEqual(await listPromotionVouchers(), []);
-  assert.equal(await findPromotionVoucherByCode('summer25'), null);
-  await assert.rejects(() => createPromotionVoucher({
-    code: 'summer25',
-    promotionDiscountId: 'discount_123',
-    status: 'active'
-  }), /DATABASE_URL is not configured/);
+  await withEnv({ DATABASE_URL: undefined }, async () => {
+    assert.deepEqual(await listPromotionVouchers(), []);
+    assert.equal(await findPromotionVoucherByCode('summer25'), null);
+    await assert.rejects(() => createPromotionVoucher({
+      code: 'summer25',
+      promotionDiscountId: 'discount_123',
+      status: 'active'
+    }), /DATABASE_URL is not configured/);
+  });
 
   for (const marker of [
     'CREATE TABLE IF NOT EXISTS "PromotionVoucher"',

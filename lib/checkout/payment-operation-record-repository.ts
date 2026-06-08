@@ -112,6 +112,17 @@ function sameNullableNumber(left: number | null, right: number | null | undefine
   return left === (right ?? null);
 }
 
+function isMissingPaymentOperationRecordError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  const meta = typeof error === 'object' && error !== null && 'meta' in error ? (error as { meta?: { code?: unknown; message?: unknown } }).meta : undefined;
+  const code = typeof error === 'object' && error !== null && 'code' in error ? String((error as { code?: unknown }).code) : '';
+  return (
+    code === 'P2010' && meta?.code === '42P01' && String(meta.message ?? '').includes('PaymentOperationRecord')
+  ) || (
+    code === '42P01' && message.includes('PaymentOperationRecord')
+  ) || message.includes('relation "PaymentOperationRecord" does not exist');
+}
+
 function idempotencyConflicts(existing: PaymentOperationRecordRow, input: CreatePendingPaymentOperationRecordInput) {
   const conflicts: string[] = [];
   if (existing.orderId !== input.orderId) conflicts.push('orderId');
@@ -128,12 +139,17 @@ function idempotencyConflicts(existing: PaymentOperationRecordRow, input: Create
 
 export async function findPaymentOperationRecordByIdempotencyKey(idempotencyKey: string) {
   if (!hasDatabase()) return null;
-  const rows = await prisma.$queryRaw<PaymentOperationRecordRow[]>`
-    SELECT * FROM "PaymentOperationRecord"
-    WHERE "idempotencyKey" = ${idempotencyKey.trim()}
-    LIMIT 1
-  `;
-  return rows[0] ?? null;
+  try {
+    const rows = await prisma.$queryRaw<PaymentOperationRecordRow[]>`
+      SELECT * FROM "PaymentOperationRecord"
+      WHERE "idempotencyKey" = ${idempotencyKey.trim()}
+      LIMIT 1
+    `;
+    return rows[0] ?? null;
+  } catch (error) {
+    if (isMissingPaymentOperationRecordError(error)) return null;
+    throw error;
+  }
 }
 
 export async function createPendingPaymentOperationRecord(input: CreatePendingPaymentOperationRecordInput): Promise<CreatePendingPaymentOperationRecordResult> {
@@ -142,21 +158,27 @@ export async function createPendingPaymentOperationRecord(input: CreatePendingPa
   const idempotencyKey = input.idempotencyKey.trim();
   if (!idempotencyKey) return { status: 'unavailable', reason: 'idempotency_key_required' };
 
-  const inserted = await prisma.$queryRaw<PaymentOperationRecordRow[]>`
-    INSERT INTO "PaymentOperationRecord" (
-      "orderId", "paymentAttemptId", "orderNumber", "operationKind", "requestedAmountCents", "currency",
-      "originalPaymentAmountCents", "originalPaymentCurrency", "provider", "providerReference", "idempotencyKey",
-      "operatorId", "operatorLabel", "operatorEmail", "operatorReason", "previewDecision", "previewReasons",
-      "status", "transitionPlan", "metadata", "updatedAt"
-    ) VALUES (
-      ${input.orderId}, ${input.paymentAttemptId}, ${cleanText(input.orderNumber)}, ${cleanProvider(input.operationKind)}, ${input.requestedAmountCents}, ${cleanCurrency(input.currency)},
-      ${input.originalPaymentAmountCents ?? null}, ${input.originalPaymentCurrency ? cleanCurrency(input.originalPaymentCurrency) : null}, ${cleanProvider(input.provider)}, ${cleanText(input.providerReference)}, ${idempotencyKey},
-      ${cleanText(input.operatorId)}, ${cleanText(input.operatorLabel)}, ${cleanText(input.operatorEmail)}, ${cleanText(input.operatorReason)}, ${input.previewDecision.trim()}, ${input.previewReasons},
-      'pending', ${cleanObject(input.transitionPlan)}, ${cleanObject(input.metadata)}, CURRENT_TIMESTAMP
-    )
-    ON CONFLICT ("idempotencyKey") DO NOTHING
-    RETURNING *
-  `;
+  let inserted: PaymentOperationRecordRow[];
+  try {
+    inserted = await prisma.$queryRaw<PaymentOperationRecordRow[]>`
+      INSERT INTO "PaymentOperationRecord" (
+        "orderId", "paymentAttemptId", "orderNumber", "operationKind", "requestedAmountCents", "currency",
+        "originalPaymentAmountCents", "originalPaymentCurrency", "provider", "providerReference", "idempotencyKey",
+        "operatorId", "operatorLabel", "operatorEmail", "operatorReason", "previewDecision", "previewReasons",
+        "status", "transitionPlan", "metadata", "updatedAt"
+      ) VALUES (
+        ${input.orderId}, ${input.paymentAttemptId}, ${cleanText(input.orderNumber)}, ${cleanProvider(input.operationKind)}, ${input.requestedAmountCents}, ${cleanCurrency(input.currency)},
+        ${input.originalPaymentAmountCents ?? null}, ${input.originalPaymentCurrency ? cleanCurrency(input.originalPaymentCurrency) : null}, ${cleanProvider(input.provider)}, ${cleanText(input.providerReference)}, ${idempotencyKey},
+        ${cleanText(input.operatorId)}, ${cleanText(input.operatorLabel)}, ${cleanText(input.operatorEmail)}, ${cleanText(input.operatorReason)}, ${input.previewDecision.trim()}, ${input.previewReasons},
+        'pending', ${cleanObject(input.transitionPlan)}, ${cleanObject(input.metadata)}, CURRENT_TIMESTAMP
+      )
+      ON CONFLICT ("idempotencyKey") DO NOTHING
+      RETURNING *
+    `;
+  } catch (error) {
+    if (isMissingPaymentOperationRecordError(error)) return { status: 'unavailable', reason: 'database_unavailable' };
+    throw error;
+  }
 
   const created = inserted[0];
   if (created) return { status: 'created', record: created };
@@ -171,65 +193,85 @@ export async function createPendingPaymentOperationRecord(input: CreatePendingPa
 
 export async function markPaymentOperationRecordSubmitted(input: MarkPaymentOperationSubmittedInput): Promise<PaymentOperationRecordTransitionResult> {
   if (!hasDatabase()) return { status: 'unavailable', reason: 'database_unavailable' };
-  const rows = await prisma.$queryRaw<PaymentOperationRecordRow[]>`
-    UPDATE "PaymentOperationRecord"
-    SET "status" = 'submitted',
-        "providerOperationReference" = COALESCE(${cleanText(input.providerOperationReference)}, "providerOperationReference"),
-        "providerStatus" = COALESCE(${cleanText(input.providerStatus)}, "providerStatus"),
-        "metadata" = "metadata" || ${cleanObject(input.metadata)}::jsonb,
-        "submittedAt" = COALESCE("submittedAt", CURRENT_TIMESTAMP),
-        "updatedAt" = CURRENT_TIMESTAMP
-    WHERE "id" = ${input.id}
-      AND "status" IN ('pending', 'manual_review')
-    RETURNING *
-  `;
-  return rows[0] ? { status: 'updated', record: rows[0] } : { status: 'not_found' };
+  try {
+    const rows = await prisma.$queryRaw<PaymentOperationRecordRow[]>`
+      UPDATE "PaymentOperationRecord"
+      SET "status" = 'submitted',
+          "providerOperationReference" = COALESCE(${cleanText(input.providerOperationReference)}, "providerOperationReference"),
+          "providerStatus" = COALESCE(${cleanText(input.providerStatus)}, "providerStatus"),
+          "metadata" = "metadata" || ${cleanObject(input.metadata)}::jsonb,
+          "submittedAt" = COALESCE("submittedAt", CURRENT_TIMESTAMP),
+          "updatedAt" = CURRENT_TIMESTAMP
+      WHERE "id" = ${input.id}
+        AND "status" IN ('pending', 'manual_review')
+      RETURNING *
+    `;
+    return rows[0] ? { status: 'updated', record: rows[0] } : { status: 'not_found' };
+  } catch (error) {
+    if (isMissingPaymentOperationRecordError(error)) return { status: 'unavailable', reason: 'database_unavailable' };
+    throw error;
+  }
 }
 
 export async function markPaymentOperationRecordSucceeded(input: MarkPaymentOperationSucceededInput): Promise<PaymentOperationRecordTransitionResult> {
   if (!hasDatabase()) return { status: 'unavailable', reason: 'database_unavailable' };
-  const rows = await prisma.$queryRaw<PaymentOperationRecordRow[]>`
-    UPDATE "PaymentOperationRecord"
-    SET "status" = 'succeeded',
-        "providerOperationReference" = COALESCE(${cleanText(input.providerOperationReference)}, "providerOperationReference"),
-        "providerStatus" = COALESCE(${cleanText(input.providerStatus)}, "providerStatus"),
-        "metadata" = "metadata" || ${cleanObject(input.metadata)}::jsonb,
-        "completedAt" = COALESCE("completedAt", CURRENT_TIMESTAMP),
-        "updatedAt" = CURRENT_TIMESTAMP
-    WHERE "id" = ${input.id}
-      AND "status" IN ('pending', 'submitted', 'manual_review')
-    RETURNING *
-  `;
-  return rows[0] ? { status: 'updated', record: rows[0] } : { status: 'not_found' };
+  try {
+    const rows = await prisma.$queryRaw<PaymentOperationRecordRow[]>`
+      UPDATE "PaymentOperationRecord"
+      SET "status" = 'succeeded',
+          "providerOperationReference" = COALESCE(${cleanText(input.providerOperationReference)}, "providerOperationReference"),
+          "providerStatus" = COALESCE(${cleanText(input.providerStatus)}, "providerStatus"),
+          "metadata" = "metadata" || ${cleanObject(input.metadata)}::jsonb,
+          "completedAt" = COALESCE("completedAt", CURRENT_TIMESTAMP),
+          "updatedAt" = CURRENT_TIMESTAMP
+      WHERE "id" = ${input.id}
+        AND "status" IN ('pending', 'submitted', 'manual_review')
+      RETURNING *
+    `;
+    return rows[0] ? { status: 'updated', record: rows[0] } : { status: 'not_found' };
+  } catch (error) {
+    if (isMissingPaymentOperationRecordError(error)) return { status: 'unavailable', reason: 'database_unavailable' };
+    throw error;
+  }
 }
 
 export async function markPaymentOperationRecordFailed(input: MarkPaymentOperationFailedInput): Promise<PaymentOperationRecordTransitionResult> {
   if (!hasDatabase()) return { status: 'unavailable', reason: 'database_unavailable' };
-  const rows = await prisma.$queryRaw<PaymentOperationRecordRow[]>`
-    UPDATE "PaymentOperationRecord"
-    SET "status" = 'failed',
-        "providerOperationReference" = COALESCE(${cleanText(input.providerOperationReference)}, "providerOperationReference"),
-        "providerStatus" = COALESCE(${cleanText(input.providerStatus)}, "providerStatus"),
-        "errorCategory" = COALESCE(${cleanText(input.errorCategory)}, "errorCategory"),
-        "retryable" = ${input.retryable ?? false},
-        "metadata" = "metadata" || ${cleanObject(input.metadata)}::jsonb,
-        "completedAt" = COALESCE("completedAt", CURRENT_TIMESTAMP),
-        "updatedAt" = CURRENT_TIMESTAMP
-    WHERE "id" = ${input.id}
-      AND "status" IN ('pending', 'submitted', 'manual_review')
-    RETURNING *
-  `;
-  return rows[0] ? { status: 'updated', record: rows[0] } : { status: 'not_found' };
+  try {
+    const rows = await prisma.$queryRaw<PaymentOperationRecordRow[]>`
+      UPDATE "PaymentOperationRecord"
+      SET "status" = 'failed',
+          "providerOperationReference" = COALESCE(${cleanText(input.providerOperationReference)}, "providerOperationReference"),
+          "providerStatus" = COALESCE(${cleanText(input.providerStatus)}, "providerStatus"),
+          "errorCategory" = COALESCE(${cleanText(input.errorCategory)}, "errorCategory"),
+          "retryable" = ${input.retryable ?? false},
+          "metadata" = "metadata" || ${cleanObject(input.metadata)}::jsonb,
+          "completedAt" = COALESCE("completedAt", CURRENT_TIMESTAMP),
+          "updatedAt" = CURRENT_TIMESTAMP
+      WHERE "id" = ${input.id}
+        AND "status" IN ('pending', 'submitted', 'manual_review')
+      RETURNING *
+    `;
+    return rows[0] ? { status: 'updated', record: rows[0] } : { status: 'not_found' };
+  } catch (error) {
+    if (isMissingPaymentOperationRecordError(error)) return { status: 'unavailable', reason: 'database_unavailable' };
+    throw error;
+  }
 }
 
 export async function listPaymentOperationRecordsForOrder(orderId: string, limit = 25) {
   if (!hasDatabase()) return [];
-  return prisma.$queryRaw<PaymentOperationRecordRow[]>`
-    SELECT * FROM "PaymentOperationRecord"
-    WHERE "orderId" = ${orderId}
-    ORDER BY "createdAt" DESC
-    LIMIT ${Math.max(1, Math.min(limit, 100))}
-  `;
+  try {
+    return await prisma.$queryRaw<PaymentOperationRecordRow[]>`
+      SELECT * FROM "PaymentOperationRecord"
+      WHERE "orderId" = ${orderId}
+      ORDER BY "createdAt" DESC
+      LIMIT ${Math.max(1, Math.min(limit, 100))}
+    `;
+  } catch (error) {
+    if (isMissingPaymentOperationRecordError(error)) return [];
+    throw error;
+  }
 }
 
 export const paymentOperationRecordRepository = {

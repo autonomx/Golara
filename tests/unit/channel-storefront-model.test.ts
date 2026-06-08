@@ -24,6 +24,24 @@ function source(path: string) {
   return readFileSync(path, 'utf8');
 }
 
+async function withEnv<T>(overrides: Record<string, string | undefined>, callback: () => Promise<T> | T) {
+  const previous = new Map<string, string | undefined>();
+  for (const [key, value] of Object.entries(overrides)) {
+    previous.set(key, process.env[key]);
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+  }
+
+  try {
+    return await callback();
+  } finally {
+    for (const [key, value] of previous) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+}
+
 function channelRecord(overrides: Partial<StorefrontChannelRecord> = {}): StorefrontChannelRecord {
   const now = new Date('2026-06-06T12:00:00.000Z');
   return {
@@ -128,9 +146,11 @@ export async function runChannelStorefrontModelTests() {
   });
   assert.deepEqual(resolveStorefrontChannelDefaults([]), buildFallbackStorefrontChannelDefaults());
 
-  assert.deepEqual(await listStorefrontChannels(), []);
-  assert.deepEqual(await getDefaultStorefrontChannelDefaults(), buildFallbackStorefrontChannelDefaults());
-  await assert.rejects(() => createStorefrontChannel({ name: 'Default' }), /DATABASE_URL is not configured/);
+  await withEnv({ DATABASE_URL: undefined }, async () => {
+    assert.deepEqual(await listStorefrontChannels(), []);
+    assert.deepEqual(await getDefaultStorefrontChannelDefaults(), buildFallbackStorefrontChannelDefaults());
+    await assert.rejects(() => createStorefrontChannel({ name: 'Default' }), /DATABASE_URL is not configured/);
+  });
 
   assert.match(migration, /CREATE TABLE IF NOT EXISTS "StorefrontChannel"/);
   assert.match(migration, /"slug" TEXT NOT NULL/);
