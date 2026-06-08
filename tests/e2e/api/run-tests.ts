@@ -27,6 +27,7 @@ import {
   runAdminSettingsContentActionTests
 } from './admin-content-tests';
 import { runAdminExportBoundaryTests } from './admin-export-boundary-tests';
+import { runExtraAdminPageRenderApiTests } from './admin-page-render-extra-tests';
 import { runAdminHomepageMerchandisingActionTests } from './admin-homepage-merchandising-tests';
 import { runAdminSettingsLongTailActionTests } from './admin-settings-longtail-tests';
 import { runAdminBoundaryPostTests } from './admin-mutation-boundary-tests';
@@ -95,6 +96,7 @@ async function main() {
     await runAdminMediaLibraryActionTests(fixture);
     await runAdminCatalogTranslationEdgeTests(fixture);
     await runAdminProductCatalogActionTests(fixture);
+    await runExtraAdminPageRenderApiTests();
     await runAccountAddressBoundaryActionTests(fixture);
     await runDirectProductCheckoutBoundaryTests(fixture);
     await runAdminOrderOperationsActionTests(fixture);
