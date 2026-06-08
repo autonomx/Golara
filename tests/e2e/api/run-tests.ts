@@ -6,6 +6,18 @@ import {
   getLifecycleTestDbConfig
 } from '@/tests/e2e/lifecycle/test-db';
 import { runAccountWebhookNegativeTests } from './account-webhook-negative-tests';
+import {
+  runAdminRolePermissionMatrixAdvancedTests,
+  runAuditLogAdvancedTests,
+  runBolaObjectAuthorizationAdvancedTests,
+  runImportExportJobLifecycleAdvancedTests,
+  runMediaUploadBoundaryAdvancedTests,
+  runPaginationFilterBoundaryAdvancedTests,
+  runPaymentOperationRawTableAdvancedTests,
+  runRateLimitResourceAbuseAdvancedTests,
+  runRawSettingsSurfaceAdvancedTests,
+  runWebhookEdgeCaseAdvancedTests
+} from './admin-advanced-gap-tests';
 import { runAdminAuthBoundaryTests } from './admin-auth-boundary-tests';
 import { runAdminCustomerInquiryActionTests } from './admin-customer-inquiry-tests';
 import { runAdminDiscountWorkspaceTests } from './admin-discount-tests';
@@ -91,6 +103,16 @@ async function main() {
     await runSeedImageRouteTests();
     await runOrderReturnRouteTests(fixture);
     await runWebhookRouteTests(fixture);
+    await runAdminRolePermissionMatrixAdvancedTests();
+    await runRawSettingsSurfaceAdvancedTests(fixture);
+    await runImportExportJobLifecycleAdvancedTests(fixture);
+    await runPaginationFilterBoundaryAdvancedTests(fixture);
+    await runBolaObjectAuthorizationAdvancedTests(fixture);
+    await runRateLimitResourceAbuseAdvancedTests(fixture);
+    await runPaymentOperationRawTableAdvancedTests(fixture);
+    await runWebhookEdgeCaseAdvancedTests(fixture);
+    await runMediaUploadBoundaryAdvancedTests(fixture);
+    await runAuditLogAdvancedTests(fixture);
 
     console.log('api lifecycle HTTP E2E tests passed');
   } finally {
