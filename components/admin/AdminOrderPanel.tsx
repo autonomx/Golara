@@ -4,6 +4,7 @@ import type { CheckoutOrderSummary } from '@/lib/catalog';
 import { formatMinorUnitAmount } from '@/lib/catalog';
 import type { AdminOrderFilters, AdminOrderPage } from '@/lib/checkout/admin-order-repository';
 import { CHECKOUT_FULFILLMENT_STATUSES, CHECKOUT_ORDER_STATUSES, CHECKOUT_PAYMENT_STATUSES } from '@/lib/checkout/checkout-state-machine';
+import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 
 const orderStatuses = [...CHECKOUT_ORDER_STATUSES];
@@ -186,8 +187,9 @@ function OrderStatusForm({ order, labels }: { order: CheckoutOrderSummary; label
   );
 }
 
-export function AdminOrderPanel({ orderPage, filters, locale }: { orderPage: AdminOrderPage; filters: AdminOrderFilters; locale?: SupportedLocale | string | null }) {
-  const labels = copy[localeKey(locale)];
+export async function AdminOrderPanel({ orderPage, filters, locale }: { orderPage: AdminOrderPage; filters: AdminOrderFilters; locale?: SupportedLocale | string | null }) {
+  const activeLocale = locale ?? await resolveStorefrontLocale();
+  const labels = copy[localeKey(activeLocale)];
   const hasFilters = Boolean(filters.status || filters.paymentStatus || filters.fulfillmentStatus || filters.search);
   const orders = orderPage.orders;
 
@@ -251,7 +253,7 @@ export function AdminOrderPanel({ orderPage, filters, locale }: { orderPage: Adm
             <tbody className="divide-y divide-rosewood/10 bg-white text-stone-700">
               {orders.map((order) => (
                 <tr key={order.id}>
-                  <td className="whitespace-nowrap px-4 py-3 text-xs text-stone-500">{formatDate(order.createdAt, locale)}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-xs text-stone-500">{formatDate(order.createdAt, activeLocale)}</td>
                   <td className="px-4 py-3 align-top">
                     <Link href={`/admin/orders/${order.id}`} className="font-semibold text-rosewood underline decoration-rosewood/30 underline-offset-4 outline-none transition hover:decoration-rosewood focus-visible:ring-4 focus-visible:ring-olive/20">
                       {order.orderNumber}
