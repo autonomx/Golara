@@ -53,7 +53,7 @@ export default async function ProductPage({
   const category = await getCategoryBySlug(product.category, { locale });
   const dbReady = hasDatabase();
   const checkoutReadiness = getPaymentGatewayReadiness(getPaymentGatewayConfig(process.env), process.env);
-  const checkoutPolicy = getProductCheckoutPolicy({ product, dbReady, checkoutReadiness });
+  const checkoutPolicy = getProductCheckoutPolicy({ product, dbReady, checkoutReadiness, locale });
 
   return (
     <main id="main-content" tabIndex={-1} dir={getStorefrontCopyDirection(locale)}>
