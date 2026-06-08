@@ -53,19 +53,19 @@ export default async function ProductPage({
   const category = await getCategoryBySlug(product.category, { locale });
   const dbReady = hasDatabase();
   const checkoutReadiness = getPaymentGatewayReadiness(getPaymentGatewayConfig(process.env), process.env);
-  const checkoutPolicy = getProductCheckoutPolicy({ product, dbReady, checkoutReadiness });
+  const checkoutPolicy = getProductCheckoutPolicy({ product, dbReady, checkoutReadiness, locale });
 
   return (
     <main id="main-content" tabIndex={-1} dir={getStorefrontCopyDirection(locale)}>
       <JsonLdScript data={buildProductJsonLd(product)} />
       <JsonLdScript data={buildProductBreadcrumbJsonLd(product, category)} />
-      <SiteHeader returnTo={`/products/${slug}`} />
+      <SiteHeader returnTo={`/products/${slug}`} locale={locale} />
       <section className="mx-auto max-w-7xl px-5 pt-10">
         <PathTrail items={[{ label: getStorefrontCopy('common.home', locale), href: '/' }, { label: category?.title || product.categoryTitle || product.category, href: `/categories/${product.category}` }, { label: product.title }]} />
       </section>
       <ProductDetail product={product} category={category} checkoutPolicy={checkoutPolicy} locale={locale} />
-      <ProductCheckoutForm product={product} dbReady={dbReady} checkout={checkout} checkoutPolicy={checkoutPolicy} />
-      {checkoutPolicy.showInquiryForm ? <ProductInquiryForm product={product} dbReady={dbReady} inquiry={inquiry} /> : null}
+      <ProductCheckoutForm product={product} dbReady={dbReady} checkout={checkout} checkoutPolicy={checkoutPolicy} locale={locale} />
+      {checkoutPolicy.showInquiryForm ? <ProductInquiryForm product={product} dbReady={dbReady} inquiry={inquiry} locale={locale} /> : null}
     </main>
   );
 }

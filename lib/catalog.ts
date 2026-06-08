@@ -1,11 +1,11 @@
-export function formatMinorUnitAmount(amount: number, currency: string) {
+export function formatMinorUnitAmount(amount: number, currency: string, locale = 'en-CA') {
   const normalizedCurrency = currency?.trim().toUpperCase() || 'CAD';
   const zeroDecimalCurrencies = new Set(['IRR', 'JPY', 'KRW', 'VND']);
   const divisor = zeroDecimalCurrencies.has(normalizedCurrency) ? 1 : 100;
   const value = Number.isFinite(amount) ? amount / divisor : 0;
 
   try {
-    return new Intl.NumberFormat('en-CA', {
+    return new Intl.NumberFormat(locale, {
       style: 'currency',
       currency: normalizedCurrency,
       maximumFractionDigits: zeroDecimalCurrencies.has(normalizedCurrency) ? 0 : 2
