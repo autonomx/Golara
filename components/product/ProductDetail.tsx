@@ -5,7 +5,7 @@ import type { Category, Product } from '@/lib/catalog';
 import { formatPrice } from '@/lib/catalog-pricing';
 import type { ProductCheckoutPolicy } from '@/lib/checkout/product-checkout-policy';
 import type { SupportedLocale } from '@/lib/i18n/locales';
-import { getStorefrontCopy } from '@/lib/localization/storefront-copy';
+import { formatStorefrontCopy, getStorefrontCopy } from '@/lib/localization/storefront-copy';
 
 const categoryLinkClass = 'rounded-full outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20';
 const whatsAppLinkClass = 'rounded-full border border-rosewood/20 px-6 py-3 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20';
@@ -30,7 +30,7 @@ export function ProductDetail({ product, category, checkoutPolicy, locale }: { p
         <h1 className="mt-4 font-display text-6xl text-rosewood">{product.title}</h1>
         <p className="mt-2 text-sm uppercase tracking-[0.25em] text-rosewood/50">{product.code}</p>
         <p className="mt-6 text-lg leading-8 text-stone-700">{product.description}</p>
-        <div className="mt-8 text-3xl font-semibold text-rosewood">{formatPrice(product)}</div>
+        <div className="mt-8 text-3xl font-semibold text-rosewood">{formatPrice(product, locale)}</div>
         <div className="mt-4 rounded-2xl border border-olive/20 bg-cream p-4 text-sm text-stone-700">
           <p className="font-semibold text-rosewood">{checkoutPolicy.summary}</p>
           <p className="mt-1 leading-6">{checkoutPolicy.detail}</p>
@@ -43,7 +43,7 @@ export function ProductDetail({ product, category, checkoutPolicy, locale }: { p
               <input type="hidden" name="currency" value={product.currency} />
               {purchasableVariants.length > 1 ? (
                 <>
-                  <label className="sr-only" htmlFor={`variant-${product.slug}`}>Variant</label>
+                  <label className="sr-only" htmlFor={`variant-${product.slug}`}>{copy('product.variant')}</label>
                   <select id={`variant-${product.slug}`} name="variantId" defaultValue={purchasableVariants[0]?.id} disabled={!canAddToCart} className="rounded-full border border-rosewood/15 bg-white px-4 py-3 text-sm font-semibold text-rosewood outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100 disabled:text-stone-400">
                     {purchasableVariants.map((variant) => <option key={variant.id} value={variant.id}>{variant.name} / {variant.sku}</option>)}
                   </select>
@@ -58,7 +58,7 @@ export function ProductDetail({ product, category, checkoutPolicy, locale }: { p
               </button>
             </form>
           ) : null}
-          <a href={`https://wa.me/?text=I%20am%20interested%20in%20${encodeURIComponent(product.title)}`} className={whatsAppLinkClass}>{copy('product.orderByWhatsApp')}</a>
+          <a href={`https://wa.me/?text=${encodeURIComponent(formatStorefrontCopy('product.interestedMessage', locale, { title: product.title }))}`} className={whatsAppLinkClass}>{copy('product.orderByWhatsApp')}</a>
           <span className="rounded-full border border-rosewood/20 px-6 py-3 text-sm font-semibold text-rosewood">
             {product.availableToday ? copy('product.availableToday') : copy('product.preOrderRequired')}
           </span>
