@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { DEFAULT_LOCALE, FALLBACK_LOCALE, SUPPORTED_LOCALES, fallbackLocaleOrder, isSupportedLocale, localeDirection, normalizeLocale } from '../../lib/i18n/locales';
 import { localizedField, selectPublishedTranslation, selectTranslatedContent } from '../../lib/i18n/translated-content';
+import { storefrontCopy } from '../../lib/localization/storefront-copy';
 
 export async function runI18nLocalizationTests() {
   assert.equal(DEFAULT_LOCALE, 'fa-IR');
@@ -31,6 +32,14 @@ export async function runI18nLocalizationTests() {
   assert.deepEqual(fallbackLocaleOrder('english'), ['en-CA', 'fa-IR']);
   assert.deepEqual(fallbackLocaleOrder(undefined), ['fa-IR', 'en-CA']);
   assert.deepEqual(fallbackLocaleOrder('bad'), ['fa-IR', 'en-CA']);
+
+  assert.deepEqual(Object.keys(storefrontCopy.fa).sort(), Object.keys(storefrontCopy.en).sort());
+  for (const [locale, copy] of Object.entries(storefrontCopy)) {
+    for (const [key, value] of Object.entries(copy)) {
+      assert.equal(typeof value, 'string', `${locale}.${key} should be a string`);
+      assert.notEqual(value.trim(), '', `${locale}.${key} should not be blank`);
+    }
+  }
 
   const translations = [
     { locale: 'fa-IR', title: 'رز', description: 'فارسی', isPublished: true },
