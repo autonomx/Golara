@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { assertAdminAuthenticated, getAdminIdentity } from '@/lib/admin-auth';
+import { assertAdminRole } from '@/lib/admin-auth';
 import { listInquiries } from '@/lib/cms/catalog-repository';
 import { filterInquiriesByAssignmentQueue, parseInquiryAssignmentQueueFilter } from '@/lib/inquiries/inquiry-assignment-queue';
 import { createInquiryReportRows } from '@/lib/inquiries/inquiry-reporting';
@@ -14,13 +14,17 @@ function csvRow(values: unknown[]) {
 }
 
 export async function GET(request: Request) {
-  await assertAdminAuthenticated();
+  let identity;
+  try {
+    identity = await assertAdminRole('staff');
+  } catch {
+    return NextResponse.json({ status: 'unauthorized' }, { status: 401 });
+  }
 
   const url = new URL(request.url);
   const status = url.searchParams.get('inquiryStatus') ?? undefined;
   const search = url.searchParams.get('inquirySearch') ?? undefined;
   const assignmentQueue = parseInquiryAssignmentQueueFilter(url.searchParams.get('inquiryAssignment'));
-  const identity = await getAdminIdentity();
   const inquiries = filterInquiriesByAssignmentQueue(await listInquiries(status, search), assignmentQueue, identity);
   const reportRows = createInquiryReportRows(inquiries, identity);
 

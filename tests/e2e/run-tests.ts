@@ -48,7 +48,7 @@ function runE2eLifecycleDbHarnessContractTests() {
 function runE2eApiHarnessContractTests() {
   const scripts = pkgScripts();
   assert.equal(scripts['test:e2e:api']?.includes('tests/e2e/api/run-tests.ts'), true);
-  assertContains('tests/e2e/api/run-tests.ts', ['prepareApiFixture', 'startNextServer', 'runPublicReadRouteTests', 'runCartBoundaryTests', 'runLocaleCurrencyMatrixTests', 'runCartCheckoutNegativeTests', 'runAccountWebhookNegativeTests', 'runAdminAuthBoundaryTests', 'runAdminExportBoundaryTests', 'runAdminBoundaryPostTests', 'runWebhookRouteTests']);
+  assertContains('tests/e2e/api/run-tests.ts', ['prepareApiFixture', 'startNextServer', 'runPublicReadRouteTests', 'runCartBoundaryTests', 'runLocaleCurrencyMatrixTests', 'runCartCheckoutNegativeTests', 'runAccountWebhookNegativeTests', 'runAdminAuthBoundaryTests', 'runAdminExportBoundaryTests', 'runAdminBoundaryPostTests', 'runAdminCustomerInquiryActionTests', 'runAdminSettingsLongTailActionTests', 'runAdminDiscountWorkspaceTests', 'runAdminHomepageMerchandisingActionTests', 'runAdminCatalogTranslationEdgeTests', 'runAccountAddressBoundaryActionTests', 'runDirectProductCheckoutBoundaryTests', 'runAdminOrderNotificationContractTests', 'runAdminPaymentReadOnlyPageTests', 'runSeedImageRouteTests', 'runWebhookRouteTests']);
   assertContains('tests/e2e/api/shared.ts', ['E2E_DATABASE_URL', 'DATABASE_URL', 'CookieJar', 'submitServerAction']);
   assertContains('tests/e2e/api/storefront-account-tests.ts', ['API checkout action order', 'API E2E Inquiry Customer']);
   assertContains('tests/e2e/api/cart-boundary-tests.ts', ['api-e2e-zero-quantity-cart', 'api-e2e-remove-line-cart', 'api-e2e-unknown-cart-token', 'api-e2e-inactive-line-cart', 'API Boundary Deluxe']);
@@ -58,6 +58,11 @@ function runE2eApiHarnessContractTests() {
   assertContains('tests/e2e/api/admin-auth-boundary-tests.ts', ['tampered-admin-session-cookie', '/admin/products/export', '/admin/orders/csv']);
   assertContains('tests/e2e/api/admin-export-boundary-tests.ts', ['API-E2E-CSV-1001', 'CSV "Quoted", Customer', 'API CSV "Quoted", Bouquet']);
   assertContains('tests/e2e/api/admin-mutation-boundary-tests.ts', ['API-E2E-ADMIN-BOUNDARY-1001', 'missing-product-id', 'missing-variant-id']);
+  assertContains('tests/e2e/api/admin-customer-inquiry-tests.ts', ['API E2E Admin Customer Updated', 'API E2E inquiry admin note', 'api-e2e-inquiry-export', 'follow-up-added']);
+  assertContains('tests/e2e/api/admin-settings-longtail-tests.ts', ['Golara API E2E Maintenance', 'isMaintenanceMode', 'API E2E Footer Navigation', 'opensInNewTab', 'settings.storefront_navigation.update']);
+  assertContains('tests/e2e/api/admin-discount-tests.ts', ['API E2E Summer Roses', 'API-E2E-SUMMER-15', 'API-E2E-CREDIT-25', '1 rule']);
+  assertContains('tests/e2e/api/admin-homepage-merchandising-tests.ts', ['API E2E Homepage Occasion', 'homepage-category-added', 'homepage-category-removed', 'homepage-featured-added']);
+  assertContains('tests/e2e/api/admin-remaining-gap-tests.ts', ['API E2E Homepage Translation', 'API E2E Delete Boundary', 'API-E2E-DIRECT-INACTIVE', 'order.notification.queue', '/admin/payments/settlement', '/seed-images/real-photo/standard-bouquet']);
   assertContains('tests/e2e/api/admin-content-tests.ts', ['store-settings-updated', 'homepage-updated', 'media-created']);
   assertContains('tests/e2e/api/admin-catalog-tests.ts', ['API-E2E-PREMIUM-001', 'variant-location-stock-updated']);
   assertContains('tests/e2e/api/admin-order-tests.ts', ['API-E2E-ADMIN-EDIT-1001', 'manual-payment-refunded', 'API E2E admin discount clamp', "quantity', '0'"]);
@@ -81,6 +86,11 @@ function runE2eScriptContractTests() {
     'tests/e2e/api/admin-auth-boundary-tests.ts',
     'tests/e2e/api/admin-export-boundary-tests.ts',
     'tests/e2e/api/admin-mutation-boundary-tests.ts',
+    'tests/e2e/api/admin-customer-inquiry-tests.ts',
+    'tests/e2e/api/admin-settings-longtail-tests.ts',
+    'tests/e2e/api/admin-discount-tests.ts',
+    'tests/e2e/api/admin-homepage-merchandising-tests.ts',
+    'tests/e2e/api/admin-remaining-gap-tests.ts',
     'tests/e2e/api/admin-content-tests.ts',
     'tests/e2e/api/admin-catalog-tests.ts',
     'tests/e2e/api/admin-order-tests.ts',

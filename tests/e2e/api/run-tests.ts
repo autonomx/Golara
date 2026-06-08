@@ -7,15 +7,27 @@ import {
 } from '@/tests/e2e/lifecycle/test-db';
 import { runAccountWebhookNegativeTests } from './account-webhook-negative-tests';
 import { runAdminAuthBoundaryTests } from './admin-auth-boundary-tests';
+import { runAdminCustomerInquiryActionTests } from './admin-customer-inquiry-tests';
+import { runAdminDiscountWorkspaceTests } from './admin-discount-tests';
 import {
   runAdminHomepageContentActionTests,
   runAdminMediaLibraryActionTests,
   runAdminSettingsContentActionTests
 } from './admin-content-tests';
 import { runAdminExportBoundaryTests } from './admin-export-boundary-tests';
+import { runAdminHomepageMerchandisingActionTests } from './admin-homepage-merchandising-tests';
+import { runAdminSettingsLongTailActionTests } from './admin-settings-longtail-tests';
 import { runAdminBoundaryPostTests } from './admin-mutation-boundary-tests';
 import { runAdminProductCatalogActionTests } from './admin-catalog-tests';
 import { runAdminOrderOperationsActionTests } from './admin-order-tests';
+import {
+  runAccountAddressBoundaryActionTests,
+  runAdminCatalogTranslationEdgeTests,
+  runAdminOrderNotificationContractTests,
+  runAdminPaymentReadOnlyPageTests,
+  runDirectProductCheckoutBoundaryTests,
+  runSeedImageRouteTests
+} from './admin-remaining-gap-tests';
 import { runCartBoundaryTests } from './cart-boundary-tests';
 import { runCartCheckoutNegativeTests } from './cart-checkout-negative-tests';
 import { prepareApiFixture } from './fixture';
@@ -62,11 +74,21 @@ async function main() {
     await runAdminProtectedRouteAndActionTests(fixture);
     await runAdminExportBoundaryTests(fixture);
     await runAdminBoundaryPostTests(fixture);
+    await runAdminCustomerInquiryActionTests(fixture);
     await runAdminSettingsContentActionTests(fixture);
+    await runAdminSettingsLongTailActionTests(fixture);
+    await runAdminDiscountWorkspaceTests(fixture);
+    await runAdminHomepageMerchandisingActionTests(fixture);
     await runAdminHomepageContentActionTests(fixture);
     await runAdminMediaLibraryActionTests(fixture);
+    await runAdminCatalogTranslationEdgeTests(fixture);
     await runAdminProductCatalogActionTests(fixture);
+    await runAccountAddressBoundaryActionTests(fixture);
+    await runDirectProductCheckoutBoundaryTests(fixture);
     await runAdminOrderOperationsActionTests(fixture);
+    await runAdminOrderNotificationContractTests();
+    await runAdminPaymentReadOnlyPageTests(fixture);
+    await runSeedImageRouteTests();
     await runOrderReturnRouteTests(fixture);
     await runWebhookRouteTests(fixture);
 
