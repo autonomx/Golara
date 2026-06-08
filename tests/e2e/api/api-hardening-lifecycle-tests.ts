@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict';
 import { source } from './api-hardening-source';
-import type { ApiFixture } from './shared';
+import {
+  appendServerActionFields,
+  createAdminCookieJar,
+  request,
+  responseText,
+  submitServerAction,
+  type ApiFixture
+} from './shared';
 
 export async function runConcurrencyAndIdempotencyHardeningTests(fixture: ApiFixture) {
   await ensurePaymentOperationRecordTable(fixture);
@@ -120,6 +127,55 @@ export async function runAsyncWorkflowHardeningTests(fixture: ApiFixture) {
   const settingsActions = source('app/admin/settings/actions.ts');
   assert.match(settingsActions, /updateImportExportJobTrackingAction/);
   assert.match(settingsActions, /updateWebhookConfigurationAction/);
+}
+
+export async function runParallelAdminMutationPressureHardeningTests(fixture: ApiFixture) {
+  const adminJar = createAdminCookieJar();
+  const order = await fixture.prisma.checkoutOrder.create({
+    data: {
+      orderNumber: 'API-E2E-HARDENING-PARALLEL-1001',
+      publicLookupToken: 'api-e2e-hardening-parallel-token',
+      status: 'draft',
+      checkoutMode: 'staff',
+      currency: 'TOMAN',
+      recipientName: 'API E2E Parallel Recipient',
+      recipientPhone: '+16045559912'
+    }
+  });
+  const detailPath = `/admin/orders/${order.id}`;
+  const html = await responseText(await request(detailPath, { headers: { cookie: adminJar.header() } }));
+  const forms = ['API E2E parallel note A', 'API E2E parallel note B'].map((note) => {
+    const form = new FormData();
+    appendServerActionFields(form, html, 'name="note"');
+    form.set('note', note);
+    return form;
+  });
+  const responses = await Promise.all(forms.map((form) => submitServerAction(detailPath, form, adminJar)));
+  for (const response of responses) {
+    assert.equal([302, 303, 307, 308, 500].includes(response.status), true);
+  }
+  const createdNotes = await fixture.prisma.checkoutOrderTimelineEvent.count({
+    where: {
+      orderId: order.id,
+      type: 'staff_note',
+      note: { in: ['API E2E parallel note A', 'API E2E parallel note B'] }
+    }
+  });
+  assert.equal(createdNotes, responses.filter((response) => [302, 303, 307, 308].includes(response.status)).length);
+  assert.ok(createdNotes >= 1);
+}
+
+export async function runOrderNotificationUiReadinessHardeningTests() {
+  const orderActions = source('app/admin/order-actions.ts');
+  const orderDetailPage = source('app/admin/orders/[orderId]/page.tsx');
+  const repository = source('lib/checkout/admin-order-notification-repository.ts');
+
+  assert.match(orderActions, /export async function queueOrderNotificationAction/);
+  assert.match(orderActions, /export async function recordOrderNotificationAttemptAction/);
+  assert.match(repository, /ADMIN_ORDER_NOTIFICATION_CHANNELS = \['email', 'sms'\]/);
+  assert.match(repository, /Unsupported order notification channel/);
+  assert.doesNotMatch(orderDetailPage, /queueOrderNotificationAction/);
+  assert.doesNotMatch(orderDetailPage, /recordOrderNotificationAttemptAction/);
 }
 
 async function ensurePaymentOperationRecordTable(fixture: ApiFixture) {

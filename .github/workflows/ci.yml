@@ -37,6 +37,10 @@ jobs:
         run: npm run test:nonbrowser > ci-results/10-test-nonbrowser.log 2>&1
       - name: E2E contract tests
         run: npm run test:e2e > ci-results/11-test-e2e.log 2>&1
+      - name: Production-like E2E contracts
+        env:
+          NODE_ENV: production
+        run: npm run test:e2e > ci-results/11b-test-e2e-production-contracts.log 2>&1
       - name: Full-suite summary
         run: npm run test:all > ci-results/12-test-all.log 2>&1
       - name: Coverage summary

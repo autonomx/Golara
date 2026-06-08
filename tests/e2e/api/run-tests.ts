@@ -25,8 +25,14 @@ import {
   runAsyncWorkflowHardeningTests,
   runConcurrencyAndIdempotencyHardeningTests,
   runMediaPayloadHardeningTests,
+  runOrderNotificationUiReadinessHardeningTests,
+  runOptionalBrowserLoadAndCiContractTests,
   runPaymentProviderContractHardeningTests,
+  runProductionCookieSecurityContractTests,
+  runProviderStyleWebhookSandboxHardeningTests,
+  runParallelAdminMutationPressureHardeningTests,
   runRouteActionInventoryHardeningTests,
+  runLiveProviderContractTests,
   runSessionCookieSecurityHardeningTests
 } from './api-hardening-tests';
 import {
@@ -123,10 +129,16 @@ async function main() {
     await runAuditLogAdvancedTests(fixture);
     await runRouteActionInventoryHardeningTests();
     await runSessionCookieSecurityHardeningTests();
+    await runProductionCookieSecurityContractTests();
     await runPaymentProviderContractHardeningTests();
+    await runProviderStyleWebhookSandboxHardeningTests();
+    await runLiveProviderContractTests();
     await runConcurrencyAndIdempotencyHardeningTests(fixture);
+    await runParallelAdminMutationPressureHardeningTests(fixture);
+    await runOrderNotificationUiReadinessHardeningTests();
     await runMediaPayloadHardeningTests(fixture);
     await runAsyncWorkflowHardeningTests(fixture);
+    await runOptionalBrowserLoadAndCiContractTests();
 
     console.log('api lifecycle HTTP E2E tests passed');
   } finally {
