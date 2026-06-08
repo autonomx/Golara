@@ -22,6 +22,14 @@ import { runAdminAuthBoundaryTests } from './admin-auth-boundary-tests';
 import { runAdminCustomerInquiryActionTests } from './admin-customer-inquiry-tests';
 import { runAdminDiscountWorkspaceTests } from './admin-discount-tests';
 import {
+  runAsyncWorkflowHardeningTests,
+  runConcurrencyAndIdempotencyHardeningTests,
+  runMediaPayloadHardeningTests,
+  runPaymentProviderContractHardeningTests,
+  runRouteActionInventoryHardeningTests,
+  runSessionCookieSecurityHardeningTests
+} from './api-hardening-tests';
+import {
   runAdminHomepageContentActionTests,
   runAdminMediaLibraryActionTests,
   runAdminSettingsContentActionTests
@@ -113,6 +121,12 @@ async function main() {
     await runWebhookEdgeCaseAdvancedTests(fixture);
     await runMediaUploadBoundaryAdvancedTests(fixture);
     await runAuditLogAdvancedTests(fixture);
+    await runRouteActionInventoryHardeningTests();
+    await runSessionCookieSecurityHardeningTests();
+    await runPaymentProviderContractHardeningTests();
+    await runConcurrencyAndIdempotencyHardeningTests(fixture);
+    await runMediaPayloadHardeningTests(fixture);
+    await runAsyncWorkflowHardeningTests(fixture);
 
     console.log('api lifecycle HTTP E2E tests passed');
   } finally {

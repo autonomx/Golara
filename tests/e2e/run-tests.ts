@@ -48,7 +48,7 @@ function runE2eLifecycleDbHarnessContractTests() {
 function runE2eApiHarnessContractTests() {
   const scripts = pkgScripts();
   assert.equal(scripts['test:e2e:api']?.includes('tests/e2e/api/run-tests.ts'), true);
-  assertContains('tests/e2e/api/run-tests.ts', ['prepareApiFixture', 'startNextServer', 'runPublicReadRouteTests', 'runCartBoundaryTests', 'runLocaleCurrencyMatrixTests', 'runCartCheckoutNegativeTests', 'runAccountWebhookNegativeTests', 'runAdminAuthBoundaryTests', 'runAdminExportBoundaryTests', 'runAdminBoundaryPostTests', 'runAdminCustomerInquiryActionTests', 'runAdminSettingsLongTailActionTests', 'runAdminDiscountWorkspaceTests', 'runAdminHomepageMerchandisingActionTests', 'runAdminCatalogTranslationEdgeTests', 'runAccountAddressBoundaryActionTests', 'runDirectProductCheckoutBoundaryTests', 'runAdminOrderNotificationContractTests', 'runAdminPaymentReadOnlyPageTests', 'runSeedImageRouteTests', 'runWebhookRouteTests', 'runAdminRolePermissionMatrixAdvancedTests', 'runRawSettingsSurfaceAdvancedTests', 'runBolaObjectAuthorizationAdvancedTests', 'runAuditLogAdvancedTests']);
+  assertContains('tests/e2e/api/run-tests.ts', ['prepareApiFixture', 'startNextServer', 'runPublicReadRouteTests', 'runCartBoundaryTests', 'runLocaleCurrencyMatrixTests', 'runCartCheckoutNegativeTests', 'runAccountWebhookNegativeTests', 'runAdminAuthBoundaryTests', 'runAdminExportBoundaryTests', 'runAdminBoundaryPostTests', 'runAdminCustomerInquiryActionTests', 'runAdminSettingsLongTailActionTests', 'runAdminDiscountWorkspaceTests', 'runAdminHomepageMerchandisingActionTests', 'runAdminCatalogTranslationEdgeTests', 'runAccountAddressBoundaryActionTests', 'runDirectProductCheckoutBoundaryTests', 'runAdminOrderNotificationContractTests', 'runAdminPaymentReadOnlyPageTests', 'runSeedImageRouteTests', 'runWebhookRouteTests', 'runAdminRolePermissionMatrixAdvancedTests', 'runRawSettingsSurfaceAdvancedTests', 'runBolaObjectAuthorizationAdvancedTests', 'runAuditLogAdvancedTests', 'runRouteActionInventoryHardeningTests', 'runSessionCookieSecurityHardeningTests', 'runPaymentProviderContractHardeningTests', 'runConcurrencyAndIdempotencyHardeningTests', 'runMediaPayloadHardeningTests', 'runAsyncWorkflowHardeningTests']);
   assertContains('tests/e2e/api/shared.ts', ['E2E_DATABASE_URL', 'DATABASE_URL', 'CookieJar', 'submitServerAction']);
   assertContains('tests/e2e/api/storefront-account-tests.ts', ['API checkout action order', 'API E2E Inquiry Customer']);
   assertContains('tests/e2e/api/cart-boundary-tests.ts', ['api-e2e-zero-quantity-cart', 'api-e2e-remove-line-cart', 'api-e2e-unknown-cart-token', 'api-e2e-inactive-line-cart', 'API Boundary Deluxe']);
@@ -69,6 +69,11 @@ function runE2eApiHarnessContractTests() {
   assertContains('tests/e2e/api/webhook-tests.ts', ['invalid_signature', 'duplicate', 'verified_paid', 'api-e2e-invalid-zarinpal-signature', 'evt_api_e2e_missing_reference', 'amount_mismatch', 'currency_mismatch']);
   assertContains('tests/e2e/api/boundary-tests.ts', ['invalid_code', 'expired-customer-session', 'failed_after_paid']);
   assertContains('tests/e2e/api/admin-advanced-gap-tests.ts', ['api-e2e-payment-provider', 'api-e2e-import-job', 'API E2E BOLA Hidden Address', 'evt_api_e2e_unknown_type_advanced', 'API E2E Empty Upload']);
+  assertContains('tests/e2e/api/api-hardening-tests.ts', ['runRouteActionInventoryHardeningTests', 'runSessionCookieSecurityHardeningTests', 'runPaymentProviderContractHardeningTests', 'runConcurrencyAndIdempotencyHardeningTests', 'runMediaPayloadHardeningTests', 'runAsyncWorkflowHardeningTests']);
+  assertContains('tests/e2e/api/api-hardening-inventory-tests.ts', ['runRouteActionInventoryHardeningTests', 'expectedActions']);
+  assertContains('tests/e2e/api/api-hardening-security-tests.ts', ['runSessionCookieSecurityHardeningTests', 'runPaymentProviderContractHardeningTests']);
+  assertContains('tests/e2e/api/api-hardening-lifecycle-tests.ts', ['runConcurrencyAndIdempotencyHardeningTests', 'runAsyncWorkflowHardeningTests', 'api-e2e-hardening-idempotency']);
+  assertContains('tests/e2e/api/api-hardening-media-tests.ts', ['runMediaPayloadHardeningTests', 'API E2E large upload rejection']);
 }
 
 function runE2eScriptContractTests() {
@@ -93,6 +98,12 @@ function runE2eScriptContractTests() {
     'tests/e2e/api/admin-homepage-merchandising-tests.ts',
     'tests/e2e/api/admin-remaining-gap-tests.ts',
     'tests/e2e/api/admin-advanced-gap-tests.ts',
+    'tests/e2e/api/api-hardening-tests.ts',
+    'tests/e2e/api/api-hardening-source.ts',
+    'tests/e2e/api/api-hardening-inventory-tests.ts',
+    'tests/e2e/api/api-hardening-security-tests.ts',
+    'tests/e2e/api/api-hardening-lifecycle-tests.ts',
+    'tests/e2e/api/api-hardening-media-tests.ts',
     'tests/e2e/api/admin-content-tests.ts',
     'tests/e2e/api/admin-catalog-tests.ts',
     'tests/e2e/api/admin-order-tests.ts',
