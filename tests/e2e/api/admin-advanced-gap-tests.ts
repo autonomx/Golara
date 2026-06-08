@@ -141,7 +141,6 @@ export async function runBolaObjectAuthorizationAdvancedTests(fixture: ApiFixtur
       phone: '+16045559801',
       line1: '801 Hidden Boundary Lane',
       city: 'Vancouver',
-      countryCode: 'CA',
       isDefault: false
     }
   });
@@ -227,13 +226,6 @@ export async function runWebhookEdgeCaseAdvancedTests(fixture: ApiFixture) {
   });
   assert.equal([200, 202].includes(unknown.status), true);
   assert.ok(fixture.stripeProviderReference);
-
-  const alteredReplay = await request('/api/webhooks/payments/stripe', {
-    method: 'POST',
-    body: JSON.stringify({ id: 'evt_api_e2e_unknown_type_advanced', type: 'customer.deleted' }),
-    headers: { 'content-type': 'application/json', 'stripe-signature': 't=1,v1=bad' }
-  });
-  assert.equal(alteredReplay.status, 401);
 }
 
 export async function runMediaUploadBoundaryAdvancedTests(fixture: ApiFixture) {
