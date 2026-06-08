@@ -14,7 +14,7 @@ function listFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const path = join(dir, entry.name);
     if (entry.isDirectory()) return listFiles(path);
-    return [path.replace(/\\/g, '/')];
+    return [path.replace(/\/g, '/')];
   });
 }
 
@@ -35,7 +35,7 @@ function runAdminOverviewFunctionalCoverageTests() {
     'bestSellingProductsService.summary()',
     'lowStockAlertsService.summary()',
     'fulfillmentQueueSummaryService.summary()',
-    'recentActivityService.summary()',
+    'recentActivitySummaryService.summary()',
     'failedPaymentNotificationAlertsService.summary()',
     'launchReadinessHealthService.summary()'
   ];
