@@ -5,6 +5,7 @@ import type { AdminAuditLogEntry, CatalogTranslation, Category, Collection, Cust
 import { prisma } from '@/lib/prisma';
 import { mapProductVariantForCatalog } from '@/lib/cms/product-variant-mapper';
 import { readWithSeedFallback } from '@/lib/cms/repository-fallback-policy';
+import { localizeSeedCategories, localizeSeedProducts } from '@/lib/localization/catalog-seed-fallback';
 import { seedCategories, seedHomepageContent, seedProducts } from '@/lib/seed-data';
 import { DEFAULT_FULFILLMENT_METHOD_SETTINGS } from '@/lib/settings/fulfillment-method-settings';
 import { localizedField, selectTranslatedContent, type TranslationLike } from '@/lib/i18n/translated-content';
@@ -717,14 +718,14 @@ export async function listCategories(options: CatalogReadOptions = {}): Promise<
   return readWithFallback(async () => {
     const categories = await prisma.category.findMany({ where: { isActive: true }, include: categoryInclude, orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }] });
     return categories.map((category) => mapCategory(category, options));
-  }, () => [...seedCategories].filter((category) => category.isActive !== false).sort(bySortThenTitle));
+  }, () => localizeSeedCategories([...seedCategories].filter((category) => category.isActive !== false).sort(bySortThenTitle), options.locale));
 }
 
 export async function listHomepageCategories(options: CatalogReadOptions = {}): Promise<Category[]> {
   return readWithFallback(async () => {
     const categories = await prisma.category.findMany({ where: { isActive: true, showOnHomepage: true }, include: categoryInclude, orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }] });
     return categories.map((category) => mapCategory(category, options));
-  }, () => [...seedCategories].filter((category) => category.isActive !== false && category.showOnHomepage !== false).sort(bySortThenTitle));
+  }, () => localizeSeedCategories([...seedCategories].filter((category) => category.isActive !== false && category.showOnHomepage !== false).sort(bySortThenTitle), options.locale));
 }
 
 export async function listAdminCategories(): Promise<Category[]> {
@@ -743,7 +744,7 @@ export async function listProducts(options: CatalogReadOptions = {}): Promise<Pr
   return readWithFallback(async () => {
     const products = await prisma.product.findMany({ where: { isActive: true, category: { isActive: true } }, include: publicProductInclude, orderBy: [{ bestSeller: 'desc' }, { title: 'asc' }] });
     return products.map((product) => mapProduct(product, options));
-  }, () => seedProducts.filter((product) => product.isActive !== false));
+  }, () => localizeSeedProducts(seedProducts.filter((product) => product.isActive !== false), options.locale, seedCategories));
 }
 
 export async function listAdminProducts(): Promise<Product[]> {
@@ -793,14 +794,14 @@ export async function getProductBySlug(slug: string, options: CatalogReadOptions
     const product = await prisma.product.findUnique({ where: { slug }, include: productInclude });
     if (!product || !product.isActive || !product.category?.isActive) return undefined;
     return mapProduct(product, options);
-  }, () => seedProducts.find((product) => product.slug === slug && product.isActive !== false));
+  }, () => localizeSeedProducts(seedProducts.filter((product) => product.slug === slug && product.isActive !== false), options.locale, seedCategories)[0]);
 }
 
 export async function listProductsByCategorySlug(slug: string, options: CatalogReadOptions = {}): Promise<Product[]> {
   return readWithFallback(async () => {
     const products = await prisma.product.findMany({ where: { isActive: true, category: { slug, isActive: true } }, include: productInclude, orderBy: [{ bestSeller: 'desc' }, { title: 'asc' }] });
     return products.map((product) => mapProduct(product, options));
-  }, () => seedProducts.filter((product) => product.category === slug && product.isActive !== false));
+  }, () => localizeSeedProducts(seedProducts.filter((product) => product.category === slug && product.isActive !== false), options.locale, seedCategories));
 }
 
 export async function getHomepageContent(options: CatalogReadOptions = {}): Promise<HomepageContent> {

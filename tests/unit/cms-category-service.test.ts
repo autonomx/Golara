@@ -167,6 +167,9 @@ export async function runCmsCategoryServiceTests() {
     assert.equal(await getCategoryBySlug('missing-category'), undefined);
     assert.ok((await listHomepageCategories()).every((category) => category.showOnHomepage !== false));
     assert.ok((await listAdminCategories()).some((category) => category.slug === 'woshe-distance'));
+    assert.equal((await listCategories({ locale: 'fa' })).find((category) => category.slug === 'available-today')?.title, 'آماده امروز');
+    assert.equal((await listHomepageCategories({ locale: 'fa-IR' })).find((category) => category.slug === 'flower-boxes')?.title, 'باکس گل');
+    assert.equal((await listAdminCategories()).find((category) => category.slug === 'available-today')?.title, 'موجود برای امروز Available Today');
 
     const products = await listProducts();
     assert.ok(products.length > 0);
@@ -175,6 +178,10 @@ export async function runCmsCategoryServiceTests() {
     assert.equal(await getProductBySlug('missing-product'), undefined);
     assert.ok((await listProductsByCategorySlug('vip-boxes')).every((product) => product.category === 'vip-boxes'));
     assert.ok((await listAdminProducts()).some((product) => product.slug === 'vip-box-blue'));
+    assert.equal((await listProducts({ locale: 'fa' })).find((product) => product.slug === 'vip-box-blue')?.title, 'باکس ویژه آبی');
+    assert.equal((await getProductBySlug('vip-box-blue', { locale: 'fa-IR' }))?.categoryTitle, 'باکس ویژه');
+    assert.equal((await listProductsByCategorySlug('vip-boxes', { locale: 'fa' })).find((product) => product.slug === 'imperium-vip-red-roses')?.title, 'باکس ویژه رز قرمز');
+    assert.equal((await listAdminProducts()).find((product) => product.slug === 'vip-box-blue')?.title, 'VIP Box - Blue');
 
     const homepage = await getHomepageContent();
     assert.equal(homepage.title, 'Flowers for moments worth keeping.');
