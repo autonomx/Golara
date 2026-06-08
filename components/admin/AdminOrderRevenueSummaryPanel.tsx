@@ -136,9 +136,9 @@ export async function AdminOrderRevenueSummaryPanel({ summary }: { summary: Orde
         ) : null}
       </section>
       <AdminInquiryOperationsSummaryPanel summary={inquiryOperationsSummary} locale={locale} />
-      <AdminBestSellingProductsPanel summary={bestSellingProductsSummary} />
-      <AdminLowStockAlertsPanel summary={lowStockAlertsSummary} />
-      <AdminFulfillmentQueueSummaryPanel summary={fulfillmentQueueSummary} />
+      <AdminBestSellingProductsPanel summary={bestSellingProductsSummary} locale={locale} />
+      <AdminLowStockAlertsPanel summary={lowStockAlertsSummary} locale={locale} />
+      <AdminFulfillmentQueueSummaryPanel summary={fulfillmentQueueSummary} locale={locale} />
       <AdminRecentActivitySummaryPanel summary={recentActivitySummary} />
       <AdminFailedPaymentNotificationAlertsPanel summary={failedPaymentNotificationAlertsSummary} />
       <AdminLaunchReadinessHealthPanel summary={launchReadinessHealthSummary} />
