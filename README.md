@@ -2,7 +2,7 @@
 
 Golara is a modern editable flower and luxury gift storefront for premium bouquets, flower boxes, weddings, events, and curated gifts. It combines a polished public shopping experience with a custom admin/CMS layer for managing homepage content, catalog records, media, translations, inquiries, and orders.
 
-![Golara storefront homepage hero](docs/assets/golara-homepage-hero.svg)
+![Golara storefront homepage hero](public/site/golara-homepage-hero.jpg)
 
 ## Highlights
 
