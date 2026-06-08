@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
+import { getStorefrontCopy } from '@/lib/localization/storefront-copy';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
 export type StorefrontNavigationMenuItem = {
@@ -58,6 +59,20 @@ export const DEFAULT_STOREFRONT_NAVIGATION_MENU: StorefrontNavigationMenu = {
     { id: 'nav-best-sellers', menuId: 'storefront-navigation-primary', label: 'Best sellers', href: '/#best-sellers', isVisible: true, opensInNewTab: false, sortOrder: 40 }
   ]
 };
+
+function localizedDefaultMenu(locale?: string | null): StorefrontNavigationMenu {
+  return {
+    ...DEFAULT_STOREFRONT_NAVIGATION_MENU,
+    label: getStorefrontCopy('header.primaryNavigation', locale),
+    locale: normalizeStorefrontNavigationLocale(locale),
+    items: [
+      { ...DEFAULT_STOREFRONT_NAVIGATION_MENU.items[0], label: getStorefrontCopy('nav.catalog', locale), locale: normalizeStorefrontNavigationLocale(locale) },
+      { ...DEFAULT_STOREFRONT_NAVIGATION_MENU.items[1], label: getStorefrontCopy('nav.occasions', locale), locale: normalizeStorefrontNavigationLocale(locale) },
+      { ...DEFAULT_STOREFRONT_NAVIGATION_MENU.items[2], label: getStorefrontCopy('nav.availableToday', locale), locale: normalizeStorefrontNavigationLocale(locale) },
+      { ...DEFAULT_STOREFRONT_NAVIGATION_MENU.items[3], label: getStorefrontCopy('nav.bestSellers', locale), locale: normalizeStorefrontNavigationLocale(locale) }
+    ]
+  };
+}
 
 function optionalText(value?: string | null) {
   const normalized = value?.trim().replace(/\s+/g, ' ');
@@ -132,19 +147,20 @@ async function fetchMenuItems(menuId: string) {
 
 export const storefrontNavigationMenuService = {
   async get(key = 'primary', locale?: string | null): Promise<StorefrontNavigationMenu> {
-    if (!hasDatabase()) return DEFAULT_STOREFRONT_NAVIGATION_MENU;
+    if (!hasDatabase()) return localizedDefaultMenu(locale);
 
     try {
       const menus = await fetchMenuRows(key, locale);
       const menu = menus[0];
-      if (!menu) return DEFAULT_STOREFRONT_NAVIGATION_MENU;
+      if (!menu) return localizedDefaultMenu(locale);
 
       return {
         ...menu,
-        items: await fetchMenuItems(menu.id)
+        label: menu.locale ? menu.label : getStorefrontCopy('header.primaryNavigation', locale),
+        items: (await fetchMenuItems(menu.id)).map((item) => item.locale ? item : localizeDefaultNavigationItem(item, locale))
       };
     } catch (error) {
-      if (isMissingStorefrontNavigationTableError(error)) return DEFAULT_STOREFRONT_NAVIGATION_MENU;
+      if (isMissingStorefrontNavigationTableError(error)) return localizedDefaultMenu(locale);
       throw error;
     }
   },
@@ -192,3 +208,15 @@ export const storefrontNavigationMenuService = {
     };
   }
 };
+
+function localizeDefaultNavigationItem(item: StorefrontNavigationMenuItem, locale?: string | null): StorefrontNavigationMenuItem {
+  const localized = DEFAULT_STOREFRONT_NAVIGATION_MENU.items.find((defaultItem) => defaultItem.href === item.href);
+  if (!localized) return item;
+  const labelByHref: Record<string, ReturnType<typeof getStorefrontCopy>> = {
+    '/products': getStorefrontCopy('nav.catalog', locale),
+    '/#occasions': getStorefrontCopy('nav.occasions', locale),
+    '/categories/available-today': getStorefrontCopy('nav.availableToday', locale),
+    '/#best-sellers': getStorefrontCopy('nav.bestSellers', locale)
+  };
+  return { ...item, label: labelByHref[item.href] ?? item.label, locale: normalizeStorefrontNavigationLocale(locale) };
+}

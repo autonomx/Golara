@@ -8,6 +8,7 @@ import { withCategoryProductCounts } from '@/lib/category-tree';
 import { getHomepageContent, listCategories, listHomepageCategories, listProducts } from '@/lib/cms/catalog-repository';
 import { homepageBannerSlides } from '@/lib/homepage-assets';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
+import { selectHomepageContentForLocale } from '@/lib/localization/homepage-content';
 import { getStorefrontCopy, getStorefrontCopyDirection } from '@/lib/localization/storefront-copy';
 
 const footerLinkClass = 'outline-none transition hover:text-rosewood focus-visible:ring-4 focus-visible:ring-olive/20';
@@ -19,12 +20,13 @@ function firstNonEmpty(...values: Array<string | undefined>) {
 export default async function HomePage() {
   const locale = await resolveStorefrontLocale();
   const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key, locale);
-  const [homepage, categories, homepageCategories, products] = await Promise.all([
+  const [homepageSource, categories, homepageCategories, products] = await Promise.all([
     getHomepageContent({ locale }),
     listCategories({ locale }),
     listHomepageCategories({ locale }),
     listProducts({ locale })
   ]);
+  const homepage = selectHomepageContentForLocale(homepageSource, locale);
 
   const bestSellers = products.filter((product) => product.bestSeller).slice(0, 24);
   const categoriesWithCounts = withCategoryProductCounts(categories, products);
