@@ -131,6 +131,22 @@ export function runLocalizationBundleSourceGuardTests() {
 }
 
 {
+  const content = source('lib/checkout/order-confirmation-copy.ts');
+  includes(content, "type OrderConfirmationLocaleKey = 'en' | 'fa';", 'order confirmation copy should support explicit locale keys');
+  includes(content, 'پرداخت دریافت شد', 'order confirmation copy should include Persian paid-result copy');
+  includes(content, 'شماره پیگیری', 'order confirmation page copy should include Persian reference copy');
+  includes(content, 'export function orderConfirmationPageCopy', 'order confirmation page copy should be exported for localized page chrome');
+}
+
+{
+  const content = source('app/orders/confirmation/page.tsx');
+  includes(content, 'resolveStorefrontLocale', 'order confirmation page should resolve storefront locale');
+  includes(content, 'orderConfirmationResultCopy(result, locale)', 'order confirmation page should request localized result copy');
+  includes(content, 'orderConfirmationPageCopy(locale)', 'order confirmation page should request localized page copy');
+  includes(content, 'dir={localeDirection(locale)}', 'order confirmation page should set direction from locale');
+}
+
+{
   const files = [
     'components/admin/AdminDashboard.tsx',
     'components/admin/AdminReadinessPanel.tsx',

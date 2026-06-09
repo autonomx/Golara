@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { DEFAULT_LOCALE, FALLBACK_LOCALE, SUPPORTED_LOCALES, fallbackLocaleOrder, isSupportedLocale, localeDirection, normalizeLocale } from '../../lib/i18n/locales';
 import { localizedField, selectPublishedTranslation, selectTranslatedContent } from '../../lib/i18n/translated-content';
 import { storefrontCopy } from '../../lib/localization/storefront-copy';
+import { orderConfirmationPageCopy, orderConfirmationResultCopy } from '../../lib/checkout/order-confirmation-copy';
 
 export async function runI18nLocalizationTests() {
   assert.equal(DEFAULT_LOCALE, 'fa-IR');
@@ -40,6 +41,26 @@ export async function runI18nLocalizationTests() {
       assert.notEqual(value.trim(), '', `${locale}.${key} should not be blank`);
     }
   }
+
+  const paidEnglish = orderConfirmationResultCopy('paid', 'en-CA');
+  assert.equal(paidEnglish.title, 'Payment received');
+  assert.equal(paidEnglish.tone, 'success');
+
+  const paidPersian = orderConfirmationResultCopy('paid', 'fa-IR');
+  assert.equal(paidPersian.title, 'پرداخت دریافت شد');
+  assert.equal(paidPersian.tone, 'success');
+
+  const unknownPersian = orderConfirmationResultCopy('unknown-result', 'fa-IR');
+  assert.equal(unknownPersian.title, 'سپاسگزاریم');
+  assert.equal(unknownPersian.tone, 'info');
+
+  const confirmationPagePersian = orderConfirmationPageCopy('fa-IR');
+  assert.equal(confirmationPagePersian.referenceLabel, 'شماره پیگیری');
+  assert.equal(confirmationPagePersian.continueShopping, 'ادامه خرید');
+
+  const confirmationPageEnglish = orderConfirmationPageCopy('en-CA');
+  assert.equal(confirmationPageEnglish.referenceLabel, 'Reference');
+  assert.equal(confirmationPageEnglish.backHome, 'Back home');
 
   const translations = [
     { locale: 'fa-IR', title: 'رز', description: 'فارسی', isPublished: true },
