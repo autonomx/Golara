@@ -1,13 +1,12 @@
 import Link from 'next/link';
 import { requestCustomerOtpAction, verifyCustomerOtpAction } from '@/app/account/login/actions';
 import { SiteHeader } from '@/components/SiteHeader';
-import { getCustomerCopy } from '@/lib/localization/customer-copy';
+import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
+import { getCustomerCopy, getCustomerCopyDirection } from '@/lib/localization/customer-copy';
 import { getLoginStatusCopy } from '@/lib/localization/account-flow-copy';
 import { hasDatabase } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
-
-const copy = (key: Parameters<typeof getCustomerCopy>[0]) => getCustomerCopy(key);
 
 function safeReturnTo(value?: string) {
   if (!value || !value.startsWith('/') || value.startsWith('//')) return '/account';
@@ -15,14 +14,15 @@ function safeReturnTo(value?: string) {
 }
 
 export default async function AccountLoginPage({ searchParams }: { searchParams: Promise<{ status?: string; phone?: string; returnTo?: string }> }) {
-  const { status, phone = '', returnTo } = await searchParams;
+  const [{ status, phone = '', returnTo }, locale] = await Promise.all([searchParams, resolveStorefrontLocale()]);
+  const copy = (key: Parameters<typeof getCustomerCopy>[0]) => getCustomerCopy(key, locale);
   const normalizedReturnTo = safeReturnTo(returnTo);
-  const message = getLoginStatusCopy(status);
+  const message = getLoginStatusCopy(status, locale);
   const showVerify = Boolean(phone) && !['request-failed', 'database-required', 'rate_limited'].includes(status || '');
 
   return (
-    <main id="main-content" tabIndex={-1}>
-      <SiteHeader />
+    <main id="main-content" tabIndex={-1} dir={getCustomerCopyDirection(locale)}>
+      <SiteHeader locale={locale} />
       <section className="mx-auto max-w-4xl px-5 py-14">
         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">{copy('login.eyebrow')}</p>
         <h1 className="mt-3 font-display text-6xl text-rosewood">{copy('login.title')}</h1>
