@@ -6,6 +6,10 @@ import {
   normalizeFulfillmentQueueStatus
 } from '../../lib/analytics/fulfillment-queue-summary';
 import type { CheckoutOrderSummary } from '../../lib/catalog';
+import {
+  createAdminFulfillmentQueueTranslator,
+  humanizeAdminFulfillmentValue
+} from '../../lib/localization/admin-fulfillment-copy';
 
 function source(path: string) {
   return readFileSync(path, 'utf8');
@@ -55,6 +59,19 @@ export async function runFulfillmentQueueSummaryTests() {
   assert.equal(summary.queuedOrders.find((row) => row.id === 'today')?.customerLabel, '555-0100');
   assert.equal(summary.byFulfillmentStatus.find((row) => row.status === 'ready_for_pickup')?.count, 1);
 
+  const fa = createAdminFulfillmentQueueTranslator('fa-IR');
+  assert.equal(fa.orderStatus('paid'), 'پرداخت شده');
+  assert.equal(fa.fulfillmentStatus('ready_for_pickup'), 'آماده تحویل حضوری');
+  assert.equal(fa.checkoutMode('local_delivery'), 'ارسال محلی');
+  assert.equal(fa.priority('overdue'), 'معوق');
+  assert.equal(fa.customerLabel('Guest checkout'), 'پرداخت مهمان');
+  assert.equal(fa.fulfillmentStatus('custom_internal_status'), 'نامشخص');
+
+  const en = createAdminFulfillmentQueueTranslator('en-CA');
+  assert.equal(en.fulfillmentStatus('ready_for_pickup'), 'Ready for pickup');
+  assert.equal(en.fulfillmentStatus('custom_internal_status'), 'Custom Internal Status');
+  assert.equal(humanizeAdminFulfillmentValue('in_progress'), 'In Progress');
+
   assert.match(service, /export type FulfillmentQueueSummary/);
   assert.match(service, /buildFulfillmentQueueSummary/);
   assert.match(service, /fulfillmentQueueSummaryService = \{/);
@@ -62,8 +79,10 @@ export async function runFulfillmentQueueSummaryTests() {
   assert.match(service, /COMPLETE_FULFILLMENT_STATUSES/);
 
   assert.match(panel, /export function AdminFulfillmentQueueSummaryPanel/);
-  assert.match(panel, /Fulfillment queue/);
-  assert.match(panel, /Queued orders/);
+  assert.match(panel, /createAdminFulfillmentQueueTranslator\(locale\)/);
+  assert.match(panel, /rowCopy\.orderStatus\(row\.orderStatus\)/);
+  assert.match(panel, /rowCopy\.fulfillmentStatus\(row\.fulfillmentStatus\)/);
+  assert.match(panel, /rowCopy\.priority\(row\.priority\)/);
   assert.match(panel, /No open fulfillment queue items/);
 
   assert.match(orderPanel, /AdminFulfillmentQueueSummaryPanel/);
