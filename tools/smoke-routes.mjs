@@ -5,7 +5,7 @@ const timeoutMs = Number.parseInt(process.env.SMOKE_TIMEOUT_MS || '10000', 10);
 const routes = [
   { path: '/', expectedStatuses: [200], label: 'homepage', expectedContent: ['Golara'] },
   { path: '/products', expectedStatuses: [200], label: 'product listing', expectedAnyContent: ['All products', 'همه محصولات'] },
-  { path: '/cart', expectedStatuses: [200], label: 'cart', expectedContent: ['cart'] },
+  { path: '/cart', expectedStatuses: [200], label: 'cart', expectedAnyContent: ['cart', 'سبد خرید'] },
   { path: '/account/login', expectedStatuses: [200], label: 'account login', expectedAnyContent: ['phone', 'شماره تلفن'] },
   { path: '/sitemap.xml', expectedStatuses: [200], label: 'sitemap', expectedContent: ['<urlset'] },
   { path: '/robots.txt', expectedStatuses: [200], label: 'robots', expectedContent: ['User-agent'] },
