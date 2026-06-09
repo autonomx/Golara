@@ -7,33 +7,20 @@ import { formatMinorUnitAmount } from '@/lib/catalog';
 import { getCustomerSession } from '@/lib/customers/customer-account-repository';
 import { getCustomerSessionCookie } from '@/lib/customers/customer-session-cookie';
 import { getCustomerCopy, getCustomerCopyDirection } from '@/lib/localization/customer-copy';
+import { getCheckoutFlowCopy } from '@/lib/localization/checkout-flow-copy';
 import { hasDatabase } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
-function checkoutMessage(status?: string) {
-  if (status === 'cart-empty') return 'Your cart is empty. Add products before checkout.';
-  if (status === 'cart-missing') return 'Your cart session was not found.';
-  if (status === 'name-required') return 'Please enter a recipient name.';
-  if (status === 'phone-required') return 'Please enter a recipient phone number.';
-  if (status === 'city-required') return 'Please enter a delivery city.';
-  if (status === 'address-required') return 'Please enter a delivery address.';
-  if (status === 'delivery-date-invalid') return 'Please enter a valid delivery date.';
-  if (status === 'delivery-window-invalid') return 'Please enter a delivery window like 10:00-12:00.';
-  if (status === 'database-required') return 'Checkout requires a configured database.';
-  if (status === 'failed') return 'We could not create checkout. Please try again.';
-  return undefined;
-}
-
 export default async function CartCheckoutPage({ searchParams }: { searchParams: Promise<{ checkout?: string }> }) {
   const [{ checkout }, cartToken, customerToken] = await Promise.all([searchParams, getCartTokenCookie(), getCustomerSessionCookie()]);
-  const message = checkoutMessage(checkout);
   const [cart, customerSession] = hasDatabase()
     ? await Promise.all([getCartByToken(cartToken), getCustomerSession(customerToken)])
     : [null, null] as const;
   const locale = customerSession?.customer.locale;
   const dir = getCustomerCopyDirection(locale);
   const copy = (key: Parameters<typeof getCustomerCopy>[0]) => getCustomerCopy(key, locale);
+  const message = getCheckoutFlowCopy(checkout, locale);
   const items = cart?.items ?? [];
   const subtotalCents = items.reduce((sum, item) => sum + item.product.priceCents * item.quantity, 0);
   const currency = cart?.currency || items[0]?.product.currency || process.env.CHECKOUT_DOMESTIC_CURRENCY || 'TOMAN';
