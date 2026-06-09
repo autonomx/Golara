@@ -1,7 +1,15 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { productTranslationReadinessIssues } from '../../lib/catalog/product-translation-readiness';
 
 export async function runProductTranslationReadinessTests() {
+  const seedSource = readFileSync('prisma/seed.ts', 'utf8');
+  assert.match(seedSource, /seedProductLocales/);
+  assert.match(seedSource, /'en-CA'/);
+  assert.match(seedSource, /'fa-IR'/);
+  assert.match(seedSource, /productTranslation\.upsert/);
+  assert.match(seedSource, /productId_locale/);
+
   const issues = productTranslationReadinessIssues([
     {
       id: 'product-1',
