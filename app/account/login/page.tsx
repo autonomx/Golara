@@ -2,24 +2,12 @@ import Link from 'next/link';
 import { requestCustomerOtpAction, verifyCustomerOtpAction } from '@/app/account/login/actions';
 import { SiteHeader } from '@/components/SiteHeader';
 import { getCustomerCopy } from '@/lib/localization/customer-copy';
+import { getLoginStatusCopy } from '@/lib/localization/account-flow-copy';
 import { hasDatabase } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
 const copy = (key: Parameters<typeof getCustomerCopy>[0]) => getCustomerCopy(key);
-
-function statusMessage(status?: string) {
-  if (status === 'code-sent') return 'Verification code sent. In development, check the server logs for the code.';
-  if (status === 'cooldown') return 'A code was sent recently. Please wait before requesting another one.';
-  if (status === 'rate_limited') return 'Too many code requests. Please try again later.';
-  if (status === 'missing_or_expired') return 'The code is missing or expired. Request a new code.';
-  if (status === 'invalid_code') return 'The code was not correct. Please try again.';
-  if (status === 'too_many_attempts') return 'Too many attempts. Request a new code.';
-  if (status === 'database-required') return 'Customer login requires a configured database.';
-  if (status === 'request-failed') return 'We could not send a code. Please check the phone number and try again.';
-  if (status === 'verify-failed') return 'We could not verify the code. Please try again.';
-  return undefined;
-}
 
 function safeReturnTo(value?: string) {
   if (!value || !value.startsWith('/') || value.startsWith('//')) return '/account';
@@ -29,7 +17,7 @@ function safeReturnTo(value?: string) {
 export default async function AccountLoginPage({ searchParams }: { searchParams: Promise<{ status?: string; phone?: string; returnTo?: string }> }) {
   const { status, phone = '', returnTo } = await searchParams;
   const normalizedReturnTo = safeReturnTo(returnTo);
-  const message = statusMessage(status);
+  const message = getLoginStatusCopy(status);
   const showVerify = Boolean(phone) && !['request-failed', 'database-required', 'rate_limited'].includes(status || '');
 
   return (
