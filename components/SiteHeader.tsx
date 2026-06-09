@@ -5,6 +5,7 @@ import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { getCartTokenCookie } from '@/lib/cart/cart-cookie';
 import { getCartByToken } from '@/lib/cart/cart-repository';
 import type { SupportedLocale } from '@/lib/i18n/locales';
+import { normalizeLocale } from '@/lib/i18n/locales';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { formatStorefrontCopy, getStorefrontCopy } from '@/lib/localization/storefront-copy';
 import { hasDatabase } from '@/lib/prisma';
@@ -21,8 +22,8 @@ async function cartItemCount() {
   return cart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
 }
 
-export async function SiteHeader({ returnTo = '/', compact = false, locale }: { returnTo?: string; compact?: boolean; locale?: SupportedLocale | null } = {}) {
-  const resolvedLocale = locale ?? await resolveStorefrontLocale();
+export async function SiteHeader({ returnTo = '/', compact = false, locale }: { returnTo?: string; compact?: boolean; locale?: SupportedLocale | string | null } = {}) {
+  const resolvedLocale = normalizeLocale(locale ?? await resolveStorefrontLocale());
   const [itemCount, navigationMenu] = await Promise.all([
     cartItemCount(),
     storefrontNavigationMenuService.get('primary', resolvedLocale)
