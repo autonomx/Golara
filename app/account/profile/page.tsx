@@ -4,15 +4,15 @@ import { updateAccountProfileAction } from '@/app/account/profile/actions';
 import { SiteHeader } from '@/components/SiteHeader';
 import { getCustomerSession } from '@/lib/customers/customer-account-repository';
 import { getCustomerSessionCookie } from '@/lib/customers/customer-session-cookie';
-import { getCustomerCopy, getCustomerCopyDirection } from '@/lib/localization/customer-copy';
+import { getCustomerCopy, getCustomerCopyDirection, type CustomerCopyKey } from '@/lib/localization/customer-copy';
 import { hasDatabase } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
-function statusMessage(status?: string) {
-  if (status === 'updated') return 'Profile updated.';
-  if (status === 'database-required') return 'Profile editing requires a configured database.';
-  if (status === 'failed') return 'We could not update your profile. Please check the fields and try again.';
+function statusMessageKey(status?: string): CustomerCopyKey | undefined {
+  if (status === 'updated') return 'profile.status.updated';
+  if (status === 'database-required') return 'profile.status.databaseRequired';
+  if (status === 'failed') return 'profile.status.failed';
   return undefined;
 }
 
@@ -37,7 +37,8 @@ export default async function AccountProfilePage({ searchParams }: { searchParam
   const locale = session.customer.locale;
   const dir = getCustomerCopyDirection(locale);
   const copy = (key: Parameters<typeof getCustomerCopy>[0]) => getCustomerCopy(key, locale);
-  const message = statusMessage(status);
+  const messageKey = statusMessageKey(status);
+  const message = messageKey ? copy(messageKey) : undefined;
 
   return (
     <main id="main-content" tabIndex={-1} dir={dir}>
@@ -71,7 +72,7 @@ export default async function AccountProfilePage({ searchParams }: { searchParam
             </select>
           </label>
           <div className="rounded-3xl border border-rosewood/10 bg-cream p-4 text-sm leading-6 text-stone-700">
-            <strong className="text-rosewood">{copy('profile.verifiedPhone')}:</strong> {session.customer.phone}<br />
+            <strong className="text-rosewood">{copy('profile.verifiedPhone')}:</strong> {session.customer['phone']}<br />
             {copy('profile.phoneDeferredNote')}
           </div>
           <button type="submit" className="rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30">{copy('profile.updateProfile')}</button>
