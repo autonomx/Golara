@@ -62,6 +62,19 @@ function TranslationPublishedToggle({ translation }: { translation?: Completenes
   );
 }
 
+function LocaleSelect({ defaultValue, label = 'Language' }: { defaultValue: SupportedLocale; label?: string }) {
+  return (
+    <label className="grid gap-2 text-sm font-semibold text-rosewood">
+      {label}
+      <select name="locale" className={inputClass} defaultValue={defaultValue}>
+        {SUPPORTED_LOCALES.map((locale) => (
+          <option key={locale} value={locale}>{locale === 'fa-IR' ? 'Persian / fa-IR' : 'English / en-CA'}</option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 function HomepageTranslationForm({ homepage, translation, locale, disabled }: { homepage: HomepageContent; translation?: HomepageTranslation; locale: SupportedLocale; disabled: boolean }) {
   const requiredFields: Array<keyof HomepageTranslation> = ['title', 'body'];
 
@@ -129,16 +142,16 @@ function ProductTranslationForm({ product, locale, disabled }: { product: Produc
     <form action={action} className="grid gap-3 rounded-3xl border border-rosewood/10 bg-cream p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Product · {locale}</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Product translation</p>
           <h4 className="font-display text-2xl text-rosewood">{product.title}</h4>
         </div>
         <LocaleBadge translation={translation} requiredFields={requiredFields} />
       </div>
-      <input type="hidden" name="locale" value={locale} />
+      <LocaleSelect defaultValue={locale} />
       <label className="grid gap-2 text-sm font-semibold text-rosewood">Translated title<input name="translationTitle" className={inputClass} defaultValue={translation?.title ?? ''} placeholder={product.title} required disabled={disabled} /></label>
       <label className="grid gap-2 text-sm font-semibold text-rosewood">Translated image alt<input name="translationImageAlt" className={inputClass} defaultValue={translation?.imageAlt ?? ''} placeholder={product.title} disabled={disabled} /></label>
       <label className="grid gap-2 text-sm font-semibold text-rosewood">Translated description<textarea name="translationDescription" className={textAreaClass} defaultValue={translation?.description ?? ''} placeholder={product.description} disabled={disabled} /></label>
-      <div className="flex flex-wrap items-center gap-3"><TranslationPublishedToggle translation={translation} /><button className={buttonClass} type="submit" disabled={disabled}>Save {locale}</button></div>
+      <div className="flex flex-wrap items-center gap-3"><TranslationPublishedToggle translation={translation} /><button className={buttonClass} type="submit" disabled={disabled}>Save product translation</button></div>
     </form>
   );
 }
