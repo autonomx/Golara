@@ -6,7 +6,7 @@ import { getCartTokenCookie } from '@/lib/cart/cart-cookie';
 import { getCartByToken } from '@/lib/cart/cart-repository';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
-import { getStorefrontCopy } from '@/lib/localization/storefront-copy';
+import { formatStorefrontCopy, getStorefrontCopy } from '@/lib/localization/storefront-copy';
 import { hasDatabase } from '@/lib/prisma';
 import { storefrontNavigationMenuService, visibleStorefrontNavigationItems } from '@/lib/settings/storefront-navigation-menu';
 
@@ -29,6 +29,9 @@ export async function SiteHeader({ returnTo = '/', compact = false, locale }: { 
   ]);
   const navigationItems = visibleStorefrontNavigationItems(navigationMenu.items, resolvedLocale);
   const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key, resolvedLocale);
+  const cartLabel = itemCount > 0
+    ? formatStorefrontCopy('header.cartWithItemsLabel', resolvedLocale, { count: itemCount })
+    : copy('header.cartLabel');
 
   return (
     <header className="sticky top-0 z-20 border-b border-rosewood/10 bg-cream/90 backdrop-blur-xl">
@@ -36,7 +39,7 @@ export async function SiteHeader({ returnTo = '/', compact = false, locale }: { 
         {copy('header.announcement')}
       </div> : null}
       <div className={`mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 ${compact ? 'py-2' : 'py-4'}`}>
-        <nav className="hidden items-center gap-2 text-sm font-medium text-rosewood/80 md:flex" aria-label={navigationMenu.label || 'Primary navigation'}>
+        <nav className="hidden items-center gap-2 text-sm font-medium text-rosewood/80 md:flex" aria-label={navigationMenu.label || copy('header.primaryNavigation')}>
           {navigationItems.map((item) => (
             <Link key={`${item.href}-${item.label}`} href={item.href} className={headerLinkClass} target={item.opensInNewTab ? '_blank' : undefined} rel={item.opensInNewTab ? 'noreferrer' : undefined}>{item.label}</Link>
           ))}
@@ -45,8 +48,8 @@ export async function SiteHeader({ returnTo = '/', compact = false, locale }: { 
         <div className="flex items-center gap-1 text-rosewood">
           <LanguageSwitcher locale={resolvedLocale} returnTo={returnTo} />
           <HeaderSearchControl label={copy('catalog.searchLabel')} placeholder={copy('catalog.searchPlaceholder')} submitLabel={copy('catalog.searchSubmit')} hideLabel={copy('catalog.searchClear')} />
-          <Link href="/account" className={iconLinkClass} aria-label="Account"><UserRound className="h-5 w-5" aria-hidden="true" /></Link>
-          <Link href="/cart" className={iconLinkClass} aria-label={`Cart${itemCount > 0 ? ` with ${itemCount} item${itemCount === 1 ? '' : 's'}` : ''}`}>
+          <Link href="/account" className={iconLinkClass} aria-label={copy('header.accountLabel')}><UserRound className="h-5 w-5" aria-hidden="true" /></Link>
+          <Link href="/cart" className={iconLinkClass} aria-label={cartLabel}>
             <ShoppingBag className="h-5 w-5" aria-hidden="true" />
             {itemCount > 0 ? (
               <span className="absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-rosewood px-1 text-[0.65rem] font-bold leading-none text-white">
