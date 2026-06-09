@@ -8,6 +8,7 @@ import { runAdminRoleBoundaryTests } from './admin-role-boundary.test';
 import { runAdminStatusSummaryViewTests } from './admin-status-summary-view.test';
 import { runApiTokenManagementTests } from './api-token-management.test';
 import { runBestSellingProductsTests } from './best-selling-products.test';
+import { runCatalogSeedFallbackLocalizationTests } from './catalog-seed-fallback-localization.test';
 import { runChannelPriceOverrideModelTests } from './channel-price-override-model.test';
 import { runChannelProductAvailabilityModelTests } from './channel-product-availability-model.test';
 import { runChannelStorefrontModelTests } from './channel-storefront-model.test';
@@ -240,6 +241,7 @@ async function main() {
   await runStaffPermissionSettingsTests();
   await runProductCheckoutPolicyTests();
   await runProductVariantMapperTests();
+  await runCatalogSeedFallbackLocalizationTests();
   await runPromotionDiscountModelTests();
   await runPromotionVoucherModelTests();
   await runPromotionValidityWindowsModelTests();
@@ -272,7 +274,7 @@ async function main() {
   await runI18nLocalizationTests();
   await runLocalizationBundleSourceGuardTests();
   await runDeployReadinessTests();
-  console.log('unit tests passed (135 files)');
+  console.log('unit tests passed (136 files)');
 }
 
 main().catch((error) => {
