@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { DEFAULT_LOCALE, FALLBACK_LOCALE, SUPPORTED_LOCALES, fallbackLocaleOrder, isSupportedLocale, localeDirection, normalizeLocale } from '../../lib/i18n/locales';
 import { localizedField, selectPublishedTranslation, selectTranslatedContent } from '../../lib/i18n/translated-content';
 import { storefrontCopy } from '../../lib/localization/storefront-copy';
 import { customerCopy, getCustomerCopy } from '../../lib/localization/customer-copy';
+import { createAdminRouteErrorTranslator } from '../../lib/localization/admin-route-error-copy';
 import { orderConfirmationPageCopy, orderConfirmationResultCopy } from '../../lib/checkout/order-confirmation-copy';
 
 export async function runI18nLocalizationTests() {
@@ -50,6 +52,22 @@ export async function runI18nLocalizationTests() {
   assert.equal(getCustomerCopy('profile.status.updated', 'fa-IR'), 'پروفایل به‌روزرسانی شد.');
   assert.equal(getCustomerCopy('profile.status.failed', 'en-CA'), 'We could not update your profile. Please check the fields and try again.');
   assert.equal(getCustomerCopy('common.cityNotSet', 'fa-IR'), 'شهر تنظیم نشده');
+
+  const adminErrorFa = createAdminRouteErrorTranslator('fa-IR');
+  assert.equal(adminErrorFa('Module error'), 'خطای بخش');
+  assert.equal(adminErrorFa('Orders could not load'), 'سفارش ها بارگیری نشدند');
+  assert.equal(adminErrorFa('Retry'), 'تلاش دوباره');
+  assert.equal(adminErrorFa('Back to overview'), 'بازگشت به نمای کلی');
+  assert.equal(adminErrorFa('Unknown error'), 'خطای نامشخص');
+  assert.equal(createAdminRouteErrorTranslator('en-CA')('Retry'), 'Retry');
+  assert.equal(createAdminRouteErrorTranslator('fa-IR')('Unmapped status'), 'Unmapped status');
+
+  const adminRouteErrorSource = readFileSync('components/admin/AdminRouteError.tsx', 'utf8');
+  assert.match(adminRouteErrorSource, /STOREFRONT_LOCALE_COOKIE/);
+  assert.match(adminRouteErrorSource, /createAdminRouteErrorTranslator\(locale\)/);
+  assert.match(adminRouteErrorSource, /t\('Module error'\)/);
+  assert.match(adminRouteErrorSource, /t\('Retry'\)/);
+  assert.match(adminRouteErrorSource, /t\('Back to overview'\)/);
 
   const paidEnglish = orderConfirmationResultCopy('paid', 'en-CA');
   assert.equal(paidEnglish.title, 'Payment received');
