@@ -16,6 +16,8 @@ export type CustomerCopyKey =
   | 'account.noSavedAddresses'
   | 'account.accountsUnavailableTitle'
   | 'account.accountsUnavailableBody'
+  | 'account.status.signedOut'
+  | 'account.status.sessionRequired'
   | 'login.eyebrow'
   | 'login.title'
   | 'login.subtitle'
@@ -40,6 +42,9 @@ export type CustomerCopyKey =
   | 'profile.verifiedPhone'
   | 'profile.phoneDeferredNote'
   | 'profile.unavailableBody'
+  | 'profile.status.updated'
+  | 'profile.status.databaseRequired'
+  | 'profile.status.failed'
   | 'cart.eyebrow'
   | 'cart.title'
   | 'cart.subtitle'
@@ -101,6 +106,7 @@ export type CustomerCopyKey =
   | 'common.email'
   | 'common.locale'
   | 'common.notSet'
+  | 'common.cityNotSet'
   | 'common.default';
 
 type CustomerCopyRegistry = Record<CustomerCopyLocale, Record<CustomerCopyKey, string>>;
@@ -122,6 +128,8 @@ export const customerCopy: CustomerCopyRegistry = {
     'account.noSavedAddresses': 'No saved addresses yet. Checkout will add delivery addresses to your profile.',
     'account.accountsUnavailableTitle': 'Accounts unavailable',
     'account.accountsUnavailableBody': 'Customer accounts require a configured database.',
+    'account.status.signedOut': 'You have been signed out.',
+    'account.status.sessionRequired': 'Please sign in to view your account.',
     'login.eyebrow': 'Customer login',
     'login.title': 'Sign in with phone',
     'login.subtitle': 'We will send a one-time code to verify your phone number.',
@@ -146,6 +154,9 @@ export const customerCopy: CustomerCopyRegistry = {
     'profile.verifiedPhone': 'Verified phone',
     'profile.phoneDeferredNote': 'Phone changes are intentionally deferred until a separate verification flow is added.',
     'profile.unavailableBody': 'Profile editing requires a configured database.',
+    'profile.status.updated': 'Profile updated.',
+    'profile.status.databaseRequired': 'Profile editing requires a configured database.',
+    'profile.status.failed': 'We could not update your profile. Please check the fields and try again.',
     'cart.eyebrow': 'Cart',
     'cart.title': 'Your flower cart',
     'cart.subtitle': 'Review quantities before moving into checkout. Totals are recomputed on the server before payment.',
@@ -207,6 +218,7 @@ export const customerCopy: CustomerCopyRegistry = {
     'common.email': 'Email',
     'common.locale': 'Locale',
     'common.notSet': 'Not set',
+    'common.cityNotSet': 'City not set',
     'common.default': 'Default'
   },
   fa: {
@@ -225,6 +237,8 @@ export const customerCopy: CustomerCopyRegistry = {
     'account.noSavedAddresses': 'هنوز نشانی ذخیره‌شده‌ای ندارید. هنگام پرداخت، نشانی ارسال به پروفایل شما اضافه می‌شود.',
     'account.accountsUnavailableTitle': 'حساب‌ها در دسترس نیستند',
     'account.accountsUnavailableBody': 'حساب مشتری به پایگاه داده پیکربندی‌شده نیاز دارد.',
+    'account.status.signedOut': 'از حساب خارج شدید.',
+    'account.status.sessionRequired': 'برای مشاهده حساب خود وارد شوید.',
     'login.eyebrow': 'ورود مشتری',
     'login.title': 'ورود با شماره تلفن',
     'login.subtitle': 'برای تایید شماره تلفن، یک کد یک‌بارمصرف ارسال می‌کنیم.',
@@ -249,6 +263,9 @@ export const customerCopy: CustomerCopyRegistry = {
     'profile.verifiedPhone': 'تلفن تاییدشده',
     'profile.phoneDeferredNote': 'تغییر شماره تلفن عمدا تا زمان اضافه‌شدن جریان تایید جداگانه به تعویق افتاده است.',
     'profile.unavailableBody': 'ویرایش پروفایل به پایگاه داده پیکربندی‌شده نیاز دارد.',
+    'profile.status.updated': 'پروفایل به‌روزرسانی شد.',
+    'profile.status.databaseRequired': 'ویرایش پروفایل به پایگاه داده پیکربندی‌شده نیاز دارد.',
+    'profile.status.failed': 'نتوانستیم پروفایل شما را به‌روزرسانی کنیم. فیلدها را بررسی کنید و دوباره تلاش کنید.',
     'cart.eyebrow': 'سبد خرید',
     'cart.title': 'سبد گل‌های شما',
     'cart.subtitle': 'پیش از پرداخت، تعداد اقلام را بررسی کنید. جمع‌ها پیش از پرداخت روی سرور دوباره محاسبه می‌شوند.',
@@ -310,6 +327,7 @@ export const customerCopy: CustomerCopyRegistry = {
     'common.email': 'ایمیل',
     'common.locale': 'زبان',
     'common.notSet': 'تنظیم نشده',
+    'common.cityNotSet': 'شهر تنظیم نشده',
     'common.default': 'پیش‌فرض'
   }
 };
