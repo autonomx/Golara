@@ -87,7 +87,7 @@ export function ProductCheckoutForm({ product, dbReady, checkout, checkoutPolicy
         <h2 className="mt-2 font-display text-4xl text-rosewood">{labels.title}</h2>
         <p className="mt-3 text-sm leading-6 text-stone-600">{labels.bodyPrefix} {checkoutPolicy.summary}</p>
 
-        {message ? <div className="mt-6 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm font-semibold text-amber-900">{message}</div> : null}
+        {message ? <div className="mt-6 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm font-semibold text-amber-900" role="status" aria-live="polite">{message}</div> : null}
 
         <form action={action} className="mt-6 grid gap-4" noValidate>
           <div className="grid gap-4 md:grid-cols-2">
