@@ -1,18 +1,22 @@
 import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
-import { orderConfirmationPanelClass, orderConfirmationResultCopy } from '@/lib/checkout/order-confirmation-copy';
+import { orderConfirmationPageCopy, orderConfirmationPanelClass, orderConfirmationResultCopy } from '@/lib/checkout/order-confirmation-copy';
+import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
+import { localeDirection } from '@/lib/i18n/locales';
 
 export const dynamic = 'force-dynamic';
 
 export default async function OrderConfirmationPage({ searchParams }: { searchParams: Promise<{ order?: string; result?: string }> }) {
   const { order, result } = await searchParams;
+  const locale = await resolveStorefrontLocale();
   const orderNumber = order?.trim();
-  const copy = orderConfirmationResultCopy(result);
+  const copy = orderConfirmationResultCopy(result, locale);
+  const labels = orderConfirmationPageCopy(locale);
 
   return (
     <main>
       <SiteHeader />
-      <section className="mx-auto max-w-3xl px-5 py-20">
+      <section className="mx-auto max-w-3xl px-5 py-20" dir={localeDirection(locale)}>
         <div className="rounded-[2rem] border border-rosewood/10 bg-white p-8 text-center shadow-sm">
           <div className={`rounded-3xl border p-5 ${orderConfirmationPanelClass(copy.tone)}`} role="status" aria-live="polite">
             <p className="text-sm font-semibold uppercase tracking-[0.25em]">{copy.eyebrow}</p>
@@ -21,19 +25,19 @@ export default async function OrderConfirmationPage({ searchParams }: { searchPa
           </div>
           {orderNumber ? (
             <div className="mt-6 rounded-3xl border border-rosewood/10 bg-cream p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rosewood/60">Reference</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rosewood/60">{labels.referenceLabel}</p>
               <p className="mt-2 font-display text-3xl text-rosewood">{orderNumber}</p>
             </div>
           ) : null}
           <p className="mt-5 text-sm leading-6 text-stone-600">
-            For privacy, this public confirmation page does not show address, customer, or payment details. Keep the reference number for staff follow-up.
+            {labels.privacyNote}
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link href="/products" className="rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20">
-              Continue shopping
+              {labels.continueShopping}
             </Link>
             <Link href="/" className="rounded-full border border-rosewood/15 bg-white px-6 py-3 text-sm font-semibold text-rosewood">
-              Back home
+              {labels.backHome}
             </Link>
           </div>
         </div>
