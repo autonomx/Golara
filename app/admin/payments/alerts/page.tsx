@@ -1,11 +1,12 @@
 import Link from 'next/link';
 
+import { AdminPageShell } from '@/components/admin/AdminPageShell';
 import { AdminPaymentWebhookAlertsPanel } from '@/components/admin/AdminPaymentWebhookAlertsPanel';
 import { getAdminIdentity, isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
 import { paymentWebhookAlertService } from '@/lib/checkout/payment-webhook-alert-service';
+import { listAdminCategories, listAdminProducts, listMedia } from '@/lib/cms/catalog-repository';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { createAdminTranslator } from '@/lib/localization/admin-copy';
-import { getStorefrontCopyDirection } from '@/lib/localization/storefront-copy';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,11 +16,27 @@ export default async function AdminPaymentWebhookAlertsPage() {
   const authenticated = await isAdminAuthenticated();
   const authConfigured = isAdminAuthConfigured();
   const identity = await getAdminIdentity();
-  const summary = authenticated ? await paymentWebhookAlertService.summary(50) : { total: 0, alerts: 0, warning: 0, critical: 0, retryable: 0, recent: [] };
+  const [summary, products, categories, media] = await Promise.all([
+    authenticated ? paymentWebhookAlertService.summary(50) : Promise.resolve({ total: 0, alerts: 0, warning: 0, critical: 0, retryable: 0, recent: [] }),
+    listAdminProducts(),
+    listAdminCategories(),
+    listMedia()
+  ]);
 
   return (
-    <main className="min-h-screen bg-stone-50 px-4 py-6 lg:px-8" dir={getStorefrontCopyDirection(locale)}>
-      <div className="mx-auto grid max-w-7xl gap-6">
+    <AdminPageShell
+      activeTab="sales"
+      activeNavKey="payment-alerts"
+      authenticated={authenticated}
+      authConfigured={authConfigured}
+      adminLabel={identity.label ?? identity.email}
+      locale={locale}
+      returnTo="/admin/payments/alerts"
+      productCount={products.length}
+      categoryCount={categories.length}
+      mediaCount={media.length}
+    >
+      <div className="mx-auto grid w-full max-w-7xl gap-6">
         <section className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
@@ -39,6 +56,6 @@ export default async function AdminPaymentWebhookAlertsPage() {
 
         {authenticated ? <AdminPaymentWebhookAlertsPanel summary={summary} /> : null}
       </div>
-    </main>
+    </AdminPageShell>
   );
 }
