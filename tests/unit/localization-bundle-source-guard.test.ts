@@ -147,6 +147,31 @@ export function runLocalizationBundleSourceGuardTests() {
 }
 
 {
+  const content = source('lib/localization/customer-copy.ts');
+  includes(content, "'account.status.signedOut'", 'customer copy should define localized signed-out status');
+  includes(content, "'account.status.sessionRequired'", 'customer copy should define localized account session-required status');
+  includes(content, "'profile.status.updated'", 'customer copy should define localized profile-updated status');
+  includes(content, 'از حساب خارج شدید.', 'customer copy should include Persian signed-out status');
+  includes(content, 'پروفایل به‌روزرسانی شد.', 'customer copy should include Persian profile-updated status');
+}
+
+{
+  const content = source('app/account/page.tsx');
+  includes(content, 'function statusMessageKey', 'account page should resolve status message keys instead of hard-coded text');
+  includes(content, "'account.status.signedOut'", 'account page should use localized signed-out status key');
+  includes(content, "'account.status.sessionRequired'", 'account page should use localized session-required status key');
+  includes(content, "copy('common.cityNotSet')", 'account page should localize missing city fallback');
+}
+
+{
+  const content = source('app/account/profile/page.tsx');
+  includes(content, 'function statusMessageKey', 'profile page should resolve status message keys instead of hard-coded text');
+  includes(content, "'profile.status.updated'", 'profile page should use localized profile-updated status key');
+  includes(content, "'profile.status.databaseRequired'", 'profile page should use localized database-required status key');
+  includes(content, "'profile.status.failed'", 'profile page should use localized profile-failed status key');
+}
+
+{
   const files = [
     'components/admin/AdminDashboard.tsx',
     'components/admin/AdminReadinessPanel.tsx',
