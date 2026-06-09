@@ -64,6 +64,13 @@ export type CustomerCopyKey =
   | 'cart.finalTotalsNote'
   | 'cart.checkout'
   | 'cart.clear'
+  | 'cart.status.added'
+  | 'cart.status.updated'
+  | 'cart.status.removed'
+  | 'cart.status.cleared'
+  | 'cart.status.missing'
+  | 'cart.status.databaseRequired'
+  | 'cart.status.failed'
   | 'checkout.eyebrow'
   | 'checkout.title'
   | 'checkout.subtitle'
@@ -176,6 +183,13 @@ export const customerCopy: CustomerCopyRegistry = {
     'cart.finalTotalsNote': 'Delivery, discounts, and final totals are recomputed during checkout.',
     'cart.checkout': 'Continue to checkout',
     'cart.clear': 'Clear cart',
+    'cart.status.added': 'Item added to your cart.',
+    'cart.status.updated': 'Cart quantity updated.',
+    'cart.status.removed': 'Item removed from your cart.',
+    'cart.status.cleared': 'Cart cleared.',
+    'cart.status.missing': 'Your cart session was not found.',
+    'cart.status.databaseRequired': 'Cart checkout requires a configured database.',
+    'cart.status.failed': 'We could not update your cart. Please try again.',
     'checkout.eyebrow': 'Cart checkout',
     'checkout.title': 'Delivery and payment',
     'checkout.subtitle': 'Confirm delivery details. Final totals are recomputed on the server before the payment handoff.',
@@ -285,6 +299,13 @@ export const customerCopy: CustomerCopyRegistry = {
     'cart.finalTotalsNote': 'هزینه ارسال، تخفیف‌ها و جمع نهایی هنگام پرداخت دوباره محاسبه می‌شوند.',
     'cart.checkout': 'ادامه به پرداخت',
     'cart.clear': 'خالی کردن سبد',
+    'cart.status.added': 'محصول به سبد خرید اضافه شد.',
+    'cart.status.updated': 'تعداد سبد خرید به‌روزرسانی شد.',
+    'cart.status.removed': 'محصول از سبد خرید حذف شد.',
+    'cart.status.cleared': 'سبد خرید خالی شد.',
+    'cart.status.missing': 'نشست سبد خرید شما پیدا نشد.',
+    'cart.status.databaseRequired': 'پرداخت سبد خرید به پایگاه داده پیکربندی‌شده نیاز دارد.',
+    'cart.status.failed': 'نتوانستیم سبد خرید شما را به‌روزرسانی کنیم. دوباره تلاش کنید.',
     'checkout.eyebrow': 'پرداخت سبد خرید',
     'checkout.title': 'ارسال و پرداخت',
     'checkout.subtitle': 'اطلاعات ارسال را تایید کنید. جمع نهایی پیش از انتقال به پرداخت روی سرور دوباره محاسبه می‌شود.',
