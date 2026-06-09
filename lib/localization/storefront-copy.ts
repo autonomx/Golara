@@ -19,6 +19,7 @@ export type StorefrontCopyKey =
   | 'header.accountLabel'
   | 'header.cartLabel'
   | 'header.cartWithItemsLabel'
+  | 'language.switcherLabel'
   | 'language.fa'
   | 'language.en'
   | 'nav.catalog'
@@ -80,6 +81,7 @@ export const storefrontCopy: StorefrontCopyRegistry = {
     'header.accountLabel': 'Account',
     'header.cartLabel': 'Cart',
     'header.cartWithItemsLabel': 'Cart with {count} items',
+    'language.switcherLabel': 'Storefront language',
     'language.fa': 'Persian',
     'language.en': 'English',
     'nav.catalog': 'Catalog',
@@ -138,6 +140,7 @@ export const storefrontCopy: StorefrontCopyRegistry = {
     'header.accountLabel': 'حساب کاربری',
     'header.cartLabel': 'سبد خرید',
     'header.cartWithItemsLabel': 'سبد خرید با {count} کالا',
+    'language.switcherLabel': 'زبان فروشگاه',
     'language.fa': 'فارسی',
     'language.en': 'انگلیسی',
     'nav.catalog': 'کاتالوگ',
