@@ -5,21 +5,21 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { getCartTokenCookie } from '@/lib/cart/cart-cookie';
 import { getCartByToken } from '@/lib/cart/cart-repository';
 import { formatMinorUnitAmount } from '@/lib/catalog';
-import { getCustomerCopy } from '@/lib/localization/customer-copy';
+import { getCustomerCopy, type CustomerCopyKey } from '@/lib/localization/customer-copy';
 import { hasDatabase } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
 const copy = (key: Parameters<typeof getCustomerCopy>[0]) => getCustomerCopy(key);
 
-function statusMessage(status?: string) {
-  if (status === 'added') return 'Item added to your cart.';
-  if (status === 'updated') return 'Cart quantity updated.';
-  if (status === 'removed') return 'Item removed from your cart.';
-  if (status === 'cleared') return 'Cart cleared.';
-  if (status === 'missing') return 'Your cart session was not found.';
-  if (status === 'database-required') return 'Cart checkout requires a configured database.';
-  if (status === 'failed') return 'We could not update your cart. Please try again.';
+function statusMessageKey(status?: string): CustomerCopyKey | undefined {
+  if (status === 'added') return 'cart.status.added';
+  if (status === 'updated') return 'cart.status.updated';
+  if (status === 'removed') return 'cart.status.removed';
+  if (status === 'cleared') return 'cart.status.cleared';
+  if (status === 'missing') return 'cart.status.missing';
+  if (status === 'database-required') return 'cart.status.databaseRequired';
+  if (status === 'failed') return 'cart.status.failed';
   return undefined;
 }
 
@@ -30,7 +30,8 @@ function quantityOptions(current: number) {
 
 export default async function CartPage({ searchParams }: { searchParams: Promise<{ cart?: string }> }) {
   const [{ cart: cartStatus }, token] = await Promise.all([searchParams, getCartTokenCookie()]);
-  const message = statusMessage(cartStatus);
+  const messageKey = statusMessageKey(cartStatus);
+  const message = messageKey ? copy(messageKey) : undefined;
   const cart = hasDatabase() ? await getCartByToken(token) : null;
   const items = cart?.items ?? [];
   const subtotalCents = items.reduce((sum, item) => sum + (item.variant?.priceCents ?? item.product.priceCents) * item.quantity, 0);
