@@ -1,12 +1,13 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { createCollectionAction, createProductAttributeAction, createProductTypeAction, createProductVariantAction, updateCollectionAction, updateProductAction, updateProductAttributeAction, updateProductAttributeValuesAction, updateProductCollectionsAction, updateProductTypeAction, updateProductVariantAction, updateVariantLocationStockAction } from '@/app/admin/actions';
+import { createCollectionAction, createProductAttributeAction, createProductTypeAction, createProductVariantAction, updateCollectionAction, updateProductAction, updateProductAttributeAction, updateProductAttributeValuesAction, updateProductCollectionsAction, updateProductTypeAction, updateProductVariantAction, updateVariantLocationStockAction, upsertProductTranslationAction } from '@/app/admin/actions';
 import { MediaSelectWithPreview } from '@/components/admin/MediaSelectWithPreview';
 import { SiteHeader } from '@/components/SiteHeader';
 import { assertAdminRole } from '@/lib/admin-auth';
 import type { Category, Collection, MediaItem, Product, ProductAttribute, ProductAttributeValue, ProductType, ProductVariant, WarehouseLocation } from '@/lib/catalog';
 import { listAdminCategories, listAdminCollections, listAdminProductAttributes, listAdminProducts, listAdminProductTypes, listAdminWarehouseLocations, listMedia } from '@/lib/cms/catalog-repository';
+import { SUPPORTED_LOCALES, type SupportedLocale } from '@/lib/i18n/locales';
 import { getProductVariantStockSummary } from '@/lib/inventory/variant-stock-status';
 import { getRuntimeReadiness } from '@/lib/runtime-readiness';
 
@@ -40,6 +41,51 @@ function Toggle({ label, name, defaultChecked, disabled }: { label: string; name
       <input name={name} type="checkbox" defaultChecked={defaultChecked} disabled={disabled} />
       {label}
     </label>
+  );
+}
+
+function LocaleSelect({ defaultValue }: { defaultValue: SupportedLocale }) {
+  return (
+    <label className="grid gap-2 text-sm font-semibold text-rosewood">
+      Language
+      <select name="locale" className={inputClass} defaultValue={defaultValue}>
+        {SUPPORTED_LOCALES.map((locale) => (
+          <option key={locale} value={locale}>{locale === 'fa-IR' ? 'Persian / fa-IR' : 'English / en-CA'}</option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function translationFor(product: Product, locale: SupportedLocale) {
+  return product.translations?.find((translation) => translation.locale === locale);
+}
+
+function ProductTranslationFields({ product, locale, disabled }: { product: Product; locale: SupportedLocale; disabled: boolean }) {
+  if (!product.id) return null;
+  const translation = translationFor(product, locale);
+  return (
+    <form action={upsertProductTranslationAction.bind(null, product.id)} className="grid gap-4 rounded-3xl border border-rosewood/10 bg-cream p-5">
+      <LocaleSelect defaultValue={locale} />
+      <Field label="Translated title" name="translationTitle" defaultValue={translation?.title ?? ''} required disabled={disabled} />
+      <Field label="Translated image alt" name="translationImageAlt" defaultValue={translation?.imageAlt ?? ''} required={false} disabled={disabled} />
+      <TextArea label="Translated description" name="translationDescription" defaultValue={translation?.description ?? ''} required={false} disabled={disabled} />
+      <Toggle label="Published" name="translationIsPublished" defaultChecked={translation?.isPublished !== false} disabled={disabled} />
+      <button className="w-fit rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none" type="submit" disabled={disabled}>
+        Save translation
+      </button>
+    </form>
+  );
+}
+
+function ProductTranslationEditor({ product, disabled }: { product: Product; disabled: boolean }) {
+  if (!product.id) {
+    return <div className="rounded-3xl border border-dashed border-stone-300 bg-stone-50 p-6 text-sm text-stone-600">Save the product before adding translations.</div>;
+  }
+  return (
+    <div className="grid gap-4 lg:grid-cols-2">
+      {SUPPORTED_LOCALES.map((locale) => <ProductTranslationFields key={`${product.id}-${locale}`} product={product} locale={locale} disabled={disabled} />)}
+    </div>
   );
 }
 
@@ -261,6 +307,7 @@ function findProduct(products: Product[], productId: string) {
 function StatusBanner({ status }: { status?: string }) {
   const messages: Record<string, string> = {
     'product-updated': 'Product saved.',
+    'product-translation-updated': 'Product translation saved.',
     'product-variant-created': 'Variant created.',
     'product-variant-updated': 'Variant saved.',
     'product-type-created': 'Product type created.',
@@ -363,6 +410,14 @@ export default async function AdminProductDetailPage({ params, searchParams }: {
               Save product
             </button>
           </form>
+
+          <section className={`${cardClass} grid gap-5`}>
+            <div>
+              <h2 className="font-display text-3xl text-rosewood">Localized product details</h2>
+              <p className="mt-2 text-sm leading-6 text-stone-600">Edit the product copy customers see for each supported language.</p>
+            </div>
+            <ProductTranslationEditor product={product} disabled={disabled} />
+          </section>
 
           <section className={`${cardClass} grid gap-5`}>
             <div>
