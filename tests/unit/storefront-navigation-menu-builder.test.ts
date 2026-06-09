@@ -112,7 +112,9 @@ export async function runStorefrontNavigationMenuBuilderTests() {
   assert.match(siteHeader, /storefrontNavigationMenuService/);
   assert.match(siteHeader, /visibleStorefrontNavigationItems/);
   assert.match(siteHeader, /navigationItems\.map/);
-  assert.match(siteHeader, /aria-label=\{navigationMenu\.label \|\| 'Primary navigation'\}/);
+  assert.match(siteHeader, /aria-label=\{navigationMenu\.label \|\| copy\('header\.primaryNavigation'\)\}/);
+  assert.match(siteHeader, /aria-label=\{copy\('header\.accountLabel'\)\}/);
+  assert.match(siteHeader, /aria-label=\{cartLabel\}/);
 
   assert.match(roadmap, /- \[x\] Add storefront navigation\/menu builder\./);
 
