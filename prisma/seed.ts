@@ -1,9 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 import { seedCategories, seedHomepageContent, seedProducts } from '../lib/seed-data';
+import { localizeSeedProducts } from '../lib/localization/catalog-seed-fallback';
 
 const prisma = new PrismaClient();
 
 const demoNow = new Date('2026-06-03T12:00:00.000Z');
+const seedProductLocales = ['en-CA', 'fa-IR'] as const;
+const seedProductsByLocale = new Map(seedProductLocales.map((locale) => [locale, localizeSeedProducts(seedProducts, locale, seedCategories)]));
 
 const demoCustomers = [
   {
@@ -592,6 +595,27 @@ async function main() {
     });
 
     productBySlug.set(product.slug, savedProduct);
+
+    for (const locale of seedProductLocales) {
+      const localizedProduct = seedProductsByLocale.get(locale)?.find((item) => item.slug === product.slug) ?? product;
+      await prisma.productTranslation.upsert({
+        where: { productId_locale: { productId: savedProduct.id, locale } },
+        create: {
+          productId: savedProduct.id,
+          locale,
+          title: localizedProduct.title,
+          description: localizedProduct.description,
+          imageAlt: localizedProduct.title,
+          isPublished: true
+        },
+        update: {
+          title: localizedProduct.title,
+          description: localizedProduct.description,
+          imageAlt: localizedProduct.title,
+          isPublished: true
+        }
+      });
+    }
 
     await prisma.media.upsert({
       where: { url: product.image },
