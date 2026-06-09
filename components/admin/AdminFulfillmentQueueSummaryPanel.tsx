@@ -1,5 +1,6 @@
 import type { FulfillmentQueueSummary } from '@/lib/analytics/fulfillment-queue-summary';
 import type { SupportedLocale } from '@/lib/i18n/locales';
+import { createAdminFulfillmentQueueTranslator } from '@/lib/localization/admin-fulfillment-copy';
 
 type AdminLocale = 'en' | 'fa';
 
@@ -60,6 +61,7 @@ function Metric({ label, value, detail }: { label: string; value: string | numbe
 
 export function AdminFulfillmentQueueSummaryPanel({ summary, locale }: { summary: FulfillmentQueueSummary; locale?: SupportedLocale | string | null }) {
   const labels = copy[localeKey(locale)];
+  const rowCopy = createAdminFulfillmentQueueTranslator(locale);
 
   return (
     <section className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
@@ -97,12 +99,12 @@ export function AdminFulfillmentQueueSummaryPanel({ summary, locale }: { summary
                 <tr key={row.id} className="border-t border-stone-200">
                   <td className="px-3 py-2">
                     <p className="font-semibold text-stone-950">{row.orderNumber}</p>
-                    <p className="text-xs text-stone-500">{row.orderStatus} · {row.checkoutMode}</p>
+                    <p className="text-xs text-stone-500">{rowCopy.orderStatus(row.orderStatus)} · {rowCopy.checkoutMode(row.checkoutMode)}</p>
                   </td>
-                  <td className="px-3 py-2 text-stone-700">{row.customerLabel}</td>
+                  <td className="px-3 py-2 text-stone-700">{rowCopy.customerLabel(row.customerLabel)}</td>
                   <td className="px-3 py-2">
-                    <p className="font-semibold text-stone-900">{row.fulfillmentStatus}</p>
-                    <p className="text-xs text-stone-500">{row.priority}</p>
+                    <p className="font-semibold text-stone-900">{rowCopy.fulfillmentStatus(row.fulfillmentStatus)}</p>
+                    <p className="text-xs text-stone-500">{rowCopy.priority(row.priority)}</p>
                   </td>
                   <td className="px-3 py-2 text-stone-700">{row.itemCount}</td>
                   <td className="px-3 py-2 text-stone-700">{row.ageDays}{labels.days}</td>
