@@ -6,7 +6,7 @@ const routes = [
   { path: '/', expectedStatuses: [200], label: 'homepage', expectedContent: ['Golara'] },
   { path: '/products', expectedStatuses: [200], label: 'product listing', expectedAnyContent: ['All products', 'همه محصولات'] },
   { path: '/cart', expectedStatuses: [200], label: 'cart', expectedContent: ['cart'] },
-  { path: '/account/login', expectedStatuses: [200], label: 'account login', expectedContent: ['phone'] },
+  { path: '/account/login', expectedStatuses: [200], label: 'account login', expectedAnyContent: ['phone', 'شماره تلفن'] },
   { path: '/sitemap.xml', expectedStatuses: [200], label: 'sitemap', expectedContent: ['<urlset'] },
   { path: '/robots.txt', expectedStatuses: [200], label: 'robots', expectedContent: ['User-agent'] },
   { path: '/account/orders', expectedStatuses: [200, 302, 303, 307, 308], label: 'unauthenticated account orders' }
