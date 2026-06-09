@@ -103,6 +103,7 @@ import { runPaymentWebhookSignatureTests } from './payment-webhook-signature.tes
 import { runPaymentWebhookTransitionPlanTests } from './payment-webhook-transition-plan.test';
 import { runPaymentWebhookValidationEvidenceDocsTests } from './payment-webhook-validation-evidence-docs.test';
 import { runProductCheckoutPolicyTests } from './product-checkout-policy.test';
+import { runProductTranslationReadinessTests } from './product-translation-readiness.test';
 import { runProductVariantMapperTests } from './product-variant-mapper.test';
 import { runPromotionAuditLogsModelTests } from './promotion-audit-logs-model.test';
 import { runPromotionDiscountModelTests } from './promotion-discount-model.test';
@@ -241,6 +242,7 @@ async function main() {
   await runStaffPermissionSettingsTests();
   await runProductCheckoutPolicyTests();
   await runProductVariantMapperTests();
+  await runProductTranslationReadinessTests();
   await runCatalogSeedFallbackLocalizationTests();
   await runPromotionDiscountModelTests();
   await runPromotionVoucherModelTests();
@@ -274,7 +276,7 @@ async function main() {
   await runI18nLocalizationTests();
   await runLocalizationBundleSourceGuardTests();
   await runDeployReadinessTests();
-  console.log('unit tests passed (136 files)');
+  console.log('unit tests passed (137 files)');
 }
 
 main().catch((error) => {
