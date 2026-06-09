@@ -91,7 +91,7 @@ function InquiryMessage({ message }: { message?: InquiryMessageConfig }) {
     message.tone === 'success'
       ? 'mt-6 rounded-2xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive'
       : 'mt-6 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm font-semibold text-amber-900';
-  return <div className={className}>{message.text}</div>;
+  return <div className={className} role="status" aria-live="polite">{message.text}</div>;
 }
 
 function FieldError({ field, message }: { field: InquiryField; message?: InquiryMessageConfig }) {
