@@ -5,6 +5,7 @@ import { localizedField, selectPublishedTranslation, selectTranslatedContent } f
 import { storefrontCopy } from '../../lib/localization/storefront-copy';
 import { customerCopy, getCustomerCopy } from '../../lib/localization/customer-copy';
 import { createAdminRouteErrorTranslator } from '../../lib/localization/admin-route-error-copy';
+import { createAdminRouteLoadingTranslator } from '../../lib/localization/admin-route-loading-copy';
 import { orderConfirmationPageCopy, orderConfirmationResultCopy } from '../../lib/checkout/order-confirmation-copy';
 
 export async function runI18nLocalizationTests() {
@@ -62,12 +63,29 @@ export async function runI18nLocalizationTests() {
   assert.equal(createAdminRouteErrorTranslator('en-CA')('Retry'), 'Retry');
   assert.equal(createAdminRouteErrorTranslator('fa-IR')('Unmapped status'), 'Unmapped status');
 
+  const adminLoadingFa = createAdminRouteLoadingTranslator('fa-IR');
+  assert.equal(adminLoadingFa('Operations console'), 'کنسول عملیات');
+  assert.equal(adminLoadingFa('Orders'), 'سفارش ها');
+  assert.equal(adminLoadingFa('Loading sales'), 'در حال بارگیری فروش');
+  assert.equal(adminLoadingFa('Media library'), 'کتابخانه رسانه');
+  assert.equal(adminLoadingFa('Loading catalog'), 'در حال بارگیری کاتالوگ');
+  assert.equal(createAdminRouteLoadingTranslator('en-CA')('Orders'), 'Orders');
+  assert.equal(createAdminRouteLoadingTranslator('fa-IR')('Unmapped loading key'), 'Unmapped loading key');
+
   const adminRouteErrorSource = readFileSync('components/admin/AdminRouteError.tsx', 'utf8');
   assert.match(adminRouteErrorSource, /STOREFRONT_LOCALE_COOKIE/);
   assert.match(adminRouteErrorSource, /createAdminRouteErrorTranslator\(locale\)/);
   assert.match(adminRouteErrorSource, /t\('Module error'\)/);
   assert.match(adminRouteErrorSource, /t\('Retry'\)/);
   assert.match(adminRouteErrorSource, /t\('Back to overview'\)/);
+
+  const adminRouteLoadingSource = readFileSync('components/admin/AdminRouteLoading.tsx', 'utf8');
+  assert.match(adminRouteLoadingSource, /STOREFRONT_LOCALE_COOKIE/);
+  assert.match(adminRouteLoadingSource, /createAdminRouteLoadingTranslator\(locale\)/);
+  assert.match(adminRouteLoadingSource, /t\('Operations console'\)/);
+  assert.match(adminRouteLoadingSource, /t\(eyebrow\)/);
+  assert.match(adminRouteLoadingSource, /t\(title\)/);
+  assert.doesNotMatch(adminRouteLoadingSource, /'Customer Ops'/);
 
   const paidEnglish = orderConfirmationResultCopy('paid', 'en-CA');
   assert.equal(paidEnglish.title, 'Payment received');
