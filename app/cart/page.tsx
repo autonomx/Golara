@@ -5,12 +5,11 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { getCartTokenCookie } from '@/lib/cart/cart-cookie';
 import { getCartByToken } from '@/lib/cart/cart-repository';
 import { formatMinorUnitAmount } from '@/lib/catalog';
-import { getCustomerCopy, type CustomerCopyKey } from '@/lib/localization/customer-copy';
+import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
+import { getCustomerCopy, getCustomerCopyDirection, type CustomerCopyKey } from '@/lib/localization/customer-copy';
 import { hasDatabase } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
-
-const copy = (key: Parameters<typeof getCustomerCopy>[0]) => getCustomerCopy(key);
 
 function statusMessageKey(status?: string): CustomerCopyKey | undefined {
   if (status === 'added') return 'cart.status.added';
@@ -29,7 +28,8 @@ function quantityOptions(current: number) {
 }
 
 export default async function CartPage({ searchParams }: { searchParams: Promise<{ cart?: string }> }) {
-  const [{ cart: cartStatus }, token] = await Promise.all([searchParams, getCartTokenCookie()]);
+  const [{ cart: cartStatus }, token, locale] = await Promise.all([searchParams, getCartTokenCookie(), resolveStorefrontLocale()]);
+  const copy = (key: Parameters<typeof getCustomerCopy>[0]) => getCustomerCopy(key, locale);
   const messageKey = statusMessageKey(cartStatus);
   const message = messageKey ? copy(messageKey) : undefined;
   const cart = hasDatabase() ? await getCartByToken(token) : null;
@@ -38,8 +38,8 @@ export default async function CartPage({ searchParams }: { searchParams: Promise
   const currency = cart?.currency || items[0]?.product.currency || process.env.CHECKOUT_DOMESTIC_CURRENCY || 'TOMAN';
 
   return (
-    <main id="main-content" tabIndex={-1}>
-      <SiteHeader />
+    <main id="main-content" tabIndex={-1} dir={getCustomerCopyDirection(locale)}>
+      <SiteHeader locale={locale} />
       <section className="mx-auto max-w-7xl px-5 py-14">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
