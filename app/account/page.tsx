@@ -3,6 +3,7 @@ import { logoutCustomerAction } from '@/app/account/actions';
 import { SiteHeader } from '@/components/SiteHeader';
 import { getCustomerSession } from '@/lib/customers/customer-account-repository';
 import { getCustomerSessionCookie } from '@/lib/customers/customer-session-cookie';
+import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { getCustomerCopy, getCustomerCopyDirection, type CustomerCopyKey } from '@/lib/localization/customer-copy';
 import { hasDatabase } from '@/lib/prisma';
 
@@ -15,9 +16,9 @@ function statusMessageKey(status?: string): CustomerCopyKey | undefined {
 }
 
 export default async function AccountPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
-  const [{ status }, token] = await Promise.all([searchParams, getCustomerSessionCookie()]);
+  const [{ status }, token, storefrontLocale] = await Promise.all([searchParams, getCustomerSessionCookie(), resolveStorefrontLocale()]);
   const session = hasDatabase() ? await getCustomerSession(token) : null;
-  const locale = session?.customer.locale;
+  const locale = session?.customer.locale || storefrontLocale;
   const dir = getCustomerCopyDirection(locale);
   const copy = (key: Parameters<typeof getCustomerCopy>[0]) => getCustomerCopy(key, locale);
   const messageKey = statusMessageKey(status);
@@ -25,7 +26,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
   return (
     <main id="main-content" tabIndex={-1} dir={dir}>
-      <SiteHeader />
+      <SiteHeader locale={locale} />
       <section className="mx-auto max-w-5xl px-5 py-14">
         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">{copy('account.eyebrow')}</p>
         <h1 className="mt-3 font-display text-6xl text-rosewood">{copy('account.title')}</h1>
