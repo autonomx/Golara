@@ -20,6 +20,12 @@ type PublicOrderCopy = {
   privacy: string;
   latestPaymentStatus: string;
   paymentGuidance: string;
+  languageNavLabel: string;
+  languageCurrentPrefix: string;
+  languageEnglish: string;
+  languagePersian: string;
+  viewInEnglish: string;
+  viewInPersian: string;
 };
 
 type PaymentGuidance = {
@@ -103,7 +109,13 @@ export const publicOrderCopy: PublicOrderCopy = {
   noProgress: 'No progress updates have been posted yet.',
   privacy: 'For privacy, this page does not show address, phone, courier details, customer notes, or staff-only notes. Contact the shop with your order reference for detailed changes.',
   latestPaymentStatus: 'Latest payment status',
-  paymentGuidance: 'Payment guidance'
+  paymentGuidance: 'Payment guidance',
+  languageNavLabel: 'Order status language',
+  languageCurrentPrefix: 'Current language',
+  languageEnglish: 'English',
+  languagePersian: 'Persian',
+  viewInEnglish: 'View this order status in English',
+  viewInPersian: 'View this order status in Persian'
 };
 
 export const publicOrderCopyFa: PublicOrderCopy = {
@@ -123,7 +135,13 @@ export const publicOrderCopyFa: PublicOrderCopy = {
   noProgress: 'هنوز به‌روزرسانی جدیدی برای این سفارش ثبت نشده است.',
   privacy: 'برای حفظ حریم خصوصی، این صفحه آدرس، تلفن، اطلاعات پیک، یادداشت مشتری یا یادداشت‌های داخلی فروشگاه را نمایش نمی‌دهد. برای تغییرات دقیق‌تر، با شماره سفارش با فروشگاه تماس بگیرید.',
   latestPaymentStatus: 'آخرین وضعیت پرداخت',
-  paymentGuidance: 'راهنمای پرداخت'
+  paymentGuidance: 'راهنمای پرداخت',
+  languageNavLabel: 'زبان وضعیت سفارش',
+  languageCurrentPrefix: 'زبان فعلی',
+  languageEnglish: 'انگلیسی',
+  languagePersian: 'فارسی',
+  viewInEnglish: 'مشاهده وضعیت این سفارش به انگلیسی',
+  viewInPersian: 'مشاهده وضعیت این سفارش به فارسی'
 };
 
 export const resultMessages: Record<string, ResultMessage> = {

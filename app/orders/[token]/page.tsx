@@ -73,7 +73,7 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
   const latestAttempt = order.paymentAttempts[0];
   const copy = publicOrderCopyFor(locale);
   const isFa = locale?.toLowerCase().startsWith('fa') ?? false;
-  const currentLanguage = isFa ? 'Persian' : 'English';
+  const currentLanguage = isFa ? copy.languagePersian : copy.languageEnglish;
 
   return (
     <main id="main-content" tabIndex={-1} dir={isFa ? 'rtl' : 'ltr'}>
@@ -85,9 +85,9 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
               <p className={eyebrowClass(isFa)}>{copy.eyebrow}</p>
               <h1 className="mt-3 font-display text-5xl text-rosewood" dir="ltr">{order.orderNumber}</h1>
             </div>
-            <nav aria-label={`Order status language. Current language: ${currentLanguage}.`} className="flex flex-row gap-2 text-sm font-semibold" dir="ltr">
-              <Link className={languageLinkClass} href={localeHref(token, 'en', result)} aria-label="View this order status in English" aria-current={!isFa ? 'page' : undefined}>English</Link>
-              <Link className={languageLinkClass} href={localeHref(token, 'fa', result)} aria-label="View this order status in Persian" aria-current={isFa ? 'page' : undefined}>فارسی</Link>
+            <nav aria-label={`${copy.languageNavLabel}. ${copy.languageCurrentPrefix}: ${currentLanguage}.`} className="flex flex-row gap-2 text-sm font-semibold" dir="ltr">
+              <Link className={languageLinkClass} href={localeHref(token, 'en', result)} aria-label={copy.viewInEnglish} aria-current={!isFa ? 'page' : undefined}>English</Link>
+              <Link className={languageLinkClass} href={localeHref(token, 'fa', result)} aria-label={copy.viewInPersian} aria-current={isFa ? 'page' : undefined}>فارسی</Link>
             </nav>
           </div>
           <p className="mt-5 text-lg leading-8 text-stone-700" aria-live="polite">
