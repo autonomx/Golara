@@ -1,5 +1,6 @@
 import { setStorefrontLocaleAction } from '@/app/locale/actions';
 import { SUPPORTED_LOCALES, type SupportedLocale } from '@/lib/i18n/locales';
+import { getStorefrontCopy } from '@/lib/localization/storefront-copy';
 
 type LocaleLabelKey = 'fa' | 'en';
 
@@ -21,7 +22,7 @@ const localizedLocaleLabels: Record<SupportedLocale, Record<LocaleLabelKey, stri
 
 export function LanguageSwitcher({ locale, returnTo = '/' }: { locale: SupportedLocale; returnTo?: string }) {
   return (
-    <form action={setStorefrontLocaleAction} className="flex items-center gap-1 rounded-full border border-rosewood/10 bg-white/60 p-1 text-xs font-semibold text-rosewood shadow-sm">
+    <form action={setStorefrontLocaleAction} aria-label={getStorefrontCopy('language.switcherLabel', locale)} className="flex items-center gap-1 rounded-full border border-rosewood/10 bg-white/60 p-1 text-xs font-semibold text-rosewood shadow-sm">
       <input type="hidden" name="returnTo" value={returnTo} />
       {SUPPORTED_LOCALES.map((candidate) => (
         <button
