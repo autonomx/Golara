@@ -3,7 +3,7 @@ import type { HomepageContent } from '@/lib/catalog';
 const lookup: Record<'en' | 'fa', Partial<HomepageContent>> = {
   en: {
     eyebrow: 'Luxury floral studio',
-    title: 'Flowers for moments worth keeping.',
+    title: 'Flowers for moments worth keeping',
     body: 'Golara is a premium flower and gift storefront for bouquets, flower boxes, weddings, events, and special gifts.',
     primaryCtaLabel: 'Shop catalog',
     primaryCtaHref: '/products',
@@ -25,7 +25,7 @@ const lookup: Record<'en' | 'fa', Partial<HomepageContent>> = {
   },
   fa: {
     eyebrow: 'استودیوی لوکس گل',
-    title: 'گل‌هایی برای لحظه‌های ماندگار.',
+    title: 'گل‌هایی برای لحظه‌های ماندگار',
     body: 'گلارا فروشگاه آنلاین گل و هدیه لوکس برای دسته‌گل، باکس گل، عروسی، مراسم و هدیه‌های خاص است.',
     primaryCtaLabel: 'مشاهده کاتالوگ',
     primaryCtaHref: '/products',
