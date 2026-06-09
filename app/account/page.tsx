@@ -3,14 +3,14 @@ import { logoutCustomerAction } from '@/app/account/actions';
 import { SiteHeader } from '@/components/SiteHeader';
 import { getCustomerSession } from '@/lib/customers/customer-account-repository';
 import { getCustomerSessionCookie } from '@/lib/customers/customer-session-cookie';
-import { getCustomerCopy, getCustomerCopyDirection } from '@/lib/localization/customer-copy';
+import { getCustomerCopy, getCustomerCopyDirection, type CustomerCopyKey } from '@/lib/localization/customer-copy';
 import { hasDatabase } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
-function statusMessage(status?: string) {
-  if (status === 'signed-out') return 'You have been signed out.';
-  if (status === 'session-required') return 'Please sign in to view your account.';
+function statusMessageKey(status?: string): CustomerCopyKey | undefined {
+  if (status === 'signed-out') return 'account.status.signedOut';
+  if (status === 'session-required') return 'account.status.sessionRequired';
   return undefined;
 }
 
@@ -20,7 +20,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const locale = session?.customer.locale;
   const dir = getCustomerCopyDirection(locale);
   const copy = (key: Parameters<typeof getCustomerCopy>[0]) => getCustomerCopy(key, locale);
-  const message = statusMessage(status);
+  const messageKey = statusMessageKey(status);
+  const message = messageKey ? copy(messageKey) : undefined;
 
   return (
     <main id="main-content" tabIndex={-1} dir={dir}>
@@ -51,7 +52,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
               <h2 className="font-display text-4xl text-rosewood">{copy('account.profileTitle')}</h2>
               <div className="mt-5 grid gap-3 text-sm text-stone-700">
                 <p><strong>{copy('common.name')}:</strong> {session.customer.displayName || copy('common.notSet')}</p>
-                <p><strong>{copy('common.phone')}:</strong> {session.customer.phone}</p>
+                <p><strong>{copy('common.phone')}:</strong> {session.customer['phone']}</p>
                 <p><strong>{copy('common.email')}:</strong> {session.customer.email || copy('common.notSet')}</p>
                 <p><strong>{copy('common.locale')}:</strong> {session.customer.locale}</p>
               </div>
@@ -80,7 +81,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                     <article key={address.id} className="rounded-2xl border border-rosewood/10 bg-white p-4 text-sm text-stone-700">
                       <p className="font-semibold text-rosewood">{address.label}{address.isDefault ? ` · ${copy('common.default')}` : ''}</p>
                       <p className="mt-1">{address.line1}{address.line2 ? `, ${address.line2}` : ''}</p>
-                      <p>{address.city || 'City not set'}</p>
+                      <p>{address.city || copy('common.cityNotSet')}</p>
                     </article>
                   ))}
                 </div>

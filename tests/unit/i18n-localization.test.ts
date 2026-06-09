@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { DEFAULT_LOCALE, FALLBACK_LOCALE, SUPPORTED_LOCALES, fallbackLocaleOrder, isSupportedLocale, localeDirection, normalizeLocale } from '../../lib/i18n/locales';
 import { localizedField, selectPublishedTranslation, selectTranslatedContent } from '../../lib/i18n/translated-content';
 import { storefrontCopy } from '../../lib/localization/storefront-copy';
+import { customerCopy, getCustomerCopy } from '../../lib/localization/customer-copy';
 import { orderConfirmationPageCopy, orderConfirmationResultCopy } from '../../lib/checkout/order-confirmation-copy';
 
 export async function runI18nLocalizationTests() {
@@ -41,6 +42,14 @@ export async function runI18nLocalizationTests() {
       assert.notEqual(value.trim(), '', `${locale}.${key} should not be blank`);
     }
   }
+
+  assert.deepEqual(Object.keys(customerCopy.fa).sort(), Object.keys(customerCopy.en).sort());
+  assert.equal(getCustomerCopy('account.status.signedOut', 'en-CA'), 'You have been signed out.');
+  assert.equal(getCustomerCopy('account.status.signedOut', 'fa-IR'), 'از حساب خارج شدید.');
+  assert.equal(getCustomerCopy('account.status.sessionRequired', 'fa-IR'), 'برای مشاهده حساب خود وارد شوید.');
+  assert.equal(getCustomerCopy('profile.status.updated', 'fa-IR'), 'پروفایل به‌روزرسانی شد.');
+  assert.equal(getCustomerCopy('profile.status.failed', 'en-CA'), 'We could not update your profile. Please check the fields and try again.');
+  assert.equal(getCustomerCopy('common.cityNotSet', 'fa-IR'), 'شهر تنظیم نشده');
 
   const paidEnglish = orderConfirmationResultCopy('paid', 'en-CA');
   assert.equal(paidEnglish.title, 'Payment received');
