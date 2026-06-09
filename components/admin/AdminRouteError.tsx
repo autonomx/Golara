@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { STOREFRONT_LOCALE_COOKIE } from '@/lib/i18n/locale-cookie';
-import { createAdminTranslator } from '@/lib/localization/admin-copy';
+import { createAdminRouteErrorTranslator } from '@/lib/localization/admin-route-error-copy';
 
 function readClientLocale() {
   if (typeof document === 'undefined') return undefined;
@@ -26,7 +26,7 @@ export function AdminRouteError({ title = 'Admin module error', error, reset }: 
     setLocale(readClientLocale());
   }, []);
 
-  const t = useMemo(() => createAdminTranslator(locale), [locale]);
+  const t = useMemo(() => createAdminRouteErrorTranslator(locale), [locale]);
 
   return (
     <main className="min-h-screen bg-stone-50 lg:pl-72">
