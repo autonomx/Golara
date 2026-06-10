@@ -8,6 +8,7 @@ import { createAdminActionBannerTranslator } from '../../lib/localization/admin-
 import { adminCatalogBulkActionLabel, adminCatalogBulkActionKeys, adminCatalogControlLabel } from '../../lib/localization/admin-catalog-control-copy';
 import { createAdminInquiryBoardTranslator } from '../../lib/localization/admin-inquiry-board-copy';
 import { adminMediaCategoryLabel, adminMediaLocalAssetLabel, adminMediaSeedOrStaticAssetLabel, adminMediaStaticLabel, adminMediaUsageLabel } from '../../lib/localization/admin-media-copy';
+import { createAdminPromotionWorkspaceTranslator } from '../../lib/localization/admin-promotion-workspace-copy';
 import { createAdminRouteErrorTranslator } from '../../lib/localization/admin-route-error-copy';
 import { createAdminRouteLoadingTranslator } from '../../lib/localization/admin-route-loading-copy';
 import { orderConfirmationPageCopy, orderConfirmationResultCopy } from '../../lib/checkout/order-confirmation-copy';
@@ -104,6 +105,16 @@ export async function runI18nLocalizationTests() {
   assert.equal(adminMediaStaticLabel('fa-IR'), 'ثابت');
   assert.equal(adminMediaCategoryLabel('homepage-banner', 'en-CA'), 'Homepage hero');
 
+  const adminPromotionFa = createAdminPromotionWorkspaceTranslator('fa-IR');
+  assert.equal(adminPromotionFa('active'), 'فعال');
+  assert.equal(adminPromotionFa('scheduled'), 'زمان بندی شده');
+  assert.equal(adminPromotionFa('Open'), 'باز');
+  assert.equal(adminPromotionFa('None'), 'هیچ کدام');
+  assert.equal(adminPromotionFa('Min'), 'حداقل');
+  assert.equal(adminPromotionFa('No store credits found.'), 'هیچ اعتبار فروشگاهی پیدا نشد.');
+  assert.equal(createAdminPromotionWorkspaceTranslator('en-CA')('active'), 'Active');
+  assert.equal(createAdminPromotionWorkspaceTranslator('fa-IR')('Unmapped promotion key'), 'Unmapped promotion key');
+
   const adminErrorFa = createAdminRouteErrorTranslator('fa-IR');
   assert.equal(adminErrorFa('Module error'), 'خطای بخش');
   assert.equal(adminErrorFa('Orders could not load'), 'سفارش ها بارگیری نشدند');
@@ -155,6 +166,17 @@ export async function runI18nLocalizationTests() {
   assert.match(adminCatalogControlCopySource, /adminCatalogBulkActionLabel/);
   assert.match(adminCatalogControlCopySource, /adminCatalogControlLabel/);
   assert.match(adminCatalogControlCopySource, /Mark available today/);
+
+  const adminPromotionCopySource = readFileSync('lib/localization/admin-promotion-workspace-copy.ts', 'utf8');
+  assert.match(adminPromotionCopySource, /createAdminPromotionWorkspaceTranslator/);
+  assert.match(adminPromotionCopySource, /No store credits found/);
+  assert.match(adminPromotionCopySource, /No promotion discounts found/);
+
+  const adminModulePlaceholderSource = readFileSync('components/admin/AdminModulePlaceholder.tsx', 'utf8');
+  assert.match(adminModulePlaceholderSource, /createAdminPromotionWorkspaceTranslator\(locale\)/);
+  assert.match(adminModulePlaceholderSource, /pt\(discount\.status\)/);
+  assert.match(adminModulePlaceholderSource, /pt\('No store credits found\.'\)/);
+  assert.doesNotMatch(adminModulePlaceholderSource, />None<|>Open<|>Expires /);
 
   const paidEnglish = orderConfirmationResultCopy('paid', 'en-CA');
   assert.equal(paidEnglish.title, 'Payment received');
