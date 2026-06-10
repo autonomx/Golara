@@ -1,11 +1,17 @@
 import { strict as assert } from 'node:assert';
 import { readFileSync } from 'node:fs';
+import { getCustomerLocaleOptionLabel } from '@/lib/localization/customer-locale-options';
 import { customerCopy } from '@/lib/localization/customer-copy';
 
 const source = readFileSync('app/account/profile/page.tsx', 'utf8');
+const allowlist = readFileSync('tests/fixtures/localization-source-audit-allowlist.txt', 'utf8');
 
 function has(fragment: string) {
   assert.ok(source.includes(fragment), `Expected profile route source to include: ${fragment}`);
+}
+
+function lacks(fragment: string) {
+  assert.ok(!source.includes(fragment), `Expected profile route source not to include: ${fragment}`);
 }
 
 function hasCustomerCopy(key: keyof typeof customerCopy.en) {
@@ -32,6 +38,12 @@ for (const key of [
   hasCustomerCopy(key);
 }
 
+assert.equal(getCustomerLocaleOptionLabel('fa-IR', 'en-CA'), 'Persian / Iran');
+assert.equal(getCustomerLocaleOptionLabel('en-CA', 'en-CA'), 'English / Canada');
+assert.equal(getCustomerLocaleOptionLabel('fa-IR', 'fa-IR'), 'فارسی / ایران');
+assert.equal(getCustomerLocaleOptionLabel('en-CA', 'fa-IR'), 'انگلیسی / کانادا');
+assert.ok(!allowlist.includes('app/account/profile/page.tsx'), 'profile route should not be source-audit allowlisted');
+
 for (const fragment of [
   'resolveStorefrontLocale',
   'const storefrontLocale = await resolveStorefrontLocale();',
@@ -55,9 +67,16 @@ for (const fragment of [
   "copy('profile.verifiedPhone')",
   "copy('profile.phoneDeferredNote')",
   "copy('profile.updateProfile')",
-  "copy('common.accountOverview')"
+  "copy('common.accountOverview')",
+  'getCustomerLocaleOptionLabel',
+  "localeOptionLabel('fa-IR')",
+  "localeOptionLabel('en-CA')"
 ]) {
   has(fragment);
+}
+
+for (const fragment of ['Persian / Iran', 'English / Canada']) {
+  lacks(fragment);
 }
 
 console.log('storefront profile route copy guard passed');

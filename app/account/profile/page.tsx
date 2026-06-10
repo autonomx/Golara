@@ -5,6 +5,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { getCustomerSession } from '@/lib/customers/customer-account-repository';
 import { getCustomerSessionCookie } from '@/lib/customers/customer-session-cookie';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
+import { getCustomerLocaleOptionLabel } from '@/lib/localization/customer-locale-options';
 import { getCustomerCopy, getCustomerCopyDirection, type CustomerCopyKey } from '@/lib/localization/customer-copy';
 import { hasDatabase } from '@/lib/prisma';
 
@@ -40,6 +41,7 @@ export default async function AccountProfilePage({ searchParams }: { searchParam
   const locale = session.customer.locale;
   const dir = getCustomerCopyDirection(locale);
   const copy = (key: Parameters<typeof getCustomerCopy>[0]) => getCustomerCopy(key, locale);
+  const localeOptionLabel = (value: Parameters<typeof getCustomerLocaleOptionLabel>[0]) => getCustomerLocaleOptionLabel(value, locale);
   const messageKey = statusMessageKey(status);
   const message = messageKey ? copy(messageKey) : undefined;
 
@@ -70,8 +72,8 @@ export default async function AccountProfilePage({ searchParams }: { searchParam
           <label className="grid gap-2 text-sm font-semibold text-rosewood">
             {copy('common.locale')}
             <select name="locale" defaultValue={session.customer.locale || 'fa-IR'} className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20">
-              <option value="fa-IR">Persian / Iran</option>
-              <option value="en-CA">English / Canada</option>
+              <option value="fa-IR">{localeOptionLabel('fa-IR')}</option>
+              <option value="en-CA">{localeOptionLabel('en-CA')}</option>
             </select>
           </label>
           <div className="rounded-3xl border border-rosewood/10 bg-cream p-4 text-sm leading-6 text-stone-700">
