@@ -31,6 +31,7 @@ import { runDashboardExtensionMountPointsTests } from './dashboard-extension-mou
 import { runDataSafetyReadinessTests } from './data-safety-readiness.test';
 import { runDeployReadinessTests } from './deploy-readiness.test';
 import { runE2eDbSafetyContractTests } from './e2e-db-safety-contract.test';
+import { runFailedPaymentAlertLocalizationTests } from './failed-payment-alert-localization.test';
 import { runFailedPaymentNotificationAlertsTests } from './failed-payment-notification-alerts.test';
 import { runFulfillmentMethodSettingsModelTests } from './fulfillment-method-settings-model.test';
 import { runFulfillmentQueueSummaryTests } from './fulfillment-queue-summary.test';
@@ -196,6 +197,7 @@ async function main() {
   await runFulfillmentQueueSummaryTests();
   await runRecentActivitySummaryTests();
   await runFailedPaymentNotificationAlertsTests();
+  await runFailedPaymentAlertLocalizationTests();
   await runLaunchReadinessHealthTests();
   await runPaymentGatewayConfigTests();
   await runPaymentGatewayAdaptersTests();
@@ -278,7 +280,7 @@ async function main() {
   await runI18nLocalizationTests();
   await runLocalizationBundleSourceGuardTests();
   await runDeployReadinessTests();
-  console.log('unit tests passed (138 files)');
+  console.log('unit tests passed (139 files)');
 }
 
 main().catch((error) => {
