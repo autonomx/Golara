@@ -7,10 +7,15 @@ type RawEnglishFinding = {
   text: string;
 };
 
-const WORKSPACE_FILES = [
+const LOCALIZED_ADMIN_COMPONENT_FILES = [
   'components/admin/AdminOverviewWorkspace.tsx',
   'components/admin/AdminCatalogWorkspace.tsx',
-  'components/admin/AdminContentWorkspace.tsx'
+  'components/admin/AdminContentWorkspace.tsx',
+  'components/admin/AdminCatalogControls.tsx',
+  'components/admin/AdminMediaSection.tsx',
+  'components/admin/AdminCategorySection.tsx',
+  'components/admin/AdminProductSection.tsx',
+  'components/admin/AdminHomepageSection.tsx'
 ] as const;
 
 function lineNumberForIndex(content: string, index: number) {
@@ -64,12 +69,12 @@ function findRawEnglishCopy(file: string): RawEnglishFinding[] {
 }
 
 export function runAdminWorkspaceLocalizationSourceGuardTests() {
-  const findings = WORKSPACE_FILES.flatMap((file) => findRawEnglishCopy(file));
+  const findings = LOCALIZED_ADMIN_COMPONENT_FILES.flatMap((file) => findRawEnglishCopy(file));
 
   assert.deepEqual(
     findings,
     [],
-    `Workspace components should not introduce raw English UI copy. Route copy through admin localization helpers instead.\n${findings
+    `Extracted admin workspace and section components should not introduce raw English UI copy. Route copy through admin localization helpers instead.\n${findings
       .map((finding) => `${finding.file}:${finding.line} ${JSON.stringify(finding.text)}`)
       .join('\n')}`
   );
