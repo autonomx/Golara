@@ -4,6 +4,7 @@ import { DEFAULT_LOCALE, FALLBACK_LOCALE, SUPPORTED_LOCALES, fallbackLocaleOrder
 import { localizedField, selectPublishedTranslation, selectTranslatedContent } from '../../lib/i18n/translated-content';
 import { storefrontCopy } from '../../lib/localization/storefront-copy';
 import { customerCopy, getCustomerCopy } from '../../lib/localization/customer-copy';
+import { adminMediaCategoryLabel, adminMediaLocalAssetLabel, adminMediaSeedOrStaticAssetLabel, adminMediaStaticLabel, adminMediaUsageLabel } from '../../lib/localization/admin-media-copy';
 import { createAdminRouteErrorTranslator } from '../../lib/localization/admin-route-error-copy';
 import { createAdminRouteLoadingTranslator } from '../../lib/localization/admin-route-loading-copy';
 import { orderConfirmationPageCopy, orderConfirmationResultCopy } from '../../lib/checkout/order-confirmation-copy';
@@ -54,6 +55,15 @@ export async function runI18nLocalizationTests() {
   assert.equal(getCustomerCopy('profile.status.failed', 'en-CA'), 'We could not update your profile. Please check the fields and try again.');
   assert.equal(getCustomerCopy('common.cityNotSet', 'fa-IR'), 'شهر تنظیم نشده');
 
+  assert.equal(adminMediaCategoryLabel('homepage-banner', 'fa-IR'), 'هیرو صفحه اصلی');
+  assert.equal(adminMediaCategoryLabel('unknown', 'fa-IR'), 'عمومی / سایر');
+  assert.equal(adminMediaUsageLabel('Homepage best seller', 'fa-IR'), 'پرفروش صفحه اصلی');
+  assert.equal(adminMediaUsageLabel('unknown', 'fa-IR'), 'تخصیص نیافته');
+  assert.equal(adminMediaLocalAssetLabel('fa-IR'), 'دارایی محلی');
+  assert.equal(adminMediaSeedOrStaticAssetLabel('fa-IR'), 'داده نمونه یا دارایی ثابت');
+  assert.equal(adminMediaStaticLabel('fa-IR'), 'ثابت');
+  assert.equal(adminMediaCategoryLabel('homepage-banner', 'en-CA'), 'Homepage hero');
+
   const adminErrorFa = createAdminRouteErrorTranslator('fa-IR');
   assert.equal(adminErrorFa('Module error'), 'خطای بخش');
   assert.equal(adminErrorFa('Orders could not load'), 'سفارش ها بارگیری نشدند');
@@ -86,6 +96,11 @@ export async function runI18nLocalizationTests() {
   assert.match(adminRouteLoadingSource, /t\(eyebrow\)/);
   assert.match(adminRouteLoadingSource, /t\(title\)/);
   assert.doesNotMatch(adminRouteLoadingSource, /'Customer Ops'/);
+
+  const adminMediaCopySource = readFileSync('lib/localization/admin-media-copy.ts', 'utf8');
+  assert.match(adminMediaCopySource, /adminMediaCategoryLabel/);
+  assert.match(adminMediaCopySource, /adminMediaUsageLabel/);
+  assert.match(adminMediaCopySource, /adminMediaLocalAssetLabel/);
 
   const paidEnglish = orderConfirmationResultCopy('paid', 'en-CA');
   assert.equal(paidEnglish.title, 'Payment received');
