@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { Category, HomepageContent, HomepageTranslation, Product } from '@/lib/catalog';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 import { updateHomepageAction } from '@/app/admin/actions';
@@ -27,7 +28,7 @@ function TextArea({ label, name, defaultValue, disabled = false }: { label: stri
   return <label className="grid gap-2 text-sm font-semibold text-rosewood">{label}<textarea className={textAreaClass} name={name} defaultValue={defaultValue} disabled={disabled} required /></label>;
 }
 
-function SubmitButton({ children, disabled }: { children: React.ReactNode; disabled: boolean }) {
+function SubmitButton({ children, disabled }: { children: ReactNode; disabled: boolean }) {
   return <button className={primaryButtonClass} type="submit" disabled={disabled}>{children}</button>;
 }
 
