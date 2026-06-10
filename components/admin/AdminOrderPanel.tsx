@@ -6,6 +6,7 @@ import type { AdminOrderFilters, AdminOrderPage } from '@/lib/checkout/admin-ord
 import { CHECKOUT_FULFILLMENT_STATUSES, CHECKOUT_ORDER_STATUSES, CHECKOUT_PAYMENT_STATUSES } from '@/lib/checkout/checkout-state-machine';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import type { SupportedLocale } from '@/lib/i18n/locales';
+import { createAdminFulfillmentQueueTranslator } from '@/lib/localization/admin-fulfillment-copy';
 
 const orderStatuses = [...CHECKOUT_ORDER_STATUSES];
 const paymentStatuses = [...CHECKOUT_PAYMENT_STATUSES];
@@ -199,19 +200,19 @@ function FilterInput({ label, name, defaultValue, placeholder }: { label: string
   );
 }
 
-function FilterSelect({ label, name, defaultValue, values, anyLabel }: { label: string; name: string; defaultValue?: string; values: string[]; anyLabel: string }) {
+function FilterSelect({ label, name, defaultValue, values, anyLabel, formatValue }: { label: string; name: string; defaultValue?: string; values: string[]; anyLabel: string; formatValue: (value: string) => string }) {
   return (
     <label className="grid gap-2 text-sm font-semibold text-rosewood">
       {label}
       <select className={filterInputClass} name={name} defaultValue={defaultValue || ''}>
         <option value="">{anyLabel}</option>
-        {values.map((value) => <option key={value} value={value}>{value}</option>)}
+        {values.map((value) => <option key={value} value={value}>{formatValue(value)}</option>)}
       </select>
     </label>
   );
 }
 
-function OrderStatusForm({ order, labels }: { order: CheckoutOrderSummary; labels: AdminOrderPanelCopy }) {
+function OrderStatusForm({ order, labels, statusLabel }: { order: CheckoutOrderSummary; labels: AdminOrderPanelCopy; statusLabel: (value: string) => string }) {
   const updateAction = updateOrderStatusAction.bind(null, order.id);
 
   return (
@@ -220,7 +221,7 @@ function OrderStatusForm({ order, labels }: { order: CheckoutOrderSummary; label
         {labels.updateStatus}
         <select name="status" defaultValue={order.status} className={inlineInputClass}>
           {orderStatuses.map((status) => (
-            <option key={status} value={status}>{status}</option>
+            <option key={status} value={status}>{statusLabel(status)}</option>
           ))}
         </select>
       </label>
@@ -236,6 +237,7 @@ function OrderStatusForm({ order, labels }: { order: CheckoutOrderSummary; label
 export async function AdminOrderPanel({ orderPage, filters, locale }: { orderPage: AdminOrderPage; filters: AdminOrderFilters; locale?: SupportedLocale | string | null }) {
   const activeLocale = locale ?? await resolveStorefrontLocale();
   const labels = copy[localeKey(activeLocale)];
+  const valueLabels = createAdminFulfillmentQueueTranslator(activeLocale);
   const hasFilters = Boolean(filters.status || filters.paymentStatus || filters.fulfillmentStatus || filters.search);
   const orders = orderPage.orders;
 
@@ -264,9 +266,9 @@ export async function AdminOrderPanel({ orderPage, filters, locale }: { orderPag
       </form>
 
       <form className="mb-6 grid gap-4 rounded-3xl border border-rosewood/10 bg-cream p-5 md:grid-cols-4" action="/admin/orders">
-        <FilterSelect label={labels.orderStatus} name="orderStatus" defaultValue={filters.status} values={orderStatuses} anyLabel={labels.any} />
-        <FilterSelect label={labels.paymentStatus} name="orderPaymentStatus" defaultValue={filters.paymentStatus} values={paymentStatuses} anyLabel={labels.any} />
-        <FilterSelect label={labels.fulfillmentStatus} name="orderFulfillmentStatus" defaultValue={filters.fulfillmentStatus} values={fulfillmentStatuses} anyLabel={labels.any} />
+        <FilterSelect label={labels.orderStatus} name="orderStatus" defaultValue={filters.status} values={orderStatuses} anyLabel={labels.any} formatValue={valueLabels.orderStatus} />
+        <FilterSelect label={labels.paymentStatus} name="orderPaymentStatus" defaultValue={filters.paymentStatus} values={paymentStatuses} anyLabel={labels.any} formatValue={valueLabels.paymentStatus} />
+        <FilterSelect label={labels.fulfillmentStatus} name="orderFulfillmentStatus" defaultValue={filters.fulfillmentStatus} values={fulfillmentStatuses} anyLabel={labels.any} formatValue={valueLabels.fulfillmentStatus} />
         <FilterInput label={labels.search} name="orderSearch" defaultValue={filters.search} placeholder={labels.searchPlaceholder} />
         <div className="flex flex-wrap gap-3 md:col-span-4">
           <button className={primaryButtonClass} type="submit">{labels.filterOrders}</button>
@@ -304,7 +306,7 @@ export async function AdminOrderPanel({ orderPage, filters, locale }: { orderPag
                     <Link href={`/admin/orders/${order.id}`} className="font-semibold text-rosewood underline decoration-rosewood/30 underline-offset-4 outline-none transition hover:decoration-rosewood focus-visible:ring-4 focus-visible:ring-olive/20">
                       {order.orderNumber}
                     </Link>
-                    <p className="text-xs text-stone-500">{order.itemCount} {order.itemCount === 1 ? labels.itemSingular : labels.itemPlural} · {order.checkoutMode}</p>
+                    <p className="text-xs text-stone-500">{order.itemCount} {order.itemCount === 1 ? labels.itemSingular : labels.itemPlural} · {valueLabels.checkoutMode(order.checkoutMode)}</p>
                     {order.latestTimelineTitle ? <p className="mt-2 rounded-xl bg-cream px-3 py-2 text-xs text-stone-600">{labels.latest}: {order.latestTimelineTitle}</p> : null}
                   </td>
                   <td className="px-4 py-3 align-top">
@@ -313,11 +315,11 @@ export async function AdminOrderPanel({ orderPage, filters, locale }: { orderPag
                   </td>
                   <td className="px-4 py-3 align-top">
                     <span className="rounded-full border border-rosewood/15 bg-cream px-3 py-1 text-xs font-semibold text-rosewood">
-                      {order.status}
+                      {valueLabels.orderStatus(order.status)}
                     </span>
-                    {order.fulfillmentStatus ? <p className="mt-1 text-xs text-stone-500">{labels.fulfillment}: {order.fulfillmentStatus}</p> : null}
-                    {order.latestPaymentStatus ? <p className="mt-1 text-xs text-stone-500">{labels.payment}: {order.latestPaymentStatus}</p> : null}
-                    <OrderStatusForm order={order} labels={labels} />
+                    {order.fulfillmentStatus ? <p className="mt-1 text-xs text-stone-500">{labels.fulfillment}: {valueLabels.fulfillmentStatus(order.fulfillmentStatus)}</p> : null}
+                    {order.latestPaymentStatus ? <p className="mt-1 text-xs text-stone-500">{labels.payment}: {valueLabels.paymentStatus(order.latestPaymentStatus)}</p> : null}
+                    <OrderStatusForm order={order} labels={labels} statusLabel={valueLabels.orderStatus} />
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 align-top font-semibold text-rosewood">
                     {formatMinorUnitAmount(order.totalCents, order.currency)}
