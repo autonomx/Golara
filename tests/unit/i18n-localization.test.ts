@@ -6,7 +6,7 @@ import { storefrontCopy } from '../../lib/localization/storefront-copy';
 import { customerCopy, getCustomerCopy } from '../../lib/localization/customer-copy';
 import { createAdminActionBannerTranslator } from '../../lib/localization/admin-action-banner-copy';
 import { adminCatalogBulkActionLabel, adminCatalogBulkActionKeys, adminCatalogControlLabel } from '../../lib/localization/admin-catalog-control-copy';
-import { createAdminInquiryBoardTranslator } from '../../lib/localization/admin-inquiry-board-copy';
+import { createAdminInquiryBoardTranslator, inquiryStatusShortcutCopyKey } from '../../lib/localization/admin-inquiry-board-copy';
 import { adminMediaCategoryLabel, adminMediaLocalAssetLabel, adminMediaSeedOrStaticAssetLabel, adminMediaStaticLabel, adminMediaUsageLabel } from '../../lib/localization/admin-media-copy';
 import { createAdminPromotionWorkspaceTranslator } from '../../lib/localization/admin-promotion-workspace-copy';
 import { createAdminRouteErrorTranslator } from '../../lib/localization/admin-route-error-copy';
@@ -93,6 +93,11 @@ export async function runI18nLocalizationTests() {
   assert.equal(adminInquiryFa('Assign to staff queue'), 'تخصیص به صف تیم');
   assert.equal(adminInquiryFa('No follow-ups recorded yet.'), 'هنوز پیگیری ثبت نشده است.');
   assert.equal(adminInquiryFa('Delivery notes'), 'یادداشت های تحویل');
+  assert.equal(inquiryStatusShortcutCopyKey('contacted'), 'Mark contacted');
+  assert.equal(adminInquiryFa(inquiryStatusShortcutCopyKey('contacted')), 'علامت گذاری به عنوان تماس گرفته شده');
+  assert.equal(adminInquiryFa(inquiryStatusShortcutCopyKey('confirmed')), 'علامت گذاری به عنوان تایید شده');
+  assert.equal(adminInquiryFa(inquiryStatusShortcutCopyKey('cancelled')), 'علامت گذاری به عنوان لغو شده');
+  assert.equal(createAdminInquiryBoardTranslator('en-CA')(inquiryStatusShortcutCopyKey('fulfilled')), 'Mark fulfilled');
   assert.equal(createAdminInquiryBoardTranslator('en-CA')('Save inquiry'), 'Save inquiry');
   assert.equal(createAdminInquiryBoardTranslator('fa-IR')('Unmapped inquiry key'), 'Unmapped inquiry key');
 
@@ -156,6 +161,14 @@ export async function runI18nLocalizationTests() {
   assert.match(adminInquiryBoardCopySource, /createAdminInquiryBoardTranslator/);
   assert.match(adminInquiryBoardCopySource, /Assign to staff queue/);
   assert.match(adminInquiryBoardCopySource, /No follow-ups recorded yet\./);
+  assert.match(adminInquiryBoardCopySource, /inquiryStatusShortcutCopyKey/);
+  assert.match(adminInquiryBoardCopySource, /Mark contacted/);
+
+  const inquiryStatusShortcutsSource = readFileSync('components/admin/InquiryStatusShortcuts.tsx', 'utf8');
+  assert.match(inquiryStatusShortcutsSource, /resolveStorefrontLocale/);
+  assert.match(inquiryStatusShortcutsSource, /createAdminInquiryBoardTranslator\(activeLocale\)/);
+  assert.match(inquiryStatusShortcutsSource, /inquiryStatusShortcutCopyKey\(status\)/);
+  assert.doesNotMatch(inquiryStatusShortcutsSource, /Mark \{status\}/);
 
   const adminMediaCopySource = readFileSync('lib/localization/admin-media-copy.ts', 'utf8');
   assert.match(adminMediaCopySource, /adminMediaCategoryLabel/);
