@@ -16,6 +16,11 @@ const en = {
   'Follow-up history': 'Follow-up history',
   'Follow-up note': 'Follow-up note',
   'General inquiry': 'General inquiry',
+  'Mark cancelled': 'Mark cancelled',
+  'Mark confirmed': 'Mark confirmed',
+  'Mark contacted': 'Mark contacted',
+  'Mark fulfilled': 'Mark fulfilled',
+  'Mark new': 'Mark new',
   'No follow-ups recorded yet.': 'No follow-ups recorded yet.',
   'Owner queue': 'Owner queue',
   'Print view': 'Print view',
@@ -41,6 +46,11 @@ const fa: Record<keyof typeof en, string> = {
   'Follow-up history': 'تاریخچه پیگیری',
   'Follow-up note': 'یادداشت پیگیری',
   'General inquiry': 'درخواست عمومی',
+  'Mark cancelled': 'علامت گذاری به عنوان لغو شده',
+  'Mark confirmed': 'علامت گذاری به عنوان تایید شده',
+  'Mark contacted': 'علامت گذاری به عنوان تماس گرفته شده',
+  'Mark fulfilled': 'علامت گذاری به عنوان انجام شده',
+  'Mark new': 'علامت گذاری به عنوان جدید',
   'No follow-ups recorded yet.': 'هنوز پیگیری ثبت نشده است.',
   'Owner queue': 'صف مالک',
   'Print view': 'نمای چاپ',
@@ -52,6 +62,10 @@ const fa: Record<keyof typeof en, string> = {
 };
 
 export type AdminInquiryBoardCopyKey = keyof typeof en;
+
+export function inquiryStatusShortcutCopyKey(status: string) {
+  return `Mark ${status}`;
+}
 
 export function getAdminInquiryBoardCopy(key: string, locale?: SupportedLocale | string | null) {
   if (adminLocaleKey(locale) === 'fa' && key in fa) return fa[key as AdminInquiryBoardCopyKey];
