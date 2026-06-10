@@ -1,7 +1,6 @@
 import type { Category, HomepageContent, HomepageTranslation, Product } from '@/lib/catalog';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 import { AdminHomepageSection } from '@/components/admin/AdminHomepageSection';
-import { AdminTranslationPanel } from '@/components/admin/AdminTranslationPanel';
 
 type AdminContentWorkspaceProps = {
   homepage: HomepageContent;
@@ -25,18 +24,15 @@ export function AdminContentWorkspace({
   t = (key: string) => key
 }: AdminContentWorkspaceProps) {
   return (
-    <>
-      <AdminHomepageSection homepage={homepage} disabled={disabled} t={t} />
-      {authenticated ? (
-        <AdminTranslationPanel
-          homepage={homepage}
-          homepageTranslations={homepageTranslations}
-          categories={categories}
-          products={products}
-          disabled={disabled}
-          locale={locale}
-        />
-      ) : null}
-    </>
+    <AdminHomepageSection
+      homepage={homepage}
+      homepageTranslations={homepageTranslations}
+      categories={categories}
+      products={products}
+      disabled={disabled}
+      authenticated={authenticated}
+      locale={locale}
+      t={t}
+    />
   );
 }
