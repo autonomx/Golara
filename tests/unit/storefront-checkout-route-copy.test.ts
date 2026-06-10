@@ -1,7 +1,7 @@
 import { strict as assert } from 'node:assert';
 import { readFileSync } from 'node:fs';
 import { customerCopy } from '@/lib/localization/customer-copy';
-import { checkoutFlowCopy } from '@/lib/localization/checkout-flow-copy';
+import { getCheckoutFlowCopy } from '@/lib/localization/checkout-flow-copy';
 
 const source = readFileSync('app/cart/checkout/page.tsx', 'utf8');
 
@@ -46,9 +46,9 @@ for (const key of [
   hasCustomerCopy(key);
 }
 
-for (const flowKey of ['missing', 'empty', 'databaseRequired', 'failed'] as const) {
-  assert.ok(checkoutFlowCopy.en[flowKey], `Expected English checkout flow copy for ${flowKey}`);
-  assert.ok(checkoutFlowCopy.fa[flowKey], `Expected Persian checkout flow copy for ${flowKey}`);
+for (const flowKey of ['cart-missing', 'cart-empty', 'database-required', 'failed'] as const) {
+  assert.ok(getCheckoutFlowCopy(flowKey, 'en'), `Expected English checkout flow copy for ${flowKey}`);
+  assert.ok(getCheckoutFlowCopy(flowKey, 'fa'), `Expected Persian checkout flow copy for ${flowKey}`);
 }
 
 for (const fragment of [
