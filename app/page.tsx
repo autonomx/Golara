@@ -21,12 +21,14 @@ function firstNonEmpty(...values: Array<string | undefined>) {
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await resolveStorefrontLocale();
+  const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key, locale);
   const homepageSource = await getHomepageContent({ locale });
   const homepage = selectHomepageContentForLocale(homepageSource, locale);
+  const brandName = copy('brand.name');
 
   return buildPageMetadata({
-    title: `${firstNonEmpty(homepage.title, 'Golara')} | Golara`,
-    description: firstNonEmpty(homepage.body, getStorefrontCopy('home.footerBody', locale)),
+    title: `${firstNonEmpty(homepage.title, brandName)} | ${brandName}`,
+    description: firstNonEmpty(homepage.body, copy('home.footerBody')),
     path: '/'
   });
 }
@@ -92,7 +94,7 @@ export default async function HomePage() {
       <footer id="home-footer" data-section="home-footer" className="border-t border-rosewood/10 bg-white">
         <div className="mx-auto grid max-w-7xl gap-8 px-5 py-10 text-sm text-stone-600 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
           <div>
-            <div className="font-display text-3xl text-rosewood">Golara</div>
+            <div className="font-display text-3xl text-rosewood">{copy('brand.name')}</div>
             <p className="mt-3 max-w-md leading-7">{firstNonEmpty(homepage.footerBody, copy('home.footerBody'))}</p>
           </div>
           <div>
