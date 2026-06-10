@@ -33,10 +33,11 @@ export function runAdminWorkspaceCompositionGuardTests() {
   {
     const content = source('components/admin/AdminContentWorkspace.tsx');
     includes(content, "import { AdminHomepageSection }", 'content workspace should use extracted homepage section');
-    includes(content, "import { AdminTranslationPanel }", 'content workspace should preserve translation panel');
-    includes(content, '<AdminHomepageSection homepage={homepage} disabled={disabled} t={t} />', 'content workspace should pass homepage state into the extracted section');
-    includes(content, 'authenticated ? (', 'content workspace should keep translations gated by authentication');
-    includes(content, 'locale={locale}', 'content workspace should pass locale into translation panel');
+    includes(content, 'homepageTranslations={homepageTranslations}', 'content workspace should pass homepage translations into the extracted section');
+    includes(content, 'categories={categories}', 'content workspace should pass categories into the extracted section');
+    includes(content, 'products={products}', 'content workspace should pass products into the extracted section');
+    includes(content, 'authenticated={authenticated}', 'content workspace should pass authentication state into the extracted section');
+    includes(content, 'locale={locale}', 'content workspace should pass locale into the extracted section');
   }
 
   console.log('admin-workspace-composition-guard.test.ts passed');
