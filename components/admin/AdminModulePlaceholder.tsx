@@ -1,6 +1,7 @@
 import { hasDatabase, prisma } from '@/lib/prisma';
 import type { SupportedLocale } from '@/lib/i18n/locales';
-import { createAdminTranslator } from '@/lib/localization/admin-copy';
+import { adminLocaleKey, createAdminTranslator } from '@/lib/localization/admin-copy';
+import { createAdminPromotionWorkspaceTranslator } from '@/lib/localization/admin-promotion-workspace-copy';
 
 type AdminModulePlaceholderProps = {
   eyebrow: string;
@@ -69,23 +70,29 @@ function statusClasses(status: string) {
   return 'bg-amber-50 text-amber-700 ring-amber-200';
 }
 
-function formatDate(value: Date | null) {
-  if (!value) return 'Open';
-  return new Intl.DateTimeFormat('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }).format(value);
+function dateLocale(locale?: SupportedLocale | string | null) {
+  return adminLocaleKey(locale) === 'fa' ? 'fa-IR' : 'en-CA';
+}
+
+function formatDate(value: Date | null, locale?: SupportedLocale | string | null) {
+  const pt = createAdminPromotionWorkspaceTranslator(locale);
+  if (!value) return pt('Open');
+  return new Intl.DateTimeFormat(dateLocale(locale), { month: 'short', day: 'numeric', year: 'numeric' }).format(value);
 }
 
 function formatLimit(used: number, limit: number | null) {
   return limit ? `${used}/${limit}` : `${used}/∞`;
 }
 
-function formatMoney(value: number | null, currency = 'IRR') {
-  if (!value) return 'None';
-  return `${currency} ${value.toLocaleString('en-CA')}`;
+function formatMoney(value: number | null, currency = 'IRR', locale?: SupportedLocale | string | null) {
+  const pt = createAdminPromotionWorkspaceTranslator(locale);
+  if (!value) return pt('None');
+  return `${currency} ${value.toLocaleString(dateLocale(locale))}`;
 }
 
-function formatDiscount(discount: DiscountRow) {
+function formatDiscount(discount: DiscountRow, locale?: SupportedLocale | string | null) {
   if (discount.discountType === 'percentage') return `${discount.value}%`;
-  return formatMoney(discount.value, discount.currency);
+  return formatMoney(discount.value, discount.currency, locale);
 }
 
 async function listPromotionWorkspace(): Promise<PromotionWorkspace> {
@@ -156,6 +163,7 @@ async function listPromotionWorkspace(): Promise<PromotionWorkspace> {
 
 async function AdminDiscountWorkspace({ eyebrow, title, body, items, locale }: AdminModulePlaceholderProps) {
   const t = createAdminTranslator(locale);
+  const pt = createAdminPromotionWorkspaceTranslator(locale);
   const workspace = await listPromotionWorkspace();
   const voucherCount = workspace.discounts.reduce((total, discount) => total + discount.vouchers.length, 0);
   const activeCount = workspace.discounts.filter((discount) => discount.status === 'active' && discount.isActive).length;
@@ -221,11 +229,11 @@ async function AdminDiscountWorkspace({ eyebrow, title, body, items, locale }: A
                     <td className="px-4 py-4 align-top">
                       <div className="font-bold text-rosewood">{discount.name}</div>
                       <div className="mt-1 text-xs text-stone-500">{discount.slug}</div>
-                      <span className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-bold ring-1 ${statusClasses(discount.status)}`}>{discount.status}</span>
+                      <span className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-bold ring-1 ${statusClasses(discount.status)}`}>{pt(discount.status)}</span>
                     </td>
                     <td className="px-4 py-4 align-top font-semibold text-stone-900">
-                      {formatDiscount(discount)}
-                      <div className="mt-1 text-xs font-normal text-stone-500">Min {formatMoney(discount.minimumSubtotalCents, discount.currency)}</div>
+                      {formatDiscount(discount, locale)}
+                      <div className="mt-1 text-xs font-normal text-stone-500">{pt('Min')} {formatMoney(discount.minimumSubtotalCents, discount.currency, locale)}</div>
                     </td>
                     <td className="px-4 py-4 align-top">
                       {discount.vouchers.length ? (
@@ -235,16 +243,16 @@ async function AdminDiscountWorkspace({ eyebrow, title, body, items, locale }: A
                           ))}
                         </div>
                       ) : (
-                        <span className="text-stone-400">None</span>
+                        <span className="text-stone-400">{pt('None')}</span>
                       )}
                     </td>
                     <td className="px-4 py-4 align-top text-stone-700">{formatLimit(discount.usageCount, discount.usageLimit)}</td>
                     <td className="px-4 py-4 align-top text-stone-700">
-                      <div>{formatDate(discount.startsAt)}</div>
-                      <div className="text-xs text-stone-500">to {formatDate(discount.endsAt)}</div>
+                      <div>{formatDate(discount.startsAt, locale)}</div>
+                      <div className="text-xs text-stone-500">{pt('to')} {formatDate(discount.endsAt, locale)}</div>
                     </td>
                     <td className="px-4 py-4 align-top text-stone-700">
-                      {discount.eligibilityRules.length ? `${discount.eligibilityRules.length} rule${discount.eligibilityRules.length === 1 ? '' : 's'}` : 'All products'}
+                      {discount.eligibilityRules.length ? `${discount.eligibilityRules.length} ${pt(discount.eligibilityRules.length === 1 ? 'rule' : 'rules')}` : pt('All products')}
                     </td>
                   </tr>
                 ))}
@@ -252,7 +260,7 @@ async function AdminDiscountWorkspace({ eyebrow, title, body, items, locale }: A
             </table>
           </div>
         ) : (
-          <div className="p-6 text-sm text-stone-500">No promotion discounts found. Run <code className="rounded bg-stone-100 px-1 py-0.5">npx prisma db seed</code>.</div>
+          <div className="p-6 text-sm text-stone-500">{pt('No promotion discounts found. Run seed.')} <code className="rounded bg-stone-100 px-1 py-0.5">npx prisma db seed</code>.</div>
         )}
       </div>
 
@@ -267,19 +275,19 @@ async function AdminDiscountWorkspace({ eyebrow, title, body, items, locale }: A
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-bold text-rosewood">{credit.code}</p>
-                    <p className="mt-1 text-xs text-stone-500">Expires {formatDate(credit.expiresAt)}</p>
+                    <p className="mt-1 text-xs text-stone-500">{pt('Expires')} {formatDate(credit.expiresAt, locale)}</p>
                   </div>
-                  <span className={`rounded-full px-2.5 py-1 text-xs font-bold ring-1 ${statusClasses(credit.status)}`}>{credit.status}</span>
+                  <span className={`rounded-full px-2.5 py-1 text-xs font-bold ring-1 ${statusClasses(credit.status)}`}>{pt(credit.status)}</span>
                 </div>
                 <div className="mt-4 text-sm text-stone-700">
-                  <div>Initial: <strong>{formatMoney(credit.initialBalanceCents, credit.currency)}</strong></div>
-                  <div>Balance: <strong>{formatMoney(credit.balanceCents, credit.currency)}</strong></div>
+                  <div>{pt('Initial')}: <strong>{formatMoney(credit.initialBalanceCents, credit.currency, locale)}</strong></div>
+                  <div>{pt('Balance')}: <strong>{formatMoney(credit.balanceCents, credit.currency, locale)}</strong></div>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="p-6 text-sm text-stone-500">No store credits found.</div>
+          <div className="p-6 text-sm text-stone-500">{pt('No store credits found.')}</div>
         )}
       </div>
     </section>
