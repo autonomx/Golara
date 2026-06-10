@@ -4,6 +4,7 @@ import { updateAccountProfileAction } from '@/app/account/profile/actions';
 import { SiteHeader } from '@/components/SiteHeader';
 import { getCustomerSession } from '@/lib/customers/customer-account-repository';
 import { getCustomerSessionCookie } from '@/lib/customers/customer-session-cookie';
+import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { getCustomerCopy, getCustomerCopyDirection, type CustomerCopyKey } from '@/lib/localization/customer-copy';
 import { hasDatabase } from '@/lib/prisma';
 
@@ -18,10 +19,12 @@ function statusMessageKey(status?: string): CustomerCopyKey | undefined {
 
 export default async function AccountProfilePage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   if (!hasDatabase()) {
-    const copy = (key: Parameters<typeof getCustomerCopy>[0]) => getCustomerCopy(key);
+    const storefrontLocale = await resolveStorefrontLocale();
+    const dir = getCustomerCopyDirection(storefrontLocale);
+    const copy = (key: Parameters<typeof getCustomerCopy>[0]) => getCustomerCopy(key, storefrontLocale);
     return (
-      <main id="main-content" tabIndex={-1}>
-        <SiteHeader />
+      <main id="main-content" tabIndex={-1} dir={dir}>
+        <SiteHeader locale={storefrontLocale} />
         <section className="mx-auto max-w-4xl px-5 py-14">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">{copy('profile.eyebrow')}</p>
           <h1 className="mt-3 font-display text-6xl text-rosewood">{copy('profile.title')}</h1>
@@ -42,7 +45,7 @@ export default async function AccountProfilePage({ searchParams }: { searchParam
 
   return (
     <main id="main-content" tabIndex={-1} dir={dir}>
-      <SiteHeader />
+      <SiteHeader locale={locale} />
       <section className="mx-auto max-w-4xl px-5 py-14">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
