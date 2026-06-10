@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { buildRecentActivitySummary } from '../../lib/analytics/recent-activity-summary';
+import { createAdminRecentActivityTranslator, translateRecentActivitySource } from '../../lib/localization/admin-recent-activity-copy';
 
 function source(path: string) {
   return readFileSync(path, 'utf8');
@@ -10,6 +11,7 @@ export async function runRecentActivitySummaryTests() {
   const service = source('lib/analytics/recent-activity-summary.ts');
   const panel = source('components/admin/AdminRecentActivitySummaryPanel.tsx');
   const orderPanel = source('components/admin/AdminOrderRevenueSummaryPanel.tsx');
+  const copy = source('lib/localization/admin-recent-activity-copy.ts');
   const roadmap = source('docs/ADMIN_SALEOR_PARITY_ROADMAP.md');
 
   const now = new Date('2026-06-02T12:00:00Z');
@@ -38,6 +40,17 @@ export async function runRecentActivitySummaryTests() {
   assert.equal(limited.entries.length, 1);
   assert.equal(limited.entries[0].id, 'order:2');
 
+  const fa = createAdminRecentActivityTranslator('fa-IR');
+  assert.equal(fa('Recent activity timeline'), 'خط زمانی فعالیت اخیر');
+  assert.equal(fa('Activities reviewed'), 'فعالیت های بررسی شده');
+  assert.equal(fa('System activity'), 'فعالیت سیستم');
+  assert.equal(fa('shown'), 'نمایش داده شده');
+  assert.equal(translateRecentActivitySource('order', 'fa-IR'), 'سفارش');
+  assert.equal(translateRecentActivitySource('customer', 'fa-IR'), 'مشتری');
+  assert.equal(translateRecentActivitySource('admin', 'fa-IR'), 'مدیریت');
+  assert.equal(createAdminRecentActivityTranslator('en-CA')('Sources'), 'Sources');
+  assert.equal(fa('Unmapped activity'), 'Unmapped activity');
+
   assert.match(service, /export type RecentActivitySummary/);
   assert.match(service, /buildRecentActivitySummary/);
   assert.match(service, /recentActivitySummaryService = \{/);
@@ -45,14 +58,19 @@ export async function runRecentActivitySummaryTests() {
   assert.match(service, /prisma\.customerAdminTimelineEvent\.findMany/);
   assert.match(service, /prisma\.adminAuditLog\.findMany/);
 
+  assert.match(copy, /createAdminRecentActivityTranslator/);
+  assert.match(copy, /translateRecentActivitySource/);
+
   assert.match(panel, /export function AdminRecentActivitySummaryPanel/);
-  assert.match(panel, /Recent activity timeline/);
-  assert.match(panel, /order timeline events, customer timeline events, and admin audit logs/);
-  assert.match(panel, /No recent order, customer, or admin activity/);
+  assert.match(panel, /createAdminRecentActivityTranslator\(locale\)/);
+  assert.match(panel, /translateRecentActivitySource\(row\.source, locale\)/);
+  assert.match(panel, /actorLabel\(row\.actorLabel, locale\)/);
+  assert.doesNotMatch(panel, /Recent activity timeline<\/h2>/);
+  assert.doesNotMatch(panel, /No recent order, customer, or admin activity/);
 
   assert.match(orderPanel, /AdminRecentActivitySummaryPanel/);
   assert.match(orderPanel, /recentActivitySummaryService\.summary\(\)/);
-  assert.match(orderPanel, /AdminRecentActivitySummaryPanel summary=\{recentActivitySummary\}/);
+  assert.match(orderPanel, /AdminRecentActivitySummaryPanel summary=\{recentActivitySummary\} locale=\{locale\}/);
 
   assert.match(roadmap, /- \[x\] Add recent activity timeline\./);
 
