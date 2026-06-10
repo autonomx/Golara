@@ -100,9 +100,20 @@ function hasEnglishLetters(value: string) {
   return /[A-Za-z]/.test(value);
 }
 
+function looksLikeCodeExpression(value: string) {
+  const normalized = normalizeText(value);
+  if (!normalized) return false;
+  if (/[{};=]/.test(normalized)) return true;
+  if (/\b(?:const|let|return|function|async|await|export|import|Promise)\b/.test(normalized)) return true;
+  if (/=>|\?\.|\?\?|:\s*null/.test(normalized)) return true;
+  if (/\b(?:map|filter|reduce|find|includes|toLowerCase|trim)\s*\(/.test(normalized)) return true;
+  return false;
+}
+
 function looksLikeCopy(value: string) {
   const normalized = normalizeText(value);
   if (!normalized || !hasEnglishLetters(normalized)) return false;
+  if (looksLikeCodeExpression(normalized)) return false;
   if (/^[A-Z0-9_./:@#${}()\-\s]+$/.test(normalized)) return false;
   if (/^(https?:|mailto:|tel:|\/|#)/.test(normalized)) return false;
   if (/^[a-z0-9-]+$/.test(normalized)) return false;
@@ -142,7 +153,17 @@ function isAllowlisted(file: string, allowlist: AllowlistEntry[]) {
   return allowlist.some((entry) => entry.regex.test(file));
 }
 
+function runCopyClassifierTests() {
+  assert.equal(looksLikeCopy('Persian / Iran'), true, 'human-readable option text should still be treated as visible copy');
+  assert.equal(looksLikeCopy('English / Canada'), true, 'human-readable locale labels should still be treated as visible copy');
+  assert.equal(looksLikeCopy('sum + item.quantity, 0)}'), false, 'JSX expression fragments should not be treated as visible copy');
+  assert.equal(looksLikeCopy('const message = getLoginStatusCopy(status, locale); return ('), false, 'code statements should not be treated as visible copy');
+  assert.equal(looksLikeCopy('value?.toLowerCase().includes(query)); return ('), false, 'method-chain fragments should not be treated as visible copy');
+}
+
 export function runLocalizationSourceAuditTests() {
+  runCopyClassifierTests();
+
   const allowlistContent = readFileSync(AUDIT_ALLOWLIST_PATH, 'utf8');
   const allowlist = parseAllowlist(allowlistContent);
   const files = TARGET_ROOTS.flatMap((root) => collectFiles(root));
