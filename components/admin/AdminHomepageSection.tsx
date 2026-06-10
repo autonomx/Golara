@@ -1,4 +1,4 @@
-import type { Category, HomepageContent, HomepageTranslation, MediaItem, Product } from '@/lib/catalog';
+import type { Category, HomepageContent, HomepageTranslation, Product } from '@/lib/catalog';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 import { updateHomepageAction } from '@/app/admin/actions';
 import { AdminTranslationPanel } from '@/components/admin/AdminTranslationPanel';
