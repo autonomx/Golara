@@ -1,6 +1,7 @@
 export type StorefrontCopyLocale = 'en' | 'fa';
 
 export type StorefrontCopyKey =
+  | 'brand.name'
   | 'home.collectionsEyebrow'
   | 'home.collectionsTitle'
   | 'home.collectionsBody'
@@ -63,6 +64,7 @@ type StorefrontCopyRegistry = Record<StorefrontCopyLocale, Record<StorefrontCopy
 
 export const storefrontCopy: StorefrontCopyRegistry = {
   en: {
+    'brand.name': 'Golara',
     'home.collectionsEyebrow': 'Categories',
     'home.collectionsTitle': 'Shop by category',
     'home.collectionsBody': 'Browse by the moment you are buying for, from birthdays and weddings to sympathy, baby flowers, and same-day gifts.',
@@ -122,6 +124,7 @@ export const storefrontCopy: StorefrontCopyRegistry = {
     'common.home': 'Home'
   },
   fa: {
+    'brand.name': 'گلارا',
     'home.collectionsEyebrow': 'دسته‌بندی‌ها',
     'home.collectionsTitle': 'خرید بر اساس دسته‌بندی',
     'home.collectionsBody': 'بر اساس مناسبت انتخاب کنید؛ از تولد و عروسی تا تسلیت، گل نوزاد و هدایای آماده همان‌روز.',
