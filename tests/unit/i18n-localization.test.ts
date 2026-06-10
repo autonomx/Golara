@@ -6,6 +6,7 @@ import { storefrontCopy } from '../../lib/localization/storefront-copy';
 import { customerCopy, getCustomerCopy } from '../../lib/localization/customer-copy';
 import { createAdminActionBannerTranslator } from '../../lib/localization/admin-action-banner-copy';
 import { adminCatalogBulkActionLabel, adminCatalogBulkActionKeys, adminCatalogControlLabel } from '../../lib/localization/admin-catalog-control-copy';
+import { createAdminInquiryBoardTranslator } from '../../lib/localization/admin-inquiry-board-copy';
 import { adminMediaCategoryLabel, adminMediaLocalAssetLabel, adminMediaSeedOrStaticAssetLabel, adminMediaStaticLabel, adminMediaUsageLabel } from '../../lib/localization/admin-media-copy';
 import { createAdminRouteErrorTranslator } from '../../lib/localization/admin-route-error-copy';
 import { createAdminRouteLoadingTranslator } from '../../lib/localization/admin-route-loading-copy';
@@ -84,6 +85,16 @@ export async function runI18nLocalizationTests() {
   assert.equal(adminCatalogBulkActionLabel('Activate', 'en-CA'), 'Activate');
   assert.equal(adminCatalogControlLabel('Unknown control', 'fa-IR'), 'Unknown control');
 
+  const adminInquiryFa = createAdminInquiryBoardTranslator('fa-IR');
+  assert.equal(adminInquiryFa('Search name, phone, email, notes, product...'), 'جستجوی نام، تلفن، ایمیل، یادداشت، محصول...');
+  assert.equal(adminInquiryFa('Assignment exports'), 'خروجی های تخصیص');
+  assert.equal(adminInquiryFa('Assign to me'), 'تخصیص به من');
+  assert.equal(adminInquiryFa('Assign to staff queue'), 'تخصیص به صف تیم');
+  assert.equal(adminInquiryFa('No follow-ups recorded yet.'), 'هنوز پیگیری ثبت نشده است.');
+  assert.equal(adminInquiryFa('Delivery notes'), 'یادداشت های تحویل');
+  assert.equal(createAdminInquiryBoardTranslator('en-CA')('Save inquiry'), 'Save inquiry');
+  assert.equal(createAdminInquiryBoardTranslator('fa-IR')('Unmapped inquiry key'), 'Unmapped inquiry key');
+
   assert.equal(adminMediaCategoryLabel('homepage-banner', 'fa-IR'), 'هیرو صفحه اصلی');
   assert.equal(adminMediaCategoryLabel('unknown', 'fa-IR'), 'عمومی / سایر');
   assert.equal(adminMediaUsageLabel('Homepage best seller', 'fa-IR'), 'پرفروش صفحه اصلی');
@@ -129,6 +140,11 @@ export async function runI18nLocalizationTests() {
   const adminActionBannerSource = readFileSync('components/admin/AdminActionBanner.tsx', 'utf8');
   assert.match(adminActionBannerSource, /createAdminActionBannerTranslator\(locale\)/);
   assert.match(adminActionBannerSource, /Fulfillment method saved successfully\./);
+
+  const adminInquiryBoardCopySource = readFileSync('lib/localization/admin-inquiry-board-copy.ts', 'utf8');
+  assert.match(adminInquiryBoardCopySource, /createAdminInquiryBoardTranslator/);
+  assert.match(adminInquiryBoardCopySource, /Assign to staff queue/);
+  assert.match(adminInquiryBoardCopySource, /No follow-ups recorded yet\./);
 
   const adminMediaCopySource = readFileSync('lib/localization/admin-media-copy.ts', 'utf8');
   assert.match(adminMediaCopySource, /adminMediaCategoryLabel/);
