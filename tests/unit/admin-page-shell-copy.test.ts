@@ -13,9 +13,11 @@ export async function runAdminPageShellCopyTests() {
   assert.equal(fa('Products, categories, subcategories, and media.'), 'محصولات، دسته‌بندی‌ها، زیرمجموعه‌ها و رسانه‌ها.');
   assert.equal(fa('Payment settlement'), 'تسویه پرداخت');
   assert.equal(fa('Staff access'), 'دسترسی تیم');
+  assert.equal(fa('product'), 'محصول');
   assert.equal(fa('products'), 'محصول');
   assert.equal(fa('category'), 'دسته‌بندی');
   assert.equal(fa('categories'), 'دسته‌بندی');
+  assert.equal(fa('media'), 'رسانه');
   assert.equal(fa('Unmapped shell key'), 'Unmapped shell key');
   assert.equal(getAdminPageShellCopy('Sign in', 'en-CA'), 'Sign in');
 
@@ -35,6 +37,8 @@ export async function runAdminPageShellCopyTests() {
   assert.match(shellSource, /t\(current\.label\)/);
   assert.match(shellSource, /t\(current\.description\)/);
   assert.match(shellSource, /productCount === 1 \? 'product' : 'products'/);
+  assert.match(shellSource, /categoryCount === 1 \? 'category' : 'categories'/);
+  assert.match(shellSource, /t\('media'\)/);
   assert.doesNotMatch(shellSource, /const copy = \{/);
 
   console.log('admin-page-shell-copy.test.ts passed');
