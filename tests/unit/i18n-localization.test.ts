@@ -4,6 +4,7 @@ import { DEFAULT_LOCALE, FALLBACK_LOCALE, SUPPORTED_LOCALES, fallbackLocaleOrder
 import { localizedField, selectPublishedTranslation, selectTranslatedContent } from '../../lib/i18n/translated-content';
 import { storefrontCopy } from '../../lib/localization/storefront-copy';
 import { customerCopy, getCustomerCopy } from '../../lib/localization/customer-copy';
+import { adminCatalogBulkActionLabel, adminCatalogBulkActionKeys, adminCatalogControlLabel } from '../../lib/localization/admin-catalog-control-copy';
 import { adminMediaCategoryLabel, adminMediaLocalAssetLabel, adminMediaSeedOrStaticAssetLabel, adminMediaStaticLabel, adminMediaUsageLabel } from '../../lib/localization/admin-media-copy';
 import { createAdminRouteErrorTranslator } from '../../lib/localization/admin-route-error-copy';
 import { createAdminRouteLoadingTranslator } from '../../lib/localization/admin-route-loading-copy';
@@ -55,6 +56,28 @@ export async function runI18nLocalizationTests() {
   assert.equal(getCustomerCopy('profile.status.failed', 'en-CA'), 'We could not update your profile. Please check the fields and try again.');
   assert.equal(getCustomerCopy('common.cityNotSet', 'fa-IR'), 'شهر تنظیم نشده');
 
+  assert.deepEqual([...adminCatalogBulkActionKeys], [
+    'Activate',
+    'Deactivate',
+    'Mark best seller',
+    'Remove best seller',
+    'Mark available today',
+    'Remove available today',
+    'Move to category'
+  ]);
+  assert.equal(adminCatalogBulkActionLabel('Activate', 'fa-IR'), 'فعال کردن');
+  assert.equal(adminCatalogBulkActionLabel('Mark best seller', 'fa-IR'), 'نشانه گذاری به عنوان پرفروش');
+  assert.equal(adminCatalogBulkActionLabel('Remove available today', 'fa-IR'), 'حذف نشان موجود امروز');
+  assert.equal(adminCatalogBulkActionLabel('Move to category', 'fa-IR'), 'انتقال به دسته');
+  assert.equal(adminCatalogControlLabel('Bulk action', 'fa-IR'), 'عملیات گروهی');
+  assert.equal(adminCatalogControlLabel('Choose action...', 'fa-IR'), 'انتخاب عملیات...');
+  assert.equal(adminCatalogControlLabel('Target category', 'fa-IR'), 'دسته هدف');
+  assert.equal(adminCatalogControlLabel('Only needed for move to category.', 'fa-IR'), 'فقط برای انتقال به دسته لازم است.');
+  assert.equal(adminCatalogControlLabel('Quick edit visible products', 'fa-IR'), 'ویرایش سریع محصولات قابل مشاهده');
+  assert.equal(adminCatalogControlLabel('Save quick edits', 'fa-IR'), 'ذخیره ویرایش های سریع');
+  assert.equal(adminCatalogBulkActionLabel('Activate', 'en-CA'), 'Activate');
+  assert.equal(adminCatalogControlLabel('Unknown control', 'fa-IR'), 'Unknown control');
+
   assert.equal(adminMediaCategoryLabel('homepage-banner', 'fa-IR'), 'هیرو صفحه اصلی');
   assert.equal(adminMediaCategoryLabel('unknown', 'fa-IR'), 'عمومی / سایر');
   assert.equal(adminMediaUsageLabel('Homepage best seller', 'fa-IR'), 'پرفروش صفحه اصلی');
@@ -101,6 +124,11 @@ export async function runI18nLocalizationTests() {
   assert.match(adminMediaCopySource, /adminMediaCategoryLabel/);
   assert.match(adminMediaCopySource, /adminMediaUsageLabel/);
   assert.match(adminMediaCopySource, /adminMediaLocalAssetLabel/);
+
+  const adminCatalogControlCopySource = readFileSync('lib/localization/admin-catalog-control-copy.ts', 'utf8');
+  assert.match(adminCatalogControlCopySource, /adminCatalogBulkActionLabel/);
+  assert.match(adminCatalogControlCopySource, /adminCatalogControlLabel/);
+  assert.match(adminCatalogControlCopySource, /Mark available today/);
 
   const paidEnglish = orderConfirmationResultCopy('paid', 'en-CA');
   assert.equal(paidEnglish.title, 'Payment received');
