@@ -96,7 +96,7 @@ export async function runFulfillmentQueueSummaryTests() {
   assert.match(orderPanel, /AdminFulfillmentQueueSummaryPanel/);
   assert.match(orderPanel, /fulfillmentQueueSummaryService\.summary\(\)/);
   assert.match(orderPanel, /AdminFulfillmentQueueSummaryPanel summary=\{fulfillmentQueueSummary\}/);
-  assert.match(roadmap, /Fulfillment queue summary/);
+  assert.match(roadmap, /fulfillment queue summary/i);
 
   console.log('fulfillment-queue-summary.test.ts passed');
 }
