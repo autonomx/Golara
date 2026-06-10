@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { Category, MediaItem } from '@/lib/catalog';
 import { createCategoryAction, updateCategoryAction } from '@/app/admin/actions';
 import { MediaSelectWithPreview } from '@/components/admin/MediaSelectWithPreview';
@@ -52,7 +53,7 @@ function Toggle({ label, name, defaultChecked = true, disabled = false }: { labe
   return <label className={toggleClass}><input name={name} type="checkbox" defaultChecked={defaultChecked} disabled={disabled} />{label}</label>;
 }
 
-function SubmitButton({ children, disabled }: { children: React.ReactNode; disabled: boolean }) {
+function SubmitButton({ children, disabled }: { children: ReactNode; disabled: boolean }) {
   return <button className={primaryButtonClass} type="submit" disabled={disabled}>{children}</button>;
 }
 
