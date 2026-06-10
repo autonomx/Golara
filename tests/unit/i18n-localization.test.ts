@@ -9,6 +9,7 @@ import { adminCatalogBulkActionLabel, adminCatalogBulkActionKeys, adminCatalogCo
 import { createAdminInquiryBoardTranslator, inquiryStatusShortcutCopyKey } from '../../lib/localization/admin-inquiry-board-copy';
 import { adminMediaCategoryLabel, adminMediaLocalAssetLabel, adminMediaSeedOrStaticAssetLabel, adminMediaStaticLabel, adminMediaUsageLabel } from '../../lib/localization/admin-media-copy';
 import { createAdminPromotionWorkspaceTranslator } from '../../lib/localization/admin-promotion-workspace-copy';
+import { adminAuthSummary, databaseDetail, databaseSummary, readinessProvidersLine, runtimeModeSummary, seedFallbackDetail } from '../../lib/localization/admin-readiness-copy';
 import { createAdminRouteErrorTranslator } from '../../lib/localization/admin-route-error-copy';
 import { createAdminRouteLoadingTranslator } from '../../lib/localization/admin-route-loading-copy';
 import { orderConfirmationPageCopy, orderConfirmationResultCopy } from '../../lib/checkout/order-confirmation-copy';
@@ -120,6 +121,23 @@ export async function runI18nLocalizationTests() {
   assert.equal(createAdminPromotionWorkspaceTranslator('en-CA')('active'), 'Active');
   assert.equal(createAdminPromotionWorkspaceTranslator('fa-IR')('Unmapped promotion key'), 'Unmapped promotion key');
 
+  const runtimeReadiness = {
+    appMode: 'production',
+    nodeEnv: 'production',
+    vercelEnv: 'production',
+    productionSafe: true,
+    databaseUrlPresent: true,
+    seedFallbackAllowed: false,
+    mediaStorage: { provider: 'local', configured: true, productionSafe: true, summary: 'ok', detail: 'ok' }
+  } as any;
+  assert.equal(runtimeModeSummary(runtimeReadiness, 'fa-IR'), 'در حال اجرا در حالت production.');
+  assert.equal(databaseSummary({ ...runtimeReadiness, databaseUrlPresent: false }, 'fa-IR'), 'DATABASE_URL وجود ندارد.');
+  assert.match(databaseDetail({ ...runtimeReadiness, databaseUrlPresent: false, seedFallbackAllowed: true }, 'fa-IR'), /پشتیبان داده نمونه مجاز است: بله/);
+  assert.equal(seedFallbackDetail({ ...runtimeReadiness, seedFallbackAllowed: true }, 'fa-IR'), 'پیش نمایش، توسعه و تست می توانند هنگام در دسترس نبودن پایگاه داده از پشتیبان کاتالوگ نمونه استفاده کنند.');
+  assert.equal(adminAuthSummary(false, false, 'fa-IR'), 'رمز عبور مدیریت یا راز نشست وجود ندارد.');
+  assert.equal(readinessProvidersLine([], 'fa-IR'), 'ارائه دهندگان: هیچ کدام');
+  assert.equal(readinessProvidersLine(['stripe'], 'en-CA'), 'Providers: stripe');
+
   const adminErrorFa = createAdminRouteErrorTranslator('fa-IR');
   assert.equal(adminErrorFa('Module error'), 'خطای بخش');
   assert.equal(adminErrorFa('Orders could not load'), 'سفارش ها بارگیری نشدند');
@@ -190,6 +208,17 @@ export async function runI18nLocalizationTests() {
   assert.match(adminModulePlaceholderSource, /pt\(discount\.status\)/);
   assert.match(adminModulePlaceholderSource, /pt\('No store credits found\.'\)/);
   assert.doesNotMatch(adminModulePlaceholderSource, />None<|>Open<|>Expires /);
+
+  const adminReadinessCopySource = readFileSync('lib/localization/admin-readiness-copy.ts', 'utf8');
+  assert.match(adminReadinessCopySource, /runtimeModeSummary/);
+  assert.match(adminReadinessCopySource, /readinessProvidersLine/);
+  assert.match(adminReadinessCopySource, /Admin password\/session secret missing/);
+
+  const adminReadinessPanelSource = readFileSync('components/admin/AdminReadinessPanel.tsx', 'utf8');
+  assert.match(adminReadinessPanelSource, /runtimeModeSummary\(runtimeReadiness, locale\)/);
+  assert.match(adminReadinessPanelSource, /databaseDetail\(runtimeReadiness, locale\)/);
+  assert.match(adminReadinessPanelSource, /readinessProvidersLine\(readiness\.providers, locale\)/);
+  assert.doesNotMatch(adminReadinessPanelSource, /Running in \$\{runtimeReadiness\.appMode\} mode\./);
 
   const paidEnglish = orderConfirmationResultCopy('paid', 'en-CA');
   assert.equal(paidEnglish.title, 'Payment received');
