@@ -9,7 +9,6 @@
 
 app/admin/** :: Admin route-boundary localization is still in progress; replace with per-route entries as guarded admin shells land.
 app/api/** :: API route files are server endpoints, not rendered page/loading/error shells, and will be handled in the server-copy phase.
-app/account/profile/page.tsx :: Profile route still has direct language option labels pending migration into customer copy keys.
 app/page.tsx :: Homepage route still contains an intentional brand literal pending brand-copy handling.
 components/admin/** :: Phase 3 and Phase 4 admin extraction/localization are still in progress; replace with per-component entries as modules are completed.
 components/storefront/** :: Phase 5 storefront localization is still in progress; replace with per-component entries as storefront surfaces are completed.
