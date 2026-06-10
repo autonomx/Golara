@@ -5,7 +5,9 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { getCustomerSession } from '@/lib/customers/customer-account-repository';
 import { getCustomerSessionCookie } from '@/lib/customers/customer-session-cookie';
 import { listCustomerAddresses } from '@/lib/customers/customer-repository';
+import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { getAddressBookCopy, getAddressBookStatusCopy, type AddressBookCopyKey } from '@/lib/localization/customer-address-copy';
+import { getCustomerCopyDirection } from '@/lib/localization/customer-copy';
 import { hasDatabase } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -46,10 +48,12 @@ function AddressFields({
 
 export default async function AccountAddressesPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   if (!hasDatabase()) {
-    const copy = (key: AddressBookCopyKey) => getAddressBookCopy(key);
+    const storefrontLocale = await resolveStorefrontLocale();
+    const dir = getCustomerCopyDirection(storefrontLocale);
+    const copy = (key: AddressBookCopyKey) => getAddressBookCopy(key, storefrontLocale);
     return (
-      <main id="main-content" tabIndex={-1}>
-        <SiteHeader />
+      <main id="main-content" tabIndex={-1} dir={dir}>
+        <SiteHeader locale={storefrontLocale} />
         <section className="mx-auto max-w-5xl px-5 py-14">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">{copy('eyebrow')}</p>
           <h1 className="mt-3 font-display text-6xl text-rosewood">{copy('title')}</h1>
@@ -63,13 +67,14 @@ export default async function AccountAddressesPage({ searchParams }: { searchPar
   const session = await getCustomerSession(token);
   if (!session) redirect('/account?status=session-required');
   const locale = session.customer.locale;
+  const dir = getCustomerCopyDirection(locale);
   const copy = (key: AddressBookCopyKey) => getAddressBookCopy(key, locale);
   const addresses = await listCustomerAddresses(session.customerId);
   const message = getAddressBookStatusCopy(status, locale);
 
   return (
-    <main id="main-content" tabIndex={-1}>
-      <SiteHeader />
+    <main id="main-content" tabIndex={-1} dir={dir}>
+      <SiteHeader locale={locale} />
       <section className="mx-auto max-w-6xl px-5 py-14">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
