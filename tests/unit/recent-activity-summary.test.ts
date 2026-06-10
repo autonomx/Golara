@@ -66,7 +66,7 @@ export async function runRecentActivitySummaryTests() {
   assert.match(panel, /translateRecentActivitySource\(row\.source, locale\)/);
   assert.match(panel, /actorLabel\(row\.actorLabel, locale\)/);
   assert.doesNotMatch(panel, /Recent activity timeline<\/h2>/);
-  assert.doesNotMatch(panel, /No recent order, customer, or admin activity/);
+  assert.match(panel, /t\('No recent order, customer, or admin activity has been recorded yet\.'\)/);
 
   assert.match(orderPanel, /AdminRecentActivitySummaryPanel/);
   assert.match(orderPanel, /recentActivitySummaryService\.summary\(\)/);
