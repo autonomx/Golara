@@ -3,6 +3,21 @@ import type { PaymentGatewayReadiness } from '@/lib/checkout/payment-gateway-con
 import type { InquiryNotificationReadiness } from '@/lib/notifications/inquiry-notifications-core';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 import { createAdminTranslator } from '@/lib/localization/admin-copy';
+import {
+  adminAuthDetail,
+  adminAuthSummary,
+  checkoutReadyDetail,
+  databaseDetail,
+  databaseSummary,
+  getReadinessCopy,
+  notificationReadyDetail,
+  readinessModeLine,
+  readinessProvidersLine,
+  runtimeModeDetail,
+  runtimeModeSummary,
+  seedFallbackDetail,
+  seedFallbackSummary
+} from '@/lib/localization/admin-readiness-copy';
 
 export type ReadinessStatus = 'ready' | 'warning' | 'blocked';
 
@@ -32,10 +47,6 @@ const statusClasses: Record<ReadinessStatus, string> = {
 
 const statusLabels: Record<ReadinessStatus, string> = { ready: 'Ready', warning: 'Needs decision', blocked: 'Blocked' };
 
-function yesNo(value: boolean) {
-  return value ? 'yes' : 'no';
-}
-
 function issueLines(readiness: { blockers: Array<{ code: string; detail: string }>; warnings: Array<{ code: string; detail: string }> }) {
   return [
     ...readiness.blockers.map((issue) => `${issue.code}: ${issue.detail}`),
@@ -43,12 +54,15 @@ function issueLines(readiness: { blockers: Array<{ code: string; detail: string 
   ];
 }
 
-function notificationReadinessStatus(readiness: InquiryNotificationReadiness): Pick<ReadinessItem, 'status' | 'summary' | 'detail' | 'extras'> {
+function notificationReadinessStatus(
+  readiness: InquiryNotificationReadiness,
+  locale?: SupportedLocale | string | null
+): Pick<ReadinessItem, 'status' | 'summary' | 'detail' | 'extras'> {
   if (readiness.blockers.length > 0) {
     return {
       status: 'blocked',
-      summary: readiness.blockers[0]?.summary ?? 'Inquiry notifications are blocked.',
-      detail: readiness.blockers[0]?.detail ?? 'Fix notification blockers before relying on automated alerting.',
+      summary: readiness.blockers[0]?.summary ?? getReadinessCopy('Inquiry notifications are blocked.', locale),
+      detail: readiness.blockers[0]?.detail ?? getReadinessCopy('Fix notification blockers before relying on automated alerting.', locale),
       extras: issueLines(readiness)
     };
   }
@@ -56,46 +70,49 @@ function notificationReadinessStatus(readiness: InquiryNotificationReadiness): P
   if (readiness.warnings.length > 0) {
     return {
       status: 'warning',
-      summary: readiness.warnings[0]?.summary ?? 'Inquiry notifications need an operating decision.',
-      detail: readiness.warnings[0]?.detail ?? 'Confirm the manual monitoring process before launch.',
+      summary: readiness.warnings[0]?.summary ?? getReadinessCopy('Inquiry notifications need an operating decision.', locale),
+      detail: readiness.warnings[0]?.detail ?? getReadinessCopy('Confirm the manual monitoring process before launch.', locale),
       extras: issueLines(readiness)
     };
   }
 
   return {
     status: 'ready',
-    summary: 'Inquiry notification configuration is ready.',
-    detail: `Notification mode ${readiness.mode} has no readiness blockers or warnings.`,
+    summary: getReadinessCopy('Inquiry notification configuration is ready.', locale),
+    detail: notificationReadyDetail(readiness, locale),
     extras: []
   };
 }
 
-function checkoutReadinessStatus(readiness: PaymentGatewayReadiness): Pick<ReadinessItem, 'status' | 'summary' | 'detail' | 'extras'> {
-  const providers = readiness.providers.length ? readiness.providers.join(', ') : 'none';
+function checkoutReadinessStatus(
+  readiness: PaymentGatewayReadiness,
+  locale?: SupportedLocale | string | null
+): Pick<ReadinessItem, 'status' | 'summary' | 'detail' | 'extras'> {
+  const providerLine = readinessProvidersLine(readiness.providers, locale);
 
   if (readiness.blockers.length > 0) {
     return {
       status: 'blocked',
-      summary: readiness.blockers[0]?.summary ?? 'Checkout readiness is blocked.',
-      detail: readiness.blockers[0]?.detail ?? 'Fix checkout configuration blockers before enabling gateway mode.',
-      extras: [`Mode: ${readiness.mode}`, `Providers: ${providers}`, ...issueLines(readiness)]
+      summary: readiness.blockers[0]?.summary ?? getReadinessCopy('Checkout readiness is blocked.', locale),
+      detail: readiness.blockers[0]?.detail ?? getReadinessCopy('Fix checkout configuration blockers before enabling gateway mode.', locale),
+      extras: [readinessModeLine(readiness.mode, locale), providerLine, ...issueLines(readiness)]
     };
   }
 
   if (readiness.warnings.length > 0) {
     return {
       status: 'warning',
-      summary: readiness.warnings[0]?.summary ?? 'Checkout readiness needs an operating decision.',
-      detail: readiness.warnings[0]?.detail ?? 'Confirm checkout mode and fallback process before launch.',
-      extras: [`Mode: ${readiness.mode}`, `Providers: ${providers}`, ...issueLines(readiness)]
+      summary: readiness.warnings[0]?.summary ?? getReadinessCopy('Checkout readiness needs an operating decision.', locale),
+      detail: readiness.warnings[0]?.detail ?? getReadinessCopy('Confirm checkout mode and fallback process before launch.', locale),
+      extras: [readinessModeLine(readiness.mode, locale), providerLine, ...issueLines(readiness)]
     };
   }
 
   return {
     status: 'ready',
-    summary: 'Checkout gateway configuration is ready.',
-    detail: `Checkout mode ${readiness.mode} has no readiness blockers or warnings.`,
-    extras: [`Providers: ${providers}`]
+    summary: getReadinessCopy('Checkout gateway configuration is ready.', locale),
+    detail: checkoutReadyDetail(readiness, locale),
+    extras: [providerLine]
   };
 }
 
@@ -132,40 +149,34 @@ function ReadinessCard({ item, t }: { item: ReadinessItem; t: (key: string) => s
 
 export function AdminReadinessPanel({ runtimeReadiness, authConfigured, authenticated, notificationReadiness, notificationRetryRunbook, checkoutReadiness, locale }: AdminReadinessPanelProps) {
   const t = createAdminTranslator(locale);
-  const notificationStatus = notificationReadinessStatus(notificationReadiness);
-  const checkoutStatus = checkoutReadinessStatus(checkoutReadiness);
+  const notificationStatus = notificationReadinessStatus(notificationReadiness, locale);
+  const checkoutStatus = checkoutReadinessStatus(checkoutReadiness, locale);
   const mediaStatus = mediaStorageReadiness(runtimeReadiness);
   const databaseReady = runtimeReadiness.databaseUrlPresent;
   const items: ReadinessItem[] = [
     {
       label: 'Runtime mode',
       status: runtimeReadiness.productionSafe ? (runtimeReadiness.appMode === 'production' ? 'ready' : 'warning') : 'blocked',
-      summary: runtimeReadiness.productionSafe ? `Running in ${runtimeReadiness.appMode} mode.` : 'Production runtime is missing DATABASE_URL.',
-      detail: `APP_MODE: ${runtimeReadiness.appMode}. NODE_ENV: ${runtimeReadiness.nodeEnv}. VERCEL_ENV: ${runtimeReadiness.vercelEnv}. Production-safe: ${yesNo(runtimeReadiness.productionSafe)}.`
+      summary: runtimeModeSummary(runtimeReadiness, locale),
+      detail: runtimeModeDetail(runtimeReadiness, locale)
     },
     {
       label: 'Database',
       status: databaseReady ? 'ready' : runtimeReadiness.seedFallbackAllowed ? 'warning' : 'blocked',
-      summary: databaseReady ? 'DATABASE_URL is configured.' : 'DATABASE_URL is missing.',
-      detail: databaseReady
-        ? 'CMS reads and writes can use Prisma-backed content. The DATABASE_URL value is intentionally hidden.'
-        : `Seed fallback allowed: ${yesNo(runtimeReadiness.seedFallbackAllowed)}. Configure DATABASE_URL before production writes or public launch.`
+      summary: databaseSummary(runtimeReadiness, locale),
+      detail: databaseDetail(runtimeReadiness, locale)
     },
     {
       label: 'Seed fallback policy',
       status: runtimeReadiness.seedFallbackAllowed ? 'warning' : 'ready',
-      summary: runtimeReadiness.seedFallbackAllowed ? 'Seed fallback is allowed in this runtime.' : 'Seed fallback is disabled for this runtime.',
-      detail: runtimeReadiness.seedFallbackAllowed
-        ? 'Preview, development, and test can use seeded catalog fallback when the database is unavailable.'
-        : 'Production runtime will throw on missing database configuration or production repository read failures instead of silently using seed data.'
+      summary: seedFallbackSummary(runtimeReadiness, locale),
+      detail: seedFallbackDetail(runtimeReadiness, locale)
     },
     {
       label: 'Admin auth',
       status: authConfigured ? (authenticated ? 'ready' : 'warning') : 'blocked',
-      summary: authConfigured ? (authenticated ? 'Signed in.' : 'Configured but not signed in.') : 'Admin password/session secret missing.',
-      detail: authConfigured
-        ? 'Password auth is the current temporary gate. Replace it with account/provider auth before full production.'
-        : 'Set ADMIN_PASSWORD and ADMIN_SESSION_SECRET before enabling staff CMS writes.'
+      summary: adminAuthSummary(authConfigured, authenticated, locale),
+      detail: adminAuthDetail(authConfigured, locale)
     },
     {
       label: `Inquiry notifications (${notificationReadiness.mode})`,
