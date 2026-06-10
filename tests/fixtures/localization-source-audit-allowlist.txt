@@ -8,5 +8,4 @@
 # audit fails if a matching entry is missing a reason.
 
 app/admin/** :: Admin route-boundary localization is still in progress; replace with per-route entries as guarded admin shells land.
-app/api/** :: API route files are server endpoints, not rendered page/loading/error shells, and will be handled in the server-copy phase.
 components/admin/** :: Phase 3 and Phase 4 admin extraction/localization are still in progress; replace with per-component entries as modules are completed.
