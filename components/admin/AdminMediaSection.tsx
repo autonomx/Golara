@@ -7,6 +7,7 @@ import {
   updateMediaCategoryAction,
   uploadMediaAction
 } from '@/app/admin/actions';
+import { homepageBannerSlides, homepageBestSellerImage, homepageCategoryImage } from '@/lib/homepage-assets';
 
 type CatalogSection = 'all' | 'media' | 'categories' | 'products';
 
@@ -33,7 +34,6 @@ type PageSlice<T> = {
 };
 
 type AdminMediaSectionProps = {
-  media: MediaItem[];
   categories: Category[];
   products: Product[];
   disabled: boolean;
@@ -43,7 +43,6 @@ type AdminMediaSectionProps = {
   catalogCategory?: string;
   catalogFlag?: string;
   productColumnsParam?: string;
-  mediaColumnsParam?: string;
   selectedMediaColumns: MediaColumn[];
   pagedMedia: PageSlice<MediaItem>;
   totalMedia: number;
@@ -57,20 +56,20 @@ const formCardClass = 'grid gap-4 rounded-lg border border-rosewood/10 bg-white 
 const panelClass = 'scroll-mt-24 rounded-lg border border-rosewood/10 bg-white p-6 shadow-sm';
 const catalogPageSize = 12;
 
+const mediaCategoryOptions = [
+  { value: 'product', label: 'Product' },
+  { value: 'category', label: 'Category' },
+  { value: 'homepage-banner', label: 'Homepage hero' },
+  { value: 'homepage-best-seller', label: 'Homepage best seller' },
+  { value: 'homepage-category', label: 'Homepage category' },
+  { value: 'general', label: 'General / other' }
+];
+
 function Field({ label, name, defaultValue, placeholder, type = 'text', disabled = false, required = true }: { label: string; name: string; defaultValue?: string | number; placeholder?: string; type?: string; disabled?: boolean; required?: boolean }) {
   return <label className="grid gap-2 text-sm font-semibold text-rosewood">{label}<input className={inputClass} name={name} type={type} defaultValue={defaultValue} placeholder={placeholder} disabled={disabled} required={required} /></label>;
 }
 
 function MediaCategorySelect({ defaultValue = 'product', disabled = false }: { defaultValue?: string; disabled?: boolean }) {
-  const mediaCategoryOptions = [
-    { value: 'product', label: 'Product' },
-    { value: 'category', label: 'Category' },
-    { value: 'homepage-banner', label: 'Homepage hero' },
-    { value: 'homepage-best-seller', label: 'Homepage best seller' },
-    { value: 'homepage-category', label: 'Homepage category' },
-    { value: 'general', label: 'General / other' }
-  ];
-
   return (
     <label className="grid gap-2 text-sm font-semibold text-rosewood">
       Image category
@@ -138,6 +137,9 @@ function buildMediaUsageMap(categories: Category[], products: Product[]) {
     addMediaUsage(map, product.image, { type: 'Product', label: product.title });
     if (product.bestSeller) addMediaUsage(map, product.image, { type: 'Homepage best seller', label: product.title });
   }
+  for (const slide of homepageBannerSlides) addMediaUsage(map, slide.image, { type: 'Homepage hero', label: slide.title });
+  addMediaUsage(map, homepageBestSellerImage, { type: 'Homepage best seller', label: 'Featured collection' });
+  ['available-today', 'birthday', 'weddings', 'condolences'].forEach((slug) => addMediaUsage(map, homepageCategoryImage(slug), { type: 'Homepage category', label: slug }));
   return map;
 }
 
@@ -167,15 +169,6 @@ function MediaUsagePills({ usages }: { usages: MediaUsage[] }) {
 }
 
 function MediaCategoryInlineForm({ item, disabled }: { item: MediaItem; disabled: boolean }) {
-  const mediaCategoryOptions = [
-    { value: 'product', label: 'Product' },
-    { value: 'category', label: 'Category' },
-    { value: 'homepage-banner', label: 'Homepage hero' },
-    { value: 'homepage-best-seller', label: 'Homepage best seller' },
-    { value: 'homepage-category', label: 'Homepage category' },
-    { value: 'general', label: 'General / other' }
-  ];
-
   if (!item.id) {
     return <span>{mediaCategoryOptions.find((option) => option.value === item.mediaCategory)?.label ?? item.mediaCategory ?? 'General / other'}</span>;
   }
@@ -333,7 +326,6 @@ function ColumnVisibilityControls<T extends string>({ path, paramName, title, op
 }
 
 export function AdminMediaSection({
-  media,
   categories,
   products,
   disabled,
