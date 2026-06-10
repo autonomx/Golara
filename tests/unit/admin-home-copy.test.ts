@@ -14,12 +14,20 @@ export async function runAdminHomeCopyTests() {
   assert.equal(fa('page'), 'صفحه');
   assert.equal(fa('previous'), 'قبلی');
   assert.equal(fa('next'), 'بعدی');
+  assert.equal(fa('addOccasionLabel'), 'افزودن دسته دیگر به صفحه اصلی');
+  assert.equal(fa('chooseCategory'), 'دسته را انتخاب کنید...');
+  assert.equal(fa('sortOrder'), 'ترتیب نمایش');
+  assert.equal(fa('addOccasionButton'), 'افزودن به صفحه اصلی');
+  assert.equal(fa('emptyOccasionState'), 'در حال حاضر هیچ کاشی مناسبتی برای صفحه اصلی انتخاب نشده است. یکی را از بالا اضافه کنید.');
   assert.equal(getAdminHomeCopy('next', 'en-CA'), 'Next');
+  assert.equal(getAdminHomeCopy('addOccasionButton', 'en-CA'), 'Add to homepage');
 
   const helperSource = readFileSync('lib/localization/admin-home-copy.ts', 'utf8');
   assert.match(helperSource, /adminLocaleKey/);
   assert.match(helperSource, /occasionsLabel/);
   assert.match(helperSource, /featuredTitle/);
+  assert.match(helperSource, /addOccasionLabel/);
+  assert.match(helperSource, /emptyOccasionState/);
 
   const pageSource = readFileSync('app/admin/homepage/page.tsx', 'utf8');
   assert.match(pageSource, /createAdminHomeTranslator/);
