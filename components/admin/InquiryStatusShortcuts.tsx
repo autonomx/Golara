@@ -1,5 +1,6 @@
 import { saveInquiryAction } from '@/app/admin/inquiry-actions';
 import type { CustomerInquiry } from '@/lib/catalog';
+import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 import type { InquiryAssignmentQueueFilter } from '@/lib/inquiries/inquiry-assignment-queue';
 import { createAdminInquiryBoardTranslator, inquiryStatusShortcutCopyKey } from '@/lib/localization/admin-inquiry-board-copy';
@@ -12,7 +13,7 @@ const nextStatusByStatus: Record<string, string[]> = {
   cancelled: []
 };
 
-export function InquiryStatusShortcuts({
+export async function InquiryStatusShortcuts({
   inquiry,
   activeStatus,
   search,
@@ -30,7 +31,8 @@ export function InquiryStatusShortcuts({
   const nextStatuses = nextStatusByStatus[inquiry.status] ?? [];
   if (nextStatuses.length === 0) return null;
 
-  const t = createAdminInquiryBoardTranslator(locale);
+  const activeLocale = locale ?? await resolveStorefrontLocale();
+  const t = createAdminInquiryBoardTranslator(activeLocale);
 
   return (
     <div className="mt-4 flex flex-wrap gap-2">
