@@ -139,7 +139,7 @@ export async function AdminOrderRevenueSummaryPanel({ summary }: { summary: Orde
       <AdminBestSellingProductsPanel summary={bestSellingProductsSummary} locale={locale} />
       <AdminLowStockAlertsPanel summary={lowStockAlertsSummary} locale={locale} />
       <AdminFulfillmentQueueSummaryPanel summary={fulfillmentQueueSummary} locale={locale} />
-      <AdminRecentActivitySummaryPanel summary={recentActivitySummary} />
+      <AdminRecentActivitySummaryPanel summary={recentActivitySummary} locale={locale} />
       <AdminFailedPaymentNotificationAlertsPanel summary={failedPaymentNotificationAlertsSummary} locale={locale} />
       <AdminLaunchReadinessHealthPanel summary={launchReadinessHealthSummary} locale={locale} />
     </>
