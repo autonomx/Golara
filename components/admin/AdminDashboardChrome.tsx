@@ -39,10 +39,10 @@ export function AdminDashboardStatusBanner({ status, message, statusLabels, t = 
 
 export function AdminDashboardIntro({ workspace, productCount, categoryCount, mediaCount, t = (key: string) => key }: AdminDashboardIntroProps) {
   const copy = {
-    catalog: ['Catalog workspace', 'Products, categories, subcategories, and media', 'Create and maintain the product catalog that powers the storefront. Assign products to any category or subcategory, manage homepage visibility, and update images from the media library.'],
-    content: ['Content workspace', 'Homepage and translations', 'Edit storefront copy and localized content without touching code.'],
-    sales: ['Sales workspace', 'Orders and inquiries', 'Use the sales tab below for customer inquiries and checkout/order management.'],
-    overview: ['Overview workspace', 'System readiness and access', 'Check database/auth readiness, security events, staff access, and audit activity before making operational changes.']
+    catalog: ['Catalog workspace', 'Catalog', 'Products, categories, subcategories, and media.'],
+    content: ['Content workspace', 'Homepage and translations', 'Homepage copy and translations.'],
+    sales: ['Sales workspace', 'Sales', 'Orders and customer inquiries.'],
+    overview: ['Overview workspace', 'System', 'Readiness, access, audit, and security.']
   }[workspace];
 
   return (
