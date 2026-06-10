@@ -38,6 +38,8 @@ Completed route-boundary slices:
 - Guarded `components/admin/AdminRouteError.tsx` source localization wiring.
 - Fixed `components/admin/AdminPageShell.tsx` count badges to use dictionary-backed lowercase count keys for product, category, and media labels.
 - Expanded `tests/unit/admin-page-shell-copy.test.ts` to guard product/category/media count copy keys.
+- Guarded `components/admin/AdminRouteLoading.tsx` source localization wiring and route loading copy keys.
+- Guarded admin `loading.tsx` route shells so their title and eyebrow props stay backed by Persian loading-copy keys.
 
 CI note from PR #510:
 
@@ -45,6 +47,12 @@ CI note from PR #510:
 - `Typecheck` passed.
 - Failure was in `tests/unit/admin-page-shell-copy.test.ts`, which expected lowercase count copy keys while `AdminPageShell.tsx` used capitalized fallback-prone keys.
 - The follow-up patch keeps the component and guard aligned on dictionary-backed lowercase count keys.
+
+CI notes from follow-up route-boundary slices:
+
+- PR #511 passed GitHub Actions before merge, including typecheck, unit, functional, API, nonbrowser, E2E contract suites, build, and route smoke.
+- PR #512 passed GitHub Actions before merge, including typecheck, unit, functional, API, nonbrowser, E2E contract suites, build, and route smoke.
+- The squash merge commit for PR #512 did not receive a separate pull-request workflow run; use the PR head run as the CI evidence for that slice.
 
 ## Next recommended Phase 1 slices
 
@@ -56,6 +64,7 @@ CI note from PR #510:
 ## Phase 1 definition of done
 
 - Admin route error shells are guarded.
+- Admin route loading shells are guarded.
 - Admin page shell and console shell are guarded.
 - Admin module pages are either source-guarded/localized or still explicitly allowlisted by path with a reason.
 - The broad `app/**` allowlist is narrowed to explicit remaining files.
