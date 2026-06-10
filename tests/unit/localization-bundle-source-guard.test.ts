@@ -95,7 +95,7 @@ export function runLocalizationBundleSourceGuardTests() {
     ['app/products/page.tsx', "title: `${getStorefrontCopy('catalog.title', locale)} | Golara`", "description: getStorefrontCopy('catalog.body', locale)"],
     ['app/categories/page.tsx', "title: `${getStorefrontCopy('categories.title', locale)} | Golara`", "description: getStorefrontCopy('categories.body', locale)"],
     ['app/products/[slug]/page.tsx', 'const product = await getProductBySlug(slug, { locale });', 'product.seoTitle || `${product.title} | Golara`'],
-    ['app/categories/[slug]/page.tsx', 'title: `${category.title} | Golara`']
+    ['app/categories/[slug]/page.tsx', 'title: `${category.title} | Golara`', 'description: category.description']
   ] as const;
 
   for (const [file, titleGuard, descriptionGuard] of pages) {
