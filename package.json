@@ -28,6 +28,8 @@
     "test:load:webhook": "node tools/run-k6-api-smoke.mjs webhook",
     "test:all": "node tools/run-full-test-suite.mjs",
     "test:coverage": "node tools/run-coverage-suite.mjs",
+    "test:admin-dashboard-workspaces": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/admin-workspace-composition-guard-entry.test.ts && node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/admin-dashboard-workspace-swap-script-entry.test.ts && node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/admin-catalog-dashboard-helpers-entry.test.ts",
+    "codemod:admin-dashboard-workspaces": "node scripts/admin-dashboard-workspace-swap.mjs",
     "check:file-lines": "node tools/check-file-lines.mjs",
     "check:runtime": "node tools/check-runtime.mjs && npm run check:action-boundaries",
     "check:action-boundaries": "node tools/check-action-boundaries.mjs",
