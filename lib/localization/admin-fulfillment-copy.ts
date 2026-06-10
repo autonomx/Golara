@@ -8,6 +8,7 @@ type FulfillmentQueueValueCopy = {
   fallbackUnknown: string;
   guestCheckout: string;
   orderStatuses: Record<string, string>;
+  paymentStatuses: Record<string, string>;
   fulfillmentStatuses: Record<string, string>;
   checkoutModes: Record<string, string>;
   priorities: Record<FulfillmentPriority, string>;
@@ -30,6 +31,19 @@ const copy: Record<AdminLocaleKey, FulfillmentQueueValueCopy> = {
       canceled: 'Canceled',
       refunded: 'Refunded',
       voided: 'Voided'
+    },
+    paymentStatuses: {
+      unknown: 'Unknown',
+      pending: 'Pending',
+      authorized: 'Authorized',
+      paid: 'Paid',
+      partially_paid: 'Partially paid',
+      failed: 'Failed',
+      refunded: 'Refunded',
+      partially_refunded: 'Partially refunded',
+      voided: 'Voided',
+      cancelled: 'Cancelled',
+      canceled: 'Canceled'
     },
     fulfillmentStatuses: {
       unfulfilled: 'Unfulfilled',
@@ -88,6 +102,19 @@ const copy: Record<AdminLocaleKey, FulfillmentQueueValueCopy> = {
       canceled: 'لغو شده',
       refunded: 'مسترد شده',
       voided: 'باطل شده'
+    },
+    paymentStatuses: {
+      unknown: 'نامشخص',
+      pending: 'در انتظار',
+      authorized: 'مجوز گرفته',
+      paid: 'پرداخت شده',
+      partially_paid: 'پرداخت جزئی',
+      failed: 'ناموفق',
+      refunded: 'مسترد شده',
+      partially_refunded: 'استرداد جزئی',
+      voided: 'باطل شده',
+      cancelled: 'لغو شده',
+      canceled: 'لغو شده'
     },
     fulfillmentStatuses: {
       unfulfilled: 'انجام نشده',
@@ -160,6 +187,9 @@ export function createAdminFulfillmentQueueTranslator(locale?: SupportedLocale |
     },
     orderStatus(value?: string | null) {
       return lookup(value, labels.orderStatuses);
+    },
+    paymentStatus(value?: string | null) {
+      return lookup(value, labels.paymentStatuses);
     },
     fulfillmentStatus(value?: string | null) {
       return lookup(value, labels.fulfillmentStatuses);

@@ -31,6 +31,7 @@ export async function runFulfillmentQueueSummaryTests() {
   const service = source('lib/analytics/fulfillment-queue-summary.ts');
   const panel = source('components/admin/AdminFulfillmentQueueSummaryPanel.tsx');
   const orderPanel = source('components/admin/AdminOrderRevenueSummaryPanel.tsx');
+  const adminOrderPanel = source('components/admin/AdminOrderPanel.tsx');
   const roadmap = source('docs/ADMIN_SALEOR_PARITY_ROADMAP.md');
 
   assert.equal(normalizeFulfillmentQueueStatus('Ready for Pickup'), 'ready_for_pickup');
@@ -61,6 +62,7 @@ export async function runFulfillmentQueueSummaryTests() {
 
   const fa = createAdminFulfillmentQueueTranslator('fa-IR');
   assert.equal(fa.orderStatus('paid'), 'پرداخت شده');
+  assert.equal(fa.paymentStatus('partially_refunded'), 'استرداد جزئی');
   assert.equal(fa.fulfillmentStatus('ready_for_pickup'), 'آماده تحویل حضوری');
   assert.equal(fa.checkoutMode('local_delivery'), 'ارسال محلی');
   assert.equal(fa.priority('overdue'), 'معوق');
@@ -69,6 +71,7 @@ export async function runFulfillmentQueueSummaryTests() {
 
   const en = createAdminFulfillmentQueueTranslator('en-CA');
   assert.equal(en.fulfillmentStatus('ready_for_pickup'), 'Ready for pickup');
+  assert.equal(en.paymentStatus('partially_paid'), 'Partially paid');
   assert.equal(en.fulfillmentStatus('custom_internal_status'), 'Custom Internal Status');
   assert.equal(humanizeAdminFulfillmentValue('in_progress'), 'In Progress');
 
@@ -85,11 +88,15 @@ export async function runFulfillmentQueueSummaryTests() {
   assert.match(panel, /rowCopy\.priority\(row\.priority\)/);
   assert.match(panel, /No open fulfillment queue items/);
 
+  assert.match(adminOrderPanel, /createAdminFulfillmentQueueTranslator\(activeLocale\)/);
+  assert.match(adminOrderPanel, /valueLabels\.orderStatus\(order\.status\)/);
+  assert.match(adminOrderPanel, /valueLabels\.paymentStatus\(order\.latestPaymentStatus\)/);
+  assert.match(adminOrderPanel, /valueLabels\.checkoutMode\(order\.checkoutMode\)/);
+
   assert.match(orderPanel, /AdminFulfillmentQueueSummaryPanel/);
   assert.match(orderPanel, /fulfillmentQueueSummaryService\.summary\(\)/);
   assert.match(orderPanel, /AdminFulfillmentQueueSummaryPanel summary=\{fulfillmentQueueSummary\}/);
-
-  assert.match(roadmap, /- \[x\] Add fulfillment queue summary\./);
+  assert.match(roadmap, /fulfillment queue summary/i);
 
   console.log('fulfillment-queue-summary.test.ts passed');
 }

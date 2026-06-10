@@ -22,7 +22,11 @@ const copy = {
     updated: 'Updated',
     unnamed: 'Unnamed customer',
     noEmail: 'No email',
-    never: 'Never'
+    never: 'Never',
+    persian: 'Persian',
+    english: 'English',
+    unknownLocale: 'Unknown locale',
+    noPhone: 'No phone'
   },
   fa: {
     eyebrow: 'مشتریان',
@@ -40,7 +44,11 @@ const copy = {
     updated: 'به‌روزرسانی',
     unnamed: 'مشتری بدون نام',
     noEmail: 'بدون ایمیل',
-    never: 'هرگز'
+    never: 'هرگز',
+    persian: 'فارسی',
+    english: 'انگلیسی',
+    unknownLocale: 'زبان نامشخص',
+    noPhone: 'بدون تلفن'
   }
 } as const;
 
@@ -51,6 +59,13 @@ function localeKey(locale?: SupportedLocale | string | null): AdminLocale {
 function formatDate(value: Date | null | undefined, locale: SupportedLocale | string | null | undefined, neverLabel: string) {
   if (!value) return neverLabel;
   return new Intl.DateTimeFormat(localeKey(locale) === 'fa' ? 'fa-IR' : 'en-CA', { dateStyle: 'medium' }).format(value);
+}
+
+function formatCustomerLocale(value: string | null | undefined, labels: typeof copy.en | typeof copy.fa) {
+  const normalized = value?.toLowerCase() ?? '';
+  if (normalized.startsWith('fa')) return labels.persian;
+  if (normalized.startsWith('en')) return labels.english;
+  return labels.unknownLocale;
 }
 
 export async function AdminCustomerPanel({ customers, databaseReady, locale }: { customers: AdminCustomerListItem[]; databaseReady: boolean; locale?: SupportedLocale | string | null }) {
@@ -103,8 +118,8 @@ export async function AdminCustomerPanel({ customers, databaseReady, locale }: {
                     </Link>
                     <div className="mt-1 text-xs text-stone-500">{customer.email || labels.noEmail}</div>
                   </td>
-                  <td className="px-4 py-4 text-stone-700">{customer.phone}</td>
-                  <td className="px-4 py-4 text-stone-700">{customer.locale}</td>
+                  <td className="px-4 py-4 text-stone-700">{customer.phone || labels.noPhone}</td>
+                  <td className="px-4 py-4 text-stone-700">{formatCustomerLocale(customer.locale, labels)}</td>
                   <td className="px-4 py-4 text-stone-700">{customer.orderCount}</td>
                   <td className="px-4 py-4 text-stone-700">{customer.addressCount}</td>
                   <td className="px-4 py-4 text-stone-700">{formatDate(customer.lastLoginAt, activeLocale, labels.never)}</td>
