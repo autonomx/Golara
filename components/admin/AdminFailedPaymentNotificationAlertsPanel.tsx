@@ -1,5 +1,11 @@
 import type { FailedPaymentNotificationAlertsSummary } from '@/lib/analytics/failed-payment-notification-alerts';
 import type { SupportedLocale } from '@/lib/i18n/locales';
+import {
+  formatAdminFailedPaymentAlertKind,
+  formatAdminFailedPaymentAlertStatus,
+  formatAdminFailedPaymentAlertTitle,
+  formatAdminFailedPaymentNotificationDetail
+} from '@/lib/localization/admin-failed-payment-alerts-copy';
 
 type AdminLocale = 'en' | 'fa';
 
@@ -86,12 +92,12 @@ export function AdminFailedPaymentNotificationAlertsPanel({ summary, locale }: {
               {summary.alerts.map((row) => (
                 <tr key={row.id} className="border-t border-stone-200">
                   <td className="px-3 py-2">
-                    <p className="font-semibold text-stone-950">{row.title}</p>
-                    <p className="text-xs text-stone-500">{row.detail}</p>
+                    <p className="font-semibold text-stone-950">{formatAdminFailedPaymentAlertTitle(row, locale)}</p>
+                    <p className="text-xs text-stone-500">{formatAdminFailedPaymentNotificationDetail(row, locale)}</p>
                   </td>
                   <td className="px-3 py-2 text-stone-700">{row.orderNumber}</td>
-                  <td className="px-3 py-2 text-stone-700">{row.kind}</td>
-                  <td className="px-3 py-2 text-stone-700">{row.status}</td>
+                  <td className="px-3 py-2 text-stone-700">{formatAdminFailedPaymentAlertKind(row.kind, locale)}</td>
+                  <td className="px-3 py-2 text-stone-700">{formatAdminFailedPaymentAlertStatus(row.status, locale)}</td>
                 </tr>
               ))}
             </tbody>
