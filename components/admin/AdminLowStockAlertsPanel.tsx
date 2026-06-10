@@ -1,5 +1,6 @@
 import type { LowStockAlertsSummary } from '@/lib/analytics/low-stock-alerts';
 import type { SupportedLocale } from '@/lib/i18n/locales';
+import { getAdminLowStockDetail, getAdminLowStockStatusLabel } from '@/lib/localization/admin-low-stock-copy';
 
 type AdminLocale = 'en' | 'fa';
 
@@ -103,8 +104,8 @@ export function AdminLowStockAlertsPanel({ summary, locale }: { summary: LowStoc
                     <p className="text-xs text-stone-500">{row.productCode} · {row.sku}</p>
                   </td>
                   <td className="px-3 py-2">
-                    <p className="font-semibold text-stone-900">{row.statusLabel}</p>
-                    <p className="text-xs text-stone-500">{row.detail}</p>
+                    <p className="font-semibold text-stone-900">{getAdminLowStockStatusLabel(row.status, locale)}</p>
+                    <p className="text-xs text-stone-500">{getAdminLowStockDetail(row.status, row.stockQuantity, row.lowStockThreshold, locale)}</p>
                   </td>
                   <td className="px-3 py-2 text-stone-700">{row.stockQuantity}</td>
                   <td className="px-3 py-2 text-stone-700">{row.lowStockThreshold ?? labels.notSet}</td>
