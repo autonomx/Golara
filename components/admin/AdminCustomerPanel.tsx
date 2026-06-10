@@ -61,7 +61,7 @@ function formatDate(value: Date | null | undefined, locale: SupportedLocale | st
   return new Intl.DateTimeFormat(localeKey(locale) === 'fa' ? 'fa-IR' : 'en-CA', { dateStyle: 'medium' }).format(value);
 }
 
-function formatCustomerLocale(value: string | null | undefined, labels: (typeof copy)[AdminLocale]['en']) {
+function formatCustomerLocale(value: string | null | undefined, labels: typeof copy.en | typeof copy.fa) {
   const normalized = value?.toLowerCase() ?? '';
   if (normalized.startsWith('fa')) return labels.persian;
   if (normalized.startsWith('en')) return labels.english;
