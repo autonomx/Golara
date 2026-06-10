@@ -3,6 +3,7 @@ import { adminLocaleKey } from '@/lib/localization/admin-copy';
 
 const en = {
   'Admin module error': 'Admin module error',
+  'Admin overview could not load': 'Admin overview could not load',
   'Back to overview': 'Back to overview',
   'Module error': 'Module error',
   'Orders could not load': 'Orders could not load',
@@ -14,6 +15,7 @@ const en = {
 
 const fa: Record<keyof typeof en, string> = {
   'Admin module error': 'خطای بخش مدیریت',
+  'Admin overview could not load': 'نمای کلی مدیریت بارگیری نشد',
   'Back to overview': 'بازگشت به نمای کلی',
   'Module error': 'خطای بخش',
   'Orders could not load': 'سفارش ها بارگیری نشدند',
