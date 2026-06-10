@@ -1,5 +1,5 @@
 import type { SupportedLocale } from '@/lib/i18n/locales';
-import { createAdminTranslator } from '@/lib/localization/admin-copy';
+import { adminLocaleKey, createAdminTranslator } from '@/lib/localization/admin-copy';
 
 const mediaCategoryLabelByValue: Record<string, string> = {
   product: 'Product',
@@ -19,24 +19,33 @@ const mediaUsageLabelByType: Record<string, string> = {
   Unassigned: 'Unassigned'
 };
 
+const faFallbackLabels: Record<string, string> = {
+  'local asset': 'دارایی محلی'
+};
+
+function adminMediaLabel(key: string, locale?: SupportedLocale | string | null) {
+  const translated = createAdminTranslator(locale)(key);
+  if (translated !== key) return translated;
+  if (adminLocaleKey(locale) === 'fa') return faFallbackLabels[key] ?? key;
+  return key;
+}
+
 export function adminMediaCategoryLabel(value?: string | null, locale?: SupportedLocale | string | null) {
-  const t = createAdminTranslator(locale);
-  return t(mediaCategoryLabelByValue[value ?? ''] ?? 'General / other');
+  return adminMediaLabel(mediaCategoryLabelByValue[value ?? ''] ?? 'General / other', locale);
 }
 
 export function adminMediaUsageLabel(type?: string | null, locale?: SupportedLocale | string | null) {
-  const t = createAdminTranslator(locale);
-  return t(mediaUsageLabelByType[type ?? ''] ?? 'Unassigned');
+  return adminMediaLabel(mediaUsageLabelByType[type ?? ''] ?? 'Unassigned', locale);
 }
 
 export function adminMediaLocalAssetLabel(locale?: SupportedLocale | string | null) {
-  return createAdminTranslator(locale)('local asset');
+  return adminMediaLabel('local asset', locale);
 }
 
 export function adminMediaStaticLabel(locale?: SupportedLocale | string | null) {
-  return createAdminTranslator(locale)('Static');
+  return adminMediaLabel('Static', locale);
 }
 
 export function adminMediaSeedOrStaticAssetLabel(locale?: SupportedLocale | string | null) {
-  return createAdminTranslator(locale)('Seed or static asset');
+  return adminMediaLabel('Seed or static asset', locale);
 }
