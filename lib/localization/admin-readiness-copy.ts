@@ -4,17 +4,9 @@ import type { InquiryNotificationReadiness } from '@/lib/notifications/inquiry-n
 import type { SupportedLocale } from '@/lib/i18n/locales';
 import { adminLocaleKey, createAdminTranslator } from '@/lib/localization/admin-copy';
 
-type ReadinessContext = {
-  runtimeReadiness: RuntimeReadiness;
-  authConfigured: boolean;
-  authenticated: boolean;
-  notificationReadiness: InquiryNotificationReadiness;
-  checkoutReadiness: PaymentGatewayReadiness;
-  locale?: SupportedLocale | string | null;
-};
-
 const fa = {
   'Admin auth': 'احراز هویت مدیریت',
+  'Admin password/session secret missing.': 'رمز عبور مدیریت یا راز نشست وجود ندارد.',
   'Checkout readiness is blocked.': 'آمادگی پرداخت مسدود است.',
   'Checkout readiness needs an operating decision.': 'آمادگی پرداخت نیازمند تصمیم عملیاتی است.',
   'Configure DATABASE_URL before production writes or public launch.': 'پیش از نوشتن در تولید یا راه اندازی عمومی، DATABASE_URL را تنظیم کنید.',
@@ -32,6 +24,7 @@ const fa = {
   'Preview, development, and test can use seeded catalog fallback when the database is unavailable.': 'پیش نمایش، توسعه و تست می توانند هنگام در دسترس نبودن پایگاه داده از پشتیبان کاتالوگ نمونه استفاده کنند.',
   'Production runtime is missing DATABASE_URL.': 'اجرای تولید فاقد DATABASE_URL است.',
   'Production runtime will throw on missing database configuration or production repository read failures instead of silently using seed data.': 'اجرای تولید هنگام نبود پیکربندی پایگاه داده یا شکست خواندن repository تولید خطا می دهد و بی صدا از داده نمونه استفاده نمی کند.',
+  'Seed fallback allowed': 'پشتیبان داده نمونه مجاز است',
   'Seed fallback is allowed in this runtime.': 'پشتیبان داده نمونه در این اجرا مجاز است.',
   'Seed fallback is disabled for this runtime.': 'پشتیبان داده نمونه برای این اجرا غیرفعال است.',
   'Set ADMIN_PASSWORD and ADMIN_SESSION_SECRET before enabling staff CMS writes.': 'پیش از فعال کردن ویرایش CMS برای تیم، ADMIN_PASSWORD و ADMIN_SESSION_SECRET را تنظیم کنید.',
@@ -39,7 +32,6 @@ const fa = {
   'The DATABASE_URL value is intentionally hidden.': 'مقدار DATABASE_URL عمدا پنهان شده است.',
   'CMS reads and writes can use Prisma-backed content.': 'خواندن و نوشتن CMS می تواند از محتوای مبتنی بر Prisma استفاده کند.',
   'Checkout gateway configuration is ready.': 'پیکربندی درگاه پرداخت آماده است.',
-  'has no readiness blockers or warnings.': 'هیچ مانع یا هشدار آمادگی ندارد.',
   'Mode': 'حالت',
   'Providers': 'ارائه دهندگان',
   'none': 'هیچ کدام',
