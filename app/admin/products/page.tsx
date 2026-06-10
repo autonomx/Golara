@@ -1,7 +1,10 @@
 import Link from 'next/link';
 import { AdminConsolePage } from '@/app/admin/AdminConsolePage';
 import { listAdminProducts } from '@/lib/cms/catalog-repository';
+import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
+import { createAdminCatalogPageTranslator } from '@/lib/localization/admin-catalog-page-copy';
 import type { Product } from '@/lib/catalog';
+import type { SupportedLocale } from '@/lib/i18n/locales';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,7 +50,8 @@ function paginationHref(params: AdminProductsSearchParams, page: number) {
   return serialized ? `/admin/products?${serialized}` : '/admin/products';
 }
 
-function ProductPaginationBar({ params, total }: { params: AdminProductsSearchParams; total: number }) {
+function ProductPaginationBar({ params, total, locale }: { params: AdminProductsSearchParams; total: number; locale: SupportedLocale }) {
+  const t = createAdminCatalogPageTranslator(locale);
   const pageCount = Math.max(1, Math.ceil(total / productPageSize));
   const currentPage = Math.min(parsePage(params.productPage), pageCount);
   const start = total === 0 ? 0 : (currentPage - 1) * productPageSize + 1;
@@ -56,12 +60,12 @@ function ProductPaginationBar({ params, total }: { params: AdminProductsSearchPa
   const hasNext = currentPage < pageCount;
 
   return (
-    <nav aria-label="Product pagination" className="fixed bottom-4 left-4 right-4 z-50 rounded-lg border border-rosewood/15 bg-white/95 p-3 shadow-[0_18px_50px_rgba(43,29,32,0.16)] backdrop-blur lg:left-[19rem]">
+    <nav aria-label={t('catalogPagination')} className="fixed bottom-4 left-4 right-4 z-50 rounded-lg border border-rosewood/15 bg-white/95 p-3 shadow-[0_18px_50px_rgba(43,29,32,0.16)] backdrop-blur lg:left-[19rem]">
       <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
-        <p className="font-semibold text-stone-700">Showing {start}-{end} of {total} products · Page {currentPage} of {pageCount}</p>
+        <p className="font-semibold text-stone-700">{t('showing')} {start}-{end} {t('of')} {total} {t('itemLabel')} · {t('page')} {currentPage} {t('of')} {pageCount}</p>
         <div className="flex items-center gap-2">
-          <Link aria-disabled={!hasPrevious} href={paginationHref(params, Math.max(1, currentPage - 1))} className={`rounded-md border px-3 py-2 font-semibold ${hasPrevious ? 'border-rosewood/20 text-rosewood hover:border-rosewood' : 'pointer-events-none border-stone-200 text-stone-300'}`}>Previous</Link>
-          <Link aria-disabled={!hasNext} href={paginationHref(params, Math.min(pageCount, currentPage + 1))} className={`rounded-md border px-3 py-2 font-semibold ${hasNext ? 'border-rosewood/20 text-rosewood hover:border-rosewood' : 'pointer-events-none border-stone-200 text-stone-300'}`}>Next</Link>
+          <Link aria-disabled={!hasPrevious} href={paginationHref(params, Math.max(1, currentPage - 1))} className={`rounded-md border px-3 py-2 font-semibold ${hasPrevious ? 'border-rosewood/20 text-rosewood hover:border-rosewood' : 'pointer-events-none border-stone-200 text-stone-300'}`}>{t('previous')}</Link>
+          <Link aria-disabled={!hasNext} href={paginationHref(params, Math.min(pageCount, currentPage + 1))} className={`rounded-md border px-3 py-2 font-semibold ${hasNext ? 'border-rosewood/20 text-rosewood hover:border-rosewood' : 'pointer-events-none border-stone-200 text-stone-300'}`}>{t('next')}</Link>
         </div>
       </div>
     </nav>
@@ -70,13 +74,14 @@ function ProductPaginationBar({ params, total }: { params: AdminProductsSearchPa
 
 export default async function AdminProductsPage({ searchParams }: { searchParams: Promise<AdminProductsSearchParams> }) {
   const resolvedSearchParams = await searchParams;
+  const locale = await resolveStorefrontLocale();
   const products = await listAdminProducts();
   const filteredProducts = filterProducts(products, resolvedSearchParams);
 
   return (
     <>
       <AdminConsolePage searchParams={Promise.resolve(resolvedSearchParams)} forcedTab="catalog" catalogSection="products" activeNavKey="products" />
-      <ProductPaginationBar params={resolvedSearchParams} total={filteredProducts.length} />
+      <ProductPaginationBar params={resolvedSearchParams} total={filteredProducts.length} locale={locale} />
     </>
   );
 }

@@ -40,6 +40,7 @@ Completed route-boundary slices:
 - Expanded `tests/unit/admin-page-shell-copy.test.ts` to guard product/category/media count copy keys.
 - Guarded `components/admin/AdminRouteLoading.tsx` source localization wiring and route loading copy keys.
 - Guarded admin `loading.tsx` route shells so their title and eyebrow props stay backed by Persian loading-copy keys.
+- Localized `app/admin/products/page.tsx` pagination copy through `lib/localization/admin-catalog-page-copy.ts` and added a focused source/key guard.
 
 CI note from PR #510:
 
@@ -52,7 +53,8 @@ CI notes from follow-up route-boundary slices:
 
 - PR #511 passed GitHub Actions before merge, including typecheck, unit, functional, API, nonbrowser, E2E contract suites, build, and route smoke.
 - PR #512 passed GitHub Actions before merge, including typecheck, unit, functional, API, nonbrowser, E2E contract suites, build, and route smoke.
-- The squash merge commit for PR #512 did not receive a separate pull-request workflow run; use the PR head run as the CI evidence for that slice.
+- PR #513 passed GitHub Actions before merge, including typecheck, unit, functional, API, nonbrowser, E2E contract suites, coverage, build, and route smoke.
+- The squash merge commits for these route-boundary slices may not receive separate pull-request workflow runs; use the PR head runs as CI evidence when no merge-commit run is attached.
 
 ## Next recommended Phase 1 slices
 
