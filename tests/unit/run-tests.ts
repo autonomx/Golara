@@ -1,6 +1,7 @@
 import { runAdminAccountCoreTests } from './admin-account-core.test';
 import { runAdminActionBoundaryGuardTests } from './admin-action-boundary-guard.test';
 import { runAdminAuthCoreTests } from './admin-auth-core.test';
+import { runAdminCatalogDashboardHelpersTests } from './admin-catalog-dashboard-helpers.test';
 import { runAdminModuleAccessTests } from './admin-module-access.test';
 import { runAdminOrderCustomerAssignmentFlowTests } from './admin-order-customer-assignment-flow.test';
 import { runAdminOrderLineEditFlowTests } from './admin-order-line-edit-flow.test';
@@ -148,6 +149,7 @@ async function main() {
   await runDataSafetyReadinessTests();
   await runE2eDbSafetyContractTests();
   await runAdminActionBoundaryGuardTests();
+  await runAdminCatalogDashboardHelpersTests();
   await runAdminAuthCoreTests();
   await runAdminAccountCoreTests();
   await runAdminRoleBoundaryTests();
@@ -280,7 +282,7 @@ async function main() {
   await runLocalizationBundleSourceGuardTests();
   await runLocalizationSourceAuditTests();
   await runDeployReadinessTests();
-  console.log('unit tests passed (139 files)');
+  console.log('unit tests passed (140 files)');
 }
 
 main().catch((error) => {
