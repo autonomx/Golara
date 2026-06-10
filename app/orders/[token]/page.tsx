@@ -87,8 +87,8 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
               <h1 className="mt-3 font-display text-5xl text-rosewood" dir="ltr">{order.orderNumber}</h1>
             </div>
             <nav aria-label={`${copy.languageNavLabel}. ${copy.languageCurrentPrefix}: ${currentLanguage}.`} className="flex flex-row gap-2 text-sm font-semibold" dir="ltr">
-              <Link className={languageLinkClass} href={localeHref(token, 'en', result)} aria-label={copy.viewInEnglish} aria-current={!isFa ? 'page' : undefined}>English</Link>
-              <Link className={languageLinkClass} href={localeHref(token, 'fa', result)} aria-label={copy.viewInPersian} aria-current={isFa ? 'page' : undefined}>فارسی</Link>
+              <Link className={languageLinkClass} href={localeHref(token, 'en', result)} aria-label={copy.viewInEnglish} aria-current={!isFa ? 'page' : undefined}>{copy.languageEnglish}</Link>
+              <Link className={languageLinkClass} href={localeHref(token, 'fa', result)} aria-label={copy.viewInPersian} aria-current={isFa ? 'page' : undefined}>{copy.languagePersian}</Link>
             </nav>
           </div>
           <p className="mt-5 text-lg leading-8 text-stone-700" aria-live="polite">
