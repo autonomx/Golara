@@ -9,5 +9,11 @@
 
 app/admin/** :: Admin route-boundary localization is still in progress; replace with per-route entries as guarded admin shells land.
 app/api/** :: API route files are server endpoints, not rendered page/loading/error shells, and will be handled in the server-copy phase.
+app/account/** :: Account route shells have focused localization guards, but the generic source audit still flags typed expressions; replace with per-file exceptions after the audit parser is refined.
+app/cart/** :: Cart and checkout route shells have focused localization guards, but the generic source audit still flags typed expressions; replace with per-file exceptions after the audit parser is refined.
+app/categories/** :: Category route shells have focused localization guards, but the generic source audit still flags typed expressions; replace with per-file exceptions after the audit parser is refined.
+app/orders/** :: Public and account order route shells have focused localization guards, but the generic source audit still flags typed expressions; replace with per-file exceptions after the audit parser is refined.
+app/products/** :: Product route shells have focused localization guards, but the generic source audit still flags typed expressions; replace with per-file exceptions after the audit parser is refined.
+app/page.tsx :: Homepage route shell has a focused localization guard, but the generic source audit still flags brand/code expressions; remove after the audit parser is refined.
 components/admin/** :: Phase 3 and Phase 4 admin extraction/localization are still in progress; replace with per-component entries as modules are completed.
 components/storefront/** :: Phase 5 storefront localization is still in progress; replace with per-component entries as storefront surfaces are completed.
