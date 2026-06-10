@@ -25,13 +25,13 @@ function catalogPath(section: AdminCatalogSection) {
 
 function AdminCatalogSectionNav({ t = (key: string) => key }: { t?: (key: string) => string }) {
   const links = [
-    { href: '#media', label: 'Media', detail: 'Images and uploads' },
-    { href: '#categories', label: 'Categories', detail: 'Sections and subcategories' },
-    { href: '#products', label: 'Products', detail: 'Items and bulk actions' }
+    { href: '#media', label: 'Media', detail: 'Images' },
+    { href: '#categories', label: 'Categories', detail: 'Categories and subcategories' },
+    { href: '#products', label: 'Products', detail: 'Products' }
   ];
 
   return (
-    <nav aria-label={t('Catalog sections')} className="sticky top-20 z-10 rounded-lg border border-stone-200 bg-white/95 p-1.5 shadow-sm backdrop-blur">
+    <nav aria-label={t('Catalog workspace')} className="sticky top-20 z-10 rounded-lg border border-stone-200 bg-white/95 p-1.5 shadow-sm backdrop-blur">
       <div className="flex flex-wrap gap-1.5">
         {links.map((link) => (
           <a key={link.href} href={link.href} title={t(link.detail)} className="rounded-md border border-transparent bg-white px-3 py-2 text-sm font-semibold text-stone-700 transition hover:border-stone-200 hover:bg-stone-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/20">
