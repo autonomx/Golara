@@ -4,6 +4,7 @@ import { DEFAULT_LOCALE, FALLBACK_LOCALE, SUPPORTED_LOCALES, fallbackLocaleOrder
 import { localizedField, selectPublishedTranslation, selectTranslatedContent } from '../../lib/i18n/translated-content';
 import { storefrontCopy } from '../../lib/localization/storefront-copy';
 import { customerCopy, getCustomerCopy } from '../../lib/localization/customer-copy';
+import { createAdminActionBannerTranslator } from '../../lib/localization/admin-action-banner-copy';
 import { adminCatalogBulkActionLabel, adminCatalogBulkActionKeys, adminCatalogControlLabel } from '../../lib/localization/admin-catalog-control-copy';
 import { adminMediaCategoryLabel, adminMediaLocalAssetLabel, adminMediaSeedOrStaticAssetLabel, adminMediaStaticLabel, adminMediaUsageLabel } from '../../lib/localization/admin-media-copy';
 import { createAdminRouteErrorTranslator } from '../../lib/localization/admin-route-error-copy';
@@ -55,6 +56,11 @@ export async function runI18nLocalizationTests() {
   assert.equal(getCustomerCopy('profile.status.updated', 'fa-IR'), 'پروفایل به‌روزرسانی شد.');
   assert.equal(getCustomerCopy('profile.status.failed', 'en-CA'), 'We could not update your profile. Please check the fields and try again.');
   assert.equal(getCustomerCopy('common.cityNotSet', 'fa-IR'), 'شهر تنظیم نشده');
+
+  const adminBannerFa = createAdminActionBannerTranslator('fa-IR');
+  assert.equal(adminBannerFa('Fulfillment method saved successfully.'), 'روش انجام سفارش با موفقیت ذخیره شد.');
+  assert.equal(adminBannerFa('Media item saved successfully.'), 'مورد رسانه با موفقیت ذخیره شد.');
+  assert.equal(createAdminActionBannerTranslator('en-CA')('Fulfillment method saved successfully.'), 'Fulfillment method saved successfully.');
 
   assert.deepEqual([...adminCatalogBulkActionKeys], [
     'Activate',
@@ -119,6 +125,10 @@ export async function runI18nLocalizationTests() {
   assert.match(adminRouteLoadingSource, /t\(eyebrow\)/);
   assert.match(adminRouteLoadingSource, /t\(title\)/);
   assert.doesNotMatch(adminRouteLoadingSource, /'Customer Ops'/);
+
+  const adminActionBannerSource = readFileSync('components/admin/AdminActionBanner.tsx', 'utf8');
+  assert.match(adminActionBannerSource, /createAdminActionBannerTranslator\(locale\)/);
+  assert.match(adminActionBannerSource, /Fulfillment method saved successfully\./);
 
   const adminMediaCopySource = readFileSync('lib/localization/admin-media-copy.ts', 'utf8');
   assert.match(adminMediaCopySource, /adminMediaCategoryLabel/);

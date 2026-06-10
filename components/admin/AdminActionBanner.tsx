@@ -1,5 +1,5 @@
 import type { SupportedLocale } from '@/lib/i18n/locales';
-import { createAdminTranslator } from '@/lib/localization/admin-copy';
+import { createAdminActionBannerTranslator } from '@/lib/localization/admin-action-banner-copy';
 
 const statusMessages: Record<string, string> = {
   'inquiry-updated': 'Inquiry updated successfully.',
@@ -12,7 +12,7 @@ const statusMessages: Record<string, string> = {
 };
 
 export function AdminActionBanner({ status, message, locale }: { status?: string; message?: string; locale?: SupportedLocale | string | null }) {
-  const t = createAdminTranslator(locale);
+  const t = createAdminActionBannerTranslator(locale);
   const text = message || (status ? statusMessages[status] : undefined);
   if (!text) return null;
 
