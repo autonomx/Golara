@@ -11,6 +11,7 @@ const LOCALIZED_ADMIN_COMPONENT_FILES = [
   'components/admin/AdminOverviewWorkspace.tsx',
   'components/admin/AdminCatalogWorkspace.tsx',
   'components/admin/AdminContentWorkspace.tsx',
+  'components/admin/AdminDashboardChrome.tsx',
   'components/admin/AdminCatalogControls.tsx',
   'components/admin/AdminCatalogSharedControls.tsx',
   'components/admin/AdminMediaSection.tsx',
@@ -80,7 +81,7 @@ export function runAdminWorkspaceLocalizationSourceGuardTests() {
   assert.deepEqual(
     findings,
     [],
-    `Extracted admin workspace, section, shared-control, overview panel, alert panel, and translation panel components should not introduce raw English UI copy. Route copy through admin localization helpers instead.\n${findings
+    `Extracted admin workspace, dashboard chrome, section, shared-control, overview panel, alert panel, and translation panel components should not introduce raw English UI copy. Route copy through admin localization helpers instead.\n${findings
       .map((finding) => `${finding.file}:${finding.line} ${JSON.stringify(finding.text)}`)
       .join('\n')}`
   );
