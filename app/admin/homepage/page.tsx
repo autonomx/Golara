@@ -13,6 +13,7 @@ import { addHomepageFeaturedPickAction, removeHomepageFeaturedPickAction, update
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 import { createAdminTranslator } from '@/lib/localization/admin-copy';
+import { createAdminHomeTranslator } from '@/lib/localization/admin-home-copy';
 import { getStorefrontCopyDirection } from '@/lib/localization/storefront-copy';
 
 export const dynamic = 'force-dynamic';
@@ -110,19 +111,21 @@ function CategoryTileEditor({ category, categories, media, disabled, occasionPag
   );
 }
 
-function HomepageCategoryManager({ categories, homepageCategories, media, disabled, occasionPage }: { categories: Category[]; homepageCategories: Category[]; media: MediaItem[]; disabled: boolean; occasionPage: number }) {
+function HomepageCategoryManager({ categories, homepageCategories, media, disabled, occasionPage, locale }: { categories: Category[]; homepageCategories: Category[]; media: MediaItem[]; disabled: boolean; occasionPage: number; locale?: SupportedLocale | string | null }) {
+  const copy = createAdminHomeTranslator(locale);
   const homepageIds = new Set(homepageCategories.map((category) => category.id).filter(Boolean));
   const addableCategories = categories.filter((category) => category.id && !homepageIds.has(category.id));
   const pageCount = Math.max(1, Math.ceil(homepageCategories.length / occasionPageSize));
   const currentPage = Math.min(occasionPage, pageCount);
   const start = (currentPage - 1) * occasionPageSize;
   const pagedCategories = homepageCategories.slice(start, start + occasionPageSize);
+  const range = pagedCategories.length ? `${start + 1}-${start + pagedCategories.length}` : '0';
 
   return (
     <section className={sectionClass}>
       <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
-        <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-olive">Displayed occasions</p><h3 className="mt-1 font-display text-3xl text-rosewood">Homepage occasion tiles</h3><p className="mt-2 max-w-3xl text-sm text-stone-600">Showing {pagedCategories.length ? `${start + 1}-${start + pagedCategories.length}` : '0'} of {homepageCategories.length}. Edit, remove, or add categories shown in the homepage occasion section.</p></div>
-        <div className="flex items-center gap-2 text-sm font-semibold"><Link aria-disabled={currentPage <= 1} href={pageHref('occasionPage', Math.max(1, currentPage - 1))} className={`rounded-md border px-3 py-2 ${currentPage <= 1 ? 'pointer-events-none border-stone-200 text-stone-300' : 'border-rosewood/20 text-rosewood'}`}>Previous</Link><span className="rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-stone-700">Page {currentPage} of {pageCount}</span><Link aria-disabled={currentPage >= pageCount} href={pageHref('occasionPage', Math.min(pageCount, currentPage + 1))} className={`rounded-md border px-3 py-2 ${currentPage >= pageCount ? 'pointer-events-none border-stone-200 text-stone-300' : 'border-rosewood/20 text-rosewood'}`}>Next</Link></div>
+        <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-olive">{copy('occasionsLabel')}</p><h3 className="mt-1 font-display text-3xl text-rosewood">{copy('occasionsTitle')}</h3><p className="mt-2 max-w-3xl text-sm text-stone-600">{copy('showing')} {range} {copy('of')} {homepageCategories.length}. {copy('occasionsHelp')}</p></div>
+        <div className="flex items-center gap-2 text-sm font-semibold"><Link aria-disabled={currentPage <= 1} href={pageHref('occasionPage', Math.max(1, currentPage - 1))} className={`rounded-md border px-3 py-2 ${currentPage <= 1 ? 'pointer-events-none border-stone-200 text-stone-300' : 'border-rosewood/20 text-rosewood'}`}>{copy('previous')}</Link><span className="rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-stone-700">{copy('page')} {currentPage} {copy('of')} {pageCount}</span><Link aria-disabled={currentPage >= pageCount} href={pageHref('occasionPage', Math.min(pageCount, currentPage + 1))} className={`rounded-md border px-3 py-2 ${currentPage >= pageCount ? 'pointer-events-none border-stone-200 text-stone-300' : 'border-rosewood/20 text-rosewood'}`}>{copy('next')}</Link></div>
       </div>
       <form action={addHomepageCategoryTileAction} className="mb-6 grid gap-3 rounded-lg border border-rosewood/10 bg-cream p-4 md:grid-cols-[1fr_180px_auto] md:items-end">
         <label className="grid gap-2 text-sm font-semibold text-rosewood">Add another category to homepage<select className={inputClass} name="categoryId" disabled={disabled || addableCategories.length === 0} required><option value="">Choose category...</option>{addableCategories.map((category) => <option key={category.id ?? category.slug} value={category.id ?? ''}>{category.parentTitle ? `${category.parentTitle} / ${category.title}` : category.title}</option>)}</select></label>
@@ -154,7 +157,8 @@ function FeaturedPickEditor({ product, disabled, featuredPage }: { product: Prod
   );
 }
 
-function FeaturedPicksManager({ products, disabled, featuredPage }: { products: Product[]; disabled: boolean; featuredPage: number }) {
+function FeaturedPicksManager({ products, disabled, featuredPage, locale }: { products: Product[]; disabled: boolean; featuredPage: number; locale?: SupportedLocale | string | null }) {
+  const copy = createAdminHomeTranslator(locale);
   const featuredProducts = products.filter((product) => product.bestSeller);
   const featuredIds = new Set(featuredProducts.map((product) => product.id).filter(Boolean));
   const addableProducts = products.filter((product) => product.id && !featuredIds.has(product.id));
@@ -162,12 +166,13 @@ function FeaturedPicksManager({ products, disabled, featuredPage }: { products: 
   const currentPage = Math.min(featuredPage, pageCount);
   const start = (currentPage - 1) * featuredPageSize;
   const pagedProducts = featuredProducts.slice(start, start + featuredPageSize);
+  const range = pagedProducts.length ? `${start + 1}-${start + pagedProducts.length}` : '0';
 
   return (
     <section className={sectionClass}>
       <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
-        <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-olive">Featured picks</p><h3 className="mt-1 font-display text-3xl text-rosewood">Homepage featured products</h3><p className="mt-2 max-w-3xl text-sm text-stone-600">Showing {pagedProducts.length ? `${start + 1}-${start + pagedProducts.length}` : '0'} of {featuredProducts.length}. Add, remove, or reorder products shown in the homepage featured picks carousel.</p></div>
-        <div className="flex items-center gap-2 text-sm font-semibold"><Link aria-disabled={currentPage <= 1} href={pageHref('featuredPage', Math.max(1, currentPage - 1))} className={`rounded-md border px-3 py-2 ${currentPage <= 1 ? 'pointer-events-none border-stone-200 text-stone-300' : 'border-rosewood/20 text-rosewood'}`}>Previous</Link><span className="rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-stone-700">Page {currentPage} of {pageCount}</span><Link aria-disabled={currentPage >= pageCount} href={pageHref('featuredPage', Math.min(pageCount, currentPage + 1))} className={`rounded-md border px-3 py-2 ${currentPage >= pageCount ? 'pointer-events-none border-stone-200 text-stone-300' : 'border-rosewood/20 text-rosewood'}`}>Next</Link></div>
+        <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-olive">{copy('featuredLabel')}</p><h3 className="mt-1 font-display text-3xl text-rosewood">{copy('featuredTitle')}</h3><p className="mt-2 max-w-3xl text-sm text-stone-600">{copy('showing')} {range} {copy('of')} {featuredProducts.length}. {copy('featuredHelp')}</p></div>
+        <div className="flex items-center gap-2 text-sm font-semibold"><Link aria-disabled={currentPage <= 1} href={pageHref('featuredPage', Math.max(1, currentPage - 1))} className={`rounded-md border px-3 py-2 ${currentPage <= 1 ? 'pointer-events-none border-stone-200 text-stone-300' : 'border-rosewood/20 text-rosewood'}`}>{copy('previous')}</Link><span className="rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-stone-700">{copy('page')} {currentPage} {copy('of')} {pageCount}</span><Link aria-disabled={currentPage >= pageCount} href={pageHref('featuredPage', Math.min(pageCount, currentPage + 1))} className={`rounded-md border px-3 py-2 ${currentPage >= pageCount ? 'pointer-events-none border-stone-200 text-stone-300' : 'border-rosewood/20 text-rosewood'}`}>{copy('next')}</Link></div>
       </div>
       <form action={addHomepageFeaturedPickAction} className="mb-6 grid gap-3 rounded-lg border border-rosewood/10 bg-cream p-4 md:grid-cols-[1fr_180px_auto] md:items-end">
         <label className="grid gap-2 text-sm font-semibold text-rosewood">Add another product to featured picks<select className={inputClass} name="productId" disabled={disabled || addableProducts.length === 0} required><option value="">Choose product...</option>{addableProducts.map((product) => <option key={product.id ?? product.slug} value={product.id ?? ''}>{product.title} ({product.code})</option>)}</select></label>
@@ -205,8 +210,8 @@ export default async function AdminHomepagePage({ searchParams }: { searchParams
           <section className={sectionClass}><div className="mb-4"><p className="text-xs font-bold uppercase tracking-[0.18em] text-olive">Footer and legacy panel</p><h3 className="mt-1 font-display text-3xl text-rosewood">Footer copy and saved panel fields</h3></div><div className="grid gap-4 md:grid-cols-2"><TextArea label="Footer brand body" name="footerBody" defaultValue={homepage.footerBody} disabled={disabled} /><TextArea label="Footer service body" name="footerServiceBody" defaultValue={homepage.footerServiceBody} disabled={disabled} /></div><div className="mt-4 grid gap-4 md:grid-cols-2"><Field label="Legacy panel eyebrow" name="panelEyebrow" defaultValue={homepage.panelEyebrow} disabled={disabled} /><Field label="Legacy panel title" name="panelTitle" defaultValue={homepage.panelTitle} disabled={disabled} /></div><div className="mt-4"><TextArea label="Legacy panel body" name="panelBody" defaultValue={homepage.panelBody} disabled={disabled} /></div></section>
           <div className="sticky bottom-4 z-10 flex justify-end"><button className={buttonClass} type="submit" disabled={disabled}>Save homepage</button></div>
         </form>
-        <HomepageCategoryManager categories={categories} homepageCategories={homepageCategories} media={media} disabled={disabled} occasionPage={parsedOccasionPage} />
-        <FeaturedPicksManager products={products} disabled={disabled} featuredPage={parsedFeaturedPage} />
+        <HomepageCategoryManager categories={categories} homepageCategories={homepageCategories} media={media} disabled={disabled} occasionPage={parsedOccasionPage} locale={locale} />
+        <FeaturedPicksManager products={products} disabled={disabled} featuredPage={parsedFeaturedPage} locale={locale} />
       </section>
     </main>
   );
