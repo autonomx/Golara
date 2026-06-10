@@ -4,6 +4,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { formatMinorUnitAmount } from '@/lib/catalog';
 import { getCustomerSession, listCustomerOrders } from '@/lib/customers/customer-account-repository';
 import { getCustomerSessionCookie } from '@/lib/customers/customer-session-cookie';
+import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import {
   customerOrderDateLocale,
   customerOrderItemCountLabel,
@@ -12,6 +13,7 @@ import {
   getCustomerOrderCopy,
   type CustomerOrderCopyKey
 } from '@/lib/localization/customer-order-copy';
+import { getCustomerCopyDirection } from '@/lib/localization/customer-copy';
 import { hasDatabase } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -25,10 +27,12 @@ function formatDate(value: Date, locale?: string | null) {
 
 export default async function CustomerOrderHistoryPage() {
   if (!hasDatabase()) {
-    const copy = (key: CustomerOrderCopyKey) => getCustomerOrderCopy(key);
+    const storefrontLocale = await resolveStorefrontLocale();
+    const dir = getCustomerCopyDirection(storefrontLocale);
+    const copy = (key: CustomerOrderCopyKey) => getCustomerOrderCopy(key, storefrontLocale);
     return (
-      <main id="main-content" tabIndex={-1}>
-        <SiteHeader />
+      <main id="main-content" tabIndex={-1} dir={dir}>
+        <SiteHeader locale={storefrontLocale} />
         <section className="mx-auto max-w-5xl px-5 py-14">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">{copy('eyebrow')}</p>
           <h1 className="mt-3 font-display text-6xl text-rosewood">{copy('title')}</h1>
@@ -46,12 +50,13 @@ export default async function CustomerOrderHistoryPage() {
   if (!session) redirect('/account?status=session-required');
 
   const locale = session.customer.locale;
+  const dir = getCustomerCopyDirection(locale);
   const copy = (key: CustomerOrderCopyKey) => getCustomerOrderCopy(key, locale);
   const orders = await listCustomerOrders(session.customerId);
 
   return (
-    <main id="main-content" tabIndex={-1}>
-      <SiteHeader />
+    <main id="main-content" tabIndex={-1} dir={dir}>
+      <SiteHeader locale={locale} />
       <section className="mx-auto max-w-6xl px-5 py-14">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
