@@ -1,0 +1,12 @@
+# Localization source audit allowlist
+#
+# Format:
+#   glob :: reason
+#
+# Every entry must include a human-readable reason. Keep this file small and
+# remove or narrow entries as each localization bundle is completed. The source
+# audit fails if a matching entry is missing a reason.
+
+app/** :: Phase 2 route-boundary localization is still in progress; tighten by route as loading/error/page shells are localized.
+components/admin/** :: Phase 3 and Phase 4 admin extraction/localization are still in progress; replace with per-component entries as modules are completed.
+components/storefront/** :: Phase 5 storefront localization is still in progress; replace with per-component entries as storefront surfaces are completed.
