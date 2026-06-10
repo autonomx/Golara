@@ -59,18 +59,18 @@ function TranslationPublishedToggle({ translation, t }: { translation?: Complete
   return (
     <label className="flex items-center gap-3 rounded-2xl border border-rosewood/10 bg-white px-4 py-3 text-sm font-semibold text-rosewood">
       <input name="translationIsPublished" type="checkbox" defaultChecked={translation?.isPublished !== false} />
-      {t('Published')}
+      {t('Active')}
     </label>
   );
 }
 
-function LocaleSelect({ defaultValue, label, t }: { defaultValue: SupportedLocale; label: string; t: AdminTranslator }) {
+function LocaleSelect({ defaultValue, label }: { defaultValue: SupportedLocale; label: string }) {
   return (
     <label className="grid gap-2 text-sm font-semibold text-rosewood">
       {label}
       <select name="locale" className={inputClass} defaultValue={defaultValue}>
         {SUPPORTED_LOCALES.map((locale) => (
-          <option key={locale} value={locale}>{t(locale === 'fa-IR' ? 'Persian / fa-IR' : 'English / en-CA')}</option>
+          <option key={locale} value={locale}>{locale}</option>
         ))}
       </select>
     </label>
@@ -144,16 +144,16 @@ function ProductTranslationForm({ product, locale, disabled, t }: { product: Pro
     <form action={action} className="grid gap-3 rounded-3xl border border-rosewood/10 bg-cream p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">{t('Product translation')}</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">{t('Product')} · {t('Translations')}</p>
           <h4 className="font-display text-2xl text-rosewood">{product.title}</h4>
         </div>
         <LocaleBadge translation={translation} requiredFields={requiredFields} t={t} />
       </div>
-      <LocaleSelect defaultValue={locale} label={t('Language')} t={t} />
+      <LocaleSelect defaultValue={locale} label={t('Localization')} />
       <label className="grid gap-2 text-sm font-semibold text-rosewood">{t('Translated title')}<input name="translationTitle" className={inputClass} defaultValue={translation?.title ?? ''} placeholder={product.title} required disabled={disabled} /></label>
       <label className="grid gap-2 text-sm font-semibold text-rosewood">{t('Translated image alt')}<input name="translationImageAlt" className={inputClass} defaultValue={translation?.imageAlt ?? ''} placeholder={product.title} disabled={disabled} /></label>
       <label className="grid gap-2 text-sm font-semibold text-rosewood">{t('Translated description')}<textarea name="translationDescription" className={textAreaClass} defaultValue={translation?.description ?? ''} placeholder={product.description} disabled={disabled} /></label>
-      <div className="flex flex-wrap items-center gap-3"><TranslationPublishedToggle translation={translation} t={t} /><button className={buttonClass} type="submit" disabled={disabled}>{t('Save product translation')}</button></div>
+      <div className="flex flex-wrap items-center gap-3"><TranslationPublishedToggle translation={translation} t={t} /><button className={buttonClass} type="submit" disabled={disabled}>{t('Save')} {t('Product')}</button></div>
     </form>
   );
 }
