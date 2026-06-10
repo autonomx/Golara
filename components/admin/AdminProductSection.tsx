@@ -20,6 +20,8 @@ type PaginationState = {
   end: number;
 };
 
+type AdminTranslator = (key: string) => string;
+
 type AdminProductSectionProps = {
   products: Product[];
   categories: Category[];
@@ -32,7 +34,7 @@ type AdminProductSectionProps = {
   paginationParams: Record<string, string | undefined>;
   columnHiddenInputs: Record<string, string | undefined>;
   showCategoryBackLink?: boolean;
-  t?: (key: string) => string;
+  t?: AdminTranslator;
 };
 
 const inputClass = 'rounded-lg border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100';
@@ -87,7 +89,7 @@ function paginationHref(path: string, pageParam: string, page: number, params: R
   return serialized ? `${path}?${serialized}` : path;
 }
 
-function PaginationControls({ path, pageParam, currentPage, pageCount, total, start, end, params, t = (key: string) => key }: PaginationState & { path: string; pageParam: string; params: Record<string, string | undefined>; t?: (key: string) => string }) {
+function PaginationControls({ path, pageParam, currentPage, pageCount, total, start, end, params, t = (key: string) => key }: PaginationState & { path: string; pageParam: string; params: Record<string, string | undefined>; t?: AdminTranslator }) {
   if (total <= catalogPageSize) {
     return <p className="text-sm font-semibold text-stone-600">{t('Showing')} {total} {total === 1 ? t('item') : t('items')}.</p>;
   }
@@ -108,7 +110,7 @@ function PaginationControls({ path, pageParam, currentPage, pageCount, total, st
   );
 }
 
-function ColumnVisibilityControls({ path, selected, hiddenInputs, t = (key: string) => key }: { path: string; selected: ProductColumn[]; hiddenInputs: Record<string, string | undefined>; t?: (key: string) => string }) {
+function ColumnVisibilityControls({ path, selected, hiddenInputs, t = (key: string) => key }: { path: string; selected: ProductColumn[]; hiddenInputs: Record<string, string | undefined>; t?: AdminTranslator }) {
   const selectedSet = new Set(selected);
   return (
     <details className="rounded-lg border border-stone-200 bg-white p-4">
@@ -141,45 +143,45 @@ function MediaSelect({ label, name, media, mediaCategory, defaultValue, disabled
   return <MediaSelectWithPreview label={label} name={name} media={mediaForCategory(media, mediaCategory, defaultValue)} defaultValue={defaultValue} disabled={disabled} className={inputClass} />;
 }
 
-function ProductFields({ product, categories, productTypes, media, disabled }: { product?: Product; categories: Category[]; productTypes: ProductType[]; media: MediaItem[]; disabled: boolean }) {
-  return <><div className="grid gap-4 md:grid-cols-2"><Field label="Title" name="title" defaultValue={product?.title} disabled={disabled} /><Field label="Slug" name="slug" defaultValue={product?.slug} disabled={disabled} /></div><div className="grid gap-4 md:grid-cols-3"><Field label="Code" name="code" defaultValue={product?.code} disabled={disabled} /><label className="grid gap-2 text-sm font-semibold text-rosewood">Category or subcategory<select className={inputClass} name="categoryId" defaultValue={categoryDefaultValue(product, categories)} disabled={disabled} required><option value="">Choose category</option>{categories.map((category) => <option key={category.id ?? category.slug} value={category.id ?? ''}>{category.parentTitle ? `${category.parentTitle} / ${category.title}` : category.title}</option>)}</select></label><label className="grid gap-2 text-sm font-semibold text-rosewood">Product type<select className={inputClass} name="productTypeId" defaultValue={product?.productTypeId ?? ''} disabled={disabled}><option value="">No product type</option>{productTypes.map((productType) => <option key={productType.id} value={productType.id}>{productType.name}</option>)}</select></label></div><TextArea label="Description" name="description" defaultValue={product?.description} disabled={disabled} /><div className="grid gap-4 md:grid-cols-2"><Field label="Price" name="price" type="number" defaultValue={product?.price ?? 0} disabled={disabled} /><Field label="Currency" name="currency" defaultValue={product?.currency ?? 'CAD'} disabled={disabled} /></div><MediaSelect label="Product image from media library" name="selectedMediaUrl" media={media} mediaCategory="product" defaultValue={product?.image} disabled={disabled} /><Field label="Manual product image URL" name="imageUrl" defaultValue={product?.image} required={false} disabled={disabled} /><div className="grid gap-3 md:grid-cols-4"><Toggle label="Available today" name="availableToday" defaultChecked={product?.availableToday ?? true} disabled={disabled} /><Toggle label="Best seller" name="bestSeller" defaultChecked={product?.bestSeller ?? false} disabled={disabled} /><Toggle label="Requires quote" name="requiresQuote" defaultChecked={product?.requiresQuote ?? false} disabled={disabled} /><Toggle label="Active" name="isActive" defaultChecked={product?.isActive ?? true} disabled={disabled} /></div><Field label="Sort order" name="sortOrder" type="number" defaultValue={0} disabled={disabled} /></>;
+function ProductFields({ product, categories, productTypes, media, disabled, t }: { product?: Product; categories: Category[]; productTypes: ProductType[]; media: MediaItem[]; disabled: boolean; t: AdminTranslator }) {
+  return <><div className="grid gap-4 md:grid-cols-2"><Field label={t('Title')} name="title" defaultValue={product?.title} disabled={disabled} /><Field label={t('Slug')} name="slug" defaultValue={product?.slug} disabled={disabled} /></div><div className="grid gap-4 md:grid-cols-3"><Field label={t('Code')} name="code" defaultValue={product?.code} disabled={disabled} /><label className="grid gap-2 text-sm font-semibold text-rosewood">{t('Category or subcategory')}<select className={inputClass} name="categoryId" defaultValue={categoryDefaultValue(product, categories)} disabled={disabled} required><option value="">{t('Choose category')}</option>{categories.map((category) => <option key={category.id ?? category.slug} value={category.id ?? ''}>{category.parentTitle ? `${category.parentTitle} / ${category.title}` : category.title}</option>)}</select></label><label className="grid gap-2 text-sm font-semibold text-rosewood">{t('Product type')}<select className={inputClass} name="productTypeId" defaultValue={product?.productTypeId ?? ''} disabled={disabled}><option value="">{t('No product type')}</option>{productTypes.map((productType) => <option key={productType.id} value={productType.id}>{productType.name}</option>)}</select></label></div><TextArea label={t('Description')} name="description" defaultValue={product?.description} disabled={disabled} /><div className="grid gap-4 md:grid-cols-2"><Field label={t('Price')} name="price" type="number" defaultValue={product?.price ?? 0} disabled={disabled} /><Field label={t('Currency')} name="currency" defaultValue={product?.currency ?? 'CAD'} disabled={disabled} /></div><MediaSelect label={t('Product image from media library')} name="selectedMediaUrl" media={media} mediaCategory="product" defaultValue={product?.image} disabled={disabled} /><Field label={t('Manual product image URL')} name="imageUrl" defaultValue={product?.image} required={false} disabled={disabled} /><div className="grid gap-3 md:grid-cols-4"><Toggle label={t('Available today')} name="availableToday" defaultChecked={product?.availableToday ?? true} disabled={disabled} /><Toggle label={t('Best seller')} name="bestSeller" defaultChecked={product?.bestSeller ?? false} disabled={disabled} /><Toggle label={t('Quote')} name="requiresQuote" defaultChecked={product?.requiresQuote ?? false} disabled={disabled} /><Toggle label={t('Active')} name="isActive" defaultChecked={product?.isActive ?? true} disabled={disabled} /></div><Field label={t('Sort order')} name="sortOrder" type="number" defaultValue={0} disabled={disabled} /></>;
 }
 
-function ProductBulkBar({ categories, disabled }: { categories: Category[]; disabled: boolean }) {
+function ProductBulkBar({ categories, disabled, t }: { categories: Category[]; disabled: boolean; t: AdminTranslator }) {
   return (
     <form id="bulk-products-form" action={bulkUpdateProductsAction} className="mt-8 grid gap-3 rounded-lg border border-rosewood/10 bg-white p-4 md:grid-cols-[1fr_1fr_auto]">
-      <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-rosewood/70">Bulk action<select name="bulkAction" className={inputClass} disabled={disabled} defaultValue=""><option value="">Choose action...</option><option value="activate">Activate</option><option value="deactivate">Deactivate</option><option value="mark-best-seller">Mark best seller</option><option value="unmark-best-seller">Remove best seller</option><option value="mark-available-today">Mark available today</option><option value="unmark-available-today">Remove available today</option><option value="move-category">Move to category</option></select></label>
-      <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-rosewood/70">Target category<select name="targetCategoryId" className={inputClass} disabled={disabled} defaultValue=""><option value="">Only needed for move...</option>{categories.map((category) => <option key={category.id ?? category.slug} value={category.id ?? ''}>{category.parentTitle ? `${category.parentTitle} / ${category.title}` : category.title}</option>)}</select></label>
-      <button type="submit" className={primaryButtonClass} disabled={disabled}>Apply</button>
+      <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-rosewood/70">{t('Bulk action')}<select name="bulkAction" className={inputClass} disabled={disabled} defaultValue=""><option value="">{t('Choose action')}</option><option value="activate">{t('Activate')}</option><option value="deactivate">{t('Deactivate')}</option><option value="mark-best-seller">{t('Mark best seller')}</option><option value="unmark-best-seller">{t('Remove best seller')}</option><option value="mark-available-today">{t('Mark available today')}</option><option value="unmark-available-today">{t('Remove available today')}</option><option value="move-category">{t('Move to category')}</option></select></label>
+      <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-rosewood/70">{t('Target category')}<select name="targetCategoryId" className={inputClass} disabled={disabled} defaultValue=""><option value="">{t('Only needed for move')}</option>{categories.map((category) => <option key={category.id ?? category.slug} value={category.id ?? ''}>{category.parentTitle ? `${category.parentTitle} / ${category.title}` : category.title}</option>)}</select></label>
+      <button type="submit" className={primaryButtonClass} disabled={disabled}>{t('Apply')}</button>
     </form>
   );
 }
 
-function ProductQuickEditPanel({ products, categories, disabled }: { products: Product[]; categories: Category[]; disabled: boolean }) {
+function ProductQuickEditPanel({ products, categories, disabled, t }: { products: Product[]; categories: Category[]; disabled: boolean; t: AdminTranslator }) {
   return (
     <details className="mt-4 rounded-lg border border-rosewood/10 bg-cream p-5">
-      <summary className="cursor-pointer font-display text-3xl text-rosewood">Quick edit visible products</summary>
+      <summary className="cursor-pointer font-display text-3xl text-rosewood">{t('Quick edit visible products')}</summary>
       <form action={quickEditProductsAction} className="mt-5 grid gap-4">
         {products.map((product) => (
           <div key={product.id ?? product.slug} className="grid gap-3 rounded-lg border border-rosewood/10 bg-white p-4 lg:grid-cols-[1.2fr_1fr_0.8fr_auto] lg:items-end">
             <input type="hidden" name="productId" value={product.id ?? ''} />
-            <Field label="Title" name={`title:${product.id}`} defaultValue={product.title} disabled={disabled || !product.id} />
-            <label className="grid gap-2 text-sm font-semibold text-rosewood">Category<select name={`categoryId:${product.id}`} className={inputClass} defaultValue={categoryDefaultValue(product, categories)} disabled={disabled || !product.id} required><option value="">Choose category</option>{categories.map((category) => <option key={category.id ?? category.slug} value={category.id ?? ''}>{category.parentTitle ? `${category.parentTitle} / ${category.title}` : category.title}</option>)}</select></label>
-            <Field label="Price" name={`price:${product.id}`} type="number" defaultValue={product.price} disabled={disabled || !product.id} />
-            <div className="grid gap-2"><Toggle label="Best" name={`bestSeller:${product.id}`} defaultChecked={product.bestSeller} disabled={disabled || !product.id} /><Toggle label="Today" name={`availableToday:${product.id}`} defaultChecked={product.availableToday} disabled={disabled || !product.id} /></div>
+            <Field label={t('Title')} name={`title:${product.id}`} defaultValue={product.title} disabled={disabled || !product.id} />
+            <label className="grid gap-2 text-sm font-semibold text-rosewood">{t('Category')}<select name={`categoryId:${product.id}`} className={inputClass} defaultValue={categoryDefaultValue(product, categories)} disabled={disabled || !product.id} required><option value="">{t('Choose category')}</option>{categories.map((category) => <option key={category.id ?? category.slug} value={category.id ?? ''}>{category.parentTitle ? `${category.parentTitle} / ${category.title}` : category.title}</option>)}</select></label>
+            <Field label={t('Price')} name={`price:${product.id}`} type="number" defaultValue={product.price} disabled={disabled || !product.id} />
+            <div className="grid gap-2"><Toggle label={t('Best')} name={`bestSeller:${product.id}`} defaultChecked={product.bestSeller} disabled={disabled || !product.id} /><Toggle label={t('Today')} name={`availableToday:${product.id}`} defaultChecked={product.availableToday} disabled={disabled || !product.id} /></div>
           </div>
         ))}
-        <SubmitButton disabled={disabled}>Save quick edits</SubmitButton>
+        <SubmitButton disabled={disabled}>{t('Save')} {t('Edit')}</SubmitButton>
       </form>
     </details>
   );
 }
 
-function ProductTable({ products, disabled, columns }: { products: Product[]; disabled: boolean; columns: ProductColumn[] }) {
+function ProductTable({ products, disabled, columns, t }: { products: Product[]; disabled: boolean; columns: ProductColumn[]; t: AdminTranslator }) {
   const show = (column: ProductColumn) => columns.includes(column);
 
   if (products.length === 0) {
-    return <EmptyState title="No products found" body="Create a product above, or adjust the current search, category, and product flag filters." />;
+    return <EmptyState title={t('No products found')} body={t('Create product')} />;
   }
 
   return (
@@ -187,12 +189,12 @@ function ProductTable({ products, disabled, columns }: { products: Product[]; di
       <table className="w-full min-w-[1180px] border-collapse text-left text-sm">
         <thead className="sticky top-0 z-[1] bg-cream text-xs font-semibold uppercase tracking-[0.16em] text-rosewood/70">
           <tr>
-            {show('pick') ? <th className="w-12 px-4 py-3">Pick</th> : null}
-            {show('product') ? <th className="px-4 py-3">Product</th> : null}
-            {show('category') ? <th className="px-4 py-3">Category</th> : null}
-            {show('price') ? <th className="px-4 py-3">Price</th> : null}
-            {show('flags') ? <th className="px-4 py-3">Flags</th> : null}
-            {show('actions') ? <th className="px-4 py-3">Actions</th> : null}
+            {show('pick') ? <th className="w-12 px-4 py-3">{t('Pick')}</th> : null}
+            {show('product') ? <th className="px-4 py-3">{t('Product')}</th> : null}
+            {show('category') ? <th className="px-4 py-3">{t('Category')}</th> : null}
+            {show('price') ? <th className="px-4 py-3">{t('Price')}</th> : null}
+            {show('flags') ? <th className="px-4 py-3">{t('Flags')}</th> : null}
+            {show('actions') ? <th className="px-4 py-3">{t('Actions')}</th> : null}
           </tr>
         </thead>
         <tbody>
@@ -202,8 +204,8 @@ function ProductTable({ products, disabled, columns }: { products: Product[]; di
               {show('product') ? <td className="px-4 py-4"><div className="flex gap-3"><div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-blush">{product.image ? <Image src={product.image} alt={product.title} fill className="object-cover" sizes="56px" /> : null}</div><div><div className="font-semibold text-rosewood">{product.title}</div><div className="mt-1 text-xs text-stone-500">{product.code} - {product.slug}</div></div></div></td> : null}
               {show('category') ? <td className="px-4 py-4 text-stone-700">{product.categoryTitle || product.category}</td> : null}
               {show('price') ? <td className="px-4 py-4 text-stone-700">{product.price} {product.currency}</td> : null}
-              {show('flags') ? <td className="px-4 py-4"><div className="flex flex-wrap gap-2">{product.bestSeller ? <span className="rounded-full bg-rosewood px-2 py-1 text-xs font-semibold text-white">Best</span> : null}{product.availableToday ? <span className="rounded-full bg-olive px-2 py-1 text-xs font-semibold text-white">Today</span> : null}{product.requiresQuote || product.price <= 0 ? <span className="rounded-full bg-stone-800 px-2 py-1 text-xs font-semibold text-white">Quote</span> : null}{product.isActive === false ? <span className="rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-700">Inactive</span> : null}</div></td> : null}
-              {show('actions') ? <td className="px-4 py-4"><div className="grid min-w-[32rem] gap-3"><a href={`/products/${product.slug}`} className="text-xs font-semibold text-rosewood underline-offset-4 hover:underline" target="_blank">View</a><Link href={`/admin/products/${product.id ?? product.slug}`} className="text-xs font-semibold text-rosewood underline-offset-4 hover:underline" aria-disabled={disabled || !product.id}>Edit</Link></div></td> : null}
+              {show('flags') ? <td className="px-4 py-4"><div className="flex flex-wrap gap-2">{product.bestSeller ? <span className="rounded-full bg-rosewood px-2 py-1 text-xs font-semibold text-white">{t('Best')}</span> : null}{product.availableToday ? <span className="rounded-full bg-olive px-2 py-1 text-xs font-semibold text-white">{t('Today')}</span> : null}{product.requiresQuote || product.price <= 0 ? <span className="rounded-full bg-stone-800 px-2 py-1 text-xs font-semibold text-white">{t('Quote')}</span> : null}{product.isActive === false ? <span className="rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-700">{t('Inactive')}</span> : null}</div></td> : null}
+              {show('actions') ? <td className="px-4 py-4"><div className="grid min-w-[32rem] gap-3"><a href={`/products/${product.slug}`} className="text-xs font-semibold text-rosewood underline-offset-4 hover:underline" target="_blank">{t('View')}</a><Link href={`/admin/products/${product.id ?? product.slug}`} className="text-xs font-semibold text-rosewood underline-offset-4 hover:underline" aria-disabled={disabled || !product.id}>{t('Edit')}</Link></div></td> : null}
             </tr>
           ))}
         </tbody>
@@ -216,13 +218,13 @@ export function AdminProductSection({ products, categories, productTypes, media,
   return (
     <section id="products" className={panelClass}>
       <div className="mb-6"><p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">{t('Products')}</p><h2 className="mt-2 font-display text-4xl text-rosewood">{t('Product management')}</h2><p className="mt-3 max-w-3xl text-sm leading-6 text-stone-600">{t('Create products, assign them to categories or subcategories, control homepage flags, and update catalog imagery.')}</p></div>
-      <details className="rounded-lg border border-rosewood/10 bg-cream p-5"><summary className="cursor-pointer font-display text-3xl text-rosewood">{t('Create product')}</summary><form action={createProductAction} className="mt-5 grid gap-4"><ProductFields categories={categories} productTypes={productTypes} media={media} disabled={disabled} /><SubmitButton disabled={disabled}>{t('Create product')}</SubmitButton></form></details>
-      <div className="mt-4 grid gap-4 rounded-lg border border-rosewood/10 bg-white p-5 md:grid-cols-[1fr_auto] md:items-start"><details><summary className="cursor-pointer font-display text-3xl text-rosewood">{t('Import products')}</summary><form action={importProductsCsvAction} className="mt-5 grid gap-4"><label className="grid gap-2 text-sm font-semibold text-rosewood">{t('CSV file')}<input className={inputClass} name="file" type="file" accept=".csv,text/csv" required disabled={disabled} /></label><p className="text-sm leading-6 text-stone-600">{t('Use the export file as the template. Imports update existing products by code or slug and create new rows when no match exists.')}</p><SubmitButton disabled={disabled}>{t('Import CSV')}</SubmitButton></form></details><a href="/admin/products/export" className={secondaryButtonClass}>{t('Export CSV')}</a></div>
+      <details className="rounded-lg border border-rosewood/10 bg-cream p-5"><summary className="cursor-pointer font-display text-3xl text-rosewood">{t('Create product')}</summary><form action={createProductAction} className="mt-5 grid gap-4"><ProductFields categories={categories} productTypes={productTypes} media={media} disabled={disabled} t={t} /><SubmitButton disabled={disabled}>{t('Create product')}</SubmitButton></form></details>
+      <div className="mt-4 grid gap-4 rounded-lg border border-rosewood/10 bg-white p-5 md:grid-cols-[1fr_auto] md:items-start"><details><summary className="cursor-pointer font-display text-3xl text-rosewood">{t('Import products')}</summary><form action={importProductsCsvAction} className="mt-5 grid gap-4"><label className="grid gap-2 text-sm font-semibold text-rosewood">{t('CSV file')}<input className={inputClass} name="file" type="file" accept=".csv,text/csv" required disabled={disabled} /></label><p className="text-sm leading-6 text-stone-600">{t('Export file as template')}</p><SubmitButton disabled={disabled}>{t('Import CSV')}</SubmitButton></form></details><a href="/admin/products/export" className={secondaryButtonClass}>{t('Export CSV')}</a></div>
       <div className="mt-8 flex items-center justify-between gap-4"><PaginationControls path={path} pageParam="productPage" currentPage={pagination.currentPage} pageCount={pagination.pageCount} total={pagination.total} start={pagination.start} end={pagination.end} params={paginationParams} t={t} />{showCategoryBackLink ? <a href="#categories" className="text-sm font-semibold text-rosewood underline-offset-4 hover:underline">{t('Back to categories')}</a> : null}</div>
-      <ProductBulkBar categories={categories} disabled={disabled} />
-      <ProductQuickEditPanel products={products} categories={categories} disabled={disabled} />
+      <ProductBulkBar categories={categories} disabled={disabled} t={t} />
+      <ProductQuickEditPanel products={products} categories={categories} disabled={disabled} t={t} />
       <div className="mt-4"><ColumnVisibilityControls path={path} selected={columns} hiddenInputs={columnHiddenInputs} t={t} /></div>
-      <ProductTable products={products} disabled={disabled} columns={columns} />
+      <ProductTable products={products} disabled={disabled} columns={columns} t={t} />
     </section>
   );
 }
