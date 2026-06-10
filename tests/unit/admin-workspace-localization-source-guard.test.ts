@@ -19,7 +19,8 @@ const LOCALIZED_ADMIN_COMPONENT_FILES = [
   'components/admin/AdminReadinessPanel.tsx',
   'components/admin/AdminSecurityPanel.tsx',
   'components/admin/AdminCmsStatusPanel.tsx',
-  'components/admin/AdminFailedPaymentNotificationAlertsPanel.tsx'
+  'components/admin/AdminFailedPaymentNotificationAlertsPanel.tsx',
+  'components/admin/AdminTranslationPanel.tsx'
 ] as const;
 
 function lineNumberForIndex(content: string, index: number) {
@@ -78,7 +79,7 @@ export function runAdminWorkspaceLocalizationSourceGuardTests() {
   assert.deepEqual(
     findings,
     [],
-    `Extracted admin workspace, section, overview panel, and alert panel components should not introduce raw English UI copy. Route copy through admin localization helpers instead.\n${findings
+    `Extracted admin workspace, section, overview panel, alert panel, and translation panel components should not introduce raw English UI copy. Route copy through admin localization helpers instead.\n${findings
       .map((finding) => `${finding.file}:${finding.line} ${JSON.stringify(finding.text)}`)
       .join('\n')}`
   );
