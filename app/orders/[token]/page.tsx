@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { SiteHeader } from '@/components/SiteHeader';
 import { formatMinorUnitAmount } from '@/lib/catalog';
-import { fulfillmentStatusLabel, labelFor, orderStatusLabel, paymentGuidanceFor, paymentStatusLabel, publicOrderCopyFor, resultMessageFor } from '@/lib/checkout/public-order-labels';
+import { fulfillmentStatusLabel, labelFor, normalizeLabelLocale, orderStatusLabel, paymentGuidanceFor, paymentStatusLabel, publicOrderCopyFor, resultMessageFor } from '@/lib/checkout/public-order-labels';
 import { getPublicOrderByToken } from '@/lib/checkout/public-order-repository';
 
 export const dynamic = 'force-dynamic';
@@ -71,13 +71,14 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
   const order = await getPublicOrderByToken(token);
   if (!order) notFound();
   const latestAttempt = order.paymentAttempts[0];
-  const copy = publicOrderCopyFor(locale);
-  const isFa = locale?.toLowerCase().startsWith('fa') ?? false;
+  const normalizedLocale = normalizeLabelLocale(locale);
+  const copy = publicOrderCopyFor(normalizedLocale);
+  const isFa = normalizedLocale === 'fa';
   const currentLanguage = isFa ? copy.languagePersian : copy.languageEnglish;
 
   return (
     <main id="main-content" tabIndex={-1} dir={isFa ? 'rtl' : 'ltr'}>
-      <SiteHeader />
+      <SiteHeader locale={normalizedLocale} />
       <section className="mx-auto max-w-4xl px-5 py-20">
         <div className="rounded-[2rem] border border-rosewood/10 bg-white p-8 shadow-sm">
           <div className="flex flex-wrap items-start justify-between gap-4">
@@ -91,10 +92,10 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
             </nav>
           </div>
           <p className="mt-5 text-lg leading-8 text-stone-700" aria-live="polite">
-            {copy.introPrefix} <strong>{orderStatusLabel(order.status, locale)}</strong>. {copy.introSuffix}
+            {copy.introPrefix} <strong>{orderStatusLabel(order.status, normalizedLocale)}</strong>. {copy.introSuffix}
           </p>
-          <ResultBanner result={result} locale={locale} isFa={isFa} />
-          <PaymentGuidancePanel status={latestAttempt?.status} locale={locale} title={copy.paymentGuidance} />
+          <ResultBanner result={result} locale={normalizedLocale} isFa={isFa} />
+          <PaymentGuidancePanel status={latestAttempt?.status} locale={normalizedLocale} title={copy.paymentGuidance} />
 
           <div className="mt-8 grid gap-4 md:grid-cols-4">
             <div className="rounded-3xl border border-rosewood/10 bg-cream p-5">
@@ -107,11 +108,11 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
             </div>
             <div className="rounded-3xl border border-rosewood/10 bg-cream p-5">
               <p className={smallLabelClass(isFa)}>{copy.fulfillment}</p>
-              <p className="mt-2 text-sm font-semibold text-rosewood">{fulfillmentStatusLabel(order.fulfillmentStatus, locale)}</p>
+              <p className="mt-2 text-sm font-semibold text-rosewood">{fulfillmentStatusLabel(order.fulfillmentStatus, normalizedLocale)}</p>
             </div>
             <div className="rounded-3xl border border-rosewood/10 bg-cream p-5">
               <p className={smallLabelClass(isFa)}>{copy.created}</p>
-              <p className="mt-2 text-sm font-semibold text-rosewood">{formatDate(order.createdAt, locale)}</p>
+              <p className="mt-2 text-sm font-semibold text-rosewood">{formatDate(order.createdAt, normalizedLocale)}</p>
             </div>
           </div>
 
@@ -119,7 +120,7 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
             <section className="mt-8 rounded-3xl border border-rosewood/10 bg-cream p-5">
               <h2 className="font-display text-3xl text-rosewood">{copy.deliveryTiming}</h2>
               <div className="mt-4 grid gap-3 text-sm text-stone-700 md:grid-cols-2">
-                <p><strong>{copy.date}:</strong> {order.deliveryDate ? formatDateOnly(order.deliveryDate, locale) : copy.notSetYet}</p>
+                <p><strong>{copy.date}:</strong> {order.deliveryDate ? formatDateOnly(order.deliveryDate, normalizedLocale) : copy.notSetYet}</p>
                 <p><strong>{copy.window}:</strong> {order.deliveryWindow || copy.notSetYet}</p>
               </div>
             </section>
@@ -146,7 +147,7 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
                 {order.timelineEvents.map((event) => (
                   <article key={`${event.type}-${event.createdAt.toISOString()}`} className="rounded-2xl border border-rosewood/10 bg-cream p-4">
                     <p className="font-semibold text-rosewood">{event.title}</p>
-                    <p className="text-xs text-stone-500">{formatDate(event.createdAt, locale)}</p>
+                    <p className="text-xs text-stone-500">{formatDate(event.createdAt, normalizedLocale)}</p>
                   </article>
                 ))}
               </div>
@@ -154,7 +155,7 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
           </section>
 
           <p className="mt-6 text-sm leading-6 text-stone-600">{copy.privacy}</p>
-          {latestAttempt ? <p className="mt-2 text-xs text-stone-500">{copy.latestPaymentStatus}: {paymentStatusLabel(latestAttempt.status, locale)} · {labelFor({}, latestAttempt.provider)}</p> : null}
+          {latestAttempt ? <p className="mt-2 text-xs text-stone-500">{copy.latestPaymentStatus}: {paymentStatusLabel(latestAttempt.status, normalizedLocale)} · {labelFor({}, latestAttempt.provider)}</p> : null}
         </div>
       </section>
     </main>
