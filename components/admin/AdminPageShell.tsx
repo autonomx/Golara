@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { BadgePercent, BarChart3, Bell, ClipboardList, CreditCard, FileText, Home, ImageIcon, LayoutDashboard, LogIn, Package, Settings, ShoppingBag, ShieldCheck, Users } from 'lucide-react';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { getStorefrontCopyDirection } from '@/lib/localization/storefront-copy';
@@ -140,6 +141,8 @@ function AdminTopBar({ activeTab, productCount = 0, categoryCount = 0, mediaCoun
 }
 
 export function AdminPageShell(props: AdminPageShellProps) {
+  if (!props.authenticated) redirect('/admin/login');
+
   return (
     <main id="main-content" tabIndex={-1} dir={getStorefrontCopyDirection(props.locale)} className="min-h-screen bg-stone-50">
       <div className="min-h-screen lg:pl-72">
