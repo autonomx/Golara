@@ -1,6 +1,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { publicInquiryService } from '@/lib/inquiries/public-inquiry-service';
 import { validateInquiryInput } from '@/lib/inquiries/validate-inquiry';
 import { hasDatabase } from '@/lib/prisma';
@@ -19,6 +20,13 @@ function inquiryPath(productSlug: string, status: string) {
 export async function createInquiryAction(productId: string | undefined, productSlug: string, formData: FormData) {
   // Enforce same-origin policy to prevent CSRF/spam for public inquiries
   await assertSameOriginServerAction();
+
+  // Basic rate limiting: if a cooldown cookie is present, redirect to a rate-limited status
+  const cookieStore = await cookies();
+  const cooldown = cookieStore.get('inquiryCooldown');
+  if (cooldown) {
+    redirect(inquiryPath(productSlug, 'rate-limited'));
+  }
 
   if (!hasDatabase()) {
     redirect(inquiryPath(productSlug, 'database-required'));
@@ -40,6 +48,14 @@ export async function createInquiryAction(productId: string | undefined, product
   await publicInquiryService.createInquiry({
     productId,
     inquiry: validation.value
+  });
+
+  // Set a short-lived cookie to limit repeated submissions (5 minutes)
+  cookieStore.set('inquiryCooldown', '1', {
+    httpOnly: true,
+    sameSite: 'lax',
+    maxAge: 60 * 5,
+    path: '/'
   });
 
   redirect(inquiryPath(productSlug, 'sent'));
