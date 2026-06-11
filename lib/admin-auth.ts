@@ -14,8 +14,12 @@ import {
   type AdminIdentity,
   type AdminRole
 } from './admin-auth-core';
+import { clearAdminSignInThrottle, isAdminSignInLocked, recordAdminSignInFailure } from './admin-login-throttle';
 
 export type { AdminIdentity, AdminRole } from './admin-auth-core';
+
+const ADMIN_SIGN_IN_THROTTLE_KEY = 'admin-password';
+const ADMIN_SIGN_IN_THROTTLED_ERROR = 'Too many admin sign-in attempts. Try again later.';
 
 function adminAuthConfig() {
   return getAdminAuthConfig(process.env);
@@ -60,10 +64,16 @@ export async function createAdminSession(password: string) {
     return { ok: false, error: 'Admin auth is not configured.' };
   }
 
+  if (isAdminSignInLocked(ADMIN_SIGN_IN_THROTTLE_KEY)) {
+    return { ok: false, error: ADMIN_SIGN_IN_THROTTLED_ERROR };
+  }
+
   if (!verifyAdminPassword(password, config)) {
+    recordAdminSignInFailure(ADMIN_SIGN_IN_THROTTLE_KEY);
     return { ok: false, error: 'Invalid admin password.' };
   }
 
+  clearAdminSignInThrottle(ADMIN_SIGN_IN_THROTTLE_KEY);
   const cookieStore = await cookies();
   cookieStore.set(ADMIN_SESSION_COOKIE_NAME, createAdminSessionCookieValue(config), {
     httpOnly: true,
