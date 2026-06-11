@@ -4,8 +4,11 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { hasDatabase, prisma } from '@/lib/prisma';
+import { assertSameOriginServerAction } from '@/lib/server-action-origin';
 
 async function ensureCanWriteFeaturedPick() {
+  // Enforce same-origin policy for admin homepage product actions
+  await assertSameOriginServerAction();
   await assertAdminRole('owner');
   if (!hasDatabase()) {
     throw new Error('DATABASE_URL is not configured. Add a PostgreSQL connection before editing featured picks.');
