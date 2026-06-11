@@ -66,6 +66,6 @@
     "typescript": "^5.7.2"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts && tsx prisma/seed-demo-discounts.ts"
+    "seed": "tsx prisma/seed.ts && tsx prisma/seed-demo-discounts.ts && tsx prisma/seed-demo-operations.ts"
   }
 }
