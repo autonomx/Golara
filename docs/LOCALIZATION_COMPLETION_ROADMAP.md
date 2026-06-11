@@ -43,6 +43,7 @@ Completed route-boundary slices:
 - Localized `app/admin/products/page.tsx` pagination copy through `lib/localization/admin-catalog-page-copy.ts` and added a focused source/key guard.
 - Guarded `app/admin/readiness/page.tsx` as a localization-clean route wrapper that delegates to the admin console readiness section.
 - Guarded `app/admin/payments/alerts/page.tsx` route-boundary localization wiring through `createAdminTranslator(locale)` and admin dictionary-backed copy keys.
+- Guarded `app/admin/payments/operations/page.tsx` route-boundary localization wiring, data-driven operation-card copy, and admin dictionary-backed copy keys.
 
 CI note from PR #510:
 
@@ -90,10 +91,3 @@ CI notes from follow-up route-boundary slices:
 - Localize server/action messages, payment/settlement labels, seed/demo content, and notification/email templates where user-visible.
 
 ### Phase 5 — RTL/rendered no-English gate
-
-- Add rendered or equivalent static guards for Persian RTL direction and no raw English in protected surfaces.
-
-### Phase 6 — Remove broad allowlists and final audit
-
-- Replace broad allowlists with explicit path-specific exceptions.
-- Keep each exception documented with a reason and removal target.
