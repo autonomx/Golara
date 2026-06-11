@@ -2,7 +2,6 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { HomepageBannerSlideshow } from '@/components/HomepageBannerSlideshow';
 import { HomepageCategoryTileCard } from '@/components/HomepageCategoryTileCard';
-import { HomepageOccasionRail } from '@/components/HomepageOccasionRail';
 import { BestSellersCarousel } from '@/components/BestSellersCarousel';
 import { SiteHeader } from '@/components/SiteHeader';
 import { withCategoryProductCounts } from '@/lib/category-tree';
@@ -52,7 +51,6 @@ export default async function HomePage() {
     productCount: productCountBySlug.get(category.slug) ?? 0
   }));
   const featuredOccasions = homepageOccasionsWithCounts.slice(0, 6);
-  const occasionRailItems = homepageOccasionsWithCounts.slice(0, 10);
 
   return (
     <main
@@ -65,9 +63,6 @@ export default async function HomePage() {
       <SiteHeader returnTo="/" locale={locale} />
 
       <HomepageBannerSlideshow slides={homepageBannerSlides} homepage={homepage} />
-      <HomepageOccasionRail occasions={occasionRailItems} locale={locale} />
-
-      <BestSellersCarousel products={bestSellers} locale={locale} />
 
       <section
         id="home-collections"
@@ -90,6 +85,8 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      <BestSellersCarousel products={bestSellers} locale={locale} />
 
       <footer id="home-footer" data-section="home-footer" className="border-t border-rosewood/10 bg-white">
         <div className="mx-auto grid max-w-7xl gap-8 px-5 py-10 text-sm text-stone-600 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
