@@ -37,12 +37,16 @@ export type CustomerCopyKey =
   | 'profile.eyebrow'
   | 'profile.title'
   | 'profile.subtitle'
+  | 'profile.completionSubtitle'
   | 'profile.displayName'
   | 'profile.updateProfile'
+  | 'profile.completeProfile'
   | 'profile.verifiedPhone'
   | 'profile.phoneDeferredNote'
   | 'profile.unavailableBody'
   | 'profile.status.updated'
+  | 'profile.status.completeProfile'
+  | 'profile.status.missingName'
   | 'profile.status.databaseRequired'
   | 'profile.status.failed'
   | 'cart.eyebrow'
@@ -127,9 +131,9 @@ export const customerCopy: CustomerCopyRegistry = {
     'account.editProfile': 'Edit profile',
     'account.orderHistory': 'View order history',
     'account.signOut': 'Sign out',
-    'account.signInTitle': 'Sign in to continue',
-    'account.signInBody': 'Use phone verification to access your order history, saved addresses, and checkout prefill.',
-    'account.signInWithPhone': 'Sign in with phone',
+    'account.signInTitle': 'Sign in or create account',
+    'account.signInBody': 'Use phone verification to sign in. New customers are registered automatically after verification.',
+    'account.signInWithPhone': 'Sign in or create account',
     'account.continueShopping': 'Continue shopping',
     'account.savedAddresses': 'Saved addresses',
     'account.noSavedAddresses': 'No saved addresses yet. Checkout will add delivery addresses to your profile.',
@@ -137,13 +141,13 @@ export const customerCopy: CustomerCopyRegistry = {
     'account.accountsUnavailableBody': 'Customer accounts require a configured database.',
     'account.status.signedOut': 'You have been signed out.',
     'account.status.sessionRequired': 'Please sign in to view your account.',
-    'login.eyebrow': 'Customer login',
-    'login.title': 'Sign in with phone',
+    'login.eyebrow': 'Customer account',
+    'login.title': 'Sign in or create account',
     'login.subtitle': 'We will send a one-time code to verify your phone number.',
-    'login.longSubtitle': 'Enter your phone number to receive a one-time verification code. This connects your account, order history, saved addresses, and checkout prefill.',
+    'login.longSubtitle': 'Enter your phone number to continue. We will send a one-time verification code; new customers are registered automatically after verification.',
     'login.unavailableTitle': 'Login unavailable',
     'login.unavailableBody': 'Customer login requires a configured database.',
-    'login.requestTitle': 'Request code',
+    'login.requestTitle': 'Start with your phone',
     'login.requestSafetyNote': 'For safety, code requests have a short resend cooldown and request limit.',
     'login.phoneLabel': 'Phone number',
     'login.requestCode': 'Send verification code',
@@ -151,17 +155,21 @@ export const customerCopy: CustomerCopyRegistry = {
     'login.codeFor': 'Code for',
     'login.codeLabel': 'Verification code',
     'login.verifyCode': 'Verify code',
-    'login.verifyAndSignIn': 'Verify and sign in',
+    'login.verifyAndSignIn': 'Verify and continue',
     'login.requestFirst': 'Request a code first, then return here to verify it.',
     'profile.eyebrow': 'Account profile',
     'profile.title': 'Edit profile',
     'profile.subtitle': 'Update your display name, email, and locale. Verified phone changes require a separate verification flow and are not edited here.',
+    'profile.completionSubtitle': 'Add your name so we can finish creating your account and return you to checkout or your account page. Email remains optional.',
     'profile.displayName': 'Display name',
     'profile.updateProfile': 'Update profile',
+    'profile.completeProfile': 'Complete profile',
     'profile.verifiedPhone': 'Verified phone',
     'profile.phoneDeferredNote': 'Phone changes are intentionally deferred until a separate verification flow is added.',
     'profile.unavailableBody': 'Profile editing requires a configured database.',
     'profile.status.updated': 'Profile updated.',
+    'profile.status.completeProfile': 'Your phone is verified. Complete your profile to finish account setup.',
+    'profile.status.missingName': 'Please enter your name to complete your profile.',
     'profile.status.databaseRequired': 'Profile editing requires a configured database.',
     'profile.status.failed': 'We could not update your profile. Please check the fields and try again.',
     'cart.eyebrow': 'Cart',
@@ -243,9 +251,9 @@ export const customerCopy: CustomerCopyRegistry = {
     'account.editProfile': 'ویرایش پروفایل',
     'account.orderHistory': 'مشاهده تاریخچه سفارش‌ها',
     'account.signOut': 'خروج',
-    'account.signInTitle': 'برای ادامه وارد شوید',
-    'account.signInBody': 'با تایید شماره تلفن، به تاریخچه سفارش‌ها، نشانی‌های ذخیره‌شده و تکمیل سریع پرداخت دسترسی پیدا می‌کنید.',
-    'account.signInWithPhone': 'ورود با شماره تلفن',
+    'account.signInTitle': 'ورود یا ساخت حساب',
+    'account.signInBody': 'با تایید شماره تلفن وارد شوید. مشتریان جدید پس از تایید شماره به‌صورت خودکار ثبت‌نام می‌شوند.',
+    'account.signInWithPhone': 'ورود یا ساخت حساب',
     'account.continueShopping': 'ادامه خرید',
     'account.savedAddresses': 'نشانی‌های ذخیره‌شده',
     'account.noSavedAddresses': 'هنوز نشانی ذخیره‌شده‌ای ندارید. هنگام پرداخت، نشانی ارسال به پروفایل شما اضافه می‌شود.',
@@ -253,13 +261,13 @@ export const customerCopy: CustomerCopyRegistry = {
     'account.accountsUnavailableBody': 'حساب مشتری به پایگاه داده پیکربندی‌شده نیاز دارد.',
     'account.status.signedOut': 'از حساب خارج شدید.',
     'account.status.sessionRequired': 'برای مشاهده حساب خود وارد شوید.',
-    'login.eyebrow': 'ورود مشتری',
-    'login.title': 'ورود با شماره تلفن',
+    'login.eyebrow': 'حساب مشتری',
+    'login.title': 'ورود یا ساخت حساب',
     'login.subtitle': 'برای تایید شماره تلفن، یک کد یک‌بارمصرف ارسال می‌کنیم.',
-    'login.longSubtitle': 'شماره تلفن خود را وارد کنید تا کد تایید یک‌بارمصرف دریافت کنید. این ورود، حساب، تاریخچه سفارش‌ها، نشانی‌های ذخیره‌شده و تکمیل سریع پرداخت را به هم متصل می‌کند.',
+    'login.longSubtitle': 'برای ادامه شماره تلفن خود را وارد کنید. کد تایید یک‌بارمصرف ارسال می‌شود و مشتریان جدید پس از تایید شماره به‌صورت خودکار ثبت‌نام می‌شوند.',
     'login.unavailableTitle': 'ورود در دسترس نیست',
     'login.unavailableBody': 'ورود مشتری به پایگاه داده پیکربندی‌شده نیاز دارد.',
-    'login.requestTitle': 'درخواست کد',
+    'login.requestTitle': 'با شماره تلفن شروع کنید',
     'login.requestSafetyNote': 'برای امنیت بیشتر، درخواست کد شامل زمان انتظار کوتاه و محدودیت تعداد درخواست است.',
     'login.phoneLabel': 'شماره تلفن',
     'login.requestCode': 'ارسال کد تایید',
@@ -267,17 +275,21 @@ export const customerCopy: CustomerCopyRegistry = {
     'login.codeFor': 'کد برای',
     'login.codeLabel': 'کد تایید',
     'login.verifyCode': 'تایید کد',
-    'login.verifyAndSignIn': 'تایید و ورود',
+    'login.verifyAndSignIn': 'تایید و ادامه',
     'login.requestFirst': 'ابتدا کد را درخواست کنید، سپس برای تایید آن به این بخش برگردید.',
     'profile.eyebrow': 'پروفایل حساب',
     'profile.title': 'ویرایش پروفایل',
     'profile.subtitle': 'نام نمایشی، ایمیل و زبان خود را به‌روزرسانی کنید. تغییر شماره تلفن تاییدشده به جریان تایید جداگانه نیاز دارد و اینجا ویرایش نمی‌شود.',
+    'profile.completionSubtitle': 'نام خود را اضافه کنید تا ساخت حساب شما کامل شود و به پرداخت یا صفحه حساب برگردید. ایمیل اختیاری است.',
     'profile.displayName': 'نام نمایشی',
     'profile.updateProfile': 'به‌روزرسانی پروفایل',
+    'profile.completeProfile': 'تکمیل پروفایل',
     'profile.verifiedPhone': 'تلفن تاییدشده',
     'profile.phoneDeferredNote': 'تغییر شماره تلفن عمدا تا زمان اضافه‌شدن جریان تایید جداگانه به تعویق افتاده است.',
     'profile.unavailableBody': 'ویرایش پروفایل به پایگاه داده پیکربندی‌شده نیاز دارد.',
     'profile.status.updated': 'پروفایل به‌روزرسانی شد.',
+    'profile.status.completeProfile': 'شماره تلفن شما تایید شد. برای تکمیل ساخت حساب، پروفایل را کامل کنید.',
+    'profile.status.missingName': 'برای تکمیل پروفایل، نام خود را وارد کنید.',
     'profile.status.databaseRequired': 'ویرایش پروفایل به پایگاه داده پیکربندی‌شده نیاز دارد.',
     'profile.status.failed': 'نتوانستیم پروفایل شما را به‌روزرسانی کنیم. فیلدها را بررسی کنید و دوباره تلاش کنید.',
     'cart.eyebrow': 'سبد خرید',
@@ -358,10 +370,9 @@ export function normalizeCustomerCopyLocale(locale?: string | null): CustomerCop
 }
 
 export function getCustomerCopy(key: CustomerCopyKey, locale?: string | null): string {
-  const normalizedLocale = normalizeCustomerCopyLocale(locale);
-  return customerCopy[normalizedLocale][key] ?? customerCopy.en[key];
+  return customerCopy[normalizeCustomerCopyLocale(locale)][key];
 }
 
-export function getCustomerCopyDirection(locale?: string | null): 'ltr' | 'rtl' {
+export function getCustomerCopyDirection(locale?: string | null): 'rtl' | 'ltr' {
   return normalizeCustomerCopyLocale(locale) === 'fa' ? 'rtl' : 'ltr';
 }

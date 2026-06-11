@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { getCustomerSession } from '@/lib/customers/customer-account-repository';
 import { getCustomerSessionCookie } from '@/lib/customers/customer-session-cookie';
+import { safeCustomerProfileReturnTo } from '@/lib/customers/customer-profile-completion';
 import { updateCustomerProfile } from '@/lib/customers/customer-repository';
 import { hasDatabase } from '@/lib/prisma';
 
@@ -13,8 +14,11 @@ function stringField(formData: FormData, name: string, fallback = '') {
   return value.trim();
 }
 
-function profilePath(status: string) {
-  return `/account/profile?status=${encodeURIComponent(status)}`;
+function profilePath(status: string, returnTo?: string) {
+  const params = new URLSearchParams({ status });
+  const safeReturnTo = returnTo ? safeCustomerProfileReturnTo(returnTo) : undefined;
+  if (safeReturnTo) params.set('returnTo', safeReturnTo);
+  return `/account/profile?${params.toString()}`;
 }
 
 async function requireCustomerId() {
@@ -27,20 +31,26 @@ async function requireCustomerId() {
 
 export async function updateAccountProfileAction(formData: FormData) {
   const customerId = await requireCustomerId();
+  const returnTo = safeCustomerProfileReturnTo(stringField(formData, 'returnTo', ''), '');
+  const displayName = stringField(formData, 'displayName');
   let redirectTarget = '';
   try {
-    await updateCustomerProfile(customerId, {
-      displayName: stringField(formData, 'displayName'),
-      email: stringField(formData, 'email'),
-      locale: stringField(formData, 'locale', 'fa-IR')
-    });
-    revalidatePath('/account');
-    revalidatePath('/account/profile');
-    revalidatePath('/cart/checkout');
-    redirectTarget = profilePath('updated');
+    if (returnTo && !displayName) {
+      redirectTarget = profilePath('missing-name', returnTo);
+    } else {
+      await updateCustomerProfile(customerId, {
+        displayName,
+        email: stringField(formData, 'email'),
+        locale: stringField(formData, 'locale', 'fa-IR')
+      });
+      revalidatePath('/account');
+      revalidatePath('/account/profile');
+      revalidatePath('/cart/checkout');
+      redirectTarget = returnTo || profilePath('updated');
+    }
   } catch (error) {
     console.warn('[account] failed to update profile', error);
-    redirectTarget = profilePath('failed');
+    redirectTarget = profilePath('failed', returnTo);
   }
   redirect(redirectTarget);
 }

@@ -28,6 +28,7 @@ import { runCmsServiceTypesTests } from './cms-service-types.test';
 import { runCustomerAdminTimelineModelTests } from './customer-admin-timeline-model.test';
 import { runCustomerAuthIdentityTests } from './customer-auth-identity.test';
 import { runCustomerPrivacyTests } from './customer-privacy.test';
+import { runCustomerRegistrationFlowTests } from './customer-registration-flow.test';
 import { runDashboardExtensionMountPointsTests } from './dashboard-extension-mount-points.test';
 import { runDataSafetyReadinessTests } from './data-safety-readiness.test';
 import { runDeployReadinessTests } from './deploy-readiness.test';
@@ -173,6 +174,7 @@ async function main() {
   await runCustomerAdminTimelineModelTests();
   await runCustomerAuthIdentityTests();
   await runCustomerPrivacyTests();
+  await runCustomerRegistrationFlowTests();
   await runOtpRateLimitTests();
   await runCheckoutStateMachineTests();
   await runCheckoutCapacityHoldTests();
