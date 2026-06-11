@@ -10,7 +10,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test:unit": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/admin-login-throttle.test.ts && node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/media-url-allowlist.test.ts && node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/run-tests.ts",
+    "test:unit": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/admin-login-throttle.test.ts && node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/media-url-allowlist.test.ts && node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/deploy-readiness-customer-otp-secret.test.ts && node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/run-tests.ts",
     "test:functional": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/functional/run-tests.ts",
     "test:api": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/api/run-tests.ts",
     "test:nonbrowser": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/nonbrowser/run-tests.ts",
