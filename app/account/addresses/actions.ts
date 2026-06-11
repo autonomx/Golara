@@ -6,6 +6,7 @@ import { getCustomerSession } from '@/lib/customers/customer-account-repository'
 import { getCustomerSessionCookie } from '@/lib/customers/customer-session-cookie';
 import { addCustomerAddress, deleteCustomerAddress, setDefaultCustomerAddress, updateCustomerAddress } from '@/lib/customers/customer-repository';
 import { hasDatabase } from '@/lib/prisma';
+import { assertSameOriginServerAction } from '@/lib/server-action-origin';
 
 function stringField(formData: FormData, name: string, fallback = '') {
   const value = formData.get(name);
@@ -29,6 +30,11 @@ async function requireCustomerId() {
   return session.customerId;
 }
 
+async function requireCustomerAddressMutation() {
+  await assertSameOriginServerAction();
+  return requireCustomerId();
+}
+
 function addressInput(formData: FormData) {
   return {
     label: stringField(formData, 'label'),
@@ -43,7 +49,7 @@ function addressInput(formData: FormData) {
 }
 
 export async function addAccountAddressAction(formData: FormData) {
-  const customerId = await requireCustomerId();
+  const customerId = await requireCustomerAddressMutation();
   let redirectTarget = '';
   try {
     await addCustomerAddress(customerId, addressInput(formData));
@@ -58,7 +64,7 @@ export async function addAccountAddressAction(formData: FormData) {
 }
 
 export async function updateAccountAddressAction(formData: FormData) {
-  const customerId = await requireCustomerId();
+  const customerId = await requireCustomerAddressMutation();
   let redirectTarget = '';
   try {
     await updateCustomerAddress(customerId, stringField(formData, 'addressId'), addressInput(formData));
@@ -73,7 +79,7 @@ export async function updateAccountAddressAction(formData: FormData) {
 }
 
 export async function setDefaultAccountAddressAction(formData: FormData) {
-  const customerId = await requireCustomerId();
+  const customerId = await requireCustomerAddressMutation();
   let redirectTarget = '';
   try {
     await setDefaultCustomerAddress(customerId, stringField(formData, 'addressId'));
@@ -88,7 +94,7 @@ export async function setDefaultAccountAddressAction(formData: FormData) {
 }
 
 export async function deleteAccountAddressAction(formData: FormData) {
-  const customerId = await requireCustomerId();
+  const customerId = await requireCustomerAddressMutation();
   let redirectTarget = '';
   try {
     await deleteCustomerAddress(customerId, stringField(formData, 'addressId'));
