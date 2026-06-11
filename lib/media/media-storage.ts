@@ -14,6 +14,7 @@ export { configuredMediaStorageProviderName, getMediaStorageReadiness, type Medi
 
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const ALLOWED_EXTERNAL_IMAGE_HOSTS = new Set(['res.cloudinary.com']);
 
 export type StoredMediaFile = {
   url: string;
@@ -43,8 +44,11 @@ export function normalizeImageUrl(value: string) {
   if (value.startsWith('/uploads/')) return value;
 
   const url = new URL(value);
-  if (!['http:', 'https:'].includes(url.protocol)) {
-    throw new Error('Image URL must start with http, https, or /uploads/.');
+  if (url.protocol !== 'https:') {
+    throw new Error('Image URL must use HTTPS or start with /uploads/.');
+  }
+  if (!ALLOWED_EXTERNAL_IMAGE_HOSTS.has(url.hostname)) {
+    throw new Error('External image URL host is not allowed. Upload the image or use an approved media provider.');
   }
   return url.toString();
 }
