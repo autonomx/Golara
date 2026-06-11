@@ -11,6 +11,7 @@ import {
 } from '@/lib/inquiries/inquiry-assignment';
 import { parseInquiryAssignmentQueueFilter } from '@/lib/inquiries/inquiry-assignment-queue';
 import { hasDatabase } from '@/lib/prisma';
+import { assertSameOriginServerAction } from '@/lib/server-action-origin';
 
 function stringFormValue(formData: FormData, name: string) {
   const value = formData.get(name);
@@ -33,6 +34,8 @@ function adminStatus(status: string, formData: FormData) {
 }
 
 export async function saveInquiryAction(inquiryId: string, formData: FormData) {
+  // Enforce same-origin policy for admin inquiry actions to prevent CSRF attacks
+  await assertSameOriginServerAction();
   await assertAdminRole('staff');
   if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
 
@@ -49,6 +52,8 @@ export async function saveInquiryAction(inquiryId: string, formData: FormData) {
 }
 
 export async function assignInquiryAction(inquiryId: string, formData: FormData) {
+  // Enforce same-origin policy for admin inquiry actions to prevent CSRF attacks
+  await assertSameOriginServerAction();
   const identity = await assertAdminRole('staff');
   if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
 
@@ -73,6 +78,8 @@ export async function assignInquiryAction(inquiryId: string, formData: FormData)
 }
 
 export async function addInquiryFollowUpAction(inquiryId: string, formData: FormData) {
+  // Enforce same-origin policy for admin inquiry actions to prevent CSRF attacks
+  await assertSameOriginServerAction();
   await assertAdminRole('staff');
   if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
 
