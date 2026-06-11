@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { formatDeployReadinessReport, getDeployReadiness } from '../../lib/deploy-readiness';
 
 const ORIGINAL_ENV = { ...process.env };
+const NEXT_CONFIG = readFileSync('next.config.mjs', 'utf8');
 
 async function withEnv<T>(env: Record<string, string | undefined>, run: () => Promise<T> | T) {
   process.env = { ...ORIGINAL_ENV };
@@ -19,6 +21,19 @@ async function withEnv<T>(env: Record<string, string | undefined>, run: () => Pr
 
 function issueCodes(report: ReturnType<typeof getDeployReadiness>) {
   return report.blockers.map((issue) => issue.code);
+}
+
+function assertPlatformConfigIsProductionScoped() {
+  assert.match(NEXT_CONFIG, /async\s+headers\s*\(\)\s*{/);
+  assert.match(NEXT_CONFIG, /Strict-Transport-Security/);
+  assert.match(NEXT_CONFIG, /max-age=63072000; includeSubDomains; preload/);
+  assert.match(NEXT_CONFIG, /X-Frame-Options[\s\S]*?DENY/);
+  assert.match(NEXT_CONFIG, /X-Content-Type-Options[\s\S]*?nosniff/);
+  assert.match(NEXT_CONFIG, /Referrer-Policy[\s\S]*?strict-origin-when-cross-origin/);
+  assert.match(NEXT_CONFIG, /Permissions-Policy/);
+  assert.match(NEXT_CONFIG, /hostname:\s*'res\.cloudinary\.com'/);
+  assert.doesNotMatch(NEXT_CONFIG, /hostname:\s*'\*\*'/);
+  assert.doesNotMatch(NEXT_CONFIG, /protocol:\s*'http'/);
 }
 
 const dataSafetyConfirmed = {
@@ -42,6 +57,8 @@ const productionBase = {
 };
 
 export async function runDeployReadinessTests() {
+  assertPlatformConfigIsProductionScoped();
+
   await withEnv({ APP_MODE: 'preview', VERCEL_ENV: undefined, NODE_ENV: 'production' }, () => {
     const report = getDeployReadiness();
     assert.equal(report.productionDeploy, false);
