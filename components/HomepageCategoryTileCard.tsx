@@ -4,8 +4,28 @@ import type { Category } from '@/lib/catalog';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 import { homepageCategoryImage } from '@/lib/homepage-assets';
 
+const PERSIAN_SCRIPT_PATTERN = /[\u0600-\u06FF]/;
+const LATIN_SCRIPT_PATTERN = /[A-Za-z]/;
+
 function localeKey(locale?: SupportedLocale) {
   return locale?.toLowerCase().startsWith('fa') ? 'fa' : 'en';
+}
+
+function normalizeLegacyBilingualTitle(value: string) {
+  return value.replace(/\s+/g, ' ').trim();
+}
+
+export function categoryTileDisplayTitle(title: string, locale?: SupportedLocale) {
+  const normalizedTitle = normalizeLegacyBilingualTitle(title);
+  if (!PERSIAN_SCRIPT_PATTERN.test(normalizedTitle) || !LATIN_SCRIPT_PATTERN.test(normalizedTitle)) return normalizedTitle;
+
+  if (localeKey(locale) === 'fa') {
+    const persianOnly = normalizeLegacyBilingualTitle(normalizedTitle.replace(/[A-Za-z0-9&|()\-–—/]+/g, ' '));
+    return persianOnly || normalizedTitle;
+  }
+
+  const englishOnly = normalizeLegacyBilingualTitle(normalizedTitle.replace(/[\u0600-\u06FF]+/g, ' ').replace(/[|()]+/g, ' '));
+  return englishOnly || normalizedTitle;
 }
 
 function viewLabel(title: string, locale?: SupportedLocale) {
@@ -19,16 +39,17 @@ function productCountLabel(count: number | undefined, locale?: SupportedLocale) 
 
 export function HomepageCategoryTileCard({ category, priority = false, locale }: { category: Category; priority?: boolean; locale?: SupportedLocale }) {
   const isFa = localeKey(locale) === 'fa';
+  const displayTitle = categoryTileDisplayTitle(category.title, locale);
 
   return (
     <Link
       href={`/categories/${category.slug}`}
-      aria-label={viewLabel(category.title, locale)}
+      aria-label={viewLabel(displayTitle, locale)}
       className="group relative block min-h-[270px] overflow-hidden rounded-lg bg-stone-100 shadow-[0_14px_36px_rgba(111,36,56,0.07)] outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30 md:min-h-[340px]"
     >
       <Image
         src={category.image || homepageCategoryImage(category.slug)}
-        alt={category.title}
+        alt={displayTitle}
         fill
         priority={priority}
         className="object-cover object-[68%_center] transition duration-500 group-hover:scale-[1.02] md:object-[72%_center]"
@@ -48,7 +69,7 @@ export function HomepageCategoryTileCard({ category, priority = false, locale }:
           <p className="inline-flex rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-olive shadow-sm">
             {category.eyebrow || (isFa ? 'مناسبت' : 'Occasion')}
           </p>
-          <h3 className="mt-4 line-clamp-2 font-display text-3xl leading-tight text-rosewood sm:text-4xl">{category.title}</h3>
+          <h3 className="mt-4 line-clamp-2 font-display text-3xl leading-tight text-rosewood sm:text-4xl">{displayTitle}</h3>
           <p className="mt-3 line-clamp-3 text-sm leading-6 text-stone-600">{category.description}</p>
           <div className="mt-5 inline-flex rounded-full border border-rosewood/15 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-rosewood shadow-sm">
             {productCountLabel(category.productCount, locale)}
