@@ -8,6 +8,7 @@ import { createOrderDraft } from '@/lib/checkout/order-draft-repository';
 import { createCheckoutPaymentAttempt } from '@/lib/checkout/payment-provider';
 import { addCustomerAddress, upsertCustomerProfile } from '@/lib/customers/customer-repository';
 import { hasDatabase } from '@/lib/prisma';
+import { assertSameOriginServerAction } from '@/lib/server-action-origin';
 
 function stringField(formData: FormData, name: string, fallback = '') {
   const value = formData.get(name);
@@ -35,6 +36,8 @@ function deliveryWindowField(formData: FormData) {
 }
 
 export async function createCartCheckoutAction(formData: FormData) {
+  // Enforce same-origin policy for checkout to prevent CSRF attacks
+  await assertSameOriginServerAction();
   if (!hasDatabase()) redirect(checkoutPath('database-required'));
 
   const token = await getCartTokenCookie();
