@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { AdminConsolePage } from '@/app/admin/AdminConsolePage';
 import { listAdminProducts } from '@/lib/cms/catalog-repository';
+import { requireAdminRouteSession } from '@/lib/admin-page-auth-boundary';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { createAdminCatalogPageTranslator } from '@/lib/localization/admin-catalog-page-copy';
 import type { Product } from '@/lib/catalog';
@@ -73,6 +74,8 @@ function ProductPaginationBar({ params, total, locale }: { params: AdminProducts
 }
 
 export default async function AdminProductsPage({ searchParams }: { searchParams: Promise<AdminProductsSearchParams> }) {
+  await requireAdminRouteSession();
+
   const resolvedSearchParams = await searchParams;
   const locale = await resolveStorefrontLocale();
   const products = await listAdminProducts();
