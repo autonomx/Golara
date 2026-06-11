@@ -25,6 +25,7 @@ import { runCmsInquiryServiceTests } from './cms-inquiry-service.test';
 import { runCmsMediaServiceTests } from './cms-media-service.test';
 import { runCmsProductServiceTests } from './cms-product-service.test';
 import { runCmsServiceTypesTests } from './cms-service-types.test';
+import { runContentSecurityPolicyConfigTests } from './content-security-policy-config.test';
 import { runCustomerAdminTimelineModelTests } from './customer-admin-timeline-model.test';
 import { runCustomerAuthIdentityTests } from './customer-auth-identity.test';
 import { runCustomerPrivacyTests } from './customer-privacy.test';
@@ -150,6 +151,7 @@ async function main() {
   await runMediaStorageReadinessTests();
   await runDataSafetyReadinessTests();
   await runE2eDbSafetyContractTests();
+  await runContentSecurityPolicyConfigTests();
   await runAdminActionBoundaryGuardTests();
   await runAdminAuthCoreTests();
   await runAdminAccountCoreTests();
