@@ -75,6 +75,8 @@ export async function createAdminSession(password: string) {
 
   clearAdminSignInThrottle(ADMIN_SIGN_IN_THROTTLE_KEY);
   const cookieStore = await cookies();
+  // Clear any existing session cookie to rotate session after login
+  cookieStore.delete(ADMIN_SESSION_COOKIE_NAME);
   cookieStore.set(ADMIN_SESSION_COOKIE_NAME, createAdminSessionCookieValue(config), {
     httpOnly: true,
     sameSite: 'lax',
