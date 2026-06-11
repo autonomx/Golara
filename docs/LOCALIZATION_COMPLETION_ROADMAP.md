@@ -47,6 +47,7 @@ Completed route-boundary slices:
 - Guarded `app/admin/payments/settlement/page.tsx` route-boundary localization wiring, admin shell locale propagation, and admin dictionary-backed settlement navigation/auth copy keys.
 - Guarded `app/admin/page.tsx` as a localization-clean overview route wrapper that delegates visible copy to `AdminConsolePage`.
 - Guarded `app/admin/login/page.tsx` route-boundary localization wiring for login copy, auth warnings, document direction, and Persian dictionary coverage.
+- Guarded `app/admin/orders/page.tsx` as a localization-clean orders route wrapper that delegates visible copy to `AdminConsolePage` with sales/orders routing.
 
 CI note from PR #510:
 
