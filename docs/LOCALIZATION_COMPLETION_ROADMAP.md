@@ -48,6 +48,7 @@ Completed route-boundary slices:
 - Guarded `app/admin/page.tsx` as a localization-clean overview route wrapper that delegates visible copy to `AdminConsolePage`.
 - Guarded `app/admin/login/page.tsx` route-boundary localization wiring for login copy, auth warnings, document direction, and Persian dictionary coverage.
 - Guarded `app/admin/orders/page.tsx` as a localization-clean orders route wrapper that delegates visible copy to `AdminConsolePage` with sales/orders routing.
+- Localized admin overview readiness card dynamic issue summaries, details, issue-code labels, mode/provider values, and dynamic card labels so Persian overview rendering does not fall back to English checklist strings.
 
 CI note from PR #510:
 
