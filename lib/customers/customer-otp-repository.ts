@@ -14,6 +14,7 @@ import {
 import { sendCustomerMessage } from '@/lib/customers/customer-message-provider';
 import { normalizeCustomerPhone } from '@/lib/customers/customer-repository';
 import { hasDatabase, prisma } from '@/lib/prisma';
+import { getAppRuntimeMode } from '@/lib/runtime-mode';
 
 const DEFAULT_OTP_TTL_MINUTES = 10;
 const DEFAULT_OTP_MAX_ATTEMPTS = 5;
@@ -114,8 +115,19 @@ function statusForThrottleReason(reason?: OtpRequestThrottleReasonCode): OtpThro
   return 'rate_limited';
 }
 
+function getCustomerOtpHashSecret() {
+  const customerSecret = process.env.CUSTOMER_OTP_SECRET?.trim();
+  if (customerSecret) return customerSecret;
+
+  if (getAppRuntimeMode() === 'production') {
+    throw new Error('CUSTOMER_OTP_SECRET is required for customer OTP hashing in production.');
+  }
+
+  return process.env.ADMIN_SESSION_SECRET?.trim() || 'golara-dev-otp-secret';
+}
+
 export function hashOtpCode(destination: string, code: string, purpose = 'login') {
-  const salt = process.env.CUSTOMER_OTP_SECRET || process.env.ADMIN_SESSION_SECRET || 'golara-dev-otp-secret';
+  const salt = getCustomerOtpHashSecret();
   return createHash('sha256')
     .update(`${salt}:${purpose}:${destination}:${code.trim()}`)
     .digest('hex');
@@ -259,29 +271,13 @@ export async function getCustomerOtpRequestStatus(phone: string, purpose = 'logi
 export async function issueCustomerOtp(input: IssueOtpInput) {
   if (!hasDatabase()) throw new Error('DATABASE_URL is required for customer OTP challenges.');
 
-  const destination = normalizeCustomerPhone(input.phone);
-  const purpose = optionalText(input.purpose) || 'login';
-  const requestStatus = await getCustomerOtpRequestStatus(destination, purpose, {
-    ipAddress: input.ipAddress,
-    userAgent: input.userAgent
-  });
-  if (!requestStatus.ok) {
-    if (requestStatus.reason !== 'database_required') {
-      await recordOtpRequestAuthEvent({
-        allowed: false,
-        reasonCode: requestStatus.decision.reasonCode,
-        messageKey: requestStatus.decision.messageKey,
-        retryAfterMs: requestStatus.decision.retryAfterMs,
-        phoneHash: requestStatus.phoneHash,
-        ipHash: requestStatus.ipHash,
-        userAgentHash: requestStatus.userAgentHash,
-        purpose
-      });
-    }
-    return requestStatus;
-  }
+  const status = await getCustomerOtpRequestStatus(input.phone, input.purpose || 'login', input);
+  if (!status.ok) return status;
 
+  const destination = status.destination;
+  const purpose = status.purpose;
   const code = makeOtpCode();
+  const codeHash = hashOtpCode(destination, code, purpose);
 
   await prisma.customerOtpChallenge.updateMany({
     where: {
@@ -290,65 +286,49 @@ export async function issueCustomerOtp(input: IssueOtpInput) {
       consumedAt: null,
       expiresAt: { gt: new Date() }
     },
-    data: { consumedAt: new Date() }
-  });
-
-  const delivery = await deliverOtp(destination, code, purpose);
-  if (!delivery.ok) {
-    await prisma.customerAuthEvent.create({
-      data: {
-        eventType: 'otp_delivery_failed',
-        phoneHash: requestStatus.phoneHash,
-        ipHash: requestStatus.ipHash,
-        userAgentHash: requestStatus.userAgentHash,
-        metadata: {
-          purpose,
-          channel: 'sms',
-          provider: delivery.provider,
-          skipped: Boolean(delivery.skipped)
-        }
-      }
-    });
-    return { ok: false as const, reason: 'delivery_failed', delivery };
-  }
-
-  await recordOtpRequestAuthEvent({
-    allowed: true,
-    messageKey: 'otp_request_allowed',
-    phoneHash: requestStatus.phoneHash,
-    ipHash: requestStatus.ipHash,
-    userAgentHash: requestStatus.userAgentHash,
-    purpose,
-    channel: delivery.provider
-  });
-
-  const challenge = await prisma.customerOtpChallenge.create({
     data: {
-      channel: delivery.provider,
-      destination,
-      purpose,
-      codeHash: hashOtpCode(destination, code, purpose),
-      maxAttempts: otpMaxAttempts(),
-      expiresAt: expiresAt(),
-      metadata: {
-        ...(input.metadata || {}),
-        deliveryProvider: delivery.provider,
-        deliveryReference: delivery.reference || ''
-      }
+      consumedAt: new Date()
     }
   });
 
-  return { ok: true as const, challenge, expiresAt: challenge.expiresAt, delivery };
+  await prisma.customerOtpChallenge.create({
+    data: {
+      destination,
+      purpose,
+      codeHash,
+      expiresAt: expiresAt(),
+      metadata: input.metadata ? { ...input.metadata, ipHash: status.ipHash || null, userAgentHash: status.userAgentHash || null } : { ipHash: status.ipHash || null, userAgentHash: status.userAgentHash || null }
+    }
+  });
+
+  const delivery = await deliverOtp(destination, code, purpose);
+  await recordOtpRequestAuthEvent({
+    allowed: true,
+    messageKey: 'otp_sent',
+    phoneHash: status.phoneHash,
+    ipHash: status.ipHash,
+    userAgentHash: status.userAgentHash,
+    purpose,
+    channel: delivery.channel
+  });
+
+  return {
+    ok: true as const,
+    destination,
+    delivery
+  };
 }
 
 export async function verifyCustomerOtp(input: VerifyOtpInput) {
-  if (!hasDatabase()) throw new Error('DATABASE_URL is required for customer OTP challenges.');
+  if (!hasDatabase()) throw new Error('DATABASE_URL is required for customer OTP verification.');
 
   const destination = normalizeCustomerPhone(input.phone);
   const purpose = optionalText(input.purpose) || 'login';
   const phoneHash = hashCustomerAuthPhone(destination);
   const ipHash = hashCustomerAuthIp(input.ipAddress) || undefined;
   const userAgentHash = hashCustomerAuthUserAgent(input.userAgent) || undefined;
+  const maxAttempts = otpMaxAttempts();
+
   const challenge = await prisma.customerOtpChallenge.findFirst({
     where: {
       destination,
@@ -366,12 +346,12 @@ export async function verifyCustomerOtp(input: VerifyOtpInput) {
       ipHash,
       userAgentHash,
       purpose,
-      reason: 'missing_or_expired'
+      reason: 'missing_or_expired_challenge'
     });
-    return { ok: false as const, reason: 'missing_or_expired' };
+    return { ok: false as const, reason: 'invalid_or_expired' as const };
   }
 
-  if (challenge.attemptCount >= challenge.maxAttempts) {
+  if (challenge.attemptCount >= maxAttempts) {
     await recordOtpVerifyAuthEvent({
       eventType: 'otp_verify_blocked',
       phoneHash,
@@ -379,46 +359,43 @@ export async function verifyCustomerOtp(input: VerifyOtpInput) {
       userAgentHash,
       challengeId: challenge.id,
       purpose,
-      reason: 'too_many_attempts',
-      remainingAttempts: 0,
+      reason: 'max_attempts_exceeded',
       attemptCount: challenge.attemptCount,
-      maxAttempts: challenge.maxAttempts
+      maxAttempts
     });
-    return { ok: false as const, reason: 'too_many_attempts' };
+    return { ok: false as const, reason: 'too_many_attempts' as const };
   }
 
   const codeHash = hashOtpCode(destination, input.code, purpose);
+  const nextAttemptCount = challenge.attemptCount + 1;
+
   if (codeHash !== challenge.codeHash) {
-    const updated = await prisma.customerOtpChallenge.update({
+    await prisma.customerOtpChallenge.update({
       where: { id: challenge.id },
-      data: { attemptCount: { increment: 1 } }
+      data: { attemptCount: nextAttemptCount }
     });
-    const remainingAttempts = Math.max(0, updated.maxAttempts - updated.attemptCount);
-    const exhausted = updated.attemptCount >= updated.maxAttempts;
+
     await recordOtpVerifyAuthEvent({
-      eventType: exhausted ? 'otp_verify_blocked' : 'otp_verify_failed',
+      eventType: nextAttemptCount >= maxAttempts ? 'otp_verify_blocked' : 'otp_verify_failed',
       phoneHash,
       ipHash,
       userAgentHash,
-      challengeId: updated.id,
+      challengeId: challenge.id,
       purpose,
-      reason: exhausted ? 'too_many_attempts' : 'invalid_code',
-      remainingAttempts,
-      attemptCount: updated.attemptCount,
-      maxAttempts: updated.maxAttempts
+      reason: nextAttemptCount >= maxAttempts ? 'max_attempts_exceeded' : 'invalid_code',
+      remainingAttempts: Math.max(maxAttempts - nextAttemptCount, 0),
+      attemptCount: nextAttemptCount,
+      maxAttempts
     });
-    return {
-      ok: false as const,
-      reason: exhausted ? 'too_many_attempts' : 'invalid_code',
-      remainingAttempts
-    };
+
+    return { ok: false as const, reason: nextAttemptCount >= maxAttempts ? 'too_many_attempts' as const : 'invalid_code' as const };
   }
 
-  const consumed = await prisma.customerOtpChallenge.update({
+  await prisma.customerOtpChallenge.update({
     where: { id: challenge.id },
     data: {
       consumedAt: new Date(),
-      attemptCount: { increment: 1 }
+      attemptCount: nextAttemptCount
     }
   });
 
@@ -427,24 +404,11 @@ export async function verifyCustomerOtp(input: VerifyOtpInput) {
     phoneHash,
     ipHash,
     userAgentHash,
-    challengeId: consumed.id,
+    challengeId: challenge.id,
     purpose,
-    remainingAttempts: Math.max(0, consumed.maxAttempts - consumed.attemptCount),
-    attemptCount: consumed.attemptCount,
-    maxAttempts: consumed.maxAttempts
+    attemptCount: nextAttemptCount,
+    maxAttempts
   });
 
-  return { ok: true as const, challenge: consumed, destination, purpose };
-}
-
-export async function expireOldCustomerOtps() {
-  if (!hasDatabase()) return { count: 0 };
-
-  return prisma.customerOtpChallenge.updateMany({
-    where: {
-      consumedAt: null,
-      expiresAt: { lte: new Date() }
-    },
-    data: { consumedAt: new Date() }
-  });
+  return { ok: true as const, destination };
 }
