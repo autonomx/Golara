@@ -7,6 +7,7 @@ import { getCustomerSessionCookie } from '@/lib/customers/customer-session-cooki
 import { safeCustomerProfileReturnTo } from '@/lib/customers/customer-profile-completion';
 import { updateCustomerProfile } from '@/lib/customers/customer-repository';
 import { hasDatabase } from '@/lib/prisma';
+import { assertSameOriginServerAction } from '@/lib/server-action-origin';
 
 function stringField(formData: FormData, name: string, fallback = '') {
   const value = formData.get(name);
@@ -30,6 +31,7 @@ async function requireCustomerId() {
 }
 
 export async function updateAccountProfileAction(formData: FormData) {
+  await assertSameOriginServerAction();
   const customerId = await requireCustomerId();
   const returnTo = safeCustomerProfileReturnTo(stringField(formData, 'returnTo', ''), '');
   const displayName = stringField(formData, 'displayName');
