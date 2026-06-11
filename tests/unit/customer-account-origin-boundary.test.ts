@@ -39,3 +39,10 @@ export async function runCustomerAccountOriginBoundaryTests() {
 
   console.log('customer-account-origin-boundary.test.ts passed');
 }
+
+if (process.argv[1]?.endsWith('customer-account-origin-boundary.test.ts')) {
+  runCustomerAccountOriginBoundaryTests().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}
