@@ -52,7 +52,7 @@ const statusClasses: Record<ReadinessStatus, string> = {
 const statusLabels: Record<ReadinessStatus, string> = { ready: 'Ready', warning: 'Needs decision', blocked: 'Blocked' };
 
 function issueLines(
-  readiness: { blockers: Array<{ code: string; detail: string }>; warnings: Array<{ code: string; detail: string }> },
+  readiness: { blockers: Array<{ code: string; summary: string; detail: string }>; warnings: Array<{ code: string; summary: string; detail: string }> },
   locale?: SupportedLocale | string | null
 ) {
   return [
