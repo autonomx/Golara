@@ -304,12 +304,12 @@ export async function issueCustomerOtp(input: IssueOtpInput) {
   const delivery = await deliverOtp(destination, code, purpose);
   await recordOtpRequestAuthEvent({
     allowed: true,
-    messageKey: 'otp_sent',
+    messageKey: 'otp_request_allowed',
     phoneHash: status.phoneHash,
     ipHash: status.ipHash,
     userAgentHash: status.userAgentHash,
     purpose,
-    channel: delivery.channel
+    channel: delivery.provider
   });
 
   return {
@@ -410,5 +410,5 @@ export async function verifyCustomerOtp(input: VerifyOtpInput) {
     maxAttempts
   });
 
-  return { ok: true as const, destination };
+  return { ok: true as const, destination, challenge };
 }
