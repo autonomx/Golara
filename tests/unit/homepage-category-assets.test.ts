@@ -25,6 +25,7 @@ export async function runHomepageCategoryAssetsTests() {
   const packageJson = readFileSync('package.json', 'utf8');
   const seedScript = readFileSync('prisma/seed-demo-category-media.ts', 'utf8');
   const categoryImageRoute = readFileSync('app/seed-images/category-real/[slug]/route.ts', 'utf8');
+  const tileCard = readFileSync('components/HomepageCategoryTileCard.tsx', 'utf8');
 
   assert.match(packageJson, /seed-demo-category-media\.ts/, 'db:seed should include the category media seed script');
   assert.match(seedScript, /seedCategories/, 'category media seed should derive rows from seed categories');
@@ -35,4 +36,9 @@ export async function runHomepageCategoryAssetsTests() {
   assert.doesNotMatch(categoryImageRoute, /stem: 'woshe-royal'/, 'category image route should not serve the removed Woshe Royal asset');
   assert.match(categoryImageRoute, /'today-vip': \[\{ directory: 'photo-real', stem: 'vip-flower-box' \}\]/, 'today VIP should route to the replacement VIP flower-box image');
   assert.match(categoryImageRoute, /royal: \[\{ directory: 'photo-real', stem: 'vip-flower-box' \}\]/, 'royal category should route to the replacement VIP flower-box image');
+
+  assert.match(tileCard, /object-\[68%_center\]/, 'category tile image should be biased away from the copy panel to reduce baked-in image text collisions');
+  assert.match(tileCard, /bg-stone-50\/92/, 'category tile live copy should sit on an opaque copy panel instead of directly over image text');
+  assert.match(tileCard, /backdrop-blur-sm/, 'category tile copy panel should soften busy image text under the live copy area');
+  assert.doesNotMatch(tileCard, /absolute left-6 top-1\/2 max-w-\[17rem\]/, 'category tile should not use the old transparent full-image text overlay');
 }
