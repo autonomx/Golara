@@ -44,6 +44,7 @@ Completed route-boundary slices:
 - Guarded `app/admin/readiness/page.tsx` as a localization-clean route wrapper that delegates to the admin console readiness section.
 - Guarded `app/admin/payments/alerts/page.tsx` route-boundary localization wiring through `createAdminTranslator(locale)` and admin dictionary-backed copy keys.
 - Guarded `app/admin/payments/operations/page.tsx` route-boundary localization wiring, data-driven operation-card copy, and admin dictionary-backed copy keys.
+- Guarded `app/admin/payments/settlement/page.tsx` route-boundary localization wiring, admin shell locale propagation, and admin dictionary-backed settlement navigation/auth copy keys.
 
 CI note from PR #510:
 
