@@ -80,6 +80,25 @@ function validateAdminReadiness(blockers: DeployReadinessIssue[]) {
   }
 }
 
+function validateCustomerAuthReadiness(blockers: DeployReadinessIssue[]) {
+  const otpSecret = envValue('CUSTOMER_OTP_SECRET');
+  if (!otpSecret) {
+    pushIssue(blockers, {
+      code: 'customer_otp_secret_missing',
+      severity: 'blocker',
+      summary: 'CUSTOMER_OTP_SECRET is missing.',
+      detail: 'Set a dedicated high-entropy customer OTP secret before production deploy.'
+    });
+  } else if (otpSecret.length < 32) {
+    pushIssue(blockers, {
+      code: 'customer_otp_secret_short',
+      severity: 'blocker',
+      summary: 'CUSTOMER_OTP_SECRET is too short.',
+      detail: 'Use a high-entropy customer OTP secret at least 32 characters long.'
+    });
+  }
+}
+
 function validateMediaReadiness(blockers: DeployReadinessIssue[]) {
   const mediaStorage = getMediaStorageReadiness();
   if (mediaStorage.productionSafe && mediaStorage.configured) return;
@@ -168,6 +187,7 @@ export function getDeployReadiness(): DeployReadinessReport {
     }
 
     validateAdminReadiness(blockers);
+    validateCustomerAuthReadiness(blockers);
     validateMediaReadiness(blockers);
     validateNotificationReadiness(blockers, warnings);
     validateDataSafetyReadiness(blockers);
