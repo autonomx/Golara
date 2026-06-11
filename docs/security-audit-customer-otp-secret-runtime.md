@@ -11,3 +11,7 @@ This security-audit slice removes the production fallback from customer OTP hash
 ## Follow-up
 
 The deploy-readiness test file still needs a separate readiness-gate slice once the connector allows the env-matrix test update. The runtime path now fails closed in production even before that readiness warning lands.
+
+## Verification note
+
+This branch keeps the runtime change narrow so CI can verify the typed OTP contract separately from the broader deploy-readiness matrix update.
