@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { customerProfileCompletionPath, isCustomerProfileComplete, safeCustomerProfileReturnTo } from '../../lib/customers/customer-profile-completion';
 import { getCustomerCopy } from '../../lib/localization/customer-copy';
+import { runCustomerAccountOriginBoundaryTests } from './customer-account-origin-boundary.test';
 
 const repoRoot = process.cwd();
 const loginActionsSource = readFileSync(join(repoRoot, 'app/account/login/actions.ts'), 'utf8');
@@ -11,6 +12,8 @@ const profileActionsSource = readFileSync(join(repoRoot, 'app/account/profile/ac
 const profilePageSource = readFileSync(join(repoRoot, 'app/account/profile/page.tsx'), 'utf8');
 
 export async function runCustomerRegistrationFlowTests() {
+  await runCustomerAccountOriginBoundaryTests();
+
   assert.equal(isCustomerProfileComplete({ displayName: 'Ava Rose' }), true, 'named customers should not be forced through profile completion');
   assert.equal(isCustomerProfileComplete({ displayName: '   ' }), false, 'blank names should keep the profile incomplete');
   assert.equal(isCustomerProfileComplete({}), false, 'new phone-only accounts should be treated as incomplete');
