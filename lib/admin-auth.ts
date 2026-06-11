@@ -15,6 +15,7 @@ import {
   type AdminRole
 } from './admin-auth-core';
 import { clearAdminSignInThrottle, isAdminSignInLocked, recordAdminSignInFailure } from './admin-login-throttle';
+import { assertSameOriginServerAction } from '@/lib/server-action-origin';
 
 export type { AdminIdentity, AdminRole } from './admin-auth-core';
 
@@ -48,6 +49,8 @@ export async function assertAdminAuthenticated() {
 }
 
 export async function assertAdminRole(requiredRole: AdminRole) {
+  // Enforce same-origin policy on all admin-only actions to prevent CSRF attacks
+  await assertSameOriginServerAction();
   const identity = await getAdminIdentity();
   if (!identity.authenticated) {
     throw new Error('Admin authentication is required for this CMS action.');
