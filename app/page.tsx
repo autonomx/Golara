@@ -68,10 +68,10 @@ export default async function HomePage() {
         id="home-collections"
         data-section="home-collections"
         aria-labelledby="home-collections-heading"
-        className="relative overflow-hidden bg-white px-5 py-20"
+        className="relative overflow-hidden bg-white py-20"
       >
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-rosewood/20 to-transparent" />
-        <div className="mx-auto max-w-[1520px]">
+        <div className="mx-auto max-w-7xl px-5">
           <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">{firstNonEmpty(homepage.collectionsEyebrow, copy('home.collectionsEyebrow'))}</p>
