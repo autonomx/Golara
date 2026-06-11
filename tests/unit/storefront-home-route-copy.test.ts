@@ -49,6 +49,8 @@ for (const fragment of [
   '<HomepageBannerSlideshow slides={homepageBannerSlides} homepage={homepage} />',
   '<BestSellersCarousel products={bestSellers} locale={locale} />',
   '<HomepageCategoryTileCard key={category.slug} category={category} priority={index < 4} locale={locale} />',
+  'className="relative overflow-hidden bg-white py-20"',
+  'className="mx-auto max-w-7xl px-5"',
   "copy('home.collectionsEyebrow')",
   "copy('home.collectionsTitle')",
   "copy('home.collectionsBody')",
@@ -66,7 +68,9 @@ for (const fragment of [
 for (const fragment of [
   "import { HomepageOccasionRail } from '@/components/HomepageOccasionRail';",
   '<HomepageOccasionRail occasions={occasionRailItems} locale={locale} />',
-  'const occasionRailItems = homepageOccasionsWithCounts.slice(0, 10);'
+  'const occasionRailItems = homepageOccasionsWithCounts.slice(0, 10);',
+  'className="relative overflow-hidden bg-white px-5 py-20"',
+  'className="mx-auto max-w-[1520px]"'
 ]) {
   lacks(fragment);
 }
