@@ -42,3 +42,8 @@ export async function runAdminLoginThrottleTests() {
   resetAdminSignInThrottleForTests();
   console.log('admin-login-throttle.test.ts passed');
 }
+
+runAdminLoginThrottleTests().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
