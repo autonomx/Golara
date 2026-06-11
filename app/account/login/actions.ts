@@ -4,6 +4,7 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createCustomerSession, linkCustomerAccount } from '@/lib/customers/customer-account-repository';
 import { setCustomerSessionCookie } from '@/lib/customers/customer-session-cookie';
+import { customerProfileCompletionPath, isCustomerProfileComplete } from '@/lib/customers/customer-profile-completion';
 import { issueCustomerOtp, verifyCustomerOtp } from '@/lib/customers/customer-otp-repository';
 import { normalizeCustomerPhone } from '@/lib/customers/customer-repository';
 import { hasDatabase } from '@/lib/prisma';
@@ -72,7 +73,7 @@ export async function verifyCustomerOtpAction(formData: FormData) {
         provider: 'phone-otp'
       });
       await setCustomerSessionCookie(token);
-      redirectTarget = returnTo;
+      redirectTarget = isCustomerProfileComplete(account.customer) ? returnTo : customerProfileCompletionPath(returnTo);
     }
   } catch (error) {
     console.warn('[account-login] failed to verify OTP', error);
