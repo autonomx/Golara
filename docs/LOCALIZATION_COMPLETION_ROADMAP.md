@@ -42,6 +42,7 @@ Completed route-boundary slices:
 - Guarded admin `loading.tsx` route shells so their title and eyebrow props stay backed by Persian loading-copy keys.
 - Localized `app/admin/products/page.tsx` pagination copy through `lib/localization/admin-catalog-page-copy.ts` and added a focused source/key guard.
 - Guarded `app/admin/readiness/page.tsx` as a localization-clean route wrapper that delegates to the admin console readiness section.
+- Guarded `app/admin/payments/alerts/page.tsx` route-boundary localization wiring through `createAdminTranslator(locale)` and admin dictionary-backed copy keys.
 
 CI note from PR #510:
 
