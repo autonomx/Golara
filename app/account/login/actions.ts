@@ -8,6 +8,7 @@ import { customerProfileCompletionPath, isCustomerProfileComplete } from '@/lib/
 import { issueCustomerOtp, verifyCustomerOtp } from '@/lib/customers/customer-otp-repository';
 import { normalizeCustomerPhone } from '@/lib/customers/customer-repository';
 import { hasDatabase } from '@/lib/prisma';
+import { assertSameOriginServerAction } from '@/lib/server-action-origin';
 
 function stringField(formData: FormData, name: string, fallback = '') {
   const value = formData.get(name);
@@ -36,6 +37,7 @@ async function requestContext() {
 }
 
 export async function requestCustomerOtpAction(formData: FormData) {
+  await assertSameOriginServerAction();
   const returnTo = safeReturnTo(stringField(formData, 'returnTo', '/account'));
   if (!hasDatabase()) redirect(loginPath('database-required', undefined, returnTo));
 
@@ -51,6 +53,7 @@ export async function requestCustomerOtpAction(formData: FormData) {
 }
 
 export async function verifyCustomerOtpAction(formData: FormData) {
+  await assertSameOriginServerAction();
   const returnTo = safeReturnTo(stringField(formData, 'returnTo', '/account'));
   if (!hasDatabase()) redirect(loginPath('database-required', undefined, returnTo));
 
