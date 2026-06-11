@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { addCartItem, clearCart, removeCartItem, updateCartItem } from '@/lib/cart/cart-repository';
 import { clearCartTokenCookie, getCartTokenCookie, setCartTokenCookie } from '@/lib/cart/cart-cookie';
 import { hasDatabase } from '@/lib/prisma';
+import { assertSameOriginServerAction } from '@/lib/server-action-origin';
 
 function stringField(formData: FormData, name: string, fallback = '') {
   const value = formData.get(name);
@@ -39,6 +40,8 @@ function revalidateCartSurfaces(returnTo: string) {
 }
 
 export async function addToCartAction(formData: FormData) {
+  // Enforce same-origin policy for cart mutations to prevent CSRF attacks
+  await assertSameOriginServerAction();
   const returnTo = safeReturnPath(stringField(formData, 'returnTo', '/cart'));
   if (!hasDatabase()) redirect(statusPath(returnTo, 'database-required'));
 
@@ -63,6 +66,8 @@ export async function addToCartAction(formData: FormData) {
 }
 
 export async function updateCartItemAction(formData: FormData) {
+  // Enforce same-origin policy for cart mutations to prevent CSRF attacks
+  await assertSameOriginServerAction();
   const returnTo = safeReturnPath(stringField(formData, 'returnTo', '/cart'));
   const token = await getCartTokenCookie();
   if (!hasDatabase() || !token) redirect(statusPath(returnTo, 'missing'));
@@ -84,6 +89,8 @@ export async function updateCartItemAction(formData: FormData) {
 }
 
 export async function removeCartItemAction(formData: FormData) {
+  // Enforce same-origin policy for cart mutations to prevent CSRF attacks
+  await assertSameOriginServerAction();
   const returnTo = safeReturnPath(stringField(formData, 'returnTo', '/cart'));
   const token = await getCartTokenCookie();
   if (!hasDatabase() || !token) redirect(statusPath(returnTo, 'missing'));
@@ -101,6 +108,8 @@ export async function removeCartItemAction(formData: FormData) {
 }
 
 export async function clearCartAction(formData: FormData) {
+  // Enforce same-origin policy for cart mutations to prevent CSRF attacks
+  await assertSameOriginServerAction();
   const returnTo = safeReturnPath(stringField(formData, 'returnTo', '/cart'));
   const token = await getCartTokenCookie();
   if (!hasDatabase() || !token) redirect(statusPath(returnTo, 'missing'));
