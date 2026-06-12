@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { STOREFRONT_LOCALE_COOKIE } from '@/lib/i18n/locale-cookie';
 import { normalizeLocale } from '@/lib/i18n/locales';
+import { assertSameOriginServerAction } from '@/lib/server-action-origin';
 
 function safeReturnPath(value: string | null) {
   const normalized = value?.trim();
@@ -12,6 +13,8 @@ function safeReturnPath(value: string | null) {
 }
 
 export async function setStorefrontLocaleAction(formData: FormData) {
+  // Enforce same-origin policy before modifying cookies to prevent CSRF attacks
+  await assertSameOriginServerAction();
   const localeValue = formData.get('locale');
   const returnToValue = formData.get('returnTo');
   const locale = normalizeLocale(typeof localeValue === 'string' ? localeValue : undefined);
