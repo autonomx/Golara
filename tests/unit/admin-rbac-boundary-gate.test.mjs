@@ -73,33 +73,41 @@ export async function recordOrderNotificationAttemptAction(orderId, notification
 }
 `,
   'app/admin/actions.ts': `
+async function ensureCanWriteCms() {
+  await assertAdminRole('owner');
+}
+export async function createMediaFromUrlAction(formData) {
+  await ensureCanWriteCms();
+}
+export async function uploadMediaAction(formData) {
+  await ensureCanWriteCms();
+}
+export async function updateMediaAction(mediaId, formData) {
+  await ensureCanWriteCms();
+}
+export async function updateMediaCategoryAction(mediaId, formData) {
+  await ensureCanWriteCms();
+}
 export async function createProductAction(formData) {
   await ensureCanWriteCms();
-  await assertAdminRole('owner');
 }
 export async function updateProductAction(productId, formData) {
   await ensureCanWriteCms();
-  await assertAdminRole('owner');
 }
-export async function deleteProductAction(productId) {
+export async function createProductVariantAction(productId, formData) {
   await ensureCanWriteCms();
-  await assertAdminRole('owner');
+}
+export async function updateProductVariantAction(productId, variantId, formData) {
+  await ensureCanWriteCms();
+}
+export async function updateVariantLocationStockAction(productId, variantId, formData) {
+  await ensureCanWriteCms();
 }
 export async function createCategoryAction(formData) {
   await ensureCanWriteCms();
-  await assertAdminRole('owner');
 }
 export async function updateCategoryAction(categoryId, formData) {
   await ensureCanWriteCms();
-  await assertAdminRole('owner');
-}
-export async function deleteCategoryAction(categoryId) {
-  await ensureCanWriteCms();
-  await assertAdminRole('owner');
-}
-export async function deleteMediaAction(mediaId) {
-  await ensureCanWriteCms();
-  await assertAdminRole('owner');
 }
 `,
   'app/admin/inquiry-actions.ts': `
@@ -119,6 +127,7 @@ assert.equal(pass.failures.length, 0);
 assert.ok(pass.checked.includes('app/admin/settings/actions.ts:updateStaffAccountAction:owner'));
 assert.ok(pass.checked.includes('app/admin/order-actions.ts:markOrderManualPaymentAction:owner'));
 assert.ok(pass.checked.includes('app/admin/order-actions.ts:updateOrderFulfillmentAction:staff'));
+assert.ok(pass.checked.includes('app/admin/actions.ts:uploadMediaAction:owner'));
 
 const fail = collectAdminRbacFailures({
   readFile: (file) => {
@@ -128,12 +137,26 @@ const fail = collectAdminRbacFailures({
     if (file === 'app/admin/order-actions.ts') {
       return sources[file].replace("markOrderManualPaymentAction(orderId, formData) {\n  await assertAdminRole('owner');", "markOrderManualPaymentAction(orderId, formData) {\n  await assertAdminRole('staff');");
     }
+    if (file === 'app/admin/actions.ts') {
+      return sources[file].replace("async function ensureCanWriteCms() {\n  await assertAdminRole('owner');", "async function ensureCanWriteCms() {\n  await assertAdminRole('staff');");
+    }
     return sources[file];
   }
 });
 assert.deepEqual(fail.failures, [
   "app/admin/settings/actions.ts: updateStaffAccountAction must require assertAdminRole('owner')",
-  "app/admin/order-actions.ts: markOrderManualPaymentAction must require assertAdminRole('owner')"
+  "app/admin/order-actions.ts: markOrderManualPaymentAction must require assertAdminRole('owner')",
+  "app/admin/actions.ts: createMediaFromUrlAction must require assertAdminRole('owner')",
+  "app/admin/actions.ts: uploadMediaAction must require assertAdminRole('owner')",
+  "app/admin/actions.ts: updateMediaAction must require assertAdminRole('owner')",
+  "app/admin/actions.ts: updateMediaCategoryAction must require assertAdminRole('owner')",
+  "app/admin/actions.ts: createProductAction must require assertAdminRole('owner')",
+  "app/admin/actions.ts: updateProductAction must require assertAdminRole('owner')",
+  "app/admin/actions.ts: createProductVariantAction must require assertAdminRole('owner')",
+  "app/admin/actions.ts: updateProductVariantAction must require assertAdminRole('owner')",
+  "app/admin/actions.ts: updateVariantLocationStockAction must require assertAdminRole('owner')",
+  "app/admin/actions.ts: createCategoryAction must require assertAdminRole('owner')",
+  "app/admin/actions.ts: updateCategoryAction must require assertAdminRole('owner')"
 ]);
 
 console.log('admin-rbac-boundary-gate.test.mjs passed');
