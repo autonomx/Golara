@@ -2,14 +2,15 @@
 
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { createCustomerSession, linkCustomerAccount } from '@/lib/customers/customer-account-repository';
-import { setCustomerSessionCookie } from '@/lib/customers/customer-session-cookie';
+import { createCustomerSession, linkCustomerAccount, revokeCustomerSession } from '@/lib/customers/customer-account-repository';
+import { getCustomerSessionCookie, setCustomerSessionCookie } from '@/lib/customers/customer-session-cookie';
 import { customerProfileCompletionPath, isCustomerProfileComplete } from '@/lib/customers/customer-profile-completion';
 import { issueCustomerOtp, verifyCustomerOtp } from '@/lib/customers/customer-otp-repository';
 import { normalizeCustomerPhone } from '@/lib/customers/customer-repository';
 import { hasDatabase } from '@/lib/prisma';
 import { assertSameOriginServerAction } from '@/lib/server-action-origin';
 import { safeReturnPath } from '@/lib/security/safe-return-path';
+import { warnWithRedactedError } from '@/lib/security/redacted-logging';
 
 function stringField(formData: FormData, name: string, fallback = '') {
   const value = formData.get(name);
@@ -47,7 +48,7 @@ export async function requestCustomerOtpAction(formData: FormData) {
     const result = await issueCustomerOtp({ phone, purpose: 'login', ...(await requestContext()) });
     redirectTarget = result.ok ? loginPath('code-sent', phone, returnTo) : loginPath(result.reason, phone, returnTo);
   } catch (error) {
-    console.warn('[account-login] failed to request OTP', error);
+    warnWithRedactedError('account-login', 'failed to request OTP', error);
   }
   redirect(redirectTarget);
 }
@@ -65,6 +66,7 @@ export async function verifyCustomerOtpAction(formData: FormData) {
     if (!result.ok) {
       redirectTarget = loginPath(result.reason, phone, returnTo);
     } else {
+      const previousToken = await getCustomerSessionCookie();
       const account = await linkCustomerAccount({
         phone,
         provider: 'phone',
@@ -75,11 +77,12 @@ export async function verifyCustomerOtpAction(formData: FormData) {
         customerId: account.customerId,
         provider: 'phone-otp'
       });
+      if (previousToken) await revokeCustomerSession(previousToken);
       await setCustomerSessionCookie(token);
       redirectTarget = isCustomerProfileComplete(account.customer) ? returnTo : customerProfileCompletionPath(returnTo);
     }
   } catch (error) {
-    console.warn('[account-login] failed to verify OTP', error);
+    warnWithRedactedError('account-login', 'failed to verify OTP', error);
   }
   redirect(redirectTarget);
 }
