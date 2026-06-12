@@ -1,183 +1,260 @@
-# Security Audit Report
+# Security Audit Report and Roadmap
 
-This document summarizes the results of a multi‑phase security audit of the **Golara** codebase.  The audit was performed in June 2026 and covers authentication, authorization, session management, CSRF and same‑origin protections, rate limiting and abuse controls, payment and order security, input validation, media handling, headers, secrets, data privacy, logging, and automated security gates.  Each finding is categorized by severity and status (Fixed, Accepted, Deferred) and links to the relevant pull request where applicable.
+This document tracks the June 2026 security audit of the **Golara** codebase. The audit covers authentication, authorization, session management, CSRF and same-origin protections, public abuse controls, payment/order security, input validation, media handling, browser headers, secrets, data privacy, logging, and automated security gates.
 
-## Phase 0 – Customer account same‑origin guard
+Status values:
 
-**Purpose:** extend the same‑origin boundary used for admin login to all customer account mutations (OTP, profile and address).  PR #583 added `assertSameOriginServerAction()` calls to these server actions and introduced focused unit tests.
+- **Fixed** — merged and covered by tests or CI gates.
+- **Partial** — meaningful controls exist, but material audit work remains.
+- **Deferred** — not yet implemented.
+- **Accepted** — intentionally accepted risk with rationale.
 
-**Status:** **Fixed**.  The merged PR ensures that customer OTP requests, OTP verification, profile edits and address mutations call `assertSameOriginServerAction()` before changing state.  The guard compares the submitted `Origin` header to the host/protocol and rejects cross‑origin submissions, while tolerating missing headers【12†L7-L13】.
+## Current audit position
 
-**Findings:**  The code addition increases protection against CSRF on customer account endpoints.  The helper is reusable and should be applied to other cookie‑backed actions in later phases.
+The project has completed the first major hardening pass and has moved into the remaining high-risk authorization, session, abuse-control, and payment/order verification work. The audit report previously marked several Phase 6, 7, 9, 10, 11, and 12 items as deferred even after they were fixed; this update reconciles that status through PR #598.
 
-## Phase 1 – Authentication and session boundaries
+## Recently completed security work
 
-**Completed:**
-
-- Admin dedicated pages and console routes require login.
-- Admin login includes throttling for repeated attempts and same‑origin checking【6†L69-L87】.
-- Customer OTP flow uses a dedicated secret and deploy‑readiness checks ensure the secret is present and of adequate length.
-
-**Remaining actions (High):**
-
-| Finding | Description | Severity | Status |
-| --- | --- | --- | --- |
-| **Admin mutation session checks** | Audit all admin mutation APIs (product/category/order/media/settlement etc.) to ensure they call `assertAdminAuthenticated()` or `assertAdminRole()`.  Currently only the generic helpers exist and there is no guarantee every server action calls them. | Critical | **Deferred** |
-| **Admin logout session clearing** | Ensure that the `clearAdminSession()` API reliably deletes the admin session cookie【6†L92-L94】.  Verify that logout endpoints call this function and test that the cookie is removed. | High | **Deferred** |
-| **Session rotation** | After successful admin login, rotate the session cookie to prevent session fixation.  This can be done by generating a new cookie value in `createAdminSession()`. | High | **Deferred** |
-| **Customer session lifetime and renewal** | Review `ADMIN_SESSION_MAX_AGE_SECONDS` and the analogous customer session lifetime to ensure tokens expire appropriately【7†L5-L8】.  Implement rolling session renewal to prevent indefinite sessions. | Medium | **Deferred** |
-| **Access control tests** | Add tests verifying that one customer cannot access another customer’s data (addresses, orders, session) through direct API calls.  Negative tests should exercise unauthorized access paths. | Critical | **Deferred** |
-
-## Phase 2 – CSRF / same‑origin protection for all mutations
-
-**Completed:**
-
-- Same‑origin guard added to admin login and customer account actions (Phase 0)【12†L7-L13】.
-
-**Remaining actions (Critical):**
-
-Apply the same‑origin or signed token requirement to *every* cookie‑backed state‑changing route.  The following route families need explicit protection:
-
-1. **Cart actions:** Adding, updating or removing items should call `assertSameOriginServerAction()`.  If implemented as server actions, these functions should verify the `Origin` header before mutating the cart.
-2. **Checkout/inquiry actions:** Checkout submission, order creation and inquiry forms should either require a same‑origin boundary or rely on signed webhooks/API tokens.  Anonymous checkout flows must be rate‑limited and validated.
-3. **Wishlist/saved items:** If the project supports wishlists, ensure mutations are same‑origin.
-4. **Admin mutations:** All admin product/category/order/media/settings actions must require the admin session and optionally a signed CSRF token.  Without this, an authenticated admin could be tricked into submitting a forged request from another site.
-5. **POST, PUT, PATCH, DELETE APIs:** Any state‑changing API using cookies must be audited.  If the endpoint is public, it should accept only signed tokens and be rate‑limited.
-
-## Phase 3 – Public API and abuse controls
-
-Unauthenticated endpoints and public actions can be abused for spam or resource exhaustion.  Recommended controls:
-
-| Endpoint/Action | Potential Abuse | Recommendation | Severity | Status |
-| --- | --- | --- | --- | --- |
-| **OTP request** | Attackers can request OTP codes repeatedly, causing SMS/email abuse | Implement per‑identity and per‑IP rate limits; enforce minimum intervals between OTP sends; log abuse events | High | Deferred |
-| **Inquiry/contact forms** | Forms may be used to send spam or perform injection | Add CAPTCHA or proof‑of‑work; rate limit per IP; validate message content and size | High | Deferred |
-| **Public order lookup** | Guessable tokens may expose order details | Ensure order tokens have sufficient entropy; implement throttling and lockout after repeated failures | High | Deferred |
-| **Product/category browsing API** | May allow enumeration and heavy queries | Add pagination, limit query complexity and enforce body size limits | Medium | Deferred |
-| **Cart creation** | Unauthenticated users could create excessive carts | Rate limit cart creation by IP and cookie; clean up abandoned sessions | Medium | Deferred |
-| **Upload/media endpoints** | Could be abused to store arbitrary content | Enforce strong authentication on uploads; limit file size and type; scan for malware | Critical | Deferred |
-| **Webhook endpoints** | Accept external calls; risk of abuse if secrets leak | Validate HMAC signatures and reject requests with incorrect signatures; implement replay protection and idempotency | Critical | Deferred |
-
-## Phase 4 – Authorization and RBAC
-
-Admin authentication alone is not enough; each action must check the caller’s role.  The codebase defines roles (`owner`, `staff`) in `admin-auth-core.ts` and includes helpers like `adminRoleMeetsRequirement()`【7†L38-L41】【7†L119-L121】.  The audit identifies the following gaps:
-
-1. **Owner‑only actions:** Payment operations, settlement and high‑risk order mutations should require the `owner` role.  Ensure each server action calls `assertAdminRole('owner')`.
-2. **Staff management:** Creating or deleting staff accounts and assigning roles should be limited to owners.  Audit the routes under `app/admin/staff` or equivalent.
-3. **Payment operations:** Issuing refunds, capturing payments and managing payout settings require strict RBAC.  Confirm there are no missing checks.
-4. **Order mutation actions:** Changing order status, editing order items, or updating shipping details should require at least the `staff` role and sometimes `owner`.
-5. **UI vs. server:** Remember that hiding UI elements is not a security control.  Tests must verify that lower roles receive authorization errors when calling restricted server actions.
-
-**Severity:** Critical.  **Status:** Deferred (implementation required).
-
-## Phase 5 – Payment and order security
-
-Payment flows involve external providers and carry high risk.  Observations:
-
-- **Webhook signature validation exists**: The payment webhook code validates HMAC signatures (observed in the repository).  Negative tests ensure invalid signatures are rejected.
-- **Remaining tasks:**
-  - **Replay protection:** Store webhook event IDs and timestamps to prevent replay attacks.  Reject duplicates or out‑of‑order events.
-  - **Idempotency enforcement:** Use idempotency keys when creating payments and orders to avoid double charges.
-  - **Amount/currency checks:** Validate that the payment amount and currency match the order; reject mismatches.
-  - **Order ownership:** Ensure that payment confirmation endpoints verify the order belongs to the current customer session; do not allow enumeration.【6†L69-L87】 shows how admin sessions set cookies; similar patterns should be used for customer order tokens.
-  - **Public token entropy:** Order lookup tokens must be long, random and unguessable; consider using UUIDv4 or strong base64 values.
-  - **Response sanitization:** Do not expose payment or admin data in storefront responses.  Ensure that only necessary fields (e.g. status, amount) are returned.
-  - **Audit trail:** Record all settlement and payment actions with timestamps, actors and IPs.
-
-**Severity:** Critical/High.  **Status:** Deferred.
-
-## Phase 6 – Input validation and injection safety
-
-Despite using an ORM (Prisma) which reduces SQL injection risk, user input can still cause issues.  The audit recommends:
-
-1. **HTML rendering:** Sanitize product descriptions, category names and rich text fields to prevent XSS.  Avoid using `dangerouslySetInnerHTML` unless sanitized.  Consider libraries like DOMPurify.
-2. **Markdown/rich text:** When rendering user‑generated Markdown, use a safe renderer that escapes HTML tags.
-3. **Search/filter queries:** Validate and escape search parameters; implement allowlist for filter fields to prevent injection into SQL or Mongo queries.
-4. **Email/SMS/webhook payloads:** Escape values included in templates to avoid injection into HTML emails or command contexts.
-5. **URL handling:** Validate redirect URLs and ensure they belong to allowed domains; avoid open redirect vulnerabilities.
-6. **File metadata:** Strip or sanitize metadata from uploaded files (e.g., EXIF) to avoid leakage of internal paths or GPS coordinates.
-
-**Severity:** High.  **Status:** Deferred.
-
-## Phase 7 – Uploads, media and external resource safety
-
-File uploads and external media present numerous risks.  The following controls are recommended:
-
-| Control | Purpose | Severity | Status |
-| --- | --- | --- | --- |
-| **MIME sniffing** | Determine file type by inspecting file headers, not just the client‑provided MIME/type.  Reject mismatches. | High | Deferred |
-| **Max file size** | Enforce server‑side limits for uploads to prevent resource exhaustion.  Document the limit in configuration. | High | Deferred |
-| **SVG sanitization** | Do not allow inline SVG content that could execute scripts.  Either disallow SVG uploads or sanitize them. | High | Deferred |
-| **Path traversal prevention** | Ensure that upload paths cannot traverse out of the designated media directory.  Use safe join functions and normalize paths. | Medium | Deferred |
-| **Deletion safeguards** | Media deletion actions should ensure the file being deleted belongs to the current user and is within allowed directories.  Avoid unsanitized input in `fs.unlink()` calls. | Medium | Deferred |
-| **Credential isolation** | Store Cloudinary or other media provider credentials exclusively on the server; never expose them to the client.  Use environment variables with strong secrets【7†L56-L60】. | Medium | Deferred |
-| **Virus/malware scanning** | For public‑facing uploads, integrate a malware scanning service (e.g., ClamAV, S3 AV). | Medium | Deferred |
-
-## Phase 8 – Security headers and browser hardening
-
-The project already uses baseline security headers and a Content‑Security‑Policy (CSP).  Recommendations:
-
-- **Tighten CSP:** Gradually reduce `script-src` allowances by adopting nonces or hashes, remove `unsafe-inline` where possible and specify allowed domains.  Consider adding a `report-uri`/`report-to` directive to collect CSP violation reports.
-- **Verify deployment:** Confirm that the same headers are present in production (e.g. Vercel) and that route overrides do not weaken them.  Use automated tests or a CI script to scan response headers.
-- **Admin parity:** Ensure admin pages receive the same security headers as storefront pages.
-- **Frame options:** Use `X-Frame-Options: DENY` or corresponding CSP directives to prevent click‑jacking.
-- **HSTS:** Set `Strict‑Transport‑Security` with a long max‑age to enforce HTTPS.
-
-**Severity:** High.  **Status:** Deferred.
-
-## Phase 9 – Secrets, environment and deploy readiness
-
-The code currently requires `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` to be set; otherwise admin auth is disabled【7†L56-L69】.  Observations:
-
-- **Ensure strong values:** Enforce minimum length/entropy for `ADMIN_SESSION_SECRET`, `ADMIN_PASSWORD` and `CUSTOMER_OTP_SECRET`.  Use a runtime check that fails startup if secrets are weak.
-- **Default credentials:** Block known default credentials in production; ensure `.env.example` clearly separates demo values and instructs operators to set real secrets.
-- **Webhook secrets:** Require unique secrets for each payment provider’s webhook; do not fall back to a default.
-- **Media provider:** Require production media provider credentials (e.g., S3, Cloudinary) when uploads are enabled.
-- **Secret scanning:** Integrate secret scanning in CI to catch accidental commits of API keys or secrets.
-
-**Severity:** Critical/High.  **Status:** Deferred.
-
-## Phase 10 – Data privacy and exposure audit
-
-Audit goals:
-
-1. **Personal data leakage:** Ensure customer phone numbers, emails and addresses are never exposed in pages or APIs without proper authorization.  Mask or redact sensitive fields in logs and responses.
-2. **Order details:** Protect order details behind unguessable tokens and session checks.  Do not include internal identifiers or payment information in storefront responses.
-3. **Admin logs:** Restrict access to audit logs and admin diagnostic endpoints to owners; do not expose them to staff roles.
-4. **Internal provider diagnostics:** Remove or protect endpoints that reveal internal provider configuration or error details.
-5. **Search endpoints:** Ensure that search APIs return only necessary fields and do not leak private metadata.
-6. **Error handling:** In production, hide stack traces and internal error messages; provide generic error responses to clients while logging details server‑side.
-
-**Severity:** High.  **Status:** Deferred.
-
-## Phase 11 – Logging, audit trails and incident readiness
-
-Security is not only prevention; traceability matters:
-
-- **Admin logins:** Record admin sign‑in attempts, including timestamps, IP addresses and throttle status.  Use structured logs and rotate them appropriately.
-- **Mutation audit logs:** For each admin mutation, record the actor, action, target, time and outcome.  Store logs securely and make them accessible only to authorized roles.
-- **Authorization failures:** Log failed authorization attempts without revealing sensitive details to the client.  Monitor for repeated failures indicating brute‑force attacks.
-- **Payment and webhook failures:** Record webhook events, including signature validation results, idempotency keys and responses from payment providers.
-- **OTP abuse:** Log OTP request events and throttle triggers.  Use logs to detect abuse patterns.
-- **Media uploads:** Log upload attempts, file metadata and scan results.  Record deletion events and actor identity.
-- **Incident runbook:** Develop incident response runbooks that outline how to investigate logs, contain breaches and communicate with stakeholders.
-
-**Severity:** Medium/High.  **Status:** Deferred.
-
-## Phase 12 – Automated security gates
-
-After completing the manual audit slices, add automated CI gates to prevent regressions:
-
-| Gate | Purpose | Status |
+| Area | Status | Evidence |
 | --- | --- | --- |
-| **Dependency audit** | Run `npm audit` or a curated security audit on dependencies; fail builds on critical vulnerabilities. | Deferred |
-| **Secret scanning** | Use tools like GitHub Advanced Security or TruffleHog to detect secrets in commits and PRs. | Deferred |
-| **Route mutation auth guard** | Add a script to scan server actions for missing `assertAdminAuthenticated()`, `assertAdminRole()` or `assertSameOriginServerAction()` calls.  Fail CI if a mutation lacks a guard.  The repository already contains `tools/check-action-boundaries.mjs`; extend it to cover admin and storefront actions. | Deferred |
-| **CSP/header guard** | Write tests that fetch pages and assert that required headers are present (e.g., via Playwright). | Deferred |
-| **Public API allowlist** | Maintain a list of public endpoints; test that no new unauthenticated endpoints are introduced without explicit approval. | Deferred |
-| **Upload/media allowlist** | Enforce file type and size checks via automated tests. | Deferred |
-| **Deploy‑readiness guard** | Add a CI gate that verifies required secrets are set and fail deployment if not. | Deferred |
+| Customer account same-origin guard | **Fixed** | PR #583 added same-origin protection to customer OTP/profile/address mutations. |
+| Admin login throttle and origin boundary | **Fixed** | Admin login has throttling and same-origin checks. |
+| Public API abuse and payment guards | **Fixed** | PR #588 hardened OTP abuse tests, public order token handling, webhook duplicate replay handling, raw webhook body validation, and payment webhook token matching. |
+| Safe return paths and JSON-LD escaping | **Fixed** | PR #589 added centralized same-origin return-path normalization and hardened JSON-LD serialization. |
+| Media magic-byte validation | **Fixed** | PR #590 rejects spoofed uploads and unsupported/SVG/script payload bytes before local or Cloudinary storage. |
+| Production secret readiness | **Fixed** | PR #591 blocks missing, short, and default/placeholder production admin/customer secrets. |
+| Account mutation log redaction | **Fixed** | PR #592 redacts caught account profile/address errors. |
+| Homepage visual polish | **Non-security fixed** | PR #593 softened homepage background transition. |
+| Checkout/cart log redaction | **Fixed** | PR #594 redacts caught cart and checkout mutation errors. |
+| Public API allowlist gate | **Fixed** | PR #595 inventories `app/api/**/route.ts`, keeps only signed payment webhooks public, and requires auth/token/signature boundaries elsewhere. |
+| Media upload allowlist gate | **Fixed** | PR #596 locks upload size/type/signature/host controls into CI. |
+| Secret scanning gate | **Fixed** | PR #597 adds committed-secret scanning to unit CI. |
+| Server-action CSRF guard gate | **Fixed** | PR #598 broadens CSRF/server-action scanning to all `app/**` server-action modules and wires it into runtime/unit CI. |
+
+## Phases left
+
+### Phase A — Admin RBAC and owner-only mutation authorization
+
+**Priority:** Critical  
+**Status:** Deferred  
+**Goal:** prove every sensitive admin mutation enforces the correct role on the server, not just in UI.
+
+Remaining work:
+
+1. Inventory all admin server actions and admin API mutations.
+2. Classify each action by required role: `staff`, `owner`, or service-token/webhook-only.
+3. Require `assertAdminAuthenticated()` or `assertAdminRole(...)` in each mutation path.
+4. Add negative tests for lower-role denial, especially owner-only actions.
+5. Expand source gates to prevent new high-risk admin mutations without explicit role requirements.
+
+High-risk targets:
+
+- Staff/user management.
+- Payment operations, captures, refunds, and settlement controls.
+- Provider settings and credentials.
+- Order status and fulfillment mutations.
+- Media deletion and destructive catalog mutations.
+- Admin diagnostics and audit-log access.
+
+### Phase B — Session lifecycle hardening
+
+**Priority:** High  
+**Status:** Deferred  
+**Goal:** tighten admin/customer session creation, logout, expiry, and fixation resistance.
+
+Remaining work:
+
+1. Verify admin logout reliably clears the session cookie.
+2. Rotate admin session cookie value after successful login.
+3. Review customer and admin session lifetimes.
+4. Add session expiry and renewal tests.
+5. Add cross-customer negative tests for account/address/order access.
+
+### Phase C — Public abuse controls and throttling
+
+**Priority:** High  
+**Status:** Partial  
+**Goal:** prevent spam, enumeration, resource exhaustion, and brute-force access against public flows.
+
+Completed:
+
+- OTP abuse regression coverage exists.
+- Public order token handling was hardened.
+- Webhook raw-body/replay/idempotency boundary was improved.
+- Public API allowlist CI gate exists.
+
+Remaining work:
+
+1. Inquiry/contact form rate limiting, content-size validation, and spam controls.
+2. Public order lookup throttling and lockout after repeated failures.
+3. Cart creation throttling and abandoned-cart cleanup controls.
+4. Product/category query complexity and pagination limits.
+5. Abuse-event logging that avoids customer-data leakage.
+
+### Phase D — Payment and order integrity
+
+**Priority:** Critical/High  
+**Status:** Partial  
+**Goal:** ensure payment state transitions cannot be replayed, spoofed, over/underpaid, cross-owned, or silently mis-audited.
+
+Completed:
+
+- Payment webhook signature validation exists.
+- Duplicate webhook replay rejection has regression coverage.
+- Public webhook routes are allowlisted and required to retain signature/raw-body validation.
+
+Remaining work:
+
+1. Amount and currency reconciliation against the canonical order total.
+2. Order ownership checks for storefront payment confirmation and public order views.
+3. Idempotency-key enforcement for payment/order creation boundaries.
+4. Provider callback payload minimization and response sanitization.
+5. Complete audit trail for payment, settlement, refund, and webhook outcomes.
+
+### Phase E — Data privacy and response exposure audit
+
+**Priority:** High  
+**Status:** Partial  
+**Goal:** verify customer and internal operational data never leaks through pages, APIs, logs, diagnostics, or search.
+
+Completed:
+
+- Account, cart, and checkout caught-error logs use redaction helpers.
+- Redaction source gates cover key customer-input mutation paths.
+
+Remaining work:
+
+1. Audit storefront pages and public APIs for exposed emails, phone numbers, addresses, internal IDs, payment metadata, and admin fields.
+2. Mask or minimize order/customer fields in public views.
+3. Protect admin diagnostic/provider pages with owner-only access.
+4. Add production-safe error response tests that hide stacks/internal details.
+5. Add search response allowlist tests for public/catalog endpoints.
+
+### Phase F — Logging, audit trails, and incident readiness
+
+**Priority:** Medium/High  
+**Status:** Partial  
+**Goal:** make security-relevant events traceable without leaking sensitive data.
+
+Completed:
+
+- Redacted error logging exists for several customer mutation surfaces.
+
+Remaining work:
+
+1. Structured admin login/audit events with safe metadata.
+2. Authorization-failure logging without secret/customer leakage.
+3. Payment/webhook event logging with signature/idempotency results.
+4. OTP abuse and throttle-event logging.
+5. Media upload/delete logging with actor and result.
+6. Incident response runbook for investigation, containment, and notification.
+
+### Phase G — Input validation and injection safety follow-up
+
+**Priority:** Medium/High  
+**Status:** Partial  
+**Goal:** finish the non-upload validation and rendering audit.
+
+Completed:
+
+- Safe return-path normalization exists.
+- JSON-LD serialization escapes script-breaking and HTML-sensitive characters.
+
+Remaining work:
+
+1. Rich text/Markdown renderer audit.
+2. Product/category/admin content rendering audit for unsafe HTML paths.
+3. Search/filter schema allowlists.
+4. Email/SMS/template escaping checks.
+5. Uploaded-image metadata stripping policy, if required by production privacy goals.
+
+### Phase H — Media deletion, path traversal, and malware policy
+
+**Priority:** Medium  
+**Status:** Partial  
+**Goal:** finish upload lifecycle controls beyond upload-time MIME/signature checks.
+
+Completed:
+
+- Upload size/type allowlist and magic-byte sniffing exist.
+- SVG/script uploads are rejected.
+- Media upload allowlist CI gate exists.
+
+Remaining work:
+
+1. Path traversal checks for local media paths and deletion helpers.
+2. Media deletion authorization and ownership checks.
+3. Cloudinary/server credential isolation verification.
+4. Production malware-scanning decision: integrate scanning or document accepted risk.
+5. Optional metadata stripping for privacy-sensitive images.
+
+### Phase I — Browser/header deployment verification
+
+**Priority:** Medium  
+**Status:** Partial  
+**Goal:** ensure security headers are present in production-like responses, not only in config.
+
+Completed:
+
+- Baseline headers and CSP exist in the app configuration.
+- Header config tests exist.
+
+Remaining work:
+
+1. Production-like route header smoke tests for storefront and admin routes.
+2. CSP tightening plan to remove/reduce `unsafe-inline` where practical.
+3. CSP report endpoint or monitoring decision.
+4. Admin/storefront header parity verification.
+
+### Phase J — Dependency and supply-chain gate
+
+**Priority:** Medium  
+**Status:** Deferred  
+**Goal:** prevent known critical/high dependency vulnerabilities and supply-chain regressions.
+
+Remaining work:
+
+1. Add dependency audit gate with a clear severity threshold.
+2. Decide allowlist/expiration policy for unavoidable advisories.
+3. Ensure lockfile changes are reviewed by CI.
+4. Consider license/publisher/package-integrity checks if production risk warrants it.
+
+### Phase K — Security roadmap closeout and documentation
+
+**Priority:** Medium  
+**Status:** In progress  
+**Goal:** keep security status auditable and aligned with merged code.
+
+Remaining work:
+
+1. Update this document after each security PR.
+2. Add owner/reviewer signoff for accepted risks.
+3. Link all completed items to PRs or commits.
+4. Convert remaining phases into narrowly scoped implementation PRs.
+5. Keep all security gates documented in the CI section of the production roadmap.
+
+## Automated gates currently in place
+
+| Gate | Status | Notes |
+| --- | --- | --- |
+| Secret scanning | **Fixed** | `npm run check:secrets` runs before the unit suite. |
+| Public API allowlist | **Fixed** | Public routes are inventoried and must have explicit approval/boundaries. |
+| Media upload allowlist | **Fixed** | Size, MIME allowlist, magic-byte checks, SVG rejection, and validated-byte reuse are covered. |
+| Server-action CSRF guard scanner | **Fixed** | `check:csrf-guards` runs in runtime and unit CI and scans all `app/**` server-action modules. |
+| Deploy-readiness secret checks | **Fixed** | Production admin/customer secrets are checked for presence, length, and placeholder/default values. |
+| Redacted logging source guards | **Partial** | Customer mutation paths are covered; admin/provider diagnostics still need broader audit. |
+| Dependency audit | **Deferred** | Still needs CI integration and policy. |
+| Production route header smoke | **Deferred** | Config tests exist; response-level smoke remains. |
+
+## Recommended next phase order
+
+1. **Phase A — Admin RBAC and owner-only mutation authorization.** This is the highest remaining risk because UI hiding is not a server-side security boundary.
+2. **Phase B — Session lifecycle hardening.** Fix logout, rotation, and cross-customer access tests.
+3. **Phase D — Payment and order integrity.** Add amount/currency/order-ownership/idempotency verification.
+4. **Phase C — Public abuse controls.** Add inquiry/order-lookup/cart/query throttles and lockouts.
+5. **Phase E/F — Privacy, diagnostics, and audit trail hardening.** Broaden redaction and operational logging.
+6. **Phase H/I/J — Media lifecycle, deployment headers, and dependency gate.** Finish remaining regression gates and accepted-risk documentation.
 
 ## Conclusion
 
-The Golara project has made progress in hardening its authentication and CSRF boundaries, particularly through the recently merged customer account same‑origin guard.  However, many critical and high‑severity items remain outstanding, particularly around admin mutation authorization, CSRF protections across all routes, abuse controls, role‑based access, and secrets management.  The remaining phases outlined above should be addressed systematically, with each item either fixed or formally accepted/deferred and tracked in production.  Comprehensive tests and automated security gates will help ensure future changes do not reintroduce these vulnerabilities.
+The security audit is no longer at the initial discovery stage. A substantial set of hardening controls and CI gates has landed, especially around public API boundaries, upload safety, secret readiness, logging redaction, and server-action CSRF scanning. The remaining highest-risk work is now concentrated in admin RBAC, session lifecycle, public abuse controls, payment/order integrity, and privacy/audit-trail completeness. Each remaining phase should continue as a narrow PR with CI-backed regression coverage.
