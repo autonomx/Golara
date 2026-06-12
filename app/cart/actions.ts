@@ -6,6 +6,7 @@ import { addCartItem, clearCart, removeCartItem, updateCartItem } from '@/lib/ca
 import { clearCartTokenCookie, getCartTokenCookie, setCartTokenCookie } from '@/lib/cart/cart-cookie';
 import { hasDatabase } from '@/lib/prisma';
 import { assertSameOriginServerAction } from '@/lib/server-action-origin';
+import { safeReturnPath } from '@/lib/security/safe-return-path';
 
 function stringField(formData: FormData, name: string, fallback = '') {
   const value = formData.get(name);
@@ -18,11 +19,8 @@ function intField(formData: FormData, name: string, fallback = 1) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-function safeReturnPath(value?: string) {
-  const fallback = '/cart';
-  if (!value || !value.startsWith('/')) return fallback;
-  if (value.startsWith('//')) return fallback;
-  return value;
+function cartReturnPath(value?: string) {
+  return safeReturnPath(value, '/cart');
 }
 
 function statusPath(path: string, status: string) {
@@ -42,7 +40,7 @@ function revalidateCartSurfaces(returnTo: string) {
 export async function addToCartAction(formData: FormData) {
   // Enforce same-origin policy for cart mutations to prevent CSRF attacks
   await assertSameOriginServerAction();
-  const returnTo = safeReturnPath(stringField(formData, 'returnTo', '/cart'));
+  const returnTo = cartReturnPath(stringField(formData, 'returnTo', '/cart'));
   if (!hasDatabase()) redirect(statusPath(returnTo, 'database-required'));
 
   let redirectTarget = '';
@@ -68,7 +66,7 @@ export async function addToCartAction(formData: FormData) {
 export async function updateCartItemAction(formData: FormData) {
   // Enforce same-origin policy for cart mutations to prevent CSRF attacks
   await assertSameOriginServerAction();
-  const returnTo = safeReturnPath(stringField(formData, 'returnTo', '/cart'));
+  const returnTo = cartReturnPath(stringField(formData, 'returnTo', '/cart'));
   const token = await getCartTokenCookie();
   if (!hasDatabase() || !token) redirect(statusPath(returnTo, 'missing'));
 
@@ -91,7 +89,7 @@ export async function updateCartItemAction(formData: FormData) {
 export async function removeCartItemAction(formData: FormData) {
   // Enforce same-origin policy for cart mutations to prevent CSRF attacks
   await assertSameOriginServerAction();
-  const returnTo = safeReturnPath(stringField(formData, 'returnTo', '/cart'));
+  const returnTo = cartReturnPath(stringField(formData, 'returnTo', '/cart'));
   const token = await getCartTokenCookie();
   if (!hasDatabase() || !token) redirect(statusPath(returnTo, 'missing'));
 
@@ -110,7 +108,7 @@ export async function removeCartItemAction(formData: FormData) {
 export async function clearCartAction(formData: FormData) {
   // Enforce same-origin policy for cart mutations to prevent CSRF attacks
   await assertSameOriginServerAction();
-  const returnTo = safeReturnPath(stringField(formData, 'returnTo', '/cart'));
+  const returnTo = cartReturnPath(stringField(formData, 'returnTo', '/cart'));
   const token = await getCartTokenCookie();
   if (!hasDatabase() || !token) redirect(statusPath(returnTo, 'missing'));
 
