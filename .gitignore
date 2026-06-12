@@ -32,3 +32,4 @@ prisma/dev.db
 Thumbs.db
 .vscode
 .idea
+.vercel
