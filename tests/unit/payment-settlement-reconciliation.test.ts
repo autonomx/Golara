@@ -18,6 +18,38 @@ export async function runPaymentSettlementReconciliationTests() {
   assert.doesNotMatch(helper, /checkoutPaymentAttempt\.update/);
   assert.doesNotMatch(helper, /checkoutPaymentEvent\.create/);
 
+  const webhookService = source('lib/checkout/payment-webhook-service.ts');
+  assert.match(
+    webhookService,
+    /function shouldApplyWebhookStateChange/,
+    'payment webhook service should centralize settlement-gated state application'
+  );
+  assert.match(
+    webhookService,
+    /if \(input\.eventStatus !== 'paid'\) return true;/,
+    'non-paid trusted webhooks may still update failed/cancelled state without settlement amount matching'
+  );
+  assert.match(
+    webhookService,
+    /return input\.settlementReconciliation\?\.status === 'settled';/,
+    'paid webhooks must require settled reconciliation before state changes are applied'
+  );
+  assert.match(
+    webhookService,
+    /const settlementReconciliation = await paymentSettlementRepository\.upsertForPaymentEvent\(created\.id\);[\s\S]*const shouldApplyState = shouldApplyWebhookStateChange/,
+    'webhook service should reconcile settlement before deciding whether to apply paid state'
+  );
+  assert.match(
+    webhookService,
+    /if \(shouldApplyState\) \{[\s\S]*await applyTrustedWebhookStateChange/,
+    'webhook service should only apply payment\/order state when the settlement gate passes'
+  );
+  assert.match(
+    webhookService,
+    /webhookSettlementStatus: settlementReconciliation\?\.status \|\| 'missing'/,
+    'webhook event metadata should record settlement status for incident review'
+  );
+
   const settled = planPaymentSettlementReconciliation({
     provider: 'stripe',
     providerReference: 'cs_test_123',
