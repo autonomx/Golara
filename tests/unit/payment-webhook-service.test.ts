@@ -19,14 +19,18 @@ export async function runPaymentWebhookServiceTests() {
   assert.match(record, /paymentAttemptId is required for payment webhook event persistence/);
 
   assert.match(service, /import 'server-only'/);
+  assert.match(service, /normalizePublicOrderLookupToken/);
   assert.match(service, /export async function recordPaymentWebhookEvent/);
   assert.match(service, /normalizePaymentWebhookEvent\(input\)/);
   assert.match(service, /checkoutPaymentEvent\.findUnique/);
   assert.match(service, /provider_idempotencyKey/);
+  assert.match(service, /status: 'duplicate'/);
   assert.match(service, /checkoutPaymentAttempt\.findFirst/);
   assert.match(service, /providerReference: input\.providerReference/);
-  assert.match(service, /orderNumber: input\.orderNumber/);
-  assert.match(service, /publicLookupToken: input\.publicLookupToken/);
+  assert.match(service, /const orderNumber = input\.orderNumber\?\.trim\(\)/);
+  assert.match(service, /const publicLookupToken = input\.publicLookupToken \? normalizePublicOrderLookupToken/);
+  assert.match(service, /if \(orderNumber\)/);
+  assert.doesNotMatch(service, /if \(input\.orderNumber \|\| input\.publicLookupToken\)/);
   assert.match(service, /checkoutPaymentEvent\.create/);
   assert.match(service, /paymentWebhookService = \{/);
   assert.match(service, /async function applyTrustedWebhookStateChange/);
