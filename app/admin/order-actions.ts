@@ -231,7 +231,7 @@ export async function removeOrderLineItemAction(orderId: string, itemId: string,
 }
 
 export async function updateOrderDiscountAction(orderId: string, formData: FormData) {
-  const actor = await assertAdminRole('staff');
+  const actor = await assertAdminRole('owner');
   if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
 
   const requestedDiscountCents = Math.max(0, integerFormValue(formData, 'discountCents', 0));
@@ -308,7 +308,7 @@ export async function updateOrderCustomerAssignmentAction(orderId: string, formD
 }
 
 export async function markOrderManualPaymentAction(orderId: string, formData: FormData) {
-  const actor = await assertAdminRole('staff');
+  const actor = await assertAdminRole('owner');
   const amountCents = integerFormValue(formData, 'amountCents', 0);
   const providerReference = stringFormValue(formData, 'providerReference');
   const note = stringFormValue(formData, 'note');
@@ -339,7 +339,7 @@ export async function markOrderManualPaymentAction(orderId: string, formData: Fo
 }
 
 async function transitionManualPaymentAttemptAction(orderId: string, paymentAttemptId: string, to: 'refunded' | 'cancelled', status: string, formData?: FormData) {
-  const actor = await assertAdminRole('staff');
+  const actor = await assertAdminRole('owner');
   if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
 
   let updated: Awaited<ReturnType<typeof transitionCheckoutPaymentStatus>>;
