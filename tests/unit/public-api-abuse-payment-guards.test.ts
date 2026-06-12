@@ -28,7 +28,7 @@ export async function runPublicApiAbusePaymentGuardTests() {
   assert.match(otpRepository, /listRecentOtpRequestEvents/);
   assert.match(otpRepository, /recordOtpRequestAuthEvent/);
   assert.match(otpRepository, /eventType: event\.eventType/);
-  assert.match(otpRepository, /reasonCode: input\.decision\.reasonCode/);
+  assert.match(otpRepository, /reasonCode: input\.reasonCode/);
   assert.match(otpThrottle, new RegExp(OTP_REQUEST_BLOCKED_EVENT));
 
   const now = new Date('2026-06-11T00:00:00.000Z');
