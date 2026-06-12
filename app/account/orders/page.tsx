@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { SiteHeader } from '@/components/SiteHeader';
 import { formatMinorUnitAmount } from '@/lib/catalog';
-import { getCustomerSession, listCustomerOrders } from '@/lib/customers/customer-account-repository';
+import { getCustomerSession, listCustomerOrdersForSession } from '@/lib/customers/customer-account-repository';
 import { getCustomerSessionCookie } from '@/lib/customers/customer-session-cookie';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import {
@@ -52,7 +52,7 @@ export default async function CustomerOrderHistoryPage() {
   const locale = session.customer.locale;
   const dir = getCustomerCopyDirection(locale);
   const copy = (key: CustomerOrderCopyKey) => getCustomerOrderCopy(key, locale);
-  const orders = await listCustomerOrders(session.customerId);
+  const orders = await listCustomerOrdersForSession(session);
 
   return (
     <main id="main-content" tabIndex={-1} dir={dir}>
