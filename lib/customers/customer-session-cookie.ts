@@ -17,6 +17,8 @@ export async function getCustomerSessionCookie() {
 
 export async function setCustomerSessionCookie(token: string) {
   const cookieStore = await cookies();
+  // Clear any existing customer session before setting a new one to rotate tokens
+  cookieStore.delete(CUSTOMER_SESSION_COOKIE_NAME);
   const maxAge = customerSessionDays() * 24 * 60 * 60;
   cookieStore.set(CUSTOMER_SESSION_COOKIE_NAME, token, {
     httpOnly: true,
