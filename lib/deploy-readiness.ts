@@ -15,6 +15,11 @@ export type DeployReadinessReport = {
   warnings: DeployReadinessIssue[];
 };
 
+const MIN_ADMIN_PASSWORD_LENGTH = 12;
+const MIN_SECRET_LENGTH = 32;
+const WEAK_SECRET_MARKERS = ['replace', 'changeme', 'change-me', 'placeholder', 'example', 'demo', 'test-secret'];
+const EXACT_WEAK_SECRETS = new Set(['admin', 'password', 'secret', 'changeme', 'replace-me', 'example-secret']);
+
 function envValue(name: string) {
   return process.env[name]?.trim() || '';
 }
@@ -27,8 +32,37 @@ function envFlag(name: string) {
   return envValue(name).toLowerCase() === 'true';
 }
 
+function normalizedSecret(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function isWeakSecretValue(value: string) {
+  const normalized = normalizedSecret(value);
+  if (!normalized) return false;
+  if (EXACT_WEAK_SECRETS.has(normalized)) return true;
+  return WEAK_SECRET_MARKERS.some((marker) => normalized.includes(marker));
+}
+
 function pushIssue(issues: DeployReadinessIssue[], issue: DeployReadinessIssue) {
   issues.push(issue);
+}
+
+function pushMissingSecretIssue(blockers: DeployReadinessIssue[], name: string, code: string, summary: string, detail: string) {
+  if (hasEnv(name)) return false;
+  pushIssue(blockers, { code, severity: 'blocker', summary, detail });
+  return true;
+}
+
+function validateMinimumSecretLength(blockers: DeployReadinessIssue[], name: string, minimumLength: number, code: string, summary: string, detail: string) {
+  const value = envValue(name);
+  if (!value || value.length >= minimumLength) return;
+  pushIssue(blockers, { code, severity: 'blocker', summary, detail });
+}
+
+function validateNoWeakSecretPlaceholder(blockers: DeployReadinessIssue[], name: string, code: string, summary: string, detail: string) {
+  const value = envValue(name);
+  if (!value || !isWeakSecretValue(value)) return;
+  pushIssue(blockers, { code, severity: 'blocker', summary, detail });
 }
 
 function validateNotificationReadiness(blockers: DeployReadinessIssue[], warnings: DeployReadinessIssue[]) {
@@ -43,30 +77,56 @@ function validateDataSafetyReadiness(blockers: DeployReadinessIssue[]) {
 }
 
 function validateAdminReadiness(blockers: DeployReadinessIssue[]) {
-  if (!hasEnv('ADMIN_PASSWORD')) {
-    pushIssue(blockers, {
-      code: 'admin_password_missing',
-      severity: 'blocker',
-      summary: 'ADMIN_PASSWORD is missing.',
-      detail: 'Set a temporary admin password before production deploy.'
-    });
+  const missingAdminPassword = pushMissingSecretIssue(
+    blockers,
+    'ADMIN_PASSWORD',
+    'admin_password_missing',
+    'ADMIN_PASSWORD is missing.',
+    'Set a temporary admin password before production deploy.'
+  );
+
+  if (!missingAdminPassword) {
+    validateMinimumSecretLength(
+      blockers,
+      'ADMIN_PASSWORD',
+      MIN_ADMIN_PASSWORD_LENGTH,
+      'admin_password_short',
+      'ADMIN_PASSWORD is too short.',
+      `Use an admin password at least ${MIN_ADMIN_PASSWORD_LENGTH} characters long before production deploy.`
+    );
+    validateNoWeakSecretPlaceholder(
+      blockers,
+      'ADMIN_PASSWORD',
+      'admin_password_placeholder',
+      'ADMIN_PASSWORD uses a placeholder or default value.',
+      'Use a unique non-default admin password before production deploy.'
+    );
   }
 
-  const sessionSecret = envValue('ADMIN_SESSION_SECRET');
-  if (!sessionSecret) {
-    pushIssue(blockers, {
-      code: 'admin_session_secret_missing',
-      severity: 'blocker',
-      summary: 'ADMIN_SESSION_SECRET is missing.',
-      detail: 'Set a long random session secret before production deploy.'
-    });
-  } else if (sessionSecret.length < 32) {
-    pushIssue(blockers, {
-      code: 'admin_session_secret_short',
-      severity: 'blocker',
-      summary: 'ADMIN_SESSION_SECRET is too short.',
-      detail: 'Use a high-entropy secret at least 32 characters long.'
-    });
+  const missingSessionSecret = pushMissingSecretIssue(
+    blockers,
+    'ADMIN_SESSION_SECRET',
+    'admin_session_secret_missing',
+    'ADMIN_SESSION_SECRET is missing.',
+    'Set a long random session secret before production deploy.'
+  );
+
+  if (!missingSessionSecret) {
+    validateMinimumSecretLength(
+      blockers,
+      'ADMIN_SESSION_SECRET',
+      MIN_SECRET_LENGTH,
+      'admin_session_secret_short',
+      'ADMIN_SESSION_SECRET is too short.',
+      `Use a high-entropy secret at least ${MIN_SECRET_LENGTH} characters long.`
+    );
+    validateNoWeakSecretPlaceholder(
+      blockers,
+      'ADMIN_SESSION_SECRET',
+      'admin_session_secret_placeholder',
+      'ADMIN_SESSION_SECRET uses a placeholder or default value.',
+      'Use a unique high-entropy admin session secret before production deploy.'
+    );
   }
 
   const role = envValue('ADMIN_ROLE').toLowerCase();
@@ -81,21 +141,30 @@ function validateAdminReadiness(blockers: DeployReadinessIssue[]) {
 }
 
 function validateCustomerAuthReadiness(blockers: DeployReadinessIssue[]) {
-  const customerOtpSecret = envValue('CUSTOMER_OTP_SECRET');
-  if (!customerOtpSecret) {
-    pushIssue(blockers, {
-      code: 'customer_otp_secret_missing',
-      severity: 'blocker',
-      summary: 'CUSTOMER_OTP_SECRET is missing.',
-      detail: 'Set a dedicated high-entropy customer OTP secret before production deploy.'
-    });
-  } else if (customerOtpSecret.length < 32) {
-    pushIssue(blockers, {
-      code: 'customer_otp_secret_short',
-      severity: 'blocker',
-      summary: 'CUSTOMER_OTP_SECRET is too short.',
-      detail: 'Use a high-entropy customer OTP secret at least 32 characters long.'
-    });
+  const missingCustomerOtpSecret = pushMissingSecretIssue(
+    blockers,
+    'CUSTOMER_OTP_SECRET',
+    'customer_otp_secret_missing',
+    'CUSTOMER_OTP_SECRET is missing.',
+    'Set a dedicated high-entropy customer OTP secret before production deploy.'
+  );
+
+  if (!missingCustomerOtpSecret) {
+    validateMinimumSecretLength(
+      blockers,
+      'CUSTOMER_OTP_SECRET',
+      MIN_SECRET_LENGTH,
+      'customer_otp_secret_short',
+      'CUSTOMER_OTP_SECRET is too short.',
+      `Use a high-entropy customer OTP secret at least ${MIN_SECRET_LENGTH} characters long.`
+    );
+    validateNoWeakSecretPlaceholder(
+      blockers,
+      'CUSTOMER_OTP_SECRET',
+      'customer_otp_secret_placeholder',
+      'CUSTOMER_OTP_SECRET uses a placeholder or default value.',
+      'Use a unique high-entropy customer OTP secret before production deploy.'
+    );
   }
 }
 

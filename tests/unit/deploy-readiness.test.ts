@@ -45,8 +45,9 @@ const dataSafetyConfirmed = {
 const productionBase = {
   APP_MODE: 'production',
   DATABASE_URL: 'postgresql://example.invalid/db',
-  ADMIN_PASSWORD: 'password-for-test',
-  ADMIN_SESSION_SECRET: '12345678901234567890123456789012',
+  ADMIN_PASSWORD: 'production-admin-password-for-test',
+  ADMIN_SESSION_SECRET: 'admin-session-secret-for-test-1234567890',
+  CUSTOMER_OTP_SECRET: 'customer-otp-secret-for-test-1234567890',
   ADMIN_ROLE: 'owner',
   MEDIA_STORAGE_PROVIDER: 'cloudinary',
   CLOUDINARY_CLOUD_NAME: 'golara-test',
@@ -67,7 +68,7 @@ export async function runDeployReadinessTests() {
     assert.equal(report.warnings[0]?.code, 'non_production_mode');
   });
 
-  await withEnv({ APP_MODE: 'production', DATABASE_URL: undefined, ADMIN_PASSWORD: undefined, ADMIN_SESSION_SECRET: undefined, MEDIA_STORAGE_PROVIDER: undefined, INQUIRY_NOTIFICATION_MODE: 'webhook', INQUIRY_NOTIFICATION_WEBHOOK_URL: undefined }, () => {
+  await withEnv({ APP_MODE: 'production', DATABASE_URL: undefined, ADMIN_PASSWORD: undefined, ADMIN_SESSION_SECRET: undefined, CUSTOMER_OTP_SECRET: undefined, MEDIA_STORAGE_PROVIDER: undefined, INQUIRY_NOTIFICATION_MODE: 'webhook', INQUIRY_NOTIFICATION_WEBHOOK_URL: undefined }, () => {
     const report = getDeployReadiness();
     assert.equal(report.productionDeploy, true);
     assert.equal(report.ready, false);
@@ -75,6 +76,7 @@ export async function runDeployReadinessTests() {
       'database_url_missing',
       'admin_password_missing',
       'admin_session_secret_missing',
+      'customer_otp_secret_missing',
       'media_storage_not_production_safe',
       'notification_webhook_url_missing',
       'migration_runbook_unconfirmed',
@@ -83,10 +85,26 @@ export async function runDeployReadinessTests() {
     ]);
   });
 
-  await withEnv({ APP_MODE: 'production', DATABASE_URL: 'postgresql://example.invalid/db', ADMIN_PASSWORD: 'password-for-test', ADMIN_SESSION_SECRET: 'short', MEDIA_STORAGE_PROVIDER: 'cloudinary', CLOUDINARY_CLOUD_NAME: 'golara-test', CLOUDINARY_UPLOAD_PRESET: 'unsigned-preset', INQUIRY_NOTIFICATION_MODE: 'unsupported', ...dataSafetyConfirmed }, () => {
+  await withEnv({ ...productionBase, ADMIN_PASSWORD: 'short', ADMIN_SESSION_SECRET: 'short', CUSTOMER_OTP_SECRET: 'short', INQUIRY_NOTIFICATION_MODE: 'unsupported' }, () => {
     const report = getDeployReadiness();
     assert.equal(report.ready, false);
-    assert.deepEqual(issueCodes(report), ['admin_session_secret_short', 'notification_mode_unsupported']);
+    assert.deepEqual(issueCodes(report), [
+      'admin_password_short',
+      'admin_session_secret_short',
+      'customer_otp_secret_short',
+      'notification_mode_unsupported'
+    ]);
+  });
+
+  await withEnv({ ...productionBase, ADMIN_PASSWORD: 'changeme-admin-password', ADMIN_SESSION_SECRET: 'replace-admin-session-secret-1234567890', CUSTOMER_OTP_SECRET: 'example-customer-otp-secret-1234567890' }, () => {
+    const report = getDeployReadiness();
+    assert.equal(report.ready, false);
+    assert.deepEqual(issueCodes(report), [
+      'admin_password_placeholder',
+      'admin_session_secret_placeholder',
+      'customer_otp_secret_placeholder'
+    ]);
+    assert.match(formatDeployReadinessReport(report), /placeholder or default/);
   });
 
   await withEnv(productionBase, () => {
