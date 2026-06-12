@@ -1,12 +1,14 @@
 import assert from 'node:assert/strict';
 // TypeScript does not attach sibling .d.ts metadata to this relative .mjs utility import in CI.
-// @ts-expect-error check-csrf-guards.mjs exports are covered by tools/check-csrf-guards.d.ts for callers that import the script path directly.
-import {
+// @ts-ignore check-csrf-guards.mjs exports are exercised by this runtime fixture test.
+import * as csrfGuards from '../../tools/check-csrf-guards.mjs';
+
+const {
   collectCsrfGuardFailures,
   hasExportedAsyncAction,
   hasMutationBoundary,
   isServerActionSource
-} from '../../tools/check-csrf-guards.mjs';
+} = csrfGuards;
 
 const guardedAction = `'use server';
 import { assertSameOriginServerAction } from '@/lib/server-action-origin';
