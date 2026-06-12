@@ -1,8 +1,11 @@
 const EMAIL_PATTERN = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi;
 const PHONE_PATTERN = /(?<![\w+])(?:\+?\d[\d\s().-]{7,}\d)(?!\w)/g;
 const SENSITIVE_FIELD_NAMES = '(?:line1|line2|address|street|recipient|phone|email|postalCode|zip|city|notes|token|secret|password|authorization|cookie|otp|code)';
-const POSTAL_ADDRESS_HINT_PATTERN = new RegExp(`\\b(?:line1|line2|address|street|recipient|phone|email|postalCode|zip|city|notes)\\s*[:=]\\s*.*?(?=\\s+${SENSITIVE_FIELD_NAMES}\\s*[:=]|[,}\\]\\n\\r]|$)`, 'gi');
-const TOKEN_LIKE_PATTERN = new RegExp(`\\b(?:token|secret|password|authorization|cookie|otp|code)\\s*[:=]\\s*.*?(?=\\s+${SENSITIVE_FIELD_NAMES}\\s*[:=]|[,}\\]\\n\\r]|$)`, 'gi');
+const ADDRESS_FIELD_NAMES = '(?:line1|line2|address|street|recipient|phone|email|postalCode|zip|city|notes)';
+const TOKEN_FIELD_NAMES = '(?:token|secret|password|authorization|cookie|otp|code)';
+const FIELD_BOUNDARY = `(?=\\s+['\"]?${SENSITIVE_FIELD_NAMES}['\"]?\\s*[:=]|[,}\\]\\n\\r]|$)`;
+const POSTAL_ADDRESS_HINT_PATTERN = new RegExp(`['\"]?\\b${ADDRESS_FIELD_NAMES}\\b['\"]?\\s*[:=]\\s*['\"]?.*?${FIELD_BOUNDARY}`, 'gi');
+const TOKEN_LIKE_PATTERN = new RegExp(`['\"]?\\b${TOKEN_FIELD_NAMES}\\b['\"]?\\s*[:=]\\s*['\"]?.*?${FIELD_BOUNDARY}`, 'gi');
 
 function redactField(match: string) {
   return `${match.split(/[:=]/, 1)[0]}=[redacted]`;
