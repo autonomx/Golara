@@ -208,13 +208,17 @@ export async function runAdminAuthCoreTests() {
   const adminAuthSource = source('lib/admin-auth.ts');
   for (const marker of [
     'cookieStore.get(ADMIN_SESSION_COOKIE_NAME)?.value',
-    'cookieStore.set(ADMIN_SESSION_COOKIE_NAME, createAdminSessionCookieValue(config)',
+    'function adminSessionCookieOptions(maxAge: number)',
+    'adminSessionCookieOptions(ADMIN_SESSION_MAX_AGE_SECONDS)',
+    'adminSessionCookieOptions(0)',
+    'createAdminSessionCookieValue(config)',
+    "cookieStore.set(ADMIN_SESSION_COOKIE_NAME, '', adminSessionCookieOptions(0))",
     'httpOnly: true',
-    "sameSite: 'lax'",
+    "sameSite: 'lax' as const",
     "secure: process.env.NODE_ENV === 'production'",
     "path: '/'",
-    'maxAge: ADMIN_SESSION_MAX_AGE_SECONDS',
-    'cookieStore.delete(ADMIN_SESSION_COOKIE_NAME)',
+    'maxAge',
+    'await clearAdminSession();',
     'adminRoleMeetsRequirement(identity.role, requiredRole)'
   ]) {
     assert.ok(adminAuthSource.includes(marker), `admin-auth source must include ${marker}`);
