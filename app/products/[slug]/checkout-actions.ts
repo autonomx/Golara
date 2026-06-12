@@ -7,6 +7,7 @@ import { createCheckoutPaymentAttempt } from '@/lib/checkout/payment-provider';
 import { addCustomerAddress, upsertCustomerProfile } from '@/lib/customers/customer-repository';
 import { hasDatabase } from '@/lib/prisma';
 import { assertSameOriginServerAction } from '@/lib/server-action-origin';
+import { warnWithRedactedError } from '@/lib/security/redacted-logging';
 
 function stringField(formData: FormData, name: string, fallback = '') {
   const value = formData.get(name);
@@ -77,7 +78,7 @@ export async function createCheckoutAction(productId: string | undefined, produc
       redirectTarget = checkoutActionNextPath(order, attempt);
     }
   } catch (error) {
-    console.warn('[checkout] failed to create order draft', error);
+    warnWithRedactedError('checkout', 'failed to create order draft', error);
     redirectTarget = checkoutPath(productSlug, 'failed');
   }
 
