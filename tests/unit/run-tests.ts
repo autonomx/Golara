@@ -42,6 +42,7 @@ import { runHomepageBannerMediaSettingsTests } from './homepage-banner-media-set
 import { runHomepageCategoryAssetsTests } from './homepage-category-assets.test';
 import { runI18nLocalizationTests } from './i18n-localization.test';
 import { runImportExportJobTrackingTests } from './import-export-job-tracking.test';
+import { runInputXssSafetyTests } from './input-xss-safety.test';
 import { runInquiryAssignmentQueueTests } from './inquiry-assignment-queue.test';
 import { runInquiryAssignmentTests } from './inquiry-assignment.test';
 import { runInquiryNotificationsCoreTests } from './inquiry-notifications-core.test';
@@ -152,6 +153,7 @@ async function main() {
   await runDataSafetyReadinessTests();
   await runE2eDbSafetyContractTests();
   await runContentSecurityPolicyConfigTests();
+  await runInputXssSafetyTests();
   await runAdminActionBoundaryGuardTests();
   await runAdminAuthCoreTests();
   await runAdminAccountCoreTests();
@@ -278,12 +280,16 @@ async function main() {
   await runNotificationProviderSettingsTests();
   await runStoreSettingsPageTests();
   await runStorefrontNavigationMenuBuilderTests();
-  await runHomepageBannerMediaSettingsTests();
   await runLocalizedSeoMetadataModelTests();
-  await runTranslationCompletenessDashboardTests();
+  await runLocaleAwareMediaAltTextTests();
   await runLocalizationSourceAuditTests();
   await runLocalizationBundleSourceGuardTests();
-  await runLocaleAwareMediaAltTextTests();
+  await runI18nLocalizationTests();
+  await runTranslationCompletenessDashboardTests();
+  await runHomepageBannerMediaSettingsTests();
+  await runHomepageCategoryAssetsTests();
+  await runFulfillmentMethodSettingsModelTests();
+  await runFulfillmentShipmentRecordsModelTests();
 }
 
 main().catch((error) => {

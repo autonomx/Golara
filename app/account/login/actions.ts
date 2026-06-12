@@ -9,6 +9,7 @@ import { issueCustomerOtp, verifyCustomerOtp } from '@/lib/customers/customer-ot
 import { normalizeCustomerPhone } from '@/lib/customers/customer-repository';
 import { hasDatabase } from '@/lib/prisma';
 import { assertSameOriginServerAction } from '@/lib/server-action-origin';
+import { safeReturnPath } from '@/lib/security/safe-return-path';
 
 function stringField(formData: FormData, name: string, fallback = '') {
   const value = formData.get(name);
@@ -16,9 +17,8 @@ function stringField(formData: FormData, name: string, fallback = '') {
   return value.trim();
 }
 
-function safeReturnTo(value?: string) {
-  if (!value || !value.startsWith('/') || value.startsWith('//')) return '/account';
-  return value;
+function loginReturnPath(value?: string) {
+  return safeReturnPath(value, '/account');
 }
 
 function loginPath(status: string, phone?: string, returnTo?: string) {
@@ -38,7 +38,7 @@ async function requestContext() {
 
 export async function requestCustomerOtpAction(formData: FormData) {
   await assertSameOriginServerAction();
-  const returnTo = safeReturnTo(stringField(formData, 'returnTo', '/account'));
+  const returnTo = loginReturnPath(stringField(formData, 'returnTo', '/account'));
   if (!hasDatabase()) redirect(loginPath('database-required', undefined, returnTo));
 
   let redirectTarget = loginPath('request-failed', undefined, returnTo);
@@ -54,7 +54,7 @@ export async function requestCustomerOtpAction(formData: FormData) {
 
 export async function verifyCustomerOtpAction(formData: FormData) {
   await assertSameOriginServerAction();
-  const returnTo = safeReturnTo(stringField(formData, 'returnTo', '/account'));
+  const returnTo = loginReturnPath(stringField(formData, 'returnTo', '/account'));
   if (!hasDatabase()) redirect(loginPath('database-required', undefined, returnTo));
 
   let redirectTarget = loginPath('verify-failed', stringField(formData, 'phone'), returnTo);
