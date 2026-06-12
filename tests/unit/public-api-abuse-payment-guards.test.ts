@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { evaluateOtpRequestThrottle, OTP_REQUEST_BLOCKED_EVENT } from '../../lib/customer-auth/otp-rate-limit';
+import { normalizePublicOrderLookupToken } from '../../lib/checkout/public-order-repository';
 
 function source(path: string) {
   return readFileSync(path, 'utf8');
@@ -24,6 +25,13 @@ export async function runPublicApiAbusePaymentGuardTests() {
   assert.doesNotMatch(publicOrderRepository, /phone:\s*true/);
   assert.doesNotMatch(publicOrderRepository, /address:\s*true/);
   assert.doesNotMatch(publicOrderRepository, /provider:\s*true/);
+
+  const validToken = 'a'.repeat(32);
+  assert.equal(normalizePublicOrderLookupToken(` ${validToken} `), validToken);
+  assert.equal(normalizePublicOrderLookupToken('a'.repeat(31)), null);
+  assert.equal(normalizePublicOrderLookupToken('a'.repeat(129)), null);
+  assert.equal(normalizePublicOrderLookupToken('a'.repeat(31) + '!'), null);
+  assert.equal(normalizePublicOrderLookupToken('order-lookup_token-1234567890123'), 'order-lookup_token-1234567890123');
 
   assert.match(otpRepository, /listRecentOtpRequestEvents/);
   assert.match(otpRepository, /recordOtpRequestAuthEvent/);
