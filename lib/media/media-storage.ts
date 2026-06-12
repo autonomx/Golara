@@ -2,6 +2,7 @@ import 'server-only';
 
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { assertImageSignatureMatchesType } from '@/lib/media/image-signature';
 import {
   configuredMediaStorageProviderName,
   getMediaStorageReadiness,
@@ -10,12 +11,16 @@ import {
   type MediaStorageReadiness
 } from '@/lib/media/media-storage-readiness';
 
-export { configuredMediaStorageProviderName, getMediaStorageReadiness, type MediaStorageProviderName, type MediaStorageReadiness } from '@/lib/media/media-storage-readiness';
+export {
+  configuredMediaStorageProviderName,
+  getMediaStorageReadiness,
+  type MediaStorageProviderName,
+  type MediaStorageReadiness
+} from '@/lib/media/media-storage-readiness';
 
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 const ALLOWED_EXTERNAL_IMAGE_HOSTS = new Set(['res.cloudinary.com']);
-const MIN_SIGNATURE_BYTES = 12;
 
 export type StoredMediaFile = {
   url: string;
@@ -80,37 +85,6 @@ function cloudinaryConfig() {
   };
 }
 
-function hasPrefix(bytes: Uint8Array, prefix: number[]) {
-  if (bytes.length < prefix.length) return false;
-  return prefix.every((value, index) => bytes[index] === value);
-}
-
-function hasAsciiSignature(bytes: Uint8Array, offset: number, signature: string) {
-  if (bytes.length < offset + signature.length) return false;
-  return [...signature].every((char, index) => bytes[offset + index] === char.charCodeAt(0));
-}
-
-export function sniffImageMimeType(bytes: Uint8Array) {
-  if (hasPrefix(bytes, [0xff, 0xd8, 0xff])) return 'image/jpeg';
-  if (hasPrefix(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) return 'image/png';
-  if (hasAsciiSignature(bytes, 0, 'GIF87a') || hasAsciiSignature(bytes, 0, 'GIF89a')) return 'image/gif';
-  if (hasAsciiSignature(bytes, 0, 'RIFF') && hasAsciiSignature(bytes, 8, 'WEBP')) return 'image/webp';
-  return null;
-}
-
-export function assertImageSignatureMatchesType(file: File, bytes: Uint8Array) {
-  if (bytes.length < MIN_SIGNATURE_BYTES) {
-    throw new Error('Image upload is too small to validate safely.');
-  }
-  const sniffedType = sniffImageMimeType(bytes);
-  if (!sniffedType) {
-    throw new Error('Image upload signature is not a supported image format.');
-  }
-  if (sniffedType !== file.type) {
-    throw new Error('Image upload content does not match the declared MIME type.');
-  }
-}
-
 export function assertValidImageUpload(file: File) {
   if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
     throw new Error('Upload must be a JPEG, PNG, WebP, or GIF image.');
@@ -123,7 +97,7 @@ export function assertValidImageUpload(file: File) {
 async function validatedUploadBytes(file: File) {
   assertValidImageUpload(file);
   const bytes = Buffer.from(await file.arrayBuffer());
-  assertImageSignatureMatchesType(file, bytes);
+  assertImageSignatureMatchesType(file.type, bytes);
   return bytes;
 }
 
@@ -172,7 +146,10 @@ const cloudinaryMediaStorageProvider: MediaStorageProvider = {
       throw new Error('Cloudinary storage requires CLOUDINARY_CLOUD_NAME and CLOUDINARY_UPLOAD_PRESET.');
     }
 
-    const safeFile = new File([bytes], file.name, { type: file.type, lastModified: file.lastModified });
+    const safeFile = new File([bytes], file.name, {
+      type: file.type,
+      lastModified: file.lastModified
+    });
     const formData = new FormData();
     formData.set('file', safeFile);
     formData.set('upload_preset', uploadPreset);
