@@ -5,12 +5,7 @@ import { redirect } from 'next/navigation';
 import { STOREFRONT_LOCALE_COOKIE } from '@/lib/i18n/locale-cookie';
 import { normalizeLocale } from '@/lib/i18n/locales';
 import { assertSameOriginServerAction } from '@/lib/server-action-origin';
-
-function safeReturnPath(value: string | null) {
-  const normalized = value?.trim();
-  if (!normalized || !normalized.startsWith('/') || normalized.startsWith('//')) return '/';
-  return normalized;
-}
+import { safeReturnPath } from '@/lib/security/safe-return-path';
 
 export async function setStorefrontLocaleAction(formData: FormData) {
   // Enforce same-origin policy before modifying cookies to prevent CSRF attacks
@@ -18,7 +13,7 @@ export async function setStorefrontLocaleAction(formData: FormData) {
   const localeValue = formData.get('locale');
   const returnToValue = formData.get('returnTo');
   const locale = normalizeLocale(typeof localeValue === 'string' ? localeValue : undefined);
-  const returnTo = safeReturnPath(typeof returnToValue === 'string' ? returnToValue : null);
+  const returnTo = safeReturnPath(typeof returnToValue === 'string' ? returnToValue : null, '/');
   const cookieStore = await cookies();
 
   cookieStore.set(STOREFRONT_LOCALE_COOKIE, locale, {
