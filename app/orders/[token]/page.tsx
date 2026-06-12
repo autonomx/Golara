@@ -155,7 +155,7 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
           </section>
 
           <p className="mt-6 text-sm leading-6 text-stone-600">{copy.privacy}</p>
-          {latestAttempt ? <p className="mt-2 text-xs text-stone-500">{copy.latestPaymentStatus}: {paymentStatusLabel(latestAttempt.status, normalizedLocale)} · {labelFor({}, latestAttempt.provider)}</p> : null}
+          {latestAttempt ? <p className="mt-2 text-xs text-stone-500">{copy.latestPaymentStatus}: {paymentStatusLabel(latestAttempt.status, normalizedLocale)}</p> : null}
         </div>
       </section>
     </main>
