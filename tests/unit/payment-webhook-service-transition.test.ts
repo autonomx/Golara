@@ -24,7 +24,9 @@ export async function runPaymentWebhookServiceTransitionTests() {
   assert.match(service, /where: \{ type: 'payment_result' \}/);
   assert.match(service, /async function applyTrustedWebhookStateChange/);
   assert.match(service, /if \(!input\.statePlan\.trusted\) return/);
+  assert.match(service, /function shouldApplyWebhookStateChange/);
   assert.match(service, /checkoutPaymentEvent\.create/);
+  assert.match(service, /checkoutPaymentEvent\.update/);
   assert.match(service, /checkoutPaymentAttempt\.update/);
   assert.match(service, /checkoutOrder\.update/);
   assert.match(service, /timelineEvents: \{/);
@@ -32,14 +34,17 @@ export async function runPaymentWebhookServiceTransitionTests() {
   assert.match(service, /webhookStateReason/);
   assert.match(service, /webhookNextOrderStatus/);
   assert.match(service, /webhookNextAttemptStatus/);
-  assert.match(service, /processedAt: statePlan\.trusted \? new Date\(\) : undefined/);
+  assert.match(service, /webhookSettlementStatus/);
+  assert.match(service, /processedAt: new Date\(\)/);
   assert.match(service, /status: 'duplicate'/);
   assert.match(service, /missingPaymentAttempt: true/);
 
   const createIndex = service.indexOf('checkoutPaymentEvent.create');
+  const reconcileIndex = service.indexOf('paymentSettlementRepository.upsertForPaymentEvent(created.id)');
   const applyIndex = service.indexOf('await applyTrustedWebhookStateChange');
   assert.ok(createIndex > -1);
-  assert.ok(applyIndex > createIndex);
+  assert.ok(reconcileIndex > createIndex);
+  assert.ok(applyIndex > reconcileIndex);
 
   console.log('payment-webhook-service-transition.test.ts passed');
 }
