@@ -23,6 +23,10 @@ type CreateCustomerSessionInput = {
   ipAddress?: string;
 };
 
+type VerifiedCustomerSession = {
+  customerId: string;
+};
+
 function optionalText(value?: string) {
   const normalized = value?.trim();
   return normalized || undefined;
@@ -154,11 +158,11 @@ export async function expireOldCustomerSessions() {
   });
 }
 
-export async function listCustomerOrders(customerId: string) {
+export async function listCustomerOrdersForSession(session: VerifiedCustomerSession) {
   if (!hasDatabase()) return [];
 
   return prisma.checkoutOrder.findMany({
-    where: { customerId },
+    where: { customerId: session.customerId },
     orderBy: { createdAt: 'desc' },
     include: {
       items: { orderBy: { createdAt: 'asc' } },
