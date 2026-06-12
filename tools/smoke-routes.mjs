@@ -16,6 +16,15 @@ const routes = [
   { path: '/account/orders', expectedStatuses: [200, 302, 303, 307, 308], label: 'unauthenticated account orders' }
 ];
 
+const requiredSecurityHeaders = [
+  'content-security-policy',
+  'strict-transport-security',
+  'x-frame-options',
+  'x-content-type-options',
+  'referrer-policy',
+  'permissions-policy'
+];
+
 function includesExpectedContent(body, expectedContent = []) {
   const normalizedBody = body.toLowerCase();
   return expectedContent.every((value) => normalizedBody.includes(value.toLowerCase()));
@@ -25,6 +34,10 @@ function includesAnyExpectedContent(body, expectedAnyContent = []) {
   if (!expectedAnyContent.length) return true;
   const normalizedBody = body.toLowerCase();
   return expectedAnyContent.some((value) => normalizedBody.includes(value.toLowerCase()));
+}
+
+function missingSecurityHeaders(headers) {
+  return requiredSecurityHeaders.filter((header) => !headers.get(header));
 }
 
 async function checkRoute(route) {
@@ -38,6 +51,8 @@ async function checkRoute(route) {
       signal: controller.signal
     });
     const statusOk = route.expectedStatuses.includes(response.status);
+    const missingHeaders = missingSecurityHeaders(response.headers);
+    const headersOk = missingHeaders.length === 0;
     let contentOk = true;
     let missingContent = [];
 
@@ -58,9 +73,11 @@ async function checkRoute(route) {
 
     return {
       ...route,
-      ok: statusOk && contentOk,
+      ok: statusOk && contentOk && headersOk,
       status: response.status,
       statusOk,
+      headersOk,
+      missingHeaders,
       contentOk,
       missingContent,
       url
@@ -71,6 +88,8 @@ async function checkRoute(route) {
       ok: false,
       status: 'error',
       statusOk: false,
+      headersOk: false,
+      missingHeaders: requiredSecurityHeaders,
       contentOk: false,
       missingContent: route.expectedContent || route.expectedAnyContent || [],
       url,
@@ -90,6 +109,7 @@ for (const route of routes) {
 for (const result of results) {
   const marker = result.ok ? 'PASS' : 'FAIL';
   const details = [`status ${result.status}`];
+  details.push(result.headersOk ? 'headers ok' : `missing headers: ${result.missingHeaders.join(', ')}`);
   if (result.expectedContent?.length || result.expectedAnyContent?.length) {
     details.push(result.contentOk ? 'content ok' : `missing content: ${result.missingContent.join(', ')}`);
   }

@@ -24,6 +24,19 @@ function runRouteSmokeContractTests() {
   assert.match(smoke, /expectedContent/);
   assert.match(smoke, /expectedAnyContent/);
   assert.match(smoke, /redirect: 'manual'/);
+  assert.match(smoke, /requiredSecurityHeaders/);
+  for (const header of [
+    'content-security-policy',
+    'strict-transport-security',
+    'x-frame-options',
+    'x-content-type-options',
+    'referrer-policy',
+    'permissions-policy'
+  ]) {
+    assert.match(smoke, new RegExp(`'${header}'`));
+  }
+  assert.match(smoke, /missingSecurityHeaders\(response\.headers\)/);
+  assert.match(smoke, /headersOk/);
 }
 
 function isProtectedWriteRoute(content: string) {
