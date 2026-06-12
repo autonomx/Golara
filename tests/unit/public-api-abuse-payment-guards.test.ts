@@ -54,3 +54,10 @@ export async function runPublicApiAbusePaymentGuardTests() {
 
   console.log('public-api-abuse-payment-guards.test.ts passed');
 }
+
+if (process.argv[1]?.endsWith('public-api-abuse-payment-guards.test.ts')) {
+  runPublicApiAbusePaymentGuardTests().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}
