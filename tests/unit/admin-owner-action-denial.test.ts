@@ -11,11 +11,20 @@ type SettingsActionsModule = {
   default?: SettingsActions;
 } & Partial<SettingsActions>;
 
+type OrderActionsModule = {
+  default?: OrderActions;
+} & Partial<OrderActions>;
+
 type SettingsActions = {
   updateApiTokenManagementAction: (formData: FormData) => Promise<void>;
   updatePaymentProviderSettingAction: (formData: FormData) => Promise<void>;
   updateStaffAccountAction: (formData: FormData) => Promise<void>;
   updateStaffPermissionGroupAction: (formData: FormData) => Promise<void>;
+};
+
+type OrderActions = {
+  markOrderManualPaymentAction: (orderId: string, formData: FormData) => Promise<void>;
+  updateOrderDiscountAction: (orderId: string, formData: FormData) => Promise<void>;
 };
 
 const staffConfig: AdminAuthConfig = {
@@ -80,6 +89,21 @@ function staffAccountForm() {
   ].reduce((formData, [name, value]) => setField(formData, name, value), new FormData());
 }
 
+function orderDiscountForm() {
+  return [
+    ['discountCents', '500'],
+    ['discountNote', 'Owner-approved adjustment']
+  ].reduce((formData, [name, value]) => setField(formData, name, value), new FormData());
+}
+
+function manualPaymentForm() {
+  return [
+    ['amountCents', '1200'],
+    ['providerReference', 'manual-owner-only-reference'],
+    ['note', 'Owner-approved manual payment']
+  ].reduce((formData, [name, value]) => setField(formData, name, value), new FormData());
+}
+
 function requireSettingsActions(actionsModule: SettingsActionsModule): SettingsActions {
   const actions = actionsModule.default ?? actionsModule;
   assert.equal(typeof actions.updateApiTokenManagementAction, 'function');
@@ -87,6 +111,13 @@ function requireSettingsActions(actionsModule: SettingsActionsModule): SettingsA
   assert.equal(typeof actions.updateStaffAccountAction, 'function');
   assert.equal(typeof actions.updateStaffPermissionGroupAction, 'function');
   return actions as SettingsActions;
+}
+
+function requireOrderActions(actionsModule: OrderActionsModule): OrderActions {
+  const actions = actionsModule.default ?? actionsModule;
+  assert.equal(typeof actions.markOrderManualPaymentAction, 'function');
+  assert.equal(typeof actions.updateOrderDiscountAction, 'function');
+  return actions as OrderActions;
 }
 
 function withStaffAdminRequestScope() {
@@ -148,6 +179,8 @@ export async function runAdminOwnerActionDenialTests() {
   try {
     const actionsModule = await import('../../app/admin/settings/actions') as SettingsActionsModule;
     const actions = requireSettingsActions(actionsModule);
+    const orderActionsModule = await import('../../app/admin/order-actions') as OrderActionsModule;
+    const orderActions = requireOrderActions(orderActionsModule);
 
     await assert.rejects(
       () => actions.updateApiTokenManagementAction(apiTokenForm()),
@@ -168,6 +201,16 @@ export async function runAdminOwnerActionDenialTests() {
       () => actions.updateStaffAccountAction(staffAccountForm()),
       /owner admin role is required for this CMS action\./,
       'staff admins must not update staff accounts'
+    );
+    await assert.rejects(
+      () => orderActions.updateOrderDiscountAction('order-owner-only-denial', orderDiscountForm()),
+      /owner admin role is required for this CMS action\./,
+      'staff admins must not update order discounts'
+    );
+    await assert.rejects(
+      () => orderActions.markOrderManualPaymentAction('order-owner-only-denial', manualPaymentForm()),
+      /owner admin role is required for this CMS action\./,
+      'staff admins must not mark manual payments'
     );
   } finally {
     restore();
