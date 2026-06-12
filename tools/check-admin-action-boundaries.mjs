@@ -46,25 +46,36 @@ const staffRequiredExports = new Map([
   ]]
 ]);
 
-function findExportStart(source, exportName) {
-  const needle = `export async function ${exportName}`;
-  const index = source.indexOf(needle);
-  if (index >= 0) return index;
-  return source.indexOf(`export async function\n${exportName}`);
+function findFunctionStart(source, functionName, exported = true) {
+  const prefix = exported ? 'export async function ' : 'async function ';
+  return source.indexOf(`${prefix}${functionName}`);
 }
 
-function exportedFunctionBody(source, exportName) {
-  const start = findExportStart(source, exportName);
+function functionBody(source, functionName, exported = true) {
+  const start = findFunctionStart(source, functionName, exported);
   if (start < 0) return '';
-  const next = source.indexOf('\nexport async function ', start + 1);
+  const nextExport = source.indexOf('\nexport async function ', start + 1);
+  const nextHelper = source.indexOf('\nasync function ', start + 1);
+  const candidates = [nextExport, nextHelper].filter((index) => index >= 0);
+  const next = candidates.length > 0 ? Math.min(...candidates) : -1;
   return next >= 0 ? source.slice(start, next) : source.slice(start);
 }
 
+function directRoleCheck(body, role) {
+  return body.includes(`assertAdminRole('${role}')`) || body.includes(`assertAdminRole("${role}")`);
+}
+
+function hasOwnerOnlyCmsHelper(source, exportBody) {
+  if (!exportBody.includes('ensureCanWriteCms(')) return false;
+  const helperBody = functionBody(source, 'ensureCanWriteCms', false);
+  return directRoleCheck(helperBody, 'owner');
+}
+
 function requiresRole(source, exportName, role) {
-  const body = exportedFunctionBody(source, exportName);
-  const requiredCall = `assertAdminRole('${role}')`;
-  const requiredDoubleQuoteCall = `assertAdminRole("${role}")`;
-  return body.includes(requiredCall) || body.includes(requiredDoubleQuoteCall);
+  const body = functionBody(source, exportName, true);
+  if (directRoleCheck(body, role)) return true;
+  if (role === 'owner' && hasOwnerOnlyCmsHelper(source, body)) return true;
+  return false;
 }
 
 export function collectAdminRbacFailures({ readFile = readFileSync } = {}) {
