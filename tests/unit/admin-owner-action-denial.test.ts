@@ -14,6 +14,8 @@ type SettingsActionsModule = {
 type SettingsActions = {
   updateApiTokenManagementAction: (formData: FormData) => Promise<void>;
   updatePaymentProviderSettingAction: (formData: FormData) => Promise<void>;
+  updateStaffAccountAction: (formData: FormData) => Promise<void>;
+  updateStaffPermissionGroupAction: (formData: FormData) => Promise<void>;
 };
 
 const staffConfig: AdminAuthConfig = {
@@ -57,10 +59,33 @@ function paymentProviderForm() {
   ].reduce((formData, [name, value]) => setField(formData, name, value), new FormData());
 }
 
+function staffPermissionGroupForm() {
+  return [
+    ['key', 'staff-operations'],
+    ['label', 'Staff operations'],
+    ['description', 'Order and inquiry operations'],
+    ['role', 'staff'],
+    ['permissions', 'orders:read,orders:write,inquiries:read,inquiries:write']
+  ].reduce((formData, [name, value]) => setField(formData, name, value), new FormData());
+}
+
+function staffAccountForm() {
+  return [
+    ['provider', 'password'],
+    ['providerAccountId', 'staff@example.invalid'],
+    ['label', 'Staff User'],
+    ['email', 'staff@example.invalid'],
+    ['role', 'staff'],
+    ['permissionGroupKey', 'staff-operations']
+  ].reduce((formData, [name, value]) => setField(formData, name, value), new FormData());
+}
+
 function requireSettingsActions(actionsModule: SettingsActionsModule): SettingsActions {
   const actions = actionsModule.default ?? actionsModule;
   assert.equal(typeof actions.updateApiTokenManagementAction, 'function');
   assert.equal(typeof actions.updatePaymentProviderSettingAction, 'function');
+  assert.equal(typeof actions.updateStaffAccountAction, 'function');
+  assert.equal(typeof actions.updateStaffPermissionGroupAction, 'function');
   return actions as SettingsActions;
 }
 
@@ -133,6 +158,16 @@ export async function runAdminOwnerActionDenialTests() {
       () => actions.updatePaymentProviderSettingAction(paymentProviderForm()),
       /owner admin role is required for this CMS action\./,
       'staff admins must not update payment provider settings'
+    );
+    await assert.rejects(
+      () => actions.updateStaffPermissionGroupAction(staffPermissionGroupForm()),
+      /owner admin role is required for this CMS action\./,
+      'staff admins must not update staff permission groups'
+    );
+    await assert.rejects(
+      () => actions.updateStaffAccountAction(staffAccountForm()),
+      /owner admin role is required for this CMS action\./,
+      'staff admins must not update staff accounts'
     );
   } finally {
     restore();
