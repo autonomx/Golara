@@ -26,6 +26,16 @@ function adminAuthConfig() {
   return getAdminAuthConfig(process.env);
 }
 
+function adminSessionCookieOptions(maxAge: number) {
+  return {
+    httpOnly: true,
+    sameSite: 'lax' as const,
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge
+  };
+}
+
 export function isAdminAuthConfigured() {
   return isAdminAuthConfiguredCore(adminAuthConfig());
 }
@@ -85,19 +95,17 @@ export async function createAdminSession(password: string) {
 
   clearAdminSignInThrottle(ADMIN_SIGN_IN_THROTTLE_KEY);
   const cookieStore = await cookies();
-  cookieStore.delete(ADMIN_SESSION_COOKIE_NAME);
-  cookieStore.set(ADMIN_SESSION_COOKIE_NAME, createAdminSessionCookieValue(config), {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    path: '/',
-    maxAge: ADMIN_SESSION_MAX_AGE_SECONDS
-  });
+  await clearAdminSession();
+  cookieStore.set(
+    ADMIN_SESSION_COOKIE_NAME,
+    createAdminSessionCookieValue(config),
+    adminSessionCookieOptions(ADMIN_SESSION_MAX_AGE_SECONDS)
+  );
 
   return { ok: true };
 }
 
 export async function clearAdminSession() {
   const cookieStore = await cookies();
-  cookieStore.delete(ADMIN_SESSION_COOKIE_NAME);
+  cookieStore.set(ADMIN_SESSION_COOKIE_NAME, '', adminSessionCookieOptions(0));
 }
