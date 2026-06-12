@@ -10,7 +10,7 @@ export async function runServicePrimaryOrderFlow(state: ServiceLifecycleState) {
   assert.ok(variant);
   assert.ok(secondVariant);
   const { addCustomerAddress, getAdminCustomerDetail, upsertCustomerProfile } = modules.customers;
-  const { listCustomerOrders } = modules.customerAccounts;
+  const { listCustomerOrdersForSession } = modules.customerAccounts;
   const { createOrderDraft } = modules.orderDrafts;
   const { createCheckoutPaymentAttempt } = modules.paymentProvider;
   const { reserveFulfillmentCapacity } = modules.fulfillmentCapacity;
@@ -149,6 +149,6 @@ export async function runServicePrimaryOrderFlow(state: ServiceLifecycleState) {
   assert.equal(adminOrder?.activityTimeline.length > 0, true);
   const customerDetail = await getAdminCustomerDetail(customer.id, { revealSensitive: true });
   assert.equal(customerDetail?.orders.some((item) => item.id === order.id), true);
-  const customerOrders = await listCustomerOrders(customer.id);
+  const customerOrders = await listCustomerOrdersForSession({ customerId: customer.id });
   assert.equal(customerOrders.some((item) => item.id === order.id), true);
 }
