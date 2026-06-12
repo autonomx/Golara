@@ -11,7 +11,7 @@ Status values:
 
 ## Current audit position
 
-The project has completed the first major hardening pass and has moved into the remaining high-risk authorization, session, abuse-control, and payment/order verification work. This roadmap reconciles the current security-audit status through PR #604, including the Phase A admin RBAC source gate and the latest Phase B session lifecycle hardening slices.
+The project has completed the first major hardening pass and has moved into the remaining high-risk authorization, session, abuse-control, and payment/order verification work. This roadmap reconciles the current security-audit status through direct-main commit `502c3c3`, including representative admin RBAC denial coverage, customer session-bound mutation gates, public abuse/privacy guards, route security-header smoke checks, and the production dependency audit gate.
 
 ## Recently completed security work
 
@@ -36,6 +36,14 @@ The project has completed the first major hardening pass and has moved into the 
 | Customer order session boundary | **Fixed** | PR #602 binds customer order history to the verified session object and adds a source gate against raw customer ID order listing. |
 | Customer login session rotation | **Fixed** | PR #603 revokes the prior browser customer session after successful OTP replacement-session creation and redacts OTP login errors. |
 | Admin logout cookie clearing | **Fixed** | PR #604 centralizes admin cookie attributes and clears logout cookies with the same name/path and `maxAge: 0`. |
+| Admin owner-action denial coverage | **Fixed** | PR #607 and direct-main commits `5a7d224`/`433d404` add staff-denial tests for API-token, payment-provider, staff-management, discount, and manual-payment owner-only actions. |
+| Customer mutation session binding | **Fixed** | Commit `07aa41c` gates profile/address mutations against caller-supplied customer IDs and locks mutation helpers to the verified session. |
+| Public order lookup abuse/privacy guards | **Fixed** | Commits `e4ae916` and `9b2f88d` add runtime token-bound tests and public DTO PII omission gates. |
+| Payment webhook lookup integrity guard | **Fixed** | Commit `cebd2fd` prevents webhook matching from regressing to public-token-only lookup. |
+| Order return log redaction | **Fixed** | Commit `4ba2acf` redacts failed payment-return status logging. |
+| Public inquiry input bounds | **Fixed** | Commit `7d5388f` adds executable coverage for inquiry name/email/message/delivery-note upper bounds. |
+| Route security-header smoke gate | **Fixed** | Commit `9422b8e` makes route smoke fail if responses omit CSP, HSTS, frame, nosniff, referrer, or permissions policy headers. |
+| Production dependency audit gate | **Fixed** | Commit `502c3c3` adds a CI `npm audit --omit=dev --audit-level=high` gate for production dependencies. |
 
 ## Phases left
 
@@ -54,10 +62,9 @@ Completed:
 
 Remaining work:
 
-1. Add runtime negative tests for lower-role denial on representative owner-only actions.
-2. Add admin API mutation inventory if new `app/api/admin/**` routes are introduced.
-3. Review admin diagnostics and audit-log access boundaries.
-4. Keep destructive media/catalog deletion paths in the owner-only inventory as they are added.
+1. Add admin API mutation inventory if new `app/api/admin/**` routes are introduced.
+2. Review admin diagnostics and audit-log access boundaries.
+3. Keep destructive media/catalog deletion paths in the owner-only inventory as they are added.
 
 ### Phase B — Session lifecycle hardening
 
@@ -79,8 +86,7 @@ Remaining work:
 
 1. Review customer and admin session lifetimes against production policy.
 2. Add customer session expiry/renewal tests if persistent customer sessions remain enabled.
-3. Add cross-customer negative tests for address/profile mutation surfaces beyond the order-history boundary.
-4. Decide whether customer sessions should use sliding renewal, fixed lifetime, or shorter privileged-action re-auth.
+3. Decide whether customer sessions should use sliding renewal, fixed lifetime, or shorter privileged-action re-auth.
 
 ### Phase C — Public abuse controls and throttling
 
@@ -94,10 +100,11 @@ Completed:
 - Public order token handling was hardened.
 - Webhook raw-body/replay/idempotency boundary was improved.
 - Public API allowlist CI gate exists.
+- Public order lookup tokens are normalized with runtime tests for minimum/maximum length and allowed characters.
 
 Remaining work:
 
-1. Inquiry/contact form rate limiting, content-size validation, and spam controls.
+1. Inquiry/contact form rate limiting and spam controls beyond current same-origin/cooldown protections.
 2. Public order lookup throttling and lockout after repeated failures.
 3. Cart creation throttling and abandoned-cart cleanup controls.
 4. Product/category query complexity and pagination limits.
@@ -114,6 +121,7 @@ Completed:
 - Payment webhook signature validation exists.
 - Duplicate webhook replay rejection has regression coverage.
 - Public webhook routes are allowlisted and required to retain signature/raw-body validation.
+- Webhook payment-attempt matching is source-gated against public-token-only lookup.
 
 Remaining work:
 
@@ -133,14 +141,14 @@ Completed:
 
 - Account, cart, and checkout caught-error logs use redaction helpers.
 - Redaction source gates cover key customer-input mutation paths.
+- Public order DTO source gates prevent customer/contact/address/staff-note fields from being selected.
 
 Remaining work:
 
 1. Audit storefront pages and public APIs for exposed emails, phone numbers, addresses, internal IDs, payment metadata, and admin fields.
-2. Mask or minimize order/customer fields in public views.
-3. Protect admin diagnostic/provider pages with owner-only access.
-4. Add production-safe error response tests that hide stacks/internal details.
-5. Add search response allowlist tests for public/catalog endpoints.
+2. Protect admin diagnostic/provider pages with owner-only access.
+3. Add production-safe error response tests that hide stacks/internal details.
+4. Add search response allowlist tests for public/catalog endpoints.
 
 ### Phase F — Logging, audit trails, and incident readiness
 
@@ -151,6 +159,7 @@ Remaining work:
 Completed:
 
 - Redacted error logging exists for several customer mutation surfaces.
+- Payment return status failures now use the redacted logging helper.
 
 Remaining work:
 
@@ -171,6 +180,7 @@ Completed:
 
 - Safe return-path normalization exists.
 - JSON-LD serialization escapes script-breaking and HTML-sensitive characters.
+- Public inquiry input upper bounds have executable unit coverage.
 
 Remaining work:
 
@@ -210,23 +220,28 @@ Completed:
 
 - Baseline headers and CSP exist in the app configuration.
 - Header config tests exist.
+- Route smoke now verifies required security headers on production-like responses.
 
 Remaining work:
 
-1. Production-like route header smoke tests for storefront and admin routes.
-2. CSP tightening plan to remove/reduce `unsafe-inline` where practical.
-3. CSP report endpoint or monitoring decision.
-4. Admin/storefront header parity verification.
+1. CSP tightening plan to remove/reduce `unsafe-inline` where practical.
+2. CSP report endpoint or monitoring decision.
+3. Admin/storefront header parity verification beyond the existing smoke route set.
 
 ### Phase J — Dependency and supply-chain gate
 
 **Priority:** Medium  
-**Status:** Deferred  
+**Status:** Partial  
 **Goal:** prevent known critical/high dependency vulnerabilities and supply-chain regressions.
 
 Remaining work:
 
-1. Add dependency audit gate with a clear severity threshold.
-2. Decide allowlist/expiration policy for unavoidable advisories.
-3. Ensure lockfile changes are reviewed by CI.
-4. Consider license/publisher/package-integrity checks if production risk warrants it.
+Completed:
+
+- CI runs `npm audit --omit=dev --audit-level=high` after dependency install.
+
+Remaining work:
+
+1. Decide allowlist/expiration policy for unavoidable advisories.
+2. Ensure lockfile changes are reviewed by CI.
+3. Consider license/publisher/package-integrity checks if production risk warrants it.
