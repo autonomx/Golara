@@ -20,13 +20,17 @@ const ownerRequiredExports = new Map([
     'markOrderManualPaymentAction'
   ]],
   ['app/admin/actions.ts', [
+    'createMediaFromUrlAction',
+    'uploadMediaAction',
+    'updateMediaAction',
+    'updateMediaCategoryAction',
     'createProductAction',
     'updateProductAction',
-    'deleteProductAction',
+    'createProductVariantAction',
+    'updateProductVariantAction',
+    'updateVariantLocationStockAction',
     'createCategoryAction',
-    'updateCategoryAction',
-    'deleteCategoryAction',
-    'deleteMediaAction'
+    'updateCategoryAction'
   ]]
 ]);
 
