@@ -1,7 +1,12 @@
 const EMAIL_PATTERN = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi;
 const PHONE_PATTERN = /(?<![\w+])(?:\+?\d[\d\s().-]{7,}\d)(?!\w)/g;
-const POSTAL_ADDRESS_HINT_PATTERN = /\b(?:line1|line2|address|street|recipient|phone|email|postalCode|zip|city|notes)\s*[:=]\s*[^,}\]\n\r]+/gi;
-const TOKEN_LIKE_PATTERN = /\b(?:token|secret|password|authorization|cookie|otp|code)\s*[:=]\s*[^,}\]\n\r]+/gi;
+const SENSITIVE_FIELD_NAMES = '(?:line1|line2|address|street|recipient|phone|email|postalCode|zip|city|notes|token|secret|password|authorization|cookie|otp|code)';
+const POSTAL_ADDRESS_HINT_PATTERN = new RegExp(`\\b(?:line1|line2|address|street|recipient|phone|email|postalCode|zip|city|notes)\\s*[:=]\\s*.*?(?=\\s+${SENSITIVE_FIELD_NAMES}\\s*[:=]|[,}\\]\\n\\r]|$)`, 'gi');
+const TOKEN_LIKE_PATTERN = new RegExp(`\\b(?:token|secret|password|authorization|cookie|otp|code)\\s*[:=]\\s*.*?(?=\\s+${SENSITIVE_FIELD_NAMES}\\s*[:=]|[,}\\]\\n\\r]|$)`, 'gi');
+
+function redactField(match: string) {
+  return `${match.split(/[:=]/, 1)[0]}=[redacted]`;
+}
 
 function stringifyLogValue(value: unknown) {
   if (value instanceof Error) return `${value.name}: ${value.message}`;
@@ -17,8 +22,8 @@ export function redactLogValue(value: unknown) {
   return stringifyLogValue(value)
     .replace(EMAIL_PATTERN, '[redacted-email]')
     .replace(PHONE_PATTERN, '[redacted-phone]')
-    .replace(POSTAL_ADDRESS_HINT_PATTERN, (match) => `${match.split(/[:=]/, 1)[0]}=[redacted]`)
-    .replace(TOKEN_LIKE_PATTERN, (match) => `${match.split(/[:=]/, 1)[0]}=[redacted]`);
+    .replace(TOKEN_LIKE_PATTERN, redactField)
+    .replace(POSTAL_ADDRESS_HINT_PATTERN, redactField);
 }
 
 export function warnWithRedactedError(scope: string, message: string, error: unknown) {
