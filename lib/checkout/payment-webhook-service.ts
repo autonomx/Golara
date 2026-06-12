@@ -178,8 +178,7 @@ export async function recordPaymentWebhookEvent(input: PaymentWebhookEventInput)
       paymentAttemptId: existing.paymentAttemptId,
       paymentEventId: existing.id,
       idempotencyKey: event.idempotencyKey,
-      plan,
-      settlementReconciliation: await paymentSettlementRepository.upsertForPaymentEvent(existing.id)
+      plan
     };
   }
 
