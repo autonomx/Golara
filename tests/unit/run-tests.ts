@@ -125,6 +125,7 @@ import { runPromotionVoucherModelTests } from './promotion-voucher-model.test';
 import { runProviderDiagnosticsTests } from './provider-diagnostics.test';
 import { runPublicInquiryServiceTests } from './public-inquiry-service.test';
 import { runRecentActivitySummaryTests } from './recent-activity-summary.test';
+import { runRedactedLoggingTests } from './redacted-logging.test';
 import { runRepositoryFallbackPolicyTests } from './repository-fallback-policy.test';
 import { runRuntimeModeTests } from './runtime-mode.test';
 import { runRuntimeReadinessTests } from './runtime-readiness.test';
@@ -156,6 +157,7 @@ async function main() {
   await runE2eDbSafetyContractTests();
   await runContentSecurityPolicyConfigTests();
   await runInputXssSafetyTests();
+  await runRedactedLoggingTests();
   await runAdminActionBoundaryGuardTests();
   await runAdminAuthCoreTests();
   await runAdminAccountCoreTests();

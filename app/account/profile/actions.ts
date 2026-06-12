@@ -8,6 +8,7 @@ import { safeCustomerProfileReturnTo } from '@/lib/customers/customer-profile-co
 import { updateCustomerProfile } from '@/lib/customers/customer-repository';
 import { hasDatabase } from '@/lib/prisma';
 import { assertSameOriginServerAction } from '@/lib/server-action-origin';
+import { warnWithRedactedError } from '@/lib/security/redacted-logging';
 
 function stringField(formData: FormData, name: string, fallback = '') {
   const value = formData.get(name);
@@ -51,7 +52,7 @@ export async function updateAccountProfileAction(formData: FormData) {
       redirectTarget = returnTo || profilePath('updated');
     }
   } catch (error) {
-    console.warn('[account] failed to update profile', error);
+    warnWithRedactedError('account', 'failed to update profile', error);
     redirectTarget = profilePath('failed', returnTo);
   }
   redirect(redirectTarget);

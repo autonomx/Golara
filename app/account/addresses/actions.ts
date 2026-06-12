@@ -7,6 +7,7 @@ import { getCustomerSessionCookie } from '@/lib/customers/customer-session-cooki
 import { addCustomerAddress, deleteCustomerAddress, setDefaultCustomerAddress, updateCustomerAddress } from '@/lib/customers/customer-repository';
 import { hasDatabase } from '@/lib/prisma';
 import { assertSameOriginServerAction } from '@/lib/server-action-origin';
+import { warnWithRedactedError } from '@/lib/security/redacted-logging';
 
 function stringField(formData: FormData, name: string, fallback = '') {
   const value = formData.get(name);
@@ -57,7 +58,7 @@ export async function addAccountAddressAction(formData: FormData) {
     revalidatePath('/account/addresses');
     redirectTarget = addressPath('added');
   } catch (error) {
-    console.warn('[account] failed to add address', error);
+    warnWithRedactedError('account', 'failed to add address', error);
     redirectTarget = addressPath('failed');
   }
   redirect(redirectTarget);
@@ -72,7 +73,7 @@ export async function updateAccountAddressAction(formData: FormData) {
     revalidatePath('/account/addresses');
     redirectTarget = addressPath('updated');
   } catch (error) {
-    console.warn('[account] failed to update address', error);
+    warnWithRedactedError('account', 'failed to update address', error);
     redirectTarget = addressPath('failed');
   }
   redirect(redirectTarget);
@@ -87,7 +88,7 @@ export async function setDefaultAccountAddressAction(formData: FormData) {
     revalidatePath('/account/addresses');
     redirectTarget = addressPath('default-updated');
   } catch (error) {
-    console.warn('[account] failed to set default address', error);
+    warnWithRedactedError('account', 'failed to set default address', error);
     redirectTarget = addressPath('failed');
   }
   redirect(redirectTarget);
@@ -102,7 +103,7 @@ export async function deleteAccountAddressAction(formData: FormData) {
     revalidatePath('/account/addresses');
     redirectTarget = addressPath('deleted');
   } catch (error) {
-    console.warn('[account] failed to delete address', error);
+    warnWithRedactedError('account', 'failed to delete address', error);
     redirectTarget = addressPath('failed');
   }
   redirect(redirectTarget);
