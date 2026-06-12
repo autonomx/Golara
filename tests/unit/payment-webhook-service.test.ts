@@ -30,6 +30,8 @@ export async function runPaymentWebhookServiceTests() {
   assert.match(service, /const orderNumber = input\.orderNumber\?\.trim\(\)/);
   assert.match(service, /const publicLookupToken = input\.publicLookupToken \? normalizePublicOrderLookupToken/);
   assert.match(service, /if \(orderNumber\)/);
+  assert.match(service, /order:\s*\{\s*orderNumber,\s*\.\.\.\(publicLookupToken \? \{ publicLookupToken \} : \{\}\)\s*\}/s);
+  assert.doesNotMatch(service, /if \(publicLookupToken\)[\s\S]*?checkoutPaymentAttempt\.findFirst/);
   assert.doesNotMatch(service, /if \(input\.orderNumber \|\| input\.publicLookupToken\)/);
   assert.match(service, /checkoutPaymentEvent\.create/);
   assert.match(service, /paymentWebhookService = \{/);
