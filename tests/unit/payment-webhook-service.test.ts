@@ -25,10 +25,14 @@ export async function runPaymentWebhookServiceTests() {
   assert.match(service, /checkoutPaymentEvent\.findUnique/);
   assert.match(service, /provider_idempotencyKey/);
   assert.match(service, /status: 'duplicate'/);
-  assert.match(service, /checkoutPaymentAttempt\.findFirst/);
-  assert.match(service, /providerReference: input\.providerReference/);
+  assert.match(service, /function isPaymentAttemptCorroborated/);
+  assert.match(service, /input\.orderNumber && input\.attempt\.order\.orderNumber !== input\.orderNumber/);
+  assert.match(service, /input\.publicLookupToken && input\.attempt\.order\.publicLookupToken !== input\.publicLookupToken/);
   assert.match(service, /const orderNumber = input\.orderNumber\?\.trim\(\)/);
   assert.match(service, /const publicLookupToken = input\.publicLookupToken \? normalizePublicOrderLookupToken/);
+  assert.match(service, /checkoutPaymentAttempt\.findFirst/);
+  assert.match(service, /providerReference: input\.providerReference/);
+  assert.match(service, /byReference && isPaymentAttemptCorroborated\(\{ attempt: byReference, orderNumber, publicLookupToken \}\)/);
   assert.match(service, /if \(orderNumber\)/);
   assert.match(service, /order:\s*\{\s*orderNumber,\s*\.\.\.\(publicLookupToken \? \{ publicLookupToken \} : \{\}\)\s*\}/s);
   assert.doesNotMatch(service, /if \(publicLookupToken\)[\s\S]*?checkoutPaymentAttempt\.findFirst/);
@@ -39,6 +43,17 @@ export async function runPaymentWebhookServiceTests() {
   assert.match(service, /if \(!input\.statePlan\.trusted\) return/);
   assert.match(service, /checkoutOrder\.update/);
   assert.match(service, /checkoutPaymentAttempt\.update/);
+
+  const corroboratorIndex = service.indexOf('function isPaymentAttemptCorroborated');
+  const orderNormalizeIndex = service.indexOf('const orderNumber = input.orderNumber?.trim()');
+  const referenceLookupIndex = service.indexOf('providerReference: input.providerReference');
+  const corroborationCallIndex = service.indexOf('isPaymentAttemptCorroborated({ attempt: byReference, orderNumber, publicLookupToken })');
+  const orderLookupIndex = service.indexOf('if (orderNumber)');
+  assert.ok(corroboratorIndex > -1);
+  assert.ok(orderNormalizeIndex > corroboratorIndex);
+  assert.ok(referenceLookupIndex > orderNormalizeIndex);
+  assert.ok(corroborationCallIndex > referenceLookupIndex);
+  assert.ok(orderLookupIndex > corroborationCallIndex);
 
   const helperIndex = service.indexOf('async function applyTrustedWebhookStateChange');
   const attemptUpdateIndex = service.indexOf('checkoutPaymentAttempt.update');
