@@ -1,12 +1,19 @@
 import { NextResponse } from 'next/server';
 
-import { handlePaymentWebhookRoute } from '@/lib/checkout/payment-webhook-route-core';
+import { handlePaymentWebhookRoute, validatePaymentWebhookRawBody } from '@/lib/checkout/payment-webhook-route-core';
 import { paymentWebhookService } from '@/lib/checkout/payment-webhook-service';
 import { verifyPaymentWebhookSignature } from '@/lib/checkout/payment-webhook-signature';
 
 export async function POST(request: Request) {
   const headers = Object.fromEntries(request.headers.entries());
   const rawBody = await request.text();
+  const bodyGuard = validatePaymentWebhookRawBody({
+    provider: 'stripe',
+    rawBody,
+    headers
+  });
+  if (bodyGuard) return NextResponse.json(bodyGuard.body, { status: bodyGuard.statusCode });
+
   const signature = verifyPaymentWebhookSignature({
     provider: 'stripe',
     rawBody,
