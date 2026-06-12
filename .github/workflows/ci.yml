@@ -19,6 +19,8 @@ jobs:
         run: npm install --package-lock-only --ignore-scripts > ci-results/01-package-lock.log 2>&1
       - name: Install dependencies
         run: npm ci > ci-results/02-npm-ci.log 2>&1
+      - name: Supply-chain audit
+        run: npm run check:supply-chain > ci-results/02b-supply-chain-audit.log 2>&1
       - name: Check file lines
         run: npm run check:file-lines > ci-results/03-check-file-lines.log 2>&1
       - name: Check runtime

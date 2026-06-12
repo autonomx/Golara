@@ -96,8 +96,12 @@ function runPublicApiFallbackContractTests() {
 
 function runApiSuiteScriptTests() {
   const pkg = source('package.json');
+  const ci = source('.github/workflows/ci.yml');
   assert.match(pkg, /"test:api":\s*"node --require \.\/tests\/setup\/server-only-register\.cjs --import tsx tests\/api\/run-tests\.ts"/);
   assert.match(pkg, /"test:all"/);
+  assert.match(pkg, /"check:supply-chain":\s*"npm audit --omit=dev --audit-level=high"/);
+  assert.match(ci, /Supply-chain audit/);
+  assert.match(ci, /npm run check:supply-chain > ci-results\/02b-supply-chain-audit\.log 2>&1/);
 }
 
 async function main() {

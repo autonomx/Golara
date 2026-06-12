@@ -31,6 +31,7 @@
     "codemod:admin-dashboard-workspaces": "node scripts/admin-dashboard-workspace-swap.mjs",
     "check:file-lines": "node tools/check-file-lines.mjs",
     "check:runtime": "node tools/check-runtime.mjs && npm run check:action-boundaries && npm run check:csrf-guards && npm run check:admin-boundaries",
+    "check:supply-chain": "npm audit --omit=dev --audit-level=high",
     "check:action-boundaries": "node tools/check-action-boundaries.mjs",
     "check:admin-boundaries": "node tools/check-admin-action-boundaries.mjs",
     "check:deploy-readiness": "tsx tools/check-deploy-readiness.ts",
