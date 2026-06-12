@@ -30,6 +30,7 @@ export async function runRedactedLoggingTests() {
   const cartActionSource = readFileSync('app/cart/actions.ts', 'utf8');
   const productCheckoutActionSource = readFileSync('app/products/[slug]/checkout-actions.ts', 'utf8');
   const cartCheckoutActionSource = readFileSync('app/cart/checkout/actions.ts', 'utf8');
+  const orderReturnRouteSource = readFileSync('app/orders/return/route.ts', 'utf8');
 
   assert.match(profileActionSource, /warnWithRedactedError\('account', 'failed to update profile', error\)/);
   assertNoRawCustomerErrorLogging(profileActionSource, 'account profile actions');
@@ -51,6 +52,9 @@ export async function runRedactedLoggingTests() {
 
   assert.match(cartCheckoutActionSource, /warnWithRedactedError\('cart', 'failed to create checkout order', error\)/);
   assertNoRawCustomerErrorLogging(cartCheckoutActionSource, 'cart checkout actions');
+
+  assert.match(orderReturnRouteSource, /warnWithRedactedError\('orders', 'failed to apply return status', result\.error\)/);
+  assertNoRawCustomerErrorLogging(orderReturnRouteSource, 'order return route');
 
   console.log('redacted-logging.test.ts passed');
 }
