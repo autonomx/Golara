@@ -12,10 +12,12 @@ import {
 import {
   ADMIN_SESSION_COOKIE_NAME,
   ADMIN_SESSION_MAX_AGE_SECONDS,
+  ADMIN_SESSION_NONCE_BYTES,
   ADMIN_SESSION_PAYLOAD,
   adminRoleMeetsRequirement,
   createAdminIdentity,
   createAdminSessionCookieValue,
+  createAdminSessionPayload,
   createConfiguredAdminIdentity,
   getAdminAuthConfig,
   isAdminAuthConfigured,
@@ -36,6 +38,7 @@ export async function runAdminAuthCoreTests() {
   assert.equal(ADMIN_SESSION_COOKIE_NAME, 'golara_admin_session');
   assert.equal(ADMIN_SESSION_PAYLOAD, 'golara-admin-v1');
   assert.equal(ADMIN_SESSION_MAX_AGE_SECONDS, 60 * 60 * 8);
+  assert.equal(ADMIN_SESSION_NONCE_BYTES, 16);
 
   assert.equal(normalizeAdminRole(undefined), 'owner');
   assert.equal(normalizeAdminRole(''), 'owner');
@@ -88,16 +91,27 @@ export async function runAdminAuthCoreTests() {
   assert.equal(verifyAdminPassword('wrong-password', config), false);
   assert.equal(verifyAdminPassword('password', { ...config, sessionSecret: '' }), false);
 
-  const cookieValue = createAdminSessionCookieValue(config);
-  assert.match(cookieValue, /^golara-admin-v1\.[a-f0-9]{64}$/);
-  assert.equal(isValidAdminSessionCookie(cookieValue, config), true);
-  assert.equal(isValidAdminSessionCookie(undefined, config), false);
-  assert.equal(isValidAdminSessionCookie('', config), false);
-  assert.equal(isValidAdminSessionCookie('bad-payload.bad-signature', config), false);
-  assert.equal(isValidAdminSessionCookie(`${ADMIN_SESSION_PAYLOAD}.`, config), false);
-  assert.equal(isValidAdminSessionCookie(`${ADMIN_SESSION_PAYLOAD}.${signAdminSessionPayload('other-payload', config)}`, config), false);
-  assert.equal(isValidAdminSessionCookie(`${ADMIN_SESSION_PAYLOAD}.${signAdminSessionPayload(ADMIN_SESSION_PAYLOAD, config)}.extra`, config), true);
-  assert.equal(isValidAdminSessionCookie(cookieValue, { ...config, sessionSecret: 'other-secret' }), false);
+  const issuedAtMs = 1_800_000_000_000;
+  const nonce = '0123456789abcdef0123456789abcdef';
+  const sessionPayload = createAdminSessionPayload(issuedAtMs, nonce);
+  assert.equal(sessionPayload, `${ADMIN_SESSION_PAYLOAD}.${issuedAtMs}.${nonce}`);
+
+  const cookieValue = createAdminSessionCookieValue(config, issuedAtMs, nonce);
+  assert.match(cookieValue, /^golara-admin-v1\.\d+\.[a-f0-9]{32}\.[a-f0-9]{64}$/);
+  assert.equal(isValidAdminSessionCookie(cookieValue, config, issuedAtMs), true);
+  assert.equal(isValidAdminSessionCookie(cookieValue, config, issuedAtMs + ADMIN_SESSION_MAX_AGE_SECONDS * 1000), true);
+  assert.equal(isValidAdminSessionCookie(cookieValue, config, issuedAtMs + ADMIN_SESSION_MAX_AGE_SECONDS * 1000 + 1), false);
+  assert.equal(isValidAdminSessionCookie(cookieValue, config, issuedAtMs - 1), false);
+  assert.notEqual(createAdminSessionCookieValue(config), createAdminSessionCookieValue(config));
+  assert.equal(isValidAdminSessionCookie(undefined, config, issuedAtMs), false);
+  assert.equal(isValidAdminSessionCookie('', config, issuedAtMs), false);
+  assert.equal(isValidAdminSessionCookie('bad-payload.bad-signature', config, issuedAtMs), false);
+  assert.equal(isValidAdminSessionCookie(`${ADMIN_SESSION_PAYLOAD}.${issuedAtMs}.${nonce}.bad-signature`, config, issuedAtMs), false);
+  assert.equal(isValidAdminSessionCookie(`${ADMIN_SESSION_PAYLOAD}.not-a-time.${nonce}.${signAdminSessionPayload(sessionPayload, config)}`, config, issuedAtMs), false);
+  assert.equal(isValidAdminSessionCookie(`${ADMIN_SESSION_PAYLOAD}.${issuedAtMs}.bad-nonce.${signAdminSessionPayload(sessionPayload, config)}`, config, issuedAtMs), false);
+  assert.equal(isValidAdminSessionCookie(`${ADMIN_SESSION_PAYLOAD}.${issuedAtMs}.${nonce}.${signAdminSessionPayload(sessionPayload, config)}.extra`, config, issuedAtMs), false);
+  assert.equal(isValidAdminSessionCookie(`${ADMIN_SESSION_PAYLOAD}.${signAdminSessionPayload(ADMIN_SESSION_PAYLOAD, config)}`, config, issuedAtMs), false);
+  assert.equal(isValidAdminSessionCookie(cookieValue, { ...config, sessionSecret: 'other-secret' }, issuedAtMs), false);
 
   assert.deepEqual(createAdminIdentity({ authenticated: true, label: 'Provider User', role: 'owner', provider: 'password' }), {
     authenticated: true,
