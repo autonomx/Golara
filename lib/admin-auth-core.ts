@@ -1,8 +1,9 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 
 export const ADMIN_SESSION_COOKIE_NAME = 'golara_admin_session';
 export const ADMIN_SESSION_PAYLOAD = 'golara-admin-v1';
 export const ADMIN_SESSION_MAX_AGE_SECONDS = 60 * 60 * 8;
+export const ADMIN_SESSION_NONCE_BYTES = 16;
 
 export type AdminRole = 'owner' | 'staff';
 export type AdminIdentityProvider = 'password';
@@ -76,17 +77,30 @@ export function safeAdminEqual(left: string, right: string) {
   return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer);
 }
 
-export function createAdminSessionCookieValue(config: AdminAuthConfig) {
-  return `${ADMIN_SESSION_PAYLOAD}.${signAdminSessionPayload(ADMIN_SESSION_PAYLOAD, config)}`;
+export function createAdminSessionPayload(issuedAtMs = Date.now(), nonce = randomBytes(ADMIN_SESSION_NONCE_BYTES).toString('hex')) {
+  return `${ADMIN_SESSION_PAYLOAD}.${issuedAtMs}.${nonce}`;
 }
 
-export function isValidAdminSessionCookie(cookieValue: string | undefined, config: AdminAuthConfig) {
+export function createAdminSessionCookieValue(config: AdminAuthConfig, issuedAtMs = Date.now(), nonce?: string) {
+  const sessionPayload = createAdminSessionPayload(issuedAtMs, nonce);
+  return `${sessionPayload}.${signAdminSessionPayload(sessionPayload, config)}`;
+}
+
+export function isValidAdminSessionCookie(cookieValue: string | undefined, config: AdminAuthConfig, nowMs = Date.now()) {
   if (!cookieValue || !isAdminAuthConfigured(config)) return false;
 
-  const [payload, signature] = cookieValue.split('.');
-  if (payload !== ADMIN_SESSION_PAYLOAD || !signature) return false;
+  const [payloadMarker, issuedAtValue, nonce, signature, ...extra] = cookieValue.split('.');
+  if (extra.length > 0) return false;
+  if (payloadMarker !== ADMIN_SESSION_PAYLOAD || !issuedAtValue || !nonce || !signature) return false;
+  if (!/^\d+$/.test(issuedAtValue) || !/^[a-f0-9]{32}$/i.test(nonce)) return false;
 
-  return safeAdminEqual(signature, signAdminSessionPayload(payload, config));
+  const issuedAtMs = Number.parseInt(issuedAtValue, 10);
+  if (!Number.isSafeInteger(issuedAtMs) || issuedAtMs <= 0) return false;
+  if (issuedAtMs > nowMs) return false;
+  if (nowMs - issuedAtMs > ADMIN_SESSION_MAX_AGE_SECONDS * 1000) return false;
+
+  const sessionPayload = `${payloadMarker}.${issuedAtValue}.${nonce}`;
+  return safeAdminEqual(signature, signAdminSessionPayload(sessionPayload, config));
 }
 
 export function verifyAdminPassword(password: string, config: AdminAuthConfig) {
