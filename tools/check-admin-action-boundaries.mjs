@@ -46,19 +46,25 @@ const staffRequiredExports = new Map([
   ]]
 ]);
 
-function escapeRegex(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function findExportStart(source, exportName) {
+  const needle = `export async function ${exportName}`;
+  const index = source.indexOf(needle);
+  if (index >= 0) return index;
+  return source.indexOf(`export async function\n${exportName}`);
 }
 
 function exportedFunctionBody(source, exportName) {
-  const pattern = new RegExp(`export\\s+async\\s+function\\s+${escapeRegex(exportName)}\\b[\\s\\S]*?(?=\\nexport\\s+async\\s+function\\s+|\\nasync\\s+function\\s+|$)`, 'm');
-  const match = source.match(pattern);
-  return match?.[0] ?? '';
+  const start = findExportStart(source, exportName);
+  if (start < 0) return '';
+  const next = source.indexOf('\nexport async function ', start + 1);
+  return next >= 0 ? source.slice(start, next) : source.slice(start);
 }
 
 function requiresRole(source, exportName, role) {
   const body = exportedFunctionBody(source, exportName);
-  return new RegExp(`assertAdminRole\\(\\s*['\"]${role}['\"]\\s*\\)`).test(body);
+  const requiredCall = `assertAdminRole('${role}')`;
+  const requiredDoubleQuoteCall = `assertAdminRole("${role}")`;
+  return body.includes(requiredCall) || body.includes(requiredDoubleQuoteCall);
 }
 
 export function collectAdminRbacFailures({ readFile = readFileSync } = {}) {
