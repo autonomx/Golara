@@ -48,6 +48,12 @@ export function validateInquiryInput(input: InquiryValidationInput): { ok: true;
   if (!looksLikePhone(phone)) return { ok: false, code: 'phone-invalid' };
   if (email && !looksLikeEmail(email)) return { ok: false, code: 'email-invalid' };
   if (message.length < 10) return { ok: false, code: 'message-short' };
+  // Upper bound length checks to prevent abuse / spam
+  if (name.length > 200) return { ok: false, code: 'name-too-long' };
+  if (phone.length > 40) return { ok: false, code: 'phone-too-long' };
+  if (email && email.length > 320) return { ok: false, code: 'email-too-long' };
+  if (message.length > 1000) return { ok: false, code: 'message-too-long' };
+  if (deliveryNotes && deliveryNotes.length > 500) return { ok: false, code: 'delivery-notes-too-long' };
 
   return {
     ok: true,
