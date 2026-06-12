@@ -7,6 +7,7 @@ import { clearCartTokenCookie, getCartTokenCookie, setCartTokenCookie } from '@/
 import { hasDatabase } from '@/lib/prisma';
 import { assertSameOriginServerAction } from '@/lib/server-action-origin';
 import { safeReturnPath } from '@/lib/security/safe-return-path';
+import { warnWithRedactedError } from '@/lib/security/redacted-logging';
 
 function stringField(formData: FormData, name: string, fallback = '') {
   const value = formData.get(name);
@@ -57,7 +58,7 @@ export async function addToCartAction(formData: FormData) {
     revalidateCartSurfaces(returnTo);
     redirectTarget = statusPath(returnTo, 'added');
   } catch (error) {
-    console.warn('[cart] failed to add item', error);
+    warnWithRedactedError('cart', 'failed to add item', error);
     redirectTarget = statusPath(returnTo, 'failed');
   }
   redirect(redirectTarget);
@@ -80,7 +81,7 @@ export async function updateCartItemAction(formData: FormData) {
     revalidateCartSurfaces(returnTo);
     redirectTarget = statusPath(returnTo, 'updated');
   } catch (error) {
-    console.warn('[cart] failed to update item', error);
+    warnWithRedactedError('cart', 'failed to update item', error);
     redirectTarget = statusPath(returnTo, 'failed');
   }
   redirect(redirectTarget);
@@ -99,7 +100,7 @@ export async function removeCartItemAction(formData: FormData) {
     revalidateCartSurfaces(returnTo);
     redirectTarget = statusPath(returnTo, 'removed');
   } catch (error) {
-    console.warn('[cart] failed to remove item', error);
+    warnWithRedactedError('cart', 'failed to remove item', error);
     redirectTarget = statusPath(returnTo, 'failed');
   }
   redirect(redirectTarget);
@@ -119,7 +120,7 @@ export async function clearCartAction(formData: FormData) {
     revalidateCartSurfaces(returnTo);
     redirectTarget = statusPath(returnTo, 'cleared');
   } catch (error) {
-    console.warn('[cart] failed to clear cart', error);
+    warnWithRedactedError('cart', 'failed to clear cart', error);
     redirectTarget = statusPath(returnTo, 'failed');
   }
   redirect(redirectTarget);
