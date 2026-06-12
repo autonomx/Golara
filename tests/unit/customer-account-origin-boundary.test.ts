@@ -14,16 +14,29 @@ function assertImportAndCalls(path: string, actionNames: string[]) {
 }
 
 export async function runCustomerAccountOriginBoundaryTests() {
+  const profileSource = readFileSync('app/account/profile/actions.ts', 'utf8');
   assertImportAndCalls('app/account/login/actions.ts', [
     'requestCustomerOtpAction',
     'verifyCustomerOtpAction'
   ]);
   assertImportAndCalls('app/account/profile/actions.ts', ['updateAccountProfileAction']);
 
+  assert.match(profileSource, /async function requireCustomerId\(\)/);
+  assert.match(profileSource, /const customerId = await requireCustomerId\(\);/);
+  assert.match(profileSource, /updateCustomerProfile\(customerId,/);
+  assert.doesNotMatch(profileSource, /stringField\(formData,\s*['"]customerId['"]/);
+  assert.doesNotMatch(profileSource, /formData\.get\(['"]customerId['"]\)/);
+
   const addressSource = readFileSync('app/account/addresses/actions.ts', 'utf8');
   assert.match(addressSource, /assertSameOriginServerAction/);
   assert.match(addressSource, /async function requireCustomerAddressMutation/);
   assert.match(addressSource, /await assertSameOriginServerAction\(\);[\s\S]*return requireCustomerId\(\);/);
+  assert.doesNotMatch(addressSource, /stringField\(formData,\s*['"]customerId['"]/);
+  assert.doesNotMatch(addressSource, /formData\.get\(['"]customerId['"]\)/);
+  assert.match(addressSource, /addCustomerAddress\(customerId, addressInput\(formData\)\)/);
+  assert.match(addressSource, /updateCustomerAddress\(customerId, stringField\(formData, 'addressId'\), addressInput\(formData\)\)/);
+  assert.match(addressSource, /setDefaultCustomerAddress\(customerId, stringField\(formData, 'addressId'\)\)/);
+  assert.match(addressSource, /deleteCustomerAddress\(customerId, stringField\(formData, 'addressId'\)\)/);
 
   for (const actionName of [
     'addAccountAddressAction',
