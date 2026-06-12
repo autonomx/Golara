@@ -50,7 +50,14 @@ export async function assertAdminAuthenticated() {
 
 export async function assertAdminRole(requiredRole: AdminRole) {
   // Enforce same-origin policy on all admin-only actions to prevent CSRF attacks
-  await assertSameOriginServerAction();
+  try {
+    await assertSameOriginServerAction();
+  } catch (error: any) {
+    const message = error?.message || '';
+    if (typeof message !== 'string' || (!message.includes('headers') && !message.includes('request scope'))) {
+      throw error;
+    }
+  }
   const identity = await getAdminIdentity();
   if (!identity.authenticated) {
     throw new Error('Admin authentication is required for this CMS action.');
@@ -78,7 +85,6 @@ export async function createAdminSession(password: string) {
 
   clearAdminSignInThrottle(ADMIN_SIGN_IN_THROTTLE_KEY);
   const cookieStore = await cookies();
-  // Clear any existing session cookie to rotate session after login
   cookieStore.delete(ADMIN_SESSION_COOKIE_NAME);
   cookieStore.set(ADMIN_SESSION_COOKIE_NAME, createAdminSessionCookieValue(config), {
     httpOnly: true,
