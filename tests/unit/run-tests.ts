@@ -60,6 +60,7 @@ import { runLowStockAlertsTests } from './low-stock-alerts.test';
 import { runManualPaymentAdjustmentFlowTests } from './manual-payment-adjustment-flow.test';
 import { runManualPaymentMarkingFlowTests } from './manual-payment-marking-flow.test';
 import { runMediaStorageReadinessTests } from './media-storage-readiness.test';
+import { runMediaUploadSignatureTests } from './media-upload-signature.test';
 import { runNotificationProviderPhase34KickoffTests } from './notification-provider-phase34-kickoff.test';
 import { runNotificationProviderSettingsTests } from './notification-provider-settings.test';
 import { runOrderActivityTimelineAttributionTests } from './order-activity-timeline-attribution.test';
@@ -150,6 +151,7 @@ async function main() {
   await runRepositoryFallbackPolicyTests();
   await runRuntimeReadinessTests();
   await runMediaStorageReadinessTests();
+  await runMediaUploadSignatureTests();
   await runDataSafetyReadinessTests();
   await runE2eDbSafetyContractTests();
   await runContentSecurityPolicyConfigTests();
