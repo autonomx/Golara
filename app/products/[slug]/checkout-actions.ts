@@ -6,6 +6,7 @@ import { createOrderDraft } from '@/lib/checkout/order-draft-repository';
 import { createCheckoutPaymentAttempt } from '@/lib/checkout/payment-provider';
 import { addCustomerAddress, upsertCustomerProfile } from '@/lib/customers/customer-repository';
 import { hasDatabase } from '@/lib/prisma';
+import { assertSameOriginServerAction } from '@/lib/server-action-origin';
 
 function stringField(formData: FormData, name: string, fallback = '') {
   const value = formData.get(name);
@@ -23,6 +24,8 @@ function checkoutPath(productSlug: string, status: string) {
 }
 
 export async function createCheckoutAction(productId: string | undefined, productSlug: string, formData: FormData) {
+  // Enforce same-origin policy for checkout actions to prevent CSRF attacks
+  await assertSameOriginServerAction();
   if (!hasDatabase() || !productId) {
     redirect(checkoutPath(productSlug, 'database-required'));
   }
