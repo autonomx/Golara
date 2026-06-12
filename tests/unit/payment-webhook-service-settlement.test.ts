@@ -15,14 +15,17 @@ export async function runPaymentWebhookServiceSettlementTests() {
   assert.match(service, /settlementReconciliation\?: PaymentSettlementReconciliationRecord \| null/);
   assert.match(service, /settlementReconciliation: await paymentSettlementRepository\.upsertForPaymentEvent\(existing\.id\)/);
   assert.match(service, /const settlementReconciliation = await paymentSettlementRepository\.upsertForPaymentEvent\(created\.id\)/);
+  assert.match(service, /function shouldApplyWebhookStateChange/);
   assert.match(service, /settlementReconciliation,/);
 
   const createIndex = service.indexOf('checkoutPaymentEvent.create');
-  const stateIndex = service.indexOf('await applyTrustedWebhookStateChange');
   const settlementIndex = service.indexOf('const settlementReconciliation = await paymentSettlementRepository.upsertForPaymentEvent(created.id)');
+  const gateIndex = service.indexOf('const shouldApplyState = shouldApplyWebhookStateChange');
+  const stateIndex = service.indexOf('await applyTrustedWebhookStateChange');
   assert.ok(createIndex > -1);
-  assert.ok(stateIndex > createIndex);
-  assert.ok(settlementIndex > stateIndex);
+  assert.ok(settlementIndex > createIndex);
+  assert.ok(gateIndex > settlementIndex);
+  assert.ok(stateIndex > gateIndex);
 
   console.log('payment-webhook-service-settlement.test.ts passed');
 }
