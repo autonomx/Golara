@@ -16,7 +16,7 @@ function csvRow(values: unknown[]) {
 export async function GET(request: Request) {
   let identity;
   try {
-    identity = await assertAdminRole('staff');
+    identity = await assertAdminRole('owner');
   } catch {
     return NextResponse.json({ status: 'unauthorized' }, { status: 401 });
   }
