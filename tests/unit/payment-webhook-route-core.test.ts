@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { handlePaymentWebhookRoute } from '../../lib/checkout/payment-webhook-route-core';
+import {
+  handlePaymentWebhookRoute,
+  validatePaymentWebhookRawBody
+} from '../../lib/checkout/payment-webhook-route-core';
 import type { PaymentWebhookEventInput } from '../../lib/checkout/payment-webhook-core';
 import type { PaymentWebhookServiceResult } from '../../lib/checkout/payment-webhook-service';
 
@@ -16,16 +19,22 @@ export async function runPaymentWebhookRouteCoreTests() {
 
   assert.match(routeCore, /export async function handlePaymentWebhookRoute/);
   assert.match(routeCore, /Webhook payload must be a JSON object/);
-  assert.match(routeCore, /statusCode: result\.status === 'needs_attention' \? 202 : 200/);
+  assert.match(routeCore, /MAX_PAYMENT_WEBHOOK_BODY_BYTES/);
+  assert.match(routeCore, /validatePaymentWebhookRawBody/);
+  assert.match(routeCore, /status === 'duplicate'\) return 409/);
+  assert.match(routeCore, /Duplicate webhook replay was rejected by idempotency key/);
+  assert.match(routeCore, /status === 'recorded'/);
   assert.match(routeCore, /provider: input\.provider/);
   assert.match(routeCore, /paymentEventId: result\.paymentEventId/);
   assert.doesNotMatch(routeCore, /checkoutOrder\.update/);
   assert.doesNotMatch(routeCore, /checkoutPaymentAttempt\.update/);
 
   assert.match(stripeRoute, /provider: 'stripe'/);
+  assert.match(stripeRoute, /validatePaymentWebhookRawBody/);
   assert.match(stripeRoute, /paymentWebhookService\.record/);
   assert.match(stripeRoute, /NextResponse\.json/);
   assert.match(zarinpalRoute, /provider: 'zarinpal'/);
+  assert.match(zarinpalRoute, /validatePaymentWebhookRawBody/);
   assert.match(zarinpalRoute, /eventType: 'zarinpal\.payment'/);
   assert.match(zarinpalRoute, /paymentWebhookService\.record/);
 
@@ -75,6 +84,48 @@ export async function runPaymentWebhookRouteCoreTests() {
   assert.equal(invalid.statusCode, 400);
   assert.equal(invalid.body.ok, false);
   assert.equal(invalid.body.status, 'invalid');
+
+  const oversized = validatePaymentWebhookRawBody({
+    provider: 'stripe',
+    rawBody: '{}',
+    headers: { 'content-length': String(65 * 1024) }
+  });
+  assert.equal(oversized?.statusCode, 413);
+  assert.equal(oversized?.body.status, 'invalid');
+
+  const empty = validatePaymentWebhookRawBody({
+    provider: 'stripe',
+    rawBody: '   ',
+    headers: {}
+  });
+  assert.equal(empty?.statusCode, 400);
+  assert.equal(empty?.body.status, 'invalid');
+
+  const duplicate = await handlePaymentWebhookRoute({
+    provider: 'stripe',
+    payload: { type: 'checkout.session.completed', data: { object: { id: 'cs_test_123' } } },
+    record: async () => ({
+      status: 'duplicate',
+      paymentAttemptId: 'attempt-1',
+      paymentEventId: 'event-1',
+      idempotencyKey: 'stripe:checkout.session.completed:cs_test_123:digest',
+      plan: {
+        idempotencyKey: 'stripe:checkout.session.completed:cs_test_123:digest',
+        provider: 'stripe',
+        eventName: 'checkout.session.completed',
+        providerReference: 'cs_test_123',
+        status: 'paid',
+        persistenceStatus: 'duplicate',
+        shouldApplyPaymentState: false,
+        shouldReconcileSettlement: false,
+        needsAttention: false,
+        metadata: {}
+      }
+    })
+  });
+  assert.equal(duplicate.statusCode, 409);
+  assert.equal(duplicate.body.ok, false);
+  assert.equal(duplicate.body.status, 'duplicate');
 
   const needsAttention = await handlePaymentWebhookRoute({
     provider: 'zarinpal',
