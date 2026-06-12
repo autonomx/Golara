@@ -14,7 +14,7 @@ function csvCell(value: unknown) {
 
 export async function GET(request: Request) {
   try {
-    await assertAdminRole('staff');
+    await assertAdminRole('owner');
   } catch {
     return NextResponse.json({ status: 'unauthorized' }, { status: 401 });
   }
