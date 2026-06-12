@@ -211,7 +211,7 @@ export async function runAdminAuthCoreTests() {
     'function adminSessionCookieOptions(maxAge: number)',
     'adminSessionCookieOptions(ADMIN_SESSION_MAX_AGE_SECONDS)',
     'adminSessionCookieOptions(0)',
-    'cookieStore.set(ADMIN_SESSION_COOKIE_NAME, createAdminSessionCookieValue(config)',
+    'createAdminSessionCookieValue(config)',
     "cookieStore.set(ADMIN_SESSION_COOKIE_NAME, '', adminSessionCookieOptions(0))",
     'httpOnly: true',
     "sameSite: 'lax' as const",
