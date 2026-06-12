@@ -11,7 +11,7 @@ Status values:
 
 ## Current audit position
 
-The project has completed the first major hardening pass and has moved into the remaining high-risk authorization, session, abuse-control, and payment/order verification work. The audit report previously marked several Phase 6, 7, 9, 10, 11, and 12 items as deferred even after they were fixed; this update reconciles that status through PR #598.
+The project has completed the first major hardening pass and has moved into the remaining high-risk authorization, session, abuse-control, and payment/order verification work. The audit report previously marked several Phase 6, 7, 9, 10, 11, and 12 items as deferred even after they were fixed; this roadmap reconciles that status through PR #600 and the current Phase B session-hardening slice.
 
 ## Recently completed security work
 
@@ -30,45 +30,49 @@ The project has completed the first major hardening pass and has moved into the 
 | Media upload allowlist gate | **Fixed** | PR #596 locks upload size/type/signature/host controls into CI. |
 | Secret scanning gate | **Fixed** | PR #597 adds committed-secret scanning to unit CI. |
 | Server-action CSRF guard gate | **Fixed** | PR #598 broadens CSRF/server-action scanning to all `app/**` server-action modules and wires it into runtime/unit CI. |
+| Security roadmap/status reconciliation | **Fixed** | PR #599 replaced stale audit state with this phased roadmap. |
+| Admin RBAC source gate | **Fixed** | PR #600 inventories high-risk admin mutations and enforces owner/staff role boundaries through runtime/unit CI. |
 
 ## Phases left
 
 ### Phase A — Admin RBAC and owner-only mutation authorization
 
 **Priority:** Critical  
-**Status:** Deferred  
+**Status:** Partial  
 **Goal:** prove every sensitive admin mutation enforces the correct role on the server, not just in UI.
+
+Completed:
+
+- High-risk admin mutation inventory source gate exists.
+- Owner-only role requirements are locked for settings, staff-account, API-token, payment-provider, webhook, manual-payment, discount, catalog, media, variant, and stock mutations.
+- Staff-level role requirements are locked for order/inquiry operational mutations.
+- CMS/catalog/media helper usage is guarded so the helper must remain owner-only.
 
 Remaining work:
 
-1. Inventory all admin server actions and admin API mutations.
-2. Classify each action by required role: `staff`, `owner`, or service-token/webhook-only.
-3. Require `assertAdminAuthenticated()` or `assertAdminRole(...)` in each mutation path.
-4. Add negative tests for lower-role denial, especially owner-only actions.
-5. Expand source gates to prevent new high-risk admin mutations without explicit role requirements.
-
-High-risk targets:
-
-- Staff/user management.
-- Payment operations, captures, refunds, and settlement controls.
-- Provider settings and credentials.
-- Order status and fulfillment mutations.
-- Media deletion and destructive catalog mutations.
-- Admin diagnostics and audit-log access.
+1. Add runtime negative tests for lower-role denial on representative owner-only actions.
+2. Add admin API mutation inventory if new `app/api/admin/**` routes are introduced.
+3. Review admin diagnostics and audit-log access boundaries.
+4. Keep destructive media/catalog deletion paths in the owner-only inventory as they are added.
 
 ### Phase B — Session lifecycle hardening
 
 **Priority:** High  
-**Status:** Deferred  
+**Status:** Partial  
 **Goal:** tighten admin/customer session creation, logout, expiry, and fixation resistance.
+
+Completed:
+
+- Customer session cookie helper clears existing customer session before setting a new token.
+- Current Phase B slice rotates admin session values per successful login with a signed issue timestamp and nonce.
+- Current Phase B slice rejects stale, future-dated, malformed, and tampered admin session cookies.
 
 Remaining work:
 
-1. Verify admin logout reliably clears the session cookie.
-2. Rotate admin session cookie value after successful login.
-3. Review customer and admin session lifetimes.
-4. Add session expiry and renewal tests.
-5. Add cross-customer negative tests for account/address/order access.
+1. Add admin logout route/action tests proving the cookie is reliably cleared in the browser-facing path.
+2. Review customer and admin session lifetimes against production policy.
+3. Add customer session expiry/renewal tests if persistent customer sessions remain enabled.
+4. Add cross-customer negative tests for account/address/order access.
 
 ### Phase C — Public abuse controls and throttling
 
@@ -218,43 +222,3 @@ Remaining work:
 2. Decide allowlist/expiration policy for unavoidable advisories.
 3. Ensure lockfile changes are reviewed by CI.
 4. Consider license/publisher/package-integrity checks if production risk warrants it.
-
-### Phase K — Security roadmap closeout and documentation
-
-**Priority:** Medium  
-**Status:** In progress  
-**Goal:** keep security status auditable and aligned with merged code.
-
-Remaining work:
-
-1. Update this document after each security PR.
-2. Add owner/reviewer signoff for accepted risks.
-3. Link all completed items to PRs or commits.
-4. Convert remaining phases into narrowly scoped implementation PRs.
-5. Keep all security gates documented in the CI section of the production roadmap.
-
-## Automated gates currently in place
-
-| Gate | Status | Notes |
-| --- | --- | --- |
-| Secret scanning | **Fixed** | `npm run check:secrets` runs before the unit suite. |
-| Public API allowlist | **Fixed** | Public routes are inventoried and must have explicit approval/boundaries. |
-| Media upload allowlist | **Fixed** | Size, MIME allowlist, magic-byte checks, SVG rejection, and validated-byte reuse are covered. |
-| Server-action CSRF guard scanner | **Fixed** | `check:csrf-guards` runs in runtime and unit CI and scans all `app/**` server-action modules. |
-| Deploy-readiness secret checks | **Fixed** | Production admin/customer secrets are checked for presence, length, and placeholder/default values. |
-| Redacted logging source guards | **Partial** | Customer mutation paths are covered; admin/provider diagnostics still need broader audit. |
-| Dependency audit | **Deferred** | Still needs CI integration and policy. |
-| Production route header smoke | **Deferred** | Config tests exist; response-level smoke remains. |
-
-## Recommended next phase order
-
-1. **Phase A — Admin RBAC and owner-only mutation authorization.** This is the highest remaining risk because UI hiding is not a server-side security boundary.
-2. **Phase B — Session lifecycle hardening.** Fix logout, rotation, and cross-customer access tests.
-3. **Phase D — Payment and order integrity.** Add amount/currency/order-ownership/idempotency verification.
-4. **Phase C — Public abuse controls.** Add inquiry/order-lookup/cart/query throttles and lockouts.
-5. **Phase E/F — Privacy, diagnostics, and audit trail hardening.** Broaden redaction and operational logging.
-6. **Phase H/I/J — Media lifecycle, deployment headers, and dependency gate.** Finish remaining regression gates and accepted-risk documentation.
-
-## Conclusion
-
-The security audit is no longer at the initial discovery stage. A substantial set of hardening controls and CI gates has landed, especially around public API boundaries, upload safety, secret readiness, logging redaction, and server-action CSRF scanning. The remaining highest-risk work is now concentrated in admin RBAC, session lifecycle, public abuse controls, payment/order integrity, and privacy/audit-trail completeness. Each remaining phase should continue as a narrow PR with CI-backed regression coverage.
