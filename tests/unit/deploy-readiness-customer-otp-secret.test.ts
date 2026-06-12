@@ -8,8 +8,9 @@ async function withProductionEnv(run: () => Promise<void> | void) {
     ...ORIGINAL_ENV,
     APP_MODE: 'production',
     DATABASE_URL: 'postgresql://example.invalid/db',
-    ADMIN_PASSWORD: 'password-for-test',
-    ADMIN_SESSION_SECRET: '12345678901234567890123456789012',
+    ADMIN_PASSWORD: 'production-admin-password-for-test',
+    ADMIN_SESSION_SECRET: 'admin-session-secret-for-test-1234567890',
+    CUSTOMER_OTP_SECRET: 'customer-otp-secret-for-test-1234567890',
     ADMIN_ROLE: 'owner',
     MEDIA_STORAGE_PROVIDER: 'cloudinary',
     CLOUDINARY_CLOUD_NAME: 'golara-test',
@@ -43,9 +44,15 @@ export async function runDeployReadinessCustomerOtpSecretTests() {
   });
 
   await withProductionEnv(() => {
-    process.env.CUSTOMER_OTP_SECRET = '12345678901234567890123456789012';
+    process.env.CUSTOMER_OTP_SECRET = 'example-customer-otp-secret-1234567890';
+    assert.deepEqual(blockerCodes(), ['customer_otp_secret_placeholder']);
+  });
+
+  await withProductionEnv(() => {
+    process.env.CUSTOMER_OTP_SECRET = 'customer-otp-secret-for-test-1234567890';
     assert.equal(blockerCodes().includes('customer_otp_secret_missing'), false);
     assert.equal(blockerCodes().includes('customer_otp_secret_short'), false);
+    assert.equal(blockerCodes().includes('customer_otp_secret_placeholder'), false);
   });
 
   console.log('deploy-readiness-customer-otp-secret.test.ts passed');
