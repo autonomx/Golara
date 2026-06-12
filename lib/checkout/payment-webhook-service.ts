@@ -96,6 +96,16 @@ async function findPaymentAttemptForWebhook(input: {
   return null;
 }
 
+function shouldApplyWebhookStateChange(input: {
+  eventStatus: string;
+  statePlan: PaymentWebhookStatePlan;
+  settlementReconciliation?: PaymentSettlementReconciliationRecord | null;
+}) {
+  if (!input.statePlan.trusted) return false;
+  if (input.eventStatus !== 'paid') return true;
+  return input.settlementReconciliation?.status === 'settled';
+}
+
 async function applyTrustedWebhookStateChange(input: {
   paymentAttempt: PaymentAttemptLookup;
   statePlan: PaymentWebhookStatePlan;
@@ -197,12 +207,10 @@ export async function recordPaymentWebhookEvent(input: PaymentWebhookEventInput)
   const persistenceInput = buildPaymentWebhookEventPersistenceInput({
     paymentAttemptId: paymentAttempt.id,
     event,
-    plan,
-    processedAt: statePlan.trusted ? new Date() : undefined
+    plan
   });
-  const metadata = {
+  const initialMetadata = {
     ...persistenceInput.metadata,
-    webhookStateTrusted: statePlan.trusted,
     webhookStateReason: statePlan.reason,
     webhookNextOrderStatus: statePlan.nextOrderStatus,
     webhookNextAttemptStatus: statePlan.nextAttemptStatus
@@ -211,17 +219,39 @@ export async function recordPaymentWebhookEvent(input: PaymentWebhookEventInput)
   const created = await prisma.checkoutPaymentEvent.create({
     data: {
       ...persistenceInput,
-      metadata
+      metadata: initialMetadata
     },
     select: { id: true, paymentAttemptId: true }
   });
 
-  await applyTrustedWebhookStateChange({
-    paymentAttempt,
-    statePlan,
-    metadata
-  });
   const settlementReconciliation = await paymentSettlementRepository.upsertForPaymentEvent(created.id);
+  const shouldApplyState = shouldApplyWebhookStateChange({
+    eventStatus: event.status,
+    statePlan,
+    settlementReconciliation
+  });
+  const metadata = {
+    ...initialMetadata,
+    webhookStateTrusted: shouldApplyState,
+    webhookSettlementStatus: settlementReconciliation?.status || 'missing',
+    webhookSettlementNeedsAttention: Boolean(settlementReconciliation?.needsAttention)
+  };
+
+  await prisma.checkoutPaymentEvent.update({
+    where: { id: created.id },
+    data: {
+      metadata,
+      ...(shouldApplyState ? { processedAt: new Date() } : {})
+    }
+  });
+
+  if (shouldApplyState) {
+    await applyTrustedWebhookStateChange({
+      paymentAttempt,
+      statePlan,
+      metadata
+    });
+  }
 
   return {
     status: plan.persistenceStatus,
