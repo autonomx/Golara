@@ -37,6 +37,16 @@ type PaymentAttemptLookup = {
   };
 };
 
+function isPaymentAttemptCorroborated(input: {
+  attempt: PaymentAttemptLookup;
+  orderNumber?: string;
+  publicLookupToken?: string | null;
+}) {
+  if (input.orderNumber && input.attempt.order.orderNumber !== input.orderNumber) return false;
+  if (input.publicLookupToken && input.attempt.order.publicLookupToken !== input.publicLookupToken) return false;
+  return true;
+}
+
 async function findPaymentAttemptForWebhook(input: {
   provider: string;
   providerReference?: string;
@@ -64,6 +74,9 @@ async function findPaymentAttemptForWebhook(input: {
     }
   };
 
+  const orderNumber = input.orderNumber?.trim();
+  const publicLookupToken = input.publicLookupToken ? normalizePublicOrderLookupToken(input.publicLookupToken) : null;
+
   if (input.providerReference) {
     const byReference = await prisma.checkoutPaymentAttempt.findFirst({
       where: {
@@ -73,11 +86,8 @@ async function findPaymentAttemptForWebhook(input: {
       orderBy: { createdAt: 'desc' },
       select
     });
-    if (byReference) return byReference;
+    if (byReference && isPaymentAttemptCorroborated({ attempt: byReference, orderNumber, publicLookupToken })) return byReference;
   }
-
-  const orderNumber = input.orderNumber?.trim();
-  const publicLookupToken = input.publicLookupToken ? normalizePublicOrderLookupToken(input.publicLookupToken) : null;
 
   if (orderNumber) {
     return prisma.checkoutPaymentAttempt.findFirst({
