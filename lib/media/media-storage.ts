@@ -2,6 +2,7 @@ import 'server-only';
 
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { assertImageSignatureMatchesType } from '@/lib/media/image-signature';
 import {
   configuredMediaStorageProviderName,
   getMediaStorageReadiness,
@@ -10,7 +11,12 @@ import {
   type MediaStorageReadiness
 } from '@/lib/media/media-storage-readiness';
 
-export { configuredMediaStorageProviderName, getMediaStorageReadiness, type MediaStorageProviderName, type MediaStorageReadiness } from '@/lib/media/media-storage-readiness';
+export {
+  configuredMediaStorageProviderName,
+  getMediaStorageReadiness,
+  type MediaStorageProviderName,
+  type MediaStorageReadiness
+} from '@/lib/media/media-storage-readiness';
 
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
@@ -88,6 +94,13 @@ export function assertValidImageUpload(file: File) {
   }
 }
 
+async function validatedUploadBytes(file: File) {
+  assertValidImageUpload(file);
+  const bytes = Buffer.from(await file.arrayBuffer());
+  assertImageSignatureMatchesType(file.type, bytes);
+  return bytes;
+}
+
 const localMediaStorageProvider: MediaStorageProvider = {
   name: 'local',
   productionSafe: false,
@@ -98,7 +111,7 @@ const localMediaStorageProvider: MediaStorageProvider = {
     return getMediaStorageReadiness();
   },
   async storeUpload(file: File) {
-    assertValidImageUpload(file);
+    const bytes = await validatedUploadBytes(file);
 
     const uploadDir = path.join(process.cwd(), 'public', 'uploads');
     await mkdir(uploadDir, { recursive: true });
@@ -107,7 +120,6 @@ const localMediaStorageProvider: MediaStorageProvider = {
     const safeBaseName = slugifyFileName(file.name.replace(/\.[^.]+$/, '')) || 'image';
     const fileName = `${Date.now()}-${safeBaseName}.${extension}`;
     const diskPath = path.join(uploadDir, fileName);
-    const bytes = Buffer.from(await file.arrayBuffer());
     await writeFile(diskPath, bytes);
 
     return {
@@ -127,15 +139,19 @@ const cloudinaryMediaStorageProvider: MediaStorageProvider = {
     return getMediaStorageReadiness();
   },
   async storeUpload(file: File) {
-    assertValidImageUpload(file);
+    const bytes = await validatedUploadBytes(file);
 
     const { cloudName, uploadPreset, folder } = cloudinaryConfig();
     if (!cloudName || !uploadPreset) {
       throw new Error('Cloudinary storage requires CLOUDINARY_CLOUD_NAME and CLOUDINARY_UPLOAD_PRESET.');
     }
 
+    const safeFile = new File([bytes], file.name, {
+      type: file.type,
+      lastModified: file.lastModified
+    });
     const formData = new FormData();
-    formData.set('file', file);
+    formData.set('file', safeFile);
     formData.set('upload_preset', uploadPreset);
     if (folder) formData.set('folder', folder);
 
