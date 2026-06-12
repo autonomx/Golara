@@ -25,6 +25,11 @@ export async function runPublicApiAbusePaymentGuardTests() {
   assert.doesNotMatch(publicOrderRepository, /phone:\s*true/);
   assert.doesNotMatch(publicOrderRepository, /address:\s*true/);
   assert.doesNotMatch(publicOrderRepository, /provider:\s*true/);
+  assert.doesNotMatch(publicOrderRepository, /recipientName:\s*true/);
+  assert.doesNotMatch(publicOrderRepository, /recipientPhone:\s*true/);
+  assert.doesNotMatch(publicOrderRepository, /customerNote:\s*true/);
+  assert.doesNotMatch(publicOrderRepository, /staffNotes:\s*true/);
+  assert.doesNotMatch(publicOrderRepository, /note:\s*true/);
 
   const validToken = 'a'.repeat(32);
   assert.equal(normalizePublicOrderLookupToken(` ${validToken} `), validToken);
