@@ -11,7 +11,7 @@ Status values:
 
 ## Current audit position
 
-The project has completed the first major hardening pass and has moved into the remaining high-risk authorization, session, abuse-control, and payment/order verification work. The audit report previously marked several Phase 6, 7, 9, 10, 11, and 12 items as deferred even after they were fixed; this roadmap reconciles that status through PR #600 and the current Phase B session-hardening slice.
+The project has completed the first major hardening pass and has moved into the remaining high-risk authorization, session, abuse-control, and payment/order verification work. This roadmap reconciles the current security-audit status through PR #604, including the Phase A admin RBAC source gate and the latest Phase B session lifecycle hardening slices.
 
 ## Recently completed security work
 
@@ -32,6 +32,10 @@ The project has completed the first major hardening pass and has moved into the 
 | Server-action CSRF guard gate | **Fixed** | PR #598 broadens CSRF/server-action scanning to all `app/**` server-action modules and wires it into runtime/unit CI. |
 | Security roadmap/status reconciliation | **Fixed** | PR #599 replaced stale audit state with this phased roadmap. |
 | Admin RBAC source gate | **Fixed** | PR #600 inventories high-risk admin mutations and enforces owner/staff role boundaries through runtime/unit CI. |
+| Admin session rotation and expiry | **Fixed** | PR #601 rotates admin session cookies per login, signs issued-at/nonce payloads, and rejects stale, future-dated, malformed, and tampered sessions. |
+| Customer order session boundary | **Fixed** | PR #602 binds customer order history to the verified session object and adds a source gate against raw customer ID order listing. |
+| Customer login session rotation | **Fixed** | PR #603 revokes the prior browser customer session after successful OTP replacement-session creation and redacts OTP login errors. |
+| Admin logout cookie clearing | **Fixed** | PR #604 centralizes admin cookie attributes and clears logout cookies with the same name/path and `maxAge: 0`. |
 
 ## Phases left
 
@@ -63,16 +67,20 @@ Remaining work:
 
 Completed:
 
-- Customer session cookie helper clears existing customer session before setting a new token.
-- Current Phase B slice rotates admin session values per successful login with a signed issue timestamp and nonce.
-- Current Phase B slice rejects stale, future-dated, malformed, and tampered admin session cookies.
+- Customer session cookie helper clears existing customer session cookies before setting a new token.
+- Admin sessions rotate per successful login with signed issued-at timestamps and nonces.
+- Admin session verification rejects stale, future-dated, malformed, tampered, and old deterministic cookie formats.
+- Admin logout clears the browser-facing cookie with the same name/path contract and `maxAge: 0`.
+- Customer OTP login rotates sessions by creating the replacement session first, revoking the prior browser session, and setting the replacement cookie.
+- Account order history is bound to the verified customer session object instead of accepting arbitrary customer IDs.
+- Source/unit gates cover admin session cookie shape, customer login rotation, and customer order-history session binding.
 
 Remaining work:
 
-1. Add admin logout route/action tests proving the cookie is reliably cleared in the browser-facing path.
-2. Review customer and admin session lifetimes against production policy.
-3. Add customer session expiry/renewal tests if persistent customer sessions remain enabled.
-4. Add cross-customer negative tests for account/address/order access.
+1. Review customer and admin session lifetimes against production policy.
+2. Add customer session expiry/renewal tests if persistent customer sessions remain enabled.
+3. Add cross-customer negative tests for address/profile mutation surfaces beyond the order-history boundary.
+4. Decide whether customer sessions should use sliding renewal, fixed lifetime, or shorter privileged-action re-auth.
 
 ### Phase C — Public abuse controls and throttling
 
