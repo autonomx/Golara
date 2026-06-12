@@ -9,6 +9,7 @@ import { createCheckoutPaymentAttempt } from '@/lib/checkout/payment-provider';
 import { addCustomerAddress, upsertCustomerProfile } from '@/lib/customers/customer-repository';
 import { hasDatabase } from '@/lib/prisma';
 import { assertSameOriginServerAction } from '@/lib/server-action-origin';
+import { warnWithRedactedError } from '@/lib/security/redacted-logging';
 
 function stringField(formData: FormData, name: string, fallback = '') {
   const value = formData.get(name);
@@ -104,7 +105,7 @@ export async function createCartCheckoutAction(formData: FormData) {
       redirectTarget = checkoutActionNextPath(order, attempt);
     }
   } catch (error) {
-    console.warn('[cart] failed to create checkout order', error);
+    warnWithRedactedError('cart', 'failed to create checkout order', error);
     redirectTarget = checkoutPath('failed');
   }
 
