@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { hasDatabase, prisma } from '@/lib/prisma';
+import { normalizePublicOrderLookupToken } from './public-order-repository';
 import { normalizePaymentWebhookEvent, type PaymentWebhookEventInput } from './payment-webhook-core';
 import {
   buildPaymentWebhookEventPersistenceInput,
@@ -75,13 +76,16 @@ async function findPaymentAttemptForWebhook(input: {
     if (byReference) return byReference;
   }
 
-  if (input.orderNumber || input.publicLookupToken) {
+  const orderNumber = input.orderNumber?.trim();
+  const publicLookupToken = input.publicLookupToken ? normalizePublicOrderLookupToken(input.publicLookupToken) : null;
+
+  if (orderNumber) {
     return prisma.checkoutPaymentAttempt.findFirst({
       where: {
         provider: input.provider,
         order: {
-          ...(input.orderNumber ? { orderNumber: input.orderNumber } : {}),
-          ...(input.publicLookupToken ? { publicLookupToken: input.publicLookupToken } : {})
+          orderNumber,
+          ...(publicLookupToken ? { publicLookupToken } : {})
         }
       },
       orderBy: { createdAt: 'desc' },
