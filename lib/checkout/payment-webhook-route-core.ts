@@ -119,14 +119,14 @@ export async function handlePaymentWebhookRoute(input: PaymentWebhookRouteInput)
         message: webhookResultMessage(result.status)
       }
     };
-  } catch (error) {
+  } catch {
     return {
       statusCode: 500,
       body: {
         ok: false,
         provider: input.provider,
         status: 'error',
-        message: error instanceof Error ? error.message : 'Webhook handling failed.'
+        message: 'Webhook handling failed.'
       }
     };
   }
