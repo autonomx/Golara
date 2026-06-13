@@ -1,12 +1,22 @@
 import { redactLogValue } from '@/lib/security/redacted-logging';
+import type { AdminRole } from '@/lib/admin-auth-core';
 
-type AdminSecurityEventOutcome = 'success' | 'failure' | 'throttled' | 'unconfigured';
+type AdminSecurityEventOutcome = 'success' | 'failure' | 'throttled' | 'unconfigured' | 'denied';
 
-type AdminSecurityEventInput = {
-  event: 'admin_login';
-  outcome: AdminSecurityEventOutcome;
-  reason?: string;
-};
+type AdminSecurityEventInput =
+  | {
+      event: 'admin_login';
+      outcome: Exclude<AdminSecurityEventOutcome, 'denied'>;
+      reason?: string;
+    }
+  | {
+      event: 'admin_authorization';
+      outcome: 'denied';
+      reason?: string;
+      requiredRole?: AdminRole;
+      actualRole?: AdminRole;
+      authenticated?: boolean;
+    };
 
 function safeReason(reason?: string) {
   const normalized = reason?.trim();
@@ -19,6 +29,13 @@ export function logAdminSecurityEvent(input: AdminSecurityEventInput) {
     event: input.event,
     outcome: input.outcome,
     reason: safeReason(input.reason),
+    ...(input.event === 'admin_authorization'
+      ? {
+          authenticated: input.authenticated,
+          requiredRole: input.requiredRole,
+          actualRole: input.actualRole
+        }
+      : {}),
     at: new Date().toISOString()
   };
 

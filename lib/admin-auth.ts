@@ -71,9 +71,24 @@ export async function assertAdminRole(requiredRole: AdminRole) {
   }
   const identity = await getAdminIdentity();
   if (!identity.authenticated) {
+    logAdminSecurityEvent({
+      event: 'admin_authorization',
+      outcome: 'denied',
+      reason: 'Admin authentication is required.',
+      requiredRole,
+      authenticated: false
+    });
     throw new Error('Admin authentication is required for this CMS action.');
   }
   if (!adminRoleMeetsRequirement(identity.role, requiredRole)) {
+    logAdminSecurityEvent({
+      event: 'admin_authorization',
+      outcome: 'denied',
+      reason: 'Admin role requirement was not met.',
+      requiredRole,
+      actualRole: identity.role,
+      authenticated: true
+    });
     throw new Error(`${requiredRole} admin role is required for this CMS action.`);
   }
   return identity;
