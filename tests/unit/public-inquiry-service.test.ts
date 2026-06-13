@@ -1,11 +1,28 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { createPublicInquiryService } from '../../lib/inquiries/public-inquiry-service-core';
-import { validateInquiryInput } from '../../lib/inquiries/validate-inquiry';
+import { INQUIRY_FIELD_LIMITS, validateInquiryInput } from '../../lib/inquiries/validate-inquiry';
 
 function assertInquiryRejects(input: Parameters<typeof validateInquiryInput>[0], code: string) {
   const result = validateInquiryInput(input);
   assert.equal(result.ok, false);
   if (!result.ok) assert.equal(result.code, code);
+}
+
+function assertInquiryFormUsesSharedBounds() {
+  const formSource = readFileSync('components/ProductInquiryForm.tsx', 'utf8');
+
+  assert.match(formSource, /import \{ INQUIRY_FIELD_LIMITS \} from '@\/lib\/inquiries\/validate-inquiry'/);
+  assert.match(formSource, /name="name"[\s\S]*maxLength=\{INQUIRY_FIELD_LIMITS\.name\}/);
+  assert.match(formSource, /name="phone"[\s\S]*maxLength=\{INQUIRY_FIELD_LIMITS\.phone\}/);
+  assert.match(formSource, /name="email"[\s\S]*maxLength=\{INQUIRY_FIELD_LIMITS\.email\}/);
+  assert.match(formSource, /name="message"[\s\S]*maxLength=\{INQUIRY_FIELD_LIMITS\.message\}/);
+  assert.match(formSource, /name="deliveryNotes"[\s\S]*maxLength=\{INQUIRY_FIELD_LIMITS\.deliveryNotes\}/);
+  assert.match(formSource, /'name-too-long'/);
+  assert.match(formSource, /'phone-too-long'/);
+  assert.match(formSource, /'email-too-long'/);
+  assert.match(formSource, /'message-too-long'/);
+  assert.match(formSource, /'delivery-notes-too-long'/);
 }
 
 export async function runPublicInquiryServiceTests() {
@@ -71,11 +88,19 @@ export async function runPublicInquiryServiceTests() {
     message: 'I would like a rose bouquet for a birthday.'
   };
 
-  assertInquiryRejects({ ...validInput, name: 'x'.repeat(201) }, 'name-too-long');
+  assert.deepEqual(INQUIRY_FIELD_LIMITS, {
+    name: 200,
+    phone: 40,
+    email: 320,
+    message: 1000,
+    deliveryNotes: 500
+  });
+  assertInquiryRejects({ ...validInput, name: 'x'.repeat(INQUIRY_FIELD_LIMITS.name + 1) }, 'name-too-long');
   assertInquiryRejects({ ...validInput, phone: '+1 ' + '5'.repeat(38) }, 'phone-invalid');
   assertInquiryRejects({ ...validInput, email: `${'a'.repeat(309)}@example.test` }, 'email-too-long');
-  assertInquiryRejects({ ...validInput, message: 'x'.repeat(1001) }, 'message-too-long');
-  assertInquiryRejects({ ...validInput, deliveryNotes: 'x'.repeat(501) }, 'delivery-notes-too-long');
+  assertInquiryRejects({ ...validInput, message: 'x'.repeat(INQUIRY_FIELD_LIMITS.message + 1) }, 'message-too-long');
+  assertInquiryRejects({ ...validInput, deliveryNotes: 'x'.repeat(INQUIRY_FIELD_LIMITS.deliveryNotes + 1) }, 'delivery-notes-too-long');
+  assertInquiryFormUsesSharedBounds();
 
   console.log('public-inquiry-service.test.ts passed');
 }
