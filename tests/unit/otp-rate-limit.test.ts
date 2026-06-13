@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   buildOtpRequestAuthEvent,
   DEFAULT_OTP_REQUEST_THROTTLE_CONFIG,
@@ -142,6 +143,25 @@ export async function runOtpRateLimitTests() {
       retryAfterMs: 1234
     }
   });
+
+  const otpRepositorySource = readFileSync('lib/customers/customer-otp-repository.ts', 'utf8');
+  assert.match(
+    otpRepositorySource,
+    /if \(!decision\.allowed\) \{\s*await recordOtpRequestAuthEvent\(\{\s*allowed:\s*false,[\s\S]*?reasonCode:\s*decision\.reasonCode,[\s\S]*?messageKey:\s*decision\.messageKey,[\s\S]*?retryAfterMs:\s*decision\.retryAfterMs,[\s\S]*?phoneHash,[\s\S]*?ipHash,[\s\S]*?userAgentHash,[\s\S]*?purpose,[\s\S]*?channel:\s*['"]sms['"]/,
+    'blocked OTP request throttle decisions should persist a bounded customer auth event before returning'
+  );
+
+  const requestEventCreateBlock = otpRepositorySource.match(/return prisma\.customerAuthEvent\.create\(\{[\s\S]*?event\.metadata[\s\S]*?\}\s*\}\s*\);\s*\}/)?.[0] ?? '';
+  assert.match(requestEventCreateBlock, /eventType:\s*event\.eventType/);
+  assert.match(requestEventCreateBlock, /phoneHash:\s*event\.phoneHash/);
+  assert.match(requestEventCreateBlock, /ipHash:\s*event\.ipHash/);
+  assert.match(requestEventCreateBlock, /userAgentHash:\s*event\.userAgentHash/);
+  assert.match(requestEventCreateBlock, /metadata:\s*event\.metadata/);
+  assert.doesNotMatch(
+    requestEventCreateBlock,
+    /(destination|input\.phone|input\.ipAddress|input\.userAgent|codeHash|code:|challenge)/,
+    'OTP request auth events must persist hashed identifiers and bounded metadata, not raw OTP, phone, IP, user-agent, or challenge details'
+  );
 
   console.log('otp-rate-limit.test.ts passed');
 }
