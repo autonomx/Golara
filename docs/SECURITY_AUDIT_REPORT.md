@@ -11,7 +11,9 @@ Status values:
 
 ## Current audit position
 
-The project has completed the first major hardening pass and has moved into the remaining high-risk authorization, session, abuse-control, and payment/order verification work. This roadmap reconciles the current security-audit status through direct-main commit `502c3c3`, including representative admin RBAC denial coverage, customer session-bound mutation gates, public abuse/privacy guards, route security-header smoke checks, and the production dependency audit gate.
+The project has completed a broad hardening pass across authorization, session management, public API boundaries, payment/order integrity, privacy, logging, media handling, input validation, browser headers, secrets, and dependency scanning. This roadmap reconciles the current security-audit status through PR #622 / main commit `363655d3`.
+
+The highest-risk remaining implementation work is now concentrated in public abuse controls/throttling, final payment/order creation and refund integrity, production session policy decisions, production-safe error response coverage, incident-response documentation, CSP/reporting decisions, and supply-chain policy refinements.
 
 ## Recently completed security work
 
@@ -30,12 +32,14 @@ The project has completed the first major hardening pass and has moved into the 
 | Media upload allowlist gate | **Fixed** | PR #596 locks upload size/type/signature/host controls into CI. |
 | Secret scanning gate | **Fixed** | PR #597 adds committed-secret scanning to unit CI. |
 | Server-action CSRF guard gate | **Fixed** | PR #598 broadens CSRF/server-action scanning to all `app/**` server-action modules and wires it into runtime/unit CI. |
-| Security roadmap/status reconciliation | **Fixed** | PR #599 replaced stale audit state with this phased roadmap. |
+| Security roadmap/status reconciliation | **Fixed** | PR #599 replaced stale audit state with a phased roadmap. |
 | Admin RBAC source gate | **Fixed** | PR #600 inventories high-risk admin mutations and enforces owner/staff role boundaries through runtime/unit CI. |
 | Admin session rotation and expiry | **Fixed** | PR #601 rotates admin session cookies per login, signs issued-at/nonce payloads, and rejects stale, future-dated, malformed, and tampered sessions. |
 | Customer order session boundary | **Fixed** | PR #602 binds customer order history to the verified session object and adds a source gate against raw customer ID order listing. |
 | Customer login session rotation | **Fixed** | PR #603 revokes the prior browser customer session after successful OTP replacement-session creation and redacts OTP login errors. |
 | Admin logout cookie clearing | **Fixed** | PR #604 centralizes admin cookie attributes and clears logout cookies with the same name/path and `maxAge: 0`. |
+| Phase B roadmap reconciliation | **Fixed** | PR #605 reconciled session-lifecycle roadmap status through admin/customer session hardening work. |
+| Customer session expiry/revocation gate | **Fixed** | PR #606 locks hashed-token lookup, `revokedAt: null`, `expiresAt > now`, expiry cleanup, and revoke timestamp behavior. |
 | Admin owner-action denial coverage | **Fixed** | PR #607 and direct-main commits `5a7d224`/`433d404` add staff-denial tests for API-token, payment-provider, staff-management, discount, and manual-payment owner-only actions. |
 | Customer mutation session binding | **Fixed** | Commit `07aa41c` gates profile/address mutations against caller-supplied customer IDs and locks mutation helpers to the verified session. |
 | Public order lookup abuse/privacy guards | **Fixed** | Commits `e4ae916` and `9b2f88d` add runtime token-bound tests and public DTO PII omission gates. |
@@ -44,13 +48,28 @@ The project has completed the first major hardening pass and has moved into the 
 | Public inquiry input bounds | **Fixed** | Commit `7d5388f` adds executable coverage for inquiry name/email/message/delivery-note upper bounds. |
 | Route security-header smoke gate | **Fixed** | Commit `9422b8e` makes route smoke fail if responses omit CSP, HSTS, frame, nosniff, referrer, or permissions policy headers. |
 | Production dependency audit gate | **Fixed** | Commit `502c3c3` adds a CI `npm audit --omit=dev --audit-level=high` gate for production dependencies. |
+| Paid webhook settlement gate | **Fixed** | PR #608 gates paid webhook state changes on settled amount/currency reconciliation. |
+| Payment reference corroboration | **Fixed** | PR #609 requires supplied order-number/public-token corroborators to match provider-reference webhook lookups. |
+| Duplicate payment webhook idempotency | **Fixed** | PR #610 makes duplicate webhook replay a pure early return without settlement or state mutation. |
+| Public order timeline privacy | **Fixed** | PR #611 hides raw internal timeline titles from public order status and renders safe event-type labels. |
+| Public order DTO allowlist | **Fixed** | PR #612 source-gates the public order DTO against customer/address/payment/provider/timeline internals. |
+| Payment diagnostics owner gate | **Fixed** | PR #613 requires owner role for payment operation diagnostics pages. |
+| Admin login security events | **Fixed** | PR #614 logs bounded/redacted admin login success, failure, throttle, and unconfigured-auth events. |
+| Payment webhook security events | **Fixed** | PR #615 logs bounded/redacted duplicate, missing-attempt, settlement, and needs-attention webhook outcomes. |
+| Local media path traversal guard | **Fixed** | PR #616 rejects unsafe `/uploads/` URL forms including traversal, encoded traversal, nested paths, and query strings. |
+| Cloudinary response URL normalization | **Fixed** | PR #617 normalizes Cloudinary upload response URLs through the media URL allowlist before storage. |
+| Media audit URL metadata redaction | **Fixed** | PR #618 removes full media URLs/paths from CMS media audit metadata while preserving bounded incident context. |
+| Catalog search query bounds | **Fixed** | PR #619 caps `/products?q=...` server-side and mirrors the bound in the browser input. |
+| Public inquiry UI/server bounds alignment | **Fixed** | PR #620 centralizes inquiry field limits and mirrors them in the storefront form. |
+| Admin order notification input bounds | **Fixed** | PR #621 bounds admin notification recipient, subject, body, template key, actor, and provider error fields. |
+| Checkout timeline text bounds | **Fixed** | PR #622 bounds checkout order, fulfillment, and payment timeline notes/actor fields. |
 
-## Phases left
+## Remaining roadmap
 
 ### Phase A — Admin RBAC and owner-only mutation authorization
 
 **Priority:** Critical  
-**Status:** Partial  
+**Status:** Mostly fixed / monitor  
 **Goal:** prove every sensitive admin mutation enforces the correct role on the server, not just in UI.
 
 Completed:
@@ -59,17 +78,19 @@ Completed:
 - Owner-only role requirements are locked for settings, staff-account, API-token, payment-provider, webhook, manual-payment, discount, catalog, media, variant, and stock mutations.
 - Staff-level role requirements are locked for order/inquiry operational mutations.
 - CMS/catalog/media helper usage is guarded so the helper must remain owner-only.
+- Staff-denial tests cover representative owner-only actions.
+- Payment operation diagnostics now require owner role.
 
 Remaining work:
 
 1. Add admin API mutation inventory if new `app/api/admin/**` routes are introduced.
-2. Review admin diagnostics and audit-log access boundaries.
-3. Keep destructive media/catalog deletion paths in the owner-only inventory as they are added.
+2. Keep destructive media/catalog deletion paths in the owner-only inventory as they are added.
+3. Review any newly added diagnostics/audit-log views for owner-only or staff-safe access before release.
 
 ### Phase B — Session lifecycle hardening
 
 **Priority:** High  
-**Status:** Partial  
+**Status:** Mostly fixed / policy remains  
 **Goal:** tighten admin/customer session creation, logout, expiry, and fixation resistance.
 
 Completed:
@@ -80,13 +101,14 @@ Completed:
 - Admin logout clears the browser-facing cookie with the same name/path contract and `maxAge: 0`.
 - Customer OTP login rotates sessions by creating the replacement session first, revoking the prior browser session, and setting the replacement cookie.
 - Account order history is bound to the verified customer session object instead of accepting arbitrary customer IDs.
-- Source/unit gates cover admin session cookie shape, customer login rotation, and customer order-history session binding.
+- Profile/address mutations are bound to verified customer sessions.
+- Customer session lookup/cleanup/revoke expiry predicates are source-gated.
 
 Remaining work:
 
-1. Review customer and admin session lifetimes against production policy.
-2. Add customer session expiry/renewal tests if persistent customer sessions remain enabled.
-3. Decide whether customer sessions should use sliding renewal, fixed lifetime, or shorter privileged-action re-auth.
+1. Finalize production customer/admin session lifetime policy.
+2. Decide fixed lifetime vs sliding renewal for customer sessions.
+3. Decide whether privileged customer/admin actions require shorter re-auth windows.
 
 ### Phase C — Public abuse controls and throttling
 
@@ -101,99 +123,109 @@ Completed:
 - Webhook raw-body/replay/idempotency boundary was improved.
 - Public API allowlist CI gate exists.
 - Public order lookup tokens are normalized with runtime tests for minimum/maximum length and allowed characters.
+- Public inquiry inputs now have aligned server/UI upper bounds.
+- Catalog search strings have server/browser length bounds.
 
 Remaining work:
 
 1. Inquiry/contact form rate limiting and spam controls beyond current same-origin/cooldown protections.
 2. Public order lookup throttling and lockout after repeated failures.
 3. Cart creation throttling and abandoned-cart cleanup controls.
-4. Product/category query complexity and pagination limits.
+4. Product/category pagination and query-complexity limits if broader filter/sort surfaces are introduced.
 5. Abuse-event logging that avoids customer-data leakage.
 
 ### Phase D — Payment and order integrity
 
 **Priority:** Critical/High  
-**Status:** Partial  
+**Status:** Partial / strongly improved  
 **Goal:** ensure payment state transitions cannot be replayed, spoofed, over/underpaid, cross-owned, or silently mis-audited.
 
 Completed:
 
 - Payment webhook signature validation exists.
-- Duplicate webhook replay rejection has regression coverage.
 - Public webhook routes are allowlisted and required to retain signature/raw-body validation.
 - Webhook payment-attempt matching is source-gated against public-token-only lookup.
+- Paid webhook state transitions require settled amount/currency reconciliation.
+- Provider-reference webhook lookups require supplied order-number/public-token corroboration.
+- Duplicate webhook replay is a pure early return and cannot re-run settlement or state transitions.
+- Payment/webhook outcomes emit bounded security events for incident review.
 
 Remaining work:
 
-1. Amount and currency reconciliation against the canonical order total.
-2. Order ownership checks for storefront payment confirmation and public order views.
-3. Idempotency-key enforcement for payment/order creation boundaries.
-4. Provider callback payload minimization and response sanitization.
-5. Complete audit trail for payment, settlement, refund, and webhook outcomes.
+1. Order ownership checks for storefront payment confirmation and any private payment/order views.
+2. Idempotency-key enforcement for payment/order creation boundaries.
+3. Refund and settlement audit trail completeness.
+4. Provider callback payload minimization and response sanitization review.
 
 ### Phase E — Data privacy and response exposure audit
 
 **Priority:** High  
-**Status:** Partial  
+**Status:** Partial / strongly improved  
 **Goal:** verify customer and internal operational data never leaks through pages, APIs, logs, diagnostics, or search.
 
 Completed:
 
-- Account, cart, and checkout caught-error logs use redaction helpers.
+- Account, cart, checkout, OTP-login, and payment-return caught-error logs use redaction helpers.
 - Redaction source gates cover key customer-input mutation paths.
-- Public order DTO source gates prevent customer/contact/address/staff-note fields from being selected.
+- Public order DTO source gates prevent customer/contact/address/staff-note/payment-provider fields from being selected.
+- Public order status hides raw internal timeline titles and metadata.
+- Payment operation diagnostics require owner role.
+- Media audit metadata no longer stores raw media URLs/paths.
 
 Remaining work:
 
-1. Audit storefront pages and public APIs for exposed emails, phone numbers, addresses, internal IDs, payment metadata, and admin fields.
-2. Protect admin diagnostic/provider pages with owner-only access.
-3. Add production-safe error response tests that hide stacks/internal details.
-4. Add search response allowlist tests for public/catalog endpoints.
+1. Production-safe error response tests that hide stacks/internal details.
+2. Broader storefront/API exposure audit for new emails, phone numbers, addresses, internal IDs, payment metadata, and admin fields as features expand.
+3. Search/catalog response allowlists if richer public APIs are introduced.
 
 ### Phase F — Logging, audit trails, and incident readiness
 
 **Priority:** Medium/High  
-**Status:** Partial  
+**Status:** Partial / improved  
 **Goal:** make security-relevant events traceable without leaking sensitive data.
 
 Completed:
 
-- Redacted error logging exists for several customer mutation surfaces.
-- Payment return status failures now use the redacted logging helper.
+- Redacted error logging exists for account, cart, checkout, OTP login, and payment return surfaces.
+- Admin login emits bounded/redacted security events for success, failure, throttling, and unconfigured auth.
+- Payment webhooks emit bounded/redacted security events for duplicate replay, missing attempt, clean settlement, and needs-attention settlement/state outcomes.
+- Media audit metadata is redacted while retaining bounded incident context.
+- Checkout timeline and admin notification text fields are bounded before storage/timeline use.
 
 Remaining work:
 
-1. Structured admin login/audit events with safe metadata.
-2. Authorization-failure logging without secret/customer leakage.
-3. Payment/webhook event logging with signature/idempotency results.
-4. OTP abuse and throttle-event logging.
-5. Media upload/delete logging with actor and result.
-6. Incident response runbook for investigation, containment, and notification.
+1. Authorization-failure logging without secret/customer leakage.
+2. OTP abuse and throttle-event logging beyond existing login/admin events.
+3. Media delete logging if delete helpers are introduced.
+4. Incident response runbook for investigation, containment, recovery, and notification.
 
 ### Phase G — Input validation and injection safety follow-up
 
 **Priority:** Medium/High  
-**Status:** Partial  
+**Status:** Partial / strongly improved  
 **Goal:** finish the non-upload validation and rendering audit.
 
 Completed:
 
 - Safe return-path normalization exists.
 - JSON-LD serialization escapes script-breaking and HTML-sensitive characters.
-- Public inquiry input upper bounds have executable unit coverage.
+- Public inquiry field limits have executable coverage and matching form bounds.
+- Catalog search query strings are normalized and length-capped server-side and in the UI.
+- Admin notification recipient/body/template/provider fields are bounded.
+- Checkout timeline notes and actor fields are bounded.
 
 Remaining work:
 
-1. Rich text/Markdown renderer audit.
-2. Product/category/admin content rendering audit for unsafe HTML paths.
-3. Search/filter schema allowlists.
-4. Email/SMS/template escaping checks.
+1. Rich text/Markdown renderer audit if any renderer is introduced.
+2. Product/category/admin content rendering audit for unsafe HTML paths as content features expand.
+3. Search/filter schema allowlists if new sort/filter params are added.
+4. Email/SMS/template escaping checks for any future outbound provider integrations.
 5. Uploaded-image metadata stripping policy, if required by production privacy goals.
 
 ### Phase H — Media deletion, path traversal, and malware policy
 
 **Priority:** Medium  
-**Status:** Partial  
+**Status:** Partial / improved  
 **Goal:** finish upload lifecycle controls beyond upload-time MIME/signature checks.
 
 Completed:
@@ -201,26 +233,28 @@ Completed:
 - Upload size/type allowlist and magic-byte sniffing exist.
 - SVG/script uploads are rejected.
 - Media upload allowlist CI gate exists.
+- Local `/uploads/` URLs reject traversal, encoded traversal, nested paths, and query strings.
+- Cloudinary upload response URLs are normalized through the media URL allowlist before storage.
+- Media audit metadata avoids storing raw URLs/paths.
 
 Remaining work:
 
-1. Path traversal checks for local media paths and deletion helpers.
-2. Media deletion authorization and ownership checks.
-3. Cloudinary/server credential isolation verification.
-4. Production malware-scanning decision: integrate scanning or document accepted risk.
-5. Optional metadata stripping for privacy-sensitive images.
+1. Media deletion authorization and ownership checks if delete helpers are introduced.
+2. Production malware-scanning decision: integrate scanning or document accepted risk.
+3. Optional metadata stripping for privacy-sensitive images.
+4. Continue verifying Cloudinary/server credential isolation as deployment configuration evolves.
 
 ### Phase I — Browser/header deployment verification
 
 **Priority:** Medium  
-**Status:** Partial  
+**Status:** Partial / stable  
 **Goal:** ensure security headers are present in production-like responses, not only in config.
 
 Completed:
 
 - Baseline headers and CSP exist in the app configuration.
 - Header config tests exist.
-- Route smoke now verifies required security headers on production-like responses.
+- Route smoke verifies required security headers on production-like responses.
 
 Remaining work:
 
@@ -231,17 +265,33 @@ Remaining work:
 ### Phase J — Dependency and supply-chain gate
 
 **Priority:** Medium  
-**Status:** Partial  
+**Status:** Partial / stable  
 **Goal:** prevent known critical/high dependency vulnerabilities and supply-chain regressions.
-
-Remaining work:
 
 Completed:
 
 - CI runs `npm audit --omit=dev --audit-level=high` after dependency install.
+- Committed-secret scanning runs in unit CI.
 
 Remaining work:
 
 1. Decide allowlist/expiration policy for unavoidable advisories.
 2. Ensure lockfile changes are reviewed by CI.
 3. Consider license/publisher/package-integrity checks if production risk warrants it.
+
+### Phase K — Security roadmap closeout and documentation
+
+**Priority:** Medium  
+**Status:** Partial  
+**Goal:** keep the security plan accurate enough to guide final production hardening.
+
+Completed:
+
+- Roadmap reconciliations were added after major security-hardening waves.
+
+Remaining work:
+
+1. Keep this document synchronized after each security PR or direct-main security change.
+2. Add a production incident-response runbook.
+3. Add deployment checklist references for secrets, headers, provider webhooks, monitoring, backups, and dependency policy.
+4. Mark phases as **Fixed** only when implementation and CI gates have both landed.
