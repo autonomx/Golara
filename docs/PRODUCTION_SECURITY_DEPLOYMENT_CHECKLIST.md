@@ -33,7 +33,7 @@ Use this as a release gate checklist. Do not store raw secrets, customer PII, pr
 ## 4. Public abuse controls
 
 - [ ] Public order lookup, inquiry, cart mutation, OTP request, and login throttles are enabled in production.
-- [ ] In-process throttles have an accepted-risk note or a distributed/persistent throttle plan for multi-instance deployments.
+- [ ] In-process throttles have an accepted-risk note or a distributed/persistent throttle plan for multi-instance deployments, following `docs/PUBLIC_ABUSE_THROTTLING_POLICY.md`.
 - [ ] Throttle and cooldown security events store only bounded/redacted metadata and hashed identifiers.
 - [ ] Monitoring can surface spikes in public order lookup failures, OTP request blocks, inquiry cooldowns, cart mutation throttles, and admin authorization denials.
 
