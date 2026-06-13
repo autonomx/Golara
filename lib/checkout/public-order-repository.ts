@@ -2,6 +2,7 @@ import 'server-only';
 
 import { createHash } from 'node:crypto';
 import { hasDatabase, prisma } from '@/lib/prisma';
+import { logPublicAbuseEvent } from '@/lib/security/public-abuse-events';
 
 const PUBLIC_ORDER_LOOKUP_TOKEN_MIN_LENGTH = 32;
 const PUBLIC_ORDER_LOOKUP_TOKEN_MAX_LENGTH = 128;
@@ -47,7 +48,10 @@ function allowPublicOrderLookupAttempt(token: string, now = Date.now()) {
     publicOrderLookupBuckets.set(key, { count: 1, resetAt: now + PUBLIC_ORDER_LOOKUP_WINDOW_MS });
     return true;
   }
-  if (existing.count >= PUBLIC_ORDER_LOOKUP_MAX_ATTEMPTS) return false;
+  if (existing.count >= PUBLIC_ORDER_LOOKUP_MAX_ATTEMPTS) {
+    logPublicAbuseEvent({ event: 'public_order_lookup', outcome: 'throttled', scope: 'lookup' });
+    return false;
+  }
   existing.count += 1;
   return true;
 }
