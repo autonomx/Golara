@@ -46,7 +46,11 @@ function assertPublicInquiryActionUsesCooldownBoundary() {
     /event:\s*['"]public_inquiry['"][\s\S]*outcome:\s*['"]cooldown_active['"][\s\S]*scope:\s*['"]inquiry['"]/, 
     'public inquiry cooldown should emit a generic cooldown event'
   );
-  assert.doesNotMatch(actionSource, /logPublicAbuseEvent\([\s\S]*(?:productId|productSlug|formData|email|phone|name|message|deliveryNotes)/, 'public inquiry cooldown log must not include product or customer identifiers');
+
+  const cooldownLogStart = actionSource.indexOf('logPublicAbuseEvent({');
+  const cooldownLogEnd = actionSource.indexOf('});', cooldownLogStart);
+  const cooldownLogCall = actionSource.slice(cooldownLogStart, cooldownLogEnd + 3);
+  assert.doesNotMatch(cooldownLogCall, /(?:productId|productSlug|formData|email|phone|name|message|deliveryNotes)/, 'public inquiry cooldown log must not include product or customer identifiers');
 
   const originIndex = actionSource.indexOf('await assertSameOriginServerAction()');
   const cookieIndex = actionSource.indexOf('const cookieStore = await cookies()');
