@@ -11,9 +11,9 @@ Status values:
 
 ## Current audit position
 
-The project has completed a broad hardening pass across authorization, session management, public API boundaries, payment/order integrity, privacy, logging, media handling, input validation, browser headers, secrets, and dependency scanning. This roadmap reconciles the current security-audit status through PR #622 / main commit `363655d3`.
+The project has completed a broad hardening pass across authorization, session management, public API boundaries, public abuse controls, payment/order integrity, privacy, logging, media handling, input validation, browser headers, secrets, and dependency scanning. This roadmap reconciles the current security-audit status through PR #629 / main commit `18bd9627`.
 
-The highest-risk remaining implementation work is now concentrated in public abuse controls/throttling, final payment/order creation and refund integrity, production session policy decisions, production-safe error response coverage, incident-response documentation, CSP/reporting decisions, and supply-chain policy refinements.
+The highest-risk remaining implementation work is now concentrated in final payment/order creation and refund integrity, production session policy decisions, production-safe error response coverage, incident-response documentation, persistent/distributed abuse-control policy, CSP/reporting decisions, and supply-chain policy refinements.
 
 ## Recently completed security work
 
@@ -63,6 +63,13 @@ The highest-risk remaining implementation work is now concentrated in public abu
 | Public inquiry UI/server bounds alignment | **Fixed** | PR #620 centralizes inquiry field limits and mirrors them in the storefront form. |
 | Admin order notification input bounds | **Fixed** | PR #621 bounds admin notification recipient, subject, body, template key, actor, and provider error fields. |
 | Checkout timeline text bounds | **Fixed** | PR #622 bounds checkout order, fulfillment, and payment timeline notes/actor fields. |
+| Security roadmap Phase K addition | **Fixed** | PR #623 reconciled security status through PR #622 and added roadmap closeout tracking. |
+| Public order lookup throttling | **Fixed** | PR #624 adds bounded in-process throttling before public order-token lookups. |
+| Public inquiry cooldown boundary | **Fixed** | PR #625 source-gates same-origin, cooldown, and validation/service ordering for public inquiries and hardens cooldown cookie attributes. |
+| Cart mutation burst throttling | **Fixed** | PR #626 adds bounded in-process throttles for add, update, and clear cart mutations. |
+| Abandoned cart cleanup bounds | **Fixed** | PR #627 bounds expired-cart cleanup to an active expired-cart batch before deleting cart items. |
+| Catalog/category query complexity gate | **Fixed** | PR #628 source-gates product/category listing pages and repositories against raw public pagination, sort, filter, or list-size controls. |
+| Public abuse security events | **Fixed** | PR #629 logs bounded/redacted security events for public order lookup throttles, inquiry cooldowns, and cart mutation throttles. |
 
 ## Remaining roadmap
 
@@ -113,7 +120,7 @@ Remaining work:
 ### Phase C — Public abuse controls and throttling
 
 **Priority:** High  
-**Status:** Partial  
+**Status:** Mostly fixed / production policy remains  
 **Goal:** prevent spam, enumeration, resource exhaustion, and brute-force access against public flows.
 
 Completed:
@@ -125,14 +132,18 @@ Completed:
 - Public order lookup tokens are normalized with runtime tests for minimum/maximum length and allowed characters.
 - Public inquiry inputs now have aligned server/UI upper bounds.
 - Catalog search strings have server/browser length bounds.
+- Public order lookups are throttled before token database lookup.
+- Public inquiry submissions are gated by same-origin, cooldown, then validation/service ordering.
+- Cart mutation bursts are throttled for add, update, and clear operations.
+- Abandoned cart cleanup is bounded to an active expired-cart batch.
+- Product/category listing pages and repositories are source-gated against raw public pagination, page-size, sort, filter, and query-complexity controls.
+- Public order lookup, inquiry cooldown, and cart throttle outcomes emit bounded/redacted public-abuse security events.
 
 Remaining work:
 
-1. Inquiry/contact form rate limiting and spam controls beyond current same-origin/cooldown protections.
-2. Public order lookup throttling and lockout after repeated failures.
-3. Cart creation throttling and abandoned-cart cleanup controls.
-4. Product/category pagination and query-complexity limits if broader filter/sort surfaces are introduced.
-5. Abuse-event logging that avoids customer-data leakage.
+1. Decide persistent/distributed throttling policy for multi-instance production deployment.
+2. Decide whether public inquiry needs additional spam/anti-automation controls beyond same-origin/cooldown.
+3. Continue adding schema allowlists before introducing richer public sort/filter/listing surfaces.
 
 ### Phase D — Payment and order integrity
 
@@ -171,6 +182,7 @@ Completed:
 - Public order status hides raw internal timeline titles and metadata.
 - Payment operation diagnostics require owner role.
 - Media audit metadata no longer stores raw media URLs/paths.
+- Public abuse throttle/cooldown logs avoid raw tokens, product IDs, line keys, and customer PII.
 
 Remaining work:
 
@@ -191,11 +203,12 @@ Completed:
 - Payment webhooks emit bounded/redacted security events for duplicate replay, missing attempt, clean settlement, and needs-attention settlement/state outcomes.
 - Media audit metadata is redacted while retaining bounded incident context.
 - Checkout timeline and admin notification text fields are bounded before storage/timeline use.
+- Public order lookup throttles, public inquiry cooldowns, and cart mutation throttles emit bounded/redacted public-abuse security events.
 
 Remaining work:
 
 1. Authorization-failure logging without secret/customer leakage.
-2. OTP abuse and throttle-event logging beyond existing login/admin events.
+2. OTP abuse and throttle-event logging beyond existing login/admin/public-abuse events.
 3. Media delete logging if delete helpers are introduced.
 4. Incident response runbook for investigation, containment, recovery, and notification.
 
@@ -213,14 +226,14 @@ Completed:
 - Catalog search query strings are normalized and length-capped server-side and in the UI.
 - Admin notification recipient/body/template/provider fields are bounded.
 - Checkout timeline notes and actor fields are bounded.
+- Product/category list query-complexity gates guard against raw public pagination, sort, filter, and page-size controls.
 
 Remaining work:
 
 1. Rich text/Markdown renderer audit if any renderer is introduced.
 2. Product/category/admin content rendering audit for unsafe HTML paths as content features expand.
-3. Search/filter schema allowlists if new sort/filter params are added.
-4. Email/SMS/template escaping checks for any future outbound provider integrations.
-5. Uploaded-image metadata stripping policy, if required by production privacy goals.
+3. Email/SMS/template escaping checks for any future outbound provider integrations.
+4. Uploaded-image metadata stripping policy, if required by production privacy goals.
 
 ### Phase H — Media deletion, path traversal, and malware policy
 
@@ -282,12 +295,13 @@ Remaining work:
 ### Phase K — Security roadmap closeout and documentation
 
 **Priority:** Medium  
-**Status:** Partial  
+**Status:** Partial / improved  
 **Goal:** keep the security plan accurate enough to guide final production hardening.
 
 Completed:
 
 - Roadmap reconciliations were added after major security-hardening waves.
+- This document is reconciled through PR #629 and main commit `18bd9627`.
 
 Remaining work:
 
