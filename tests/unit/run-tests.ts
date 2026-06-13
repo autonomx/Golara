@@ -17,6 +17,7 @@ import { runChannelStorefrontModelTests } from './channel-storefront-model.test'
 import { runCheckoutActionNextPathTests } from './checkout-action-next-path.test';
 import { runCheckoutAdapterAliasAttemptTests } from './checkout-adapter-alias-attempt.test';
 import { runCheckoutCapacityHoldTests } from './checkout-capacity-hold.test';
+import { runCheckoutCreationBoundaryTests } from './checkout-creation-boundary.test';
 import { runCheckoutPaymentProviderTests } from './checkout-payment-provider.test';
 import { runCheckoutStateMachineTests } from './checkout-state-machine.test';
 import { runCmsCategoryServiceTests } from './cms-category-service.test';
@@ -186,6 +187,7 @@ async function main() {
   await runOtpRateLimitTests();
   await runCheckoutStateMachineTests();
   await runCheckoutCapacityHoldTests();
+  await runCheckoutCreationBoundaryTests();
   await runCheckoutPaymentProviderTests();
   await runCheckoutAdapterAliasAttemptTests();
   await runPaymentProviderAliasCoreTests();
