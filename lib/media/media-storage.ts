@@ -21,6 +21,7 @@ export {
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 const ALLOWED_EXTERNAL_IMAGE_HOSTS = new Set(['res.cloudinary.com']);
+const LOCAL_UPLOAD_URL_PATTERN = /^\/uploads\/[a-zA-Z0-9][a-zA-Z0-9._-]*$/;
 
 export type StoredMediaFile = {
   url: string;
@@ -46,8 +47,15 @@ type CloudinaryUploadResponse = {
   error?: { message?: string };
 };
 
+function normalizeLocalUploadUrl(value: string) {
+  if (!LOCAL_UPLOAD_URL_PATTERN.test(value)) {
+    throw new Error('Local media URL must reference a safe file directly under /uploads/.');
+  }
+  return value;
+}
+
 export function normalizeImageUrl(value: string) {
-  if (value.startsWith('/uploads/')) return value;
+  if (value.startsWith('/uploads/')) return normalizeLocalUploadUrl(value);
 
   const url = new URL(value);
   if (url.protocol !== 'https:') {
