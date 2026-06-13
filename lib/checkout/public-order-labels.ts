@@ -63,6 +63,15 @@ export const paymentStatusLabels: Record<string, string> = {
   cancelled: 'Payment cancelled'
 };
 
+export const publicProgressLabels: Record<string, string> = {
+  order_created: 'Order received',
+  payment_status_changed: 'Payment status updated',
+  order_status_changed: 'Order status updated',
+  fulfillment_status_changed: 'Fulfillment status updated',
+  fulfillment_shipment_created: 'Fulfillment update posted',
+  order_line_updated: 'Order contents updated'
+};
+
 export const orderStatusLabelsFa: Record<string, string> = {
   draft: 'دریافت شده توسط فروشگاه',
   pending_payment: 'در انتظار پرداخت یا تایید فروشگاه',
@@ -90,6 +99,15 @@ export const paymentStatusLabelsFa: Record<string, string> = {
   verified_paid: 'پرداخت تایید شد',
   failed: 'پرداخت ناموفق بود یا تایید نشد',
   cancelled: 'پرداخت لغو شد'
+};
+
+export const publicProgressLabelsFa: Record<string, string> = {
+  order_created: 'سفارش دریافت شد',
+  payment_status_changed: 'وضعیت پرداخت به‌روزرسانی شد',
+  order_status_changed: 'وضعیت سفارش به‌روزرسانی شد',
+  fulfillment_status_changed: 'وضعیت آماده‌سازی و ارسال به‌روزرسانی شد',
+  fulfillment_shipment_created: 'به‌روزرسانی ارسال ثبت شد',
+  order_line_updated: 'محتوای سفارش به‌روزرسانی شد'
 };
 
 export const publicOrderCopy: PublicOrderCopy = {
@@ -254,6 +272,10 @@ export function fulfillmentStatusLabel(value: string, locale?: string) {
 
 export function paymentStatusLabel(value: string, locale?: string) {
   return labelFor(normalizeLabelLocale(locale) === 'fa' ? paymentStatusLabelsFa : paymentStatusLabels, value);
+}
+
+export function publicOrderProgressTitle(value: string, locale?: string) {
+  return labelFor(normalizeLabelLocale(locale) === 'fa' ? publicProgressLabelsFa : publicProgressLabels, value);
 }
 
 export function resultMessageFor(value: string | undefined, locale?: string) {
