@@ -7,6 +7,11 @@ import { validateInquiryInput } from '@/lib/inquiries/validate-inquiry';
 import { hasDatabase } from '@/lib/prisma';
 import { assertSameOriginServerAction } from '@/lib/server-action-origin';
 
+const PUBLIC_INQUIRY_COOLDOWN_COOKIE = 'publicInquiryCooldown';
+const PUBLIC_INQUIRY_COOLDOWN_SECONDS = 60 * 5;
+
+type CookieStore = Awaited<ReturnType<typeof cookies>>;
+
 function stringField(formData: FormData, name: string, fallback = '') {
   const value = formData.get(name);
   if (typeof value !== 'string') return fallback;
@@ -17,16 +22,28 @@ function inquiryPath(productSlug: string, status: string) {
   return `/products/${productSlug}?inquiry=${encodeURIComponent(status)}`;
 }
 
+function assertInquirySubmissionNotThrottled(productSlug: string, cookieStore: CookieStore) {
+  const cooldown = cookieStore.get(PUBLIC_INQUIRY_COOLDOWN_COOKIE);
+  if (cooldown) {
+    redirect(inquiryPath(productSlug, 'rate-limited'));
+  }
+}
+
+function setInquirySubmissionThrottle(cookieStore: CookieStore) {
+  cookieStore.set(PUBLIC_INQUIRY_COOLDOWN_COOKIE, '1', {
+    httpOnly: true,
+    sameSite: 'lax',
+    maxAge: PUBLIC_INQUIRY_COOLDOWN_SECONDS,
+    path: '/'
+  });
+}
+
 export async function createInquiryAction(productId: string | undefined, productSlug: string, formData: FormData) {
   // Enforce same-origin policy to prevent CSRF/spam for public inquiries
   await assertSameOriginServerAction();
 
-  // Basic rate limiting: if a cooldown cookie is present, redirect to a rate-limited status
   const cookieStore = await cookies();
-  const cooldown = cookieStore.get('inquiryCooldown');
-  if (cooldown) {
-    redirect(inquiryPath(productSlug, 'rate-limited'));
-  }
+  assertInquirySubmissionNotThrottled(productSlug, cookieStore);
 
   if (!hasDatabase()) {
     redirect(inquiryPath(productSlug, 'database-required'));
@@ -50,13 +67,7 @@ export async function createInquiryAction(productId: string | undefined, product
     inquiry: validation.value
   });
 
-  // Set a short-lived cookie to limit repeated submissions (5 minutes)
-  cookieStore.set('inquiryCooldown', '1', {
-    httpOnly: true,
-    sameSite: 'lax',
-    maxAge: 60 * 5,
-    path: '/'
-  });
+  setInquirySubmissionThrottle(cookieStore);
 
   redirect(inquiryPath(productSlug, 'sent'));
 }
