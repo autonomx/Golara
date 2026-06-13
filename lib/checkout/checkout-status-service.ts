@@ -15,6 +15,10 @@ import { confirmOrderFulfillmentCapacityReservation, releaseOrderFulfillmentCapa
 import { commitOrderInventoryReservations, releaseOrderInventoryReservations } from '@/lib/inventory/inventory-reservation-service';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
+const TIMELINE_NOTE_MAX_LENGTH = 1000;
+const TIMELINE_ACTOR_LABEL_MAX_LENGTH = 120;
+const TIMELINE_ACTOR_ROLE_MAX_LENGTH = 80;
+
 type TransitionActor = {
   actorLabel?: string;
   actorRole?: string;
@@ -36,9 +40,22 @@ function timelineTitle(kind: string, from: string, to: string) {
   return `${kind} status changed from ${from} to ${to}`;
 }
 
-function optionalText(value?: string) {
+function boundedOptionalText(value: string | undefined, maxLength: number) {
   const normalized = value?.trim();
-  return normalized || undefined;
+  if (!normalized) return undefined;
+  return normalized.slice(0, maxLength);
+}
+
+function timelineNote(value?: string) {
+  return boundedOptionalText(value, TIMELINE_NOTE_MAX_LENGTH);
+}
+
+function timelineActorLabel(value?: string) {
+  return boundedOptionalText(value, TIMELINE_ACTOR_LABEL_MAX_LENGTH);
+}
+
+function timelineActorRole(value?: string) {
+  return boundedOptionalText(value, TIMELINE_ACTOR_ROLE_MAX_LENGTH);
 }
 
 function assertDatabaseReady() {
@@ -92,9 +109,9 @@ export async function transitionCheckoutOrderStatus(input: TransitionInput<Check
           orderId: order.id,
           type: 'order_status_changed',
           title: timelineTitle('Order', from, input.to),
-          note: optionalText(input.note),
-          actorLabel: optionalText(input.actorLabel),
-          actorRole: optionalText(input.actorRole),
+          note: timelineNote(input.note),
+          actorLabel: timelineActorLabel(input.actorLabel),
+          actorRole: timelineActorRole(input.actorRole),
           metadata: { from, to: input.to }
         }
       });
@@ -127,9 +144,9 @@ export async function transitionCheckoutFulfillmentStatus(input: TransitionInput
           orderId: order.id,
           type: 'fulfillment_status_changed',
           title: timelineTitle('Fulfillment', from, input.to),
-          note: optionalText(input.note),
-          actorLabel: optionalText(input.actorLabel),
-          actorRole: optionalText(input.actorRole),
+          note: timelineNote(input.note),
+          actorLabel: timelineActorLabel(input.actorLabel),
+          actorRole: timelineActorRole(input.actorRole),
           metadata: { from, to: input.to }
         }
       });
@@ -159,9 +176,9 @@ export async function transitionCheckoutPaymentStatus(input: PaymentTransitionIn
           orderId: payment.orderId,
           type: 'payment_status_changed',
           title: timelineTitle('Payment', from, input.to),
-          note: optionalText(input.note),
-          actorLabel: optionalText(input.actorLabel),
-          actorRole: optionalText(input.actorRole),
+          note: timelineNote(input.note),
+          actorLabel: timelineActorLabel(input.actorLabel),
+          actorRole: timelineActorRole(input.actorRole),
           metadata: { from, to: input.to, paymentAttemptId: payment.id }
         }
       });
