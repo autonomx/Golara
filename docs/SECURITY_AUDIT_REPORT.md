@@ -11,9 +11,9 @@ Status values:
 
 ## Current audit position
 
-The project has completed a broad hardening pass across authorization, session management, public API boundaries, public abuse controls, payment/order integrity, privacy, logging, media handling, input validation, browser headers, secrets, and dependency scanning. This roadmap reconciles the current security-audit status through PR #629 / main commit `18bd9627`.
+The project has completed a broad hardening pass across authorization, session management, public API boundaries, public abuse controls, payment/order integrity, privacy, logging, media handling, input validation, browser headers, secrets, and dependency scanning. This roadmap reconciles the current security-audit status through PR #634 / main commit `eb1a29d`.
 
-The highest-risk remaining implementation work is now concentrated in final payment/order creation and refund integrity, production session policy decisions, production-safe error response coverage, incident-response documentation, persistent/distributed abuse-control policy, CSP/reporting decisions, and supply-chain policy refinements.
+The highest-risk remaining implementation work is now concentrated in production session policy decisions, production-safe error response coverage, incident-response documentation, persistent/distributed abuse-control policy, CSP/reporting decisions, and supply-chain policy refinements.
 
 ## Recently completed security work
 
@@ -70,6 +70,11 @@ The highest-risk remaining implementation work is now concentrated in final paym
 | Abandoned cart cleanup bounds | **Fixed** | PR #627 bounds expired-cart cleanup to an active expired-cart batch before deleting cart items. |
 | Catalog/category query complexity gate | **Fixed** | PR #628 source-gates product/category listing pages and repositories against raw public pagination, sort, filter, or list-size controls. |
 | Public abuse security events | **Fixed** | PR #629 logs bounded/redacted security events for public order lookup throttles, inquiry cooldowns, and cart mutation throttles. |
+| Security roadmap Phase C/F/G/K reconciliation | **Fixed** | PR #630 reconciled public-abuse and query-complexity roadmap status through PR #629. |
+| Payment confirmation order privacy | **Fixed** | PR #631 source-gates payment confirmation, return redirects, public DTO exposure, and session-bound private order history. |
+| Checkout creation boundary idempotency | **Fixed** | PR #632 source-gates checkout same-origin, cart claim ordering, payment-attempt ordering, cart completion, and reservation transaction boundaries. |
+| Manual payment refund audit trail | **Fixed** | PR #633 source-gates owner-only manual refund/void actions, manual-provider restriction, transition metadata, audit metadata redaction, and reservation release. |
+| Payment return callback minimization | **Fixed** | PR #634 removes duplicate Zarinpal `authority` forwarding and proves extra provider-return query params are ignored. |
 
 ## Remaining roadmap
 
@@ -148,7 +153,7 @@ Remaining work:
 ### Phase D — Payment and order integrity
 
 **Priority:** Critical/High  
-**Status:** Partial / strongly improved  
+**Status:** Mostly fixed / monitor  
 **Goal:** ensure payment state transitions cannot be replayed, spoofed, over/underpaid, cross-owned, or silently mis-audited.
 
 Completed:
@@ -160,13 +165,17 @@ Completed:
 - Provider-reference webhook lookups require supplied order-number/public-token corroboration.
 - Duplicate webhook replay is a pure early return and cannot re-run settlement or state transitions.
 - Payment/webhook outcomes emit bounded security events for incident review.
+- Payment confirmation and return redirects remain public-safe and avoid hydrating private order details.
+- Private customer order history is derived from the verified customer session and bound to `session.customerId`.
+- Checkout creation flow is source-gated so cart claim, order draft creation, payment-attempt creation, cart completion, and reservation transactions remain ordered and idempotency-safe.
+- Manual refund/void flows are owner-only, manual-provider-only, order-bound, and preserve payment transition/audit metadata without provider-reference leakage.
+- Refunded/cancelled/failed payment transitions release fulfillment capacity and inventory reservations.
+- Provider callback parsing forwards only the normalized provider reference and ignores extra return query params.
 
 Remaining work:
 
-1. Order ownership checks for storefront payment confirmation and any private payment/order views.
-2. Idempotency-key enforcement for payment/order creation boundaries.
-3. Refund and settlement audit trail completeness.
-4. Provider callback payload minimization and response sanitization review.
+1. Continue monitoring new payment-provider integrations for the same settlement, corroboration, callback minimization, and audit-trail boundaries.
+2. Add additional provider-specific reconciliation tests when non-manual/non-Zarinpal providers gain refund or settlement flows.
 
 ### Phase E — Data privacy and response exposure audit
 
@@ -183,6 +192,7 @@ Completed:
 - Payment operation diagnostics require owner role.
 - Media audit metadata no longer stores raw media URLs/paths.
 - Public abuse throttle/cooldown logs avoid raw tokens, product IDs, line keys, and customer PII.
+- Payment confirmation, return redirects, and provider-return payload handling are source-gated for public-safe exposure.
 
 Remaining work:
 
@@ -204,6 +214,7 @@ Completed:
 - Media audit metadata is redacted while retaining bounded incident context.
 - Checkout timeline and admin notification text fields are bounded before storage/timeline use.
 - Public order lookup throttles, public inquiry cooldowns, and cart mutation throttles emit bounded/redacted public-abuse security events.
+- Manual refund/void transitions preserve bounded payment status and admin audit metadata without provider-reference leakage.
 
 Remaining work:
 
@@ -227,6 +238,7 @@ Completed:
 - Admin notification recipient/body/template/provider fields are bounded.
 - Checkout timeline notes and actor fields are bounded.
 - Product/category list query-complexity gates guard against raw public pagination, sort, filter, and page-size controls.
+- Provider return parsing ignores unexpected callback query params.
 
 Remaining work:
 
@@ -301,7 +313,7 @@ Remaining work:
 Completed:
 
 - Roadmap reconciliations were added after major security-hardening waves.
-- This document is reconciled through PR #629 and main commit `18bd9627`.
+- This document is reconciled through PR #634 and main commit `eb1a29d`.
 
 Remaining work:
 
