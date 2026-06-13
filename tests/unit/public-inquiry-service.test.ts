@@ -25,6 +25,35 @@ function assertInquiryFormUsesSharedBounds() {
   assert.match(formSource, /'delivery-notes-too-long'/);
 }
 
+function assertPublicInquiryActionUsesCooldownBoundary() {
+  const actionSource = readFileSync('app/products/[slug]/actions.ts', 'utf8');
+
+  assert.ok(actionSource.includes("const PUBLIC_INQUIRY_COOLDOWN_COOKIE = 'publicInquiryCooldown'"));
+  assert.ok(actionSource.includes('const PUBLIC_INQUIRY_COOLDOWN_SECONDS = 60 * 5'));
+  assert.ok(actionSource.includes('function assertInquirySubmissionNotThrottled'));
+  assert.ok(actionSource.includes('function setInquirySubmissionThrottle'));
+  assert.ok(actionSource.includes('sameSite: \'lax\''));
+  assert.ok(actionSource.includes('httpOnly: true'));
+  assert.ok(actionSource.includes("path: '/'"));
+  assert.ok(actionSource.includes('maxAge: PUBLIC_INQUIRY_COOLDOWN_SECONDS'));
+
+  const originIndex = actionSource.indexOf('await assertSameOriginServerAction()');
+  const cookieIndex = actionSource.indexOf('const cookieStore = await cookies()');
+  const throttleCheckIndex = actionSource.indexOf('assertInquirySubmissionNotThrottled(productSlug, cookieStore)');
+  const databaseIndex = actionSource.indexOf('hasDatabase()');
+  const validationIndex = actionSource.indexOf('validateInquiryInput({');
+  const createIndex = actionSource.indexOf('publicInquiryService.createInquiry({');
+  const setThrottleIndex = actionSource.indexOf('setInquirySubmissionThrottle(cookieStore)');
+
+  assert.ok(originIndex >= 0);
+  assert.ok(cookieIndex > originIndex);
+  assert.ok(throttleCheckIndex > cookieIndex);
+  assert.ok(throttleCheckIndex < databaseIndex);
+  assert.ok(throttleCheckIndex < validationIndex);
+  assert.ok(throttleCheckIndex < createIndex);
+  assert.ok(setThrottleIndex > createIndex);
+}
+
 export async function runPublicInquiryServiceTests() {
   const creates: unknown[] = [];
   const notifications: unknown[] = [];
@@ -101,6 +130,7 @@ export async function runPublicInquiryServiceTests() {
   assertInquiryRejects({ ...validInput, message: 'x'.repeat(INQUIRY_FIELD_LIMITS.message + 1) }, 'message-too-long');
   assertInquiryRejects({ ...validInput, deliveryNotes: 'x'.repeat(INQUIRY_FIELD_LIMITS.deliveryNotes + 1) }, 'delivery-notes-too-long');
   assertInquiryFormUsesSharedBounds();
+  assertPublicInquiryActionUsesCooldownBoundary();
 
   console.log('public-inquiry-service.test.ts passed');
 }
