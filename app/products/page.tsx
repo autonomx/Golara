@@ -10,9 +10,9 @@ import { buildPageMetadata } from '@/lib/site-metadata';
 
 type ProductsSearchParams = { q?: string };
 
-export const CATALOG_SEARCH_MAX_LENGTH = 80;
+const CATALOG_SEARCH_MAX_LENGTH = 80;
 
-export function normalizeSearch(value?: string) {
+function normalizeSearch(value?: string) {
   const normalized = value?.trim().replace(/\s+/g, ' ') ?? '';
   return normalized.length > CATALOG_SEARCH_MAX_LENGTH ? normalized.slice(0, CATALOG_SEARCH_MAX_LENGTH).trimEnd() : normalized;
 }
