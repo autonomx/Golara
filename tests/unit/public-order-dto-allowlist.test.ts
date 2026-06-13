@@ -20,9 +20,30 @@ function extractSelectBlock(source: string, marker: string) {
   throw new Error(`unterminated select block after ${marker}`);
 }
 
+function topLevelSelectedFields(block: string) {
+  const fields: string[] = [];
+  let depth = 0;
+  let lineStart = 0;
+  for (let index = 0; index <= block.length; index += 1) {
+    const char = block[index];
+    if (char === '\n' || index === block.length) {
+      const line = block.slice(lineStart, index);
+      if (depth === 0) {
+        const match = line.match(/^\s*([A-Za-z][A-Za-z0-9_]*)\s*:/);
+        if (match) fields.push(match[1]);
+      }
+      for (const current of line) {
+        if (current === '{') depth += 1;
+        if (current === '}') depth -= 1;
+      }
+      lineStart = index + 1;
+    }
+  }
+  return fields;
+}
+
 function assertAllowedSelectFields(block: string, allowed: string[], context: string) {
-  const selectedFields = Array.from(block.matchAll(/^\s*([A-Za-z][A-Za-z0-9_]*)\s*:/gm)).map((match) => match[1]);
-  for (const field of selectedFields) {
+  for (const field of topLevelSelectedFields(block)) {
     assert.ok(allowed.includes(field), `${context} must not expose ${field}`);
   }
 }
