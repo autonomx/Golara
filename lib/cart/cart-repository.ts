@@ -1,12 +1,14 @@
 import 'server-only';
 
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
 const DEFAULT_CART_TTL_DAYS = 14;
 const MAX_CART_QUANTITY = 99;
 const CHECKOUT_PENDING_STATUS = 'checkout_pending';
 const CHECKED_OUT_STATUS = 'checked_out';
+const CART_MUTATION_THROTTLE_WINDOW_MS = 60_000;
+const CART_MUTATION_THROTTLE_LIMIT = 120;
 
 type CartCurrency = string | undefined;
 
@@ -30,9 +32,37 @@ type UpdateCartItemInput = {
   quantity: number;
 };
 
+type CartMutationThrottleBucket = {
+  count: number;
+  resetAt: number;
+};
+
+const cartMutationThrottleBuckets = new Map<string, CartMutationThrottleBucket>();
+
 function optionalText(value?: string) {
   const normalized = value?.trim();
   return normalized || undefined;
+}
+
+function cartMutationThrottleKey(token?: string, fallback?: string) {
+  const normalizedToken = optionalText(token);
+  const normalizedFallback = optionalText(fallback);
+  const source = normalizedToken ? `token:${normalizedToken}` : `anonymous:${normalizedFallback || 'cart'}`;
+  return createHash('sha256').update(source).digest('hex');
+}
+
+function enforceCartMutationThrottle(input: { token?: string; fallback?: string }) {
+  const now = Date.now();
+  const key = cartMutationThrottleKey(input.token, input.fallback);
+  const bucket = cartMutationThrottleBuckets.get(key);
+  if (!bucket || bucket.resetAt <= now) {
+    cartMutationThrottleBuckets.set(key, { count: 1, resetAt: now + CART_MUTATION_THROTTLE_WINDOW_MS });
+    return;
+  }
+  if (bucket.count >= CART_MUTATION_THROTTLE_LIMIT) {
+    throw new Error('Too many cart updates. Please wait before trying again.');
+  }
+  bucket.count += 1;
 }
 
 function normalizeLocale(locale?: string) {
@@ -191,6 +221,7 @@ export async function addCartItem(input: AddCartItemInput) {
   if (!hasDatabase()) throw new Error('DATABASE_URL is required for cart sessions.');
   const productId = optionalText(input.productId);
   if (!productId) throw new Error('Product is required.');
+  enforceCartMutationThrottle({ token: input.token, fallback: productId });
 
   const product = await prisma.product.findFirst({
     where: {
@@ -245,6 +276,7 @@ export async function addCartItem(input: AddCartItemInput) {
 
 export async function updateCartItem(input: UpdateCartItemInput) {
   if (!hasDatabase()) throw new Error('DATABASE_URL is required for cart sessions.');
+  enforceCartMutationThrottle({ token: input.token, fallback: input.lineKey });
   const cart = await findActiveCart(input.token);
   if (!cart) throw new Error('Cart was not found.');
   const lineKey = optionalText(input.lineKey);
@@ -273,6 +305,7 @@ export async function removeCartItem(token: string, lineKey: string) {
 
 export async function clearCart(token: string) {
   if (!hasDatabase()) throw new Error('DATABASE_URL is required for cart sessions.');
+  enforceCartMutationThrottle({ token, fallback: 'clear' });
   const cart = await findActiveCart(token);
   if (!cart) return null;
 
