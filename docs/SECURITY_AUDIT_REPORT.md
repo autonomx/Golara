@@ -11,9 +11,9 @@ Status values:
 
 ## Current audit position
 
-The project has completed a broad hardening pass across authorization, session management, public API boundaries, public abuse controls, payment/order integrity, privacy, logging, media handling, input validation, browser headers, secrets, and dependency scanning. This roadmap reconciles the current security-audit status through PR #634 / main commit `eb1a29d`.
+The project has completed a broad hardening pass across authorization, session management, public API boundaries, public abuse controls, payment/order integrity, privacy, logging, media handling, input validation, browser headers, secrets, dependency scanning, and incident-response documentation. This roadmap reconciles the current security-audit status through PR #639 / main commit `df0f953`.
 
-The highest-risk remaining implementation work is now concentrated in production session policy decisions, production-safe error response coverage, incident-response documentation, persistent/distributed abuse-control policy, CSP/reporting decisions, and supply-chain policy refinements.
+The highest-risk remaining implementation work is now concentrated in production session policy decisions, persistent/distributed abuse-control policy, CSP/reporting decisions, deployment checklist references, and supply-chain policy refinements.
 
 ## Recently completed security work
 
@@ -75,6 +75,11 @@ The highest-risk remaining implementation work is now concentrated in production
 | Checkout creation boundary idempotency | **Fixed** | PR #632 source-gates checkout same-origin, cart claim ordering, payment-attempt ordering, cart completion, and reservation transaction boundaries. |
 | Manual payment refund audit trail | **Fixed** | PR #633 source-gates owner-only manual refund/void actions, manual-provider restriction, transition metadata, audit metadata redaction, and reservation release. |
 | Payment return callback minimization | **Fixed** | PR #634 removes duplicate Zarinpal `authority` forwarding and proves extra provider-return query params are ignored. |
+| Security roadmap Phase D/E/F/G/K reconciliation | **Fixed** | PR #635 reconciled payment/order integrity and related privacy/logging roadmap status through PR #634. |
+| Payment webhook error response sanitization | **Fixed** | PR #636 replaces raw webhook exception messages with generic 500 responses and tests that internal/provider details are not exposed. |
+| Admin authorization-denial logging | **Fixed** | PR #637 emits bounded/redacted admin authorization denial events without labels, emails, cookies, passwords, or raw form data. |
+| OTP blocked-request logging | **Fixed** | PR #638 persists bounded `otp_request_blocked` customer auth events with hashed phone/IP/user-agent identifiers. |
+| Security incident response runbook | **Fixed** | PR #639 adds a production incident-response runbook covering triage, evidence preservation, containment, recovery, communications, and closure. |
 
 ## Remaining roadmap
 
@@ -143,6 +148,7 @@ Completed:
 - Abandoned cart cleanup is bounded to an active expired-cart batch.
 - Product/category listing pages and repositories are source-gated against raw public pagination, page-size, sort, filter, and query-complexity controls.
 - Public order lookup, inquiry cooldown, and cart throttle outcomes emit bounded/redacted public-abuse security events.
+- Blocked OTP request decisions persist bounded customer auth events with hashed identifiers.
 
 Remaining work:
 
@@ -171,10 +177,11 @@ Completed:
 - Manual refund/void flows are owner-only, manual-provider-only, order-bound, and preserve payment transition/audit metadata without provider-reference leakage.
 - Refunded/cancelled/failed payment transitions release fulfillment capacity and inventory reservations.
 - Provider callback parsing forwards only the normalized provider reference and ignores extra return query params.
+- Payment webhook failure responses are generic and do not expose caught exception details.
 
 Remaining work:
 
-1. Continue monitoring new payment-provider integrations for the same settlement, corroboration, callback minimization, and audit-trail boundaries.
+1. Continue monitoring new payment-provider integrations for the same settlement, corroboration, callback minimization, response-sanitization, and audit-trail boundaries.
 2. Add additional provider-specific reconciliation tests when non-manual/non-Zarinpal providers gain refund or settlement flows.
 
 ### Phase E — Data privacy and response exposure audit
@@ -193,17 +200,18 @@ Completed:
 - Media audit metadata no longer stores raw media URLs/paths.
 - Public abuse throttle/cooldown logs avoid raw tokens, product IDs, line keys, and customer PII.
 - Payment confirmation, return redirects, and provider-return payload handling are source-gated for public-safe exposure.
+- Payment webhook failure responses use generic messages and hide internal/provider exception details.
 
 Remaining work:
 
-1. Production-safe error response tests that hide stacks/internal details.
-2. Broader storefront/API exposure audit for new emails, phone numbers, addresses, internal IDs, payment metadata, and admin fields as features expand.
-3. Search/catalog response allowlists if richer public APIs are introduced.
+1. Broader storefront/API exposure audit for new emails, phone numbers, addresses, internal IDs, payment metadata, and admin fields as features expand.
+2. Search/catalog response allowlists if richer public APIs are introduced.
+3. Continue adding production-safe error response tests as new public/API surfaces are introduced.
 
 ### Phase F — Logging, audit trails, and incident readiness
 
 **Priority:** Medium/High  
-**Status:** Partial / improved  
+**Status:** Mostly fixed / monitor  
 **Goal:** make security-relevant events traceable without leaking sensitive data.
 
 Completed:
@@ -215,13 +223,14 @@ Completed:
 - Checkout timeline and admin notification text fields are bounded before storage/timeline use.
 - Public order lookup throttles, public inquiry cooldowns, and cart mutation throttles emit bounded/redacted public-abuse security events.
 - Manual refund/void transitions preserve bounded payment status and admin audit metadata without provider-reference leakage.
+- Admin authorization denials emit bounded/redacted security events without labels, emails, cookies, passwords, or raw form data.
+- Blocked OTP request decisions emit bounded customer auth events with hashed phone/IP/user-agent identifiers.
+- A production security incident response runbook now covers triage, evidence preservation, containment, communication, recovery validation, post-incident review, and closure.
 
 Remaining work:
 
-1. Authorization-failure logging without secret/customer leakage.
-2. OTP abuse and throttle-event logging beyond existing login/admin/public-abuse events.
-3. Media delete logging if delete helpers are introduced.
-4. Incident response runbook for investigation, containment, recovery, and notification.
+1. Media delete logging if delete helpers are introduced.
+2. Keep incident-response and logging guidance synchronized as new security-event sources are added.
 
 ### Phase G — Input validation and injection safety follow-up
 
@@ -313,11 +322,11 @@ Remaining work:
 Completed:
 
 - Roadmap reconciliations were added after major security-hardening waves.
-- This document is reconciled through PR #634 and main commit `eb1a29d`.
+- This document is reconciled through PR #639 and main commit `df0f953`.
+- A production security incident response runbook has been added.
 
 Remaining work:
 
 1. Keep this document synchronized after each security PR or direct-main security change.
-2. Add a production incident-response runbook.
-3. Add deployment checklist references for secrets, headers, provider webhooks, monitoring, backups, and dependency policy.
-4. Mark phases as **Fixed** only when implementation and CI gates have both landed.
+2. Add deployment checklist references for secrets, headers, provider webhooks, monitoring, backups, and dependency policy.
+3. Mark phases as **Fixed** only when implementation and CI gates have both landed.
