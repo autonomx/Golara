@@ -39,12 +39,24 @@ export async function runPaymentWebhookServiceTransitionTests() {
   assert.match(service, /status: 'duplicate'/);
   assert.match(service, /missingPaymentAttempt: true/);
 
+  const duplicateIndex = service.indexOf('if (existing)');
+  const attemptLookupIndex = service.indexOf('const paymentAttempt = await findPaymentAttemptForWebhook');
   const createIndex = service.indexOf('checkoutPaymentEvent.create');
   const reconcileIndex = service.indexOf('paymentSettlementRepository.upsertForPaymentEvent(created.id)');
   const applyIndex = service.indexOf('await applyTrustedWebhookStateChange');
-  assert.ok(createIndex > -1);
+  assert.ok(duplicateIndex > -1);
+  assert.ok(attemptLookupIndex > duplicateIndex);
+  assert.ok(createIndex > attemptLookupIndex);
   assert.ok(reconcileIndex > createIndex);
   assert.ok(applyIndex > reconcileIndex);
+
+  const duplicateBlock = service.slice(duplicateIndex, attemptLookupIndex);
+  assert.match(duplicateBlock, /status: 'duplicate'/);
+  assert.doesNotMatch(
+    duplicateBlock,
+    /paymentSettlementRepository\.upsertForPaymentEvent|findPaymentAttemptForWebhook|checkoutPaymentEvent\.create|applyTrustedWebhookStateChange/,
+    'duplicate webhook idempotency path must be a pure early return without settlement or state replay'
+  );
 
   console.log('payment-webhook-service-transition.test.ts passed');
 }
