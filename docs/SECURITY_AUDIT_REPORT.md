@@ -11,9 +11,9 @@ Status values:
 
 ## Current audit position
 
-The project has completed a broad hardening pass across authorization, session management, public API boundaries, public abuse controls, payment/order integrity, privacy, logging, media handling, input validation, browser headers, secrets, dependency scanning, and incident-response documentation. This roadmap reconciles the current security-audit status through PR #639 / main commit `df0f953`.
+The project has completed a broad hardening pass across authorization, session management, public API boundaries, public abuse controls, payment/order integrity, privacy, logging, media handling, input validation, browser headers, secrets, dependency scanning, incident-response documentation, and production security deployment checklist coverage. This roadmap reconciles the current security-audit status through PR #641 / main commit `78c2a89`.
 
-The highest-risk remaining implementation work is now concentrated in production session policy decisions, persistent/distributed abuse-control policy, CSP/reporting decisions, deployment checklist references, and supply-chain policy refinements.
+The highest-risk remaining implementation work is now concentrated in production session policy decisions, persistent/distributed abuse-control policy, CSP/reporting decisions, and supply-chain policy refinements.
 
 ## Recently completed security work
 
@@ -80,6 +80,8 @@ The highest-risk remaining implementation work is now concentrated in production
 | Admin authorization-denial logging | **Fixed** | PR #637 emits bounded/redacted admin authorization denial events without labels, emails, cookies, passwords, or raw form data. |
 | OTP blocked-request logging | **Fixed** | PR #638 persists bounded `otp_request_blocked` customer auth events with hashed phone/IP/user-agent identifiers. |
 | Security incident response runbook | **Fixed** | PR #639 adds a production incident-response runbook covering triage, evidence preservation, containment, recovery, communications, and closure. |
+| Security roadmap Phase C/D/E/F/K reconciliation | **Fixed** | PR #640 reconciled error-response, authorization-denial, OTP-event, and incident-response roadmap status through PR #639. |
+| Production security deployment checklist | **Fixed** | PR #641 adds a production release checklist covering secrets, headers/CSP, payment webhooks, abuse controls, monitoring, backups, dependency policy, evidence, and sign-off. |
 
 ## Remaining roadmap
 
@@ -289,6 +291,7 @@ Completed:
 - Baseline headers and CSP exist in the app configuration.
 - Header config tests exist.
 - Route smoke verifies required security headers on production-like responses.
+- Production deployment checklist now includes browser header and CSP verification.
 
 Remaining work:
 
@@ -306,6 +309,7 @@ Completed:
 
 - CI runs `npm audit --omit=dev --audit-level=high` after dependency install.
 - Committed-secret scanning runs in unit CI.
+- Production deployment checklist now includes dependency and lockfile review sign-off.
 
 Remaining work:
 
@@ -322,11 +326,11 @@ Remaining work:
 Completed:
 
 - Roadmap reconciliations were added after major security-hardening waves.
-- This document is reconciled through PR #639 and main commit `df0f953`.
+- This document is reconciled through PR #641 and main commit `78c2a89`.
 - A production security incident response runbook has been added.
+- A production security deployment checklist now references secrets, headers, provider webhooks, monitoring, backups, dependency policy, evidence, and sign-off.
 
 Remaining work:
 
 1. Keep this document synchronized after each security PR or direct-main security change.
-2. Add deployment checklist references for secrets, headers, provider webhooks, monitoring, backups, and dependency policy.
-3. Mark phases as **Fixed** only when implementation and CI gates have both landed.
+2. Mark phases as **Fixed** only when implementation and CI gates have both landed.
