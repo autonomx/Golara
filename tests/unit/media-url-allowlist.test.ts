@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { normalizeImageUrl } from '@/lib/media/media-storage';
 
 assert.equal(
@@ -47,6 +48,13 @@ assert.throws(
   () => normalizeImageUrl('https://example.com/image.jpg'),
   /not allowed/,
   'manual media URLs should reject arbitrary external hosts'
+);
+
+const mediaStorageSource = readFileSync('lib/media/media-storage.ts', 'utf8');
+assert.match(
+  mediaStorageSource,
+  /const normalizedUrl = normalizeImageUrl\(url\);[\s\S]*url: normalizedUrl/,
+  'Cloudinary upload responses should be normalized through the media URL allowlist before storage'
 );
 
 console.log('media-url-allowlist: ok');

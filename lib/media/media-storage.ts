@@ -177,9 +177,10 @@ const cloudinaryMediaStorageProvider: MediaStorageProvider = {
     if (!url) {
       throw new Error('Cloudinary upload did not return a secure URL.');
     }
+    const normalizedUrl = normalizeImageUrl(url);
 
     return {
-      url,
+      url: normalizedUrl,
       size: payload.bytes ?? file.size,
       type: file.type,
       provider: 'cloudinary'
