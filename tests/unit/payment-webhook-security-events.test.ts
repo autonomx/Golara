@@ -44,7 +44,8 @@ export async function runPaymentWebhookSecurityEventTests() {
   );
 
   assert.match(loggerSource, /redactLogValue\(/, 'payment webhook event logger should redact text values before logging');
-  assert.match(loggerSource, /slice\(0,\s*160\)/, 'payment webhook event reasons should be bounded before logging');
+  assert.match(loggerSource, /slice\(0,\s*maxLength\)/, 'payment webhook event text values should be bounded before logging');
+  assert.match(loggerSource, /reason: safeText\(input\.reason,\s*160\)/, 'payment webhook event reasons should be bounded to 160 characters');
   assert.match(loggerSource, /console\.info\(message,\s*payload\)/, 'recorded webhook events should use structured info logging');
   assert.match(loggerSource, /console\.warn\(message,\s*payload\)/, 'attention webhook events should use structured warning logging');
 
