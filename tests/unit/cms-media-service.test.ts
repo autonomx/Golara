@@ -15,6 +15,13 @@ function mediaCategoryFromMetadata(metadata: unknown) {
   return typeof mediaCategory === 'string' ? mediaCategory : 'general';
 }
 
+function assertAuditMetadataDoesNotExposeUrl(audit: AuditRecord) {
+  const serialized = JSON.stringify(audit.metadata);
+  assert.ok(!serialized.includes('https://cdn.example.test/'), `audit metadata must not expose full media URLs: ${serialized}`);
+  assert.ok(!serialized.includes('/uploads/rose'), `audit metadata must not expose local media paths: ${serialized}`);
+  assert.ok(!Object.prototype.hasOwnProperty.call((audit.metadata ?? {}) as Record<string, unknown>, 'url'), 'audit metadata must not include raw url field');
+}
+
 export async function runCmsMediaServiceTests() {
   const audits: AuditRecord[] = [];
   const upserts: unknown[] = [];
@@ -93,7 +100,7 @@ export async function runCmsMediaServiceTests() {
     entity: 'media',
     entityId: 'media-url-1',
     summary: 'Registered media URL: Rose',
-    metadata: { url: 'https://cdn.example.test/rose.webp', mediaCategory: 'product', sourceType: 'external', storageProvider: 'external' }
+    metadata: { urlScope: 'remote', urlScheme: 'https', urlHost: 'cdn.example.test', mediaCategory: 'product', sourceType: 'external', storageProvider: 'external' }
   });
 
   const file = new File(['hello'], 'rose-original.webp', { type: 'image/webp' });
@@ -115,7 +122,7 @@ export async function runCmsMediaServiceTests() {
     entity: 'media',
     entityId: 'media-upload-1',
     summary: 'Uploaded media: Uploaded rose',
-    metadata: { url: 'https://cdn.example.test/uploads/rose.webp', size: file.size, type: 'image/webp', provider: 'cloudinary', mediaCategory: 'category', sourceType: 'upload' }
+    metadata: { urlScope: 'remote', urlScheme: 'https', urlHost: 'cdn.example.test', size: file.size, type: 'image/webp', provider: 'cloudinary', mediaCategory: 'category', sourceType: 'upload' }
   });
 
   const updatedMedia = await service.update({ id: 'media-upload-1', url: '/uploads/rose-edited.webp', alt: 'Edited rose', mediaCategory: 'homepage-banner' });
@@ -129,7 +136,7 @@ export async function runCmsMediaServiceTests() {
     entity: 'media',
     entityId: 'media-upload-1',
     summary: 'Updated media: Edited rose',
-    metadata: { url: 'https://cdn.example.test/uploads/rose-edited.webp', mediaCategory: 'homepage-banner', sourceType: 'upload', storageProvider: 'cloudinary' }
+    metadata: { urlScope: 'remote', urlScheme: 'https', urlHost: 'cdn.example.test', mediaCategory: 'homepage-banner', sourceType: 'upload', storageProvider: 'cloudinary' }
   });
 
   const categorizedMedia = await service.updateCategory({ id: 'media-upload-1', mediaCategory: 'product' });
@@ -143,8 +150,12 @@ export async function runCmsMediaServiceTests() {
     entity: 'media',
     entityId: 'media-upload-1',
     summary: 'Updated media category: product',
-    metadata: { url: 'https://cdn.example.test/uploads/rose-edited.webp', mediaCategory: 'product', sourceType: 'upload', storageProvider: 'cloudinary' }
+    metadata: { urlScope: 'remote', urlScheme: 'https', urlHost: 'cdn.example.test', mediaCategory: 'product', sourceType: 'upload', storageProvider: 'cloudinary' }
   });
+
+  for (const audit of audits) {
+    assertAuditMetadataDoesNotExposeUrl(audit);
+  }
 
   console.log('cms-media-service.test.ts passed');
 }
