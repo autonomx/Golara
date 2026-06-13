@@ -38,8 +38,7 @@ export async function runOrderReturnRouteCoreTests() {
     token: 'lookup-token-123456',
     status: 'paid',
     provider: 'zarinpal',
-    providerReference: 'A0001',
-    authority: 'A0001'
+    providerReference: 'A0001'
   });
 
   assert.deepEqual(checkoutReturnApplyInput('https://golara.example/orders/return?order=GOL-1002&token=lookup-token-abcdef&status=cancelled&ref=REF-1'), {
@@ -47,8 +46,7 @@ export async function runOrderReturnRouteCoreTests() {
     token: 'lookup-token-abcdef',
     status: 'cancelled',
     provider: undefined,
-    providerReference: 'REF-1',
-    authority: undefined
+    providerReference: 'REF-1'
   });
 
   assert.deepEqual(checkoutReturnApplyInput('https://golara.example/orders/return?order=GOL-1003&token=lookup-token-stripe&provider=stripe&payment=success&checkout_session_id=cs_test_123'), {
@@ -56,8 +54,7 @@ export async function runOrderReturnRouteCoreTests() {
     token: 'lookup-token-stripe',
     status: 'paid',
     provider: 'stripe',
-    providerReference: 'cs_test_123',
-    authority: undefined
+    providerReference: 'cs_test_123'
   });
 
   assert.deepEqual(checkoutReturnApplyInput('https://golara.example/orders/return?order=GOL-1004&token=lookup-token-stripe&provider=stripe&payment=cancel&checkoutSession=cs_test_cancel'), {
@@ -65,8 +62,7 @@ export async function runOrderReturnRouteCoreTests() {
     token: 'lookup-token-stripe',
     status: 'cancelled',
     provider: 'stripe',
-    providerReference: 'cs_test_cancel',
-    authority: undefined
+    providerReference: 'cs_test_cancel'
   });
 
   assert.deepEqual(checkoutReturnApplyInput('https://golara.example/orders/return?order=GOL-1007&token=lookup-token-zarinpal&provider=zarinpal&Authority=A0007&Status=NOK'), {
@@ -74,8 +70,15 @@ export async function runOrderReturnRouteCoreTests() {
     token: 'lookup-token-zarinpal',
     status: 'failed',
     provider: 'zarinpal',
-    providerReference: 'A0007',
-    authority: 'A0007'
+    providerReference: 'A0007'
+  });
+
+  assert.deepEqual(checkoutReturnApplyInput('https://golara.example/orders/return?order=GOL-1010&token=lookup-token-extra&provider=stripe&payment=success&session_id=cs_test_extra&customerEmail=a@example.com&recipientPhone=555&rawPayload=secret'), {
+    orderNumber: 'GOL-1010',
+    token: 'lookup-token-extra',
+    status: 'paid',
+    provider: 'stripe',
+    providerReference: 'cs_test_extra'
   });
 
   assert.equal(
@@ -120,8 +123,7 @@ export async function runOrderReturnRouteCoreTests() {
     token: 'lookup-token-route',
     status: 'paid',
     provider: 'stripe',
-    providerReference: 'cs_test_456',
-    authority: undefined
+    providerReference: 'cs_test_456'
   }]);
 
   const cancelInputs: CheckoutReturnApplyInput[] = [];
@@ -140,8 +142,7 @@ export async function runOrderReturnRouteCoreTests() {
     token: 'lookup-token-cancel',
     status: 'cancelled',
     provider: 'stripe',
-    providerReference: 'cs_test_cancel_789',
-    authority: undefined
+    providerReference: 'cs_test_cancel_789'
   }]);
 
   const zarinpalFailedInputs: CheckoutReturnApplyInput[] = [];
@@ -160,8 +161,7 @@ export async function runOrderReturnRouteCoreTests() {
     token: 'lookup-token-zarinpal-failed',
     status: 'failed',
     provider: 'zarinpal',
-    providerReference: 'A0009',
-    authority: 'A0009'
+    providerReference: 'A0009'
   }]);
 
   const failure = await checkoutReturnRouteRedirect({

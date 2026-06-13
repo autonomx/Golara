@@ -4,7 +4,6 @@ export type CheckoutReturnApplyInput = {
   status: string;
   provider?: string;
   providerReference?: string;
-  authority?: string;
 };
 
 export type CheckoutReturnResult = {
@@ -46,7 +45,7 @@ export function checkoutReturnApplyInput(requestUrl: string): CheckoutReturnAppl
     : normalizeHostedCheckoutReturnStatus(rawStatus || paymentStatus);
   const providerReference = url.searchParams.get('ref') || hostedCheckoutReference || authority || undefined;
 
-  return { orderNumber, token, status, provider, providerReference, authority };
+  return { orderNumber, token, status, provider, providerReference };
 }
 
 export function checkoutReturnSuccessUrl(requestUrl: string, result: CheckoutReturnResult) {
