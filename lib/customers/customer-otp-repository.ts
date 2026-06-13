@@ -244,6 +244,18 @@ export async function getCustomerOtpRequestStatus(phone: string, purpose = 'logi
   });
 
   if (!decision.allowed) {
+    await recordOtpRequestAuthEvent({
+      allowed: false,
+      reasonCode: decision.reasonCode,
+      messageKey: decision.messageKey,
+      retryAfterMs: decision.retryAfterMs,
+      phoneHash,
+      ipHash,
+      userAgentHash,
+      purpose,
+      channel: 'sms'
+    });
+
     return {
       ok: false,
       reason: statusForThrottleReason(decision.reasonCode),
