@@ -9,6 +9,7 @@ const CHECKOUT_PENDING_STATUS = 'checkout_pending';
 const CHECKED_OUT_STATUS = 'checked_out';
 const CART_MUTATION_THROTTLE_WINDOW_MS = 60_000;
 const CART_MUTATION_THROTTLE_LIMIT = 120;
+const CART_EXPIRY_CLEANUP_BATCH_LIMIT = 500;
 
 type CartCurrency = string | undefined;
 
@@ -319,13 +320,27 @@ export async function clearCart(token: string) {
 }
 
 export async function expireOldCarts() {
-  if (!hasDatabase()) return { count: 0 };
+  if (!hasDatabase()) return { count: 0, itemCount: 0 };
 
-  return prisma.cartSession.updateMany({
+  const expired = await prisma.cartSession.updateMany({
     where: {
       status: 'active',
       expiresAt: { lte: new Date() }
     },
     data: { status: 'expired' }
   });
+  const expiredCarts = await prisma.cartSession.findMany({
+    where: { status: 'expired' },
+    orderBy: { updatedAt: 'asc' },
+    take: CART_EXPIRY_CLEANUP_BATCH_LIMIT,
+    select: { id: true }
+  });
+  const expiredCartIds = expiredCarts.map((cart) => cart.id);
+  if (!expiredCartIds.length) return { count: expired.count, itemCount: 0 };
+
+  const deletedItems = await prisma.cartItem.deleteMany({
+    where: { cartId: { in: expiredCartIds } }
+  });
+
+  return { count: expired.count, itemCount: deletedItems.count };
 }
