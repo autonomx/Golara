@@ -48,9 +48,33 @@ function assertAllowedSelectFields(block: string, allowed: string[], context: st
   }
 }
 
+function assertNoPrivateOrderReads(source: string, context: string) {
+  for (const forbidden of [
+    'prisma.checkoutOrder',
+    'getCustomerSession',
+    'getCustomerSessionCookie',
+    'listCustomerOrdersForSession',
+    'customerAccount',
+    'customerSession',
+    'customerId',
+    'customerEmail',
+    'customerPhone',
+    'recipientName',
+    'recipientPhone',
+    'shippingAddress',
+    'paymentProviderMetadata'
+  ]) {
+    assert.doesNotMatch(source, new RegExp(`\\b${forbidden}\\b`), `${context} must not read or render private order/session field ${forbidden}`);
+  }
+}
+
 export async function runPublicOrderDtoAllowlistTests() {
   const repositorySource = readFileSync('lib/checkout/public-order-repository.ts', 'utf8');
   const pageSource = readFileSync('app/orders/[token]/page.tsx', 'utf8');
+  const confirmationPageSource = readFileSync('app/orders/confirmation/page.tsx', 'utf8');
+  const returnCoreSource = readFileSync('lib/checkout/order-return-route-core.ts', 'utf8');
+  const accountOrdersPageSource = readFileSync('app/account/orders/page.tsx', 'utf8');
+  const customerAccountRepositorySource = readFileSync('lib/customers/customer-account-repository.ts', 'utf8');
 
   const orderSelect = extractSelectBlock(repositorySource, 'prisma.checkoutOrder.findUnique');
   assertAllowedSelectFields(
@@ -106,6 +130,23 @@ export async function runPublicOrderDtoAllowlistTests() {
 
   assert.doesNotMatch(pageSource, /order\.(?:customer|address|recipient|customerNote|adminNote|internalNote|metadata)/, 'public order page must not render private order fields');
   assert.doesNotMatch(pageSource, /latestAttempt\?\.(?:provider|providerReference|amountCents|currency|rawPayload|metadata|errorMessage)/, 'public order page must not render private payment attempt fields');
+
+  assertNoPrivateOrderReads(confirmationPageSource, 'payment confirmation page');
+  assert.doesNotMatch(confirmationPageSource, /getPublicOrderByToken|checkoutOrder|paymentAttempts|timelineEvents/, 'payment confirmation page must stay receipt-only and not hydrate order details');
+  assert.match(confirmationPageSource, /orderNumber\s*=\s*order\?\.trim\(\)/, 'payment confirmation page may only echo the bounded order reference from the redirect query');
+
+  assert.match(returnCoreSource, /new URL\(`\/orders\/\$\{result\.publicLookupToken\}`/, 'successful payment returns must redirect to the public lookup-token status route');
+  assert.doesNotMatch(returnCoreSource, /\/orders\/confirmation[^`'\"]*order=/, 'payment return fallback must not put order references on the confirmation URL');
+  assert.doesNotMatch(returnCoreSource, /customerId|customerEmail|customerPhone|recipientName|recipientPhone|shippingAddress/, 'payment return URLs must not carry customer-only fields');
+
+  assert.match(accountOrdersPageSource, /getCustomerSessionCookie\(\)/, 'private customer order history must read the customer session cookie');
+  assert.match(accountOrdersPageSource, /getCustomerSession\(token\)/, 'private customer order history must verify the customer session before loading orders');
+  assert.match(accountOrdersPageSource, /if \(!session\) redirect\('\/account\?status=session-required'\)/, 'private customer order history must reject missing sessions');
+  assert.match(accountOrdersPageSource, /listCustomerOrdersForSession\(session\)/, 'private customer order history must derive orders from the verified session');
+  assert.doesNotMatch(accountOrdersPageSource, /searchParams|params:|publicLookupToken[^?]/, 'private customer order history must not accept public route/query identifiers as ownership proof');
+
+  assert.match(customerAccountRepositorySource, /type VerifiedCustomerSession = \{\s*customerId: string;\s*\}/s, 'private order repository must require a verified customer session shape');
+  assert.match(customerAccountRepositorySource, /where:\s*\{\s*customerId:\s*session\.customerId\s*\}/, 'private order repository must bind order reads to the verified session customerId');
 
   console.log('public-order-dto-allowlist.test.ts passed');
 }
