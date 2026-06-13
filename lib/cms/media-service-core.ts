@@ -54,6 +54,19 @@ function mediaCategoryMetadata(mediaCategory: string): Prisma.InputJsonValue {
   return { mediaCategory };
 }
 
+function auditUrlMetadata(url: string): Prisma.InputJsonObject {
+  if (url.startsWith('/uploads/')) {
+    return { urlScope: 'local_upload' };
+  }
+
+  try {
+    const parsed = new URL(url);
+    return { urlScope: 'remote', urlScheme: parsed.protocol.replace(/:$/, ''), urlHost: parsed.hostname };
+  } catch {
+    return { urlScope: 'unknown' };
+  }
+}
+
 export function createCmsMediaService(deps: CmsMediaServiceDeps) {
   return {
     async createFromUrl(input: { url: string; alt: string; mediaCategory?: string }) {
@@ -70,7 +83,7 @@ export function createCmsMediaService(deps: CmsMediaServiceDeps) {
         entity: 'media',
         entityId: media.id,
         summary: `Registered media URL: ${input.alt}`,
-        metadata: { url, mediaCategory: media.mediaCategory, sourceType: media.sourceType, storageProvider: media.storageProvider }
+        metadata: { ...auditUrlMetadata(url), mediaCategory: media.mediaCategory, sourceType: media.sourceType, storageProvider: media.storageProvider }
       });
 
       return media;
@@ -88,7 +101,7 @@ export function createCmsMediaService(deps: CmsMediaServiceDeps) {
         entity: 'media',
         entityId: media.id,
         summary: `Uploaded media: ${input.alt}`,
-        metadata: { url: storedFile.url, size: storedFile.size, type: storedFile.type, provider: storedFile.provider, mediaCategory: media.mediaCategory, sourceType: media.sourceType }
+        metadata: { ...auditUrlMetadata(storedFile.url), size: storedFile.size, type: storedFile.type, provider: storedFile.provider, mediaCategory: media.mediaCategory, sourceType: media.sourceType }
       });
 
       return media;
@@ -107,7 +120,7 @@ export function createCmsMediaService(deps: CmsMediaServiceDeps) {
         entity: 'media',
         entityId: media.id,
         summary: `Updated media: ${input.alt}`,
-        metadata: { url, mediaCategory: media.mediaCategory, sourceType: media.sourceType, storageProvider: media.storageProvider }
+        metadata: { ...auditUrlMetadata(url), mediaCategory: media.mediaCategory, sourceType: media.sourceType, storageProvider: media.storageProvider }
       });
 
       return media;
@@ -125,7 +138,7 @@ export function createCmsMediaService(deps: CmsMediaServiceDeps) {
         entity: 'media',
         entityId: media.id,
         summary: `Updated media category: ${mediaCategory}`,
-        metadata: { url: media.url, mediaCategory: media.mediaCategory, sourceType: media.sourceType, storageProvider: media.storageProvider }
+        metadata: { ...auditUrlMetadata(media.url), mediaCategory: media.mediaCategory, sourceType: media.sourceType, storageProvider: media.storageProvider }
       });
 
       return media;
