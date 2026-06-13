@@ -16,6 +16,14 @@ export type ValidInquiryInput = {
   deliveryNotes?: string;
 };
 
+export const INQUIRY_FIELD_LIMITS = {
+  name: 200,
+  phone: 40,
+  email: 320,
+  message: 1000,
+  deliveryNotes: 500
+} as const;
+
 function normalizeOptional(value?: string) {
   const normalized = value?.trim();
   return normalized || undefined;
@@ -49,11 +57,11 @@ export function validateInquiryInput(input: InquiryValidationInput): { ok: true;
   if (email && !looksLikeEmail(email)) return { ok: false, code: 'email-invalid' };
   if (message.length < 10) return { ok: false, code: 'message-short' };
   // Upper bound length checks to prevent abuse / spam
-  if (name.length > 200) return { ok: false, code: 'name-too-long' };
-  if (phone.length > 40) return { ok: false, code: 'phone-too-long' };
-  if (email && email.length > 320) return { ok: false, code: 'email-too-long' };
-  if (message.length > 1000) return { ok: false, code: 'message-too-long' };
-  if (deliveryNotes && deliveryNotes.length > 500) return { ok: false, code: 'delivery-notes-too-long' };
+  if (name.length > INQUIRY_FIELD_LIMITS.name) return { ok: false, code: 'name-too-long' };
+  if (phone.length > INQUIRY_FIELD_LIMITS.phone) return { ok: false, code: 'phone-too-long' };
+  if (email && email.length > INQUIRY_FIELD_LIMITS.email) return { ok: false, code: 'email-too-long' };
+  if (message.length > INQUIRY_FIELD_LIMITS.message) return { ok: false, code: 'message-too-long' };
+  if (deliveryNotes && deliveryNotes.length > INQUIRY_FIELD_LIMITS.deliveryNotes) return { ok: false, code: 'delivery-notes-too-long' };
 
   return {
     ok: true,

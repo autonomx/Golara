@@ -1,5 +1,6 @@
 import type { Product } from '@/lib/catalog';
 import { createInquiryAction } from '@/app/products/[slug]/actions';
+import { INQUIRY_FIELD_LIMITS } from '@/lib/inquiries/validate-inquiry';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 import { formatStorefrontCopy } from '@/lib/localization/storefront-copy';
 
@@ -40,9 +41,14 @@ const copy = {
       sent: { tone: 'success', text: 'Inquiry sent. The shop will follow up soon.' },
       'database-required': { tone: 'warning', text: 'Inquiry storage requires DATABASE_URL. WhatsApp ordering is still available.', field: 'database' },
       'name-required': { tone: 'warning', text: 'Please enter your name.', field: 'name' },
+      'name-too-long': { tone: 'warning', text: 'Please shorten your name before sending.', field: 'name' },
       'phone-invalid': { tone: 'warning', text: 'Please enter a valid phone number.', field: 'phone' },
+      'phone-too-long': { tone: 'warning', text: 'Please shorten your phone number before sending.', field: 'phone' },
       'email-invalid': { tone: 'warning', text: 'Please enter a valid email address or leave it blank.', field: 'email' },
-      'message-short': { tone: 'warning', text: 'Please include a message with at least 10 characters.', field: 'message' }
+      'email-too-long': { tone: 'warning', text: 'Please shorten your email address before sending.', field: 'email' },
+      'message-short': { tone: 'warning', text: 'Please include a message with at least 10 characters.', field: 'message' },
+      'message-too-long': { tone: 'warning', text: 'Please shorten your message before sending.', field: 'message' },
+      'delivery-notes-too-long': { tone: 'warning', text: 'Please shorten the delivery notes before sending.', field: 'message' }
     } satisfies InquiryMessageMap
   },
   fa: {
@@ -64,9 +70,14 @@ const copy = {
       sent: { tone: 'success', text: 'درخواست ارسال شد. فروشگاه به‌زودی پیگیری می‌کند.' },
       'database-required': { tone: 'warning', text: 'ذخیره درخواست به DATABASE_URL نیاز دارد. سفارش واتساپی همچنان در دسترس است.', field: 'database' },
       'name-required': { tone: 'warning', text: 'لطفاً نام خود را وارد کنید.', field: 'name' },
+      'name-too-long': { tone: 'warning', text: 'لطفاً نام را کوتاه‌تر وارد کنید.', field: 'name' },
       'phone-invalid': { tone: 'warning', text: 'لطفاً شماره تلفن معتبر وارد کنید.', field: 'phone' },
+      'phone-too-long': { tone: 'warning', text: 'لطفاً شماره تلفن را کوتاه‌تر وارد کنید.', field: 'phone' },
       'email-invalid': { tone: 'warning', text: 'لطفاً ایمیل معتبر وارد کنید یا آن را خالی بگذارید.', field: 'email' },
-      'message-short': { tone: 'warning', text: 'لطفاً پیامی با حداقل ۱۰ نویسه وارد کنید.', field: 'message' }
+      'email-too-long': { tone: 'warning', text: 'لطفاً ایمیل را کوتاه‌تر وارد کنید.', field: 'email' },
+      'message-short': { tone: 'warning', text: 'لطفاً پیامی با حداقل ۱۰ نویسه وارد کنید.', field: 'message' },
+      'message-too-long': { tone: 'warning', text: 'لطفاً پیام را کوتاه‌تر وارد کنید.', field: 'message' },
+      'delivery-notes-too-long': { tone: 'warning', text: 'لطفاً توضیحات تحویل را کوتاه‌تر وارد کنید.', field: 'message' }
     } satisfies InquiryMessageMap
   }
 } as const;
@@ -125,19 +136,19 @@ export function ProductInquiryForm({ product, dbReady, inquiry, locale }: Produc
           <div className="grid gap-4 md:grid-cols-2">
             <label className="grid gap-2 text-sm font-semibold text-rosewood">
               {labels.name}
-              <input className={nameError ? errorInputClass : baseInputClass} name="name" required minLength={2} aria-invalid={nameError} aria-describedby="inquiry-name-help" disabled={!dbReady} />
+              <input className={nameError ? errorInputClass : baseInputClass} name="name" required minLength={2} maxLength={INQUIRY_FIELD_LIMITS.name} aria-invalid={nameError} aria-describedby="inquiry-name-help" disabled={!dbReady} />
               <span id="inquiry-name-help" className="text-xs font-medium text-stone-500">{labels.nameHelp}</span>
               <FieldError field="name" message={activeMessage} />
             </label>
             <label className="grid gap-2 text-sm font-semibold text-rosewood">
               {labels.phone}
-              <input className={phoneError ? errorInputClass : baseInputClass} name="phone" required inputMode="tel" aria-invalid={phoneError} aria-describedby="inquiry-phone-help" disabled={!dbReady} />
+              <input className={phoneError ? errorInputClass : baseInputClass} name="phone" required inputMode="tel" maxLength={INQUIRY_FIELD_LIMITS.phone} aria-invalid={phoneError} aria-describedby="inquiry-phone-help" disabled={!dbReady} />
               <span id="inquiry-phone-help" className="text-xs font-medium text-stone-500">{labels.phoneHelp}</span>
               <FieldError field="phone" message={activeMessage} />
             </label>
             <label className="grid gap-2 text-sm font-semibold text-rosewood">
               {labels.emailOptional}
-              <input className={emailError ? errorInputClass : baseInputClass} name="email" type="email" aria-invalid={emailError} aria-describedby="inquiry-email-help" disabled={!dbReady} />
+              <input className={emailError ? errorInputClass : baseInputClass} name="email" type="email" maxLength={INQUIRY_FIELD_LIMITS.email} aria-invalid={emailError} aria-describedby="inquiry-email-help" disabled={!dbReady} />
               <span id="inquiry-email-help" className="text-xs font-medium text-stone-500">{labels.emailHelp}</span>
               <FieldError field="email" message={activeMessage} />
             </label>
@@ -148,13 +159,13 @@ export function ProductInquiryForm({ product, dbReady, inquiry, locale }: Produc
           </div>
           <label className="grid gap-2 text-sm font-semibold text-rosewood">
             {labels.message}
-            <textarea className={messageError ? errorTextAreaClass : baseTextAreaClass} name="message" required minLength={10} aria-invalid={messageError} aria-describedby="inquiry-message-help" disabled={!dbReady} defaultValue={formatStorefrontCopy('product.interestedMessage', locale, { title: product.title })} />
+            <textarea className={messageError ? errorTextAreaClass : baseTextAreaClass} name="message" required minLength={10} maxLength={INQUIRY_FIELD_LIMITS.message} aria-invalid={messageError} aria-describedby="inquiry-message-help" disabled={!dbReady} defaultValue={formatStorefrontCopy('product.interestedMessage', locale, { title: product.title })} />
             <span id="inquiry-message-help" className="text-xs font-medium text-stone-500">{labels.messageHelp}</span>
             <FieldError field="message" message={activeMessage} />
           </label>
           <label className="grid gap-2 text-sm font-semibold text-rosewood">
             {labels.deliveryNotesOptional}
-            <textarea className="min-h-24 rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100" name="deliveryNotes" disabled={!dbReady} />
+            <textarea className="min-h-24 rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100" name="deliveryNotes" maxLength={INQUIRY_FIELD_LIMITS.deliveryNotes} disabled={!dbReady} />
           </label>
           <button className="rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none focus-visible:ring-4 focus-visible:ring-olive/30 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none" type="submit" disabled={!dbReady}>{labels.submit}</button>
         </form>
