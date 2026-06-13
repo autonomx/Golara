@@ -10,8 +10,11 @@ import { buildPageMetadata } from '@/lib/site-metadata';
 
 type ProductsSearchParams = { q?: string };
 
+const CATALOG_SEARCH_MAX_LENGTH = 80;
+
 function normalizeSearch(value?: string) {
-  return value?.trim().replace(/\s+/g, ' ') ?? '';
+  const normalized = value?.trim().replace(/\s+/g, ' ') ?? '';
+  return normalized.length > CATALOG_SEARCH_MAX_LENGTH ? normalized.slice(0, CATALOG_SEARCH_MAX_LENGTH).trimEnd() : normalized;
 }
 
 function productMatchesSearch(product: Awaited<ReturnType<typeof listProducts>>[number], search: string) {
@@ -56,6 +59,7 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
               name="q"
               type="search"
               defaultValue={search}
+              maxLength={CATALOG_SEARCH_MAX_LENGTH}
               placeholder={copy('catalog.searchPlaceholder')}
               className="w-full rounded-full border border-rosewood/10 bg-[#fffaf7] py-3 pl-12 pr-4 text-stone-800 outline-none transition placeholder:text-stone-400 focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20"
             />
