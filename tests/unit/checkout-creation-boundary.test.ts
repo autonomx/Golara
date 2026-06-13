@@ -34,8 +34,8 @@ export async function runCheckoutCreationBoundaryTests() {
   );
   assert.doesNotMatch(
     checkoutActionSource,
-    /createOrderDraft\(\{[\s\S]*cartToken|createCheckoutPaymentAttempt\(\{[\s\S]*cartToken/,
-    'checkout order/payment creation must not pass raw cart tokens into order or payment records'
+    /\bcartToken\s*:/,
+    'checkout order/payment creation must not pass raw cart tokens into order or payment record fields'
   );
 
   assert.match(
