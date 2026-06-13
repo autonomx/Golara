@@ -5,8 +5,20 @@ const source = readFileSync('app/products/page.tsx', 'utf8');
 
 assert.match(
   source,
-  /export const CATALOG_SEARCH_MAX_LENGTH = 80;/,
+  /const CATALOG_SEARCH_MAX_LENGTH = 80;/,
   'catalog search must keep a bounded server-side search length constant'
+);
+
+assert.equal(
+  source.includes('export const CATALOG_SEARCH_MAX_LENGTH'),
+  false,
+  'catalog search length constant must remain private to the Next.js page module'
+);
+
+assert.equal(
+  source.includes('export function normalizeSearch'),
+  false,
+  'catalog search normalizer must remain private to the Next.js page module'
 );
 
 assert.match(
