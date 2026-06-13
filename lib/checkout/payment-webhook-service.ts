@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { hasDatabase, prisma } from '@/lib/prisma';
+import { logPaymentWebhookEvent } from '@/lib/security/payment-webhook-events';
 import { normalizePublicOrderLookupToken } from './public-order-repository';
 import { normalizePaymentWebhookEvent, type PaymentWebhookEventInput } from './payment-webhook-core';
 import {
@@ -173,6 +174,14 @@ export async function recordPaymentWebhookEvent(input: PaymentWebhookEventInput)
   });
 
   if (existing) {
+    logPaymentWebhookEvent({
+      event: 'payment_webhook',
+      outcome: 'duplicate',
+      provider: event.provider,
+      status: event.status,
+      reason: 'duplicate_idempotency_key'
+    });
+
     return {
       status: 'duplicate',
       paymentAttemptId: existing.paymentAttemptId,
@@ -190,6 +199,14 @@ export async function recordPaymentWebhookEvent(input: PaymentWebhookEventInput)
   });
 
   if (!paymentAttempt) {
+    logPaymentWebhookEvent({
+      event: 'payment_webhook',
+      outcome: 'missing_attempt',
+      provider: event.provider,
+      status: event.status,
+      reason: 'missing_payment_attempt'
+    });
+
     return {
       status: 'needs_attention',
       idempotencyKey: event.idempotencyKey,
@@ -261,6 +278,16 @@ export async function recordPaymentWebhookEvent(input: PaymentWebhookEventInput)
       metadata
     });
   }
+
+  logPaymentWebhookEvent({
+    event: 'payment_webhook',
+    outcome: settlementReconciliation?.needsAttention || (event.status === 'paid' && !shouldApplyState) ? 'needs_attention' : 'recorded',
+    provider: event.provider,
+    status: event.status,
+    settlementStatus: settlementReconciliation?.status || 'missing',
+    stateTrusted: shouldApplyState,
+    reason: statePlan.reason
+  });
 
   return {
     status: plan.persistenceStatus,
