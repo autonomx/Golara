@@ -143,7 +143,11 @@ export async function runPublicOrderDtoAllowlistTests() {
   assert.match(accountOrdersPageSource, /getCustomerSession\(token\)/, 'private customer order history must verify the customer session before loading orders');
   assert.match(accountOrdersPageSource, /if \(!session\) redirect\('\/account\?status=session-required'\)/, 'private customer order history must reject missing sessions');
   assert.match(accountOrdersPageSource, /listCustomerOrdersForSession\(session\)/, 'private customer order history must derive orders from the verified session');
-  assert.doesNotMatch(accountOrdersPageSource, /searchParams|params:|publicLookupToken[^?]/, 'private customer order history must not accept public route/query identifiers as ownership proof');
+  assert.doesNotMatch(accountOrdersPageSource, /searchParams|params:/, 'private customer order history must not accept route/query identifiers as ownership proof');
+  assert.ok(
+    accountOrdersPageSource.indexOf('listCustomerOrdersForSession(session)') < accountOrdersPageSource.indexOf('order.publicLookupToken'),
+    'private customer order history may only render public status links after session-owned orders are loaded'
+  );
 
   assert.match(customerAccountRepositorySource, /type VerifiedCustomerSession = \{\s*customerId: string;\s*\}/s, 'private order repository must require a verified customer session shape');
   assert.match(customerAccountRepositorySource, /where:\s*\{\s*customerId:\s*session\.customerId\s*\}/, 'private order repository must bind order reads to the verified session customerId');
