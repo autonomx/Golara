@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 import { AdminPaymentOperationPreviewPanel } from '@/components/admin/AdminPaymentOperationPreviewPanel';
-import { getAdminIdentity, isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
+import { assertAdminRole, isAdminAuthConfigured } from '@/lib/admin-auth';
 import { buildPaymentOperationPreviewRequestResult } from '@/lib/checkout/payment-operation-preview-request-core';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { createAdminTranslator } from '@/lib/localization/admin-copy';
@@ -28,9 +28,8 @@ const samplePreviewRequest = {
 export default async function AdminPaymentOperationPreviewPage() {
   const locale = await resolveStorefrontLocale();
   const t = createAdminTranslator(locale);
-  const authenticated = await isAdminAuthenticated();
   const authConfigured = isAdminAuthConfigured();
-  const identity = await getAdminIdentity();
+  const identity = await assertAdminRole('owner');
   const previewResult = buildPaymentOperationPreviewRequestResult(samplePreviewRequest);
   const previewRouteResult = previewResult.status === 200 && previewResult.body.ok ? previewResult : null;
 
@@ -52,12 +51,12 @@ export default async function AdminPaymentOperationPreviewPage() {
             </div>
           </div>
           <div className="mt-4 rounded-lg bg-stone-50 p-3 text-sm text-stone-600">
-            {authConfigured ? authenticated ? `${t('Signed in as')} ${identity.label ?? identity.email ?? 'admin'}.` : t('Admin authentication is required to view payment operation previews.') : t('Admin authentication is not configured yet.')}
+            {authConfigured ? `${t('Signed in as')} ${identity.label ?? identity.email ?? 'admin'}.` : t('Admin authentication is not configured yet.')}
           </div>
         </section>
 
-        {authenticated && previewRouteResult ? <AdminPaymentOperationPreviewPanel result={previewRouteResult} locale={locale} /> : null}
-        {authenticated && !previewResult.body.ok ? (
+        {previewRouteResult ? <AdminPaymentOperationPreviewPanel result={previewRouteResult} locale={locale} /> : null}
+        {!previewResult.body.ok ? (
           <section className="rounded-lg border border-red-200 bg-red-50 p-5 text-red-950 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-[0.16em]">{t('Preview sample validation failed')}</p>
             <ul className="mt-3 list-disc space-y-1 pl-5 text-sm leading-6">
