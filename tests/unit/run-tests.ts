@@ -38,6 +38,7 @@ import { runE2eDbSafetyContractTests } from './e2e-db-safety-contract.test';
 import { runFailedPaymentNotificationAlertsTests } from './failed-payment-notification-alerts.test';
 import { runFulfillmentMethodSettingsModelTests } from './fulfillment-method-settings-model.test';
 import { runFulfillmentQueueSummaryTests } from './fulfillment-queue-summary.test';
+import { runFulfillmentShipmentRecordsModelTests } from './fulfillment-shipment-records-model.test';
 import { runHomepageBannerMediaSettingsTests } from './homepage-banner-media-settings.test';
 import { runHomepageCategoryAssetsTests } from './homepage-category-assets.test';
 import { runI18nLocalizationTests } from './i18n-localization.test';
@@ -293,8 +294,8 @@ async function main() {
   await runTranslationCompletenessDashboardTests();
   await runHomepageBannerMediaSettingsTests();
   await runHomepageCategoryAssetsTests();
-  await runFulfillmentMethodSettingsTests();
-  await runFulfillmentShipmentRecordsTests();
+  await runFulfillmentMethodSettingsModelTests();
+  await runFulfillmentShipmentRecordsModelTests();
 }
 
 main().catch((error) => {
