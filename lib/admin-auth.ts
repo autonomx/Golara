@@ -16,6 +16,7 @@ import {
 } from './admin-auth-core';
 import { clearAdminSignInThrottle, isAdminSignInLocked, recordAdminSignInFailure } from './admin-login-throttle';
 import { assertSameOriginServerAction } from '@/lib/server-action-origin';
+import { logAdminSecurityEvent } from '@/lib/security/admin-security-events';
 
 export type { AdminIdentity, AdminRole } from './admin-auth-core';
 
@@ -81,15 +82,18 @@ export async function assertAdminRole(requiredRole: AdminRole) {
 export async function createAdminSession(password: string) {
   const config = adminAuthConfig();
   if (!isAdminAuthConfiguredCore(config)) {
+    logAdminSecurityEvent({ event: 'admin_login', outcome: 'unconfigured', reason: 'Admin auth is not configured.' });
     return { ok: false, error: 'Admin auth is not configured.' };
   }
 
   if (isAdminSignInLocked(ADMIN_SIGN_IN_THROTTLE_KEY)) {
+    logAdminSecurityEvent({ event: 'admin_login', outcome: 'throttled', reason: ADMIN_SIGN_IN_THROTTLED_ERROR });
     return { ok: false, error: ADMIN_SIGN_IN_THROTTLED_ERROR };
   }
 
   if (!verifyAdminPassword(password, config)) {
     recordAdminSignInFailure(ADMIN_SIGN_IN_THROTTLE_KEY);
+    logAdminSecurityEvent({ event: 'admin_login', outcome: 'failure', reason: 'Invalid admin password.' });
     return { ok: false, error: 'Invalid admin password.' };
   }
 
@@ -101,6 +105,7 @@ export async function createAdminSession(password: string) {
     createAdminSessionCookieValue(config),
     adminSessionCookieOptions(ADMIN_SESSION_MAX_AGE_SECONDS)
   );
+  logAdminSecurityEvent({ event: 'admin_login', outcome: 'success' });
 
   return { ok: true };
 }
