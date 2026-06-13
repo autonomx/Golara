@@ -40,7 +40,6 @@ export async function getPublicOrderByToken(token: string) {
       timelineEvents: {
         select: {
           type: true,
-          title: true,
           createdAt: true
         },
         orderBy: { createdAt: 'desc' },
