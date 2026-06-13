@@ -152,5 +152,20 @@ export async function runPaymentWebhookRouteCoreTests() {
   assert.equal(needsAttention.body.ok, false);
   assert.equal(needsAttention.body.status, 'needs_attention');
 
+  const unsafeMessage = 'postgres://user:pass@db.internal.local checkoutPaymentAttempt stack trace providerReference=secret-ref';
+  const failed = await handlePaymentWebhookRoute({
+    provider: 'stripe',
+    payload: { type: 'checkout.session.completed', data: { object: { id: 'cs_test_123' } } },
+    record: async () => {
+      throw new Error(unsafeMessage);
+    }
+  });
+  assert.equal(failed.statusCode, 500);
+  assert.equal(failed.body.ok, false);
+  assert.equal(failed.body.status, 'error');
+  assert.equal(failed.body.message, 'Webhook handling failed.');
+  assert.doesNotMatch(JSON.stringify(failed.body), /postgres|db\.internal|stack trace|providerReference|secret-ref|checkoutPaymentAttempt/);
+  assert.doesNotMatch(routeCore, /error instanceof Error \? error\.message/);
+
   console.log('payment-webhook-route-core.test.ts passed');
 }
