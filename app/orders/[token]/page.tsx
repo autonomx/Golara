@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { SiteHeader } from '@/components/SiteHeader';
 import { formatMinorUnitAmount } from '@/lib/catalog';
-import { fulfillmentStatusLabel, labelFor, normalizeLabelLocale, orderStatusLabel, paymentGuidanceFor, paymentStatusLabel, publicOrderCopyFor, resultMessageFor } from '@/lib/checkout/public-order-labels';
+import { fulfillmentStatusLabel, labelFor, normalizeLabelLocale, orderStatusLabel, paymentGuidanceFor, paymentStatusLabel, publicOrderCopyFor, publicOrderProgressTitle, resultMessageFor } from '@/lib/checkout/public-order-labels';
 import { getPublicOrderByToken } from '@/lib/checkout/public-order-repository';
 
 export const dynamic = 'force-dynamic';
@@ -146,7 +146,7 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
               <div className="mt-4 grid gap-3">
                 {order.timelineEvents.map((event) => (
                   <article key={`${event.type}-${event.createdAt.toISOString()}`} className="rounded-2xl border border-rosewood/10 bg-cream p-4">
-                    <p className="font-semibold text-rosewood">{event.title}</p>
+                    <p className="font-semibold text-rosewood">{publicOrderProgressTitle(event.type, normalizedLocale)}</p>
                     <p className="text-xs text-stone-500">{formatDate(event.createdAt, normalizedLocale)}</p>
                   </article>
                 ))}
