@@ -23,11 +23,19 @@ export async function runAdminLoginSecurityEventTests() {
     /event:\s*['"]admin_authorization['"],[\s\S]*?outcome:\s*['"]denied['"],[\s\S]*?requiredRole,[\s\S]*?actualRole:\s*identity\.role,[\s\S]*?authenticated:\s*true/,
     'insufficient-role admin authorization denials should emit a bounded security event'
   );
-  assert.doesNotMatch(
-    adminAuthSource,
-    /event:\s*['"]admin_authorization['"][\s\S]*?(label|email|cookie|password|FormData)/,
-    'admin authorization security events must not include labels, emails, cookies, passwords, or raw form data'
+  const authorizationEventCalls = adminAuthSource.match(/logAdminSecurityEvent\(\{[\s\S]*?event:\s*['"]admin_authorization['"][\s\S]*?\}\);/g) ?? [];
+  assert.equal(
+    authorizationEventCalls.length,
+    2,
+    'admin authorization denials should be logged only for unauthenticated and insufficient-role outcomes'
   );
+  for (const call of authorizationEventCalls) {
+    assert.doesNotMatch(
+      call,
+      /(label|email|cookie|password|FormData)/i,
+      'admin authorization security events must not include labels, emails, cookies, passwords, or raw form data'
+    );
+  }
 
   assert.match(
     eventLoggerSource,
