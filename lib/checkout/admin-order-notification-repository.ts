@@ -6,6 +6,16 @@ import { hasDatabase, prisma } from '@/lib/prisma';
 
 export const ADMIN_ORDER_NOTIFICATION_CHANNELS = ['email', 'sms'] as const;
 export const ADMIN_ORDER_NOTIFICATION_STATUSES = ['queued', 'delivered', 'failed', 'retry_scheduled', 'cancelled'] as const;
+export const ADMIN_ORDER_NOTIFICATION_LIMITS = {
+  templateKey: 64,
+  recipient: 320,
+  subject: 160,
+  body: 2_000,
+  actorLabel: 80,
+  actorRole: 40,
+  errorCode: 80,
+  errorMessage: 500
+} as const;
 
 export type AdminOrderNotificationChannel = (typeof ADMIN_ORDER_NOTIFICATION_CHANNELS)[number];
 export type AdminOrderNotificationStatus = (typeof ADMIN_ORDER_NOTIFICATION_STATUSES)[number];
@@ -58,6 +68,11 @@ function optionalText(value?: string | null) {
   return normalized || null;
 }
 
+function boundedOptionalText(value: string | null | undefined, maxLength: number) {
+  const normalized = optionalText(value);
+  return normalized ? normalized.slice(0, maxLength) : null;
+}
+
 function positiveInteger(value: unknown, fallback: number) {
   const parsed = typeof value === 'number' ? value : Number.parseInt(String(value ?? ''), 10);
   return Number.isFinite(parsed) ? Math.max(1, Math.floor(parsed)) : fallback;
@@ -73,8 +88,8 @@ export function assertAdminOrderNotificationChannel(value: string): AdminOrderNo
 
 export function normalizeAdminOrderNotificationInput(input: AdminOrderNotificationInput) {
   const channel = assertAdminOrderNotificationChannel(input.channel);
-  const recipient = optionalText(input.recipient);
-  const body = optionalText(input.body);
+  const recipient = boundedOptionalText(input.recipient, ADMIN_ORDER_NOTIFICATION_LIMITS.recipient);
+  const body = boundedOptionalText(input.body, ADMIN_ORDER_NOTIFICATION_LIMITS.body);
   if (!recipient) throw new Error('Notification recipient is required.');
   if (!body) throw new Error('Notification body is required.');
 
@@ -82,11 +97,11 @@ export function normalizeAdminOrderNotificationInput(input: AdminOrderNotificati
     channel,
     recipient,
     body,
-    templateKey: optionalText(input.templateKey) ?? 'manual_order_update',
-    subject: optionalText(input.subject),
+    templateKey: boundedOptionalText(input.templateKey, ADMIN_ORDER_NOTIFICATION_LIMITS.templateKey) ?? 'manual_order_update',
+    subject: boundedOptionalText(input.subject, ADMIN_ORDER_NOTIFICATION_LIMITS.subject),
     maxAttempts: positiveInteger(input.maxAttempts, 3),
-    actorLabel: optionalText(input.actorLabel) ?? 'Admin',
-    actorRole: optionalText(input.actorRole) ?? 'staff'
+    actorLabel: boundedOptionalText(input.actorLabel, ADMIN_ORDER_NOTIFICATION_LIMITS.actorLabel) ?? 'Admin',
+    actorRole: boundedOptionalText(input.actorRole, ADMIN_ORDER_NOTIFICATION_LIMITS.actorRole) ?? 'staff'
   };
 }
 
@@ -248,10 +263,10 @@ export async function recordAdminOrderNotificationAttempt(notificationId: string
   const nextRetryAt = retryAvailable ? buildNextOrderNotificationRetryDate(now, input.retryDelayMinutes) : null;
   const deliveredAt = status === 'delivered' ? now : null;
   const failedAt = status === 'failed' ? now : null;
-  const errorCode = optionalText(input.errorCode);
-  const errorMessage = optionalText(input.errorMessage);
-  const actorLabel = optionalText(input.actorLabel) ?? existing.actorLabel ?? 'Admin';
-  const actorRole = optionalText(input.actorRole) ?? existing.actorRole ?? 'staff';
+  const errorCode = boundedOptionalText(input.errorCode, ADMIN_ORDER_NOTIFICATION_LIMITS.errorCode);
+  const errorMessage = boundedOptionalText(input.errorMessage, ADMIN_ORDER_NOTIFICATION_LIMITS.errorMessage);
+  const actorLabel = boundedOptionalText(input.actorLabel, ADMIN_ORDER_NOTIFICATION_LIMITS.actorLabel) ?? existing.actorLabel ?? 'Admin';
+  const actorRole = boundedOptionalText(input.actorRole, ADMIN_ORDER_NOTIFICATION_LIMITS.actorRole) ?? existing.actorRole ?? 'staff';
 
   const updatedRows = await prisma.$queryRaw<AdminOrderNotificationActionRecord[]>`
     UPDATE "CheckoutOrderNotificationAction"

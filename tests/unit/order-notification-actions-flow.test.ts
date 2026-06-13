@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
+  ADMIN_ORDER_NOTIFICATION_LIMITS,
   assertAdminOrderNotificationChannel,
   buildNextOrderNotificationRetryDate,
   listAdminOrderNotificationActions,
@@ -59,6 +60,22 @@ export async function runOrderNotificationActionsFlowTests() {
     actorRole: 'staff'
   });
 
+  const bounded = normalizeAdminOrderNotificationInput({
+    channel: 'email',
+    templateKey: ` ${'t'.repeat(ADMIN_ORDER_NOTIFICATION_LIMITS.templateKey + 12)} `,
+    recipient: ` ${'r'.repeat(ADMIN_ORDER_NOTIFICATION_LIMITS.recipient + 12)} `,
+    subject: ` ${'s'.repeat(ADMIN_ORDER_NOTIFICATION_LIMITS.subject + 12)} `,
+    body: ` ${'b'.repeat(ADMIN_ORDER_NOTIFICATION_LIMITS.body + 12)} `,
+    actorLabel: ` ${'a'.repeat(ADMIN_ORDER_NOTIFICATION_LIMITS.actorLabel + 12)} `,
+    actorRole: ` ${'o'.repeat(ADMIN_ORDER_NOTIFICATION_LIMITS.actorRole + 12)} `
+  });
+  assert.equal(bounded.templateKey.length, ADMIN_ORDER_NOTIFICATION_LIMITS.templateKey);
+  assert.equal(bounded.recipient.length, ADMIN_ORDER_NOTIFICATION_LIMITS.recipient);
+  assert.equal(bounded.subject?.length, ADMIN_ORDER_NOTIFICATION_LIMITS.subject);
+  assert.equal(bounded.body.length, ADMIN_ORDER_NOTIFICATION_LIMITS.body);
+  assert.equal(bounded.actorLabel.length, ADMIN_ORDER_NOTIFICATION_LIMITS.actorLabel);
+  assert.equal(bounded.actorRole.length, ADMIN_ORDER_NOTIFICATION_LIMITS.actorRole);
+
   assert.throws(() => normalizeAdminOrderNotificationInput({
     channel: 'email',
     recipient: ' ',
@@ -99,6 +116,12 @@ export async function runOrderNotificationActionsFlowTests() {
 
   assert.match(repository, /ADMIN_ORDER_NOTIFICATION_CHANNELS = \['email', 'sms'\] as const/);
   assert.match(repository, /ADMIN_ORDER_NOTIFICATION_STATUSES = \['queued', 'delivered', 'failed', 'retry_scheduled', 'cancelled'\] as const/);
+  assert.match(repository, /export const ADMIN_ORDER_NOTIFICATION_LIMITS/);
+  assert.match(repository, /function boundedOptionalText/);
+  assert.match(repository, /boundedOptionalText\(input\.recipient, ADMIN_ORDER_NOTIFICATION_LIMITS\.recipient\)/);
+  assert.match(repository, /boundedOptionalText\(input\.body, ADMIN_ORDER_NOTIFICATION_LIMITS\.body\)/);
+  assert.match(repository, /boundedOptionalText\(input\.subject, ADMIN_ORDER_NOTIFICATION_LIMITS\.subject\)/);
+  assert.match(repository, /boundedOptionalText\(input\.errorMessage, ADMIN_ORDER_NOTIFICATION_LIMITS\.errorMessage\)/);
   assert.match(repository, /export function assertAdminOrderNotificationChannel/);
   assert.match(repository, /export function normalizeAdminOrderNotificationInput/);
   assert.match(repository, /export function buildNextOrderNotificationRetryDate/);
