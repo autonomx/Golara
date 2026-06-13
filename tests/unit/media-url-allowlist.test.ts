@@ -14,6 +14,30 @@ assert.equal(
 );
 
 assert.throws(
+  () => normalizeImageUrl('/uploads/../secret.jpg'),
+  /safe file directly under \/uploads\//,
+  'local upload URLs should reject path traversal segments'
+);
+
+assert.throws(
+  () => normalizeImageUrl('/uploads/%2e%2e/secret.jpg'),
+  /safe file directly under \/uploads\//,
+  'local upload URLs should reject encoded traversal segments'
+);
+
+assert.throws(
+  () => normalizeImageUrl('/uploads/nested/demo.jpg'),
+  /safe file directly under \/uploads\//,
+  'local upload URLs should reject nested paths'
+);
+
+assert.throws(
+  () => normalizeImageUrl('/uploads/demo.jpg?download=1'),
+  /safe file directly under \/uploads\//,
+  'local upload URLs should reject query strings'
+);
+
+assert.throws(
   () => normalizeImageUrl('http://res.cloudinary.com/demo/image/upload/sample.jpg'),
   /HTTPS/,
   'manual media URLs should reject insecure HTTP'
