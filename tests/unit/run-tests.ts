@@ -17,6 +17,7 @@ import { runChannelStorefrontModelTests } from './channel-storefront-model.test'
 import { runCheckoutActionNextPathTests } from './checkout-action-next-path.test';
 import { runCheckoutAdapterAliasAttemptTests } from './checkout-adapter-alias-attempt.test';
 import { runCheckoutCapacityHoldTests } from './checkout-capacity-hold.test';
+import { runCheckoutCreationBoundaryTests } from './checkout-creation-boundary.test';
 import { runCheckoutPaymentProviderTests } from './checkout-payment-provider.test';
 import { runCheckoutStateMachineTests } from './checkout-state-machine.test';
 import { runCmsCategoryServiceTests } from './cms-category-service.test';
@@ -37,7 +38,6 @@ import { runE2eDbSafetyContractTests } from './e2e-db-safety-contract.test';
 import { runFailedPaymentNotificationAlertsTests } from './failed-payment-notification-alerts.test';
 import { runFulfillmentMethodSettingsModelTests } from './fulfillment-method-settings-model.test';
 import { runFulfillmentQueueSummaryTests } from './fulfillment-queue-summary.test';
-import { runFulfillmentShipmentRecordsModelTests } from './fulfillment-shipment-records-model.test';
 import { runHomepageBannerMediaSettingsTests } from './homepage-banner-media-settings.test';
 import { runHomepageCategoryAssetsTests } from './homepage-category-assets.test';
 import { runI18nLocalizationTests } from './i18n-localization.test';
@@ -186,6 +186,7 @@ async function main() {
   await runOtpRateLimitTests();
   await runCheckoutStateMachineTests();
   await runCheckoutCapacityHoldTests();
+  await runCheckoutCreationBoundaryTests();
   await runCheckoutPaymentProviderTests();
   await runCheckoutAdapterAliasAttemptTests();
   await runPaymentProviderAliasCoreTests();
@@ -292,8 +293,8 @@ async function main() {
   await runTranslationCompletenessDashboardTests();
   await runHomepageBannerMediaSettingsTests();
   await runHomepageCategoryAssetsTests();
-  await runFulfillmentMethodSettingsModelTests();
-  await runFulfillmentShipmentRecordsModelTests();
+  await runFulfillmentMethodSettingsTests();
+  await runFulfillmentShipmentRecordsTests();
 }
 
 main().catch((error) => {
