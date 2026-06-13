@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 import { AdminPaymentOperationHistoryPanel } from '@/components/admin/AdminPaymentOperationHistoryPanel';
-import { getAdminIdentity, isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
+import { assertAdminRole, isAdminAuthConfigured } from '@/lib/admin-auth';
 import { buildPaymentOperationHistoryRouteResult } from '@/lib/checkout/payment-operation-history-route-core';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { createAdminTranslator } from '@/lib/localization/admin-copy';
@@ -18,16 +18,13 @@ function firstParam(value: string | string[] | undefined) {
 export default async function AdminPaymentOperationHistoryPage({ searchParams }: { searchParams?: Promise<SearchParams> }) {
   const locale = await resolveStorefrontLocale();
   const t = createAdminTranslator(locale);
-  const authenticated = await isAdminAuthenticated();
   const authConfigured = isAdminAuthConfigured();
-  const identity = await getAdminIdentity();
+  const identity = await assertAdminRole('owner');
   const params = searchParams ? await searchParams : {};
-  const historyResult = authenticated
-    ? await buildPaymentOperationHistoryRouteResult({
-        orderId: firstParam(params.orderId),
-        limit: firstParam(params.limit)
-      })
-    : null;
+  const historyResult = await buildPaymentOperationHistoryRouteResult({
+    orderId: firstParam(params.orderId),
+    limit: firstParam(params.limit)
+  });
 
   return (
     <main className="min-h-screen bg-stone-50 px-4 py-6 lg:px-8" dir={getStorefrontCopyDirection(locale)}>
@@ -48,12 +45,12 @@ export default async function AdminPaymentOperationHistoryPage({ searchParams }:
             </div>
           </div>
           <div className="mt-4 rounded-lg bg-stone-50 p-3 text-sm text-stone-600">
-            {authConfigured ? authenticated ? `${t('Signed in as')} ${identity.label ?? identity.email ?? 'admin'}.` : t('Admin authentication is required to view payment operation history.') : t('Admin authentication is not configured yet.')}
+            {authConfigured ? `${t('Signed in as')} ${identity.label ?? identity.email ?? 'admin'}.` : t('Admin authentication is not configured yet.')}
           </div>
         </section>
 
-        {authenticated && historyResult?.status === 200 ? <AdminPaymentOperationHistoryPanel view={historyResult.body.history} locale={locale} /> : null}
-        {authenticated && historyResult?.status === 400 ? (
+        {historyResult.status === 200 ? <AdminPaymentOperationHistoryPanel view={historyResult.body.history} locale={locale} /> : null}
+        {historyResult.status === 400 ? (
           <section className="rounded-lg border border-red-200 bg-red-50 p-5 text-red-950 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-[0.16em]">{t('History request validation failed')}</p>
             <ul className="mt-3 list-disc space-y-1 pl-5 text-sm leading-6">
@@ -61,7 +58,7 @@ export default async function AdminPaymentOperationHistoryPage({ searchParams }:
             </ul>
           </section>
         ) : null}
-        {authenticated && historyResult?.status === 503 ? (
+        {historyResult.status === 503 ? (
           <section className="rounded-lg border border-amber-200 bg-amber-50 p-5 text-amber-950 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-[0.16em]">{t('Payment operation records unavailable')}</p>
             <h2 className="mt-2 text-xl font-bold">{t('Migration confirmation required')}</h2>
