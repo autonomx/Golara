@@ -41,6 +41,15 @@ export async function runPublicOrderLookupThrottleTests() {
   const clearLookup = clearCart.indexOf('findActiveCart(token)');
   assert.ok(clearThrottle >= 0 && clearLookup >= 0 && clearThrottle < clearLookup, 'clearCart must throttle before active cart lookup');
 
+  const expireOldCarts = cartSource.slice(cartSource.indexOf('export async function expireOldCarts'));
+  assert.ok(cartSource.includes('CART_EXPIRY_CLEANUP_BATCH_LIMIT'), 'abandoned cart cleanup must define a bounded batch limit');
+  assert.ok(expireOldCarts.includes("status: 'expired'"), 'abandoned cart cleanup must only prune expired carts');
+  assert.ok(expireOldCarts.includes('take: CART_EXPIRY_CLEANUP_BATCH_LIMIT'), 'abandoned cart cleanup must bound expired cart batch size');
+  assert.ok(expireOldCarts.includes('select: { id: true }'), 'abandoned cart cleanup must only select expired cart IDs');
+  assert.ok(expireOldCarts.includes('prisma.cartItem.deleteMany'), 'abandoned cart cleanup must prune expired cart items');
+  assert.ok(expireOldCarts.includes('cartId: { in: expiredCartIds }'), 'abandoned cart cleanup must delete only items for the bounded expired cart batch');
+  assert.doesNotMatch(expireOldCarts, /deleteMany\(\{\s*where:\s*\{\s*\}\s*\}\)/, 'abandoned cart cleanup must never run an unbounded deleteMany');
+
   console.log('public-order-lookup-throttle.test.ts passed');
 }
 
