@@ -6,6 +6,7 @@ import { publicInquiryService } from '@/lib/inquiries/public-inquiry-service';
 import { validateInquiryInput } from '@/lib/inquiries/validate-inquiry';
 import { hasDatabase } from '@/lib/prisma';
 import { assertSameOriginServerAction } from '@/lib/server-action-origin';
+import { logPublicAbuseEvent } from '@/lib/security/public-abuse-events';
 
 const PUBLIC_INQUIRY_COOLDOWN_COOKIE = 'publicInquiryCooldown';
 const PUBLIC_INQUIRY_COOLDOWN_SECONDS = 60 * 5;
@@ -25,6 +26,7 @@ function inquiryPath(productSlug: string, status: string) {
 function assertInquirySubmissionNotThrottled(productSlug: string, cookieStore: CookieStore) {
   const cooldown = cookieStore.get(PUBLIC_INQUIRY_COOLDOWN_COOKIE);
   if (cooldown) {
+    logPublicAbuseEvent({ event: 'public_inquiry', outcome: 'cooldown_active', scope: 'inquiry' });
     redirect(inquiryPath(productSlug, 'rate-limited'));
   }
 }

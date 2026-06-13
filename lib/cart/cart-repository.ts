@@ -2,6 +2,7 @@ import 'server-only';
 
 import { createHash, randomBytes } from 'node:crypto';
 import { hasDatabase, prisma } from '@/lib/prisma';
+import { logPublicAbuseEvent } from '@/lib/security/public-abuse-events';
 
 const DEFAULT_CART_TTL_DAYS = 14;
 const MAX_CART_QUANTITY = 99;
@@ -38,6 +39,8 @@ type CartMutationThrottleBucket = {
   resetAt: number;
 };
 
+type CartMutationThrottleAction = 'add_cart_item' | 'update_cart_item' | 'clear_cart';
+
 const cartMutationThrottleBuckets = new Map<string, CartMutationThrottleBucket>();
 
 function optionalText(value?: string) {
@@ -52,7 +55,7 @@ function cartMutationThrottleKey(token?: string, fallback?: string) {
   return createHash('sha256').update(source).digest('hex');
 }
 
-function enforceCartMutationThrottle(input: { token?: string; fallback?: string }) {
+function enforceCartMutationThrottle(input: { token?: string; fallback?: string; action: CartMutationThrottleAction }) {
   const now = Date.now();
   const key = cartMutationThrottleKey(input.token, input.fallback);
   const bucket = cartMutationThrottleBuckets.get(key);
@@ -61,6 +64,7 @@ function enforceCartMutationThrottle(input: { token?: string; fallback?: string 
     return;
   }
   if (bucket.count >= CART_MUTATION_THROTTLE_LIMIT) {
+    logPublicAbuseEvent({ event: 'cart_mutation', outcome: 'throttled', scope: input.action });
     throw new Error('Too many cart updates. Please wait before trying again.');
   }
   bucket.count += 1;
@@ -222,7 +226,7 @@ export async function addCartItem(input: AddCartItemInput) {
   if (!hasDatabase()) throw new Error('DATABASE_URL is required for cart sessions.');
   const productId = optionalText(input.productId);
   if (!productId) throw new Error('Product is required.');
-  enforceCartMutationThrottle({ token: input.token, fallback: productId });
+  enforceCartMutationThrottle({ token: input.token, fallback: productId, action: 'add_cart_item' });
 
   const product = await prisma.product.findFirst({
     where: {
@@ -277,7 +281,7 @@ export async function addCartItem(input: AddCartItemInput) {
 
 export async function updateCartItem(input: UpdateCartItemInput) {
   if (!hasDatabase()) throw new Error('DATABASE_URL is required for cart sessions.');
-  enforceCartMutationThrottle({ token: input.token, fallback: input.lineKey });
+  enforceCartMutationThrottle({ token: input.token, fallback: input.lineKey, action: 'update_cart_item' });
   const cart = await findActiveCart(input.token);
   if (!cart) throw new Error('Cart was not found.');
   const lineKey = optionalText(input.lineKey);
@@ -306,7 +310,7 @@ export async function removeCartItem(token: string, lineKey: string) {
 
 export async function clearCart(token: string) {
   if (!hasDatabase()) throw new Error('DATABASE_URL is required for cart sessions.');
-  enforceCartMutationThrottle({ token, fallback: 'clear' });
+  enforceCartMutationThrottle({ token, fallback: 'clear', action: 'clear_cart' });
   const cart = await findActiveCart(token);
   if (!cart) return null;
 

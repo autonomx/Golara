@@ -36,6 +36,21 @@ function assertPublicInquiryActionUsesCooldownBoundary() {
   assert.ok(actionSource.includes('httpOnly: true'));
   assert.ok(actionSource.includes("path: '/'"));
   assert.ok(actionSource.includes('maxAge: PUBLIC_INQUIRY_COOLDOWN_SECONDS'));
+  assert.match(
+    actionSource,
+    /import \{ logPublicAbuseEvent \} from ['"]@\/lib\/security\/public-abuse-events['"]/,
+    'public inquiry cooldown should use bounded public-abuse event logger'
+  );
+  assert.match(
+    actionSource,
+    /event:\s*['"]public_inquiry['"][\s\S]*outcome:\s*['"]cooldown_active['"][\s\S]*scope:\s*['"]inquiry['"]/, 
+    'public inquiry cooldown should emit a generic cooldown event'
+  );
+
+  const cooldownLogStart = actionSource.indexOf('logPublicAbuseEvent({');
+  const cooldownLogEnd = actionSource.indexOf('});', cooldownLogStart);
+  const cooldownLogCall = actionSource.slice(cooldownLogStart, cooldownLogEnd + 3);
+  assert.doesNotMatch(cooldownLogCall, /(?:productId|productSlug|formData|email|phone|name|message|deliveryNotes)/, 'public inquiry cooldown log must not include product or customer identifiers');
 
   const originIndex = actionSource.indexOf('await assertSameOriginServerAction()');
   const cookieIndex = actionSource.indexOf('const cookieStore = await cookies()');
@@ -44,6 +59,8 @@ function assertPublicInquiryActionUsesCooldownBoundary() {
   const validationIndex = actionSource.indexOf('validateInquiryInput({');
   const createIndex = actionSource.indexOf('publicInquiryService.createInquiry({');
   const setThrottleIndex = actionSource.indexOf('setInquirySubmissionThrottle(cookieStore)');
+  const cooldownLogIndex = actionSource.indexOf("outcome: 'cooldown_active'");
+  const rateLimitedRedirectIndex = actionSource.indexOf("redirect(inquiryPath(productSlug, 'rate-limited'))");
 
   assert.ok(originIndex >= 0);
   assert.ok(cookieIndex > originIndex);
@@ -52,6 +69,7 @@ function assertPublicInquiryActionUsesCooldownBoundary() {
   assert.ok(throttleCheckIndex < validationIndex);
   assert.ok(throttleCheckIndex < createIndex);
   assert.ok(setThrottleIndex > createIndex);
+  assert.ok(cooldownLogIndex > -1 && rateLimitedRedirectIndex > cooldownLogIndex, 'public inquiry cooldown should log before redirecting');
 }
 
 export async function runPublicInquiryServiceTests() {
