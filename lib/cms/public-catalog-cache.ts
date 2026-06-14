@@ -7,8 +7,7 @@ import {
   getHomepageContent,
   getProductBySlug,
   listCategories,
-  listHomepageCategories,
-  listProducts
+  listHomepageCategories
 } from '@/lib/cms/catalog-repository';
 import {
   listBestSellerProducts,
@@ -94,15 +93,6 @@ export function getCachedCategoryBySlug(slug: string, options: PublicCatalogRead
     ['category-by-slug', locale, slug],
     [STOREFRONT_CATALOG_TAG, `storefront-category:${slug}`],
     () => getCategoryBySlug(slug, { locale: options.locale })
-  );
-}
-
-export function listCachedProducts(options: PublicCatalogReadOptions = {}) {
-  const locale = localeKey(options.locale);
-  return publicCache(
-    ['products-all', locale],
-    [STOREFRONT_CATALOG_TAG],
-    () => listProducts({ locale: options.locale })
   );
 }
 
