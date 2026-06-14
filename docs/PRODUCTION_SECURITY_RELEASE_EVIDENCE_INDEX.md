@@ -12,6 +12,7 @@ Do not include raw secrets, customer PII, provider references, webhook bodies, d
 - Exact release commit or artifact identifier:
 - Production environment(s):
 - Sign-off record link:
+- Launch decision register link:
 
 ## CI and deployment evidence
 
@@ -39,6 +40,7 @@ Use links to access-controlled CI/deployment systems. Record only pass/fail stat
 | --- | --- | --- | --- |
 | Production security deployment checklist | | | |
 | Security audit roadmap current for release scope | | | |
+| Security launch decision register | | | |
 | Incident response runbook visible to operators | | | |
 | Session lifetime/revocation policy decision | | | |
 | Public abuse throttling policy decision | | | |
