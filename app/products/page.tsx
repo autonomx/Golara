@@ -3,7 +3,7 @@ import { Search } from 'lucide-react';
 import type { Metadata } from 'next';
 import { ProductCard } from '@/components/ProductCard';
 import { SiteHeader } from '@/components/SiteHeader';
-import { listProducts } from '@/lib/cms/catalog-repository';
+import { listPublicProducts } from '@/lib/cms/public-catalog-queries';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { formatStorefrontCopy, getStorefrontCopy, getStorefrontCopyDirection } from '@/lib/localization/storefront-copy';
 import { buildPageMetadata } from '@/lib/site-metadata';
@@ -15,14 +15,6 @@ const CATALOG_SEARCH_MAX_LENGTH = 80;
 function normalizeSearch(value?: string) {
   const normalized = value?.trim().replace(/\s+/g, ' ') ?? '';
   return normalized.length > CATALOG_SEARCH_MAX_LENGTH ? normalized.slice(0, CATALOG_SEARCH_MAX_LENGTH).trimEnd() : normalized;
-}
-
-function productMatchesSearch(product: Awaited<ReturnType<typeof listProducts>>[number], search: string) {
-  if (!search) return true;
-  const query = search.toLowerCase();
-  return [product.title, product.slug, product.code, product.description, product.category, product.categoryTitle]
-    .filter(Boolean)
-    .some((value) => value?.toLowerCase().includes(query));
 }
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -40,8 +32,7 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
   const [resolvedSearchParams, locale] = await Promise.all([searchParams ?? Promise.resolve(emptySearchParams), resolveStorefrontLocale()]);
   const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key, locale);
   const search = normalizeSearch(resolvedSearchParams.q);
-  const products = await listProducts({ locale });
-  const filteredProducts = products.filter((product) => productMatchesSearch(product, search));
+  const products = await listPublicProducts({ locale, search: search || undefined, take: 60 });
 
   return (
     <main dir={getStorefrontCopyDirection(locale)}>
@@ -77,12 +68,12 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
         </form>
 
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3 text-sm font-semibold text-stone-600">
-          <p>{search ? formatStorefrontCopy('catalog.showingSearchResults', locale, { count: filteredProducts.length, search }) : formatStorefrontCopy('catalog.showingProducts', locale, { count: products.length })}</p>
+          <p>{search ? formatStorefrontCopy('catalog.showingSearchResults', locale, { count: products.length, search }) : formatStorefrontCopy('catalog.showingProducts', locale, { count: products.length })}</p>
         </div>
 
-        {filteredProducts.length ? (
+        {products.length ? (
           <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredProducts.map((product) => <ProductCard key={product.slug} product={product} locale={locale} />)}
+            {products.map((product) => <ProductCard key={product.slug} product={product} locale={locale} />)}
           </div>
         ) : (
           <div className="mt-8 rounded-2xl border border-dashed border-rosewood/20 bg-white p-10 text-center">
