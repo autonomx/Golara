@@ -10,7 +10,7 @@ import { getProductCheckoutPolicy } from '@/lib/checkout/product-checkout-policy
 import {
   getCachedCategoryBySlug,
   getCachedProductBySlug as getProductBySlug,
-  listCachedProducts
+  listCachedPublicProductSlugs
 } from '@/lib/cms/public-catalog-cache';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { getStorefrontCopy, getStorefrontCopyDirection } from '@/lib/localization/storefront-copy';
@@ -19,7 +19,7 @@ import { buildPageMetadata } from '@/lib/site-metadata';
 import { buildProductBreadcrumbJsonLd, buildProductJsonLd, JsonLdScript } from '@/lib/structured-data';
 
 export async function generateStaticParams() {
-  const products = await listCachedProducts();
+  const products = await listCachedPublicProductSlugs();
   return products.map((product) => ({ slug: product.slug }));
 }
 
