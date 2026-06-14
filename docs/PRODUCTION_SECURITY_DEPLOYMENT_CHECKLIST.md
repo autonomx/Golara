@@ -56,7 +56,7 @@ Use this as a release gate checklist. Do not store raw secrets, customer PII, pr
 ## 7. Dependency and supply-chain policy
 
 - [ ] CI production dependency audit passes for high/critical vulnerabilities.
-- [ ] Any advisory exception has an owner, rationale, mitigation, and expiry date.
+- [ ] Any advisory exception has an owner, rationale, mitigation, and expiry date, following `docs/DEPENDENCY_ADVISORY_EXCEPTION_POLICY.md`.
 - [ ] Lockfile changes are reviewed as part of release approval.
 - [ ] Package additions are checked for maintenance status, license suitability, and publisher/package integrity risk when production-facing.
 - [ ] Committed-secret scanning passes before release.
