@@ -4,8 +4,14 @@ import { HomepageBannerSlideshow } from '@/components/HomepageBannerSlideshow';
 import { HomepageCategoryTileCard } from '@/components/HomepageCategoryTileCard';
 import { BestSellersCarousel } from '@/components/BestSellersCarousel';
 import { SiteHeader } from '@/components/SiteHeader';
-import { getHomepageContent, listCategories, listHomepageCategories } from '@/lib/cms/catalog-repository';
-import { listBestSellerProducts, listPublicProductCountsByCategoryId, withCategoryCountsFromDirectCounts } from '@/lib/cms/public-catalog-queries';
+import {
+  getCachedHomepageContent,
+  listCachedBestSellerProducts,
+  listCachedCategories,
+  listCachedHomepageCategories,
+  listCachedPublicProductCountsByCategoryId
+} from '@/lib/cms/public-catalog-cache';
+import { withCategoryCountsFromDirectCounts } from '@/lib/cms/public-catalog-queries';
 import { homepageBannerSlides } from '@/lib/homepage-assets';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { selectHomepageContentForLocale } from '@/lib/localization/homepage-content';
@@ -21,7 +27,7 @@ function firstNonEmpty(...values: Array<string | undefined>) {
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await resolveStorefrontLocale();
   const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key, locale);
-  const homepageSource = await getHomepageContent({ locale });
+  const homepageSource = await getCachedHomepageContent({ locale });
   const homepage = selectHomepageContentForLocale(homepageSource, locale);
   const brandName = copy('brand.name');
 
@@ -36,11 +42,11 @@ export default async function HomePage() {
   const locale = await resolveStorefrontLocale();
   const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key, locale);
   const [homepageSource, categories, homepageCategories, bestSellers, directProductCounts] = await Promise.all([
-    getHomepageContent({ locale }),
-    listCategories({ locale }),
-    listHomepageCategories({ locale }),
-    listBestSellerProducts({ locale, take: 12 }),
-    listPublicProductCountsByCategoryId()
+    getCachedHomepageContent({ locale }),
+    listCachedCategories({ locale }),
+    listCachedHomepageCategories({ locale }),
+    listCachedBestSellerProducts({ locale, take: 12 }),
+    listCachedPublicProductCountsByCategoryId()
   ]);
   const homepage = selectHomepageContentForLocale(homepageSource, locale);
 
