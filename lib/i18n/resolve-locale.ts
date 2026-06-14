@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { cache } from 'react';
 import { cookies, headers } from 'next/headers';
 import { STOREFRONT_LOCALE_COOKIE } from '@/lib/i18n/locale-cookie';
 import { DEFAULT_LOCALE, normalizeLocale, type SupportedLocale } from '@/lib/i18n/locales';
@@ -10,7 +11,7 @@ function localeFromAcceptLanguage(value: string | null) {
   return candidates.find((candidate) => candidate.toLowerCase().startsWith('fa') || candidate.toLowerCase().startsWith('en'));
 }
 
-export async function resolveStorefrontLocale(): Promise<SupportedLocale> {
+export const resolveStorefrontLocale = cache(async function resolveStorefrontLocale(): Promise<SupportedLocale> {
   const cookieStore = await cookies();
   const cookieLocale = cookieStore.get(STOREFRONT_LOCALE_COOKIE)?.value;
   if (cookieLocale) return normalizeLocale(cookieLocale);
@@ -20,4 +21,4 @@ export async function resolveStorefrontLocale(): Promise<SupportedLocale> {
   if (acceptedLocale) return normalizeLocale(acceptedLocale);
 
   return DEFAULT_LOCALE;
-}
+});
