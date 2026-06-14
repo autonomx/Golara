@@ -69,6 +69,7 @@ Use this as a release gate checklist. Start from `docs/PRODUCTION_SECURITY_OPERA
 - [ ] Required CI gates passed on the exact release commit or deployment artifact.
 - [ ] Security audit roadmap is current for the release scope.
 - [ ] Incident response runbook and deployment checklist are linked from release notes or operator docs.
+- [ ] Rollback and hotfix decisions follow `docs/PRODUCTION_SECURITY_ROLLBACK_AND_HOTFIX_PLAYBOOK.md` when security regressions or release blockers are discovered.
 - [ ] Open security risks are documented with an owner, severity, mitigation, and target date.
 - [ ] Release sign-off uses `docs/SECURITY_RELEASE_SIGNOFF_TEMPLATE.md` and records only bounded evidence.
 - [ ] Release evidence is indexed using `docs/PRODUCTION_SECURITY_RELEASE_EVIDENCE_INDEX.md` or an equivalent access-controlled release tracker.
