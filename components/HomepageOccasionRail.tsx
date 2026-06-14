@@ -4,6 +4,7 @@ import { ArrowUpRight } from 'lucide-react';
 import type { Category } from '@/lib/catalog';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 import { homepageCategoryImage } from '@/lib/homepage-assets';
+import { getStorefrontCloudinaryImage } from '@/lib/media/cloudinary-image';
 
 const railCopy = {
   en: {
@@ -83,27 +84,31 @@ export function HomepageOccasionRail({ occasions, locale }: { occasions: Categor
           </Link>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          {featuredOccasions.map((occasion, index) => (
-            <Link
-              key={occasion.slug}
-              href={`/categories/${occasion.slug}`}
-              className="group relative min-h-[155px] overflow-hidden rounded-lg bg-stone-100 outline-none shadow-[0_8px_22px_rgba(43,29,32,0.06)] transition focus-visible:ring-4 focus-visible:ring-olive/30"
-            >
-              <Image
-                src={occasion.image || homepageCategoryImage(occasion.slug)}
-                alt={occasion.title}
-                fill
-                priority={index < 2}
-                className="object-cover"
-                sizes="(min-width: 1024px) 18vw, (min-width: 640px) 30vw, 50vw"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-rosewood/75 via-rosewood/20 to-transparent" />
-              <div className="absolute inset-x-0 bottom-0 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/75">{occasion.eyebrow}</p>
-                <h3 className="mt-1 font-display text-2xl leading-tight text-white">{occasionLabelBySlug[activeLocale][occasion.slug] ?? occasion.title}</h3>
-              </div>
-            </Link>
-          ))}
+          {featuredOccasions.map((occasion, index) => {
+            const imageSrc = getStorefrontCloudinaryImage(occasion.image || homepageCategoryImage(occasion.slug), 'productCard');
+
+            return (
+              <Link
+                key={occasion.slug}
+                href={`/categories/${occasion.slug}`}
+                className="group relative min-h-[155px] overflow-hidden rounded-lg bg-stone-100 outline-none shadow-[0_8px_22px_rgba(43,29,32,0.06)] transition focus-visible:ring-4 focus-visible:ring-olive/30"
+              >
+                <Image
+                  src={imageSrc}
+                  alt={occasion.title}
+                  fill
+                  priority={index < 2}
+                  className="object-cover"
+                  sizes="(min-width: 1024px) 18vw, (min-width: 640px) 30vw, 50vw"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-rosewood/75 via-rosewood/20 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/75">{occasion.eyebrow}</p>
+                  <h3 className="mt-1 font-display text-2xl leading-tight text-white">{occasionLabelBySlug[activeLocale][occasion.slug] ?? occasion.title}</h3>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </section>
