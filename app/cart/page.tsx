@@ -8,6 +8,7 @@ import { getCartByToken } from '@/lib/cart/cart-repository';
 import { formatMinorUnitAmount } from '@/lib/catalog';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { getCustomerCopy, getCustomerCopyDirection, type CustomerCopyKey } from '@/lib/localization/customer-copy';
+import { getStorefrontCloudinaryImage } from '@/lib/media/cloudinary-image';
 import { hasDatabase } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -93,7 +94,7 @@ export default async function CartPage({ searchParams }: { searchParams: Promise
                 return (
                   <article key={item.id} className="grid gap-4 rounded-[2rem] border border-rosewood/10 bg-white p-5 shadow-sm md:grid-cols-[140px_1fr]">
                     <div className="relative aspect-square overflow-hidden rounded-3xl bg-blush">
-                      <Image src={item.product.imageUrl} alt={item.product.title} fill className="object-cover" sizes="140px" />
+                      <Image src={getStorefrontCloudinaryImage(item.product.imageUrl, 'productCard')} alt={item.product.title} fill className="object-cover" sizes="140px" />
                     </div>
                     <div className="grid gap-4">
                       <div className="flex flex-wrap items-start justify-between gap-4">
