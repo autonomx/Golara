@@ -18,6 +18,8 @@ import { getStorefrontCopy, getStorefrontCopyDirection } from '@/lib/localizatio
 import { buildPageMetadata } from '@/lib/site-metadata';
 import { buildCategoryBreadcrumbJsonLd, JsonLdScript } from '@/lib/structured-data';
 
+const ABOVE_THE_FOLD_PRODUCT_CARD_COUNT = 3;
+
 function categoryTrail(category: Category, categories: Category[], locale?: string) {
   const parent = category.parentSlug ? categories.find((candidate) => candidate.slug === category.parentSlug) : undefined;
   return [
@@ -65,6 +67,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   const categoryWithCount = categoriesWithCounts.find((candidate) => candidate.slug === category.slug) ?? category;
   const childCategories = childCategoriesFor(categoryWithCount, categoriesWithCounts);
   const descendants = descendantCategoriesFor(categoryWithCount, categoriesWithCounts);
+  const prioritizeProductImages = childCategories.length === 0;
   const categoryProducts = await listCachedProductsForCategorySlugs(
     [categoryWithCount.slug, ...descendants.map((child) => child.slug)],
     { locale, take: 72 }
@@ -99,7 +102,14 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
           </div>
           {categoryProducts.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {categoryProducts.map((product) => <ProductCard key={product.slug} product={product} locale={locale} />)}
+              {categoryProducts.map((product, index) => (
+                <ProductCard
+                  key={product.slug}
+                  product={product}
+                  priority={prioritizeProductImages && index < ABOVE_THE_FOLD_PRODUCT_CARD_COUNT}
+                  locale={locale}
+                />
+              ))}
             </div>
           ) : (
             <div className="rounded-[2rem] border border-rosewood/10 bg-white p-8 text-stone-700 shadow-sm">
