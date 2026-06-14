@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { MessageCircle, Sparkles, Truck } from 'lucide-react';
 import type { HomepageContent } from '@/lib/catalog';
 import type { HomepageBannerSlide } from '@/lib/homepage-assets';
+import { getStorefrontCloudinaryImage } from '@/lib/media/cloudinary-image';
 
 interface HomepageBannerSlideshowProps {
   slides: HomepageBannerSlide[];
@@ -37,6 +38,7 @@ export function HomepageBannerSlideshow({ slides, homepage }: HomepageBannerSlid
     { label: firstNonEmpty(homepage?.trustItemTwo, 'Premium finish'), icon: Sparkles },
     { label: firstNonEmpty(homepage?.trustItemThree, 'Sales guidance'), icon: MessageCircle }
   ].filter((item) => item.label);
+  const heroImage = getStorefrontCloudinaryImage(heroSlide.image, 'homepageHero');
 
   return (
     <section
@@ -47,7 +49,7 @@ export function HomepageBannerSlideshow({ slides, homepage }: HomepageBannerSlid
     >
       <div dir="ltr" className="relative mx-auto min-h-[460px] max-w-[1520px] overflow-hidden rounded-[1.75rem] border border-rosewood/10 bg-stone-900 shadow-[0_22px_56px_rgba(111,36,56,0.12)] md:min-h-[520px] xl:min-h-[560px]">
         <Image
-          src={heroSlide.image}
+          src={heroImage}
           alt={heroSlide.alt}
           fill
           priority
