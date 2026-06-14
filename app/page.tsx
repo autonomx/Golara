@@ -106,7 +106,7 @@ export default async function HomePage() {
             <div className="mt-3 grid gap-2">
               <Link href="/products" className={footerLinkClass}>{copy('home.footerAllProducts')}</Link>
               <Link href="/categories" className={footerLinkClass}>{copy('home.footerOccasions')}</Link>
-              <Link href="/#best-sellers" className={footerLinkClass}>{copy('home.footerBestSellers')}</Link>
+              <Link href="/#best-sellers" prefetch={false} className={footerLinkClass}>{copy('home.footerBestSellers')}</Link>
             </div>
           </div>
           <div>
