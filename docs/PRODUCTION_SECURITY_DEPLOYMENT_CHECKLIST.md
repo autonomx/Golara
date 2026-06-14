@@ -2,7 +2,7 @@
 
 This checklist captures production-readiness controls that must be reviewed before enabling or changing Golara production traffic. It complements the security audit roadmap and the incident response runbook.
 
-Use this as a release gate checklist. Do not store raw secrets, customer PII, provider references, webhook bodies, database dumps, OTPs, cookies, or access tokens in checklist evidence.
+Use this as a release gate checklist. Start from `docs/PRODUCTION_SECURITY_OPERATOR_DOCS_INDEX.md` when operators need the full map of security audit, checklist, evidence, sign-off, runbook, and policy documents. Do not store raw secrets, customer PII, provider references, webhook bodies, database dumps, OTPs, cookies, or access tokens in checklist evidence.
 
 ## 1. Secrets and credentials
 
