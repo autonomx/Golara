@@ -9,6 +9,7 @@ import {
   type CmsCategoryRecord,
   type CmsCategoryTranslationRecord
 } from '@/lib/cms/category-service-core';
+import { revalidateStorefrontCatalogCache } from '@/lib/cms/public-catalog-cache';
 import { prisma } from '@/lib/prisma';
 
 export { createCmsCategoryService } from '@/lib/cms/category-service-core';
@@ -31,5 +32,6 @@ const categoryTranslationRepository = {
 export const cmsCategoryService = createCmsCategoryService({
   categoryRepository,
   categoryTranslationRepository,
-  auditWriter: recordAdminAuditLog
+  auditWriter: recordAdminAuditLog,
+  cacheInvalidator: revalidateStorefrontCatalogCache
 });
