@@ -7,7 +7,11 @@ import { ProductDetail } from '@/components/product/ProductDetail';
 import { SiteHeader } from '@/components/SiteHeader';
 import { getPaymentGatewayConfig, getPaymentGatewayReadiness } from '@/lib/checkout/payment-gateway-config';
 import { getProductCheckoutPolicy } from '@/lib/checkout/product-checkout-policy';
-import { getCategoryBySlug, getProductBySlug, listProducts } from '@/lib/cms/catalog-repository';
+import {
+  getCachedCategoryBySlug,
+  getCachedProductBySlug as getProductBySlug,
+  listCachedProducts
+} from '@/lib/cms/public-catalog-cache';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { getStorefrontCopy, getStorefrontCopyDirection } from '@/lib/localization/storefront-copy';
 import { hasDatabase } from '@/lib/prisma';
@@ -15,7 +19,7 @@ import { buildPageMetadata } from '@/lib/site-metadata';
 import { buildProductBreadcrumbJsonLd, buildProductJsonLd, JsonLdScript } from '@/lib/structured-data';
 
 export async function generateStaticParams() {
-  const products = await listProducts();
+  const products = await listCachedProducts();
   return products.map((product) => ({ slug: product.slug }));
 }
 
@@ -50,7 +54,7 @@ export default async function ProductPage({
   const [{ slug }, { inquiry, checkout }] = await Promise.all([params, searchParams]);
   const product = await getProductBySlug(slug, { locale });
   if (!product) notFound();
-  const category = await getCategoryBySlug(product.category, { locale });
+  const category = await getCachedCategoryBySlug(product.category, { locale });
   const dbReady = hasDatabase();
   const checkoutReadiness = getPaymentGatewayReadiness(getPaymentGatewayConfig(process.env), process.env);
   const checkoutPolicy = getProductCheckoutPolicy({ product, dbReady, checkoutReadiness, locale });
