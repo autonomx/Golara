@@ -24,6 +24,7 @@ const STOREFRONT_PUBLIC_REVALIDATE_SECONDS = 60;
 const STOREFRONT_PUBLIC_TAG = 'storefront-public';
 const STOREFRONT_CATALOG_TAG = 'storefront-catalog';
 const STOREFRONT_HOMEPAGE_TAG = 'storefront-homepage';
+const MAX_PUBLIC_PRODUCT_TAKE = 96;
 
 export function revalidateStorefrontPublicCache() {
   revalidateTag(STOREFRONT_PUBLIC_TAG);
@@ -42,7 +43,9 @@ function localeKey(locale?: string | null) {
 }
 
 function takeKey(take?: number) {
-  return Number.isFinite(take) ? String(Math.floor(Number(take))) : 'default';
+  const numericTake = Number(take);
+  if (!numericTake || !Number.isFinite(numericTake)) return 'default';
+  return String(Math.max(1, Math.min(MAX_PUBLIC_PRODUCT_TAKE, Math.floor(numericTake))));
 }
 
 function searchKey(search?: string) {
