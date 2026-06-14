@@ -7,7 +7,6 @@ import { SiteHeader } from '@/components/SiteHeader';
 import {
   getCachedHomepageContent,
   listCachedBestSellerProducts,
-  listCachedCategories,
   listCachedHomepageCategories,
   listCachedPublicProductCountsByCategoryId
 } from '@/lib/cms/public-catalog-cache';
@@ -41,21 +40,15 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function HomePage() {
   const locale = await resolveStorefrontLocale();
   const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key, locale);
-  const [homepageSource, categories, homepageCategories, bestSellers, directProductCounts] = await Promise.all([
+  const [homepageSource, homepageCategories, bestSellers, directProductCounts] = await Promise.all([
     getCachedHomepageContent({ locale }),
-    listCachedCategories({ locale }),
     listCachedHomepageCategories({ locale }),
     listCachedBestSellerProducts({ locale, take: 12 }),
     listCachedPublicProductCountsByCategoryId()
   ]);
   const homepage = selectHomepageContentForLocale(homepageSource, locale);
 
-  const categoriesWithCounts = withCategoryCountsFromDirectCounts(categories, directProductCounts);
-  const productCountBySlug = new Map(categoriesWithCounts.map((category) => [category.slug, category.productCount]));
-  const homepageOccasionsWithCounts = homepageCategories.map((category) => ({
-    ...category,
-    productCount: productCountBySlug.get(category.slug) ?? 0
-  }));
+  const homepageOccasionsWithCounts = withCategoryCountsFromDirectCounts(homepageCategories, directProductCounts);
   const featuredOccasions = homepageOccasionsWithCounts.slice(0, 6);
 
   return (
