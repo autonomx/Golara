@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { unstable_cache } from 'next/cache';
+import { revalidateTag, unstable_cache } from 'next/cache';
 import type { Category } from '@/lib/catalog';
 import {
   getCategoryBySlug,
@@ -23,6 +23,18 @@ const STOREFRONT_PUBLIC_REVALIDATE_SECONDS = 60;
 const STOREFRONT_PUBLIC_TAG = 'storefront-public';
 const STOREFRONT_CATALOG_TAG = 'storefront-catalog';
 const STOREFRONT_HOMEPAGE_TAG = 'storefront-homepage';
+
+export function revalidateStorefrontPublicCache() {
+  revalidateTag(STOREFRONT_PUBLIC_TAG);
+}
+
+export function revalidateStorefrontCatalogCache() {
+  revalidateTag(STOREFRONT_CATALOG_TAG);
+}
+
+export function revalidateStorefrontHomepageCache() {
+  revalidateTag(STOREFRONT_HOMEPAGE_TAG);
+}
 
 function localeKey(locale?: string | null) {
   return locale?.trim() || 'default';
