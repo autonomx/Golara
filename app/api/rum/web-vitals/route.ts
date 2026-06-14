@@ -71,6 +71,7 @@ function normalizePayload(payload: WebVitalPayload) {
 
 export async function POST(request: Request) {
   try {
+    // Same-origin CSRF boundary for browser-sent RUM writes.
     await assertSameOriginServerAction();
   } catch {
     return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
