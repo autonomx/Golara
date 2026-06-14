@@ -46,6 +46,7 @@ export function HomepageCategoryTileCard({ category, priority = false, locale }:
   return (
     <Link
       href={`/categories/${category.slug}`}
+      prefetch={priority}
       aria-label={viewLabel(displayTitle, locale)}
       className="group relative block min-h-[270px] overflow-hidden rounded-lg bg-stone-100 shadow-[0_14px_36px_rgba(111,36,56,0.07)] outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30 md:min-h-[340px]"
     >

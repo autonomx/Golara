@@ -86,18 +86,20 @@ export function HomepageOccasionRail({ occasions, locale }: { occasions: Categor
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {featuredOccasions.map((occasion, index) => {
             const imageSrc = getStorefrontCloudinaryImage(occasion.image || homepageCategoryImage(occasion.slug), 'productCard');
+            const priority = index < 2;
 
             return (
               <Link
                 key={occasion.slug}
                 href={`/categories/${occasion.slug}`}
+                prefetch={priority}
                 className="group relative min-h-[155px] overflow-hidden rounded-lg bg-stone-100 outline-none shadow-[0_8px_22px_rgba(43,29,32,0.06)] transition focus-visible:ring-4 focus-visible:ring-olive/30"
               >
                 <Image
                   src={imageSrc}
                   alt={occasion.title}
                   fill
-                  priority={index < 2}
+                  priority={priority}
                   className="object-cover"
                   sizes="(min-width: 1024px) 18vw, (min-width: 640px) 30vw, 50vw"
                 />
