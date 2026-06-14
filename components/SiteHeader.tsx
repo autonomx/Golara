@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { ShoppingBag, UserRound } from 'lucide-react';
 import { HeaderSearchControl } from '@/components/HeaderSearchControl';
@@ -22,17 +23,33 @@ async function cartItemCount() {
   return cart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
 }
 
+function CartHeaderLink({ itemCount = 0, cartLabel }: { itemCount?: number; cartLabel: string }) {
+  return (
+    <Link href="/cart" className={iconLinkClass} aria-label={cartLabel}>
+      <ShoppingBag className="h-5 w-5" aria-hidden="true" />
+      {itemCount > 0 ? (
+        <span className="absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-rosewood px-1 text-[0.65rem] font-bold leading-none text-white">
+          {itemCount > 99 ? '99+' : itemCount}
+        </span>
+      ) : null}
+    </Link>
+  );
+}
+
+async function CartHeaderBadge({ locale }: { locale: SupportedLocale }) {
+  const itemCount = await cartItemCount();
+  const cartLabel = itemCount > 0
+    ? formatStorefrontCopy('header.cartWithItemsLabel', locale, { count: itemCount })
+    : getStorefrontCopy('header.cartLabel', locale);
+
+  return <CartHeaderLink itemCount={itemCount} cartLabel={cartLabel} />;
+}
+
 export async function SiteHeader({ returnTo = '/', compact = false, locale }: { returnTo?: string; compact?: boolean; locale?: SupportedLocale | string | null } = {}) {
   const resolvedLocale = normalizeLocale(locale ?? await resolveStorefrontLocale());
-  const [itemCount, navigationMenu] = await Promise.all([
-    cartItemCount(),
-    storefrontNavigationMenuService.get('primary', resolvedLocale)
-  ]);
+  const navigationMenu = await storefrontNavigationMenuService.get('primary', resolvedLocale);
   const navigationItems = visibleStorefrontNavigationItems(navigationMenu.items, resolvedLocale);
   const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key, resolvedLocale);
-  const cartLabel = itemCount > 0
-    ? formatStorefrontCopy('header.cartWithItemsLabel', resolvedLocale, { count: itemCount })
-    : copy('header.cartLabel');
 
   return (
     <header className="sticky top-0 z-20 border-b border-rosewood/10 bg-cream/90 backdrop-blur-xl">
@@ -50,14 +67,9 @@ export async function SiteHeader({ returnTo = '/', compact = false, locale }: { 
           <LanguageSwitcher locale={resolvedLocale} returnTo={returnTo} />
           <HeaderSearchControl label={copy('catalog.searchLabel')} placeholder={copy('catalog.searchPlaceholder')} submitLabel={copy('catalog.searchSubmit')} hideLabel={copy('catalog.searchClear')} />
           <Link href="/account" className={iconLinkClass} aria-label={copy('header.accountLabel')}><UserRound className="h-5 w-5" aria-hidden="true" /></Link>
-          <Link href="/cart" className={iconLinkClass} aria-label={cartLabel}>
-            <ShoppingBag className="h-5 w-5" aria-hidden="true" />
-            {itemCount > 0 ? (
-              <span className="absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-rosewood px-1 text-[0.65rem] font-bold leading-none text-white">
-                {itemCount > 99 ? '99+' : itemCount}
-              </span>
-            ) : null}
-          </Link>
+          <Suspense fallback={<CartHeaderLink cartLabel={copy('header.cartLabel')} />}>
+            <CartHeaderBadge locale={resolvedLocale} />
+          </Suspense>
         </div>
       </div>
     </header>
