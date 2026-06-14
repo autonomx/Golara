@@ -15,6 +15,10 @@ import { storefrontNavigationMenuService, visibleStorefrontNavigationItems } fro
 const headerLinkClass = 'rounded-full px-3 py-2 outline-none transition hover:bg-white/70 hover:text-rosewood focus-visible:ring-4 focus-visible:ring-olive/20';
 const iconLinkClass = 'relative rounded-full p-2 outline-none transition hover:bg-white/70 focus-visible:ring-4 focus-visible:ring-olive/20';
 
+function shouldPrefetchHeaderLink(href: string) {
+  return href.startsWith('/') && !href.includes('#');
+}
+
 async function cartItemCount() {
   if (!hasDatabase()) return 0;
   const token = await getCartTokenCookie();
@@ -59,7 +63,7 @@ export async function SiteHeader({ returnTo = '/', compact = false, locale }: { 
       <div className={`mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 ${compact ? 'py-2' : 'py-4'}`}>
         <nav className="hidden items-center gap-2 text-sm font-medium text-rosewood/80 md:flex" aria-label={navigationMenu.label || copy('header.primaryNavigation')}>
           {navigationItems.map((item) => (
-            <Link key={`${item.href}-${item.label}`} href={item.href} className={headerLinkClass} target={item.opensInNewTab ? '_blank' : undefined} rel={item.opensInNewTab ? 'noreferrer' : undefined}>{item.label}</Link>
+            <Link key={`${item.href}-${item.label}`} href={item.href} className={headerLinkClass} target={item.opensInNewTab ? '_blank' : undefined} rel={item.opensInNewTab ? 'noreferrer' : undefined} prefetch={shouldPrefetchHeaderLink(item.href)}>{item.label}</Link>
           ))}
         </nav>
         <Link href="/" className={`rounded-full font-display tracking-tight text-rosewood outline-none focus-visible:ring-4 focus-visible:ring-olive/20 ${compact ? 'text-2xl' : 'text-3xl'}`}>Golara</Link>
