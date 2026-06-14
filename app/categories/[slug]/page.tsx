@@ -55,11 +55,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const locale = await resolveStorefrontLocale();
   const { slug } = await params;
-  const [category, categories, directProductCounts] = await Promise.all([
-    getCachedCategoryBySlug(slug, { locale }),
+  const [categories, directProductCounts] = await Promise.all([
     listCachedCategories({ locale }),
     listCachedPublicProductCountsByCategoryId()
   ]);
+  const category = categories.find((candidate) => candidate.slug === slug);
 
   if (!category) notFound();
 
