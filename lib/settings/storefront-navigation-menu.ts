@@ -1,8 +1,12 @@
 import 'server-only';
 
+import { revalidateTag, unstable_cache } from 'next/cache';
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
 import { getStorefrontCopy } from '@/lib/localization/storefront-copy';
 import { hasDatabase, prisma } from '@/lib/prisma';
+
+const STOREFRONT_NAVIGATION_CACHE_TAG = 'storefront-navigation';
+const STOREFRONT_NAVIGATION_CACHE_REVALIDATE_SECONDS = 300;
 
 export type StorefrontNavigationMenuItem = {
   id: string;
@@ -95,6 +99,10 @@ export function normalizeStorefrontNavigationHref(value: string) {
   return `/${href}`;
 }
 
+export function revalidateStorefrontNavigationCache() {
+  revalidateTag(STOREFRONT_NAVIGATION_CACHE_TAG);
+}
+
 export function normalizeStorefrontNavigationMenuInput(input: StorefrontNavigationMenuInput): StorefrontNavigationMenuInput {
   return {
     key: optionalText(input.key) ?? 'primary',
@@ -145,24 +153,40 @@ async function fetchMenuItems(menuId: string) {
   `;
 }
 
+async function getStorefrontNavigationMenu(key = 'primary', locale?: string | null): Promise<StorefrontNavigationMenu> {
+  if (!hasDatabase()) return localizedDefaultMenu(locale);
+
+  try {
+    const menus = await fetchMenuRows(key, locale);
+    const menu = menus[0];
+    if (!menu) return localizedDefaultMenu(locale);
+
+    return {
+      ...menu,
+      label: menu.locale ? menu.label : getStorefrontCopy('header.primaryNavigation', locale),
+      items: (await fetchMenuItems(menu.id)).map((item) => item.locale ? item : localizeDefaultNavigationItem(item, locale))
+    };
+  } catch (error) {
+    if (isMissingStorefrontNavigationTableError(error)) return localizedDefaultMenu(locale);
+    throw error;
+  }
+}
+
+function cachedStorefrontNavigationMenu(key = 'primary', locale?: string | null): Promise<StorefrontNavigationMenu> {
+  const normalizedLocale = normalizeStorefrontNavigationLocale(locale);
+  return unstable_cache(
+    () => getStorefrontNavigationMenu(key, normalizedLocale),
+    ['storefront-navigation-menu', key, normalizedLocale ?? 'default'],
+    {
+      tags: [STOREFRONT_NAVIGATION_CACHE_TAG],
+      revalidate: STOREFRONT_NAVIGATION_CACHE_REVALIDATE_SECONDS
+    }
+  )();
+}
+
 export const storefrontNavigationMenuService = {
   async get(key = 'primary', locale?: string | null): Promise<StorefrontNavigationMenu> {
-    if (!hasDatabase()) return localizedDefaultMenu(locale);
-
-    try {
-      const menus = await fetchMenuRows(key, locale);
-      const menu = menus[0];
-      if (!menu) return localizedDefaultMenu(locale);
-
-      return {
-        ...menu,
-        label: menu.locale ? menu.label : getStorefrontCopy('header.primaryNavigation', locale),
-        items: (await fetchMenuItems(menu.id)).map((item) => item.locale ? item : localizeDefaultNavigationItem(item, locale))
-      };
-    } catch (error) {
-      if (isMissingStorefrontNavigationTableError(error)) return localizedDefaultMenu(locale);
-      throw error;
-    }
+    return cachedStorefrontNavigationMenu(key, locale);
   },
 
   async update(input: StorefrontNavigationMenuInput): Promise<StorefrontNavigationMenu> {
@@ -201,6 +225,8 @@ export const storefrontNavigationMenuService = {
         itemCount: normalized.items.length
       }
     });
+
+    revalidateStorefrontNavigationCache();
 
     return {
       ...menu,
