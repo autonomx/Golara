@@ -5,8 +5,9 @@ import { PathTrail } from '@/components/PathTrail';
 import { ProductCard } from '@/components/ProductCard';
 import { SiteHeader } from '@/components/SiteHeader';
 import type { Category } from '@/lib/catalog';
-import { childCategoriesFor, descendantCategoriesFor, productsForCategoryTree, withCategoryProductCounts } from '@/lib/category-tree';
-import { getCategoryBySlug, listCategories, listProducts } from '@/lib/cms/catalog-repository';
+import { childCategoriesFor, descendantCategoriesFor } from '@/lib/category-tree';
+import { getCategoryBySlug, listCategories } from '@/lib/cms/catalog-repository';
+import { listProductsForCategorySlugs, listPublicProductCountsByCategoryId, withCategoryCountsFromDirectCounts } from '@/lib/cms/public-catalog-queries';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { getStorefrontCopy, getStorefrontCopyDirection } from '@/lib/localization/storefront-copy';
 import { buildPageMetadata } from '@/lib/site-metadata';
@@ -47,19 +48,19 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const locale = await resolveStorefrontLocale();
   const { slug } = await params;
-  const [category, categories, products] = await Promise.all([
+  const [category, categories, directProductCounts] = await Promise.all([
     getCategoryBySlug(slug, { locale }),
     listCategories({ locale }),
-    listProducts({ locale })
+    listPublicProductCountsByCategoryId()
   ]);
 
   if (!category) notFound();
 
-  const categoriesWithCounts = withCategoryProductCounts(categories, products);
+  const categoriesWithCounts = withCategoryCountsFromDirectCounts(categories, directProductCounts);
   const categoryWithCount = categoriesWithCounts.find((candidate) => candidate.slug === category.slug) ?? category;
   const childCategories = childCategoriesFor(categoryWithCount, categoriesWithCounts);
   const descendants = descendantCategoriesFor(categoryWithCount, categoriesWithCounts);
-  const categoryProducts = productsForCategoryTree(categoryWithCount, categoriesWithCounts, products);
+  const categoryProducts = await listProductsForCategorySlugs([categoryWithCount.slug, ...descendants.map((child) => child.slug)], { locale, take: 72 });
 
   return (
     <main id="main-content" tabIndex={-1} dir={getStorefrontCopyDirection(locale)}>
