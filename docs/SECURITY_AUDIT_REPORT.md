@@ -11,9 +11,9 @@ Status values:
 
 ## Current audit position
 
-The project has completed a broad hardening pass across authorization, session management, public API boundaries, public abuse controls, payment/order integrity, privacy, logging, media handling, input validation, browser headers, secrets, dependency scanning, incident-response documentation, production security deployment checklist coverage, and supporting production security policies. This roadmap reconciles the current security-audit status through PR #647 / main commit `bbc3c99`.
+The project has completed a broad hardening pass across authorization, session management, public API boundaries, public abuse controls, payment/order integrity, privacy, logging, media handling, input validation, browser headers, secrets, dependency scanning, incident-response documentation, production security deployment checklist coverage, and supporting production security policies. This roadmap reconciles the current security-audit status through PR #650 / main commit `05deb58`.
 
-The highest-risk remaining implementation work is now concentrated in production session policy decisions, public inquiry spam/anti-automation decisions, future surface monitoring, media lifecycle policy decisions, and optional package-integrity/license checks.
+The highest-risk remaining implementation work is now concentrated in future surface monitoring, media lifecycle policy decisions, production sign-off application, and optional package-integrity/license checks.
 
 ## Recently completed security work
 
@@ -88,6 +88,9 @@ The highest-risk remaining implementation work is now concentrated in production
 | Backup and restore policy | **Fixed** | PR #645 adds database/media backup, restore-test, and evidence-hygiene policy guidance. |
 | Dependency advisory exception policy | **Fixed** | PR #646 adds dependency advisory exception, remediation, lockfile review, and evidence-hygiene policy guidance. |
 | Security release sign-off template | **Fixed** | PR #647 adds a bounded security release sign-off template and links it from the production deployment checklist. |
+| Security roadmap Phase C/I/J/K reconciliation | **Fixed** | PR #648 reconciled roadmap status through PR #647 after production checklist and policy docs landed. |
+| Production session lifetime policy | **Fixed** | PR #649 adds admin/customer session lifetime, privileged re-auth, OTP bridge expiry, revocation, and monitoring policy guidance. |
+| Public inquiry spam policy | **Fixed** | PR #650 adds public inquiry spam/anti-automation launch decision guidance and checklist linkage. |
 
 ## Remaining roadmap
 
@@ -128,17 +131,17 @@ Completed:
 - Account order history is bound to the verified customer session object instead of accepting arbitrary customer IDs.
 - Profile/address mutations are bound to verified customer sessions.
 - Customer session lookup/cleanup/revoke expiry predicates are source-gated.
+- Production session lifetime policy now documents admin/customer lifetimes, OTP bridge expiry, privileged re-auth, revocation, and monitoring decisions.
 
 Remaining work:
 
-1. Finalize production customer/admin session lifetime policy.
-2. Decide fixed lifetime vs sliding renewal for customer sessions.
-3. Decide whether privileged customer/admin actions require shorter re-auth windows.
+1. Apply the production session lifetime policy during release sign-off and update implementation if the chosen policy is stricter than current defaults.
+2. Revisit privileged re-auth implementation if future admin/customer surfaces become materially higher risk.
 
 ### Phase C — Public abuse controls and throttling
 
 **Priority:** High  
-**Status:** Mostly fixed / production policy remains  
+**Status:** Mostly fixed / policy remains  
 **Goal:** prevent spam, enumeration, resource exhaustion, and brute-force access against public flows.
 
 Completed:
@@ -158,12 +161,12 @@ Completed:
 - Public order lookup, inquiry cooldown, and cart throttle outcomes emit bounded/redacted public-abuse security events.
 - Blocked OTP request decisions persist bounded customer auth events with hashed identifiers.
 - Public abuse throttling policy now documents in-process, distributed, and hybrid launch decisions.
+- Public inquiry spam policy now documents baseline acceptance, escalation triggers, stronger controls, evidence hygiene, and review cadence.
 
 Remaining work:
 
-1. Decide whether public inquiry needs additional spam/anti-automation controls beyond same-origin/cooldown.
+1. Apply the public abuse throttling and public inquiry spam policies during production deployment sign-off.
 2. Continue adding schema allowlists before introducing richer public sort/filter/listing surfaces.
-3. Apply the public abuse throttling policy during production deployment sign-off.
 
 ### Phase D — Payment and order integrity
 
@@ -333,10 +336,10 @@ Remaining work:
 Completed:
 
 - Roadmap reconciliations were added after major security-hardening waves.
-- This document is reconciled through PR #647 and main commit `bbc3c99`.
+- This document is reconciled through PR #650 and main commit `05deb58`.
 - A production security incident response runbook has been added.
 - A production security deployment checklist now references secrets, headers, provider webhooks, monitoring, backups, dependency policy, evidence, and sign-off.
-- Public abuse throttling, CSP reporting/tightening, backup/restore, dependency advisory exception, and release sign-off policy docs have been added and linked from the checklist.
+- Public abuse throttling, CSP reporting/tightening, backup/restore, dependency advisory exception, release sign-off, production session lifetime, and public inquiry spam policy docs have been added and linked from the checklist.
 
 Remaining work:
 
