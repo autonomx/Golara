@@ -3,6 +3,7 @@ import { createCheckoutAction } from '@/app/products/[slug]/checkout-actions';
 import type { ProductCheckoutPolicy } from '@/lib/checkout/product-checkout-policy';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 import { formatStorefrontCopy } from '@/lib/localization/storefront-copy';
+import { StorefrontSubmitButton } from '@/components/StorefrontSubmitButton';
 
 type ProductCheckoutFormProps = {
   product: Product;
@@ -31,6 +32,7 @@ const copy = {
     customerNoteOptional: 'Customer note optional',
     customerNoteDefault: 'Order draft for {title}.',
     submit: 'Create order draft',
+    submitting: 'Creating order draft…',
     messages: {
       'database-required': 'Order drafts require DATABASE_URL. You can still send an inquiry below.',
       'name-required': 'Please enter a name.',
@@ -56,6 +58,7 @@ const copy = {
     customerNoteOptional: 'یادداشت مشتری اختیاری',
     customerNoteDefault: 'پیش‌نویس سفارش برای {title}.',
     submit: 'ایجاد پیش‌نویس سفارش',
+    submitting: 'در حال ایجاد پیش‌نویس…',
     messages: {
       'database-required': 'ثبت پیش‌نویس سفارش به DATABASE_URL نیاز دارد. همچنان می‌توانید درخواست خود را ارسال کنید.',
       'name-required': 'لطفاً نام را وارد کنید.',
@@ -67,6 +70,7 @@ const copy = {
 
 const inputClass = 'rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100';
 const areaClass = 'min-h-24 rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100';
+const submitClass = 'rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none focus-visible:ring-4 focus-visible:ring-olive/30 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none';
 
 function localeKey(locale?: SupportedLocale) {
   return locale?.toLowerCase().startsWith('fa') ? 'fa' : 'en';
@@ -111,7 +115,7 @@ export function ProductCheckoutForm({ product, dbReady, checkout, checkoutPolicy
           <label className="grid gap-2 text-sm font-semibold text-rosewood">{labels.addressDetailsOptional}<input className={inputClass} name="addressLine2" disabled={!dbReady} /></label>
           <label className="grid gap-2 text-sm font-semibold text-rosewood">{labels.deliveryNotesOptional}<textarea className={areaClass} name="deliveryNotes" disabled={!dbReady} /></label>
           <label className="grid gap-2 text-sm font-semibold text-rosewood">{labels.customerNoteOptional}<textarea className={areaClass} name="customerNote" defaultValue={formatStorefrontCopy('product.interestedMessage', locale, { title: product.title }) || labels.customerNoteDefault.replace('{title}', product.title)} disabled={!dbReady} /></label>
-          <button className="rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none focus-visible:ring-4 focus-visible:ring-olive/30 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none" type="submit" disabled={!dbReady}>{labels.submit}</button>
+          <StorefrontSubmitButton label={labels.submit} pendingLabel={labels.submitting} disabled={!dbReady} className={submitClass} />
         </form>
       </div>
     </section>
