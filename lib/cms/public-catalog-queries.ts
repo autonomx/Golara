@@ -17,6 +17,7 @@ export type PublicCatalogReadOptions = { locale?: string | null };
 export type PublicProductQueryOptions = PublicCatalogReadOptions & { search?: string; categorySlugs?: string[]; take?: number };
 
 export type CategoryProductCount = { categoryId: string; count: number };
+export type PublicSlug = { slug: string };
 
 const publicProductCardInclude = {
   category: { include: { translations: true } },
@@ -255,6 +256,26 @@ export async function listPublicProductCountsByCategoryId(): Promise<CategoryPro
     }
     return Array.from(counts, ([categoryId, count]) => ({ categoryId, count }));
   });
+}
+
+export async function listPublicProductSlugs(): Promise<PublicSlug[]> {
+  return readWithFallback(async () => {
+    return prisma.product.findMany({
+      where: { isActive: true, category: { isActive: true } },
+      select: { slug: true },
+      orderBy: [{ slug: 'asc' }]
+    });
+  }, () => seedProducts.filter((product) => product.isActive !== false).map((product) => ({ slug: product.slug })).sort((a, b) => a.slug.localeCompare(b.slug)));
+}
+
+export async function listPublicCategorySlugs(): Promise<PublicSlug[]> {
+  return readWithFallback(async () => {
+    return prisma.category.findMany({
+      where: { isActive: true },
+      select: { slug: true },
+      orderBy: [{ slug: 'asc' }]
+    });
+  }, () => seedCategories.filter((category) => category.isActive !== false).map((category) => ({ slug: category.slug })).sort((a, b) => a.slug.localeCompare(b.slug)));
 }
 
 export function withCategoryCountsFromDirectCounts(categories: Category[], directCounts: CategoryProductCount[]) {
