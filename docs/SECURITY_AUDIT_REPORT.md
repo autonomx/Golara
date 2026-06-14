@@ -11,7 +11,7 @@ Status values:
 
 ## Current audit position
 
-The project has completed a broad hardening pass across authorization, session management, public API boundaries, public abuse controls, payment/order integrity, privacy, logging, media handling, input validation, browser headers, secrets, dependency scanning, incident-response documentation, production security deployment checklist coverage, and supporting production security policies. This roadmap reconciles the current security-audit status through PR #655 / main commit `5b3c207`.
+The project has completed a broad hardening pass across authorization, session management, public API boundaries, public abuse controls, payment/order integrity, privacy, logging, media handling, input validation, browser headers, secrets, dependency scanning, incident-response documentation, production security deployment checklist coverage, supporting production security policies, release evidence/exception tracking, operator documentation, and recurring security maintenance planning. This roadmap reconciles the current security-audit status through PR #674 / main commit `4fab2d2`.
 
 The highest-risk remaining implementation work is now concentrated in future surface monitoring, production sign-off application, and operator/environment decisions that must be completed during release rather than in repository policy text.
 
@@ -95,6 +95,10 @@ The highest-risk remaining implementation work is now concentrated in future sur
 | Media malware and metadata policy | **Fixed** | PR #652 adds launch decision guidance for media malware scanning, metadata stripping, accepted risk, evidence, and review cadence. |
 | Package integrity and license policy | **Fixed** | PR #653 adds production package review fields, license suitability, publisher/integrity review, lockfile review, exception handling, and review cadence. |
 | Admin route header smoke expansion | **Fixed** | PR #655 expands production-like route smoke coverage to unauthenticated admin overview, products, orders, and settings routes. |
+| Production release evidence index | **Fixed** | PR #657 adds bounded release evidence indexing for CI, deployment, policy, checklist, risk, and post-release evidence. |
+| Security operator docs index | **Fixed** | PR #660 adds an operator-facing index for the audit, checklist, sign-off, evidence, incident response, and policy documents. |
+| Release exceptions register | **Fixed** | PR #670 adds a compact register for release exceptions that require an owner, expiry/review date, evidence pointer, and decision. |
+| Production security maintenance schedule | **Fixed** | PR #674 adds weekly, monthly, and quarterly production security review cadence with owners and outputs. |
 
 ## Remaining roadmap
 
@@ -342,10 +346,10 @@ Remaining work:
 Completed:
 
 - Roadmap reconciliations were added after major security-hardening waves.
-- This document is reconciled through PR #655 and main commit `5b3c207`.
+- This document is reconciled through PR #674 and main commit `4fab2d2`.
 - A production security incident response runbook has been added.
-- A production security deployment checklist now references secrets, headers, provider webhooks, monitoring, backups, dependency policy, evidence, sign-off, media malware/metadata review, and package integrity/license review.
-- Public abuse throttling, CSP reporting/tightening, backup/restore, dependency advisory exception, release sign-off, production session lifetime, public inquiry spam, media malware/metadata, and package integrity/license policy docs have been added and linked from the checklist.
+- A production security deployment checklist now references secrets, headers, provider webhooks, monitoring, backups, dependency policy, evidence, sign-off, media malware/metadata review, package integrity/license review, release evidence indexing, release exceptions, operator guidance, and recurring maintenance.
+- Public abuse throttling, CSP reporting/tightening, backup/restore, dependency advisory exception, release sign-off, production session lifetime, public inquiry spam, media malware/metadata, package integrity/license, release evidence, operator docs, release exceptions, and security maintenance docs have been added.
 
 Remaining work:
 
