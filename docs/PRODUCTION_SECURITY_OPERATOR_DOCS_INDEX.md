@@ -12,6 +12,7 @@ Do not store raw secrets, customer PII, provider references, webhook bodies, dat
 | `docs/PRODUCTION_SECURITY_DEPLOYMENT_CHECKLIST.md` | Release-gate checklist for secrets, headers, payments, abuse controls, monitoring, backups, dependencies, evidence, and sign-off. |
 | `docs/SECURITY_RELEASE_SIGNOFF_TEMPLATE.md` | Final bounded sign-off record for release owner, security reviewer, risks, evidence, rollback, and approval. |
 | `docs/PRODUCTION_SECURITY_RELEASE_EVIDENCE_INDEX.md` | Bounded index of CI, deployment, policy, checklist, and post-release evidence links or summaries. |
+| `docs/PRODUCTION_SECURITY_ROLLBACK_AND_HOTFIX_PLAYBOOK.md` | Security rollback and hotfix decision checklist for release regressions, external blockers, and post-release findings. |
 
 ## Policy decision documents
 
