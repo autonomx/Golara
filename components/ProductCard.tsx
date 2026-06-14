@@ -6,6 +6,7 @@ import type { Product } from '@/lib/catalog';
 import { formatPrice, productRequiresQuote } from '@/lib/catalog-pricing';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 import { formatStorefrontCopy, getStorefrontCopy } from '@/lib/localization/storefront-copy';
+import { getStorefrontCloudinaryImage } from '@/lib/media/cloudinary-image';
 
 export function ProductCard({ product, priority = false, locale }: { product: Product; priority?: boolean; locale?: SupportedLocale }) {
   const requiresQuote = productRequiresQuote(product);
@@ -18,7 +19,7 @@ export function ProductCard({ product, priority = false, locale }: { product: Pr
       <Link href={`/products/${product.slug}`} aria-label={formatStorefrontCopy('product.viewLabel', locale, { title: product.title })} className="block outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
         <div className="relative aspect-[4/5] overflow-hidden bg-blush">
           <Image
-            src={product.image}
+            src={getStorefrontCloudinaryImage(product.image, 'productCard')}
             alt={product.title}
             fill
             className="object-cover transition duration-500 group-hover:scale-105"
