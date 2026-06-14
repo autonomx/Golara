@@ -53,6 +53,7 @@ export type CmsCategoryServiceDeps = {
   categoryRepository: CategoryRepository;
   categoryTranslationRepository: CategoryTranslationRepository;
   auditWriter: CmsAuditWriter;
+  cacheInvalidator?: () => void;
 };
 
 export function createCmsCategoryService(deps: CmsCategoryServiceDeps) {
@@ -67,6 +68,7 @@ export function createCmsCategoryService(deps: CmsCategoryServiceDeps) {
         summary: `Created category: ${category.title}`,
         metadata: { slug: category.slug, isActive: category.isActive, parentId: category.parentId, showOnHomepage: category.showOnHomepage }
       });
+      deps.cacheInvalidator?.();
 
       return category;
     },
@@ -81,6 +83,7 @@ export function createCmsCategoryService(deps: CmsCategoryServiceDeps) {
         summary: `Updated category: ${category.title}`,
         metadata: { slug: category.slug, isActive: category.isActive, parentId: category.parentId, showOnHomepage: category.showOnHomepage }
       });
+      deps.cacheInvalidator?.();
 
       return category;
     },
@@ -105,6 +108,7 @@ export function createCmsCategoryService(deps: CmsCategoryServiceDeps) {
         summary: `Saved category translation: ${input.locale}`,
         metadata: { locale: input.locale, translationId: translation.id, isPublished: translation.isPublished }
       });
+      deps.cacheInvalidator?.();
 
       return translation;
     }
