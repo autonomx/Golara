@@ -6,6 +6,7 @@ import { formatPrice, productRequiresQuote } from '@/lib/catalog-pricing';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 import { formatStorefrontCopy, getStorefrontCopy } from '@/lib/localization/storefront-copy';
 import { homepageBestSellerImage } from '@/lib/homepage-assets';
+import { getStorefrontCloudinaryImage } from '@/lib/media/cloudinary-image';
 
 interface BestSellersCarouselProps {
   products: Product[];
@@ -79,7 +80,7 @@ export function BestSellersCarousel({ products, locale }: BestSellersCarouselPro
                   <Link href={`/products/${product.slug}`} className="block outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
                     <div className="relative aspect-[4/5] overflow-hidden bg-stone-100">
                       <Image
-                        src={product.image || homepageBestSellerImage(product.slug)}
+                        src={getStorefrontCloudinaryImage(product.image || homepageBestSellerImage(product.slug), 'productCard')}
                         alt={product.title}
                         fill
                         priority={index === 0}
