@@ -25,7 +25,7 @@ async function cartItemCount() {
 
 function CartHeaderLink({ itemCount = 0, cartLabel }: { itemCount?: number; cartLabel: string }) {
   return (
-    <Link href="/cart" className={iconLinkClass} aria-label={cartLabel}>
+    <Link href="/cart" className={iconLinkClass} aria-label={cartLabel} prefetch={false}>
       <ShoppingBag className="h-5 w-5" aria-hidden="true" />
       {itemCount > 0 ? (
         <span className="absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-rosewood px-1 text-[0.65rem] font-bold leading-none text-white">
@@ -66,7 +66,7 @@ export async function SiteHeader({ returnTo = '/', compact = false, locale }: { 
         <div className="flex items-center gap-1 text-rosewood">
           <LanguageSwitcher locale={resolvedLocale} returnTo={returnTo} />
           <HeaderSearchControl label={copy('catalog.searchLabel')} placeholder={copy('catalog.searchPlaceholder')} submitLabel={copy('catalog.searchSubmit')} hideLabel={copy('catalog.searchClear')} />
-          <Link href="/account" className={iconLinkClass} aria-label={copy('header.accountLabel')}><UserRound className="h-5 w-5" aria-hidden="true" /></Link>
+          <Link href="/account" className={iconLinkClass} aria-label={copy('header.accountLabel')} prefetch={false}><UserRound className="h-5 w-5" aria-hidden="true" /></Link>
           <Suspense fallback={<CartHeaderLink cartLabel={copy('header.cartLabel')} />}>
             <CartHeaderBadge locale={resolvedLocale} />
           </Suspense>
