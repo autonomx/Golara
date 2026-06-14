@@ -57,6 +57,7 @@ export type CmsHomepageServiceDeps = {
   translationRepository: HomepageTranslationRepository;
   auditWriter: CmsAuditWriter;
   seedHomepageContent: HomepagePayload;
+  cacheInvalidator?: () => void;
 };
 
 function translationPayload(sectionId: string, locale: string, payload: HomepagePayload, isPublished: boolean) {
@@ -112,6 +113,7 @@ export function createCmsHomepageService(deps: CmsHomepageServiceDeps) {
         summary: 'Updated homepage hero content',
         metadata: { key: section.key, locale: 'fa-IR', title: input.payload.title }
       });
+      deps.cacheInvalidator?.();
 
       return section;
     },
@@ -137,6 +139,7 @@ export function createCmsHomepageService(deps: CmsHomepageServiceDeps) {
         summary: `Saved homepage translation: ${input.locale}`,
         metadata: { locale: input.locale, translationId: translation.id, isPublished: translation.isPublished }
       });
+      deps.cacheInvalidator?.();
 
       return translation;
     }
