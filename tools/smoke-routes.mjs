@@ -13,7 +13,11 @@ const routes = [
   { path: '/account/login', expectedStatuses: [200], label: 'account login', expectedAnyContent: ['phone', 'شماره تلفن'] },
   { path: '/sitemap.xml', expectedStatuses: [200], label: 'sitemap', expectedContent: ['<urlset'] },
   { path: '/robots.txt', expectedStatuses: [200], label: 'robots', expectedContent: ['User-agent'] },
-  { path: '/account/orders', expectedStatuses: [200, 302, 303, 307, 308], label: 'unauthenticated account orders' }
+  { path: '/account/orders', expectedStatuses: [200, 302, 303, 307, 308], label: 'unauthenticated account orders' },
+  { path: '/admin', expectedStatuses: [200, 302, 303, 307, 308], label: 'admin overview header parity' },
+  { path: '/admin/products', expectedStatuses: [200, 302, 303, 307, 308], label: 'admin products header parity' },
+  { path: '/admin/orders', expectedStatuses: [200, 302, 303, 307, 308], label: 'admin orders header parity' },
+  { path: '/admin/settings', expectedStatuses: [200, 302, 303, 307, 308], label: 'admin settings header parity' }
 ];
 
 const requiredSecurityHeaders = [
