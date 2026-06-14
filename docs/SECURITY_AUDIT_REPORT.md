@@ -11,9 +11,9 @@ Status values:
 
 ## Current audit position
 
-The project has completed a broad hardening pass across authorization, session management, public API boundaries, public abuse controls, payment/order integrity, privacy, logging, media handling, input validation, browser headers, secrets, dependency scanning, incident-response documentation, and production security deployment checklist coverage. This roadmap reconciles the current security-audit status through PR #641 / main commit `78c2a89`.
+The project has completed a broad hardening pass across authorization, session management, public API boundaries, public abuse controls, payment/order integrity, privacy, logging, media handling, input validation, browser headers, secrets, dependency scanning, incident-response documentation, production security deployment checklist coverage, and supporting production security policies. This roadmap reconciles the current security-audit status through PR #647 / main commit `bbc3c99`.
 
-The highest-risk remaining implementation work is now concentrated in production session policy decisions, persistent/distributed abuse-control policy, CSP/reporting decisions, and supply-chain policy refinements.
+The highest-risk remaining implementation work is now concentrated in production session policy decisions, public inquiry spam/anti-automation decisions, future surface monitoring, media lifecycle policy decisions, and optional package-integrity/license checks.
 
 ## Recently completed security work
 
@@ -82,6 +82,12 @@ The highest-risk remaining implementation work is now concentrated in production
 | Security incident response runbook | **Fixed** | PR #639 adds a production incident-response runbook covering triage, evidence preservation, containment, recovery, communications, and closure. |
 | Security roadmap Phase C/D/E/F/K reconciliation | **Fixed** | PR #640 reconciled error-response, authorization-denial, OTP-event, and incident-response roadmap status through PR #639. |
 | Production security deployment checklist | **Fixed** | PR #641 adds a production release checklist covering secrets, headers/CSP, payment webhooks, abuse controls, monitoring, backups, dependency policy, evidence, and sign-off. |
+| Security roadmap Phase I/J/K reconciliation | **Fixed** | PR #642 reconciled roadmap status through PR #641 and linked deployment-checklist coverage. |
+| Public abuse throttling policy | **Fixed** | PR #643 adds public abuse throttling policy guidance for in-process, distributed, and hybrid production throttling decisions. |
+| CSP reporting and tightening policy | **Fixed** | PR #644 adds CSP reporting/tightening policy guidance and checklist linkage. |
+| Backup and restore policy | **Fixed** | PR #645 adds database/media backup, restore-test, and evidence-hygiene policy guidance. |
+| Dependency advisory exception policy | **Fixed** | PR #646 adds dependency advisory exception, remediation, lockfile review, and evidence-hygiene policy guidance. |
+| Security release sign-off template | **Fixed** | PR #647 adds a bounded security release sign-off template and links it from the production deployment checklist. |
 
 ## Remaining roadmap
 
@@ -151,12 +157,13 @@ Completed:
 - Product/category listing pages and repositories are source-gated against raw public pagination, page-size, sort, filter, and query-complexity controls.
 - Public order lookup, inquiry cooldown, and cart throttle outcomes emit bounded/redacted public-abuse security events.
 - Blocked OTP request decisions persist bounded customer auth events with hashed identifiers.
+- Public abuse throttling policy now documents in-process, distributed, and hybrid launch decisions.
 
 Remaining work:
 
-1. Decide persistent/distributed throttling policy for multi-instance production deployment.
-2. Decide whether public inquiry needs additional spam/anti-automation controls beyond same-origin/cooldown.
-3. Continue adding schema allowlists before introducing richer public sort/filter/listing surfaces.
+1. Decide whether public inquiry needs additional spam/anti-automation controls beyond same-origin/cooldown.
+2. Continue adding schema allowlists before introducing richer public sort/filter/listing surfaces.
+3. Apply the public abuse throttling policy during production deployment sign-off.
 
 ### Phase D — Payment and order integrity
 
@@ -283,7 +290,7 @@ Remaining work:
 ### Phase I — Browser/header deployment verification
 
 **Priority:** Medium  
-**Status:** Partial / stable  
+**Status:** Mostly fixed / policy remains  
 **Goal:** ensure security headers are present in production-like responses, not only in config.
 
 Completed:
@@ -292,17 +299,17 @@ Completed:
 - Header config tests exist.
 - Route smoke verifies required security headers on production-like responses.
 - Production deployment checklist now includes browser header and CSP verification.
+- CSP reporting and tightening policy now documents report-only, enforced-baseline, and tightening-required launch decisions.
 
 Remaining work:
 
-1. CSP tightening plan to remove/reduce `unsafe-inline` where practical.
-2. CSP report endpoint or monitoring decision.
-3. Admin/storefront header parity verification beyond the existing smoke route set.
+1. Apply the CSP reporting/tightening policy during production deployment sign-off.
+2. Admin/storefront header parity verification beyond the existing smoke route set as routes expand.
 
 ### Phase J — Dependency and supply-chain gate
 
 **Priority:** Medium  
-**Status:** Partial / stable  
+**Status:** Mostly fixed / policy remains  
 **Goal:** prevent known critical/high dependency vulnerabilities and supply-chain regressions.
 
 Completed:
@@ -310,25 +317,26 @@ Completed:
 - CI runs `npm audit --omit=dev --audit-level=high` after dependency install.
 - Committed-secret scanning runs in unit CI.
 - Production deployment checklist now includes dependency and lockfile review sign-off.
+- Dependency advisory exception policy now documents exception criteria, remediation, expiry, lockfile review, and evidence hygiene.
 
 Remaining work:
 
-1. Decide allowlist/expiration policy for unavoidable advisories.
-2. Ensure lockfile changes are reviewed by CI.
-3. Consider license/publisher/package-integrity checks if production risk warrants it.
+1. Apply the dependency advisory exception policy during production deployment sign-off.
+2. Consider license/publisher/package-integrity checks if production risk warrants it.
 
 ### Phase K — Security roadmap closeout and documentation
 
 **Priority:** Medium  
-**Status:** Partial / improved  
+**Status:** Mostly fixed / monitor  
 **Goal:** keep the security plan accurate enough to guide final production hardening.
 
 Completed:
 
 - Roadmap reconciliations were added after major security-hardening waves.
-- This document is reconciled through PR #641 and main commit `78c2a89`.
+- This document is reconciled through PR #647 and main commit `bbc3c99`.
 - A production security incident response runbook has been added.
 - A production security deployment checklist now references secrets, headers, provider webhooks, monitoring, backups, dependency policy, evidence, and sign-off.
+- Public abuse throttling, CSP reporting/tightening, backup/restore, dependency advisory exception, and release sign-off policy docs have been added and linked from the checklist.
 
 Remaining work:
 
