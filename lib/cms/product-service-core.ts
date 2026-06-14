@@ -67,6 +67,7 @@ export type CmsProductServiceDeps = {
   productRepository: ProductRepository;
   productTranslationRepository: ProductTranslationRepository;
   auditWriter: CmsAuditWriter;
+  cacheInvalidator?: () => void;
 };
 
 export function createCmsProductService(deps: CmsProductServiceDeps) {
@@ -81,6 +82,7 @@ export function createCmsProductService(deps: CmsProductServiceDeps) {
         summary: `Created product: ${product.title}`,
         metadata: { slug: product.slug, code: product.code, categoryId: product.categoryId, priceCents: product.priceCents, isActive: product.isActive }
       });
+      deps.cacheInvalidator?.();
 
       return product;
     },
@@ -95,6 +97,7 @@ export function createCmsProductService(deps: CmsProductServiceDeps) {
         summary: `Updated product: ${product.title}`,
         metadata: { slug: product.slug, code: product.code, categoryId: product.categoryId, priceCents: product.priceCents, isActive: product.isActive }
       });
+      deps.cacheInvalidator?.();
 
       return product;
     },
@@ -118,6 +121,7 @@ export function createCmsProductService(deps: CmsProductServiceDeps) {
         summary: `Saved product translation: ${input.locale}`,
         metadata: { locale: input.locale, translationId: translation.id, isPublished: translation.isPublished }
       });
+      deps.cacheInvalidator?.();
 
       return translation;
     }
