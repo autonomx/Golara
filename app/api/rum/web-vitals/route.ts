@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+import { assertSameOriginServerAction } from '@/lib/server-action-origin';
+
 export const runtime = 'nodejs';
 
 type WebVitalName = 'CLS' | 'FID' | 'FCP' | 'INP' | 'LCP' | 'TTFB';
@@ -68,6 +70,12 @@ function normalizePayload(payload: WebVitalPayload) {
 }
 
 export async function POST(request: Request) {
+  try {
+    await assertSameOriginServerAction();
+  } catch {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+  }
+
   const contentLength = Number(request.headers.get('content-length') ?? '0');
 
   if (contentLength > MAX_BODY_BYTES) {
