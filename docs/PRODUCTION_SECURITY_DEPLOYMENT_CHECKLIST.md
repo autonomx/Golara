@@ -7,6 +7,7 @@ Use this as a release gate checklist. Do not store raw secrets, customer PII, pr
 ## 1. Secrets and credentials
 
 - [ ] Production admin/customer session secrets are present, unique, sufficiently long, and not default placeholders.
+- [ ] Production admin/customer session lifetime, renewal, revocation, and privileged re-auth decisions are documented, following `docs/PRODUCTION_SESSION_LIFETIME_POLICY.md`.
 - [ ] Payment provider secrets, webhook secrets, API keys, database credentials, object-storage credentials, and email/SMS provider credentials are stored only in the deployment secret manager.
 - [ ] No production secrets are committed to the repository or copied into issue/PR/runbook notes.
 - [ ] Rotation owners and rotation steps are documented for admin/customer session secrets, payment credentials, database credentials, and media/storage credentials.
