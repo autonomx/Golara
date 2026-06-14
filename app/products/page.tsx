@@ -3,7 +3,7 @@ import { Search } from 'lucide-react';
 import type { Metadata } from 'next';
 import { ProductCard } from '@/components/ProductCard';
 import { SiteHeader } from '@/components/SiteHeader';
-import { listPublicProducts } from '@/lib/cms/public-catalog-queries';
+import { listCachedPublicProducts } from '@/lib/cms/public-catalog-cache';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { formatStorefrontCopy, getStorefrontCopy, getStorefrontCopyDirection } from '@/lib/localization/storefront-copy';
 import { buildPageMetadata } from '@/lib/site-metadata';
@@ -32,7 +32,7 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
   const [resolvedSearchParams, locale] = await Promise.all([searchParams ?? Promise.resolve(emptySearchParams), resolveStorefrontLocale()]);
   const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key, locale);
   const search = normalizeSearch(resolvedSearchParams.q);
-  const products = await listPublicProducts({ locale, search: search || undefined, take: 60 });
+  const products = await listCachedPublicProducts({ locale, search: search || undefined, take: 60 });
 
   return (
     <main dir={getStorefrontCopyDirection(locale)}>
