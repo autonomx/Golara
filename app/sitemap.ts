@@ -2,6 +2,8 @@ import type { MetadataRoute } from 'next';
 import { listCategoryIndexEntries, listProductIndexEntries } from '@/lib/cms/site-index-repository';
 import { absoluteSiteUrl } from '@/lib/site-metadata';
 
+export const revalidate = 300;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [categories, products] = await Promise.all([listCategoryIndexEntries(), listProductIndexEntries()]);
   const now = new Date();
