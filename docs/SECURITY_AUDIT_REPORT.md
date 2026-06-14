@@ -11,7 +11,7 @@ Status values:
 
 ## Current audit position
 
-The project has completed a broad hardening pass across authorization, session management, public API boundaries, public abuse controls, payment/order integrity, privacy, logging, media handling, input validation, browser headers, secrets, dependency scanning, incident-response documentation, production security deployment checklist coverage, and supporting production security policies. This roadmap reconciles the current security-audit status through PR #655 / main commit `5b3c207`.
+The project has completed a broad hardening pass across authorization, session management, public API boundaries, public abuse controls, payment/order integrity, privacy, logging, media handling, input validation, browser headers, secrets, dependency scanning, incident-response documentation, production security deployment checklist coverage, release evidence organization, operator documentation, and supporting production security policies. This roadmap reconciles the current security-audit status through PR #660 / main commit `7c820dc`.
 
 The highest-risk remaining implementation work is now concentrated in future surface monitoring, production sign-off application, and operator/environment decisions that must be completed during release rather than in repository policy text.
 
@@ -95,6 +95,8 @@ The highest-risk remaining implementation work is now concentrated in future sur
 | Media malware and metadata policy | **Fixed** | PR #652 adds launch decision guidance for media malware scanning, metadata stripping, accepted risk, evidence, and review cadence. |
 | Package integrity and license policy | **Fixed** | PR #653 adds production package review fields, license suitability, publisher/integrity review, lockfile review, exception handling, and review cadence. |
 | Admin route header smoke expansion | **Fixed** | PR #655 expands production-like route smoke coverage to unauthenticated admin overview, products, orders, and settings routes. |
+| Production security release evidence index | **Fixed** | PR #657 adds a bounded release evidence index and links it from the production security deployment checklist. |
+| Production security operator docs index | **Fixed** | PR #660 adds a consolidated operator-facing security documentation index and links it from the deployment checklist. |
 
 ## Remaining roadmap
 
@@ -342,9 +344,10 @@ Remaining work:
 Completed:
 
 - Roadmap reconciliations were added after major security-hardening waves.
-- This document is reconciled through PR #655 and main commit `5b3c207`.
+- This document is reconciled through PR #660 and main commit `7c820dc`.
 - A production security incident response runbook has been added.
-- A production security deployment checklist now references secrets, headers, provider webhooks, monitoring, backups, dependency policy, evidence, sign-off, media malware/metadata review, and package integrity/license review.
+- A production security deployment checklist now references secrets, headers, provider webhooks, monitoring, backups, dependency policy, evidence, sign-off, media malware/metadata review, package integrity/license review, release evidence, and operator documentation.
+- A production security release evidence index and operator docs index have been added and linked from the checklist.
 - Public abuse throttling, CSP reporting/tightening, backup/restore, dependency advisory exception, release sign-off, production session lifetime, public inquiry spam, media malware/metadata, and package integrity/license policy docs have been added and linked from the checklist.
 
 Remaining work:
