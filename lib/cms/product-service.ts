@@ -9,6 +9,7 @@ import {
   type ProductTranslationUpsertArgs,
   type ProductUpdateArgs
 } from '@/lib/cms/product-service-core';
+import { revalidateStorefrontCatalogCache } from '@/lib/cms/public-catalog-cache';
 import { prisma } from '@/lib/prisma';
 
 export { createCmsProductService } from '@/lib/cms/product-service-core';
@@ -31,5 +32,6 @@ const productTranslationRepository = {
 export const cmsProductService = createCmsProductService({
   productRepository,
   productTranslationRepository,
-  auditWriter: recordAdminAuditLog
+  auditWriter: recordAdminAuditLog,
+  cacheInvalidator: revalidateStorefrontCatalogCache
 });

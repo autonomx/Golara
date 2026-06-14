@@ -8,6 +8,7 @@ import {
   type HomepageSectionUpsertArgs,
   type HomepageTranslationUpsertArgs
 } from '@/lib/cms/homepage-service-core';
+import { revalidateStorefrontHomepageCache } from '@/lib/cms/public-catalog-cache';
 import { prisma } from '@/lib/prisma';
 import { seedHomepageContent } from '@/lib/seed-data';
 
@@ -29,5 +30,6 @@ export const cmsHomepageService = createCmsHomepageService({
   sectionRepository,
   translationRepository,
   auditWriter: recordAdminAuditLog,
-  seedHomepageContent
+  seedHomepageContent,
+  cacheInvalidator: revalidateStorefrontHomepageCache
 });
