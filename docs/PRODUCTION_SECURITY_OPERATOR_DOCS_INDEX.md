@@ -12,6 +12,7 @@ Do not store raw secrets, customer PII, provider references, webhook bodies, dat
 | `docs/PRODUCTION_SECURITY_DEPLOYMENT_CHECKLIST.md` | Release-gate checklist for secrets, headers, payments, abuse controls, monitoring, backups, dependencies, evidence, and sign-off. |
 | `docs/SECURITY_RELEASE_SIGNOFF_TEMPLATE.md` | Final bounded sign-off record for release owner, security reviewer, risks, evidence, rollback, and approval. |
 | `docs/PRODUCTION_SECURITY_RELEASE_EVIDENCE_INDEX.md` | Bounded index of CI, deployment, policy, checklist, and post-release evidence links or summaries. |
+| `docs/PRODUCTION_SECURITY_RELEASE_ROLES.md` | Role ownership and handoff matrix for release, security review, CI verification, platform operations, incident response, and communications. |
 
 ## Policy decision documents
 
@@ -36,10 +37,11 @@ Do not store raw secrets, customer PII, provider references, webhook bodies, dat
 
 1. Start from `docs/SECURITY_AUDIT_REPORT.md` to identify release-relevant open security items.
 2. Complete `docs/PRODUCTION_SECURITY_DEPLOYMENT_CHECKLIST.md` for the target release.
-3. Record required policy decisions in the linked policy documents or an access-controlled release tracker.
-4. Collect bounded evidence in `docs/PRODUCTION_SECURITY_RELEASE_EVIDENCE_INDEX.md` or an equivalent access-controlled tracker.
-5. Complete `docs/SECURITY_RELEASE_SIGNOFF_TEMPLATE.md` after CI, deployment verification, and risk review are done.
-6. Keep `docs/SECURITY_INCIDENT_RESPONSE_RUNBOOK.md` visible to release and on-call operators.
+3. Assign release owners and handoff coverage in `docs/PRODUCTION_SECURITY_RELEASE_ROLES.md`.
+4. Record required policy decisions in the linked policy documents or an access-controlled release tracker.
+5. Collect bounded evidence in `docs/PRODUCTION_SECURITY_RELEASE_EVIDENCE_INDEX.md` or an equivalent access-controlled tracker.
+6. Complete `docs/SECURITY_RELEASE_SIGNOFF_TEMPLATE.md` after CI, deployment verification, and risk review are done.
+7. Keep `docs/SECURITY_INCIDENT_RESPONSE_RUNBOOK.md` visible to release and on-call operators.
 
 ## Evidence hygiene
 
