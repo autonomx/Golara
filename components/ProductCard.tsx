@@ -22,7 +22,7 @@ export function ProductCard({ product, priority = false, locale }: { product: Pr
             alt={product.title}
             fill
             className="object-cover transition duration-500 group-hover:scale-105"
-            sizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 100vw"
+            sizes="(min-width: 1280px) 300px, (min-width: 1024px) calc(25vw - 36px), (min-width: 768px) calc(50vw - 48px), 100vw"
             priority={priority}
           />
           <div className="absolute left-4 top-4 flex gap-2 text-xs font-semibold">
