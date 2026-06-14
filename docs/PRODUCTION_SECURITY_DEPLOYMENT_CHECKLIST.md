@@ -47,7 +47,7 @@ Use this as a release gate checklist. Do not store raw secrets, customer PII, pr
 
 ## 6. Backups and recovery
 
-- [ ] Database backup cadence, retention, encryption, and restore ownership are documented.
+- [ ] Database backup cadence, retention, encryption, and restore ownership are documented, following `docs/BACKUP_AND_RESTORE_POLICY.md`.
 - [ ] A production-like restore test has been completed or scheduled before launch.
 - [ ] Media/object-storage backup or provider-retention policy is documented.
 - [ ] Backup access is restricted to authorized operators and audited.
