@@ -11,7 +11,7 @@ Status values:
 
 ## Current audit position
 
-The project has completed a broad hardening pass across authorization, session management, public API boundaries, public abuse controls, payment/order integrity, privacy, logging, media handling, input validation, browser headers, secrets, dependency scanning, incident-response documentation, production security deployment checklist coverage, and supporting production security policies. This roadmap reconciles the current security-audit status through PR #655 / main commit `5b3c207`.
+The project has completed a broad hardening pass across authorization, session management, public API boundaries, public abuse controls, payment/order integrity, privacy, logging, media handling, input validation, browser headers, secrets, dependency scanning, incident-response documentation, production security deployment checklist coverage, release evidence collection, and supporting production security policies. This roadmap reconciles the current security-audit status through PR #657 / main commit `5af970b`.
 
 The highest-risk remaining implementation work is now concentrated in future surface monitoring, production sign-off application, and operator/environment decisions that must be completed during release rather than in repository policy text.
 
@@ -83,10 +83,10 @@ The highest-risk remaining implementation work is now concentrated in future sur
 | Security roadmap Phase C/D/E/F/K reconciliation | **Fixed** | PR #640 reconciled error-response, authorization-denial, OTP-event, and incident-response roadmap status through PR #639. |
 | Production security deployment checklist | **Fixed** | PR #641 adds a production release checklist covering secrets, headers/CSP, payment webhooks, abuse controls, monitoring, backups, dependency policy, evidence, and sign-off. |
 | Security roadmap Phase I/J/K reconciliation | **Fixed** | PR #642 reconciled roadmap status through PR #641 and linked deployment-checklist coverage. |
-| Public abuse throttling policy | **Fixed** | PR #643 adds public abuse throttling policy guidance for in-process, distributed, and hybrid production throttling decisions. |
+| Public abuse throttling policy | **Fixed** | PR #643 adds public abuse throttling policy guidance for in-process, distributed, and hybrid launch decisions. |
 | CSP reporting and tightening policy | **Fixed** | PR #644 adds CSP reporting/tightening policy guidance and checklist linkage. |
 | Backup and restore policy | **Fixed** | PR #645 adds database/media backup, restore-test, and evidence-hygiene policy guidance. |
-| Dependency advisory exception policy | **Fixed** | PR #646 adds dependency advisory exception, remediation, expiry, lockfile review, and evidence-hygiene policy guidance. |
+| Dependency advisory exception policy | **Fixed** | PR #646 adds dependency advisory exception, remediation, expiry, lockfile review, and evidence hygiene policy guidance. |
 | Security release sign-off template | **Fixed** | PR #647 adds a bounded security release sign-off template and links it from the production deployment checklist. |
 | Security roadmap Phase C/I/J/K reconciliation | **Fixed** | PR #648 reconciled roadmap status through PR #647 after production checklist and policy docs landed. |
 | Production session lifetime policy | **Fixed** | PR #649 adds admin/customer session lifetime, privileged re-auth, OTP bridge expiry, revocation, and monitoring policy guidance. |
@@ -95,6 +95,7 @@ The highest-risk remaining implementation work is now concentrated in future sur
 | Media malware and metadata policy | **Fixed** | PR #652 adds launch decision guidance for media malware scanning, metadata stripping, accepted risk, evidence, and review cadence. |
 | Package integrity and license policy | **Fixed** | PR #653 adds production package review fields, license suitability, publisher/integrity review, lockfile review, exception handling, and review cadence. |
 | Admin route header smoke expansion | **Fixed** | PR #655 expands production-like route smoke coverage to unauthenticated admin overview, products, orders, and settings routes. |
+| Production security release evidence index | **Fixed** | PR #657 adds a bounded release evidence index template and links it from the production security deployment checklist. |
 
 ## Remaining roadmap
 
@@ -342,10 +343,10 @@ Remaining work:
 Completed:
 
 - Roadmap reconciliations were added after major security-hardening waves.
-- This document is reconciled through PR #655 and main commit `5b3c207`.
+- This document is reconciled through PR #657 and main commit `5af970b`.
 - A production security incident response runbook has been added.
-- A production security deployment checklist now references secrets, headers, provider webhooks, monitoring, backups, dependency policy, evidence, sign-off, media malware/metadata review, and package integrity/license review.
-- Public abuse throttling, CSP reporting/tightening, backup/restore, dependency advisory exception, release sign-off, production session lifetime, public inquiry spam, media malware/metadata, and package integrity/license policy docs have been added and linked from the checklist.
+- A production security deployment checklist now references secrets, headers, provider webhooks, monitoring, backups, dependency policy, evidence, sign-off, media malware/metadata review, package integrity/license review, and release evidence indexing.
+- Public abuse throttling, CSP reporting/tightening, backup/restore, dependency advisory exception, release sign-off, production session lifetime, public inquiry spam, media malware/metadata, package integrity/license, and production security release evidence index docs have been added and linked from the checklist.
 
 Remaining work:
 
