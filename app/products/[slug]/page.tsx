@@ -50,8 +50,11 @@ export default async function ProductPage({
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ inquiry?: string; checkout?: string }>;
 }) {
-  const locale = await resolveStorefrontLocale();
-  const [{ slug }, { inquiry, checkout }] = await Promise.all([params, searchParams]);
+  const [{ slug }, { inquiry, checkout }, locale] = await Promise.all([
+    params,
+    searchParams,
+    resolveStorefrontLocale()
+  ]);
   const product = await getProductBySlug(slug, { locale });
   if (!product) notFound();
   const category = await getCachedCategoryBySlug(product.category, { locale });
