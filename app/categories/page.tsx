@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { HomepageCategoryTileCard } from '@/components/HomepageCategoryTileCard';
 import { SiteHeader } from '@/components/SiteHeader';
-import { withCategoryProductCounts } from '@/lib/category-tree';
-import { listCategories, listProducts } from '@/lib/cms/catalog-repository';
+import { listCachedCategories, listCachedPublicProductCountsByCategoryId } from '@/lib/cms/public-catalog-cache';
+import { withCategoryCountsFromDirectCounts } from '@/lib/cms/public-catalog-queries';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { getStorefrontCopy, getStorefrontCopyDirection } from '@/lib/localization/storefront-copy';
 import { buildPageMetadata } from '@/lib/site-metadata';
@@ -19,11 +19,11 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function CategoriesPage() {
   const locale = await resolveStorefrontLocale();
-  const [categories, products] = await Promise.all([
-    listCategories({ locale }),
-    listProducts({ locale })
+  const [categories, directProductCounts] = await Promise.all([
+    listCachedCategories({ locale }),
+    listCachedPublicProductCountsByCategoryId()
   ]);
-  const categoriesWithCounts = withCategoryProductCounts(categories, products);
+  const categoriesWithCounts = withCategoryCountsFromDirectCounts(categories, directProductCounts);
   const topLevelCategories = categoriesWithCounts.filter((category) => !category.parentSlug);
 
   return (
