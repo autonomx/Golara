@@ -18,7 +18,7 @@ Use this as a release gate checklist. Do not store raw secrets, customer PII, pr
 - [ ] Route smoke or equivalent production-like checks pass after deployment.
 - [ ] CSP exceptions are reviewed before each release and tied to required storefront/admin/payment-provider behavior.
 - [ ] Any `unsafe-inline` or third-party script/image/connect allowances are documented with an owner and removal plan where practical.
-- [ ] CSP reporting or monitoring decision is documented before launch.
+- [ ] CSP reporting or monitoring decision is documented before launch, following `docs/CSP_REPORTING_AND_TIGHTENING_POLICY.md`.
 
 ## 3. Payment providers and webhooks
 
