@@ -4,8 +4,8 @@ import { HomepageBannerSlideshow } from '@/components/HomepageBannerSlideshow';
 import { HomepageCategoryTileCard } from '@/components/HomepageCategoryTileCard';
 import { BestSellersCarousel } from '@/components/BestSellersCarousel';
 import { SiteHeader } from '@/components/SiteHeader';
-import { withCategoryProductCounts } from '@/lib/category-tree';
-import { getHomepageContent, listCategories, listHomepageCategories, listProducts } from '@/lib/cms/catalog-repository';
+import { getHomepageContent, listCategories, listHomepageCategories } from '@/lib/cms/catalog-repository';
+import { listBestSellerProducts, listPublicProductCountsByCategoryId, withCategoryCountsFromDirectCounts } from '@/lib/cms/public-catalog-queries';
 import { homepageBannerSlides } from '@/lib/homepage-assets';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { selectHomepageContentForLocale } from '@/lib/localization/homepage-content';
@@ -35,16 +35,16 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function HomePage() {
   const locale = await resolveStorefrontLocale();
   const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key, locale);
-  const [homepageSource, categories, homepageCategories, products] = await Promise.all([
+  const [homepageSource, categories, homepageCategories, bestSellers, directProductCounts] = await Promise.all([
     getHomepageContent({ locale }),
     listCategories({ locale }),
     listHomepageCategories({ locale }),
-    listProducts({ locale })
+    listBestSellerProducts({ locale, take: 12 }),
+    listPublicProductCountsByCategoryId()
   ]);
   const homepage = selectHomepageContentForLocale(homepageSource, locale);
 
-  const bestSellers = products.filter((product) => product.bestSeller).slice(0, 24);
-  const categoriesWithCounts = withCategoryProductCounts(categories, products);
+  const categoriesWithCounts = withCategoryCountsFromDirectCounts(categories, directProductCounts);
   const productCountBySlug = new Map(categoriesWithCounts.map((category) => [category.slug, category.productCount]));
   const homepageOccasionsWithCounts = homepageCategories.map((category) => ({
     ...category,
