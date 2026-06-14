@@ -74,51 +74,55 @@ export function BestSellersCarousel({ products, locale }: BestSellersCarouselPro
 
         <div className="-mx-5 overflow-x-auto px-5 pb-3 [scrollbar-width:thin]" aria-label={labels.title}>
           <div className="grid auto-cols-[minmax(17rem,1fr)] grid-flow-col gap-6 md:auto-cols-[minmax(18rem,1fr)] lg:grid-flow-row lg:grid-cols-3 xl:grid-cols-4">
-            {products.map((product, index) => (
-              <article key={product.slug} className="min-w-0 scroll-mx-5 snap-start">
-                <div className="group h-full overflow-hidden rounded-lg border border-rosewood/10 bg-white shadow-[0_12px_32px_rgba(111,36,56,0.07)]">
-                  <Link href={`/products/${product.slug}`} className="block outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
-                    <div className="relative aspect-[4/5] overflow-hidden bg-stone-100">
-                      <Image
-                        src={getStorefrontCloudinaryImage(product.image || homepageBestSellerImage(product.slug), 'productCard')}
-                        alt={product.title}
-                        fill
-                        priority={index === 0}
-                        className="object-cover"
-                        sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 768px) 50vw, 85vw"
-                      />
-                      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 to-transparent" />
-                      <div className="absolute left-4 top-4 flex flex-wrap gap-2 text-xs font-semibold">
-                        {product.bestSeller ? <span className="rounded-full bg-rosewood px-3 py-1 text-white">{copy('product.bestSeller')}</span> : null}
-                        {product.availableToday ? <span className="rounded-full bg-white/90 px-3 py-1 text-rosewood">{copy('product.availableToday')}</span> : null}
+            {products.map((product, index) => {
+              const shouldPrefetchProduct = index === 0;
+
+              return (
+                <article key={product.slug} className="min-w-0 scroll-mx-5 snap-start">
+                  <div className="group h-full overflow-hidden rounded-lg border border-rosewood/10 bg-white shadow-[0_12px_32px_rgba(111,36,56,0.07)]">
+                    <Link href={`/products/${product.slug}`} prefetch={shouldPrefetchProduct} className="block outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
+                      <div className="relative aspect-[4/5] overflow-hidden bg-stone-100">
+                        <Image
+                          src={getStorefrontCloudinaryImage(product.image || homepageBestSellerImage(product.slug), 'productCard')}
+                          alt={product.title}
+                          fill
+                          priority={index === 0}
+                          className="object-cover"
+                          sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 768px) 50vw, 85vw"
+                        />
+                        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 to-transparent" />
+                        <div className="absolute left-4 top-4 flex flex-wrap gap-2 text-xs font-semibold">
+                          {product.bestSeller ? <span className="rounded-full bg-rosewood px-3 py-1 text-white">{copy('product.bestSeller')}</span> : null}
+                          {product.availableToday ? <span className="rounded-full bg-white/90 px-3 py-1 text-rosewood">{copy('product.availableToday')}</span> : null}
+                        </div>
+                        <div className="absolute bottom-4 right-4 rounded-full bg-white/90 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-rosewood">
+                          {product.categoryTitle}
+                        </div>
                       </div>
-                      <div className="absolute bottom-4 right-4 rounded-full bg-white/90 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-rosewood">
-                        {product.categoryTitle}
+                      <div className="space-y-2 p-5">
+                        <div className="text-xs uppercase tracking-[0.25em] text-rosewood/50">{product.code}</div>
+                        <h3 className="line-clamp-1 font-display text-2xl text-rosewood">{product.title}</h3>
+                        <p className="line-clamp-2 text-sm text-stone-600">{product.description}</p>
+                        <div className="pt-3 text-lg font-semibold text-rosewood">{productRequiresQuote(product) ? labels.contactToOrder : formatPrice(product, locale)}</div>
                       </div>
+                    </Link>
+                    <div className="flex items-center gap-2 px-5 pb-5">
+                      {productRequiresQuote(product) ? (
+                        <a href={whatsappHref(product, locale)} className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-rosewood px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-stone-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
+                          <MessageCircle aria-hidden="true" className="h-4 w-4" />
+                          {labels.messageSales}
+                        </a>
+                      ) : (
+                        <Link href={`/products/${product.slug}`} prefetch={shouldPrefetchProduct} className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-rosewood px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-stone-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
+                          <ShoppingBag aria-hidden="true" className="h-4 w-4" />
+                          {labels.viewAndOrder}
+                        </Link>
+                      )}
                     </div>
-                    <div className="space-y-2 p-5">
-                      <div className="text-xs uppercase tracking-[0.25em] text-rosewood/50">{product.code}</div>
-                      <h3 className="line-clamp-1 font-display text-2xl text-rosewood">{product.title}</h3>
-                      <p className="line-clamp-2 text-sm text-stone-600">{product.description}</p>
-                      <div className="pt-3 text-lg font-semibold text-rosewood">{productRequiresQuote(product) ? labels.contactToOrder : formatPrice(product, locale)}</div>
-                    </div>
-                  </Link>
-                  <div className="flex items-center gap-2 px-5 pb-5">
-                    {productRequiresQuote(product) ? (
-                      <a href={whatsappHref(product, locale)} className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-rosewood px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-stone-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
-                        <MessageCircle aria-hidden="true" className="h-4 w-4" />
-                        {labels.messageSales}
-                      </a>
-                    ) : (
-                      <Link href={`/products/${product.slug}`} className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-rosewood px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-stone-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
-                        <ShoppingBag aria-hidden="true" className="h-4 w-4" />
-                        {labels.viewAndOrder}
-                      </Link>
-                    )}
                   </div>
-                </div>
-              </article>
-            ))}
+                </article>
+              );
+            })}
           </div>
         </div>
       </div>
