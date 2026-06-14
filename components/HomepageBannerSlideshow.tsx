@@ -52,7 +52,7 @@ export function HomepageBannerSlideshow({ slides, homepage }: HomepageBannerSlid
           fill
           priority
           className="object-cover"
-          sizes="100vw"
+          sizes="(min-width: 1520px) 1520px, 100vw"
         />
 
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,248,241,0.97)_0%,rgba(255,248,241,0.9)_32%,rgba(255,248,241,0.44)_56%,rgba(43,29,32,0.12)_100%)]" />
