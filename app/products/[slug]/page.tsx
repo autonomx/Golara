@@ -7,7 +7,11 @@ import { ProductDetail } from '@/components/product/ProductDetail';
 import { SiteHeader } from '@/components/SiteHeader';
 import { getPaymentGatewayConfig, getPaymentGatewayReadiness } from '@/lib/checkout/payment-gateway-config';
 import { getProductCheckoutPolicy } from '@/lib/checkout/product-checkout-policy';
-import { getCachedCategoryBySlug, getCachedProductBySlug, listCachedProducts } from '@/lib/cms/public-catalog-cache';
+import {
+  getCachedCategoryBySlug,
+  getCachedProductBySlug as getProductBySlug,
+  listCachedProducts
+} from '@/lib/cms/public-catalog-cache';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { getStorefrontCopy, getStorefrontCopyDirection } from '@/lib/localization/storefront-copy';
 import { hasDatabase } from '@/lib/prisma';
@@ -21,7 +25,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const [{ slug }, locale] = await Promise.all([params, resolveStorefrontLocale()]);
-  const product = await getCachedProductBySlug(slug, { locale });
+  const product = await getProductBySlug(slug, { locale });
   if (!product) {
     return buildPageMetadata({
       title: `${getStorefrontCopy('catalog.title', locale)} | Golara`,
@@ -48,7 +52,7 @@ export default async function ProductPage({
 }) {
   const locale = await resolveStorefrontLocale();
   const [{ slug }, { inquiry, checkout }] = await Promise.all([params, searchParams]);
-  const product = await getCachedProductBySlug(slug, { locale });
+  const product = await getProductBySlug(slug, { locale });
   if (!product) notFound();
   const category = await getCachedCategoryBySlug(product.category, { locale });
   const dbReady = hasDatabase();
