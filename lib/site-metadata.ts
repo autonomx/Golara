@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { getStorefrontCloudinaryImage } from '@/lib/media/cloudinary-image';
 
 export const siteMetadata = {
   name: 'Golara',
@@ -18,7 +19,7 @@ export function buildPageMetadata(input: { title?: string; description?: string;
   const title = input.title || siteMetadata.title;
   const description = input.description || siteMetadata.description;
   const path = input.path || '/';
-  const image = input.image || siteMetadata.image;
+  const image = getStorefrontCloudinaryImage(input.image || siteMetadata.image, 'socialPreview');
   const shouldIndex = input.index ?? true;
 
   return {
