@@ -12,6 +12,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang={locale}>
+      <head>
+        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
+      </head>
       <body>
         <SkipLink />
         <JsonLdScript data={buildOrganizationJsonLd()} />
