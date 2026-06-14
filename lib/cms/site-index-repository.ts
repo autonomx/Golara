@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { unstable_cache } from 'next/cache';
 import { hasDatabase, prisma } from '@/lib/prisma';
 import { seedCategories, seedProducts } from '@/lib/seed-data';
 
@@ -9,7 +10,11 @@ export type SiteIndexEntry = {
   bestSeller?: boolean;
 };
 
-export async function listCategoryIndexEntries(): Promise<SiteIndexEntry[]> {
+const SITE_INDEX_REVALIDATE_SECONDS = 60;
+const STOREFRONT_PUBLIC_TAG = 'storefront-public';
+const STOREFRONT_CATALOG_TAG = 'storefront-catalog';
+
+async function readCategoryIndexEntries(): Promise<SiteIndexEntry[]> {
   if (!hasDatabase()) {
     return seedCategories
       .filter((category) => category.isActive !== false)
@@ -31,7 +36,7 @@ export async function listCategoryIndexEntries(): Promise<SiteIndexEntry[]> {
   }
 }
 
-export async function listProductIndexEntries(): Promise<SiteIndexEntry[]> {
+async function readProductIndexEntries(): Promise<SiteIndexEntry[]> {
   if (!hasDatabase()) {
     return seedProducts
       .filter((product) => product.isActive !== false)
@@ -52,3 +57,13 @@ export async function listProductIndexEntries(): Promise<SiteIndexEntry[]> {
       .map((product) => ({ slug: product.slug, bestSeller: product.bestSeller }));
   }
 }
+
+export const listCategoryIndexEntries = unstable_cache(readCategoryIndexEntries, ['site-index-categories'], {
+  revalidate: SITE_INDEX_REVALIDATE_SECONDS,
+  tags: [STOREFRONT_PUBLIC_TAG, STOREFRONT_CATALOG_TAG]
+});
+
+export const listProductIndexEntries = unstable_cache(readProductIndexEntries, ['site-index-products'], {
+  revalidate: SITE_INDEX_REVALIDATE_SECONDS,
+  tags: [STOREFRONT_PUBLIC_TAG, STOREFRONT_CATALOG_TAG]
+});
