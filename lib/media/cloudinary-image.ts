@@ -3,7 +3,8 @@ const CLOUDINARY_IMAGE_UPLOAD_SEGMENT = '/image/upload/';
 export const storefrontCloudinaryImageTransforms = {
   homepageHero: 'f_auto,q_auto,c_fill,g_auto,w_1600',
   productDetail: 'f_auto,q_auto,c_fill,g_auto,w_1240',
-  productCard: 'f_auto,q_auto,c_fill,g_auto,w_800'
+  productCard: 'f_auto,q_auto,c_fill,g_auto,w_800',
+  socialPreview: 'f_auto,q_auto,c_fill,g_auto,w_1200,h_630'
 } as const;
 
 type StorefrontCloudinaryTransform = keyof typeof storefrontCloudinaryImageTransforms;
