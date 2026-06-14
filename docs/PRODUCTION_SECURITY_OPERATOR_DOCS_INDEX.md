@@ -12,6 +12,7 @@ Do not store raw secrets, customer PII, provider references, webhook bodies, dat
 | `docs/PRODUCTION_SECURITY_DEPLOYMENT_CHECKLIST.md` | Release-gate checklist for secrets, headers, payments, abuse controls, monitoring, backups, dependencies, evidence, and sign-off. |
 | `docs/SECURITY_RELEASE_SIGNOFF_TEMPLATE.md` | Final bounded sign-off record for release owner, security reviewer, risks, evidence, rollback, and approval. |
 | `docs/PRODUCTION_SECURITY_RELEASE_EVIDENCE_INDEX.md` | Bounded index of CI, deployment, policy, checklist, and post-release evidence links or summaries. |
+| `docs/PRODUCTION_SECURITY_EXTERNAL_CHECK_STATUS.md` | Triage guidance for external status-provider failures, delays, quota limits, and required-check blockers. |
 
 ## Policy decision documents
 
@@ -38,8 +39,9 @@ Do not store raw secrets, customer PII, provider references, webhook bodies, dat
 2. Complete `docs/PRODUCTION_SECURITY_DEPLOYMENT_CHECKLIST.md` for the target release.
 3. Record required policy decisions in the linked policy documents or an access-controlled release tracker.
 4. Collect bounded evidence in `docs/PRODUCTION_SECURITY_RELEASE_EVIDENCE_INDEX.md` or an equivalent access-controlled tracker.
-5. Complete `docs/SECURITY_RELEASE_SIGNOFF_TEMPLATE.md` after CI, deployment verification, and risk review are done.
-6. Keep `docs/SECURITY_INCIDENT_RESPONSE_RUNBOOK.md` visible to release and on-call operators.
+5. Use `docs/PRODUCTION_SECURITY_EXTERNAL_CHECK_STATUS.md` if a required external check is failed, delayed, or rate-limited while GitHub Actions is otherwise green.
+6. Complete `docs/SECURITY_RELEASE_SIGNOFF_TEMPLATE.md` after CI, deployment verification, and risk review are done.
+7. Keep `docs/SECURITY_INCIDENT_RESPONSE_RUNBOOK.md` visible to release and on-call operators.
 
 ## Evidence hygiene
 
