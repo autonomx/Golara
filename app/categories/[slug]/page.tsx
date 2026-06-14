@@ -10,6 +10,7 @@ import {
   getCachedCategoryBySlug,
   listCachedCategories,
   listCachedProductsForCategorySlugs,
+  listCachedPublicCategorySlugs,
   listCachedPublicProductCountsByCategoryId
 } from '@/lib/cms/public-catalog-cache';
 import { withCategoryCountsFromDirectCounts } from '@/lib/cms/public-catalog-queries';
@@ -30,7 +31,7 @@ function categoryTrail(category: Category, categories: Category[], locale?: stri
 }
 
 export async function generateStaticParams() {
-  const categories = await listCachedCategories();
+  const categories = await listCachedPublicCategorySlugs();
   return categories.map((category) => ({ slug: category.slug }));
 }
 
