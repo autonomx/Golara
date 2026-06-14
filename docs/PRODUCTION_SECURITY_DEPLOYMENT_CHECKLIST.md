@@ -70,6 +70,7 @@ Use this as a release gate checklist. Start from `docs/PRODUCTION_SECURITY_OPERA
 - [ ] Security audit roadmap is current for the release scope.
 - [ ] Incident response runbook and deployment checklist are linked from release notes or operator docs.
 - [ ] Open security risks are documented with an owner, severity, mitigation, and target date.
+- [ ] Release exceptions are tracked in `docs/PRODUCTION_SECURITY_RELEASE_EXCEPTIONS.md` or an equivalent access-controlled release tracker.
 - [ ] Release sign-off uses `docs/SECURITY_RELEASE_SIGNOFF_TEMPLATE.md` and records only bounded evidence.
 - [ ] Release evidence is indexed using `docs/PRODUCTION_SECURITY_RELEASE_EVIDENCE_INDEX.md` or an equivalent access-controlled release tracker.
 - [ ] Release sign-off records never include raw secrets, PII, OTPs, cookies, tokens, provider references, webhook bodies, or database dumps.
