@@ -11,6 +11,7 @@ import { buildPageMetadata } from '@/lib/site-metadata';
 type ProductsSearchParams = { q?: string };
 
 const CATALOG_SEARCH_MAX_LENGTH = 80;
+const ABOVE_THE_FOLD_PRODUCT_CARD_COUNT = 3;
 
 function normalizeSearch(value?: string) {
   const normalized = value?.trim().replace(/\s+/g, ' ') ?? '';
@@ -73,7 +74,14 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
 
         {products.length ? (
           <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {products.map((product) => <ProductCard key={product.slug} product={product} locale={locale} />)}
+            {products.map((product, index) => (
+              <ProductCard
+                key={product.slug}
+                product={product}
+                priority={index < ABOVE_THE_FOLD_PRODUCT_CARD_COUNT}
+                locale={locale}
+              />
+            ))}
           </div>
         ) : (
           <div className="mt-8 rounded-2xl border border-dashed border-rosewood/20 bg-white p-10 text-center">
