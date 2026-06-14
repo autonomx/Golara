@@ -3,6 +3,7 @@ import { createInquiryAction } from '@/app/products/[slug]/actions';
 import { INQUIRY_FIELD_LIMITS } from '@/lib/inquiries/validate-inquiry';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 import { formatStorefrontCopy } from '@/lib/localization/storefront-copy';
+import { StorefrontSubmitButton } from '@/components/StorefrontSubmitButton';
 
 type ProductInquiryFormProps = {
   product: Product;
@@ -37,6 +38,7 @@ const copy = {
     messageHelp: 'Include the occasion, size, color preference, or delivery timing.',
     deliveryNotesOptional: 'Delivery notes optional',
     submit: 'Send inquiry',
+    submitting: 'Sending inquiry…',
     messages: {
       sent: { tone: 'success', text: 'Inquiry sent. The shop will follow up soon.' },
       'database-required': { tone: 'warning', text: 'Inquiry storage requires DATABASE_URL. WhatsApp ordering is still available.', field: 'database' },
@@ -66,6 +68,7 @@ const copy = {
     messageHelp: 'مناسبت، اندازه، رنگ دلخواه یا زمان تحویل را بنویسید.',
     deliveryNotesOptional: 'توضیحات تحویل اختیاری',
     submit: 'ارسال درخواست',
+    submitting: 'در حال ارسال درخواست…',
     messages: {
       sent: { tone: 'success', text: 'درخواست ارسال شد. فروشگاه به‌زودی پیگیری می‌کند.' },
       'database-required': { tone: 'warning', text: 'ذخیره درخواست به DATABASE_URL نیاز دارد. سفارش واتساپی همچنان در دسترس است.', field: 'database' },
@@ -86,6 +89,7 @@ const baseInputClass = 'rounded-2xl border border-rosewood/15 bg-white px-4 py-3
 const errorInputClass = 'rounded-2xl border border-amber-400 bg-amber-50 px-4 py-3 text-stone-800 outline-none transition focus:border-amber-500 focus-visible:ring-4 focus-visible:ring-amber-200 disabled:cursor-not-allowed disabled:bg-stone-100';
 const baseTextAreaClass = 'min-h-28 rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100';
 const errorTextAreaClass = 'min-h-28 rounded-2xl border border-amber-400 bg-amber-50 px-4 py-3 text-stone-800 outline-none transition focus:border-amber-500 focus-visible:ring-4 focus-visible:ring-amber-200 disabled:cursor-not-allowed disabled:bg-stone-100';
+const submitClass = 'rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none focus-visible:ring-4 focus-visible:ring-olive/30 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none';
 
 function localeKey(locale?: SupportedLocale) {
   return locale?.toLowerCase().startsWith('fa') ? 'fa' : 'en';
@@ -167,7 +171,7 @@ export function ProductInquiryForm({ product, dbReady, inquiry, locale }: Produc
             {labels.deliveryNotesOptional}
             <textarea className="min-h-24 rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100" name="deliveryNotes" maxLength={INQUIRY_FIELD_LIMITS.deliveryNotes} disabled={!dbReady} />
           </label>
-          <button className="rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none focus-visible:ring-4 focus-visible:ring-olive/30 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none" type="submit" disabled={!dbReady}>{labels.submit}</button>
+          <StorefrontSubmitButton label={labels.submit} pendingLabel={labels.submitting} disabled={!dbReady} className={submitClass} />
         </form>
       </div>
     </section>
