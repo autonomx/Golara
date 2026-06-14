@@ -5,6 +5,7 @@ import type { Category, Product } from '@/lib/catalog';
 import { formatPrice } from '@/lib/catalog-pricing';
 import type { ProductCheckoutPolicy } from '@/lib/checkout/product-checkout-policy';
 import type { SupportedLocale } from '@/lib/i18n/locales';
+import { getStorefrontCloudinaryImage } from '@/lib/media/cloudinary-image';
 import { formatStorefrontCopy, getStorefrontCopy } from '@/lib/localization/storefront-copy';
 
 const categoryLinkClass = 'rounded-full outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20';
@@ -19,7 +20,7 @@ export function ProductDetail({ product, category, checkoutPolicy, locale }: { p
   return (
     <section className="mx-auto grid max-w-7xl gap-10 px-5 py-14 lg:grid-cols-2">
       <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] bg-blush shadow-2xl shadow-rosewood/10">
-        <Image src={product.image} alt={product.title} fill priority className="object-cover" sizes="(min-width: 1280px) 620px, (min-width: 1024px) calc(50vw - 40px), 100vw" />
+        <Image src={getStorefrontCloudinaryImage(product.image, 'productDetail')} alt={product.title} fill priority className="object-cover" sizes="(min-width: 1280px) 620px, (min-width: 1024px) calc(50vw - 40px), 100vw" />
       </div>
       <div className="flex flex-col justify-center">
         <Link href={`/categories/${product.category}`} className={categoryLinkClass}>
