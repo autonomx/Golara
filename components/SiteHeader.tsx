@@ -69,7 +69,7 @@ export async function SiteHeader({ returnTo = '/', compact = false, locale }: { 
         <Link href="/" className={`rounded-full font-display tracking-tight text-rosewood outline-none focus-visible:ring-4 focus-visible:ring-olive/20 ${compact ? 'text-2xl' : 'text-3xl'}`}>Golara</Link>
         <div className="flex items-center gap-1 text-rosewood">
           <LanguageSwitcher locale={resolvedLocale} returnTo={returnTo} />
-          <HeaderSearchControl label={copy('catalog.searchLabel')} placeholder={copy('catalog.searchPlaceholder')} submitLabel={copy('catalog.searchSubmit')} hideLabel={copy('catalog.searchClear')} />
+          <HeaderSearchControl label={copy('catalog.searchLabel')} placeholder={copy('catalog.searchPlaceholder')} submitLabel={copy('catalog.searchSubmit')} />
           <Link href="/account" className={iconLinkClass} aria-label={copy('header.accountLabel')} prefetch={false}><UserRound className="h-5 w-5" aria-hidden="true" /></Link>
           <Suspense fallback={<CartHeaderLink cartLabel={copy('header.cartLabel')} />}>
             <CartHeaderBadge locale={resolvedLocale} />
