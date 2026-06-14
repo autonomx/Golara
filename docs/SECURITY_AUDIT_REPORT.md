@@ -11,9 +11,9 @@ Status values:
 
 ## Current audit position
 
-The project has completed a broad hardening pass across authorization, session management, public API boundaries, public abuse controls, payment/order integrity, privacy, logging, media handling, input validation, browser headers, secrets, dependency scanning, incident-response documentation, production security deployment checklist coverage, and supporting production security policies. This roadmap reconciles the current security-audit status through PR #650 / main commit `05deb58`.
+The project has completed a broad hardening pass across authorization, session management, public API boundaries, public abuse controls, payment/order integrity, privacy, logging, media handling, input validation, browser headers, secrets, dependency scanning, incident-response documentation, production security deployment checklist coverage, and supporting production security policies. This roadmap reconciles the current security-audit status through PR #653 / main commit `71b2f36`.
 
-The highest-risk remaining implementation work is now concentrated in future surface monitoring, media lifecycle policy decisions, production sign-off application, and optional package-integrity/license checks.
+The highest-risk remaining implementation work is now concentrated in future surface monitoring, production sign-off application, and operator/environment decisions that must be completed during release rather than in repository policy text.
 
 ## Recently completed security work
 
@@ -86,11 +86,14 @@ The highest-risk remaining implementation work is now concentrated in future sur
 | Public abuse throttling policy | **Fixed** | PR #643 adds public abuse throttling policy guidance for in-process, distributed, and hybrid production throttling decisions. |
 | CSP reporting and tightening policy | **Fixed** | PR #644 adds CSP reporting/tightening policy guidance and checklist linkage. |
 | Backup and restore policy | **Fixed** | PR #645 adds database/media backup, restore-test, and evidence-hygiene policy guidance. |
-| Dependency advisory exception policy | **Fixed** | PR #646 adds dependency advisory exception, remediation, lockfile review, and evidence-hygiene policy guidance. |
+| Dependency advisory exception policy | **Fixed** | PR #646 adds dependency advisory exception, remediation, expiry, lockfile review, and evidence-hygiene policy guidance. |
 | Security release sign-off template | **Fixed** | PR #647 adds a bounded security release sign-off template and links it from the production deployment checklist. |
 | Security roadmap Phase C/I/J/K reconciliation | **Fixed** | PR #648 reconciled roadmap status through PR #647 after production checklist and policy docs landed. |
 | Production session lifetime policy | **Fixed** | PR #649 adds admin/customer session lifetime, privileged re-auth, OTP bridge expiry, revocation, and monitoring policy guidance. |
 | Public inquiry spam policy | **Fixed** | PR #650 adds public inquiry spam/anti-automation launch decision guidance and checklist linkage. |
+| Security roadmap reconciliation through #650 | **Fixed** | PR #651 reconciled roadmap status through public inquiry spam policy coverage. |
+| Media malware and metadata policy | **Fixed** | PR #652 adds launch decision guidance for media malware scanning, metadata stripping, accepted risk, evidence, and review cadence. |
+| Package integrity and license policy | **Fixed** | PR #653 adds production package review fields, license suitability, publisher/integrity review, lockfile review, exception handling, and review cadence. |
 
 ## Remaining roadmap
 
@@ -266,12 +269,12 @@ Remaining work:
 1. Rich text/Markdown renderer audit if any renderer is introduced.
 2. Product/category/admin content rendering audit for unsafe HTML paths as content features expand.
 3. Email/SMS/template escaping checks for any future outbound provider integrations.
-4. Uploaded-image metadata stripping policy, if required by production privacy goals.
+4. Apply the media malware/metadata policy during release sign-off if production privacy goals require uploaded-image metadata stripping.
 
 ### Phase H — Media deletion, path traversal, and malware policy
 
 **Priority:** Medium  
-**Status:** Partial / improved  
+**Status:** Mostly fixed / policy remains  
 **Goal:** finish upload lifecycle controls beyond upload-time MIME/signature checks.
 
 Completed:
@@ -282,13 +285,13 @@ Completed:
 - Local `/uploads/` URLs reject traversal, encoded traversal, nested paths, and query strings.
 - Cloudinary upload response URLs are normalized through the media URL allowlist before storage.
 - Media audit metadata avoids storing raw URLs/paths.
+- Media malware and metadata policy now documents malware-scanning, metadata-stripping, accepted-risk, evidence, and review-cadence decisions.
 
 Remaining work:
 
 1. Media deletion authorization and ownership checks if delete helpers are introduced.
-2. Production malware-scanning decision: integrate scanning or document accepted risk.
-3. Optional metadata stripping for privacy-sensitive images.
-4. Continue verifying Cloudinary/server credential isolation as deployment configuration evolves.
+2. Apply the media malware and metadata policy during production deployment sign-off.
+3. Continue verifying Cloudinary/server credential isolation as deployment configuration evolves.
 
 ### Phase I — Browser/header deployment verification
 
@@ -321,11 +324,12 @@ Completed:
 - Committed-secret scanning runs in unit CI.
 - Production deployment checklist now includes dependency and lockfile review sign-off.
 - Dependency advisory exception policy now documents exception criteria, remediation, expiry, lockfile review, and evidence hygiene.
+- Package integrity and license policy now documents required review fields, license suitability, publisher/integrity checks, lockfile review, exceptions, and review cadence.
 
 Remaining work:
 
 1. Apply the dependency advisory exception policy during production deployment sign-off.
-2. Consider license/publisher/package-integrity checks if production risk warrants it.
+2. Apply the package integrity and license policy during production deployment sign-off and future production-facing dependency additions.
 
 ### Phase K — Security roadmap closeout and documentation
 
@@ -336,10 +340,10 @@ Remaining work:
 Completed:
 
 - Roadmap reconciliations were added after major security-hardening waves.
-- This document is reconciled through PR #650 and main commit `05deb58`.
+- This document is reconciled through PR #653 and main commit `71b2f36`.
 - A production security incident response runbook has been added.
-- A production security deployment checklist now references secrets, headers, provider webhooks, monitoring, backups, dependency policy, evidence, and sign-off.
-- Public abuse throttling, CSP reporting/tightening, backup/restore, dependency advisory exception, release sign-off, production session lifetime, and public inquiry spam policy docs have been added and linked from the checklist.
+- A production security deployment checklist now references secrets, headers, provider webhooks, monitoring, backups, dependency policy, evidence, sign-off, media malware/metadata review, and package integrity/license review.
+- Public abuse throttling, CSP reporting/tightening, backup/restore, dependency advisory exception, release sign-off, production session lifetime, public inquiry spam, media malware/metadata, and package integrity/license policy docs have been added and linked from the checklist.
 
 Remaining work:
 
