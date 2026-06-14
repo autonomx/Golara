@@ -13,6 +13,13 @@ const contentSecurityPolicy = [
   'upgrade-insecure-requests'
 ].join('; ');
 
+const staticAssetCacheHeaders = [
+  {
+    key: 'Cache-Control',
+    value: 'public, max-age=31536000, immutable'
+  }
+];
+
 const nextConfig = {
   images: {
     unoptimized: true,
@@ -22,6 +29,10 @@ const nextConfig = {
   },
   async headers() {
     return [
+      {
+        source: '/_next/static/:path*',
+        headers: staticAssetCacheHeaders
+      },
       {
         source: '/:path*',
         headers: [
