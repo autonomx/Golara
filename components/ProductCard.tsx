@@ -16,7 +16,7 @@ export function ProductCard({ product, priority = false, locale }: { product: Pr
 
   return (
     <article className="group overflow-hidden rounded-3xl border border-rosewood/10 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
-      <Link href={`/products/${product.slug}`} aria-label={formatStorefrontCopy('product.viewLabel', locale, { title: product.title })} className="block outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
+      <Link href={`/products/${product.slug}`} prefetch={priority} aria-label={formatStorefrontCopy('product.viewLabel', locale, { title: product.title })} className="block outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
         <div className="relative aspect-[4/5] overflow-hidden bg-blush">
           <Image
             src={getStorefrontCloudinaryImage(product.image, 'productCard')}
@@ -40,7 +40,7 @@ export function ProductCard({ product, priority = false, locale }: { product: Pr
       </Link>
       {requiresQuote ? (
         <div className="px-5 pb-5">
-          <Link href={`/products/${product.slug}`} className="block w-full rounded-full border border-rosewood/20 px-4 py-2 text-center text-xs font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20">
+          <Link href={`/products/${product.slug}`} prefetch={priority} className="block w-full rounded-full border border-rosewood/20 px-4 py-2 text-center text-xs font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20">
             {copy('product.orderByWhatsApp')}
           </Link>
         </div>
