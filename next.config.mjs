@@ -20,6 +20,13 @@ const staticAssetCacheHeaders = [
   }
 ];
 
+const publicAssetCacheSources = [
+  '/fonts/:path*',
+  '/images/:path*',
+  '/icons/:path*',
+  '/favicons/:path*'
+];
+
 const nextConfig = {
   images: {
     unoptimized: true,
@@ -33,6 +40,10 @@ const nextConfig = {
         source: '/_next/static/:path*',
         headers: staticAssetCacheHeaders
       },
+      ...publicAssetCacheSources.map((source) => ({
+        source,
+        headers: staticAssetCacheHeaders
+      })),
       {
         source: '/:path*',
         headers: [
