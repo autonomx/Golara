@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { SkipLink } from '@/components/SkipLink';
+import { StorefrontWebVitalsReporter } from '@/components/StorefrontWebVitalsReporter';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { buildPageMetadata } from '@/lib/site-metadata';
 import { buildOrganizationJsonLd, buildWebSiteJsonLd, JsonLdScript } from '@/lib/structured-data';
@@ -17,6 +18,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body>
         <SkipLink />
+        <StorefrontWebVitalsReporter />
         <JsonLdScript data={buildOrganizationJsonLd()} />
         <JsonLdScript data={buildWebSiteJsonLd()} />
         {children}
