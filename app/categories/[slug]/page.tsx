@@ -6,8 +6,13 @@ import { ProductCard } from '@/components/ProductCard';
 import { SiteHeader } from '@/components/SiteHeader';
 import type { Category } from '@/lib/catalog';
 import { childCategoriesFor, descendantCategoriesFor } from '@/lib/category-tree';
-import { getCategoryBySlug, listCategories } from '@/lib/cms/catalog-repository';
-import { listProductsForCategorySlugs, listPublicProductCountsByCategoryId, withCategoryCountsFromDirectCounts } from '@/lib/cms/public-catalog-queries';
+import {
+  getCachedCategoryBySlug,
+  listCachedCategories,
+  listCachedProductsForCategorySlugs,
+  listCachedPublicProductCountsByCategoryId
+} from '@/lib/cms/public-catalog-cache';
+import { withCategoryCountsFromDirectCounts } from '@/lib/cms/public-catalog-queries';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { getStorefrontCopy, getStorefrontCopyDirection } from '@/lib/localization/storefront-copy';
 import { buildPageMetadata } from '@/lib/site-metadata';
@@ -23,13 +28,13 @@ function categoryTrail(category: Category, categories: Category[], locale?: stri
 }
 
 export async function generateStaticParams() {
-  const categories = await listCategories();
+  const categories = await listCachedCategories();
   return categories.map((category) => ({ slug: category.slug }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const [{ slug }, locale] = await Promise.all([params, resolveStorefrontLocale()]);
-  const category = await getCategoryBySlug(slug, { locale });
+  const category = await getCachedCategoryBySlug(slug, { locale });
   if (!category) {
     return buildPageMetadata({
       title: `${getStorefrontCopy('categories.title', locale)} | Golara`,
@@ -49,9 +54,9 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   const locale = await resolveStorefrontLocale();
   const { slug } = await params;
   const [category, categories, directProductCounts] = await Promise.all([
-    getCategoryBySlug(slug, { locale }),
-    listCategories({ locale }),
-    listPublicProductCountsByCategoryId()
+    getCachedCategoryBySlug(slug, { locale }),
+    listCachedCategories({ locale }),
+    listCachedPublicProductCountsByCategoryId()
   ]);
 
   if (!category) notFound();
@@ -60,7 +65,10 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   const categoryWithCount = categoriesWithCounts.find((candidate) => candidate.slug === category.slug) ?? category;
   const childCategories = childCategoriesFor(categoryWithCount, categoriesWithCounts);
   const descendants = descendantCategoriesFor(categoryWithCount, categoriesWithCounts);
-  const categoryProducts = await listProductsForCategorySlugs([categoryWithCount.slug, ...descendants.map((child) => child.slug)], { locale, take: 72 });
+  const categoryProducts = await listCachedProductsForCategorySlugs(
+    [categoryWithCount.slug, ...descendants.map((child) => child.slug)],
+    { locale, take: 72 }
+  );
 
   return (
     <main id="main-content" tabIndex={-1} dir={getStorefrontCopyDirection(locale)}>
