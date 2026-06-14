@@ -43,6 +43,7 @@ Use this as a release gate checklist. Do not store raw secrets, customer PII, pr
 
 - [ ] Production logs include bounded/redacted security events for admin login, admin authorization denial, payment webhook outcomes, public abuse throttles, OTP blocks, and media audit activity.
 - [ ] Alerts exist for repeated admin login failures, authorization denials, payment settlement mismatches, webhook signature failures, public-abuse spikes, and suspicious media upload failures.
+- [ ] Media malware scanning and metadata stripping decisions are documented, following `docs/MEDIA_MALWARE_AND_METADATA_POLICY.md`.
 - [ ] Alert destinations and escalation owners are documented.
 - [ ] Monitoring dashboards avoid raw PII, secrets, provider references, webhook payloads, and database dumps.
 - [ ] Incident response runbook links are visible to on-call operators.
