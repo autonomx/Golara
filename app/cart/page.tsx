@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { clearCartAction, removeCartItemAction, updateCartItemAction } from '@/app/cart/actions';
 import { SiteHeader } from '@/components/SiteHeader';
+import { StorefrontSubmitButton } from '@/components/StorefrontSubmitButton';
 import { getCartTokenCookie } from '@/lib/cart/cart-cookie';
 import { getCartByToken } from '@/lib/cart/cart-repository';
 import { formatMinorUnitAmount } from '@/lib/catalog';
@@ -25,6 +26,10 @@ function statusMessageKey(status?: string): CustomerCopyKey | undefined {
 function quantityOptions(current: number) {
   const values = new Set([1, 2, 3, 4, 5, current]);
   return [...values].filter((value) => value > 0 && value <= 99).sort((a, b) => a - b);
+}
+
+function pendingLabel(label: string) {
+  return `${label}…`;
 }
 
 export default async function CartPage({ searchParams }: { searchParams: Promise<{ cart?: string }> }) {
@@ -83,6 +88,8 @@ export default async function CartPage({ searchParams }: { searchParams: Promise
               {items.map((item) => {
                 const unitPriceCents = item.variant?.priceCents ?? item.product.priceCents;
                 const lineTotal = unitPriceCents * item.quantity;
+                const updateLabel = copy('cart.update');
+                const removeLabel = copy('cart.remove');
                 return (
                   <article key={item.id} className="grid gap-4 rounded-[2rem] border border-rosewood/10 bg-white p-5 shadow-sm md:grid-cols-[140px_1fr]">
                     <div className="relative aspect-square overflow-hidden rounded-3xl bg-blush">
@@ -110,12 +117,20 @@ export default async function CartPage({ searchParams }: { searchParams: Promise
                               {quantityOptions(item.quantity).map((quantity) => <option key={quantity} value={quantity}>{quantity}</option>)}
                             </select>
                           </label>
-                          <button type="submit" className="rounded-full bg-rosewood px-4 py-2 text-xs font-semibold text-white outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30">{copy('cart.update')}</button>
+                          <StorefrontSubmitButton
+                            label={updateLabel}
+                            pendingLabel={pendingLabel(updateLabel)}
+                            className="rounded-full bg-rosewood px-4 py-2 text-xs font-semibold text-white outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30 disabled:cursor-wait disabled:bg-rosewood/60"
+                          />
                         </form>
                         <form action={removeCartItemAction}>
                           <input type="hidden" name="lineKey" value={item.lineKey} />
                           <input type="hidden" name="returnTo" value="/cart" />
-                          <button type="submit" className="rounded-full border border-rosewood/20 bg-white px-4 py-2 text-xs font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20">{copy('cart.remove')}</button>
+                          <StorefrontSubmitButton
+                            label={removeLabel}
+                            pendingLabel={pendingLabel(removeLabel)}
+                            className="rounded-full border border-rosewood/20 bg-white px-4 py-2 text-xs font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-wait disabled:text-rosewood/50"
+                          />
                         </form>
                       </div>
                     </div>
@@ -144,9 +159,11 @@ export default async function CartPage({ searchParams }: { searchParams: Promise
                 </Link>
                 <form action={clearCartAction}>
                   <input type="hidden" name="returnTo" value="/cart" />
-                  <button type="submit" className="w-full rounded-full border border-rosewood/20 px-6 py-3 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20">
-                    {copy('cart.clear')}
-                  </button>
+                  <StorefrontSubmitButton
+                    label={copy('cart.clear')}
+                    pendingLabel={pendingLabel(copy('cart.clear'))}
+                    className="w-full rounded-full border border-rosewood/20 px-6 py-3 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-wait disabled:text-rosewood/50"
+                  />
                 </form>
               </div>
             </aside>
