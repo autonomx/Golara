@@ -11,7 +11,7 @@ Status values:
 
 ## Current audit position
 
-The project has completed a broad hardening pass across authorization, session management, public API boundaries, public abuse controls, payment/order integrity, privacy, logging, media handling, input validation, browser headers, secrets, dependency scanning, incident-response documentation, production security deployment checklist coverage, and supporting production security policies. This roadmap reconciles the current security-audit status through PR #653 / main commit `71b2f36`.
+The project has completed a broad hardening pass across authorization, session management, public API boundaries, public abuse controls, payment/order integrity, privacy, logging, media handling, input validation, browser headers, secrets, dependency scanning, incident-response documentation, production security deployment checklist coverage, and supporting production security policies. This roadmap reconciles the current security-audit status through PR #655 / main commit `5b3c207`.
 
 The highest-risk remaining implementation work is now concentrated in future surface monitoring, production sign-off application, and operator/environment decisions that must be completed during release rather than in repository policy text.
 
@@ -94,6 +94,7 @@ The highest-risk remaining implementation work is now concentrated in future sur
 | Security roadmap reconciliation through #650 | **Fixed** | PR #651 reconciled roadmap status through public inquiry spam policy coverage. |
 | Media malware and metadata policy | **Fixed** | PR #652 adds launch decision guidance for media malware scanning, metadata stripping, accepted risk, evidence, and review cadence. |
 | Package integrity and license policy | **Fixed** | PR #653 adds production package review fields, license suitability, publisher/integrity review, lockfile review, exception handling, and review cadence. |
+| Admin route header smoke expansion | **Fixed** | PR #655 expands production-like route smoke coverage to unauthenticated admin overview, products, orders, and settings routes. |
 
 ## Remaining roadmap
 
@@ -296,7 +297,7 @@ Remaining work:
 ### Phase I — Browser/header deployment verification
 
 **Priority:** Medium  
-**Status:** Mostly fixed / policy remains  
+**Status:** Mostly fixed / monitor  
 **Goal:** ensure security headers are present in production-like responses, not only in config.
 
 Completed:
@@ -306,11 +307,12 @@ Completed:
 - Route smoke verifies required security headers on production-like responses.
 - Production deployment checklist now includes browser header and CSP verification.
 - CSP reporting and tightening policy now documents report-only, enforced-baseline, and tightening-required launch decisions.
+- Production-like route smoke now includes unauthenticated admin overview, products, orders, and settings routes to verify admin/storefront header parity coverage.
 
 Remaining work:
 
 1. Apply the CSP reporting/tightening policy during production deployment sign-off.
-2. Admin/storefront header parity verification beyond the existing smoke route set as routes expand.
+2. Continue expanding admin/storefront header parity coverage as new route families are added.
 
 ### Phase J — Dependency and supply-chain gate
 
@@ -340,7 +342,7 @@ Remaining work:
 Completed:
 
 - Roadmap reconciliations were added after major security-hardening waves.
-- This document is reconciled through PR #653 and main commit `71b2f36`.
+- This document is reconciled through PR #655 and main commit `5b3c207`.
 - A production security incident response runbook has been added.
 - A production security deployment checklist now references secrets, headers, provider webhooks, monitoring, backups, dependency policy, evidence, sign-off, media malware/metadata review, and package integrity/license review.
 - Public abuse throttling, CSP reporting/tightening, backup/restore, dependency advisory exception, release sign-off, production session lifetime, public inquiry spam, media malware/metadata, and package integrity/license policy docs have been added and linked from the checklist.
