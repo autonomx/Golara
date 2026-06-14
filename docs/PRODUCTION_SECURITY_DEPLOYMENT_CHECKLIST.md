@@ -67,4 +67,5 @@ Use this as a release gate checklist. Do not store raw secrets, customer PII, pr
 - [ ] Security audit roadmap is current for the release scope.
 - [ ] Incident response runbook and deployment checklist are linked from release notes or operator docs.
 - [ ] Open security risks are documented with an owner, severity, mitigation, and target date.
-- [ ] Release sign-off records only bounded evidence and never raw secrets, PII, OTPs, cookies, tokens, provider references, webhook bodies, or database dumps.
+- [ ] Release sign-off uses `docs/SECURITY_RELEASE_SIGNOFF_TEMPLATE.md` and records only bounded evidence.
+- [ ] Release sign-off records never include raw secrets, PII, OTPs, cookies, tokens, provider references, webhook bodies, or database dumps.
