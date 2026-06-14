@@ -49,6 +49,8 @@ jobs:
         run: npm run test:coverage > ci-results/13-test-coverage.log 2>&1
       - name: Build
         run: npm run build > ci-results/14-build.log 2>&1
+      - name: Storefront performance budget
+        run: npm run check:storefront-performance > ci-results/14b-storefront-performance.log 2>&1
       - name: Route smoke
         run: npm run smoke:routes:local > ci-results/15-smoke-routes-local.log 2>&1
       - name: Upload CI command logs
