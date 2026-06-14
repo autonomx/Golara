@@ -47,6 +47,7 @@ Use this as a release gate checklist. Start from `docs/PRODUCTION_SECURITY_OPERA
 - [ ] Alert destinations and escalation owners are documented.
 - [ ] Monitoring dashboards avoid raw PII, secrets, provider references, webhook payloads, and database dumps.
 - [ ] Incident response runbook links are visible to on-call operators.
+- [ ] Post-release first-hour and first-day monitoring uses `docs/PRODUCTION_SECURITY_POST_RELEASE_MONITORING.md` or an equivalent release tracker.
 
 ## 6. Backups and recovery
 

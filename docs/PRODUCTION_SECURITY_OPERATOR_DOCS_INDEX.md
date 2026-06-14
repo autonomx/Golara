@@ -12,6 +12,7 @@ Do not store raw secrets, customer PII, provider references, webhook bodies, dat
 | `docs/PRODUCTION_SECURITY_DEPLOYMENT_CHECKLIST.md` | Release-gate checklist for secrets, headers, payments, abuse controls, monitoring, backups, dependencies, evidence, and sign-off. |
 | `docs/SECURITY_RELEASE_SIGNOFF_TEMPLATE.md` | Final bounded sign-off record for release owner, security reviewer, risks, evidence, rollback, and approval. |
 | `docs/PRODUCTION_SECURITY_RELEASE_EVIDENCE_INDEX.md` | Bounded index of CI, deployment, policy, checklist, and post-release evidence links or summaries. |
+| `docs/PRODUCTION_SECURITY_POST_RELEASE_MONITORING.md` | First-hour/first-day post-release security monitoring, escalation triggers, and bounded monitoring evidence fields. |
 
 ## Policy decision documents
 
@@ -39,10 +40,11 @@ Do not store raw secrets, customer PII, provider references, webhook bodies, dat
 3. Record required policy decisions in the linked policy documents or an access-controlled release tracker.
 4. Collect bounded evidence in `docs/PRODUCTION_SECURITY_RELEASE_EVIDENCE_INDEX.md` or an equivalent access-controlled tracker.
 5. Complete `docs/SECURITY_RELEASE_SIGNOFF_TEMPLATE.md` after CI, deployment verification, and risk review are done.
-6. Keep `docs/SECURITY_INCIDENT_RESPONSE_RUNBOOK.md` visible to release and on-call operators.
+6. Use `docs/PRODUCTION_SECURITY_POST_RELEASE_MONITORING.md` for the first-hour and first-day post-release watch.
+7. Keep `docs/SECURITY_INCIDENT_RESPONSE_RUNBOOK.md` visible to release and on-call operators.
 
 ## Evidence hygiene
 
 Release notes and security records may include commit SHAs, PR numbers, CI run IDs, sanitized dashboard links, owner names, dates, and bounded summaries.
 
-Release notes and security records must not include secrets, raw customer data, provider references, webhook payloads, database dumps, OTPs, cookies, bearer tokens, session IDs, or raw production logs.
+Release notes and security records must not include secrets or raw production data.
