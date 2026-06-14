@@ -13,7 +13,9 @@ import {
 import {
   listBestSellerProducts,
   listProductsForCategorySlugs,
+  listPublicCategorySlugs,
   listPublicProductCountsByCategoryId,
+  listPublicProductSlugs,
   listPublicProducts,
   type PublicCatalogReadOptions,
   type PublicProductQueryOptions
@@ -145,6 +147,22 @@ export function listCachedPublicProductCountsByCategoryId() {
     ['product-counts-by-category-id'],
     [STOREFRONT_CATALOG_TAG, STOREFRONT_HOMEPAGE_TAG],
     listPublicProductCountsByCategoryId
+  );
+}
+
+export function listCachedPublicProductSlugs() {
+  return publicCache(
+    ['product-slugs-public'],
+    [STOREFRONT_CATALOG_TAG],
+    listPublicProductSlugs
+  );
+}
+
+export function listCachedPublicCategorySlugs() {
+  return publicCache(
+    ['category-slugs-public'],
+    [STOREFRONT_CATALOG_TAG],
+    listPublicCategorySlugs
   );
 }
 
