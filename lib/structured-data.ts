@@ -1,5 +1,6 @@
 import { createElement } from 'react';
 import type { Category, Product } from '@/lib/catalog';
+import { getStorefrontCloudinaryImage } from '@/lib/media/cloudinary-image';
 import { absoluteSiteUrl, siteMetadata } from '@/lib/site-metadata';
 
 function absoluteImageUrl(image: string) {
@@ -71,7 +72,7 @@ export function buildProductJsonLd(product: Product) {
     '@type': 'Product',
     name: product.title,
     description: product.description,
-    image: absoluteImageUrl(product.image),
+    image: absoluteImageUrl(getStorefrontCloudinaryImage(product.image, 'productDetail')),
     sku: product.code,
     brand: {
       '@type': 'Brand',
