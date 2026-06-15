@@ -58,5 +58,16 @@ export function runPaymentBrowserSmokeMatrixTests() {
   assert.doesNotMatch(source, /stripe\./i);
   assert.doesNotMatch(source, /zarinpal\./i);
 
+  const docs = readFileSync('docs/payment-browser-smoke-matrix.md', 'utf8');
+  for (const marker of [
+    'PAYMENT_BROWSER_SMOKE_TESTS_CONFIRMED="true"',
+    'Guest cart add/update/remove/clear/subtotal/count behavior.',
+    'Provider handoff idempotency',
+    'English LTR and Persian RTL payment/checkout/order copy',
+    'Do not set this flag based only on unit guards, source guards, documentation guards, or local static route checks.'
+  ]) {
+    assert.ok(docs.includes(marker), `Expected payment browser smoke docs to include: ${marker}`);
+  }
+
   console.log('payment-browser-smoke-matrix.test.ts passed');
 }
