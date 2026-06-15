@@ -29,6 +29,14 @@ The gates do **not** complete provider validation. They prevent future live paym
   - Direct runner entry for the monitoring matrix guard.
 - `docs/payment-production-monitoring-evidence.md`
   - Operator-facing evidence template for `PAYMENT_PRODUCTION_MONITORING_CONFIRMED="true"`.
+- `lib/checkout/payment-operation-state-transition-matrix.ts`
+  - Pure state-transition evidence matrix for provider-backed full refund, partial refund, void, failure, order/payment status, and inventory/capacity release behavior.
+- `tests/unit/payment-operation-state-transition-matrix.test.ts`
+  - Behavior/source guard for the transition matrix.
+- `tests/unit/payment-operation-state-transition-matrix-entry.test.ts`
+  - Direct runner entry for the transition matrix guard.
+- `docs/payment-operation-state-transition-evidence.md`
+  - Operator-facing evidence template for `PAYMENT_OPERATION_STATE_TRANSITIONS_CONFIRMED="true"`.
 - `lib/notifications/notification-delivery-persistence-matrix.ts`
   - Pure future delivery-attempt persistence matrix for notification fields, statuses, idempotency components, privacy controls, and evidence requirements.
 - `tests/unit/notification-delivery-persistence-matrix.test.ts`
@@ -56,6 +64,36 @@ When `PAYMENT_REFUND_VOID_EXECUTION_ENABLED="true"`, the checker requires:
 - `PAYMENT_REFUND_VOID_SMOKE_TESTS_CONFIRMED="true"`
 - `PAYMENT_OPERATION_STATE_TRANSITIONS_CONFIRMED="true"`
 - `PAYMENT_PRODUCTION_MONITORING_CONFIRMED="true"`
+
+`PAYMENT_OPERATION_STATE_TRANSITIONS_CONFIRMED="true"` should only be set after operators complete `docs/payment-operation-state-transition-evidence.md` for every required case in `lib/checkout/payment-operation-state-transition-matrix.ts`.
+
+Required cases include:
+
+- `full-refund-before-fulfillment`
+- `full-refund-after-fulfillment-started`
+- `partial-refund`
+- `void-before-fulfillment`
+- `void-after-fulfillment-started`
+- `provider-operation-failed`
+
+The transition matrix guards:
+
+- order status expectations,
+- payment status expectations,
+- inventory/capacity release expectations,
+- provider success/failure evidence requirements,
+- owner-only execution and idempotency requirements,
+- no state mutation before provider success,
+- no state mutation or release after provider failure,
+- no automatic release after fulfillment has started,
+- no inventory release for partial refunds,
+- no provider calls, no Prisma access, and no order/payment mutation SQL.
+
+Run the focused transition guard with:
+
+```bash
+npm run check:payment-operation-transitions
+```
 
 ### Live notification delivery
 
@@ -122,4 +160,4 @@ A blocked result exits with code `1` and prints the missing gate codes.
 
 `lib/deploy-readiness.ts` now imports `getPaymentProductionGateConfig` and `getPaymentProductionGates`, then converts returned payment production gates into production deploy blockers.
 
-CI/deploy wrappers can also call `npm run check:payment-production-gates`, `npm run check:payment-production-monitoring`, and `npm run check:notification-delivery-persistence` as focused checks.
+CI/deploy wrappers can also call `npm run check:payment-production-gates`, `npm run check:payment-production-monitoring`, `npm run check:payment-operation-transitions`, and `npm run check:notification-delivery-persistence` as focused checks.
