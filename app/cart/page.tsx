@@ -1,6 +1,6 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { clearCartAction, removeCartItemAction, updateCartItemAction } from '@/app/cart/actions';
+import { ProgressiveStorefrontImage } from '@/components/ProgressiveStorefrontImage';
 import { SiteHeader } from '@/components/SiteHeader';
 import { StorefrontSubmitButton } from '@/components/StorefrontSubmitButton';
 import { getCartTokenCookie } from '@/lib/cart/cart-cookie';
@@ -94,7 +94,7 @@ export default async function CartPage({ searchParams }: { searchParams: Promise
                 return (
                   <article key={item.id} className="grid gap-4 rounded-[2rem] border border-rosewood/10 bg-white p-5 shadow-sm md:grid-cols-[140px_1fr]">
                     <div className="relative aspect-square overflow-hidden rounded-3xl bg-blush">
-                      <Image src={getStorefrontCloudinaryImage(item.product.imageUrl, 'productCard')} alt={item.product.title} fill className="object-cover" sizes="140px" />
+                      <ProgressiveStorefrontImage src={getStorefrontCloudinaryImage(item.product.imageUrl, 'productCard')} alt={item.product.title} fill imageClassName="object-cover" sizes="140px" />
                     </div>
                     <div className="grid gap-4">
                       <div className="flex flex-wrap items-start justify-between gap-4">
