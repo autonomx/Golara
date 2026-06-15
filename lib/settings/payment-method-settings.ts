@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { recordAdminAuditLog } from '@/lib/admin-audit-log';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
 export const PAYMENT_METHOD_TYPES = ['gateway', 'wallet', 'installment', 'manual_transfer', 'cod'] as const;
@@ -26,6 +27,14 @@ export type PaymentMethodSetting = {
   sortOrder: number;
   metadata?: unknown;
   updatedAt?: Date;
+};
+
+export type PaymentMethodControlsInput = {
+  key: string;
+  isActive: boolean;
+  isDefault: boolean;
+  requiresManualReview: boolean;
+  sortOrder: number;
 };
 
 export const DEFAULT_DIGIKALA_PAYMENT_METHOD_SETTINGS: PaymentMethodSetting[] = [
@@ -116,6 +125,26 @@ function isMissingPaymentMethodSettingTable(error: unknown) {
   return message.includes('PaymentMethodSetting') && (message.includes('does not exist') || message.includes('42P01'));
 }
 
+function normalizeText(value?: string | null) {
+  const normalized = value?.trim().replace(/\s+/g, ' ');
+  return normalized || null;
+}
+
+function normalizePaymentMethodKey(value?: string | null) {
+  const normalized = normalizeText(value)?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return normalized || DEFAULT_DIGIKALA_PAYMENT_METHOD_SETTINGS[0].key;
+}
+
+function normalizeControlsInput(input: PaymentMethodControlsInput): PaymentMethodControlsInput {
+  return {
+    key: normalizePaymentMethodKey(input.key),
+    isActive: input.isActive,
+    isDefault: input.isDefault,
+    requiresManualReview: input.requiresManualReview,
+    sortOrder: Number.isFinite(input.sortOrder) ? Math.max(0, Math.round(input.sortOrder)) : 50
+  };
+}
+
 function normalizeMethodType(value: string): PaymentMethodType {
   return PAYMENT_METHOD_TYPES.includes(value as PaymentMethodType) ? value as PaymentMethodType : 'manual_transfer';
 }
@@ -182,6 +211,61 @@ export const paymentMethodSettingsService = {
       return rows.length ? rows.map(mapPaymentMethodSetting) : DEFAULT_DIGIKALA_PAYMENT_METHOD_SETTINGS;
     } catch (error) {
       if (isMissingPaymentMethodSettingTable(error)) return DEFAULT_DIGIKALA_PAYMENT_METHOD_SETTINGS;
+      throw error;
+    }
+  },
+
+  async updateControls(input: PaymentMethodControlsInput): Promise<PaymentMethodSetting> {
+    if (!hasDatabase()) throw new Error('DATABASE_URL is not configured.');
+
+    const normalized = normalizeControlsInput(input);
+    try {
+      if (normalized.isDefault) {
+        await prisma.$executeRaw`
+          UPDATE "PaymentMethodSetting"
+          SET "isDefault" = false, "updatedAt" = CURRENT_TIMESTAMP
+          WHERE "key" <> ${normalized.key}
+        `;
+      }
+
+      const rows = await prisma.$queryRaw<PaymentMethodRow[]>`
+        UPDATE "PaymentMethodSetting"
+        SET
+          "isActive" = ${normalized.isActive},
+          "isDefault" = ${normalized.isDefault},
+          "requiresManualReview" = ${normalized.requiresManualReview},
+          "sortOrder" = ${normalized.sortOrder},
+          "updatedAt" = CURRENT_TIMESTAMP
+        WHERE "key" = ${normalized.key}
+        RETURNING "id", "key", "label", "description", "methodType", "providerKey", "settlementMode", "captureMode", "currency", "isActive", "isDefault", "requiresManualReview", "sortOrder", "metadata", "updatedAt"
+      `;
+
+      if (!rows[0]) throw new Error(`Payment method setting not found: ${normalized.key}`);
+      const setting = mapPaymentMethodSetting(rows[0]);
+
+      await recordAdminAuditLog({
+        action: 'settings.payment_method.update',
+        entity: 'paymentMethodSetting',
+        entityId: setting.id,
+        summary: `Updated payment method setting: ${setting.label}`,
+        metadata: {
+          key: setting.key,
+          methodType: setting.methodType,
+          providerKey: setting.providerKey,
+          captureMode: setting.captureMode,
+          settlementMode: setting.settlementMode,
+          isActive: setting.isActive,
+          isDefault: setting.isDefault,
+          requiresManualReview: setting.requiresManualReview,
+          sortOrder: setting.sortOrder
+        }
+      });
+
+      return setting;
+    } catch (error) {
+      if (isMissingPaymentMethodSettingTable(error)) {
+        throw new Error('Payment method settings are not available until the PaymentMethodSetting table exists. Run the latest database schema setup before saving payment methods.');
+      }
       throw error;
     }
   }

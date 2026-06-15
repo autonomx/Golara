@@ -54,6 +54,7 @@
     "check:payment-method-settings": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/payment-method-settings.test.ts",
     "check:payment-method-checkout-selection": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/payment-method-checkout-selection.test.ts",
     "check:admin-payment-method-visibility": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/admin-payment-method-visibility.test.ts",
+    "check:payment-method-admin-controls": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/payment-method-admin-controls.test.ts",
     "check:secrets": "node tools/check-secrets.mjs",
     "check:storefront-performance": "node tools/check-storefront-performance-budget.mjs",
     "smoke:routes": "node tools/smoke-routes.mjs",
