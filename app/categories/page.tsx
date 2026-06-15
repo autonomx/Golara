@@ -18,10 +18,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function CategoriesPage() {
+  const directProductCountsPromise = listCachedPublicProductCountsByCategoryId();
   const locale = await resolveStorefrontLocale();
   const [categories, directProductCounts] = await Promise.all([
     listCachedCategories({ locale }),
-    listCachedPublicProductCountsByCategoryId()
+    directProductCountsPromise
   ]);
   const categoriesWithCounts = withCategoryCountsFromDirectCounts(categories, directProductCounts);
   const topLevelCategories = categoriesWithCounts.filter((category) => !category.parentSlug);
