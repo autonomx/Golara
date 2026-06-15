@@ -43,6 +43,7 @@
     "check:progressive-storefront-images": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/progressive-storefront-image-source.test.ts",
     "check:category-locale-fallback": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/category-locale-seed-fallback.test.ts",
     "check:admin-products-performance": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/admin-products-page-performance.test.ts",
+    "check:admin-route-data-scope": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/admin-route-data-scope.test.ts",
     "check:secrets": "node tools/check-secrets.mjs",
     "check:storefront-performance": "node tools/check-storefront-performance-budget.mjs",
     "smoke:routes": "node tools/smoke-routes.mjs",
