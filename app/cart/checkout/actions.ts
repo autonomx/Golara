@@ -19,6 +19,10 @@ function stringField(formData: FormData, name: string, fallback = '') {
   return value.trim();
 }
 
+function boundedStringField(formData: FormData, name: string, maxLength: number) {
+  return stringField(formData, name).slice(0, maxLength);
+}
+
 function checkoutPath(status: string) {
   return `/cart/checkout?checkout=${encodeURIComponent(status)}`;
 }
@@ -36,6 +40,17 @@ function deliveryWindowField(formData: FormData) {
   if (!value) return '';
   if (!/^\d{2}:\d{2}-\d{2}:\d{2}$/.test(value)) redirect(checkoutPath('delivery-window-invalid'));
   return value;
+}
+
+function manualTransferMetadata(formData: FormData, methodType: string) {
+  if (methodType !== 'manual_transfer') return {};
+  const manualPaymentReference = boundedStringField(formData, 'manualPaymentReference', 120);
+  const manualPaymentProofUrl = boundedStringField(formData, 'manualPaymentProofUrl', 240);
+  return {
+    ...(manualPaymentReference ? { manualPaymentReference } : {}),
+    ...(manualPaymentProofUrl ? { manualPaymentProofUrl } : {}),
+    manualPaymentInstructionsAcknowledged: true
+  };
 }
 
 export async function createCartCheckoutAction(formData: FormData) {
@@ -107,7 +122,10 @@ export async function createCartCheckoutAction(formData: FormData) {
       const attempt = await createCheckoutPaymentAttempt({
         orderId: order.id,
         provider: paymentMethodSelection.selection.provider,
-        metadata: checkoutPaymentMethodMetadata(paymentMethodSelection.selection)
+        metadata: {
+          ...checkoutPaymentMethodMetadata(paymentMethodSelection.selection),
+          ...manualTransferMetadata(formData, paymentMethodSelection.selection.methodType)
+        }
       });
       await completeCartCheckout(token);
       await clearCartTokenCookie();
