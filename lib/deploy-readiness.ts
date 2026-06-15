@@ -4,6 +4,7 @@ import { getMediaStorageReadiness } from '@/lib/media/media-storage-readiness';
 import { getInquiryNotificationConfig, getInquiryNotificationReadiness } from '@/lib/notifications/inquiry-notifications-core';
 import { getAppRuntimeMode, type AppRuntimeMode } from '@/lib/runtime-mode';
 import { getPaymentGatewayConfig, getPaymentGatewayReadiness } from '@/lib/checkout/payment-gateway-config';
+import { getPaymentProductionGateConfig, getPaymentProductionGates } from '@/lib/checkout/payment-production-gates';
 
 export type { DeployReadinessIssue, DeployReadinessSeverity } from '@/lib/deploy-readiness-types';
 
@@ -186,48 +187,56 @@ function validatePaymentReadiness(blockers: DeployReadinessIssue[], warnings: De
 
   if (paymentConfig.checkoutMode !== 'gateway') {
     warnings.push(...paymentReadiness.warnings);
-    return;
+  } else {
+    blockers.push(...paymentReadiness.blockers);
+    warnings.push(...paymentReadiness.warnings);
+
+    const providers = new Set(paymentReadiness.providers);
+    if (paymentConfig.overseasFallback === 'stripe') providers.add('stripe');
+
+    if (providers.has('stripe') && !hasEnv('STRIPE_WEBHOOK_SECRET')) {
+      pushIssue(blockers, {
+        code: 'stripe_webhook_secret_missing',
+        severity: 'blocker',
+        summary: 'STRIPE_WEBHOOK_SECRET is missing for gateway checkout.',
+        detail: 'Set the Stripe endpoint signing secret before accepting production Stripe webhook traffic.'
+      });
+    }
+
+    if (providers.has('zarinpal') && !hasEnv('ZARINPAL_WEBHOOK_SECRET')) {
+      pushIssue(blockers, {
+        code: 'zarinpal_webhook_secret_missing',
+        severity: 'blocker',
+        summary: 'ZARINPAL_WEBHOOK_SECRET is missing for gateway checkout.',
+        detail: 'Set the shared ZarinPal/Golara webhook HMAC secret before accepting production ZarinPal webhook traffic.'
+      });
+    }
+
+    if (!envFlag('PAYMENT_SETTLEMENT_MIGRATION_CONFIRMED')) {
+      pushIssue(blockers, {
+        code: 'payment_settlement_migration_unconfirmed',
+        severity: 'blocker',
+        summary: 'Payment settlement migration has not been confirmed.',
+        detail: 'Apply and verify prisma/migrations/20260604170000_add_payment_settlement_reconciliation before production gateway checkout.'
+      });
+    }
+
+    if (!envFlag('PAYMENT_WEBHOOK_SMOKE_TESTS_CONFIRMED')) {
+      pushIssue(blockers, {
+        code: 'payment_webhook_smoke_tests_unconfirmed',
+        severity: 'blocker',
+        summary: 'Payment webhook smoke tests have not been confirmed.',
+        detail: 'Run docs/production-roadmap-phase32-payment-webhook-smoke-tests.md against the target provider dashboards before production gateway checkout.'
+      });
+    }
   }
 
-  blockers.push(...paymentReadiness.blockers);
-  warnings.push(...paymentReadiness.warnings);
-
-  const providers = new Set(paymentReadiness.providers);
-  if (paymentConfig.overseasFallback === 'stripe') providers.add('stripe');
-
-  if (providers.has('stripe') && !hasEnv('STRIPE_WEBHOOK_SECRET')) {
+  for (const gate of getPaymentProductionGates(getPaymentProductionGateConfig(process.env))) {
     pushIssue(blockers, {
-      code: 'stripe_webhook_secret_missing',
+      code: gate.code,
       severity: 'blocker',
-      summary: 'STRIPE_WEBHOOK_SECRET is missing for gateway checkout.',
-      detail: 'Set the Stripe endpoint signing secret before accepting production Stripe webhook traffic.'
-    });
-  }
-
-  if (providers.has('zarinpal') && !hasEnv('ZARINPAL_WEBHOOK_SECRET')) {
-    pushIssue(blockers, {
-      code: 'zarinpal_webhook_secret_missing',
-      severity: 'blocker',
-      summary: 'ZARINPAL_WEBHOOK_SECRET is missing for gateway checkout.',
-      detail: 'Set the shared ZarinPal/Golara webhook HMAC secret before accepting production ZarinPal webhook traffic.'
-    });
-  }
-
-  if (!envFlag('PAYMENT_SETTLEMENT_MIGRATION_CONFIRMED')) {
-    pushIssue(blockers, {
-      code: 'payment_settlement_migration_unconfirmed',
-      severity: 'blocker',
-      summary: 'Payment settlement migration has not been confirmed.',
-      detail: 'Apply and verify prisma/migrations/20260604170000_add_payment_settlement_reconciliation before production gateway checkout.'
-    });
-  }
-
-  if (!envFlag('PAYMENT_WEBHOOK_SMOKE_TESTS_CONFIRMED')) {
-    pushIssue(blockers, {
-      code: 'payment_webhook_smoke_tests_unconfirmed',
-      severity: 'blocker',
-      summary: 'Payment webhook smoke tests have not been confirmed.',
-      detail: 'Run docs/production-roadmap-phase32-payment-webhook-smoke-tests.md against the target provider dashboards before production gateway checkout.'
+      summary: gate.summary,
+      detail: gate.detail
     });
   }
 }
