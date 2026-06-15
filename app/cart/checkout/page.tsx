@@ -20,7 +20,13 @@ function checkoutPaymentMethodCopy(locale?: string | null) {
       body: 'یکی از روش‌های فعال پرداخت را انتخاب کنید. گزینه‌های نیازمند بررسی دستی پس از ثبت سفارش توسط تیم گل‌آرا پیگیری می‌شوند.',
       manualReview: 'نیازمند بررسی دستی',
       online: 'پرداخت آنلاین',
-      noMethods: 'در حال حاضر روش پرداخت فعالی تعریف نشده است.'
+      noMethods: 'در حال حاضر روش پرداخت فعالی تعریف نشده است.',
+      transferTitle: 'راهنمای کارت‌به‌کارت یا انتقال بانکی',
+      transferBody: 'اگر پرداخت را پیش از ثبت سفارش انجام داده‌اید، شماره پیگیری یا لینک رسید را وارد کنید. در غیر این صورت سفارش ثبت می‌شود و تیم گل‌آرا اطلاعات پرداخت را برایتان ارسال می‌کند.',
+      transferReference: 'شماره پیگیری پرداخت (اختیاری)',
+      transferReferencePlaceholder: 'مثلاً 123456789',
+      transferProofUrl: 'لینک رسید پرداخت (اختیاری)',
+      transferProofUrlPlaceholder: 'https://...'
     };
   }
 
@@ -29,7 +35,13 @@ function checkoutPaymentMethodCopy(locale?: string | null) {
     body: 'Choose an enabled payment method. Manual-review options are followed up by the Golara team after order creation.',
     manualReview: 'Manual review required',
     online: 'Online capture',
-    noMethods: 'No active payment methods are currently configured.'
+    noMethods: 'No active payment methods are currently configured.',
+    transferTitle: 'Bank transfer or card-to-card instructions',
+    transferBody: 'If you already paid before placing the order, add the tracking/reference number or receipt link. Otherwise, the order is created and the Golara team will send payment instructions for manual review.',
+    transferReference: 'Payment tracking/reference number (optional)',
+    transferReferencePlaceholder: 'For example, 123456789',
+    transferProofUrl: 'Payment receipt link (optional)',
+    transferProofUrlPlaceholder: 'https://...'
   };
 }
 
@@ -149,6 +161,7 @@ export default async function CartCheckoutPage({ searchParams }: { searchParams:
                 <p className="text-sm leading-6 text-stone-700">{paymentCopy.body}</p>
                 {activePaymentMethods.length ? activePaymentMethods.map((method, index) => {
                   const notes = buildPaymentMethodReadinessNotes(method, process.env);
+                  const showManualTransferInstructions = method.methodType === 'manual_transfer';
                   return (
                     <label key={method.key} className="grid cursor-pointer gap-2 rounded-2xl border border-rosewood/10 bg-white p-4 text-sm text-stone-700 shadow-sm transition hover:border-rosewood/30 has-[:checked]:border-rosewood has-[:checked]:ring-4 has-[:checked]:ring-olive/15">
                       <span className="flex flex-wrap items-center gap-3">
@@ -158,6 +171,22 @@ export default async function CartCheckoutPage({ searchParams }: { searchParams:
                       </span>
                       {method.description ? <span className="leading-6">{method.description}</span> : null}
                       {notes.length ? <span className="text-xs leading-5 text-stone-500">{notes.join(' ')}</span> : null}
+                      {showManualTransferInstructions ? (
+                        <span className="grid gap-3 rounded-2xl border border-olive/20 bg-olive/5 p-4 text-sm text-stone-700">
+                          <span className="font-semibold text-olive">{paymentCopy.transferTitle}</span>
+                          <span className="leading-6">{paymentCopy.transferBody}</span>
+                          <span className="grid gap-3 md:grid-cols-2">
+                            <span className="grid gap-1 font-semibold text-rosewood">
+                              {paymentCopy.transferReference}
+                              <input name="manualPaymentReference" maxLength={120} placeholder={paymentCopy.transferReferencePlaceholder} className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 font-normal text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20" />
+                            </span>
+                            <span className="grid gap-1 font-semibold text-rosewood">
+                              {paymentCopy.transferProofUrl}
+                              <input name="manualPaymentProofUrl" type="url" maxLength={240} placeholder={paymentCopy.transferProofUrlPlaceholder} className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 font-normal text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20" />
+                            </span>
+                          </span>
+                        </span>
+                      ) : null}
                     </label>
                   );
                 }) : <p className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm font-semibold text-amber-900">{paymentCopy.noMethods}</p>}
