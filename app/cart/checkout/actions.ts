@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { clearCartTokenCookie, getCartTokenCookie } from '@/lib/cart/cart-cookie';
 import { claimCartForCheckout, completeCartCheckout, releaseCartCheckoutClaim } from '@/lib/cart/cart-repository';
 import { checkoutActionNextPath } from '@/lib/checkout/checkout-action-next-path';
+import { captureCustomerWalletCheckoutPayment } from '@/lib/checkout/customer-wallet-checkout-capture';
 import { checkoutPaymentMethodMetadata, resolveCheckoutPaymentMethodSelection } from '@/lib/checkout/payment-method-checkout-selection';
 import { createOrderDraft } from '@/lib/checkout/order-draft-repository';
 import { createCheckoutPaymentAttempt } from '@/lib/checkout/payment-provider';
@@ -127,10 +128,20 @@ export async function createCartCheckoutAction(formData: FormData) {
           ...manualTransferMetadata(formData, paymentMethodSelection.selection.methodType)
         }
       });
+      let paymentAttemptForRedirect = attempt;
+      if (paymentMethodSelection.selection.methodType === 'wallet') {
+        await captureCustomerWalletCheckoutPayment({
+          paymentAttemptId: attempt.id,
+          actorLabel: 'Wallet checkout',
+          actorRole: 'system',
+          note: 'Wallet balance captured during checkout.'
+        });
+        paymentAttemptForRedirect = { ...attempt, status: 'paid' };
+      }
       await completeCartCheckout(token);
       await clearCartTokenCookie();
       checkoutCompleted = true;
-      redirectTarget = checkoutActionNextPath(order, attempt);
+      redirectTarget = checkoutActionNextPath(order, paymentAttemptForRedirect);
     }
   } catch (error) {
     warnWithRedactedError('cart', 'failed to create checkout order', error);
