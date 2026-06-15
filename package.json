@@ -57,6 +57,7 @@
     "check:payment-method-admin-controls": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/payment-method-admin-controls.test.ts",
     "check:manual-transfer-checkout": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/manual-transfer-checkout-instructions.test.ts",
     "check:manual-transfer-verification": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/manual-transfer-verification-source.test.ts",
+    "check:customer-wallet-ledger": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/customer-wallet-ledger-source.test.ts",
     "check:secrets": "node tools/check-secrets.mjs",
     "check:storefront-performance": "node tools/check-storefront-performance-budget.mjs",
     "smoke:routes": "node tools/smoke-routes.mjs",
