@@ -1,4 +1,4 @@
-import { normalizeLocale, type SupportedLocale } from '@/lib/i18n/locales';
+import { fallbackLocaleOrder, normalizeLocale, type SupportedLocale } from '@/lib/i18n/locales';
 import { getLocalizedCategorySeedCopy } from '@/lib/localization/catalog-seed-fallback';
 
 export type TranslationLike = {
@@ -13,6 +13,17 @@ export type TranslationSelection<TTranslation extends TranslationLike, TBase> = 
   base: TBase;
   requestedLocale: SupportedLocale;
 };
+
+export function selectPublishedTranslation<TTranslation extends TranslationLike>(translations: TTranslation[], requestedLocale: string | undefined | null) {
+  const order = fallbackLocaleOrder(requestedLocale);
+
+  for (const locale of order) {
+    const translation = translations.find((item) => item.locale === locale && item.isPublished !== false);
+    if (translation) return { locale, translation };
+  }
+
+  return null;
+}
 
 export function selectPublishedTranslationForExactLocale<TTranslation extends TranslationLike>(translations: TTranslation[], requestedLocale: string | undefined | null) {
   const locale = normalizeLocale(requestedLocale);
