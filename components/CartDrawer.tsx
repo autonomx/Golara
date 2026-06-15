@@ -93,14 +93,14 @@ export function CartDrawer({
 
       {open ? (
         <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-labelledby={titleId} dir={direction}>
-          <button type="button" className="absolute inset-0 cursor-default bg-rosewood/30 backdrop-blur-[2px]" aria-label="Close cart drawer" onClick={() => setOpen(false)} />
+          <button type="button" className="absolute inset-0 cursor-default bg-rosewood/30 backdrop-blur-[2px]" aria-label={copy('cart.title')} onClick={() => setOpen(false)} />
           <aside className={`absolute top-0 flex h-full w-full max-w-md flex-col bg-cream shadow-2xl ${direction === 'rtl' ? 'left-0 border-r border-rosewood/10' : 'right-0 border-l border-rosewood/10'}`}>
             <div className="flex items-start justify-between gap-4 border-b border-rosewood/10 px-6 py-5">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.25em] text-olive">{copy('cart.eyebrow')}</p>
                 <h2 id={titleId} className="mt-1 font-display text-4xl text-rosewood">{copy('cart.title')}</h2>
               </div>
-              <button type="button" className="rounded-full p-2 text-rosewood outline-none transition hover:bg-white focus-visible:ring-4 focus-visible:ring-olive/20" aria-label="Close cart drawer" onClick={() => setOpen(false)}>
+              <button type="button" className="rounded-full p-2 text-rosewood outline-none transition hover:bg-white focus-visible:ring-4 focus-visible:ring-olive/20" aria-label={copy('cart.title')} onClick={() => setOpen(false)}>
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
