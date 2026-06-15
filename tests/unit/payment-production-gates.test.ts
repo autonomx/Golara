@@ -60,6 +60,18 @@ export function runPaymentProductionGatesTests() {
   assert.doesNotMatch(source, /fetch\s*\(/);
   assert.doesNotMatch(source, /prisma\./i);
 
+  const cli = readFileSync('tools/check-payment-production-gates.mjs', 'utf8');
+  assert.match(cli, /Payment production gates: blocked/);
+  assert.match(cli, /process\.exit\(1\)/);
+  assert.match(cli, /CHECKOUT_MODE/);
+  assert.match(cli, /PAYMENT_REFUND_VOID_EXECUTION_ENABLED/);
+  assert.match(cli, /NOTIFICATION_LIVE_DELIVERY_ENABLED/);
+  assert.doesNotMatch(cli, /fetch\s*\(/);
+  assert.doesNotMatch(cli, /prisma\./i);
+
+  const pkg = readFileSync('package.json', 'utf8');
+  assert.match(pkg, /"check:payment-production-gates": "node tools\/check-payment-production-gates\.mjs"/);
+
   const roadmap = readFileSync('docs/payment-readiness-implementation-roadmap.md', 'utf8');
   for (const fragment of [
     'Target-environment gateway validation',
