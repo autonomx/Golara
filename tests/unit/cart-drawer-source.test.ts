@@ -27,6 +27,13 @@ includes(drawerSource, 'aria-modal="true"', 'CartDrawer should be modal while op
 includes(drawerSource, "if (event.key === 'Escape') setOpen(false);", 'CartDrawer should close with Escape');
 includes(drawerSource, "document.body.style.overflow = 'hidden';", 'CartDrawer should lock body scroll while open');
 includes(drawerSource, "direction === 'rtl' ? 'left-0 border-r border-rosewood/10' : 'right-0 border-l border-rosewood/10'", 'CartDrawer should slide from the locale-appropriate side');
+includes(drawerSource, 'fixed inset-y-0', 'CartDrawer sidebar should cover the full viewport height');
+includes(drawerSource, 'h-dvh', 'CartDrawer should use dynamic viewport height for mobile browser chrome');
+includes(drawerSource, 'bg-[#fff8f1]', 'CartDrawer should keep an opaque sidebar surface instead of transparency');
+includes(drawerSource, 'transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]', 'CartDrawer should animate smoothly with transform transitions');
+includes(drawerSource, "open ? 'translate-x-0' : closedTransformClass", 'CartDrawer should animate between off-canvas and open states');
+includes(drawerSource, "open ? 'opacity-100' : 'opacity-0'", 'CartDrawer overlay should fade smoothly');
+excludes(drawerSource, 'bg-white/70', 'CartDrawer footer should not be translucent over page imagery');
 includes(drawerSource, "action={updateCartItemAction}", 'CartDrawer should allow quantity updates');
 includes(drawerSource, "action={removeCartItemAction}", 'CartDrawer should allow item removal');
 includes(drawerSource, "action={clearCartAction}", 'CartDrawer should allow clearing the cart');
