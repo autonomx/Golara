@@ -165,85 +165,44 @@ function moduleHeader(activeTab: AdminTab, activeNavKey: string, locale?: Suppor
     overview: { eyebrow: 'Admin / Overview', title: 'Operations overview', description: 'Readiness, audit activity, security posture, and staff access.' },
     products: { eyebrow: 'Admin / Catalog', title: 'Products', description: 'Manage product records, merchandising flags, pricing, and images.', action: { href: '#products', label: 'Create product' } },
     categories: { eyebrow: 'Admin / Catalog', title: 'Categories', description: 'Manage storefront categories and subcategories.', action: { href: '#categories', label: 'Create category' } },
-    media: { eyebrow: 'Admin / Catalog', title: 'Media library', description: 'Manage image uploads, URL media, category tags, and usage.', action: { href: '#media', label: 'Add image' } },
-    catalog: { eyebrow: 'Admin / Catalog', title: 'Catalog', description: 'Manage products, categories, subcategories, and media.', action: { href: '#products', label: 'Create product' } },
-    content: { eyebrow: 'Admin / Content', title: 'Content', description: 'Manage homepage content and localized storefront copy.' },
-    homepage: { eyebrow: 'Admin / Content', title: 'Homepage', description: 'Manage homepage hero copy and storefront calls to action.', action: { href: '#homepage', label: 'Edit homepage' } },
-    translations: { eyebrow: 'Admin / Content', title: 'Translations', description: 'Manage localized storefront content.' },
-    sales: { eyebrow: 'Admin / Sales', title: 'Sales operations', description: 'Review orders and customer inquiries.' },
-    orders: { eyebrow: 'Admin / Sales', title: 'Orders', description: 'Review checkout orders, fulfillment, payment status, and exports.', action: { href: '/admin/orders/print', label: 'Print orders' } },
-    'payment-settlement': { eyebrow: 'Admin / Payments', title: 'Payment settlement', description: 'Review provider webhook settlement status and reconciliation mismatches.' },
-    'payment-alerts': { eyebrow: 'Admin / Payments', title: 'Payment webhook alerts', description: 'Review payment webhook events that need operator attention or retry follow-up.' },
-    inquiries: { eyebrow: 'Admin / Sales', title: 'Inquiries', description: 'Review customer requests, assignments, follow-ups, and exports.', action: { href: '/admin/inquiries/print', label: 'Print inquiries' } },
-    customers: { eyebrow: 'Admin / Customer Ops', title: 'Customers', description: 'Review customer profiles, addresses, accounts, and order counts.' },
-    discounts: { eyebrow: 'Admin / Customer Ops', title: 'Discounts', description: 'Plan voucher, campaign, and gift-card workflows.' },
-    readiness: { eyebrow: 'Admin / System', title: 'Readiness', description: 'Review runtime, database, auth, checkout, and notification readiness.' },
-    audit: { eyebrow: 'Admin / System', title: 'Audit log', description: 'Review recent admin actions and filter by actor, entity, or action.' },
-    staff: { eyebrow: 'Admin / System', title: 'Staff access', description: 'Review staff access readiness and account assignments.' },
-    settings: { eyebrow: 'Admin / System', title: 'Settings', description: 'Group store, provider, delivery, and staff configuration.' }
+    media: { eyebrow: 'Admin / Catalog', title: 'Media library', description: 'Review, upload, and assign product/category media.', action: { href: '#media', label: 'Upload media' } },
+    homepage: { eyebrow: 'Admin / Content', title: 'Homepage', description: 'Edit the storefront hero and content blocks.' },
+    translations: { eyebrow: 'Admin / Content', title: 'Translations', description: 'Localize homepage, categories, and product copy.' },
+    orders: { eyebrow: 'Admin / Sales', title: 'Orders', description: 'Review checkout orders, payment state, fulfillment, and customer details.' },
+    inquiries: { eyebrow: 'Admin / Sales', title: 'Inquiries', description: 'Triage customer inquiries, follow-ups, assignments, and quote requests.' },
+    customers: { eyebrow: 'Admin / Customers', title: 'Customers', description: 'Review customer profiles, saved addresses, order history, and account activity.' },
+    discounts: { eyebrow: 'Admin / Discounts', title: 'Discounts', description: 'Plan and manage promotions, vouchers, campaigns, and gift-card work.' },
+    readiness: { eyebrow: 'Admin / System', title: 'Readiness', description: 'Review runtime configuration, auth posture, notifications, and checkout readiness.' },
+    audit: { eyebrow: 'Admin / System', title: 'Audit log', description: 'Track sensitive admin actions and operational changes.' },
+    staff: { eyebrow: 'Admin / System', title: 'Staff access', description: 'Review admin account readiness and owner-only access state.' },
+    settings: { eyebrow: 'Admin / Settings', title: 'Settings', description: 'Configure store settings, navigation, fulfillment, and provider options.' }
   };
   const fa: Record<string, AdminModuleHeader> = {
-    overview: { eyebrow: 'مدیریت / نمای کلی', title: 'نمای کلی عملیات', description: 'آمادگی، فعالیت ممیزی، وضعیت امنیتی و دسترسی تیم.' },
-    products: { eyebrow: 'مدیریت / کاتالوگ', title: 'محصولات', description: 'مدیریت رکوردهای محصول، پرچم‌های نمایش، قیمت‌گذاری و تصاویر.', action: { href: '#products', label: 'ایجاد محصول' } },
+    overview: { eyebrow: 'مدیریت / نمای کلی', title: 'نمای عملیات', description: 'آمادگی، فعالیت ممیزی، وضعیت امنیت و دسترسی تیم.' },
+    products: { eyebrow: 'مدیریت / کاتالوگ', title: 'محصولات', description: 'مدیریت رکوردهای محصول، پرچم‌های فروش، قیمت‌گذاری و تصاویر.', action: { href: '#products', label: 'ایجاد محصول' } },
     categories: { eyebrow: 'مدیریت / کاتالوگ', title: 'دسته‌بندی‌ها', description: 'مدیریت دسته‌بندی‌ها و زیرمجموعه‌های فروشگاه.', action: { href: '#categories', label: 'ایجاد دسته‌بندی' } },
-    media: { eyebrow: 'مدیریت / کاتالوگ', title: 'کتابخانه رسانه', description: 'مدیریت تصاویر، رسانه‌های نشانی‌دار، برچسب‌های دسته و کاربردها.', action: { href: '#media', label: 'افزودن تصویر' } },
-    catalog: { eyebrow: 'مدیریت / کاتالوگ', title: 'کاتالوگ', description: 'مدیریت محصولات، دسته‌بندی‌ها، زیرمجموعه‌ها و رسانه‌ها.', action: { href: '#products', label: 'ایجاد محصول' } },
-    content: { eyebrow: 'مدیریت / محتوا', title: 'محتوا', description: 'مدیریت محتوای صفحه اصلی و متن‌های محلی‌سازی‌شده فروشگاه.' },
-    homepage: { eyebrow: 'مدیریت / محتوا', title: 'صفحه اصلی', description: 'مدیریت متن هیرو و دکمه‌های صفحه اصلی.', action: { href: '#homepage', label: 'ویرایش صفحه اصلی' } },
-    translations: { eyebrow: 'مدیریت / محتوا', title: 'ترجمه‌ها', description: 'مدیریت محتوای محلی‌سازی‌شده فروشگاه.' },
-    sales: { eyebrow: 'مدیریت / فروش', title: 'عملیات فروش', description: 'بررسی سفارش‌ها و درخواست‌های مشتریان.' },
-    orders: { eyebrow: 'مدیریت / فروش', title: 'سفارش‌ها', description: 'بررسی سفارش‌ها، ارسال، وضعیت پرداخت و خروجی‌ها.', action: { href: '/admin/orders/print', label: 'چاپ سفارش‌ها' } },
-    'payment-settlement': { eyebrow: 'مدیریت / پرداخت', title: 'تسویه پرداخت', description: 'بررسی وضعیت تسویه وبهوک‌ها و مغایرت‌های تطبیق.' },
-    'payment-alerts': { eyebrow: 'مدیریت / پرداخت', title: 'هشدارهای وبهوک پرداخت', description: 'بررسی رویدادهای پرداخت نیازمند پیگیری یا تلاش دوباره.' },
-    inquiries: { eyebrow: 'مدیریت / فروش', title: 'درخواست‌ها', description: 'بررسی درخواست‌های مشتری، تخصیص‌ها، پیگیری‌ها و خروجی‌ها.', action: { href: '/admin/inquiries/print', label: 'چاپ درخواست‌ها' } },
-    customers: { eyebrow: 'مدیریت / عملیات مشتری', title: 'مشتریان', description: 'بررسی پروفایل‌ها، نشانی‌ها، حساب‌ها و تعداد سفارش‌ها.' },
-    discounts: { eyebrow: 'مدیریت / عملیات مشتری', title: 'تخفیف‌ها', description: 'برنامه‌ریزی کوپن، کمپین و کارت هدیه.' },
-    readiness: { eyebrow: 'مدیریت / سیستم', title: 'آمادگی', description: 'بررسی آمادگی اجرا، پایگاه داده، احراز هویت، پرداخت و اعلان‌ها.' },
-    audit: { eyebrow: 'مدیریت / سیستم', title: 'گزارش ممیزی', description: 'بررسی اقدامات اخیر مدیریت و فیلتر بر اساس کاربر، موجودیت یا عملیات.' },
-    staff: { eyebrow: 'مدیریت / سیستم', title: 'دسترسی تیم', description: 'بررسی آمادگی دسترسی تیم و تخصیص حساب‌ها.' },
-    settings: { eyebrow: 'مدیریت / سیستم', title: 'تنظیمات', description: 'گروه‌بندی تنظیمات فروشگاه، ارائه‌دهندگان، تحویل و تیم.' }
+    media: { eyebrow: 'مدیریت / کاتالوگ', title: 'کتابخانه رسانه', description: 'بررسی، بارگذاری و اتصال رسانه به محصول یا دسته‌بندی.', action: { href: '#media', label: 'بارگذاری رسانه' } },
+    homepage: { eyebrow: 'مدیریت / محتوا', title: 'صفحه اصلی', description: 'ویرایش هیرو و بلوک‌های محتوایی فروشگاه.' },
+    translations: { eyebrow: 'مدیریت / محتوا', title: 'ترجمه‌ها', description: 'محلی‌سازی متن صفحه اصلی، دسته‌بندی‌ها و محصولات.' },
+    orders: { eyebrow: 'مدیریت / فروش', title: 'سفارش‌ها', description: 'بررسی سفارش‌های پرداخت، وضعیت پرداخت، انجام سفارش و اطلاعات مشتری.' },
+    inquiries: { eyebrow: 'مدیریت / فروش', title: 'درخواست‌ها', description: 'رسیدگی به درخواست‌ها، پیگیری‌ها، ارجاع‌ها و درخواست‌های قیمت.' },
+    customers: { eyebrow: 'مدیریت / مشتریان', title: 'مشتریان', description: 'بررسی پروفایل‌ها، نشانی‌های ذخیره‌شده، تاریخچه سفارش و فعالیت حساب.' },
+    discounts: { eyebrow: 'مدیریت / تخفیف‌ها', title: 'تخفیف‌ها', description: 'برنامه‌ریزی و مدیریت پروموشن‌ها، کوپن‌ها، کمپین‌ها و کارت هدیه.' },
+    readiness: { eyebrow: 'مدیریت / سیستم', title: 'آمادگی', description: 'بررسی پیکربندی اجرا، احراز هویت، اعلان‌ها و آمادگی پرداخت.' },
+    audit: { eyebrow: 'مدیریت / سیستم', title: 'گزارش ممیزی', description: 'ردیابی اقدامات حساس مدیریت و تغییرات عملیاتی.' },
+    staff: { eyebrow: 'مدیریت / سیستم', title: 'دسترسی تیم', description: 'بررسی آمادگی حساب‌های مدیریت و وضعیت دسترسی مالک.' },
+    settings: { eyebrow: 'مدیریت / تنظیمات', title: 'تنظیمات', description: 'پیکربندی تنظیمات فروشگاه، ناوبری، انجام سفارش و ارائه‌دهندگان.' }
   };
-  const headers = adminLocale(locale) === 'fa' ? fa : en;
-  return headers[activeNavKey] ?? headers[activeTab] ?? headers.overview;
+  return (adminLocale(locale) === 'fa' ? fa : en)[activeNavKey] ?? (adminLocale(locale) === 'fa' ? fa : en)[activeTab] ?? en.overview;
 }
 
 function AdminModuleHeader({ header }: { header: AdminModuleHeader }) {
-  return (
-    <section className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">{header.eyebrow}</p>
-          <h2 className="mt-1 text-2xl font-bold text-stone-950">{header.title}</h2>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">{header.description}</p>
-        </div>
-        {header.action ? <Link href={header.action.href} className="rounded-md bg-rosewood px-4 py-2 text-sm font-semibold text-white">{header.action.label}</Link> : null}
-      </div>
-    </section>
-  );
+  return <section className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm"><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-rosewood">{header.eyebrow}</p><h2 className="mt-2 text-2xl font-bold text-stone-950">{header.title}</h2><p className="mt-1 max-w-3xl text-sm text-stone-600">{header.description}</p></div>{header.action ? <Link href={header.action.href} className="rounded-full bg-rosewood px-5 py-2.5 text-sm font-semibold text-white shadow-sm">{header.action.label}</Link> : null}</div></section>;
 }
 
-function Field({ label, name, defaultValue, placeholder, disabled = false }: { label: string; name: string; defaultValue?: string; placeholder?: string; disabled?: boolean }) {
-  return <label className="grid gap-2 text-sm font-semibold text-rosewood">{label}<input className={inputClass} name={name} defaultValue={defaultValue} placeholder={placeholder} disabled={disabled} required /></label>;
-}
-
-function TextArea({ label, name, defaultValue, disabled = false }: { label: string; name: string; defaultValue?: string; disabled?: boolean }) {
-  return <label className="grid gap-2 text-sm font-semibold text-rosewood">{label}<textarea className={textAreaClass} name={name} defaultValue={defaultValue} disabled={disabled} required /></label>;
-}
-
-function AdminHomepageContentPanel({ homepage, disabled, locale }: { homepage: HomepageContent; disabled: boolean; locale?: SupportedLocale }) {
+function AdminHomepageContentPanel({ homepage, disabled, locale }: { homepage: HomepageContent; disabled: boolean; locale: SupportedLocale }) {
   const copy = adminCopy(locale).homepageForm;
-  return (
-    <section id="homepage" className={panelClass}>
-      <div className="mb-6"><p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">{copy.eyebrow}</p><h2 className="mt-2 font-display text-4xl text-rosewood">{copy.title}</h2></div>
-      <form action={updateHomepageAction} className="grid gap-4">
-        <div className="grid gap-4 md:grid-cols-2"><Field label={copy.eyebrowField} name="eyebrow" defaultValue={homepage.eyebrow} disabled={disabled} /><Field label={copy.titleField} name="title" defaultValue={homepage.title} disabled={disabled} /></div>
-        <TextArea label={copy.body} name="body" defaultValue={homepage.body} disabled={disabled} />
-        <div className="grid gap-4 md:grid-cols-2"><Field label={copy.primaryLabel} name="primaryCtaLabel" defaultValue={homepage.primaryCtaLabel} disabled={disabled} /><Field label={copy.primaryUrl} name="primaryCtaHref" defaultValue={homepage.primaryCtaHref} disabled={disabled} /><Field label={copy.secondaryLabel} name="secondaryCtaLabel" defaultValue={homepage.secondaryCtaLabel} disabled={disabled} /><Field label={copy.secondaryUrl} name="secondaryCtaHref" defaultValue={homepage.secondaryCtaHref} disabled={disabled} /><Field label={copy.panelEyebrow} name="panelEyebrow" defaultValue={homepage.panelEyebrow} disabled={disabled} /><Field label={copy.panelTitle} name="panelTitle" defaultValue={homepage.panelTitle} disabled={disabled} /></div>
-        <TextArea label={copy.panelBody} name="panelBody" defaultValue={homepage.panelBody} disabled={disabled} />
-        <button className={primaryButtonClass} type="submit" disabled={disabled}>{copy.save}</button>
-      </form>
-    </section>
-  );
+  return <section id="homepage" className={panelClass}><form action={updateHomepageAction} className="grid gap-4"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-rosewood">{copy.eyebrow}</p><h3 className="text-xl font-bold text-stone-950">{copy.title}</h3></div><label className="grid gap-1 text-sm font-semibold text-stone-700">{copy.eyebrowField}<input name="eyebrow" defaultValue={homepage.eyebrow} disabled={disabled} className={inputClass} /></label><label className="grid gap-1 text-sm font-semibold text-stone-700">{copy.titleField}<input name="title" defaultValue={homepage.title} disabled={disabled} className={inputClass} /></label><label className="grid gap-1 text-sm font-semibold text-stone-700">{copy.body}<textarea name="body" defaultValue={homepage.body} disabled={disabled} className={textAreaClass} /></label><div className="grid gap-4 md:grid-cols-2"><label className="grid gap-1 text-sm font-semibold text-stone-700">{copy.primaryLabel}<input name="primaryLabel" defaultValue={homepage.primaryLabel} disabled={disabled} className={inputClass} /></label><label className="grid gap-1 text-sm font-semibold text-stone-700">{copy.primaryUrl}<input name="primaryUrl" defaultValue={homepage.primaryUrl} disabled={disabled} className={inputClass} /></label><label className="grid gap-1 text-sm font-semibold text-stone-700">{copy.secondaryLabel}<input name="secondaryLabel" defaultValue={homepage.secondaryLabel} disabled={disabled} className={inputClass} /></label><label className="grid gap-1 text-sm font-semibold text-stone-700">{copy.secondaryUrl}<input name="secondaryUrl" defaultValue={homepage.secondaryUrl} disabled={disabled} className={inputClass} /></label></div><div className="grid gap-4 md:grid-cols-3"><label className="grid gap-1 text-sm font-semibold text-stone-700">{copy.panelEyebrow}<input name="panelEyebrow" defaultValue={homepage.panelEyebrow} disabled={disabled} className={inputClass} /></label><label className="grid gap-1 text-sm font-semibold text-stone-700">{copy.panelTitle}<input name="panelTitle" defaultValue={homepage.panelTitle} disabled={disabled} className={inputClass} /></label><label className="grid gap-1 text-sm font-semibold text-stone-700">{copy.panelBody}<input name="panelBody" defaultValue={homepage.panelBody} disabled={disabled} className={inputClass} /></label></div><button type="submit" disabled={disabled} className={primaryButtonClass}>{copy.save}</button></form></section>;
 }
 
 const sidebarSections = [
@@ -338,8 +297,9 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
   const adminIdentity = authenticated ? await getAdminIdentity() : undefined;
   const canViewStaffReadiness = adminIdentity?.role === 'owner';
   const needsSettingsReads = activeTab === 'settings';
+  const needsCustomerReads = activeTab === 'customers';
   const [categories, products, productTypes, homepage, homepageTranslations, media, inquiryPageData, assignmentSourceInquiries, inquiryCounts, auditLogs, orderRevenueSummary, orderPageData, authEventSummary, adminAccounts, adminCustomers, fulfillmentMethods] = await Promise.all([
-    listAdminCategories(), listAdminProducts(), listAdminProductTypes(), getHomepageContent(), authenticated ? listHomepageTranslations() : Promise.resolve([]), listMedia(), listInquiryPage(inquiryStatus, inquiryPageNumber, undefined, inquirySearch), listInquiries(inquiryStatus, inquirySearch), listInquiryStatusCounts(inquirySearch), authenticated ? listAdminAuditLogs(auditFilters) : Promise.resolve([]), authenticated ? orderRevenueSummaryService.summary() : Promise.resolve(EMPTY_ORDER_REVENUE_SUMMARY), authenticated ? listAdminCheckoutOrderPage(orderFilters, parsePage(orderPage)) : Promise.resolve({ orders: [], page: 1, pageSize: 12, totalCount: 0, totalPages: 1 }), authenticated ? getCustomerAuthEventSummary() : getCustomerAuthEventSummary(1), canViewStaffReadiness ? listAdminAccountReadinessRecords() : Promise.resolve([]), authenticated ? listAdminCustomers() : Promise.resolve([]), needsSettingsReads && authenticated ? listAdminFulfillmentMethodSettings() : Promise.resolve([])
+    listAdminCategories(), listAdminProducts(), listAdminProductTypes(), getHomepageContent(), authenticated ? listHomepageTranslations() : Promise.resolve([]), listMedia(), listInquiryPage(inquiryStatus, inquiryPageNumber, undefined, inquirySearch), listInquiries(inquiryStatus, inquirySearch), listInquiryStatusCounts(inquirySearch), authenticated ? listAdminAuditLogs(auditFilters) : Promise.resolve([]), authenticated ? orderRevenueSummaryService.summary() : Promise.resolve(EMPTY_ORDER_REVENUE_SUMMARY), authenticated ? listAdminCheckoutOrderPage(orderFilters, parsePage(orderPage)) : Promise.resolve({ orders: [], page: 1, pageSize: 12, totalCount: 0, totalPages: 1 }), authenticated ? getCustomerAuthEventSummary() : getCustomerAuthEventSummary(1), canViewStaffReadiness ? listAdminAccountReadinessRecords() : Promise.resolve([]), needsCustomerReads && authenticated ? listAdminCustomers() : Promise.resolve([]), needsSettingsReads && authenticated ? listAdminFulfillmentMethodSettings() : Promise.resolve([])
   ]);
   const [storefrontNavigationMenu, storeSetting] = await Promise.all([
     needsSettingsReads ? storefrontNavigationMenuService.get() : Promise.resolve(DEFAULT_STOREFRONT_NAVIGATION_MENU),
