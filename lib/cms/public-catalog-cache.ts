@@ -42,6 +42,10 @@ function localeKey(locale?: string | null) {
   return locale?.trim() || 'default';
 }
 
+function slugKey(slug: string) {
+  return slug.trim();
+}
+
 function takeKey(take?: number) {
   const numericTake = Number(take);
   if (!numericTake || !Number.isFinite(numericTake)) return 'default';
@@ -92,9 +96,10 @@ export function listCachedHomepageCategories(options: PublicCatalogReadOptions =
 
 export function getCachedCategoryBySlug(slug: string, options: PublicCatalogReadOptions = {}) {
   const locale = localeKey(options.locale);
+  const categorySlug = slugKey(slug);
   return publicCache(
-    ['category-by-slug', locale, slug],
-    [STOREFRONT_CATALOG_TAG, `storefront-category:${slug}`],
+    ['category-by-slug', locale, categorySlug],
+    [STOREFRONT_CATALOG_TAG, `storefront-category:${categorySlug}`],
     () => getCategoryBySlug(slug, { locale: options.locale })
   );
 }
@@ -161,9 +166,10 @@ export function listCachedPublicCategorySlugs() {
 
 export function getCachedProductBySlug(slug: string, options: PublicCatalogReadOptions = {}) {
   const locale = localeKey(options.locale);
+  const productSlug = slugKey(slug);
   return publicCache(
-    ['product-by-slug', locale, slug],
-    [STOREFRONT_CATALOG_TAG, `storefront-product:${slug}`],
+    ['product-by-slug', locale, productSlug],
+    [STOREFRONT_CATALOG_TAG, `storefront-product:${productSlug}`],
     () => getProductBySlug(slug, { locale: options.locale })
   );
 }
