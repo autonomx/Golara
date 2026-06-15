@@ -29,6 +29,12 @@ The gates do **not** complete provider validation. They prevent future live paym
   - Direct runner entry for the monitoring matrix guard.
 - `docs/payment-production-monitoring-evidence.md`
   - Operator-facing evidence template for `PAYMENT_PRODUCTION_MONITORING_CONFIRMED="true"`.
+- `lib/notifications/notification-delivery-persistence-matrix.ts`
+  - Pure future delivery-attempt persistence matrix for notification fields, statuses, idempotency components, privacy controls, and evidence requirements.
+- `tests/unit/notification-delivery-persistence-matrix.test.ts`
+  - Behavior/source guard for the notification persistence matrix.
+- `tests/unit/notification-delivery-persistence-matrix-entry.test.ts`
+  - Direct runner entry for the notification persistence matrix guard.
 
 ## Gate groups
 
@@ -59,6 +65,24 @@ When `NOTIFICATION_LIVE_DELIVERY_ENABLED="true"`, the checker requires:
 - `NOTIFICATION_SMOKE_TESTS_CONFIRMED="true"`
 - `NOTIFICATION_DELIVERY_PERSISTENCE_CONFIRMED="true"`
 - `PAYMENT_PRODUCTION_MONITORING_CONFIRMED="true"`
+
+`NOTIFICATION_DELIVERY_PERSISTENCE_CONFIRMED="true"` should only be set after operators have a reviewed delivery-attempt persistence design or migration evidence matching `lib/notifications/notification-delivery-persistence-matrix.ts` and the existing Phase 34 persistence planning document.
+
+The persistence matrix guards:
+
+- required delivery-attempt fields,
+- provider-neutral lifecycle statuses,
+- idempotency key components,
+- privacy/minimization controls,
+- worker/retry boundary evidence,
+- suppression, opt-out, retention, and privacy-request evidence,
+- no live provider calls, no Prisma access, and no admin send/retry controls.
+
+Run the focused notification persistence guard with:
+
+```bash
+npm run check:notification-delivery-persistence
+```
 
 ### Production monitoring confirmation
 
@@ -98,4 +122,4 @@ A blocked result exits with code `1` and prints the missing gate codes.
 
 `lib/deploy-readiness.ts` now imports `getPaymentProductionGateConfig` and `getPaymentProductionGates`, then converts returned payment production gates into production deploy blockers.
 
-CI/deploy wrappers can also call `npm run check:payment-production-gates` and `npm run check:payment-production-monitoring` as focused checks.
+CI/deploy wrappers can also call `npm run check:payment-production-gates`, `npm run check:payment-production-monitoring`, and `npm run check:notification-delivery-persistence` as focused checks.
