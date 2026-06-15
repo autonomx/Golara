@@ -40,6 +40,7 @@
     "check:payment-operation-transitions": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/payment-operation-state-transition-matrix-entry.test.ts",
     "check:notification-delivery-persistence": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/notification-delivery-persistence-matrix-entry.test.ts",
     "check:cart-drawer": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/cart-drawer-source.test.ts",
+    "check:progressive-storefront-images": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/progressive-storefront-image-source.test.ts",
     "check:secrets": "node tools/check-secrets.mjs",
     "check:storefront-performance": "node tools/check-storefront-performance-budget.mjs",
     "smoke:routes": "node tools/smoke-routes.mjs",
