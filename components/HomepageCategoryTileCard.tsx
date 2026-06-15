@@ -58,23 +58,24 @@ export function HomepageCategoryTileCard({ category, priority = false, locale }:
         imageClassName="object-cover object-[68%_center] transition duration-500 group-hover:scale-[1.02] md:object-[72%_center]"
         sizes="(min-width: 1280px) 40vw, (min-width: 768px) 50vw, 100vw"
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-stone-100/95 via-stone-100/72 to-transparent" />
-      <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-rosewood/25 to-transparent" />
+      <div className={`absolute inset-0 ${isFa ? 'bg-gradient-to-l from-stone-100/98 via-stone-100/82 to-stone-100/20' : 'bg-gradient-to-r from-stone-100/98 via-stone-100/82 to-stone-100/20'}`} />
+      <div className={`absolute inset-y-0 ${isFa ? 'right-0' : 'left-0'} w-[68%] bg-stone-100/45 blur-3xl`} />
+      <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-rosewood/28 to-transparent" />
       <div
         className={`absolute inset-y-0 flex w-full items-center px-5 py-6 sm:px-7 md:w-[52%] md:max-w-[24rem] ${
           isFa ? 'right-0 md:pl-0 md:pr-8' : 'left-0 md:pl-8 md:pr-0'
         }`}
       >
         <div
-          className="rounded-3xl border border-white/70 bg-stone-50/92 p-5 text-stone-700 shadow-[0_20px_50px_rgba(54,35,26,0.16)] backdrop-blur-sm transition group-hover:bg-white/95 sm:p-6"
+          className="rounded-3xl border border-white/85 bg-[#fffaf4]/98 p-5 text-stone-800 shadow-[0_24px_60px_rgba(54,35,26,0.22)] ring-1 ring-rosewood/8 backdrop-blur-md transition group-hover:bg-white sm:p-6"
           dir={isFa ? 'rtl' : 'ltr'}
         >
-          <p className="inline-flex rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-olive shadow-sm">
+          <p className="inline-flex rounded-full bg-white/95 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-olive shadow-sm ring-1 ring-olive/10">
             {category.eyebrow || (isFa ? 'مناسبت' : 'Occasion')}
           </p>
-          <h3 className="mt-4 line-clamp-2 font-display text-3xl leading-tight text-rosewood sm:text-4xl">{displayTitle}</h3>
-          <p className="mt-3 line-clamp-3 text-sm leading-6 text-stone-600">{category.description}</p>
-          <div className="mt-5 inline-flex rounded-full border border-rosewood/15 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-rosewood shadow-sm">
+          <h3 className="mt-4 line-clamp-2 font-display text-3xl leading-tight text-rosewood drop-shadow-[0_1px_0_rgba(255,255,255,0.65)] sm:text-4xl">{displayTitle}</h3>
+          <p className="mt-3 line-clamp-3 text-sm font-medium leading-6 text-stone-700">{category.description}</p>
+          <div className="mt-5 inline-flex rounded-full border border-rosewood/20 bg-white/95 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-rosewood shadow-sm ring-1 ring-white/70">
             {productCountLabel(category.productCount, locale)}
           </div>
         </div>
