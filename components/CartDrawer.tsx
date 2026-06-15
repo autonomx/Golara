@@ -1,11 +1,11 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useId, useState } from 'react';
 import { ShoppingBag, X } from 'lucide-react';
 import { clearCartAction, removeCartItemAction, updateCartItemAction } from '@/app/cart/actions';
+import { ProgressiveStorefrontImage } from '@/components/ProgressiveStorefrontImage';
 import { StorefrontSubmitButton } from '@/components/StorefrontSubmitButton';
 import { getCustomerCopy, getCustomerCopyDirection } from '@/lib/localization/customer-copy';
 
@@ -148,7 +148,7 @@ export function CartDrawer({
                     return (
                       <article key={item.id} className="grid grid-cols-[88px_1fr] gap-4 rounded-[1.5rem] border border-rosewood/10 bg-white p-3 shadow-sm">
                         <Link href={`/products/${item.productSlug}`} className="relative aspect-square overflow-hidden rounded-2xl bg-blush outline-none focus-visible:ring-4 focus-visible:ring-olive/20" onClick={closeDrawer}>
-                          <Image src={item.imageUrl} alt={item.productTitle} fill className="object-cover" sizes="88px" />
+                          <ProgressiveStorefrontImage src={item.imageUrl} alt={item.productTitle} fill imageClassName="object-cover" sizes="88px" />
                         </Link>
                         <div className="min-w-0">
                           <div className="flex items-start justify-between gap-3">
