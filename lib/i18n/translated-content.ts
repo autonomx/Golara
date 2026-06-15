@@ -1,4 +1,4 @@
-import { fallbackLocaleOrder, type SupportedLocale } from '@/lib/i18n/locales';
+import { fallbackLocaleOrder, normalizeLocale, type SupportedLocale } from '@/lib/i18n/locales';
 
 export type TranslationLike = {
   locale: string;
@@ -24,13 +24,19 @@ export function selectPublishedTranslation<TTranslation extends TranslationLike>
   return null;
 }
 
+export function selectPublishedTranslationForExactLocale<TTranslation extends TranslationLike>(translations: TTranslation[], requestedLocale: string | undefined | null) {
+  const locale = normalizeLocale(requestedLocale);
+  const translation = translations.find((item) => item.locale === locale && item.isPublished !== false);
+  return translation ? { locale, translation } : null;
+}
+
 export function selectTranslatedContent<TTranslation extends TranslationLike, TBase>(input: {
   translations?: TTranslation[] | null;
   base: TBase;
   requestedLocale?: string | null;
 }): TranslationSelection<TTranslation, TBase> {
-  const requestedLocale = fallbackLocaleOrder(input.requestedLocale)[0];
-  const selected = selectPublishedTranslation(input.translations ?? [], requestedLocale);
+  const requestedLocale = normalizeLocale(input.requestedLocale);
+  const selected = selectPublishedTranslationForExactLocale(input.translations ?? [], requestedLocale);
 
   if (selected) {
     return {
