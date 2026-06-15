@@ -34,7 +34,7 @@ type DbOrderSummary = {
     displayName: string | null;
   } | null;
   _count: { items: number };
-  paymentAttempts: { status: string }[];
+  paymentAttempts: { status: string; provider: string; metadata: Prisma.JsonValue | null }[];
   timelineEvents: { title: string; createdAt: Date }[];
 };
 
@@ -49,6 +49,23 @@ function safePage(value = 1) {
 
 function safePageSize(value = 12) {
   return Number.isFinite(value) ? Math.max(1, Math.min(50, Math.floor(value))) : 12;
+}
+
+function metadataObject(value: Prisma.JsonValue | null | undefined) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {} as Record<string, Prisma.JsonValue>;
+  return value as Record<string, Prisma.JsonValue>;
+}
+
+function textMetadataValue(value: Prisma.JsonValue | undefined) {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  return undefined;
+}
+
+function booleanMetadataValue(value: Prisma.JsonValue | undefined) {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') return value.toLowerCase() === 'true';
+  return undefined;
 }
 
 function buildOrderWhere(filters: AdminOrderFilters = {}): Prisma.CheckoutOrderWhereInput {
@@ -76,6 +93,9 @@ function buildOrderWhere(filters: AdminOrderFilters = {}): Prisma.CheckoutOrderW
 }
 
 function mapOrderSummary(order: DbOrderSummary): CheckoutOrderSummary {
+  const latestPayment = order.paymentAttempts[0];
+  const paymentMetadata = metadataObject(latestPayment?.metadata);
+
   return {
     id: order.id,
     orderNumber: order.orderNumber,
@@ -88,6 +108,11 @@ function mapOrderSummary(order: DbOrderSummary): CheckoutOrderSummary {
     customerName: order.customer?.displayName ?? undefined,
     itemCount: order._count.items,
     latestPaymentStatus: order.paymentAttempts[0]?.status,
+    latestPaymentProvider: latestPayment?.provider,
+    latestPaymentMethodKey: textMetadataValue(paymentMetadata.paymentMethodKey),
+    latestPaymentMethodLabel: textMetadataValue(paymentMetadata.paymentMethodLabel),
+    latestPaymentMethodType: textMetadataValue(paymentMetadata.paymentMethodType),
+    latestPaymentRequiresManualReview: booleanMetadataValue(paymentMetadata.paymentRequiresManualReview),
     latestTimelineTitle: order.timelineEvents[0]?.title,
     createdAt: order.createdAt
   };
@@ -103,7 +128,7 @@ async function readOrderSummaries(where: Prisma.CheckoutOrderWhereInput, take: n
       customer: { select: { phone: true, displayName: true } },
       _count: { select: { items: true } },
       paymentAttempts: {
-        select: { status: true },
+        select: { status: true, provider: true, metadata: true },
         orderBy: { createdAt: 'desc' },
         take: 1
       },

@@ -288,6 +288,11 @@ export type CheckoutOrderSummary = {
   customerName?: string;
   itemCount: number;
   latestPaymentStatus?: string;
+  latestPaymentProvider?: string;
+  latestPaymentMethodKey?: string;
+  latestPaymentMethodLabel?: string;
+  latestPaymentMethodType?: string;
+  latestPaymentRequiresManualReview?: boolean;
   latestTimelineTitle?: string;
   createdAt: Date;
 };

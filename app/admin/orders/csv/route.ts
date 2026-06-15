@@ -12,6 +12,10 @@ function csvCell(value: unknown) {
   return `"${text.replace(/"/g, '""')}"`;
 }
 
+function paymentMethodName(order: Awaited<ReturnType<typeof listAdminCheckoutOrdersForExport>>[number]) {
+  return order.latestPaymentMethodLabel || order.latestPaymentMethodKey || order.latestPaymentProvider || '';
+}
+
 export async function GET(request: Request) {
   try {
     await assertAdminRole('owner');
@@ -26,7 +30,7 @@ export async function GET(request: Request) {
     search: optionalParam(url.searchParams.get('orderSearch'))
   });
 
-  const header = ['Created', 'Order', 'Customer', 'Phone', 'Status', 'Payment', 'Items', 'Total'];
+  const header = ['Created', 'Order', 'Customer', 'Phone', 'Status', 'Payment', 'Payment method', 'Payment provider', 'Manual review', 'Items', 'Total'];
   const rows = orders.map((order) => [
     order.createdAt.toISOString(),
     order.orderNumber,
@@ -34,6 +38,9 @@ export async function GET(request: Request) {
     order.customerPhone || '',
     order.status,
     order.latestPaymentStatus || '',
+    paymentMethodName(order),
+    order.latestPaymentProvider || '',
+    order.latestPaymentRequiresManualReview ? 'yes' : 'no',
     order.itemCount,
     `${order.totalCents / 100} ${order.currency}`
   ]);
