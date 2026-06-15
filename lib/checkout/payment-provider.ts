@@ -11,6 +11,7 @@ export type PaymentProviderName = CheckoutPaymentProviderName;
 type CreatePaymentAttemptInput = {
   orderId: string;
   provider?: PaymentProviderName;
+  metadata?: PaymentMetadata;
 };
 
 type PaymentMetadata = Record<string, string | number | boolean | string[]>;
@@ -155,6 +156,7 @@ export async function createCheckoutPaymentAttempt(input: CreatePaymentAttemptIn
       adapters: liveGatewayAdapters()
     })
   });
+  const mergedMetadata = { ...(input.metadata ?? {}), ...(result.metadata ?? {}) };
 
   const attemptData = {
     orderId: order.id,
@@ -164,7 +166,7 @@ export async function createCheckoutPaymentAttempt(input: CreatePaymentAttemptIn
     currency: order.currency,
     ...(result.providerReference ? { providerReference: result.providerReference } : {}),
     ...(result.redirectUrl ? { redirectUrl: result.redirectUrl } : {}),
-    ...(result.metadata ? { metadata: result.metadata } : {})
+    ...(Object.keys(mergedMetadata).length ? { metadata: mergedMetadata } : {})
   };
 
   const attempt = await prisma.checkoutPaymentAttempt.create({
