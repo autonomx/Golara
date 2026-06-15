@@ -1,6 +1,6 @@
 # DigiKala-Style Payment System — Remaining Phases
 
-Status: updated after the wallet/store-credit ledger foundation merged.
+Status: updated after wallet/store-credit checkout capture merged.
 
 ## Completed foundations
 
@@ -17,20 +17,24 @@ Status: updated after the wallet/store-credit ledger foundation merged.
 - Owner-only wallet credit/debit adjustment controls.
 - Wallet ledger idempotency, row-locking, overspend protection, and audit logging foundations.
 - Admin wallet balance visibility page.
+- Wallet checkout reservation/capture flow for wallet-selected payments.
+- Wallet payment attempt transition to paid after successful capture.
+- Wallet checkout idempotency keys for reservation/capture ledger entries.
+- Wallet checkout double-spend protection through locked balance rows and insufficient-balance rejection.
+- Wallet checkout inventory/capacity confirmation after capture.
 
 ## Remaining implementation phases
 
-### Phase P2 — Wallet/store-credit checkout and refunds
+### Phase P2 — Wallet/store-credit refunds and customer history
 
-Complete internal wallet behavior without pretending external wallet execution exists.
+Complete customer/admin wallet visibility and wallet reversal behavior.
 
 Deliverables:
-- Checkout wallet debit reservation/capture flow.
-- Wallet payment attempt status transitions.
 - Refund-to-wallet support.
 - Customer account wallet history page.
-- Double-spend and concurrent-checkout guards around wallet checkout use.
 - Admin/customer timeline visibility for wallet debits, credits, and reversals.
+- Wallet refund receipt metadata.
+- Wallet refund idempotency and reversal guards.
 
 ### Phase P3 — Installment/credit purchase workflow
 
@@ -68,7 +72,7 @@ Deliverables:
 
 ### Phase P6 — Refunds and reversals per method
 
-Make refund behavior method-aware.
+Make refund behavior method-aware across all payment lanes.
 
 Deliverables:
 - Gateway refund/void adapter boundary.
@@ -115,4 +119,4 @@ Deliverables:
 
 ## Recommended next slice
 
-Start with **Phase P2 — Wallet/store-credit checkout reservation/capture**. The wallet ledger foundation is now in place, so the next DigiKala-style capability should let checkout reserve and capture wallet funds safely, then expose wallet history and refund-to-wallet flows in follow-up slices.
+Start with **Phase P2 — Wallet/store-credit customer history or refund-to-wallet support**. Wallet checkout can now capture funds safely; the next useful capability is either customer-visible wallet history or method-aware refund entries back into the wallet ledger.
