@@ -46,6 +46,7 @@
     "check:admin-route-data-scope": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/admin-route-data-scope.test.ts",
     "check:admin-route-load-plan": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/admin-route-load-plan.test.ts",
     "check:admin-route-loading-performance": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/admin-route-loading-performance.test.ts",
+    "check:admin-products-filter-index": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/admin-products-filter-index-performance.test.ts",
     "check:secrets": "node tools/check-secrets.mjs",
     "check:storefront-performance": "node tools/check-storefront-performance-budget.mjs",
     "smoke:routes": "node tools/smoke-routes.mjs",
