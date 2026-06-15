@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { getPaymentProductionGateConfig, getPaymentProductionGates } from '@/lib/checkout/payment-production-gates';
 
-function codes(env: NodeJS.ProcessEnv) {
-  return getPaymentProductionGates(getPaymentProductionGateConfig(env)).map((gate) => gate.code);
+function codes(env: Partial<NodeJS.ProcessEnv>) {
+  return getPaymentProductionGates(getPaymentProductionGateConfig(env as NodeJS.ProcessEnv)).map((gate) => gate.code);
 }
 
 export function runPaymentProductionGatesTests() {
