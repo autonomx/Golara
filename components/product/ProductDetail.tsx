@@ -1,6 +1,6 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { addToCartAction } from '@/app/cart/actions';
+import { ProgressiveStorefrontImage } from '@/components/ProgressiveStorefrontImage';
 import type { Category, Product } from '@/lib/catalog';
 import { formatPrice } from '@/lib/catalog-pricing';
 import type { ProductCheckoutPolicy } from '@/lib/checkout/product-checkout-policy';
@@ -20,7 +20,7 @@ export function ProductDetail({ product, category, checkoutPolicy, locale }: { p
   return (
     <section className="mx-auto grid max-w-7xl gap-10 px-5 py-14 lg:grid-cols-2">
       <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] bg-blush shadow-2xl shadow-rosewood/10">
-        <Image src={getStorefrontCloudinaryImage(product.image, 'productDetail')} alt={product.title} fill priority className="object-cover" sizes="(min-width: 1280px) 620px, (min-width: 1024px) calc(50vw - 40px), 100vw" />
+        <ProgressiveStorefrontImage src={getStorefrontCloudinaryImage(product.image, 'productDetail')} alt={product.title} fill priority imageClassName="object-cover" sizes="(min-width: 1280px) 620px, (min-width: 1024px) calc(50vw - 40px), 100vw" />
       </div>
       <div className="flex flex-col justify-center">
         <Link href={`/categories/${product.category}`} className={categoryLinkClass}>
