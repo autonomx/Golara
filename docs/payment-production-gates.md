@@ -21,6 +21,14 @@ The gates do **not** complete provider validation. They prevent future live paym
   - Direct runner entry for the helper test.
 - `tools/check-payment-production-gates.mjs`
   - Standalone CLI check for deployments and CI wrappers.
+- `lib/checkout/payment-production-monitoring-matrix.ts`
+  - Pure monitoring/evidence matrix for checkout, return, webhook, settlement, refund/void, notification, admin audit, and rollback readiness.
+- `tests/unit/payment-production-monitoring-matrix.test.ts`
+  - Behavior/source guard for the monitoring matrix.
+- `tests/unit/payment-production-monitoring-matrix-entry.test.ts`
+  - Direct runner entry for the monitoring matrix guard.
+- `docs/payment-production-monitoring-evidence.md`
+  - Operator-facing evidence template for `PAYMENT_PRODUCTION_MONITORING_CONFIRMED="true"`.
 
 ## Gate groups
 
@@ -52,20 +60,42 @@ When `NOTIFICATION_LIVE_DELIVERY_ENABLED="true"`, the checker requires:
 - `NOTIFICATION_DELIVERY_PERSISTENCE_CONFIRMED="true"`
 - `PAYMENT_PRODUCTION_MONITORING_CONFIRMED="true"`
 
+### Production monitoring confirmation
+
+`PAYMENT_PRODUCTION_MONITORING_CONFIRMED="true"` should only be set after operators complete `docs/payment-production-monitoring-evidence.md` for every required case in `lib/checkout/payment-production-monitoring-matrix.ts`.
+
+Required cases include:
+
+- `checkout_creation_errors`
+- `provider_handoff_failures`
+- `payment_return_anomalies`
+- `webhook_signature_failures`
+- `settlement_mismatches`
+- `refund_void_operation_failures`
+- `notification_delivery_failures`
+- `admin_payment_action_audit`
+- `gateway_mode_rollback_drill`
+
+Run the focused monitoring guard with:
+
+```bash
+npm run check:payment-production-monitoring
+```
+
 ## Usage
 
 Run the standalone checker in a production-like environment:
 
 ```bash
-node tools/check-payment-production-gates.mjs
+npm run check:payment-production-gates
 ```
 
 A ready result exits with code `0`.
 
 A blocked result exits with code `1` and prints the missing gate codes.
 
-## Next integration step
+## Deploy-readiness integration
 
-The next narrow slice should wire `getPaymentProductionGates(getPaymentProductionGateConfig(process.env))` into `lib/deploy-readiness.ts` once that file can be safely patched locally. The intended behavior is to convert each returned gate into a production deploy blocker.
+`lib/deploy-readiness.ts` now imports `getPaymentProductionGateConfig` and `getPaymentProductionGates`, then converts returned payment production gates into production deploy blockers.
 
-Until then, CI/deploy wrappers can call `node tools/check-payment-production-gates.mjs` alongside `npm run check:deploy-readiness`.
+CI/deploy wrappers can also call `npm run check:payment-production-gates` and `npm run check:payment-production-monitoring` as focused checks.
