@@ -19,16 +19,74 @@ export type PublicProductQueryOptions = PublicCatalogReadOptions & { search?: st
 export type CategoryProductCount = { categoryId: string; count: number };
 export type PublicSlug = { slug: string };
 
-const publicProductCardInclude = {
-  category: { include: { translations: true } },
-  images: { take: 1, orderBy: { createdAt: 'asc' as const } },
+const publicProductCardSelect = {
+  id: true,
+  slug: true,
+  code: true,
+  title: true,
+  description: true,
+  seoTitle: true,
+  seoDescription: true,
+  canonicalPath: true,
+  seoIndex: true,
+  priceCents: true,
+  currency: true,
+  availableToday: true,
+  bestSeller: true,
+  requiresQuote: true,
+  isActive: true,
+  categoryId: true,
+  imageUrl: true,
+  productTypeId: true,
+  category: {
+    select: {
+      slug: true,
+      title: true,
+      translations: {
+        select: {
+          locale: true,
+          title: true,
+          eyebrow: true,
+          description: true,
+          imageAlt: true,
+          isPublished: true,
+          updatedAt: true
+        }
+      }
+    }
+  },
+  images: { select: { url: true, alt: true }, take: 1, orderBy: { createdAt: 'asc' as const } },
   variants: {
     where: { isActive: true },
     orderBy: [{ sortOrder: 'asc' as const }, { name: 'asc' as const }],
-    take: 1
+    take: 1,
+    select: {
+      id: true,
+      productId: true,
+      sku: true,
+      name: true,
+      priceCents: true,
+      currency: true,
+      imageUrl: true,
+      stockQuantity: true,
+      trackInventory: true,
+      lowStockThreshold: true,
+      isActive: true,
+      sortOrder: true,
+      updatedAt: true
+    }
   },
-  translations: true
-} satisfies Prisma.ProductInclude;
+  translations: {
+    select: {
+      locale: true,
+      title: true,
+      description: true,
+      imageAlt: true,
+      isPublished: true,
+      updatedAt: true
+    }
+  }
+} satisfies Prisma.ProductSelect;
 
 type DbProductTranslation = TranslationLike & {
   title: string;
@@ -212,7 +270,7 @@ export async function listPublicProducts(options: PublicProductQueryOptions = {}
   return readWithFallback(async () => {
     const products = await prisma.product.findMany({
       where: publicProductWhere(options),
-      include: publicProductCardInclude,
+      select: publicProductCardSelect,
       orderBy: [{ bestSeller: 'desc' }, { title: 'asc' }],
       take
     });
@@ -225,7 +283,7 @@ export async function listBestSellerProducts(options: PublicCatalogReadOptions &
   return readWithFallback(async () => {
     const products = await prisma.product.findMany({
       where: publicProductWhere({ bestSeller: true }),
-      include: publicProductCardInclude,
+      select: publicProductCardSelect,
       orderBy: [{ title: 'asc' }],
       take
     });
