@@ -1,6 +1,6 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { MessageCircle, Sparkles, Truck } from 'lucide-react';
+import { ProgressiveStorefrontImage } from '@/components/ProgressiveStorefrontImage';
 import type { HomepageContent } from '@/lib/catalog';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 import type { HomepageBannerSlide } from '@/lib/homepage-assets';
@@ -53,13 +53,14 @@ export function HomepageBannerSlideshow({ slides, homepage, locale }: HomepageBa
       aria-labelledby="home-hero-heading"
       className="relative overflow-hidden bg-[#fff7f1] px-4 pb-10 pt-5 md:px-8 md:pb-14 md:pt-7"
     >
-      <div dir={direction} className="relative mx-auto min-h-[460px] max-w-[1520px] overflow-hidden rounded-[1.75rem] border border-rosewood/10 bg-stone-900 shadow-[0_22px_56px_rgba(111,36,56,0.12)] md:min-h-[520px] xl:min-h-[560px]">
-        <Image
+      <div dir={direction} className="relative mx-auto min-h-[460px] max-w-[1520px] overflow-hidden rounded-[1.75rem] border border-rosewood/10 bg-[#fff7f1] shadow-[0_22px_56px_rgba(111,36,56,0.12)] md:min-h-[520px] xl:min-h-[560px]">
+        <ProgressiveStorefrontImage
           src={heroImage}
           alt={heroSlide.alt}
           fill
           priority
-          className="object-cover"
+          imageClassName="object-cover"
+          placeholderClassName="bg-[linear-gradient(135deg,#fff7f1_0%,#f4ded2_42%,#fffaf5_100%)]"
           sizes="(min-width: 1520px) 1520px, 100vw"
         />
 
