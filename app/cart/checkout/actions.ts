@@ -44,9 +44,11 @@ function deliveryWindowField(formData: FormData) {
 
 function manualTransferMetadata(formData: FormData, methodType: string) {
   if (methodType !== 'manual_transfer') return {};
+  const manualPaymentReference = boundedStringField(formData, 'manualPaymentReference', 120);
+  const manualPaymentProofUrl = boundedStringField(formData, 'manualPaymentProofUrl', 240);
   return {
-    manualPaymentReference: boundedStringField(formData, 'manualPaymentReference', 120) || null,
-    manualPaymentProofUrl: boundedStringField(formData, 'manualPaymentProofUrl', 240) || null,
+    ...(manualPaymentReference ? { manualPaymentReference } : {}),
+    ...(manualPaymentProofUrl ? { manualPaymentProofUrl } : {}),
     manualPaymentInstructionsAcknowledged: true
   };
 }
