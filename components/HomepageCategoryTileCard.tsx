@@ -67,7 +67,7 @@ export function HomepageCategoryTileCard({ category, priority = false, locale }:
         }`}
       >
         <div
-          className="rounded-3xl border border-white/85 bg-[#fffaf4]/98 p-5 text-stone-800 shadow-[0_24px_60px_rgba(54,35,26,0.22)] ring-1 ring-rosewood/8 backdrop-blur-md transition group-hover:bg-white sm:p-6"
+          className="rounded-3xl border border-white/85 bg-stone-50/92 p-5 text-stone-800 shadow-[0_24px_60px_rgba(54,35,26,0.22)] ring-1 ring-rosewood/8 backdrop-blur-sm transition group-hover:bg-white sm:p-6"
           dir={isFa ? 'rtl' : 'ltr'}
         >
           <p className="inline-flex rounded-full bg-white/95 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-olive shadow-sm ring-1 ring-olive/10">
