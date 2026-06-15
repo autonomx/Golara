@@ -1,6 +1,6 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { addToCartAction } from '@/app/cart/actions';
+import { ProgressiveStorefrontImage } from '@/components/ProgressiveStorefrontImage';
 import { StorefrontSubmitButton } from '@/components/StorefrontSubmitButton';
 import type { Product } from '@/lib/catalog';
 import { formatPrice, productRequiresQuote } from '@/lib/catalog-pricing';
@@ -18,11 +18,11 @@ export function ProductCard({ product, priority = false, locale }: { product: Pr
     <article className="group overflow-hidden rounded-3xl border border-rosewood/10 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
       <Link href={`/products/${product.slug}`} prefetch={priority} aria-label={formatStorefrontCopy('product.viewLabel', locale, { title: product.title })} className="block outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
         <div className="relative aspect-[4/5] overflow-hidden bg-blush">
-          <Image
+          <ProgressiveStorefrontImage
             src={getStorefrontCloudinaryImage(product.image, 'productCard')}
             alt={product.title}
             fill
-            className="object-cover transition duration-500 group-hover:scale-105"
+            imageClassName="object-cover transition duration-500 group-hover:scale-105"
             sizes="(min-width: 1280px) 300px, (min-width: 1024px) calc(25vw - 36px), (min-width: 768px) calc(50vw - 48px), 100vw"
             priority={priority}
           />
