@@ -107,7 +107,7 @@ function mapOrderSummary(order: DbOrderSummary): CheckoutOrderSummary {
     customerPhone: order.customer?.phone,
     customerName: order.customer?.displayName ?? undefined,
     itemCount: order._count.items,
-    latestPaymentStatus: latestPayment?.status,
+    latestPaymentStatus: order.paymentAttempts[0]?.status,
     latestPaymentProvider: latestPayment?.provider,
     latestPaymentMethodKey: textMetadataValue(paymentMetadata.paymentMethodKey),
     latestPaymentMethodLabel: textMetadataValue(paymentMetadata.paymentMethodLabel),
