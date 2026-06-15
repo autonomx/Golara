@@ -369,7 +369,7 @@ export async function getAdminCustomerDetail(customerId: string, options: AdminC
       orders: {
         orderBy: { createdAt: 'desc' },
         include: {
-          items: { select: { id: true } },
+          _count: { select: { items: true } },
           paymentAttempts: { select: { status: true }, orderBy: { createdAt: 'desc' }, take: 1 }
         },
         take: 25
@@ -433,7 +433,7 @@ export async function getAdminCustomerDetail(customerId: string, options: AdminC
       paymentStatus: order.paymentAttempts[0]?.status,
       totalCents: order.totalCents,
       currency: order.currency,
-      itemCount: order.items.length,
+      itemCount: order._count.items,
       createdAt: order.createdAt
     })),
     inquiries: inquiries.map((inquiry) => ({
