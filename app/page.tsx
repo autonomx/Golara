@@ -61,7 +61,7 @@ export default async function HomePage() {
     >
       <SiteHeader returnTo="/" locale={locale} />
 
-      <HomepageBannerSlideshow slides={homepageBannerSlides} homepage={homepage} />
+      <HomepageBannerSlideshow slides={homepageBannerSlides} homepage={homepage} locale={locale} />
 
       <section
         id="home-collections"
