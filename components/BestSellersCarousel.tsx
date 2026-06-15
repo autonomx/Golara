@@ -1,6 +1,6 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { MessageCircle, ShoppingBag } from 'lucide-react';
+import { ProgressiveStorefrontImage } from '@/components/ProgressiveStorefrontImage';
 import type { Product } from '@/lib/catalog';
 import { formatPrice, productRequiresQuote } from '@/lib/catalog-pricing';
 import type { SupportedLocale } from '@/lib/i18n/locales';
@@ -82,12 +82,12 @@ export function BestSellersCarousel({ products, locale }: BestSellersCarouselPro
                   <div className="group h-full overflow-hidden rounded-lg border border-rosewood/10 bg-white shadow-[0_12px_32px_rgba(111,36,56,0.07)]">
                     <Link href={`/products/${product.slug}`} prefetch={shouldPrefetchProduct} className="block outline-none focus-visible:ring-4 focus-visible:ring-olive/30">
                       <div className="relative aspect-[4/5] overflow-hidden bg-stone-100">
-                        <Image
+                        <ProgressiveStorefrontImage
                           src={getStorefrontCloudinaryImage(product.image || homepageBestSellerImage(product.slug), 'productCard')}
                           alt={product.title}
                           fill
                           priority={index === 0}
-                          className="object-cover"
+                          imageClassName="object-cover"
                           sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 768px) 50vw, 85vw"
                         />
                         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 to-transparent" />
