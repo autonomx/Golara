@@ -33,7 +33,7 @@ type DbOrderSummary = {
     phone: string;
     displayName: string | null;
   } | null;
-  items: { id: string }[];
+  _count: { items: number };
   paymentAttempts: { status: string }[];
   timelineEvents: { title: string; createdAt: Date }[];
 };
@@ -86,7 +86,7 @@ function mapOrderSummary(order: DbOrderSummary): CheckoutOrderSummary {
     totalCents: order.totalCents,
     customerPhone: order.customer?.phone,
     customerName: order.customer?.displayName ?? undefined,
-    itemCount: order.items.length,
+    itemCount: order._count.items,
     latestPaymentStatus: order.paymentAttempts[0]?.status,
     latestTimelineTitle: order.timelineEvents[0]?.title,
     createdAt: order.createdAt
@@ -101,7 +101,7 @@ async function readOrderSummaries(where: Prisma.CheckoutOrderWhereInput, take: n
     skip,
     include: {
       customer: { select: { phone: true, displayName: true } },
-      items: { select: { id: true } },
+      _count: { select: { items: true } },
       paymentAttempts: {
         select: { status: true },
         orderBy: { createdAt: 'desc' },
