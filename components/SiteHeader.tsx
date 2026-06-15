@@ -1,14 +1,17 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { ShoppingBag, UserRound } from 'lucide-react';
+import { UserRound } from 'lucide-react';
+import { CartDrawer, type CartDrawerCart } from '@/components/CartDrawer';
 import { HeaderSearchControl } from '@/components/HeaderSearchControl';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { getCartTokenCookie } from '@/lib/cart/cart-cookie';
 import { getCartByToken } from '@/lib/cart/cart-repository';
+import { formatMinorUnitAmount } from '@/lib/catalog';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 import { normalizeLocale } from '@/lib/i18n/locales';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { formatStorefrontCopy, getStorefrontCopy } from '@/lib/localization/storefront-copy';
+import { getStorefrontCloudinaryImage } from '@/lib/media/cloudinary-image';
 import { hasDatabase } from '@/lib/prisma';
 import { storefrontNavigationMenuService, visibleStorefrontNavigationItems } from '@/lib/settings/storefront-navigation-menu';
 
@@ -19,34 +22,48 @@ function shouldPrefetchHeaderLink(href: string) {
   return href.startsWith('/') && !href.includes('#');
 }
 
-async function cartItemCount() {
-  if (!hasDatabase()) return 0;
+async function headerCart(): Promise<CartDrawerCart> {
+  if (!hasDatabase()) return { items: [], itemCount: 0, subtotalLabel: formatMinorUnitAmount(0, process.env.CHECKOUT_DOMESTIC_CURRENCY || 'TOMAN') };
   const token = await getCartTokenCookie();
-  if (!token) return 0;
+  if (!token) return { items: [], itemCount: 0, subtotalLabel: formatMinorUnitAmount(0, process.env.CHECKOUT_DOMESTIC_CURRENCY || 'TOMAN') };
   const cart = await getCartByToken(token);
-  return cart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
+  const items = cart?.items ?? [];
+  const currency = cart?.currency || items[0]?.product.currency || process.env.CHECKOUT_DOMESTIC_CURRENCY || 'TOMAN';
+  const subtotalCents = items.reduce((sum, item) => sum + (item.variant?.priceCents ?? item.product.priceCents) * item.quantity, 0);
+
+  return {
+    itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
+    subtotalLabel: formatMinorUnitAmount(subtotalCents, currency),
+    items: items.map((item) => {
+      const unitPriceCents = item.variant?.priceCents ?? item.product.priceCents;
+      const lineTotal = unitPriceCents * item.quantity;
+      return {
+        id: item.id,
+        lineKey: item.lineKey,
+        productTitle: item.product.title,
+        productCode: item.product.code,
+        productSlug: item.product.slug,
+        imageUrl: getStorefrontCloudinaryImage(item.product.imageUrl, 'productCard'),
+        variantLabel: item.variant ? `${item.variant.name} / ${item.variant.sku}` : undefined,
+        quantity: item.quantity,
+        unitPriceLabel: formatMinorUnitAmount(unitPriceCents, item.variant?.currency ?? item.product.currency),
+        lineTotalLabel: formatMinorUnitAmount(lineTotal, item.product.currency)
+      };
+    })
+  };
 }
 
-function CartHeaderLink({ itemCount = 0, cartLabel }: { itemCount?: number; cartLabel: string }) {
-  return (
-    <Link href="/cart" className={iconLinkClass} aria-label={cartLabel} prefetch={false}>
-      <ShoppingBag className="h-5 w-5" aria-hidden="true" />
-      {itemCount > 0 ? (
-        <span className="absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-rosewood px-1 text-[0.65rem] font-bold leading-none text-white">
-          {itemCount > 99 ? '99+' : itemCount}
-        </span>
-      ) : null}
-    </Link>
-  );
+function CartHeaderFallback({ cartLabel, locale }: { cartLabel: string; locale: SupportedLocale }) {
+  return <CartDrawer cart={{ items: [], itemCount: 0, subtotalLabel: formatMinorUnitAmount(0, 'TOMAN') }} cartLabel={cartLabel} locale={locale} triggerClassName={iconLinkClass} />;
 }
 
 async function CartHeaderBadge({ locale }: { locale: SupportedLocale }) {
-  const itemCount = await cartItemCount();
-  const cartLabel = itemCount > 0
-    ? formatStorefrontCopy('header.cartWithItemsLabel', locale, { count: itemCount })
+  const cart = await headerCart();
+  const cartLabel = cart.itemCount > 0
+    ? formatStorefrontCopy('header.cartWithItemsLabel', locale, { count: cart.itemCount })
     : getStorefrontCopy('header.cartLabel', locale);
 
-  return <CartHeaderLink itemCount={itemCount} cartLabel={cartLabel} />;
+  return <CartDrawer cart={cart} cartLabel={cartLabel} locale={locale} triggerClassName={iconLinkClass} />;
 }
 
 export async function SiteHeader({ returnTo = '/', compact = false, locale }: { returnTo?: string; compact?: boolean; locale?: SupportedLocale | string | null } = {}) {
@@ -71,7 +88,7 @@ export async function SiteHeader({ returnTo = '/', compact = false, locale }: { 
           <LanguageSwitcher locale={resolvedLocale} returnTo={returnTo} />
           <HeaderSearchControl label={copy('catalog.searchLabel')} placeholder={copy('catalog.searchPlaceholder')} submitLabel={copy('catalog.searchSubmit')} />
           <Link href="/account" className={iconLinkClass} aria-label={copy('header.accountLabel')} prefetch={false}><UserRound className="h-5 w-5" aria-hidden="true" /></Link>
-          <Suspense fallback={<CartHeaderLink cartLabel={copy('header.cartLabel')} />}>
+          <Suspense fallback={<CartHeaderFallback cartLabel={copy('header.cartLabel')} locale={resolvedLocale} />}>
             <CartHeaderBadge locale={resolvedLocale} />
           </Suspense>
         </div>
