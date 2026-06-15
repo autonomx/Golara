@@ -35,6 +35,7 @@
     "check:action-boundaries": "node tools/check-action-boundaries.mjs",
     "check:admin-boundaries": "node tools/check-admin-action-boundaries.mjs",
     "check:deploy-readiness": "tsx tools/check-deploy-readiness.ts",
+    "check:payment-production-gates": "node tools/check-payment-production-gates.mjs",
     "check:secrets": "node tools/check-secrets.mjs",
     "check:storefront-performance": "node tools/check-storefront-performance-budget.mjs",
     "smoke:routes": "node tools/smoke-routes.mjs",
