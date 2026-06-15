@@ -6,7 +6,55 @@ type AdminLocale = 'en' | 'fa';
 type CategoryCopy = Pick<Category, 'title' | 'eyebrow' | 'description'>;
 type ProductCopy = Pick<Product, 'title' | 'description'> & { categoryTitle?: string };
 
-const categoryCopy: Record<string, CategoryCopy> = {
+const englishCategoryCopy: Record<string, CategoryCopy> = {
+  'available-today': { title: 'Available Today', eyebrow: 'Today', description: 'Today-ready Woshe-style collection for daily, cacao and rose, and VIP selections.' },
+  daily: { title: 'Daily', eyebrow: 'Ready today', description: 'Daily ready-to-order arrangements.' },
+  'cacao-roses': { title: 'Cacao & Roses', eyebrow: 'Chocolate and roses', description: 'Chocolate, rose, and preserved rose gift concepts.' },
+  'today-vip': { title: 'VIP', eyebrow: 'Today VIP', description: 'Premium arrangements available through sales-assisted ordering.' },
+  'flower-boxes': { title: 'Flower Box', eyebrow: 'Flower boxes', description: 'Boxed floral arrangements following the public Woshe flower-box navigation.' },
+  'vip-boxes': { title: 'VIP Box', eyebrow: 'VIP boxes', description: 'Premium VIP flower boxes and large luxury boxed arrangements.' },
+  'standard-boxes': { title: 'Standard Boxes', eyebrow: 'Standard boxes', description: 'Standard boxed flower arrangements.' },
+  'rose-envelope': { title: 'Woshe Trends', eyebrow: 'Rose envelope', description: 'Rose envelope and trend-led floral gift concepts.' },
+  'kids-boxes': { title: 'Kids Box', eyebrow: 'Kids boxes', description: 'Child-focused flower box and gift designs.' },
+  bouquets: { title: 'Bouquets', eyebrow: 'Bouquets', description: 'Hand bouquets and wrapped floral gifts.' },
+  'vip-bouquets': { title: 'VIP Bouquets', eyebrow: 'VIP bouquets', description: 'Premium VIP bouquet designs.' },
+  'standard-bouquets': { title: 'Standard Bouquets', eyebrow: 'Standard bouquets', description: 'Standard round and hand-tied bouquets.' },
+  royal: { title: 'Woshe Royal VVIP', eyebrow: 'Royal VVIP', description: 'Royal and VVIP premium floral arrangements.' },
+  'chocolate-eternal-rose': { title: 'Chocolate & Eternal Rose', eyebrow: 'Cacao and roses', description: 'Chocolate, preserved rose, and long-lasting gift concepts.' },
+  'ceremony-design': { title: 'Ceremony Design', eyebrow: 'Ceremony design', description: 'Event, ceremony, and venue floral design.' },
+  birthday: { title: 'Birthday', eyebrow: 'Birthday', description: 'Birthday arrangements, packages, and surprise concepts.' },
+  'birthday-package': { title: 'Birthday Package', eyebrow: 'Birthday package', description: 'Curated birthday gift packages.' },
+  'birthday-box': { title: 'Birthday Box', eyebrow: 'Birthday box', description: 'Birthday flower boxes and celebration gifts.' },
+  'birthday-ceremony-design': { title: 'Birthday Ceremony Design', eyebrow: 'Birthday design', description: 'Birthday event floral styling.' },
+  surprise: { title: 'Surprise', eyebrow: 'Surprise', description: 'Surprise flower and celebration gift concepts.' },
+  'cake-balloon': { title: 'Cake & Balloon', eyebrow: 'Cake and balloon', description: 'Cake, balloon, and celebration add-on gifts.' },
+  cakes: { title: 'Cakes', eyebrow: 'Cakes', description: 'Cake category parent for birthday, wedding, kids, classic, and mini cakes.' },
+  'birthday-cake': { title: 'Birthday Cake', eyebrow: 'Birthday cake', description: 'Birthday cake designs.' },
+  'wedding-ceremony-cake': { title: 'Wedding & Ceremony Cake', eyebrow: 'Wedding cake', description: 'Wedding and ceremony cakes.' },
+  'kids-cake': { title: 'Kids Cake', eyebrow: 'Kids cake', description: 'Kids cake designs.' },
+  'classic-cake': { title: 'Classic Cake', eyebrow: 'Classic cake', description: 'Classic cake designs.' },
+  'mini-cake-trio': { title: 'Mini Cake Trio', eyebrow: 'Mini cake trio', description: 'Mini cake trio designs.' },
+  balloons: { title: 'Balloons', eyebrow: 'Balloons', description: 'Balloon add-ons and celebration decorations.' },
+  pots: { title: 'Pots', eyebrow: 'Pots', description: 'Vase, pot, orchid, and basket arrangements.' },
+  'steel-vases': { title: 'Steel Vases', eyebrow: 'Steel vases', description: 'Modern steel vase arrangements.' },
+  'glass-vases': { title: 'Glass Vases', eyebrow: 'Glass vases', description: 'Glass vase arrangements.' },
+  orchids: { title: 'Orchids', eyebrow: 'Orchids', description: 'Orchid arrangements and potted orchid gifts.' },
+  'flower-baskets': { title: 'Flower Baskets', eyebrow: 'Flower baskets', description: 'Basket-style flower arrangements.' },
+  condolences: { title: 'Condolences', eyebrow: 'Condolences', description: 'Sympathy and condolence flowers.' },
+  'proposal-ceremony': { title: 'Proposal & Bale Boroon', eyebrow: 'Proposal', description: 'Proposal and Bale Boroon ceremony flowers.' },
+  proposal: { title: 'Proposal', eyebrow: 'Proposal', description: 'Proposal-ready romantic arrangements.' },
+  'bale-boroon': { title: 'Bale Boroon', eyebrow: 'Bale Boroon', description: 'Bale Boroon ceremony flowers.' },
+  'baby-flowers': { title: 'Baby Flowers', eyebrow: 'Baby flowers', description: 'New baby and gender reveal flowers.' },
+  'newborn-flowers': { title: 'Newborn Flowers', eyebrow: 'Newborn flowers', description: 'Newborn flower gifts.' },
+  'gender-reveal': { title: 'Gender Reveal', eyebrow: 'Gender reveal', description: 'Gender reveal flower and gift concepts.' },
+  weddings: { title: 'Weddings', eyebrow: 'Weddings', description: 'Wedding flowers, bridal bouquets, car design, and groom boutonniere.' },
+  'bridal-bouquet': { title: 'Bridal Bouquet', eyebrow: 'Bridal bouquet', description: 'Bridal bouquet designs.' },
+  'bridal-car-design': { title: 'Bridal Car Design', eyebrow: 'Bridal car', description: 'Bridal car floral design.' },
+  'groom-boutonniere': { title: 'Groom Boutonniere', eyebrow: 'Groom boutonniere', description: 'Groom boutonniere and pocket flower designs.' },
+  'woshe-distance': { title: 'WOSHE Distance', eyebrow: 'Distance delivery', description: 'Distance ordering and delivery category inspired by the public Woshe navigation.' }
+};
+
+const persianCategoryCopy: Record<string, CategoryCopy> = {
   'available-today': { title: 'آماده امروز', eyebrow: 'امروز', description: 'گل‌آرایی‌های آماده سفارش برای امروز.' },
   daily: { title: 'گل‌های روزانه', eyebrow: 'آماده امروز', description: 'گل‌آرایی‌های روزانه آماده سفارش.' },
   'cacao-roses': { title: 'شکلات و رز', eyebrow: 'شکلات و رز', description: 'هدیه‌های شکلاتی، رز و رز جاودان.' },
@@ -54,6 +102,11 @@ const categoryCopy: Record<string, CategoryCopy> = {
   'woshe-distance': { title: 'ارسال به سراسر ایران', eyebrow: 'ارسال راه دور', description: 'سفارش و ارسال گل به شهرهای ایران.' }
 };
 
+const categoryCopyByLocale: Record<AdminLocale, Record<string, CategoryCopy>> = {
+  en: englishCategoryCopy,
+  fa: persianCategoryCopy
+};
+
 const productTitleCopy: Record<string, string> = {
   'vip-box-blue': 'باکس ویژه آبی',
   'signiture-round-baby-pink': 'باکس گرد صورتی ملایم',
@@ -85,8 +138,13 @@ function localeKey(locale?: SupportedLocale | string | null): AdminLocale {
   return locale?.toLowerCase().startsWith('fa') ? 'fa' : 'en';
 }
 
-function localizeSeedCategory(category: Category): Category {
-  const localized = categoryCopy[category.slug];
+export function getLocalizedCategorySeedCopy(slug: string | undefined, locale?: SupportedLocale | string | null): CategoryCopy | undefined {
+  if (!slug) return undefined;
+  return categoryCopyByLocale[localeKey(locale)][slug];
+}
+
+function localizeSeedCategory(category: Category, locale?: SupportedLocale | string | null): Category {
+  const localized = getLocalizedCategorySeedCopy(category.slug, locale);
   if (!localized) return category;
   return { ...category, ...localized };
 }
@@ -103,8 +161,7 @@ function localizeSeedProduct(product: Product, categoryTitleBySlug: Map<string, 
 }
 
 export function localizeSeedCategories(categories: Category[], locale?: SupportedLocale | string | null): Category[] {
-  if (localeKey(locale) !== 'fa') return categories;
-  return categories.map(localizeSeedCategory);
+  return categories.map((category) => localizeSeedCategory(category, locale));
 }
 
 export function localizeSeedProducts(products: Product[], locale?: SupportedLocale | string | null, categories: Category[] = []): Product[] {
