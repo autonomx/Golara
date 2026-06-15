@@ -4,7 +4,7 @@ import { MessageCircle, Sparkles, Truck } from 'lucide-react';
 import type { HomepageContent } from '@/lib/catalog';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 import type { HomepageBannerSlide } from '@/lib/homepage-assets';
-import { getStorefrontCopy } from '@/lib/localization/storefront-copy';
+import { getStorefrontCopy, getStorefrontCopyDirection } from '@/lib/localization/storefront-copy';
 import { getStorefrontCloudinaryImage } from '@/lib/media/cloudinary-image';
 
 interface HomepageBannerSlideshowProps {
@@ -20,6 +20,8 @@ function firstNonEmpty(...values: Array<string | undefined>) {
 export function HomepageBannerSlideshow({ slides, homepage, locale }: HomepageBannerSlideshowProps) {
   const fallbackSlide = slides[0];
   const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key, locale);
+  const direction = getStorefrontCopyDirection(locale);
+  const textAlignmentClass = direction === 'rtl' ? 'text-right' : 'text-left';
 
   if (!fallbackSlide && !homepage) {
     return null;
@@ -51,7 +53,7 @@ export function HomepageBannerSlideshow({ slides, homepage, locale }: HomepageBa
       aria-labelledby="home-hero-heading"
       className="relative overflow-hidden bg-[#fff7f1] px-4 pb-10 pt-5 md:px-8 md:pb-14 md:pt-7"
     >
-      <div dir="ltr" className="relative mx-auto min-h-[460px] max-w-[1520px] overflow-hidden rounded-[1.75rem] border border-rosewood/10 bg-stone-900 shadow-[0_22px_56px_rgba(111,36,56,0.12)] md:min-h-[520px] xl:min-h-[560px]">
+      <div dir={direction} className="relative mx-auto min-h-[460px] max-w-[1520px] overflow-hidden rounded-[1.75rem] border border-rosewood/10 bg-stone-900 shadow-[0_22px_56px_rgba(111,36,56,0.12)] md:min-h-[520px] xl:min-h-[560px]">
         <Image
           src={heroImage}
           alt={heroSlide.alt}
@@ -64,8 +66,8 @@ export function HomepageBannerSlideshow({ slides, homepage, locale }: HomepageBa
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,248,241,0.97)_0%,rgba(255,248,241,0.9)_32%,rgba(255,248,241,0.44)_56%,rgba(43,29,32,0.12)_100%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_28%,rgba(255,255,255,0.82)_0%,rgba(255,255,255,0.16)_34%,rgba(255,255,255,0)_62%)]" />
 
-        <div className="relative z-10 flex min-h-[460px] items-center justify-start px-6 py-10 text-left md:min-h-[520px] md:px-12 md:py-12 lg:px-16 xl:min-h-[560px]">
-          <div className="max-w-xl text-left text-stone-800 lg:max-w-2xl">
+        <div className="relative z-10 flex min-h-[460px] items-center justify-start px-6 py-10 md:min-h-[520px] md:px-12 md:py-12 lg:px-16 xl:min-h-[560px]">
+          <div className={`max-w-xl ${textAlignmentClass} text-stone-800 lg:max-w-2xl`}>
             {heroSlide.eyebrow ? <p className="inline-flex rounded-full border border-rosewood/10 bg-white/72 px-5 py-2 text-xs font-semibold uppercase tracking-[0.32em] text-olive shadow-sm">
               {heroSlide.eyebrow}
             </p> : null}
