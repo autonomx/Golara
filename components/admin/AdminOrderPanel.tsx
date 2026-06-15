@@ -55,6 +55,9 @@ type AdminOrderPanelCopy = {
   guestDraft: string;
   fulfillment: string;
   payment: string;
+  paymentMethod: string;
+  manualReview: string;
+  provider: string;
   previous: string;
   next: string;
   page: string;
@@ -103,6 +106,9 @@ const copy: Record<AdminLocale, AdminOrderPanelCopy> = {
     guestDraft: 'Guest / draft',
     fulfillment: 'Fulfillment',
     payment: 'Payment',
+    paymentMethod: 'Payment method',
+    manualReview: 'Manual review',
+    provider: 'Provider',
     previous: 'Previous',
     next: 'Next',
     page: 'Page'
@@ -149,6 +155,9 @@ const copy: Record<AdminLocale, AdminOrderPanelCopy> = {
     guestDraft: 'مهمان / پیش‌نویس',
     fulfillment: 'اجرا',
     payment: 'پرداخت',
+    paymentMethod: 'روش پرداخت',
+    manualReview: 'بررسی دستی',
+    provider: 'ارائه‌دهنده',
     previous: 'قبلی',
     next: 'بعدی',
     page: 'صفحه'
@@ -189,6 +198,10 @@ function orderExportQuery(filters: AdminOrderFilters, format: 'csv' | 'print') {
   if (filters.fulfillmentStatus) params.set('orderFulfillmentStatus', filters.fulfillmentStatus);
   if (filters.search) params.set('orderSearch', filters.search);
   return `/admin/orders/${format}?${params.toString()}`;
+}
+
+function paymentMethodName(order: CheckoutOrderSummary) {
+  return order.latestPaymentMethodLabel || order.latestPaymentMethodKey || order.latestPaymentProvider;
 }
 
 function FilterInput({ label, name, defaultValue, placeholder }: { label: string; name: string; defaultValue?: string; placeholder?: string }) {
@@ -295,37 +308,46 @@ export async function AdminOrderPanel({ orderPage, filters, locale }: { orderPag
                 <th className="px-4 py-3 font-semibold">{labels.order}</th>
                 <th className="px-4 py-3 font-semibold">{labels.customer}</th>
                 <th className="px-4 py-3 font-semibold">{labels.status}</th>
+                <th className="px-4 py-3 font-semibold">{labels.paymentMethod}</th>
                 <th className="px-4 py-3 font-semibold">{labels.total}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-rosewood/10 bg-white text-stone-700">
-              {orders.map((order) => (
-                <tr key={order.id}>
-                  <td className="whitespace-nowrap px-4 py-3 text-xs text-stone-500">{formatDate(order.createdAt, activeLocale)}</td>
-                  <td className="px-4 py-3 align-top">
-                    <Link href={`/admin/orders/${order.id}`} className="font-semibold text-rosewood underline decoration-rosewood/30 underline-offset-4 outline-none transition hover:decoration-rosewood focus-visible:ring-4 focus-visible:ring-olive/20">
-                      {order.orderNumber}
-                    </Link>
-                    <p className="text-xs text-stone-500">{order.itemCount} {order.itemCount === 1 ? labels.itemSingular : labels.itemPlural} · {valueLabels.checkoutMode(order.checkoutMode)}</p>
-                    {order.latestTimelineTitle ? <p className="mt-2 rounded-xl bg-cream px-3 py-2 text-xs text-stone-600">{labels.latest}: {order.latestTimelineTitle}</p> : null}
-                  </td>
-                  <td className="px-4 py-3 align-top">
-                    <p className="font-semibold text-stone-700">{order.customerName || labels.guestDraft}</p>
-                    {order.customerPhone ? <p className="text-xs text-stone-500">{order.customerPhone}</p> : null}
-                  </td>
-                  <td className="px-4 py-3 align-top">
-                    <span className="rounded-full border border-rosewood/15 bg-cream px-3 py-1 text-xs font-semibold text-rosewood">
-                      {valueLabels.orderStatus(order.status)}
-                    </span>
-                    {order.fulfillmentStatus ? <p className="mt-1 text-xs text-stone-500">{labels.fulfillment}: {valueLabels.fulfillmentStatus(order.fulfillmentStatus)}</p> : null}
-                    {order.latestPaymentStatus ? <p className="mt-1 text-xs text-stone-500">{labels.payment}: {valueLabels.paymentStatus(order.latestPaymentStatus)}</p> : null}
-                    <OrderStatusForm order={order} labels={labels} statusLabel={valueLabels.orderStatus} />
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3 align-top font-semibold text-rosewood">
-                    {formatMinorUnitAmount(order.totalCents, order.currency)}
-                  </td>
-                </tr>
-              ))}
+              {orders.map((order) => {
+                const methodName = paymentMethodName(order);
+                return (
+                  <tr key={order.id}>
+                    <td className="whitespace-nowrap px-4 py-3 text-xs text-stone-500">{formatDate(order.createdAt, activeLocale)}</td>
+                    <td className="px-4 py-3 align-top">
+                      <Link href={`/admin/orders/${order.id}`} className="font-semibold text-rosewood underline decoration-rosewood/30 underline-offset-4 outline-none transition hover:decoration-rosewood focus-visible:ring-4 focus-visible:ring-olive/20">
+                        {order.orderNumber}
+                      </Link>
+                      <p className="text-xs text-stone-500">{order.itemCount} {order.itemCount === 1 ? labels.itemSingular : labels.itemPlural} · {valueLabels.checkoutMode(order.checkoutMode)}</p>
+                      {order.latestTimelineTitle ? <p className="mt-2 rounded-xl bg-cream px-3 py-2 text-xs text-stone-600">{labels.latest}: {order.latestTimelineTitle}</p> : null}
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      <p className="font-semibold text-stone-700">{order.customerName || labels.guestDraft}</p>
+                      {order.customerPhone ? <p className="text-xs text-stone-500">{order.customerPhone}</p> : null}
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      <span className="rounded-full border border-rosewood/15 bg-cream px-3 py-1 text-xs font-semibold text-rosewood">
+                        {valueLabels.orderStatus(order.status)}
+                      </span>
+                      {order.fulfillmentStatus ? <p className="mt-1 text-xs text-stone-500">{labels.fulfillment}: {valueLabels.fulfillmentStatus(order.fulfillmentStatus)}</p> : null}
+                      {order.latestPaymentStatus ? <p className="mt-1 text-xs text-stone-500">{labels.payment}: {valueLabels.paymentStatus(order.latestPaymentStatus)}</p> : null}
+                      <OrderStatusForm order={order} labels={labels} statusLabel={valueLabels.orderStatus} />
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      {methodName ? <p className="font-semibold text-stone-700">{methodName}</p> : <p className="text-xs text-stone-400">—</p>}
+                      {order.latestPaymentProvider ? <p className="mt-1 text-xs text-stone-500">{labels.provider}: {order.latestPaymentProvider}</p> : null}
+                      {order.latestPaymentRequiresManualReview ? <span className="mt-2 inline-flex rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800">{labels.manualReview}</span> : null}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 align-top font-semibold text-rosewood">
+                      {formatMinorUnitAmount(order.totalCents, order.currency)}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
