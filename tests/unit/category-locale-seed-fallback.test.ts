@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { localizedField, selectTranslatedContent } from '@/lib/i18n/translated-content';
 import { getLocalizedCategorySeedCopy, localizeSeedCategories } from '@/lib/localization/catalog-seed-fallback';
 import { seedCategories } from '@/lib/seed-data';
@@ -46,7 +47,7 @@ assert.equal(persianSeedCategories.find((category) => category.slug === 'availab
 assert.equal(persianSeedCategories.find((category) => category.slug === 'flower-boxes')?.title, 'باکس گل');
 assert.equal(persianSeedCategories.find((category) => category.slug === 'weddings')?.title, 'عروسی');
 
-const source = await import('node:fs').then(({ readFileSync }) => readFileSync('lib/i18n/translated-content.ts', 'utf8'));
+const source = readFileSync('lib/i18n/translated-content.ts', 'utf8');
 assert.match(source, /getLocalizedCategorySeedCopy\(slug, selection\.requestedLocale\)/);
 assert.match(source, /selection\.source !== 'legacy-base'/);
 
