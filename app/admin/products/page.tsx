@@ -1,10 +1,9 @@
 import Link from 'next/link';
 import { AdminConsolePage } from '@/app/admin/AdminConsolePage';
-import { listAdminProducts } from '@/lib/cms/catalog-repository';
+import { listAdminProductFilterIndex, type AdminProductFilterIndexItem } from '@/lib/admin/admin-product-filter-index';
 import { requireAdminRouteSession } from '@/lib/admin-page-auth-boundary';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { createAdminCatalogPageTranslator } from '@/lib/localization/admin-catalog-page-copy';
-import type { Product } from '@/lib/catalog';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 
 export const dynamic = 'force-dynamic';
@@ -22,7 +21,7 @@ function includesText(value: string | undefined, search: string) {
   return value?.toLowerCase().includes(search.toLowerCase()) ?? false;
 }
 
-function productMatchesFlag(product: Product, flag?: string) {
+function productMatchesFlag(product: AdminProductFilterIndexItem, flag?: string) {
   if (flag === 'best-seller') return Boolean(product.bestSeller);
   if (flag === 'available-today') return product.availableToday;
   if (flag === 'quote-only') return Boolean(product.requiresQuote || product.price <= 0);
@@ -31,7 +30,7 @@ function productMatchesFlag(product: Product, flag?: string) {
   return true;
 }
 
-function filterProducts(products: Product[], params: AdminProductsSearchParams) {
+function filterProducts(products: AdminProductFilterIndexItem[], params: AdminProductsSearchParams) {
   const search = params.catalogSearch?.trim();
   return products.filter((product) => {
     const matchesSearch = !search || includesText(product.title, search) || includesText(product.code, search) || includesText(product.slug, search) || includesText(product.description, search);
@@ -78,14 +77,14 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
 
   const searchParamsPromise = searchParams;
   const localePromise = resolveStorefrontLocale();
-  const productsPromise = listAdminProducts();
+  const productFilterIndexPromise = listAdminProductFilterIndex();
 
-  const [resolvedSearchParams, locale, products] = await Promise.all([
+  const [resolvedSearchParams, locale, productFilterIndex] = await Promise.all([
     searchParamsPromise,
     localePromise,
-    productsPromise
+    productFilterIndexPromise
   ]);
-  const filteredProducts = filterProducts(products, resolvedSearchParams);
+  const filteredProducts = filterProducts(productFilterIndex, resolvedSearchParams);
 
   return (
     <>
