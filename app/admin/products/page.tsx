@@ -74,11 +74,17 @@ function ProductPaginationBar({ params, total, locale }: { params: AdminProducts
 }
 
 export default async function AdminProductsPage({ searchParams }: { searchParams: Promise<AdminProductsSearchParams> }) {
-  await requireAdminRouteSession();
+  const sessionPromise = requireAdminRouteSession();
+  const searchParamsPromise = searchParams;
+  const localePromise = resolveStorefrontLocale();
+  const productsPromise = listAdminProducts();
 
-  const resolvedSearchParams = await searchParams;
-  const locale = await resolveStorefrontLocale();
-  const products = await listAdminProducts();
+  await sessionPromise;
+  const [resolvedSearchParams, locale, products] = await Promise.all([
+    searchParamsPromise,
+    localePromise,
+    productsPromise
+  ]);
   const filteredProducts = filterProducts(products, resolvedSearchParams);
 
   return (
