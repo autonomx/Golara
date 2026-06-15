@@ -34,8 +34,18 @@ export async function runCheckoutCreationBoundaryTests() {
   );
   assert.match(
     checkoutActionSource,
-    /const attempt = await createCheckoutPaymentAttempt\(\{\s*orderId: order\.id,\s*provider: paymentMethodSelection\.selection\.provider,\s*metadata: checkoutPaymentMethodMetadata\(paymentMethodSelection\.selection\)\s*\}\);/s,
-    'checkout action must create payment attempts with the order id, selected provider, and payment-method metadata'
+    /const attempt = await createCheckoutPaymentAttempt\(\{\s*orderId: order\.id,\s*provider: paymentMethodSelection\.selection\.provider,\s*metadata: \{\s*\.\.\.checkoutPaymentMethodMetadata\(paymentMethodSelection\.selection\),\s*\.\.\.manualTransferMetadata\(formData, paymentMethodSelection\.selection\.methodType\)\s*\}\s*\}\);/s,
+    'checkout action must create payment attempts with the order id, selected provider, selected-method metadata, and optional manual-transfer metadata'
+  );
+  assert.match(
+    checkoutActionSource,
+    /function manualTransferMetadata\(formData: FormData, methodType: string\) \{\s*if \(methodType !== 'manual_transfer'\) return \{\};/s,
+    'manual-transfer metadata must only be accepted for manual-transfer payment methods'
+  );
+  assert.match(
+    checkoutActionSource,
+    /\.\.\.\(manualPaymentReference \? \{ manualPaymentReference \} : \{\}\),\s*\.\.\.\(manualPaymentProofUrl \? \{ manualPaymentProofUrl \} : \{\}\),/s,
+    'manual-transfer metadata must omit empty reference/proof fields instead of persisting undefined values'
   );
   assert.match(
     checkoutActionSource,
