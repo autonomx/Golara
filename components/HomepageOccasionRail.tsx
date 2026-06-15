@@ -1,6 +1,6 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
+import { ProgressiveStorefrontImage } from '@/components/ProgressiveStorefrontImage';
 import type { Category } from '@/lib/catalog';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 import { homepageCategoryImage } from '@/lib/homepage-assets';
@@ -95,12 +95,12 @@ export function HomepageOccasionRail({ occasions, locale }: { occasions: Categor
                 prefetch={priority}
                 className="group relative min-h-[155px] overflow-hidden rounded-lg bg-stone-100 outline-none shadow-[0_8px_22px_rgba(43,29,32,0.06)] transition focus-visible:ring-4 focus-visible:ring-olive/30"
               >
-                <Image
+                <ProgressiveStorefrontImage
                   src={imageSrc}
                   alt={occasion.title}
                   fill
                   priority={priority}
-                  className="object-cover"
+                  imageClassName="object-cover"
                   sizes="(min-width: 1024px) 18vw, (min-width: 640px) 30vw, 50vw"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-rosewood/75 via-rosewood/20 to-transparent" />
