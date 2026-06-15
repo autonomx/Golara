@@ -57,6 +57,18 @@ const productionBase = {
   ...dataSafetyConfirmed
 };
 
+const gatewayBase = {
+  ...productionBase,
+  CHECKOUT_MODE: 'gateway',
+  CHECKOUT_DOMESTIC_GATEWAY_PROVIDER: 'zarinpal',
+  CHECKOUT_DOMESTIC_CURRENCY: 'TOMAN',
+  CHECKOUT_OVERSEAS_GATEWAY_PROVIDER: 'stripe',
+  CHECKOUT_OVERSEAS_CURRENCY: 'USD',
+  CHECKOUT_OVERSEAS_FALLBACK: 'stripe',
+  ZARINPAL_MERCHANT_ID: 'merchant-for-test',
+  STRIPE_SECRET_KEY: 'stripe-secret-for-test'
+};
+
 export async function runDeployReadinessTests() {
   assertPlatformConfigIsProductionScoped();
 
@@ -123,19 +135,13 @@ export async function runDeployReadinessTests() {
   });
 
   await withEnv({
-    ...productionBase,
-    CHECKOUT_MODE: 'gateway',
-    CHECKOUT_DOMESTIC_GATEWAY_PROVIDER: 'zarinpal',
-    CHECKOUT_DOMESTIC_CURRENCY: 'TOMAN',
-    CHECKOUT_OVERSEAS_GATEWAY_PROVIDER: 'stripe',
-    CHECKOUT_OVERSEAS_CURRENCY: 'USD',
-    CHECKOUT_OVERSEAS_FALLBACK: 'stripe',
-    ZARINPAL_MERCHANT_ID: 'merchant-for-test',
-    STRIPE_SECRET_KEY: 'stripe-secret-for-test',
+    ...gatewayBase,
     STRIPE_WEBHOOK_SECRET: undefined,
     ZARINPAL_WEBHOOK_SECRET: undefined,
     PAYMENT_SETTLEMENT_MIGRATION_CONFIRMED: undefined,
-    PAYMENT_WEBHOOK_SMOKE_TESTS_CONFIRMED: undefined
+    PAYMENT_WEBHOOK_SMOKE_TESTS_CONFIRMED: undefined,
+    PAYMENT_BROWSER_SMOKE_TESTS_CONFIRMED: undefined,
+    PAYMENT_PRODUCTION_MONITORING_CONFIRMED: undefined
   }, () => {
     const report = getDeployReadiness();
     assert.equal(report.ready, false);
@@ -143,31 +149,70 @@ export async function runDeployReadinessTests() {
       'stripe_webhook_secret_missing',
       'zarinpal_webhook_secret_missing',
       'payment_settlement_migration_unconfirmed',
-      'payment_webhook_smoke_tests_unconfirmed'
+      'payment_webhook_smoke_tests_unconfirmed',
+      'payment_browser_smoke_tests_unconfirmed',
+      'payment_production_monitoring_unconfirmed'
     ]);
     assert.match(formatDeployReadinessReport(report), /STRIPE_WEBHOOK_SECRET is missing/);
+    assert.match(formatDeployReadinessReport(report), /Payment browser smoke tests have not been confirmed/);
   });
 
   await withEnv({
-    ...productionBase,
-    CHECKOUT_MODE: 'gateway',
-    CHECKOUT_DOMESTIC_GATEWAY_PROVIDER: 'zarinpal',
-    CHECKOUT_DOMESTIC_CURRENCY: 'TOMAN',
-    CHECKOUT_OVERSEAS_GATEWAY_PROVIDER: 'stripe',
-    CHECKOUT_OVERSEAS_CURRENCY: 'USD',
-    CHECKOUT_OVERSEAS_FALLBACK: 'stripe',
-    ZARINPAL_MERCHANT_ID: 'merchant-for-test',
-    STRIPE_SECRET_KEY: 'stripe-secret-for-test',
+    ...gatewayBase,
     STRIPE_WEBHOOK_SECRET: 'stripe-webhook-for-test',
     ZARINPAL_WEBHOOK_SECRET: 'zarinpal-webhook-for-test',
     PAYMENT_SETTLEMENT_MIGRATION_CONFIRMED: 'true',
-    PAYMENT_WEBHOOK_SMOKE_TESTS_CONFIRMED: 'true'
+    PAYMENT_WEBHOOK_SMOKE_TESTS_CONFIRMED: 'true',
+    PAYMENT_BROWSER_SMOKE_TESTS_CONFIRMED: 'true',
+    PAYMENT_PRODUCTION_MONITORING_CONFIRMED: 'true'
   }, () => {
     const report = getDeployReadiness();
     assert.equal(report.ready, true);
     assert.deepEqual(issueCodes(report), []);
     assert.deepEqual(report.warnings.map((issue) => issue.code), ['notification_log_only']);
   });
+
+  await withEnv({
+    ...productionBase,
+    PAYMENT_REFUND_VOID_EXECUTION_ENABLED: 'true',
+    PAYMENT_OPERATION_RECORDS_MIGRATION_CONFIRMED: undefined,
+    PAYMENT_OPERATION_PROVIDER_EVIDENCE_CONFIRMED: undefined,
+    PAYMENT_REFUND_VOID_SMOKE_TESTS_CONFIRMED: undefined,
+    PAYMENT_OPERATION_STATE_TRANSITIONS_CONFIRMED: undefined,
+    PAYMENT_PRODUCTION_MONITORING_CONFIRMED: undefined
+  }, () => {
+    const report = getDeployReadiness();
+    assert.equal(report.ready, false);
+    assert.deepEqual(issueCodes(report), [
+      'payment_operation_records_migration_unconfirmed',
+      'payment_operation_provider_evidence_unconfirmed',
+      'payment_refund_void_smoke_tests_unconfirmed',
+      'payment_operation_state_transitions_unconfirmed',
+      'payment_production_monitoring_unconfirmed'
+    ]);
+  });
+
+  await withEnv({
+    ...productionBase,
+    NOTIFICATION_LIVE_DELIVERY_ENABLED: 'true',
+    NOTIFICATION_PROVIDER_EVIDENCE_CONFIRMED: undefined,
+    NOTIFICATION_SMOKE_TESTS_CONFIRMED: undefined,
+    NOTIFICATION_DELIVERY_PERSISTENCE_CONFIRMED: undefined,
+    PAYMENT_PRODUCTION_MONITORING_CONFIRMED: undefined
+  }, () => {
+    const report = getDeployReadiness();
+    assert.equal(report.ready, false);
+    assert.deepEqual(issueCodes(report), [
+      'notification_provider_evidence_unconfirmed',
+      'notification_smoke_tests_unconfirmed',
+      'notification_delivery_persistence_unconfirmed',
+      'payment_production_monitoring_unconfirmed'
+    ]);
+  });
+
+  const deployReadinessSource = readFileSync('lib/deploy-readiness.ts', 'utf8');
+  assert.match(deployReadinessSource, /getPaymentProductionGates/);
+  assert.match(deployReadinessSource, /getPaymentProductionGateConfig/);
 
   console.log('deploy-readiness.test.ts passed');
 }
