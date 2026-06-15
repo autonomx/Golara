@@ -2,20 +2,24 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { MessageCircle, Sparkles, Truck } from 'lucide-react';
 import type { HomepageContent } from '@/lib/catalog';
+import type { SupportedLocale } from '@/lib/i18n/locales';
 import type { HomepageBannerSlide } from '@/lib/homepage-assets';
+import { getStorefrontCopy } from '@/lib/localization/storefront-copy';
 import { getStorefrontCloudinaryImage } from '@/lib/media/cloudinary-image';
 
 interface HomepageBannerSlideshowProps {
   slides: HomepageBannerSlide[];
   homepage?: HomepageContent;
+  locale?: SupportedLocale;
 }
 
 function firstNonEmpty(...values: Array<string | undefined>) {
   return values.find((value) => value?.trim()) ?? '';
 }
 
-export function HomepageBannerSlideshow({ slides, homepage }: HomepageBannerSlideshowProps) {
+export function HomepageBannerSlideshow({ slides, homepage, locale }: HomepageBannerSlideshowProps) {
   const fallbackSlide = slides[0];
+  const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key, locale);
 
   if (!fallbackSlide && !homepage) {
     return null;
@@ -29,14 +33,14 @@ export function HomepageBannerSlideshow({ slides, homepage }: HomepageBannerSlid
     body: firstNonEmpty(homepage?.body, fallbackSlide?.body)
   };
   const ctas = [
-    { label: firstNonEmpty(homepage?.primaryCtaLabel, 'Shop available today'), href: firstNonEmpty(homepage?.primaryCtaHref, '/categories/available-today'), variant: 'primary' },
-    { label: firstNonEmpty(homepage?.secondaryCtaLabel, 'All products'), href: firstNonEmpty(homepage?.secondaryCtaHref, '/products'), variant: 'secondary' },
-    { label: firstNonEmpty(homepage?.tertiaryCtaLabel, 'Best sellers'), href: firstNonEmpty(homepage?.tertiaryCtaHref, '/#best-sellers'), variant: 'soft' }
+    { label: firstNonEmpty(homepage?.primaryCtaLabel, copy('home.heroPrimaryCtaFallback')), href: firstNonEmpty(homepage?.primaryCtaHref, '/categories/available-today'), variant: 'primary' },
+    { label: firstNonEmpty(homepage?.secondaryCtaLabel, copy('home.heroSecondaryCtaFallback')), href: firstNonEmpty(homepage?.secondaryCtaHref, '/products'), variant: 'secondary' },
+    { label: firstNonEmpty(homepage?.tertiaryCtaLabel, copy('home.heroTertiaryCtaFallback')), href: firstNonEmpty(homepage?.tertiaryCtaHref, '/#best-sellers'), variant: 'soft' }
   ].filter((cta) => cta.label && cta.href);
   const trustItems = [
-    { label: firstNonEmpty(homepage?.trustItemOne, 'Same-day options'), icon: Truck },
-    { label: firstNonEmpty(homepage?.trustItemTwo, 'Premium finish'), icon: Sparkles },
-    { label: firstNonEmpty(homepage?.trustItemThree, 'Sales guidance'), icon: MessageCircle }
+    { label: firstNonEmpty(homepage?.trustItemOne, copy('home.heroTrustOneFallback')), icon: Truck },
+    { label: firstNonEmpty(homepage?.trustItemTwo, copy('home.heroTrustTwoFallback')), icon: Sparkles },
+    { label: firstNonEmpty(homepage?.trustItemThree, copy('home.heroTrustThreeFallback')), icon: MessageCircle }
   ].filter((item) => item.label);
   const heroImage = getStorefrontCloudinaryImage(heroSlide.image, 'homepageHero');
 
@@ -92,7 +96,7 @@ export function HomepageBannerSlideshow({ slides, homepage }: HomepageBannerSlid
         </div>
 
         {homepage?.studioBadge !== '' ? <div className="absolute bottom-6 right-6 hidden rounded-full border border-white/35 bg-white/72 px-5 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-rosewood shadow-sm md:block">
-          {firstNonEmpty(homepage?.studioBadge, 'Golara studio selection')}
+          {firstNonEmpty(homepage?.studioBadge, copy('home.heroStudioBadgeFallback'))}
         </div> : null}
       </div>
     </section>
