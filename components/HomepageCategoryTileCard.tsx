@@ -1,5 +1,5 @@
-import Image from 'next/image';
 import Link from 'next/link';
+import { ProgressiveStorefrontImage } from '@/components/ProgressiveStorefrontImage';
 import type { Category } from '@/lib/catalog';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 import { homepageCategoryImage } from '@/lib/homepage-assets';
@@ -50,12 +50,12 @@ export function HomepageCategoryTileCard({ category, priority = false, locale }:
       aria-label={viewLabel(displayTitle, locale)}
       className="group relative block min-h-[270px] overflow-hidden rounded-lg bg-stone-100 shadow-[0_14px_36px_rgba(111,36,56,0.07)] outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30 md:min-h-[340px]"
     >
-      <Image
+      <ProgressiveStorefrontImage
         src={imageSrc}
         alt={displayTitle}
         fill
         priority={priority}
-        className="object-cover object-[68%_center] transition duration-500 group-hover:scale-[1.02] md:object-[72%_center]"
+        imageClassName="object-cover object-[68%_center] transition duration-500 group-hover:scale-[1.02] md:object-[72%_center]"
         sizes="(min-width: 1280px) 40vw, (min-width: 768px) 50vw, 100vw"
       />
       <div className="absolute inset-0 bg-gradient-to-r from-stone-100/95 via-stone-100/72 to-transparent" />
