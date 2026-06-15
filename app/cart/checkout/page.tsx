@@ -9,17 +9,39 @@ import { getCustomerSessionCookie } from '@/lib/customers/customer-session-cooki
 import { getCustomerCopy, getCustomerCopyDirection } from '@/lib/localization/customer-copy';
 import { getCheckoutFlowCopy } from '@/lib/localization/checkout-flow-copy';
 import { hasDatabase } from '@/lib/prisma';
+import { buildPaymentMethodReadinessNotes, paymentMethodSettingsService } from '@/lib/settings/payment-method-settings';
 
 export const dynamic = 'force-dynamic';
 
+function checkoutPaymentMethodCopy(locale?: string | null) {
+  if (locale?.toLowerCase().startsWith('fa')) {
+    return {
+      title: 'روش پرداخت',
+      body: 'یکی از روش‌های فعال پرداخت را انتخاب کنید. گزینه‌های نیازمند بررسی دستی پس از ثبت سفارش توسط تیم گل‌آرا پیگیری می‌شوند.',
+      manualReview: 'نیازمند بررسی دستی',
+      online: 'پرداخت آنلاین',
+      noMethods: 'در حال حاضر روش پرداخت فعالی تعریف نشده است.'
+    };
+  }
+
+  return {
+    title: 'Payment method',
+    body: 'Choose an enabled payment method. Manual-review options are followed up by the Golara team after order creation.',
+    manualReview: 'Manual review required',
+    online: 'Online capture',
+    noMethods: 'No active payment methods are currently configured.'
+  };
+}
+
 export default async function CartCheckoutPage({ searchParams }: { searchParams: Promise<{ checkout?: string }> }) {
-  const [{ checkout }, cartToken, customerToken] = await Promise.all([searchParams, getCartTokenCookie(), getCustomerSessionCookie()]);
+  const [{ checkout }, cartToken, customerToken, paymentMethodSettings] = await Promise.all([searchParams, getCartTokenCookie(), getCustomerSessionCookie(), paymentMethodSettingsService.list()]);
   const [cart, customerSession] = hasDatabase()
     ? await Promise.all([getCartByToken(cartToken), getCustomerSession(customerToken)])
     : [null, null] as const;
   const locale = customerSession?.customer.locale;
   const dir = getCustomerCopyDirection(locale);
   const copy = (key: Parameters<typeof getCustomerCopy>[0]) => getCustomerCopy(key, locale);
+  const paymentCopy = checkoutPaymentMethodCopy(locale);
   const message = getCheckoutFlowCopy(checkout, locale);
   const items = cart?.items ?? [];
   const subtotalCents = items.reduce((sum, item) => sum + item.product.priceCents * item.quantity, 0);
@@ -28,6 +50,7 @@ export default async function CartCheckoutPage({ searchParams }: { searchParams:
   const defaultName = defaultAddress?.recipient || customerSession?.customer.displayName || '';
   const defaultPhone = defaultAddress?.phone || customerSession?.customer.phone || '';
   const defaultEmail = customerSession?.customer.email || '';
+  const activePaymentMethods = paymentMethodSettings.filter((method) => method.isActive).sort((a, b) => a.sortOrder - b.sortOrder);
 
   return (
     <main id="main-content" tabIndex={-1} dir={dir}>
@@ -121,6 +144,24 @@ export default async function CartCheckoutPage({ searchParams }: { searchParams:
                   <textarea name="customerNote" className="min-h-24 rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20" />
                 </label>
               </div>
+              <fieldset className="grid gap-3 rounded-[1.5rem] border border-rosewood/10 bg-cream/70 p-4">
+                <legend className="px-1 text-sm font-bold uppercase tracking-[0.18em] text-olive">{paymentCopy.title}</legend>
+                <p className="text-sm leading-6 text-stone-700">{paymentCopy.body}</p>
+                {activePaymentMethods.length ? activePaymentMethods.map((method, index) => {
+                  const notes = buildPaymentMethodReadinessNotes(method, process.env);
+                  return (
+                    <label key={method.key} className="grid cursor-pointer gap-2 rounded-2xl border border-rosewood/10 bg-white p-4 text-sm text-stone-700 shadow-sm transition hover:border-rosewood/30 has-[:checked]:border-rosewood has-[:checked]:ring-4 has-[:checked]:ring-olive/15">
+                      <span className="flex flex-wrap items-center gap-3">
+                        <input name="paymentMethodKey" type="radio" value={method.key} required defaultChecked={method.isDefault || index === 0} className="h-4 w-4 accent-rosewood" />
+                        <span className="font-semibold text-rosewood">{method.label}</span>
+                        <span className="rounded-full bg-olive/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-olive">{method.requiresManualReview ? paymentCopy.manualReview : paymentCopy.online}</span>
+                      </span>
+                      {method.description ? <span className="leading-6">{method.description}</span> : null}
+                      {notes.length ? <span className="text-xs leading-5 text-stone-500">{notes.join(' ')}</span> : null}
+                    </label>
+                  );
+                }) : <p className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm font-semibold text-amber-900">{paymentCopy.noMethods}</p>}
+              </fieldset>
               <button type="submit" className="rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30">
                 {copy('checkout.createOrderAndPay')}
               </button>

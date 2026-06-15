@@ -4,12 +4,14 @@ import { redirect } from 'next/navigation';
 import { clearCartTokenCookie, getCartTokenCookie } from '@/lib/cart/cart-cookie';
 import { claimCartForCheckout, completeCartCheckout, releaseCartCheckoutClaim } from '@/lib/cart/cart-repository';
 import { checkoutActionNextPath } from '@/lib/checkout/checkout-action-next-path';
+import { checkoutPaymentMethodMetadata, resolveCheckoutPaymentMethodSelection } from '@/lib/checkout/payment-method-checkout-selection';
 import { createOrderDraft } from '@/lib/checkout/order-draft-repository';
 import { createCheckoutPaymentAttempt } from '@/lib/checkout/payment-provider';
 import { addCustomerAddress, upsertCustomerProfile } from '@/lib/customers/customer-repository';
 import { hasDatabase } from '@/lib/prisma';
 import { assertSameOriginServerAction } from '@/lib/server-action-origin';
 import { warnWithRedactedError } from '@/lib/security/redacted-logging';
+import { paymentMethodSettingsService } from '@/lib/settings/payment-method-settings';
 
 function stringField(formData: FormData, name: string, fallback = '') {
   const value = formData.get(name);
@@ -49,6 +51,7 @@ export async function createCartCheckoutAction(formData: FormData) {
   const email = stringField(formData, 'email');
   const city = stringField(formData, 'city');
   const line1 = stringField(formData, 'addressLine1');
+  const paymentMethodKey = stringField(formData, 'paymentMethodKey');
   const deliveryDate = optionalDeliveryDate(formData);
   const deliveryWindow = deliveryWindowField(formData);
 
@@ -56,6 +59,9 @@ export async function createCartCheckoutAction(formData: FormData) {
   if (phone.length < 7) redirect(checkoutPath('phone-required'));
   if (city.length < 2) redirect(checkoutPath('city-required'));
   if (line1.length < 4) redirect(checkoutPath('address-required'));
+
+  const paymentMethodSelection = resolveCheckoutPaymentMethodSelection(await paymentMethodSettingsService.list(), paymentMethodKey);
+  if (!paymentMethodSelection.ok) redirect(checkoutPath(paymentMethodSelection.code));
 
   let redirectTarget = '';
   let claimAcquired = false;
@@ -98,7 +104,11 @@ export async function createCartCheckoutAction(formData: FormData) {
         items: items.map((item) => ({ productId: item.productId, variantId: item.variantId ?? undefined, quantity: item.quantity }))
       });
 
-      const attempt = await createCheckoutPaymentAttempt({ orderId: order.id });
+      const attempt = await createCheckoutPaymentAttempt({
+        orderId: order.id,
+        provider: paymentMethodSelection.selection.provider,
+        metadata: checkoutPaymentMethodMetadata(paymentMethodSelection.selection)
+      });
       await completeCartCheckout(token);
       await clearCartTokenCookie();
       checkoutCompleted = true;

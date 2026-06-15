@@ -9,6 +9,8 @@ export type CheckoutFlowCopyKey =
   | 'address-required'
   | 'delivery-date-invalid'
   | 'delivery-window-invalid'
+  | 'payment-method-required'
+  | 'payment-method-unavailable'
   | 'database-required'
   | 'failed';
 
@@ -24,6 +26,8 @@ const checkoutFlowCopy: CheckoutFlowCopyRegistry = {
     'address-required': 'Please enter a delivery address.',
     'delivery-date-invalid': 'Please enter a valid delivery date.',
     'delivery-window-invalid': 'Please enter a delivery window like 10:00-12:00.',
+    'payment-method-required': 'Please choose a payment method before checkout.',
+    'payment-method-unavailable': 'That payment method is no longer available. Please choose another option.',
     'database-required': 'Checkout requires a configured database.',
     failed: 'We could not create checkout. Please try again.'
   },
@@ -36,6 +40,8 @@ const checkoutFlowCopy: CheckoutFlowCopyRegistry = {
     'address-required': 'لطفا نشانی ارسال را وارد کنید.',
     'delivery-date-invalid': 'لطفا تاریخ ارسال معتبر وارد کنید.',
     'delivery-window-invalid': 'لطفا بازه ارسال را مانند 10:00-12:00 وارد کنید.',
+    'payment-method-required': 'لطفا پیش از پرداخت یک روش پرداخت انتخاب کنید.',
+    'payment-method-unavailable': 'این روش پرداخت دیگر در دسترس نیست. لطفا گزینه دیگری انتخاب کنید.',
     'database-required': 'پرداخت به پایگاه داده پیکربندی‌شده نیاز دارد.',
     failed: 'نتوانستیم پرداخت را ایجاد کنیم. دوباره تلاش کنید.'
   }

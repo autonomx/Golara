@@ -24,9 +24,19 @@ export async function runCheckoutCreationBoundaryTests() {
     'checkout order creation must retain the same-origin server-action boundary'
   );
   assertOrder(checkoutActionSource, 'await claimCartForCheckout(token)', 'await createOrderDraft({', 'checkout action');
-  assertOrder(checkoutActionSource, 'await createOrderDraft({', 'await createCheckoutPaymentAttempt({ orderId: order.id })', 'checkout action');
-  assertOrder(checkoutActionSource, 'await createCheckoutPaymentAttempt({ orderId: order.id })', 'await completeCartCheckout(token)', 'checkout action');
+  assertOrder(checkoutActionSource, 'await createOrderDraft({', 'const attempt = await createCheckoutPaymentAttempt({', 'checkout action');
+  assertOrder(checkoutActionSource, 'const attempt = await createCheckoutPaymentAttempt({', 'await completeCartCheckout(token)', 'checkout action');
   assertOrder(checkoutActionSource, 'await completeCartCheckout(token)', 'await clearCartTokenCookie()', 'checkout action');
+  assert.match(
+    checkoutActionSource,
+    /const paymentMethodSelection = resolveCheckoutPaymentMethodSelection\(await paymentMethodSettingsService\.list\(\), paymentMethodKey\);\s*if \(!paymentMethodSelection\.ok\) redirect\(checkoutPath\(paymentMethodSelection\.code\)\);/s,
+    'checkout action must validate the selected payment method before order/payment creation'
+  );
+  assert.match(
+    checkoutActionSource,
+    /const attempt = await createCheckoutPaymentAttempt\(\{\s*orderId: order\.id,\s*provider: paymentMethodSelection\.selection\.provider,\s*metadata: checkoutPaymentMethodMetadata\(paymentMethodSelection\.selection\)\s*\}\);/s,
+    'checkout action must create payment attempts with the order id, selected provider, and payment-method metadata'
+  );
   assert.match(
     checkoutActionSource,
     /if \(claimAcquired && !checkoutCompleted\) \{\s*await releaseCartCheckoutClaim\(token\);\s*\}/s,

@@ -52,6 +52,7 @@
     "check:admin-shell-settings-read-gate": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/admin-shell-settings-read-gate.test.ts",
     "check:homepage-category-card-readability": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/homepage-category-card-readability.test.ts",
     "check:payment-method-settings": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/payment-method-settings.test.ts",
+    "check:payment-method-checkout-selection": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/payment-method-checkout-selection.test.ts",
     "check:secrets": "node tools/check-secrets.mjs",
     "check:storefront-performance": "node tools/check-storefront-performance-budget.mjs",
     "smoke:routes": "node tools/smoke-routes.mjs",
