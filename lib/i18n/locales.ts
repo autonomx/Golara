@@ -29,5 +29,12 @@ export function localeDirection(locale: SupportedLocale) {
 }
 
 export function fallbackLocaleOrder(requestedLocale: string | undefined | null): SupportedLocale[] {
-  return [normalizeLocale(requestedLocale)];
+  const requested = normalizeLocale(requestedLocale);
+  const order: SupportedLocale[] = [requested];
+
+  for (const locale of [DEFAULT_LOCALE, FALLBACK_LOCALE] as const) {
+    if (!order.includes(locale)) order.push(locale);
+  }
+
+  return order;
 }
