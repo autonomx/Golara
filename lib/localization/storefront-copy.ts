@@ -8,6 +8,13 @@ export type StorefrontCopyKey =
   | 'home.collectionsCtaLabel'
   | 'home.favoritesEyebrow'
   | 'home.favoritesTitle'
+  | 'home.heroPrimaryCtaFallback'
+  | 'home.heroSecondaryCtaFallback'
+  | 'home.heroTertiaryCtaFallback'
+  | 'home.heroTrustOneFallback'
+  | 'home.heroTrustTwoFallback'
+  | 'home.heroTrustThreeFallback'
+  | 'home.heroStudioBadgeFallback'
   | 'home.footerShopTitle'
   | 'home.footerServiceTitle'
   | 'home.footerBody'
@@ -71,6 +78,13 @@ export const storefrontCopy: StorefrontCopyRegistry = {
     'home.collectionsCtaLabel': 'See all occasions',
     'home.favoritesEyebrow': 'Customer favorites',
     'home.favoritesTitle': 'Best sellers',
+    'home.heroPrimaryCtaFallback': 'Shop available today',
+    'home.heroSecondaryCtaFallback': 'All products',
+    'home.heroTertiaryCtaFallback': 'Best sellers',
+    'home.heroTrustOneFallback': 'Same-day options',
+    'home.heroTrustTwoFallback': 'Premium finish',
+    'home.heroTrustThreeFallback': 'Sales guidance',
+    'home.heroStudioBadgeFallback': 'Golara studio selection',
     'home.footerShopTitle': 'Shop',
     'home.footerServiceTitle': 'Service',
     'home.footerBody': 'A luxury floral storefront for bouquets, flower boxes, weddings, events, and premium gifting.',
@@ -131,6 +145,13 @@ export const storefrontCopy: StorefrontCopyRegistry = {
     'home.collectionsCtaLabel': 'مشاهده همه مناسبت‌ها',
     'home.favoritesEyebrow': 'محبوب مشتریان',
     'home.favoritesTitle': 'پرفروش‌ها',
+    'home.heroPrimaryCtaFallback': 'خرید گزینه‌های آماده امروز',
+    'home.heroSecondaryCtaFallback': 'همه محصولات',
+    'home.heroTertiaryCtaFallback': 'پرفروش‌ها',
+    'home.heroTrustOneFallback': 'گزینه‌های همان‌روز',
+    'home.heroTrustTwoFallback': 'اجرای لوکس',
+    'home.heroTrustThreeFallback': 'راهنمایی فروش',
+    'home.heroStudioBadgeFallback': 'انتخاب ویژه استودیو گلارا',
     'home.footerShopTitle': 'خرید',
     'home.footerServiceTitle': 'خدمات',
     'home.footerBody': 'فروشگاه گل لوکس برای دسته‌گل، باکس گل، عروسی، مراسم و هدیه‌های خاص.',
