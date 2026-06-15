@@ -1,6 +1,6 @@
 # DigiKala-Style Payment System — Remaining Phases
 
-Status: updated after the manual-transfer checkout slice merged.
+Status: updated after the manual-transfer verification workflow merged.
 
 ## Completed foundations
 
@@ -10,19 +10,11 @@ Status: updated after the manual-transfer checkout slice merged.
 - Checkout method selection driven by enabled payment methods.
 - Admin order visibility for selected payment method, provider, and manual-review state.
 - Bank-transfer/card-to-card checkout instructions with optional customer reference/proof-link capture.
+- Manual-transfer/card-to-card verification workflow with a dedicated admin review queue.
+- Manual-transfer verification outcomes: received, rejected, and needs follow-up.
+- Manual-transfer audit metadata: verifier, timestamp, note, received amount, and provider/bank reference.
 
 ## Remaining implementation phases
-
-### Phase P1 — Manual transfer verification workflow
-
-Add staff-side verification for card-to-card/bank-transfer payments.
-
-Deliverables:
-- Admin payment review queue filtered by manual-transfer attempts.
-- Mark transfer as received, rejected, or needs follow-up.
-- Store verification actor, timestamp, note, and received amount.
-- Move order/payment state forward only after staff verification.
-- Add audit logs and guards for verification actions.
 
 ### Phase P2 — Wallet/store-credit ledger
 
@@ -119,4 +111,4 @@ Deliverables:
 
 ## Recommended next slice
 
-Start with **Phase P1 — Manual transfer verification workflow** because manual transfer is already visible in checkout and now captures optional reference/proof metadata. Staff verification is the next required step before these payments can safely move orders forward.
+Start with **Phase P2 — Wallet/store-credit ledger**. Manual transfer now has checkout capture and staff verification, so the next DigiKala-style capability should be an internal wallet ledger with immutable balance movements, checkout reservation/capture, and refund-to-wallet support.
