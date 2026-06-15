@@ -49,6 +49,7 @@
     "check:admin-products-filter-index": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/admin-products-filter-index-performance.test.ts",
     "check:admin-order-summary-performance": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/admin-order-summary-performance.test.ts",
     "check:admin-customer-detail-performance": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/admin-customer-detail-performance.test.ts",
+    "check:admin-shell-settings-read-gate": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/admin-shell-settings-read-gate.test.ts",
     "check:secrets": "node tools/check-secrets.mjs",
     "check:storefront-performance": "node tools/check-storefront-performance-budget.mjs",
     "smoke:routes": "node tools/smoke-routes.mjs",
