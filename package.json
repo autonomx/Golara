@@ -36,6 +36,7 @@
     "check:admin-boundaries": "node tools/check-admin-action-boundaries.mjs",
     "check:deploy-readiness": "tsx tools/check-deploy-readiness.ts",
     "check:payment-production-gates": "node tools/check-payment-production-gates.mjs",
+    "check:payment-production-monitoring": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/payment-production-monitoring-matrix-entry.test.ts",
     "check:secrets": "node tools/check-secrets.mjs",
     "check:storefront-performance": "node tools/check-storefront-performance-budget.mjs",
     "smoke:routes": "node tools/smoke-routes.mjs",
