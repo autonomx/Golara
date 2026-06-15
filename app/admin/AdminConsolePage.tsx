@@ -28,8 +28,8 @@ import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { createInquiryAssignmentQueueSummary, filterInquiriesByAssignmentQueue, parseInquiryAssignmentQueueFilter } from '@/lib/inquiries/inquiry-assignment-queue';
 import { getCurrentInquiryNotificationReadiness, getCurrentInquiryNotificationRetryRunbook } from '@/lib/notifications/inquiry-notifications';
 import { getRuntimeReadiness } from '@/lib/runtime-readiness';
-import { storeSettingsService } from '@/lib/settings/store-settings';
-import { storefrontNavigationMenuService } from '@/lib/settings/storefront-navigation-menu';
+import { DEFAULT_STORE_SETTING, storeSettingsService } from '@/lib/settings/store-settings';
+import { DEFAULT_STOREFRONT_NAVIGATION_MENU, storefrontNavigationMenuService } from '@/lib/settings/storefront-navigation-menu';
 import { getStorefrontCopyDirection } from '@/lib/localization/storefront-copy';
 import type { HomepageContent } from '@/lib/catalog';
 import type { SupportedLocale } from '@/lib/i18n/locales';
@@ -337,10 +337,14 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
   const authenticated = await isAdminAuthenticated();
   const adminIdentity = authenticated ? await getAdminIdentity() : undefined;
   const canViewStaffReadiness = adminIdentity?.role === 'owner';
+  const needsSettingsReads = activeTab === 'settings';
   const [categories, products, productTypes, homepage, homepageTranslations, media, inquiryPageData, assignmentSourceInquiries, inquiryCounts, auditLogs, orderRevenueSummary, orderPageData, authEventSummary, adminAccounts, adminCustomers, fulfillmentMethods] = await Promise.all([
-    listAdminCategories(), listAdminProducts(), listAdminProductTypes(), getHomepageContent(), authenticated ? listHomepageTranslations() : Promise.resolve([]), listMedia(), listInquiryPage(inquiryStatus, inquiryPageNumber, undefined, inquirySearch), listInquiries(inquiryStatus, inquirySearch), listInquiryStatusCounts(inquirySearch), authenticated ? listAdminAuditLogs(auditFilters) : Promise.resolve([]), authenticated ? orderRevenueSummaryService.summary() : Promise.resolve(EMPTY_ORDER_REVENUE_SUMMARY), authenticated ? listAdminCheckoutOrderPage(orderFilters, parsePage(orderPage)) : Promise.resolve({ orders: [], page: 1, pageSize: 12, totalCount: 0, totalPages: 1 }), authenticated ? getCustomerAuthEventSummary() : getCustomerAuthEventSummary(1), canViewStaffReadiness ? listAdminAccountReadinessRecords() : Promise.resolve([]), authenticated ? listAdminCustomers() : Promise.resolve([]), authenticated ? listAdminFulfillmentMethodSettings() : Promise.resolve([])
+    listAdminCategories(), listAdminProducts(), listAdminProductTypes(), getHomepageContent(), authenticated ? listHomepageTranslations() : Promise.resolve([]), listMedia(), listInquiryPage(inquiryStatus, inquiryPageNumber, undefined, inquirySearch), listInquiries(inquiryStatus, inquirySearch), listInquiryStatusCounts(inquirySearch), authenticated ? listAdminAuditLogs(auditFilters) : Promise.resolve([]), authenticated ? orderRevenueSummaryService.summary() : Promise.resolve(EMPTY_ORDER_REVENUE_SUMMARY), authenticated ? listAdminCheckoutOrderPage(orderFilters, parsePage(orderPage)) : Promise.resolve({ orders: [], page: 1, pageSize: 12, totalCount: 0, totalPages: 1 }), authenticated ? getCustomerAuthEventSummary() : getCustomerAuthEventSummary(1), canViewStaffReadiness ? listAdminAccountReadinessRecords() : Promise.resolve([]), authenticated ? listAdminCustomers() : Promise.resolve([]), needsSettingsReads && authenticated ? listAdminFulfillmentMethodSettings() : Promise.resolve([])
   ]);
-  const [storefrontNavigationMenu, storeSetting] = await Promise.all([storefrontNavigationMenuService.get(), storeSettingsService.get()]);
+  const [storefrontNavigationMenu, storeSetting] = await Promise.all([
+    needsSettingsReads ? storefrontNavigationMenuService.get() : Promise.resolve(DEFAULT_STOREFRONT_NAVIGATION_MENU),
+    needsSettingsReads ? storeSettingsService.get() : Promise.resolve(DEFAULT_STORE_SETTING)
+  ]);
   const assignmentSummary = createInquiryAssignmentQueueSummary(assignmentSourceInquiries, adminIdentity);
   const adminAccountSummary = await getAdminAccountReadinessSummary(adminAccounts);
   if (assignmentFilter !== 'all') {
