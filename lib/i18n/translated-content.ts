@@ -1,4 +1,5 @@
-import { fallbackLocaleOrder, normalizeLocale, type SupportedLocale } from '@/lib/i18n/locales';
+import { normalizeLocale, type SupportedLocale } from '@/lib/i18n/locales';
+import { getLocalizedCategorySeedCopy } from '@/lib/localization/catalog-seed-fallback';
 
 export type TranslationLike = {
   locale: string;
@@ -12,17 +13,6 @@ export type TranslationSelection<TTranslation extends TranslationLike, TBase> = 
   base: TBase;
   requestedLocale: SupportedLocale;
 };
-
-export function selectPublishedTranslation<TTranslation extends TranslationLike>(translations: TTranslation[], requestedLocale: string | undefined | null) {
-  const order = fallbackLocaleOrder(requestedLocale);
-
-  for (const locale of order) {
-    const translation = translations.find((item) => item.locale === locale && item.isPublished !== false);
-    if (translation) return { locale, translation };
-  }
-
-  return null;
-}
 
 export function selectPublishedTranslationForExactLocale<TTranslation extends TranslationLike>(translations: TTranslation[], requestedLocale: string | undefined | null) {
   const locale = normalizeLocale(requestedLocale);
@@ -56,12 +46,23 @@ export function selectTranslatedContent<TTranslation extends TranslationLike, TB
   };
 }
 
+function localizedLegacyCategoryField<TBase extends Record<string, unknown>>(selection: TranslationSelection<TranslationLike, TBase>, field: string) {
+  if (selection.source !== 'legacy-base') return '';
+  if (field !== 'title' && field !== 'eyebrow' && field !== 'description') return '';
+  const slug = selection.base.slug;
+  if (typeof slug !== 'string') return '';
+  return getLocalizedCategorySeedCopy(slug, selection.requestedLocale)?.[field as 'title' | 'eyebrow' | 'description'] ?? '';
+}
+
 export function localizedField<TTranslation extends Record<string, unknown>, TBase extends Record<string, unknown>>(input: {
   selection: TranslationSelection<TTranslation & TranslationLike, TBase>;
   field: keyof TTranslation & keyof TBase & string;
 }) {
   const translatedValue = input.selection.translation?.[input.field];
   if (typeof translatedValue === 'string' && translatedValue.trim()) return translatedValue;
+
+  const localeSeedValue = localizedLegacyCategoryField(input.selection, input.field);
+  if (localeSeedValue.trim()) return localeSeedValue;
 
   const baseValue = input.selection.base[input.field];
   return typeof baseValue === 'string' ? baseValue : '';
