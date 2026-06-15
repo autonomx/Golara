@@ -10,6 +10,7 @@ import { homepageBannerMediaSettingsService } from '@/lib/settings/homepage-bann
 import { importExportJobTrackingService } from '@/lib/settings/import-export-job-tracking';
 import { integrationAppRegistryService } from '@/lib/settings/integration-app-registry';
 import { notificationProviderSettingsService } from '@/lib/settings/notification-provider-settings';
+import { paymentMethodSettingsService } from '@/lib/settings/payment-method-settings';
 import { paymentProviderSettingsService } from '@/lib/settings/payment-provider-settings';
 import { shippingDeliverySettingsService } from '@/lib/settings/shipping-delivery-settings';
 import { staffPermissionSettingsService } from '@/lib/settings/staff-permission-settings';
@@ -199,6 +200,24 @@ export async function updatePaymentProviderSettingAction(formData: FormData) {
   redirect('/admin/settings?status=payment-provider-updated');
 }
 
+export async function updatePaymentMethodSettingAction(formData: FormData) {
+  await assertAdminRole('owner');
+
+  await paymentMethodSettingsService.updateControls({
+    key: requiredString(formData, 'key'),
+    isActive: boolField(formData, 'isActive'),
+    isDefault: boolField(formData, 'isDefault'),
+    requiresManualReview: boolField(formData, 'requiresManualReview'),
+    sortOrder: intField(formData, 'sortOrder', 50)
+  });
+
+  revalidatePath('/cart/checkout');
+  revalidatePath('/admin');
+  revalidatePath('/admin/payment-methods');
+  revalidatePath('/admin/orders');
+  redirect('/admin/payment-methods?status=payment-method-updated');
+}
+
 export async function updateNotificationProviderSettingAction(formData: FormData) {
   await assertAdminRole('owner');
 
@@ -258,135 +277,10 @@ export async function updateIntegrationAppRegistryAction(formData: FormData) {
     docsUrl: stringField(formData, 'docsUrl') || null,
     webhookConfigurationKey: stringField(formData, 'webhookConfigurationKey') || null,
     permissions: listField(formData, 'permissions'),
-    requiredEnvVars: listField(formData, 'requiredEnvVars'),
-    isInternal: boolField(formData, 'isInternal'),
     isActive: boolField(formData, 'isActive')
   });
 
   revalidatePath('/admin');
   revalidatePath('/admin/settings');
-  redirect('/admin/settings?status=integration-app-registry-updated');
-}
-
-export async function updateApiTokenManagementAction(formData: FormData) {
-  await assertAdminRole('owner');
-
-  await apiTokenManagementService.update({
-    key: requiredString(formData, 'key'),
-    label: requiredString(formData, 'label'),
-    description: stringField(formData, 'description') || null,
-    tokenValue: stringField(formData, 'tokenValue') || null,
-    tokenPrefix: stringField(formData, 'tokenPrefix') || null,
-    scopes: listField(formData, 'scopes'),
-    integrationAppKey: stringField(formData, 'integrationAppKey') || null,
-    expiresAt: stringField(formData, 'expiresAt') || null,
-    isRevoked: boolField(formData, 'isRevoked'),
-    isActive: boolField(formData, 'isActive')
-  });
-
-  revalidatePath('/admin');
-  revalidatePath('/admin/settings');
-  redirect('/admin/settings?status=api-token-management-updated');
-}
-
-export async function updateDashboardExtensionMountPointAction(formData: FormData) {
-  await assertAdminRole('owner');
-
-  await dashboardExtensionMountPointService.update({
-    key: requiredString(formData, 'key'),
-    label: requiredString(formData, 'label'),
-    description: stringField(formData, 'description') || null,
-    mountLocation: requiredString(formData, 'mountLocation'),
-    integrationAppKey: stringField(formData, 'integrationAppKey') || null,
-    requiredRoles: listField(formData, 'requiredRoles'),
-    requiredPermissions: listField(formData, 'requiredPermissions'),
-    isInternal: boolField(formData, 'isInternal'),
-    isActive: boolField(formData, 'isActive'),
-    sortOrder: intField(formData, 'sortOrder', 100)
-  });
-
-  revalidatePath('/admin');
-  revalidatePath('/admin/settings');
-  redirect('/admin/settings?status=dashboard-extension-mount-point-updated');
-}
-
-export async function updateImportExportJobTrackingAction(formData: FormData) {
-  await assertAdminRole('owner');
-
-  await importExportJobTrackingService.upsert({
-    key: requiredString(formData, 'key'),
-    label: requiredString(formData, 'label'),
-    description: stringField(formData, 'description') || null,
-    kind: requiredString(formData, 'kind'),
-    target: requiredString(formData, 'target'),
-    status: requiredString(formData, 'status'),
-    requestedBy: stringField(formData, 'requestedBy') || null,
-    sourceFilename: stringField(formData, 'sourceFilename') || null,
-    sourceMimeType: stringField(formData, 'sourceMimeType') || null,
-    inputValue: stringField(formData, 'inputValue') || null,
-    outputUrl: stringField(formData, 'outputUrl') || null,
-    totalRows: intField(formData, 'totalRows', 0),
-    processedRows: intField(formData, 'processedRows', 0),
-    failedRows: intField(formData, 'failedRows', 0),
-    errorMessage: stringField(formData, 'errorMessage') || null
-  });
-
-  revalidatePath('/admin');
-  revalidatePath('/admin/settings');
-  redirect('/admin/settings?status=import-export-job-tracking-updated');
-}
-
-export async function updateStaffPermissionGroupAction(formData: FormData) {
-  await assertAdminRole('owner');
-
-  await staffPermissionSettingsService.updateGroup({
-    key: requiredString(formData, 'key'),
-    label: requiredString(formData, 'label'),
-    description: stringField(formData, 'description') || null,
-    role: requiredString(formData, 'role'),
-    permissions: listField(formData, 'permissions'),
-    isDefault: boolField(formData, 'isDefault'),
-    isActive: boolField(formData, 'isActive')
-  });
-
-  revalidatePath('/admin');
-  revalidatePath('/admin/settings');
-  redirect('/admin/settings?status=staff-permission-group-updated');
-}
-
-export async function updateStaffAccountAction(formData: FormData) {
-  await assertAdminRole('owner');
-
-  await staffPermissionSettingsService.updateAccount({
-    provider: stringField(formData, 'provider') || 'password',
-    providerAccountId: requiredString(formData, 'providerAccountId'),
-    label: requiredString(formData, 'label'),
-    email: stringField(formData, 'email') || null,
-    role: requiredString(formData, 'role'),
-    permissionGroupKey: stringField(formData, 'permissionGroupKey') || null,
-    isActive: boolField(formData, 'isActive')
-  });
-
-  revalidatePath('/admin');
-  revalidatePath('/admin/settings');
-  redirect('/admin/settings?status=staff-account-updated');
-}
-
-export async function updateFulfillmentMethodSettingAction(formData: FormData) {
-  await assertAdminRole('owner');
-
-  await fulfillmentMethodSettingsService.update({
-    key: requiredString(formData, 'key'),
-    label: requiredString(formData, 'label'),
-    description: stringField(formData, 'description') || null,
-    isActive: boolField(formData, 'isActive'),
-    isDefault: boolField(formData, 'isDefault'),
-    requiresAddress: boolField(formData, 'requiresAddress'),
-    requiresScheduling: boolField(formData, 'requiresScheduling'),
-    sortOrder: intField(formData, 'sortOrder', 0)
-  });
-
-  revalidatePath('/admin');
-  revalidatePath('/admin/settings');
-  redirect('/admin/settings?status=fulfillment-method-updated');
+  redirect('/admin/settings?status=integration-app-updated');
 }
