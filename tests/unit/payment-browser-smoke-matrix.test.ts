@@ -69,5 +69,16 @@ export function runPaymentBrowserSmokeMatrixTests() {
     assert.ok(docs.includes(marker), `Expected payment browser smoke docs to include: ${marker}`);
   }
 
+  const evidence = readFileSync('docs/payment-browser-smoke-validation-evidence.md', 'utf8');
+  for (const marker of [
+    'PAYMENT_BROWSER_SMOKE_TESTS_CONFIRMED="true"',
+    '| cart-guest-add-update-remove | Pending |',
+    '| provider-handoff-idempotency | Pending |',
+    '| localization-en-fa-payment-copy | Pending |',
+    'Unit tests, source guards, static route smoke tests, and documentation-only checks do not count as target-environment browser smoke evidence.'
+  ]) {
+    assert.ok(evidence.includes(marker), `Expected browser smoke evidence template to include: ${marker}`);
+  }
+
   console.log('payment-browser-smoke-matrix.test.ts passed');
 }
