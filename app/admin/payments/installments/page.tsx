@@ -40,7 +40,7 @@ export default async function AdminInstallmentPaymentsPage({ searchParams }: { s
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-rosewood">Payments / Installments</p>
               <h1 className="mt-2 flex items-center gap-3 text-3xl font-bold text-stone-950"><CreditCard aria-hidden="true" className="h-7 w-7" /> Installment review queue</h1>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">Review installment and credit purchase requests captured during checkout. Approval marks the request as approved and keeps the payment pending for schedule setup; rejection fails the payment attempt.</p>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">Review installment and credit purchase requests captured during checkout. Approval now creates the schedule from the approved term and first-due date; rejection fails the payment attempt.</p>
             </div>
             <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm font-semibold text-stone-700">{items.length} pending/reviewable</div>
           </div>
@@ -80,10 +80,14 @@ export default async function AdminInstallmentPaymentsPage({ searchParams }: { s
                     <label className="grid gap-1 text-sm font-semibold text-stone-700">Down payment cents
                       <input name="downPaymentCents" inputMode="numeric" placeholder="0" className="rounded-lg border border-stone-200 px-3 py-2" />
                     </label>
+                    <label className="grid gap-1 text-sm font-semibold text-stone-700">First due date
+                      <input name="firstDueAt" type="date" className="rounded-lg border border-stone-200 px-3 py-2" />
+                    </label>
                     <label className="grid gap-1 text-sm font-semibold text-stone-700">Approval note
                       <textarea name="note" rows={2} className="rounded-lg border border-stone-200 px-3 py-2" />
                     </label>
-                    <button disabled={!canReview} className="rounded-full bg-emerald-700 px-4 py-2 text-sm font-bold text-white disabled:bg-stone-300">Approve request</button>
+                    <p className="text-xs leading-5 text-stone-500">Approving creates the installment plan and scheduled receivable entries immediately. Leave first due date blank to default to one month from now.</p>
+                    <button disabled={!canReview} className="rounded-full bg-emerald-700 px-4 py-2 text-sm font-bold text-white disabled:bg-stone-300">Approve and create schedule</button>
                   </form>
 
                   <form action={reviewInstallmentAction} className="grid gap-3 rounded-xl bg-white p-3">
