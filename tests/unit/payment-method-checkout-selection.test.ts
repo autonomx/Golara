@@ -27,13 +27,27 @@ if (walletSelection.ok) {
   });
 }
 
-const unavailableSelection = resolveCheckoutPaymentMethodSelection(DEFAULT_DIGIKALA_PAYMENT_METHOD_SETTINGS, 'disabled-method');
+const unavailableSelection = resolveCheckoutPaymentMethodSelection(DEFAULT_DIGIKALA_PAYMENT_METHOD_SETTINGS, 'missing-method');
 assert.equal(unavailableSelection.ok, false);
 if (!unavailableSelection.ok) assert.equal(unavailableSelection.code, 'payment-method-unavailable');
 
+const disabledGatewaySelection = resolveCheckoutPaymentMethodSelection(
+  DEFAULT_DIGIKALA_PAYMENT_METHOD_SETTINGS.map((method) => (method.key === 'iranian-ipg' ? { ...method, isActive: false } : method)),
+  'iranian-ipg'
+);
+assert.equal(disabledGatewaySelection.ok, false);
+if (!disabledGatewaySelection.ok) {
+  assert.equal(disabledGatewaySelection.code, 'payment-method-disabled');
+  assert.ok(disabledGatewaySelection.methods.every((method) => method.key !== 'iranian-ipg'), 'Disabled gateway method must not remain selectable.');
+}
+
 const inactiveSelection = resolveCheckoutPaymentMethodSelection(DEFAULT_DIGIKALA_PAYMENT_METHOD_SETTINGS.map((method) => ({ ...method, isActive: false })), 'iranian-ipg');
 assert.equal(inactiveSelection.ok, false);
-if (!inactiveSelection.ok) assert.equal(inactiveSelection.code, 'payment-method-required');
+if (!inactiveSelection.ok) assert.equal(inactiveSelection.code, 'payment-method-disabled');
+
+const requiredSelection = resolveCheckoutPaymentMethodSelection(DEFAULT_DIGIKALA_PAYMENT_METHOD_SETTINGS.map((method) => ({ ...method, isActive: false })));
+assert.equal(requiredSelection.ok, false);
+if (!requiredSelection.ok) assert.equal(requiredSelection.code, 'payment-method-required');
 
 const checkoutPageSource = readFileSync('app/cart/checkout/page.tsx', 'utf8');
 assert.ok(checkoutPageSource.includes('paymentMethodSettingsService.list()'), 'Checkout page should load configured payment methods.');
@@ -43,6 +57,7 @@ assert.ok(checkoutPageSource.includes('buildPaymentMethodReadinessNotes(method, 
 const checkoutActionSource = readFileSync('app/cart/checkout/actions.ts', 'utf8');
 assert.ok(checkoutActionSource.includes("stringField(formData, 'paymentMethodKey')"), 'Checkout action should read paymentMethodKey.');
 assert.ok(checkoutActionSource.includes('resolveCheckoutPaymentMethodSelection(await paymentMethodSettingsService.list(), paymentMethodKey)'), 'Checkout action should validate selected method against active settings.');
+assert.ok(checkoutActionSource.includes('if (!paymentMethodSelection.ok) redirect(checkoutPath(paymentMethodSelection.code));'), 'Checkout action should redirect before payment attempt creation when a selected method is disabled.');
 assert.ok(checkoutActionSource.includes('provider: paymentMethodSelection.selection.provider'), 'Checkout action should route payment attempt through the resolved provider.');
 assert.ok(checkoutActionSource.includes('metadata: checkoutPaymentMethodMetadata(paymentMethodSelection.selection)'), 'Checkout action should persist selected method metadata.');
 
