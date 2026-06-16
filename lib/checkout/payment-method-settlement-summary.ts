@@ -24,6 +24,7 @@ export type MethodSettlementSummary = {
   rawStatusCounts: Record<string, number>;
   totalCentsByStatus: Record<string, number>;
   codCollectionStatuses: Record<string, number>;
+  totalCentsByCodCollectionStatus: Record<string, number>;
   codSettlementModes: Record<string, number>;
   manualReviewRequiredCount: number;
   timelineEvidenceCount: number;
@@ -43,6 +44,24 @@ export type ManualTransferSettlementTotals = {
   needsFollowUpTotalCents: number;
   rejectedTotalCents: number;
   manualReviewRequiredCount: number;
+  timelineEvidenceCount: number;
+};
+
+export type CodCollectionSettlementTotals = {
+  methodKeys: string[];
+  currency: string;
+  orderCount: number;
+  collectedCount: number;
+  pendingCollectionCount: number;
+  failedCollectionCount: number;
+  waivedCollectionCount: number;
+  collectedTotalCents: number;
+  pendingCollectionTotalCents: number;
+  failedCollectionTotalCents: number;
+  waivedCollectionTotalCents: number;
+  collectionStatuses: Record<string, number>;
+  settlementModes: Record<string, number>;
+  ownerAdjustmentEvidenceCount: number;
   timelineEvidenceCount: number;
 };
 
@@ -99,13 +118,15 @@ const MANUAL_TRANSFER_METHOD_KEYS = new Set([
 ]);
 
 const WALLET_METHOD_KEYS = new Set(['wallet', 'customer_wallet', 'store_credit']);
+const COD_METHOD_KEYS = new Set(['cod', 'cash_on_delivery', 'cash-on-delivery', 'pay_on_delivery', 'pay-on-delivery']);
+const COD_PENDING_COLLECTION_STATUSES = new Set(['pending', 'pending_delivery', 'ready_for_delivery', 'uncollected']);
 
 function cleanText(value: string | undefined | null, fallback: string) {
   const normalized = value?.trim();
   return normalized || fallback;
 }
 
-function normalizeStatus(value: string | undefined) {
+function normalizeStatus(value: string | undefined | null) {
   return cleanText(value, 'unknown').toLowerCase();
 }
 
@@ -125,14 +146,20 @@ function normalizeActivityTime(value?: Date | string | null) {
   return date.toISOString();
 }
 
-function incrementCounter(counter: Record<string, number>, key: string | undefined) {
+function incrementCounter(counter: Record<string, number>, key: string | undefined | null) {
   const normalized = cleanText(key, 'unknown').toLowerCase();
   counter[normalized] = (counter[normalized] || 0) + 1;
 }
 
-function incrementTotal(counter: Record<string, number>, key: string | undefined, amount: number) {
+function incrementTotal(counter: Record<string, number>, key: string | undefined | null, amount: number) {
   const normalized = cleanText(key, 'unknown').toLowerCase();
   counter[normalized] = (counter[normalized] || 0) + amount;
+}
+
+function mergeCounters(target: Record<string, number>, source: Record<string, number>) {
+  for (const [key, count] of Object.entries(source)) {
+    target[key] = (target[key] || 0) + count;
+  }
 }
 
 function emptyStatusCounts(): MethodSettlementStatusCounts {
@@ -163,8 +190,24 @@ function evidenceTitle(title: string | undefined) {
   return REVERSAL_EVIDENCE_PATTERNS.some((pattern) => lower.includes(pattern)) ? normalized : undefined;
 }
 
+function orderMethodKey(order: CheckoutOrderSummary) {
+  return cleanText(order.latestPaymentMethodKey, cleanText(order.latestPaymentProvider, 'unknown'));
+}
+
+function isCodOrder(order: CheckoutOrderSummary) {
+  const methodKey = orderMethodKey(order).toLowerCase();
+  const methodType = cleanText(order.latestPaymentMethodType, 'unknown').toLowerCase();
+  const provider = cleanText(order.latestPaymentProvider, 'unknown').toLowerCase();
+  return COD_METHOD_KEYS.has(methodKey) || methodType === 'cod' || provider === 'cod';
+}
+
+function codCollectionStatusForOrder(order: CheckoutOrderSummary) {
+  if (order.latestCodCollectionStatus) return normalizeStatus(order.latestCodCollectionStatus);
+  return isCodOrder(order) ? 'pending' : undefined;
+}
+
 function summaryKey(order: CheckoutOrderSummary) {
-  const methodKey = cleanText(order.latestPaymentMethodKey, cleanText(order.latestPaymentProvider, 'unknown'));
+  const methodKey = orderMethodKey(order);
   const provider = cleanText(order.latestPaymentProvider, 'unknown');
   const currency = normalizeCurrency(order.currency);
   return `${methodKey}::${provider}::${currency}`;
@@ -172,7 +215,7 @@ function summaryKey(order: CheckoutOrderSummary) {
 
 function createSummary(order: CheckoutOrderSummary): MethodSettlementSummary {
   return {
-    methodKey: cleanText(order.latestPaymentMethodKey, cleanText(order.latestPaymentProvider, 'unknown')),
+    methodKey: orderMethodKey(order),
     methodLabel: cleanText(order.latestPaymentMethodLabel, cleanText(order.latestPaymentMethodKey, 'Unknown method')),
     methodType: cleanText(order.latestPaymentMethodType, 'unknown'),
     provider: cleanText(order.latestPaymentProvider, 'unknown'),
@@ -186,6 +229,7 @@ function createSummary(order: CheckoutOrderSummary): MethodSettlementSummary {
     rawStatusCounts: {},
     totalCentsByStatus: {},
     codCollectionStatuses: {},
+    totalCentsByCodCollectionStatus: {},
     codSettlementModes: {},
     manualReviewRequiredCount: 0,
     timelineEvidenceCount: 0,
@@ -198,6 +242,7 @@ function addOrderToSummary(summary: MethodSettlementSummary, order: CheckoutOrde
   const bucket = statusBucket(status);
   const totalCents = Number.isFinite(order.totalCents) ? order.totalCents : 0;
   const evidence = evidenceTitle(order.latestTimelineTitle);
+  const codCollectionStatus = codCollectionStatusForOrder(order);
 
   summary.orderCount += 1;
   summary.grossTotalCents += totalCents;
@@ -210,7 +255,10 @@ function addOrderToSummary(summary: MethodSettlementSummary, order: CheckoutOrde
   if (bucket === 'pending' || bucket === 'failed' || bucket === 'other') summary.outstandingTotalCents += totalCents;
   if (order.latestPaymentRequiresManualReview) summary.manualReviewRequiredCount += 1;
 
-  if (order.latestCodCollectionStatus) incrementCounter(summary.codCollectionStatuses, order.latestCodCollectionStatus);
+  if (codCollectionStatus) {
+    incrementCounter(summary.codCollectionStatuses, codCollectionStatus);
+    incrementTotal(summary.totalCentsByCodCollectionStatus, codCollectionStatus, totalCents);
+  }
   if (order.latestCodSettlementMode) incrementCounter(summary.codSettlementModes, order.latestCodSettlementMode);
   if (evidence) {
     summary.timelineEvidenceCount += 1;
@@ -235,12 +283,60 @@ function isWalletSummary(summary: MethodSettlementSummary) {
   );
 }
 
+function isCodSummary(summary: MethodSettlementSummary) {
+  return (
+    COD_METHOD_KEYS.has(summary.methodKey.toLowerCase()) ||
+    summary.methodType.toLowerCase() === 'cod' ||
+    summary.provider.toLowerCase() === 'cod'
+  );
+}
+
 function statusCount(summary: MethodSettlementSummary, status: string) {
   return summary.rawStatusCounts[status] || 0;
 }
 
 function statusTotal(summary: MethodSettlementSummary, status: string) {
   return summary.totalCentsByStatus[status] || 0;
+}
+
+function codStatusCount(summary: MethodSettlementSummary, status: string) {
+  return summary.codCollectionStatuses[status] || 0;
+}
+
+function codStatusTotal(summary: MethodSettlementSummary, status: string) {
+  return summary.totalCentsByCodCollectionStatus[status] || 0;
+}
+
+function codPendingCollectionCount(summary: MethodSettlementSummary) {
+  return Array.from(COD_PENDING_COLLECTION_STATUSES).reduce((total, status) => total + codStatusCount(summary, status), 0);
+}
+
+function codPendingCollectionTotal(summary: MethodSettlementSummary) {
+  return Array.from(COD_PENDING_COLLECTION_STATUSES).reduce((total, status) => total + codStatusTotal(summary, status), 0);
+}
+
+function countAdjustmentEvidence(summary: MethodSettlementSummary) {
+  return summary.latestEvidenceTitles.filter((title) => title.toLowerCase().includes('adjustment')).length;
+}
+
+function emptyCodCollectionTotals(currency: string): CodCollectionSettlementTotals {
+  return {
+    methodKeys: [],
+    currency,
+    orderCount: 0,
+    collectedCount: 0,
+    pendingCollectionCount: 0,
+    failedCollectionCount: 0,
+    waivedCollectionCount: 0,
+    collectedTotalCents: 0,
+    pendingCollectionTotalCents: 0,
+    failedCollectionTotalCents: 0,
+    waivedCollectionTotalCents: 0,
+    collectionStatuses: {},
+    settlementModes: {},
+    ownerAdjustmentEvidenceCount: 0,
+    timelineEvidenceCount: 0
+  };
 }
 
 function emptyWalletLiability(currency: string): WalletLiabilityBalance {
@@ -315,6 +411,36 @@ export function summarizeManualTransferSettlementTotals(
     totals.rejectedTotalCents += statusTotal(summary, 'rejected') + statusTotal(summary, 'failed');
     totals.manualReviewRequiredCount += summary.manualReviewRequiredCount;
     totals.timelineEvidenceCount += summary.timelineEvidenceCount;
+  }
+
+  totals.methodKeys = Array.from(methodKeys).sort();
+  return totals;
+}
+
+export function summarizeCodCollectionSettlementTotals(
+  summaries: MethodSettlementSummary[],
+  currency = 'CAD'
+): CodCollectionSettlementTotals {
+  const normalizedCurrency = normalizeCurrency(currency);
+  const methodKeys = new Set<string>();
+  const totals = emptyCodCollectionTotals(normalizedCurrency);
+
+  for (const summary of summaries) {
+    if (!isCodSummary(summary) || summary.currency !== normalizedCurrency) continue;
+    methodKeys.add(summary.methodKey);
+    totals.orderCount += summary.orderCount;
+    totals.collectedCount += codStatusCount(summary, 'collected');
+    totals.pendingCollectionCount += codPendingCollectionCount(summary);
+    totals.failedCollectionCount += codStatusCount(summary, 'failed');
+    totals.waivedCollectionCount += codStatusCount(summary, 'waived');
+    totals.collectedTotalCents += codStatusTotal(summary, 'collected');
+    totals.pendingCollectionTotalCents += codPendingCollectionTotal(summary);
+    totals.failedCollectionTotalCents += codStatusTotal(summary, 'failed');
+    totals.waivedCollectionTotalCents += codStatusTotal(summary, 'waived');
+    totals.ownerAdjustmentEvidenceCount += countAdjustmentEvidence(summary);
+    totals.timelineEvidenceCount += summary.timelineEvidenceCount;
+    mergeCounters(totals.collectionStatuses, summary.codCollectionStatuses);
+    mergeCounters(totals.settlementModes, summary.codSettlementModes);
   }
 
   totals.methodKeys = Array.from(methodKeys).sort();
