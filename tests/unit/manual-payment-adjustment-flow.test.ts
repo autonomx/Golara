@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
+import { buildInstallmentReversalBoundaryMetadata } from '../../lib/checkout/installment-reversal-boundary';
 import { buildManualTransferRefundTrackingMetadata } from '../../lib/checkout/manual-transfer-refund-tracking';
 
 function source(path: string) {
@@ -20,6 +21,8 @@ export async function runManualPaymentAdjustmentFlowTests() {
   const detail = source('app/admin/orders/[orderId]/page.tsx');
   const statusService = source('lib/checkout/checkout-status-service.ts');
   const refundTracking = source('lib/checkout/manual-transfer-refund-tracking.ts');
+  const installmentReversal = source('lib/checkout/installment-reversal-boundary.ts');
+  const paymentRoadmap = source('docs/digikala-style-payment-remaining-phases.md');
 
   const trackingMetadata = buildManualTransferRefundTrackingMetadata({
     operation: 'refund',
@@ -55,6 +58,40 @@ export async function runManualPaymentAdjustmentFlowTests() {
   assert.equal(voidTrackingMetadata.manualTransferRefundAmountCents, 0);
   assert.equal(voidTrackingMetadata.manualTransferRefundRecordedBy, 'Admin');
   assert.equal(voidTrackingMetadata.manualTransferRefundRecordedRole, 'owner');
+
+  const installmentCancellationMetadata = buildInstallmentReversalBoundaryMetadata({
+    operation: 'cancel',
+    planId: 'plan_123',
+    orderId: 'order_123',
+    paymentAttemptId: 'attempt_123',
+    fromPlanStatus: 'active',
+    requestedAmountCents: 0,
+    currency: 'irr',
+    reason: 'Customer cancelled',
+    actorLabel: 'Owner',
+    actorRole: 'owner',
+    recordedAt: '2026-06-16T08:30:00.000Z'
+  });
+  assert.equal(installmentCancellationMetadata.installmentReversalBoundaryVersion, 'p6.installment-cancellation-refund-boundary.v1');
+  assert.equal(installmentCancellationMetadata.installmentReversalOperation, 'cancel');
+  assert.equal(installmentCancellationMetadata.installmentReversalStatus, 'cancellation_recorded');
+  assert.equal(installmentCancellationMetadata.installmentReversalRequestedAmountCents, 0);
+  assert.equal(installmentCancellationMetadata.installmentReversalCurrency, 'IRR');
+  assert.equal(installmentCancellationMetadata.installmentReversalRequiresScheduleReview, true);
+
+  const installmentRefundMetadata = buildInstallmentReversalBoundaryMetadata({
+    operation: 'refund',
+    planId: 'plan_456',
+    orderId: 'order_456',
+    paymentAttemptId: 'attempt_456',
+    fromPlanStatus: 'attention_required',
+    requestedAmountCents: 250000,
+    currency: 'toman'
+  });
+  assert.equal(installmentRefundMetadata.installmentReversalOperation, 'refund');
+  assert.equal(installmentRefundMetadata.installmentReversalStatus, 'refund_recorded');
+  assert.equal(installmentRefundMetadata.installmentReversalRequestedAmountCents, 250000);
+  assert.equal(installmentRefundMetadata.installmentReversalRecordedBy, 'Admin');
 
   assert.match(actions, /transitionManualPaymentAttemptAction/);
   assert.match(actions, /existingAttempt\.provider !== 'manual'/);
@@ -105,6 +142,19 @@ export async function runManualPaymentAdjustmentFlowTests() {
   assert.match(refundTracking, /manualTransferRefundRecordedAt/);
   assert.equal(refundTracking.includes('@prisma/client'), false);
   assert.equal(refundTracking.includes('prisma.'), false);
+
+  assert.match(installmentReversal, /INSTALLMENT_REVERSAL_BOUNDARY_VERSION/);
+  assert.match(installmentReversal, /INSTALLMENT_REVERSAL_OPERATIONS/);
+  assert.match(installmentReversal, /normalizeInstallmentReversalOperation/);
+  assert.match(installmentReversal, /buildInstallmentReversalBoundaryMetadata/);
+  assert.match(installmentReversal, /installmentReversalRequiresScheduleReview/);
+  assert.match(installmentReversal, /installmentReversalAffectsReceivables/);
+  assert.match(installmentReversal, /installmentReversalInventoryPolicy/);
+  assert.equal(installmentReversal.includes('@prisma/client'), false);
+  assert.equal(installmentReversal.includes('prisma.'), false);
+
+  assert.ok(paymentRoadmap.includes('Installment cancellation/refund metadata boundary normalizes cancellation and refund evidence before wiring plan and schedule persistence.'));
+  assert.ok(paymentRoadmap.includes('Start **Phase P6 — wire installment cancellation/refund boundary into plan and schedule persistence**'));
 
   console.log('manual-payment-adjustment-flow.test.ts passed');
 }
