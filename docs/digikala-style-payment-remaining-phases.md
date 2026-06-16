@@ -1,6 +1,6 @@
 # DigiKala-Style Payment System — Remaining Phases
 
-Status: updated after refund-to-wallet workflow merged.
+Status: updated after wallet receipt visibility merged.
 
 ## Completed foundations
 
@@ -31,18 +31,19 @@ Status: updated after refund-to-wallet workflow merged.
 - Owner-only wallet refund admin action with audit logging.
 - Wallet refund admin page for order/payment-attempt initiated refunds.
 - Payment-attempt refund metadata and full-refund transition to refunded.
+- Customer-facing wallet refund receipt/details in account wallet history.
+- Wallet refund receipt metadata display in customer wallet history.
 
 ## Remaining implementation phases
 
-### Phase P2 — Wallet reversal visibility and receipts
+### Phase P2 — Wallet reversal admin visibility
 
-Complete customer/admin visibility around wallet reversals.
+Complete admin visibility around wallet reversals.
 
 Deliverables:
-- Customer-facing wallet refund receipt/details in account wallet history.
 - Admin order/payment timeline visibility for wallet reversals.
 - Method-aware wallet refund status in admin order/payment views.
-- Wallet refund receipt metadata display.
+- Staff-facing wallet refund receipt metadata display.
 
 ### Phase P3 — Installment/credit purchase workflow
 
@@ -84,7 +85,6 @@ Make refund behavior method-aware across all payment lanes.
 
 Deliverables:
 - Gateway refund/void adapter boundary.
-- Wallet refund ledger entries.
 - Manual-transfer refund tracking.
 - Installment cancellation/refund workflow.
 - COD adjustment workflow.
@@ -127,4 +127,4 @@ Deliverables:
 
 ## Recommended next slice
 
-Start with **Phase P2 — wallet reversal visibility and receipts**. Refund-to-wallet now credits customer balances and updates payment attempts; the next useful capability is exposing wallet reversal details consistently in customer history and admin order/payment timelines.
+Start with **Phase P2 — wallet reversal admin visibility**. Customer wallet history now shows receipt details; the next useful capability is staff-facing wallet refund metadata in admin order/payment views.
