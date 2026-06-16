@@ -9,6 +9,7 @@ import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import {
   customerOrderDateLocale,
   customerOrderItemCountLabel,
+  customerOrderMethodConfirmation,
   customerOrderMoreItemLabel,
   customerOrderPaymentSummary,
   getCustomerOrderCopy,
@@ -184,6 +185,7 @@ export default async function CustomerOrderHistoryPage() {
               const isInstallment = textMetadataValue(metadata.paymentMethodType) === 'installment';
               const installmentStatus = latestAttempt ? installmentStatusByAttemptId.get(latestAttempt.id) : undefined;
               const publicHref = order.publicLookupToken ? `/orders/${order.publicLookupToken}` : undefined;
+              const methodConfirmation = customerOrderMethodConfirmation(metadata, locale);
               return (
                 <article key={order.id} className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
                   <div className="flex flex-wrap items-start justify-between gap-4">
@@ -197,6 +199,14 @@ export default async function CustomerOrderHistoryPage() {
                       <p className="mt-1 text-xs text-stone-500">{customerOrderItemCountLabel(order.items.reduce((sum, item) => sum + item.quantity, 0), locale)}</p>
                     </div>
                   </div>
+
+                  {methodConfirmation ? (
+                    <section className="mt-5 rounded-3xl border border-sage/20 bg-sage/5 p-4 text-sm text-stone-700">
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-olive">{methodConfirmation.methodLabel ?? methodConfirmation.title}</p>
+                      <h3 className="mt-1 font-display text-3xl text-rosewood">{methodConfirmation.title}</h3>
+                      <p className="mt-2 leading-6">{methodConfirmation.body}</p>
+                    </section>
+                  ) : null}
 
                   <div className="mt-5 grid gap-2 text-sm text-stone-700">
                     {order.items.slice(0, 3).map((item) => (

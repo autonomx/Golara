@@ -3,10 +3,13 @@ import { readFileSync } from 'node:fs';
 import {
   customerOrderDateLocale,
   customerOrderItemCountLabel,
+  customerOrderMethodConfirmation,
   customerOrderMoreItemLabel,
   customerOrderPaymentSummary,
   getCustomerOrderCopy,
-  type CustomerOrderCopyKey
+  getCustomerOrderMethodConfirmationCopy,
+  type CustomerOrderCopyKey,
+  type CustomerOrderMethodConfirmationKey
 } from '@/lib/localization/customer-order-copy';
 
 const source = readFileSync('app/account/orders/page.tsx', 'utf8');
@@ -41,6 +44,17 @@ for (const key of [
   assert.ok(getCustomerOrderCopy(key, 'fa'), `Expected Persian order copy for ${key}`);
 }
 
+for (const key of [
+  'gateway',
+  'wallet',
+  'manualTransfer',
+  'installment',
+  'cod'
+] as const satisfies readonly CustomerOrderMethodConfirmationKey[]) {
+  assert.ok(getCustomerOrderMethodConfirmationCopy(key, 'en').title, `Expected English method confirmation title for ${key}`);
+  assert.ok(getCustomerOrderMethodConfirmationCopy(key, 'fa').body, `Expected Persian method confirmation body for ${key}`);
+}
+
 for (const fragment of [
   'resolveStorefrontLocale',
   'const storefrontLocale = await resolveStorefrontLocale();',
@@ -53,6 +67,9 @@ for (const fragment of [
   '<SiteHeader locale={locale} />',
   'customerOrderDateLocale(locale)',
   'customerOrderPaymentSummary(latestAttempt?.status, locale)',
+  'customerOrderMethodConfirmation(metadata, locale)',
+  'methodConfirmation.methodLabel ?? methodConfirmation.title',
+  'methodConfirmation.body',
   'customerOrderItemCountLabel(order.items.reduce((sum, item) => sum + item.quantity, 0), locale)',
   'customerOrderMoreItemLabel(order.items.length - 3, locale)',
   "copy('eyebrow')",
@@ -78,5 +95,11 @@ assert.equal(customerOrderMoreItemLabel(1, 'en'), '1 more item');
 assert.equal(customerOrderPaymentSummary('verified_paid', 'en'), getCustomerOrderCopy('payment.verifiedPaid', 'en'));
 assert.equal(customerOrderPaymentSummary('redirect_required', 'fa'), getCustomerOrderCopy('payment.redirectRequired', 'fa'));
 assert.equal(customerOrderPaymentSummary(null, 'en'), getCustomerOrderCopy('payment.none', 'en'));
+assert.equal(customerOrderMethodConfirmation({ paymentMethodType: 'gateway', paymentMethodLabel: 'Online card payment / Iranian IPG' }, 'en')?.key, 'gateway');
+assert.equal(customerOrderMethodConfirmation({ paymentMethodKey: 'wallet-credit' }, 'en')?.title, getCustomerOrderMethodConfirmationCopy('wallet', 'en').title);
+assert.equal(customerOrderMethodConfirmation({ paymentMethodType: 'manual_transfer' }, 'en')?.key, 'manualTransfer');
+assert.equal(customerOrderMethodConfirmation({ paymentMethodType: 'installment' }, 'fa')?.key, 'installment');
+assert.equal(customerOrderMethodConfirmation({ paymentMethodKey: 'cash-on-delivery' }, 'en')?.key, 'cod');
+assert.equal(customerOrderMethodConfirmation({ paymentMethodType: 'unknown' }, 'en'), null);
 
 console.log('storefront order history route copy guard passed');

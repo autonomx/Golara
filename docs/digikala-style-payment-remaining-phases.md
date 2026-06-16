@@ -1,6 +1,6 @@
 # DigiKala-Style Payment System — Remaining Phases
 
-Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, the COD fulfillment completion guard, COD settlement/reconciliation fields, method-specific gateway adapter mapping, gateway production readiness evidence fields, provider reference persistence per method, gateway return method-key mapping, gateway webhook method-key mapping, gateway fallback/disable behavior, the P6 gateway refund/void adapter boundary, the P6 manual-transfer refund tracking metadata boundary, the P6 manual-transfer refund action persistence, the P6 installment cancellation/refund metadata boundary, the P6 installment reversal plan/schedule persistence boundary, the P6 installment cancellation/refund owner admin action, the P6 COD adjustment/refund metadata boundary, the P6 COD adjustment owner/admin action, the P6 admin refund/reversal status timeline, the P7 method-level settlement summary, the P7 manual-transfer settlement totals, the P7 wallet liability balance, the P7 COD collection totals, the P7 installment receivables summary, the P7 exportable reconciliation CSV formatter, the P7 owner-only admin reconciliation CSV route, and the P7 dashboard panels for settlement summaries.
+Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, the COD fulfillment completion guard, COD settlement/reconciliation fields, method-specific gateway adapter mapping, gateway production readiness evidence fields, provider reference persistence per method, gateway return method-key mapping, gateway webhook method-key mapping, gateway fallback/disable behavior, the P6 gateway refund/void adapter boundary, the P6 manual-transfer refund tracking metadata boundary, the P6 manual-transfer refund action persistence, the P6 installment cancellation/refund metadata boundary, the P6 installment reversal plan/schedule persistence boundary, the P6 installment cancellation/refund owner admin action, the P6 COD adjustment/refund metadata boundary, the P6 COD adjustment owner/admin action, the P6 admin refund/reversal status timeline, the P7 method-level settlement summary, the P7 manual-transfer settlement totals, the P7 wallet liability balance, the P7 COD collection totals, the P7 installment receivables summary, the P7 exportable reconciliation CSV formatter, the P7 owner-only admin reconciliation CSV route, the P7 dashboard panels for settlement summaries, and the P8 method-specific order confirmation copy.
 
 ## Completed foundations
 
@@ -96,6 +96,8 @@ Status: updated after customer-facing installment status, staff collection track
 - Completed checkpoint: Start **Phase P7 — admin reconciliation CSV route wiring** is now complete.
 - Dashboard panels for settlement summaries render method-level, manual-transfer, wallet, COD, and installment read models on the owner/admin settlement page.
 - Completed checkpoint: Start **Phase P7 — dashboard panels for settlement summaries** is now complete.
+- Method-specific order confirmation copy renders deterministic customer-facing guidance from selected payment method metadata.
+- Completed checkpoint: Start **Phase P8 — method-specific order confirmation copy** is now complete.
 
 ## Remaining implementation phases
 
@@ -141,7 +143,7 @@ Deliverables:
 Add customer-facing status and notifications for each method.
 
 Deliverables:
-- Method-specific order confirmation copy.
+- Method-specific order confirmation copy is complete.
 - Manual-transfer instructions in order detail and emails.
 - Wallet debit/refund receipts.
 - Installment approval/rejection messages.
@@ -161,4 +163,4 @@ Deliverables:
 
 ## Recommended next slice
 
-Start **Phase P8 — method-specific order confirmation copy**. Keep it narrow: add deterministic, method-aware order confirmation copy using the selected payment method metadata before adding emails or notification persistence.
+Start **Phase P8 — manual-transfer instructions in order detail and emails**. Keep it narrow: extend the existing method-aware order confirmation copy with bank-transfer/card-to-card instructions on the customer order surface before adding notification persistence.

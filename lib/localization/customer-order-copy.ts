@@ -22,7 +22,22 @@ export type CustomerOrderCopyKey =
   | 'payment.failed'
   | 'payment.cancelled';
 
+export type CustomerOrderMethodConfirmationKey =
+  | 'gateway'
+  | 'wallet'
+  | 'manualTransfer'
+  | 'installment'
+  | 'cod';
+
+export type CustomerOrderMethodConfirmation = {
+  key: CustomerOrderMethodConfirmationKey;
+  title: string;
+  body: string;
+  methodLabel?: string;
+};
+
 type CustomerOrderCopyRegistry = Record<CustomerOrderCopyLocale, Record<CustomerOrderCopyKey, string>>;
+type CustomerOrderMethodConfirmationRegistry = Record<CustomerOrderCopyLocale, Record<CustomerOrderMethodConfirmationKey, { title: string; body: string }>>;
 
 const customerOrderCopy: CustomerOrderCopyRegistry = {
   en: {
@@ -71,6 +86,53 @@ const customerOrderCopy: CustomerOrderCopyRegistry = {
   }
 };
 
+const customerOrderMethodConfirmationCopy: CustomerOrderMethodConfirmationRegistry = {
+  en: {
+    gateway: {
+      title: 'Online payment selected',
+      body: 'Your order is linked to an online gateway payment. We will update the order as soon as provider confirmation is recorded.'
+    },
+    wallet: {
+      title: 'Wallet payment selected',
+      body: 'Your order uses your wallet balance. Balance reservation, capture, and later adjustments are shown in your wallet history.'
+    },
+    manualTransfer: {
+      title: 'Manual transfer selected',
+      body: 'Keep your bank transfer reference or proof link available. Staff will review the transfer evidence before marking payment complete.'
+    },
+    installment: {
+      title: 'Installment request selected',
+      body: 'Your order uses the installment review lane. We will show approval status, follow-up requests, and schedule details here.'
+    },
+    cod: {
+      title: 'Pay on delivery selected',
+      body: 'Your order will be collected at delivery. Staff collection status and settlement evidence are tracked with the order.'
+    }
+  },
+  fa: {
+    gateway: {
+      title: 'پرداخت آنلاین انتخاب شده است',
+      body: 'این سفارش به پرداخت آنلاین درگاه متصل است. پس از ثبت تایید ارائه‌دهنده، وضعیت سفارش به‌روزرسانی می‌شود.'
+    },
+    wallet: {
+      title: 'پرداخت با کیف پول انتخاب شده است',
+      body: 'این سفارش از موجودی کیف پول شما استفاده می‌کند. رزرو، برداشت و اصلاحات بعدی در تاریخچه کیف پول نمایش داده می‌شود.'
+    },
+    manualTransfer: {
+      title: 'انتقال بانکی انتخاب شده است',
+      body: 'شناسه انتقال یا لینک رسید را نگه دارید. تیم پشتیبانی رسید انتقال را پیش از تکمیل پرداخت بررسی می‌کند.'
+    },
+    installment: {
+      title: 'خرید اقساطی انتخاب شده است',
+      body: 'این سفارش از مسیر بررسی اقساط استفاده می‌کند. وضعیت تایید، درخواست پیگیری و برنامه پرداخت در اینجا نمایش داده می‌شود.'
+    },
+    cod: {
+      title: 'پرداخت هنگام تحویل انتخاب شده است',
+      body: 'مبلغ این سفارش هنگام تحویل دریافت می‌شود. وضعیت دریافت توسط کارکنان و شواهد تسویه همراه سفارش ثبت می‌شود.'
+    }
+  }
+};
+
 export function normalizeCustomerOrderCopyLocale(locale?: string | null): CustomerOrderCopyLocale {
   return locale?.toLowerCase().startsWith('fa') ? 'fa' : 'en';
 }
@@ -78,6 +140,51 @@ export function normalizeCustomerOrderCopyLocale(locale?: string | null): Custom
 export function getCustomerOrderCopy(key: CustomerOrderCopyKey, locale?: string | null): string {
   const normalizedLocale = normalizeCustomerOrderCopyLocale(locale);
   return customerOrderCopy[normalizedLocale][key] ?? customerOrderCopy.en[key];
+}
+
+export function getCustomerOrderMethodConfirmationCopy(key: CustomerOrderMethodConfirmationKey, locale?: string | null) {
+  const normalizedLocale = normalizeCustomerOrderCopyLocale(locale);
+  return customerOrderMethodConfirmationCopy[normalizedLocale][key] ?? customerOrderMethodConfirmationCopy.en[key];
+}
+
+function metadataText(value: unknown) {
+  if (typeof value === 'string') return value.trim() || undefined;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  return undefined;
+}
+
+function normalizedMetadataMethodKey(metadata: Record<string, unknown>) {
+  return metadataText(metadata.paymentMethodKey)?.toLowerCase();
+}
+
+function normalizedMetadataMethodType(metadata: Record<string, unknown>) {
+  return metadataText(metadata.paymentMethodType)?.toLowerCase();
+}
+
+export function customerOrderMethodConfirmation(
+  metadata?: Record<string, unknown> | null,
+  locale?: string | null
+): CustomerOrderMethodConfirmation | null {
+  if (!metadata) return null;
+
+  const methodType = normalizedMetadataMethodType(metadata);
+  const methodKey = normalizedMetadataMethodKey(metadata);
+  const methodLabel = metadataText(metadata.paymentMethodLabel);
+  let key: CustomerOrderMethodConfirmationKey | undefined;
+
+  if (methodType === 'gateway' || methodKey === 'iranian-ipg') key = 'gateway';
+  else if (methodType === 'wallet' || methodKey === 'wallet-credit') key = 'wallet';
+  else if (methodType === 'manual_transfer' || methodKey === 'bank-transfer') key = 'manualTransfer';
+  else if (methodType === 'installment' || methodKey === 'installment-credit') key = 'installment';
+  else if (methodType === 'cod' || methodKey === 'cash-on-delivery') key = 'cod';
+
+  if (!key) return null;
+
+  return {
+    key,
+    methodLabel,
+    ...getCustomerOrderMethodConfirmationCopy(key, locale)
+  };
 }
 
 export function customerOrderDateLocale(locale?: string | null): string {
