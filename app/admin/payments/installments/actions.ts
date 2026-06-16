@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
 import { reviewInstallmentPaymentAttempt, type InstallmentReviewOutcome } from '@/lib/checkout/installment-review';
+import { createInstallmentScheduleForApprovedAttempt } from '@/lib/checkout/installment-schedule-foundation';
 
 function textValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -22,13 +23,20 @@ function optionalNumberValue(formData: FormData, key: string) {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
+function optionalDateValue(formData: FormData, key: string) {
+  const raw = textValue(formData, key);
+  if (!raw) return undefined;
+  const parsed = new Date(`${raw}T00:00:00.000Z`);
+  return Number.isFinite(parsed.getTime()) ? parsed : undefined;
+}
+
 function parseOutcome(value: string): InstallmentReviewOutcome {
   if (value === 'approved' || value === 'rejected' || value === 'needs_follow_up') return value;
   throw new Error('Unsupported installment review outcome.');
 }
 
-function statusForOutcome(outcome: InstallmentReviewOutcome) {
-  if (outcome === 'approved') return 'installment-approved';
+function statusForOutcome(outcome: InstallmentReviewOutcome, scheduleCreated: boolean) {
+  if (outcome === 'approved') return scheduleCreated ? 'installment-approved-scheduled' : 'installment-approved';
   if (outcome === 'rejected') return 'installment-rejected';
   return 'installment-follow-up';
 }
@@ -49,6 +57,20 @@ export async function reviewInstallmentAction(formData: FormData) {
     actorRole: admin.role
   });
 
+  let schedulePlanId: string | null = null;
+  let scheduleEntryCount: number | null = null;
+  if (outcome === 'approved') {
+    const schedule = await createInstallmentScheduleForApprovedAttempt({
+      orderId,
+      paymentAttemptId,
+      firstDueAt: optionalDateValue(formData, 'firstDueAt'),
+      actorLabel: admin.label,
+      actorRole: admin.role
+    });
+    schedulePlanId = schedule.plan?.id ?? null;
+    scheduleEntryCount = schedule.entries.length;
+  }
+
   await recordAdminAuditLog({
     action: 'payment.installment.review',
     entity: 'checkoutPaymentAttempt',
@@ -59,6 +81,8 @@ export async function reviewInstallmentAction(formData: FormData) {
       outcome,
       approvedTermMonths: reviewed.approvedTermMonths ?? null,
       downPaymentCents: reviewed.downPaymentCents ?? null,
+      schedulePlanId,
+      scheduleEntryCount,
       noteAdded: Boolean(optionalTextValue(formData, 'note'))
     }
   });
@@ -66,5 +90,5 @@ export async function reviewInstallmentAction(formData: FormData) {
   revalidatePath('/admin/payments/installments');
   revalidatePath('/admin/orders');
   revalidatePath(`/admin/orders/${orderId}`);
-  redirect(`/admin/payments/installments?status=${statusForOutcome(outcome)}`);
+  redirect(`/admin/payments/installments?status=${statusForOutcome(outcome, Boolean(schedulePlanId))}`);
 }
