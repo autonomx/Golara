@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import type { CheckoutOrderSummary } from '../../lib/catalog';
 import {
   summarizeCodCollectionSettlementTotals,
+  summarizeInstallmentReceivables,
   summarizeManualTransferSettlementTotals,
   summarizeSettlementByPaymentMethod,
   summarizeWalletLiabilityBalances
@@ -43,10 +44,12 @@ export async function runPaymentSettlementReconciliationTests() {
   const methodSummaryHelper = source('lib/checkout/payment-method-settlement-summary.ts');
   assert.match(methodSummaryHelper, /export type MethodSettlementSummary/);
   assert.match(methodSummaryHelper, /export type CodCollectionSettlementTotals/);
+  assert.match(methodSummaryHelper, /export type InstallmentReceivablesSummary/);
   assert.match(methodSummaryHelper, /export function summarizeSettlementByPaymentMethod/);
   assert.match(methodSummaryHelper, /export function summarizeManualTransferSettlementTotals/);
   assert.match(methodSummaryHelper, /export function summarizeCodCollectionSettlementTotals/);
   assert.match(methodSummaryHelper, /export function summarizeWalletLiabilityBalances/);
+  assert.match(methodSummaryHelper, /export function summarizeInstallmentReceivables/);
   assert.match(methodSummaryHelper, /WalletLiabilityBalance/);
   assert.match(methodSummaryHelper, /availableLiabilityCents/);
   assert.match(methodSummaryHelper, /reservedLiabilityCents/);
@@ -55,6 +58,8 @@ export async function runPaymentSettlementReconciliationTests() {
   assert.match(methodSummaryHelper, /pendingCollectionTotalCents/);
   assert.match(methodSummaryHelper, /ownerAdjustmentEvidenceCount/);
   assert.match(methodSummaryHelper, /timelineEvidenceCount/);
+  assert.match(methodSummaryHelper, /remainingTotalCents/);
+  assert.match(methodSummaryHelper, /overdueTotalCents/);
   assert.match(methodSummaryHelper, /latestCodCollectionStatus/);
   assert.match(methodSummaryHelper, /latestCodSettlementMode/);
   assert.doesNotMatch(methodSummaryHelper, /prisma\./, 'method-level settlement summary must remain read-only and pure');
@@ -64,8 +69,10 @@ export async function runPaymentSettlementReconciliationTests() {
   assert.match(roadmap, /Manual-transfer settlement totals summarize received, pending-review, needs-follow-up, and rejected buckets/);
   assert.match(roadmap, /Wallet liability balance summarizes available and reserved customer wallet balances/);
   assert.match(roadmap, /COD collection totals summarize collected, pending, failed, waived, settlement mode, and owner adjustment evidence/);
+  assert.match(roadmap, /Installment receivables summary aggregates paid, pending, failed, waived, overdue, and remaining schedule balances/);
   assert.match(roadmap, /Completed checkpoint: Start \*\*Phase P7 — COD collection totals\*\* is now complete/);
-  assert.match(roadmap, /Start \*\*Phase P7 — installment receivables summary\*\*/);
+  assert.match(roadmap, /Completed checkpoint: Start \*\*Phase P7 — installment receivables summary\*\* is now complete/);
+  assert.match(roadmap, /Start \*\*Phase P7 — exportable reconciliation CSVs\*\*/);
 
   const webhookService = source('lib/checkout/payment-webhook-service.ts');
   assert.match(
@@ -345,6 +352,76 @@ export async function runPaymentSettlementReconciliationTests() {
   assert.deepEqual(codTotals.settlementModes, { driver_cash: 1, owner_waived: 1 });
   assert.equal(codTotals.ownerAdjustmentEvidenceCount, 1);
   assert.equal(codTotals.timelineEvidenceCount, 2);
+
+  const installmentReceivables = summarizeInstallmentReceivables([
+    {
+      id: 'entry-paid',
+      planId: 'plan-1',
+      currency: 'TOMAN',
+      amountCents: 10000,
+      paidAmountCents: 10000,
+      status: 'paid',
+      dueAt: '2026-06-01T00:00:00.000Z',
+      paidAt: '2026-06-01T01:00:00.000Z'
+    },
+    {
+      id: 'entry-overdue',
+      planId: 'plan-1',
+      currency: 'TOMAN',
+      amountCents: 12000,
+      status: 'pending',
+      dueAt: '2026-06-10T00:00:00.000Z'
+    },
+    {
+      id: 'entry-failed',
+      planId: 'plan-2',
+      currency: 'TOMAN',
+      amountCents: 8000,
+      paidAmountCents: 1000,
+      status: 'failed',
+      dueAt: '2026-06-15T00:00:00.000Z'
+    },
+    {
+      id: 'entry-waived',
+      planId: 'plan-2',
+      currency: 'TOMAN',
+      amountCents: 5000,
+      status: 'waived',
+      dueAt: '2026-06-20T00:00:00.000Z'
+    },
+    {
+      id: 'entry-pending',
+      planId: 'plan-3',
+      currency: 'TOMAN',
+      amountCents: 15000,
+      status: 'pending',
+      dueAt: '2026-07-01T00:00:00.000Z'
+    },
+    {
+      id: 'entry-cad',
+      planId: 'plan-4',
+      currency: 'CAD',
+      amountCents: 9900,
+      status: 'pending',
+      dueAt: '2026-07-01T00:00:00.000Z'
+    }
+  ], 'TOMAN', '2026-06-16T00:00:00.000Z');
+  assert.deepEqual(installmentReceivables.planIds, ['plan-1', 'plan-2', 'plan-3']);
+  assert.equal(installmentReceivables.entryCount, 5);
+  assert.equal(installmentReceivables.paidCount, 1);
+  assert.equal(installmentReceivables.pendingCount, 2);
+  assert.equal(installmentReceivables.failedCount, 1);
+  assert.equal(installmentReceivables.waivedCount, 1);
+  assert.equal(installmentReceivables.overdueCount, 2);
+  assert.equal(installmentReceivables.remainingCount, 3);
+  assert.equal(installmentReceivables.paidTotalCents, 10000);
+  assert.equal(installmentReceivables.pendingTotalCents, 27000);
+  assert.equal(installmentReceivables.failedTotalCents, 7000);
+  assert.equal(installmentReceivables.waivedTotalCents, 5000);
+  assert.equal(installmentReceivables.overdueTotalCents, 19000);
+  assert.equal(installmentReceivables.remainingTotalCents, 34000);
+  assert.equal(installmentReceivables.latestDueAt, '2026-07-01T00:00:00.000Z');
+  assert.equal(installmentReceivables.nextDueAt, '2026-07-01T00:00:00.000Z');
 
   console.log('payment-settlement-reconciliation.test.ts passed');
 }
