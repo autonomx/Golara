@@ -66,6 +66,19 @@ function liveGatewayAdapters() {
   });
 }
 
+function methodAwareProviderReferenceMetadata(result: PaymentProviderResult, metadata: PaymentMetadata): PaymentMetadata {
+  const methodKey = typeof metadata.paymentMethodKey === 'string' ? metadata.paymentMethodKey : undefined;
+  if (!result.providerReference || !methodKey) return {};
+
+  return {
+    paymentProviderReference: result.providerReference,
+    paymentProviderReferenceMethodKey: methodKey,
+    paymentProviderReferenceProvider: result.provider,
+    paymentProviderReferenceStatus: result.status,
+    paymentProviderReferenceCaptured: true
+  };
+}
+
 const manualPaymentProvider: LocalPaymentProvider = {
   name: 'manual',
   async createAttempt(order) {
@@ -157,6 +170,7 @@ export async function createCheckoutPaymentAttempt(input: CreatePaymentAttemptIn
     })
   });
   const mergedMetadata = { ...(input.metadata ?? {}), ...(result.metadata ?? {}) };
+  const finalMetadata = { ...mergedMetadata, ...methodAwareProviderReferenceMetadata(result, mergedMetadata) };
 
   const attemptData = {
     orderId: order.id,
@@ -166,7 +180,7 @@ export async function createCheckoutPaymentAttempt(input: CreatePaymentAttemptIn
     currency: order.currency,
     ...(result.providerReference ? { providerReference: result.providerReference } : {}),
     ...(result.redirectUrl ? { redirectUrl: result.redirectUrl } : {}),
-    ...(Object.keys(mergedMetadata).length ? { metadata: mergedMetadata } : {})
+    ...(Object.keys(finalMetadata).length ? { metadata: finalMetadata } : {})
   };
 
   const attempt = await prisma.checkoutPaymentAttempt.create({
