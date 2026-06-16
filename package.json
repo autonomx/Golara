@@ -64,6 +64,7 @@
     "check:installment-review-workflow": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/installment-review-workflow-source.test.ts",
     "check:installment-schedule-foundation": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/installment-schedule-foundation-source.test.ts",
     "check:installment-approval-schedule": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/installment-approval-schedule-source.test.ts",
+    "check:customer-installment-status": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/customer-installment-status-source.test.ts",
     "check:secrets": "node tools/check-secrets.mjs",
     "check:storefront-performance": "node tools/check-storefront-performance-budget.mjs",
     "smoke:routes": "node tools/smoke-routes.mjs",
