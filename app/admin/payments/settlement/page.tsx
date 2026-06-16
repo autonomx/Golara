@@ -5,20 +5,19 @@ import { AdminPaymentReconciliationDashboardPanels } from '@/components/admin/Ad
 import { AdminPaymentSettlementSummaryPanel } from '@/components/admin/AdminPaymentSettlementSummaryPanel';
 import { getAdminIdentity, isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
 import { listAdminCheckoutOrdersForExport } from '@/lib/checkout/admin-order-repository';
+import { listInstallmentReceivableScheduleEntries } from '@/lib/checkout/admin-installment-receivables-source';
 import { listCustomerWalletSummaries } from '@/lib/checkout/customer-wallet-ledger';
 import {
   summarizeCodCollectionSettlementTotals,
   summarizeInstallmentReceivables,
   summarizeManualTransferSettlementTotals,
   summarizeSettlementByPaymentMethod,
-  summarizeWalletLiabilityBalances,
-  type InstallmentReceivableScheduleEntryInput
+  summarizeWalletLiabilityBalances
 } from '@/lib/checkout/payment-method-settlement-summary';
 import { paymentSettlementService, type PaymentSettlementSummary } from '@/lib/checkout/payment-settlement-service';
 import { listAdminCategories, listAdminProducts, listMedia } from '@/lib/cms/catalog-repository';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { createAdminTranslator } from '@/lib/localization/admin-copy';
-import { hasDatabase, prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,42 +31,6 @@ const emptySettlementSummary: PaymentSettlementSummary = {
   recent: [],
   source: 'unavailable'
 };
-
-function isMissingInstallmentTable(error: unknown) {
-  const message = error instanceof Error ? error.message : String(error);
-  return (
-    (message.includes('InstallmentPaymentScheduleEntry') || message.includes('InstallmentPaymentPlan')) &&
-    (message.includes('does not exist') || message.includes('42P01'))
-  );
-}
-
-async function listInstallmentReceivableScheduleEntries(limit = 500): Promise<InstallmentReceivableScheduleEntryInput[]> {
-  if (!hasDatabase()) return [];
-
-  try {
-    return await prisma.$queryRaw<InstallmentReceivableScheduleEntryInput[]>`
-      SELECT
-        entry."id",
-        entry."planId",
-        plan."currency",
-        entry."totalCents" AS "amountCents",
-        CASE
-          WHEN entry."status" IN ('paid', 'collected') THEN entry."totalCents"
-          ELSE 0
-        END AS "paidAmountCents",
-        entry."status",
-        entry."dueAt",
-        entry."paidAt"
-      FROM "InstallmentPaymentScheduleEntry" entry
-      JOIN "InstallmentPaymentPlan" plan ON plan."id" = entry."planId"
-      ORDER BY entry."dueAt" ASC
-      LIMIT ${limit}
-    `;
-  } catch (error) {
-    if (isMissingInstallmentTable(error)) return [];
-    throw error;
-  }
-}
 
 export default async function AdminPaymentSettlementPage() {
   const locale = await resolveStorefrontLocale();
