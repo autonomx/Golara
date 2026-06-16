@@ -5,8 +5,10 @@ import { redirect } from 'next/navigation';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
 import { collectInstallmentScheduleEntry, type InstallmentCollectionOutcome } from '@/lib/checkout/installment-collection';
+import { persistInstallmentReversalBoundary, type InstallmentReversalPersistenceResult } from '@/lib/checkout/installment-reversal-persistence';
 import { reviewInstallmentPaymentAttempt, type InstallmentReviewOutcome } from '@/lib/checkout/installment-review';
 import { createInstallmentScheduleForApprovedAttempt } from '@/lib/checkout/installment-schedule-foundation';
+import type { InstallmentReversalOperation } from '@/lib/checkout/installment-reversal-boundary';
 
 function textValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -41,6 +43,11 @@ function parseCollectionOutcome(value: string): InstallmentCollectionOutcome {
   throw new Error('Unsupported installment collection outcome.');
 }
 
+function parseReversalOperation(value: string): InstallmentReversalOperation {
+  if (value === 'cancel' || value === 'refund') return value;
+  throw new Error('Unsupported installment reversal operation.');
+}
+
 function statusForOutcome(outcome: InstallmentReviewOutcome, scheduleCreated: boolean) {
   if (outcome === 'approved') return scheduleCreated ? 'installment-approved-scheduled' : 'installment-approved';
   if (outcome === 'rejected') return 'installment-rejected';
@@ -51,6 +58,16 @@ function statusForCollectionOutcome(outcome: InstallmentCollectionOutcome) {
   if (outcome === 'paid') return 'installment-collection-paid';
   if (outcome === 'waived') return 'installment-collection-waived';
   return 'installment-collection-failed';
+}
+
+function statusForReversalOperation(operation: InstallmentReversalOperation) {
+  return operation === 'refund' ? 'installment-refund-requested' : 'installment-cancelled';
+}
+
+function reversalSummary(result: InstallmentReversalPersistenceResult) {
+  return result.operation === 'refund'
+    ? `Installment refund for order ${result.orderNumber} recorded.`
+    : `Installment plan for order ${result.orderNumber} cancelled.`;
 }
 
 export async function reviewInstallmentAction(formData: FormData) {
@@ -143,4 +160,42 @@ export async function collectInstallmentScheduleEntryAction(formData: FormData) 
   revalidatePath('/admin/orders');
   revalidatePath(`/admin/orders/${collected.orderId}`);
   redirect(`/admin/payments/installments?status=${statusForCollectionOutcome(outcome)}`);
+}
+
+export async function reverseInstallmentPlanAction(formData: FormData) {
+  const admin = await assertAdminRole('owner');
+  const planId = textValue(formData, 'planId');
+  const operation = parseReversalOperation(textValue(formData, 'operation'));
+  if (!planId) throw new Error('Installment payment plan is required.');
+
+  const reversed = await persistInstallmentReversalBoundary({
+    planId,
+    operation,
+    requestedAmountCents: optionalNumberValue(formData, 'requestedAmountCents'),
+    reason: optionalTextValue(formData, 'note'),
+    actorLabel: admin.label,
+    actorRole: admin.role
+  });
+
+  await recordAdminAuditLog({
+    action: `payment.installment.reversal.${operation}`,
+    entity: 'installmentPaymentPlan',
+    entityId: planId,
+    summary: reversalSummary(reversed),
+    metadata: {
+      orderId: reversed.orderId,
+      paymentAttemptId: reversed.paymentAttemptId,
+      planId: reversed.planId,
+      operation,
+      nextPlanStatus: reversed.nextPlanStatus,
+      affectedScheduleEntries: reversed.affectedScheduleEntries,
+      requestedAmountCents: reversed.metadata.installmentReversalRequestedAmountCents,
+      noteAdded: Boolean(optionalTextValue(formData, 'note'))
+    }
+  });
+
+  revalidatePath('/admin/payments/installments');
+  revalidatePath('/admin/orders');
+  revalidatePath(`/admin/orders/${reversed.orderId}`);
+  redirect(`/admin/payments/installments?status=${statusForReversalOperation(operation)}`);
 }
