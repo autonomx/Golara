@@ -293,6 +293,11 @@ export type CheckoutOrderSummary = {
   latestPaymentMethodLabel?: string;
   latestPaymentMethodType?: string;
   latestPaymentRequiresManualReview?: boolean;
+  latestWalletRefundEntryId?: string;
+  latestWalletRefundIdempotencyKey?: string;
+  latestWalletRefundedAt?: string;
+  latestWalletRefundTotalCents?: number;
+  latestWalletRefundCurrency?: string;
   latestTimelineTitle?: string;
   createdAt: Date;
 };
