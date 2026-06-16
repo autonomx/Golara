@@ -11,6 +11,16 @@ export type CheckoutPaymentProviderName = LegacyPaymentProviderName | AdapterPay
 export type AdapterPaymentGatewayResult = PaymentGatewayInitiationResult & { provider: AdapterPaymentProviderName };
 export type CheckoutProviderRoutingKind = 'local' | 'adapter';
 
+export const PAYMENT_METHOD_GATEWAY_ADAPTERS: Record<string, AdapterPaymentProviderName> = {
+  'iranian-ipg': 'zarinpal',
+  'zarinpal': 'zarinpal',
+  'domestic-ipg': 'iranian',
+  'international-card': 'stripe',
+  'stripe-card': 'stripe',
+  'whatsapp-checkout': 'whatsapp',
+  'inquiry-checkout': 'inquiry'
+};
+
 function normalizedProviderName(value: string) {
   return value.trim().toLowerCase();
 }
@@ -28,6 +38,15 @@ export function normalizeCheckoutProviderName(raw: string | null | undefined): C
   if (isLegacyPaymentProviderName(provider)) return provider;
   if (isAdapterPaymentProviderName(provider)) return provider;
   return 'manual';
+}
+
+export function resolvePaymentMethodGatewayAdapter(input: { methodKey?: string | null; providerKey?: string | null }): CheckoutPaymentProviderName {
+  const provider = normalizedProviderName(input.providerKey ?? '');
+  if (isLegacyPaymentProviderName(provider)) return provider;
+  if (isAdapterPaymentProviderName(provider)) return provider;
+
+  const methodKey = normalizedProviderName(input.methodKey ?? '');
+  return PAYMENT_METHOD_GATEWAY_ADAPTERS[methodKey] ?? 'manual';
 }
 
 export function shouldUseDirectCheckoutProvider(provider: CheckoutPaymentProviderName): provider is LegacyPaymentProviderName {
