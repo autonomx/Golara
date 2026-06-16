@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
+import { buildManualTransferRefundTrackingMetadata } from '../../lib/checkout/manual-transfer-refund-tracking';
+
 function source(path: string) {
   return readFileSync(path, 'utf8');
 }
@@ -17,6 +19,42 @@ export async function runManualPaymentAdjustmentFlowTests() {
   const actions = source('app/admin/order-actions.ts');
   const detail = source('app/admin/orders/[orderId]/page.tsx');
   const statusService = source('lib/checkout/checkout-status-service.ts');
+  const refundTracking = source('lib/checkout/manual-transfer-refund-tracking.ts');
+
+  const trackingMetadata = buildManualTransferRefundTrackingMetadata({
+    operation: 'refund',
+    paymentAttemptId: 'attempt_123',
+    orderId: 'order_123',
+    fromStatus: 'paid',
+    amountCents: 4200,
+    currency: 'toman',
+    providerReference: 'bank-ref-123',
+    manualPaymentReference: 'customer-ref-123',
+    note: 'Refund approved',
+    actorLabel: 'Owner',
+    actorRole: 'owner',
+    recordedAt: '2026-06-16T08:00:00.000Z'
+  });
+  assert.equal(trackingMetadata.manualTransferRefundTrackingVersion, 'p6.manual-transfer-refund-tracking.v1');
+  assert.equal(trackingMetadata.manualTransferRefundOperation, 'refund');
+  assert.equal(trackingMetadata.manualTransferRefundStatus, 'refund_recorded');
+  assert.equal(trackingMetadata.manualTransferRefundAmountCents, 4200);
+  assert.equal(trackingMetadata.manualTransferRefundCurrency, 'TOMAN');
+  assert.equal(trackingMetadata.manualTransferRefundProviderReference, 'bank-ref-123');
+  assert.equal(trackingMetadata.manualTransferRefundManualReference, 'customer-ref-123');
+
+  const voidTrackingMetadata = buildManualTransferRefundTrackingMetadata({
+    operation: 'void',
+    paymentAttemptId: 'attempt_456',
+    orderId: 'order_456',
+    fromStatus: 'pending',
+    amountCents: -1,
+    currency: 'usd'
+  });
+  assert.equal(voidTrackingMetadata.manualTransferRefundStatus, 'void_recorded');
+  assert.equal(voidTrackingMetadata.manualTransferRefundAmountCents, 0);
+  assert.equal(voidTrackingMetadata.manualTransferRefundRecordedBy, 'Admin');
+  assert.equal(voidTrackingMetadata.manualTransferRefundRecordedRole, 'owner');
 
   assert.match(actions, /transitionManualPaymentAttemptAction/);
   assert.match(actions, /existingAttempt\.provider !== 'manual'/);
@@ -48,6 +86,15 @@ export async function runManualPaymentAdjustmentFlowTests() {
   assert.match(detail, /Void manual payment/);
   assert.match(detail, /manual-payment-refunded/);
   assert.match(detail, /manual-payment-voided/);
+
+  assert.match(refundTracking, /MANUAL_TRANSFER_REFUND_TRACKING_VERSION/);
+  assert.match(refundTracking, /buildManualTransferRefundTrackingMetadata/);
+  assert.match(refundTracking, /manualTransferRefundTrackingVersion/);
+  assert.match(refundTracking, /manualTransferRefundProviderReference/);
+  assert.match(refundTracking, /manualTransferRefundManualReference/);
+  assert.match(refundTracking, /manualTransferRefundRecordedAt/);
+  assert.equal(refundTracking.includes('@prisma/client'), false);
+  assert.equal(refundTracking.includes('prisma.'), false);
 
   console.log('manual-payment-adjustment-flow.test.ts passed');
 }
