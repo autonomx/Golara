@@ -69,6 +69,7 @@
     "check:installment-refund-deferral": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/installment-refund-deferral-source.test.ts",
     "check:cod-selected-method-state": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/cod-selected-method-state-source.test.ts",
     "check:cod-collection-read-model": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/cod-collection-read-model-source.test.ts",
+    "check:cod-staff-collection-controls": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/cod-staff-collection-controls-source.test.ts",
     "check:secrets": "node tools/check-secrets.mjs",
     "check:storefront-performance": "node tools/check-storefront-performance-budget.mjs",
     "smoke:routes": "node tools/smoke-routes.mjs",
