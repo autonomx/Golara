@@ -1,6 +1,6 @@
 # DigiKala-Style Payment System — Remaining Phases
 
-Status: updated after customer wallet history merged.
+Status: updated after refund-to-wallet workflow merged.
 
 ## Completed foundations
 
@@ -25,19 +25,24 @@ Status: updated after customer wallet history merged.
 - Customer account wallet history page.
 - Customer wallet balance summary and ledger-entry history.
 - Account overview navigation to wallet history.
+- Refund-to-wallet workflow for paid payment attempts.
+- Wallet refund idempotency and over-refund protection.
+- Wallet refund ledger entries with locked balance updates.
+- Owner-only wallet refund admin action with audit logging.
+- Wallet refund admin page for order/payment-attempt initiated refunds.
+- Payment-attempt refund metadata and full-refund transition to refunded.
 
 ## Remaining implementation phases
 
-### Phase P2 — Wallet/store-credit refunds and reversal visibility
+### Phase P2 — Wallet reversal visibility and receipts
 
-Complete wallet reversal behavior and timeline evidence.
+Complete customer/admin visibility around wallet reversals.
 
 Deliverables:
-- Refund-to-wallet support.
-- Admin/customer timeline visibility for wallet reversals.
-- Wallet refund receipt metadata.
-- Wallet refund idempotency and reversal guards.
+- Customer-facing wallet refund receipt/details in account wallet history.
+- Admin order/payment timeline visibility for wallet reversals.
 - Method-aware wallet refund status in admin order/payment views.
+- Wallet refund receipt metadata display.
 
 ### Phase P3 — Installment/credit purchase workflow
 
@@ -122,4 +127,4 @@ Deliverables:
 
 ## Recommended next slice
 
-Start with **Phase P2 — refund-to-wallet support**. Wallet checkout can now capture funds and customers can review wallet history; the next useful capability is method-aware wallet refunds/reversal entries back into the wallet ledger.
+Start with **Phase P2 — wallet reversal visibility and receipts**. Refund-to-wallet now credits customer balances and updates payment attempts; the next useful capability is exposing wallet reversal details consistently in customer history and admin order/payment timelines.
