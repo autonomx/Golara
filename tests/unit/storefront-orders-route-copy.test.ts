@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import {
   customerOrderDateLocale,
   customerOrderItemCountLabel,
+  customerOrderManualTransferInstructions,
   customerOrderMethodConfirmation,
   customerOrderMoreItemLabel,
   customerOrderPaymentSummary,
@@ -13,9 +14,14 @@ import {
 } from '@/lib/localization/customer-order-copy';
 
 const source = readFileSync('app/account/orders/page.tsx', 'utf8');
+const copySource = readFileSync('lib/localization/customer-order-copy.ts', 'utf8');
 
 function has(fragment: string) {
   assert.ok(source.includes(fragment), `Expected order history route source to include: ${fragment}`);
+}
+
+function copyHas(fragment: string) {
+  assert.ok(copySource.includes(fragment), `Expected customer order copy source to include: ${fragment}`);
 }
 
 for (const key of [
@@ -68,8 +74,13 @@ for (const fragment of [
   'customerOrderDateLocale(locale)',
   'customerOrderPaymentSummary(latestAttempt?.status, locale)',
   'customerOrderMethodConfirmation(metadata, locale)',
+  'customerOrderManualTransferInstructions(metadata, order.orderNumber, locale)',
   'methodConfirmation.methodLabel ?? methodConfirmation.title',
   'methodConfirmation.body',
+  'manualTransferInstructions.referenceLabel',
+  'manualTransferInstructions.proofUrlLabel',
+  'manualTransferInstructions.emailSubject',
+  'manualTransferInstructions.emailBody',
   'customerOrderItemCountLabel(order.items.reduce((sum, item) => sum + item.quantity, 0), locale)',
   'customerOrderMoreItemLabel(order.items.length - 3, locale)',
   "copy('eyebrow')",
@@ -84,6 +95,19 @@ for (const fragment of [
   "copy('viewPublicStatus')"
 ]) {
   has(fragment);
+}
+
+for (const fragment of [
+  'CustomerOrderManualTransferInstructions',
+  'manualPaymentReference',
+  'manualPaymentProofUrl',
+  'manualPaymentInstructionsAcknowledged',
+  'emailSubject',
+  'emailBody',
+  'Manual-transfer instructions',
+  'راهنمای انتقال بانکی'
+]) {
+  copyHas(fragment);
 }
 
 assert.equal(customerOrderDateLocale('en'), 'en-CA');
@@ -101,5 +125,17 @@ assert.equal(customerOrderMethodConfirmation({ paymentMethodType: 'manual_transf
 assert.equal(customerOrderMethodConfirmation({ paymentMethodType: 'installment' }, 'fa')?.key, 'installment');
 assert.equal(customerOrderMethodConfirmation({ paymentMethodKey: 'cash-on-delivery' }, 'en')?.key, 'cod');
 assert.equal(customerOrderMethodConfirmation({ paymentMethodType: 'unknown' }, 'en'), null);
+
+const manualInstructions = customerOrderManualTransferInstructions({
+  paymentMethodType: 'manual_transfer',
+  manualPaymentReference: 'ABC-123',
+  manualPaymentProofUrl: 'https://example.test/proof'
+}, 'GOL-1001', 'en');
+assert.equal(manualInstructions?.reference, 'ABC-123');
+assert.equal(manualInstructions?.proofUrl, 'https://example.test/proof');
+assert.ok(manualInstructions?.emailSubject.includes('GOL-1001'));
+assert.ok(manualInstructions?.emailBody.includes('ABC-123'));
+assert.ok(customerOrderManualTransferInstructions({ paymentMethodType: 'wallet' }, 'GOL-1002', 'en') === null);
+assert.ok(customerOrderManualTransferInstructions({ paymentMethodKey: 'bank-transfer' }, 'GOL-1003', 'fa')?.emailSubject.includes('GOL-1003'));
 
 console.log('storefront order history route copy guard passed');
