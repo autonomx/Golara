@@ -1,6 +1,6 @@
 # DigiKala-Style Payment System — Remaining Phases
 
-Status: updated after installment approval-to-schedule wiring merged.
+Status: updated after customer-facing installment status and installment collection tracking implementation.
 
 ## Completed foundations
 
@@ -50,6 +50,11 @@ Status: updated after installment approval-to-schedule wiring merged.
 - Installment approval flow creates the plan/schedule from the admin review path.
 - Installment approval form supports optional first due date.
 - Installment approval audit metadata records schedule plan ID and entry count.
+- Customer-facing installment approval and schedule status on account orders.
+- Customer-scoped installment schedule read model with upcoming schedule entries.
+- Installment collection/payment tracking service for scheduled entries.
+- Staff-facing installment collection controls for paid, failed, and waived schedule entries.
+- Installment collection metadata, plan status updates, order timeline entries, and admin audit logs.
 
 ## Remaining implementation phases
 
@@ -58,8 +63,7 @@ Status: updated after installment approval-to-schedule wiring merged.
 Continue installment as an approval workflow first, then leave provider integration behind a future adapter.
 
 Remaining deliverables:
-- Customer-facing approval and schedule status.
-- Installment collection/payment tracking against schedule entries.
+- Installment cancellation/refund workflow or defer to P6.
 - Optional future provider adapter boundary.
 
 ### Phase P4 — Cash/pay-on-delivery workflow
@@ -132,4 +136,4 @@ Deliverables:
 
 ## Recommended next slice
 
-Continue **Phase P3 — customer-facing installment approval and schedule status**. Approved requests now create schedules from the admin flow, but customers still need a safe account/order status view before receivables tracking and reminders are completed.
+Continue **Phase P3 — installment cancellation/refund decision**. Customer status and staff collection tracking are now covered; the next narrow slice should either defer installment cancellation/refund formally to P6 or add a minimal cancellation/refund workflow before starting COD.
