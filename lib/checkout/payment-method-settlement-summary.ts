@@ -574,7 +574,9 @@ export function summarizeInstallmentReceivables(
     summary.entryCount += 1;
     if (entry.planId) planIds.add(entry.planId);
     if (dueAtIso && (!summary.latestDueAt || dueAtIso > summary.latestDueAt)) summary.latestDueAt = dueAtIso;
-    if (dueAtIso && dueAt >= asOfDate && (!summary.nextDueAt || dueAtIso < summary.nextDueAt)) summary.nextDueAt = dueAtIso;
+    if (dueAt && dueAtIso && dueAt >= asOfDate && (!summary.nextDueAt || dueAtIso < summary.nextDueAt)) {
+      summary.nextDueAt = dueAtIso;
+    }
 
     if (isPaid) {
       summary.paidCount += 1;
