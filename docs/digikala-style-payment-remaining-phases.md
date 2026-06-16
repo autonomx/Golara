@@ -1,6 +1,6 @@
 # DigiKala-Style Payment System — Remaining Phases
 
-Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, the COD fulfillment completion guard, COD settlement/reconciliation fields, method-specific gateway adapter mapping, gateway production readiness evidence fields, provider reference persistence per method, gateway return method-key mapping, and gateway webhook method-key mapping.
+Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, the COD fulfillment completion guard, COD settlement/reconciliation fields, method-specific gateway adapter mapping, gateway production readiness evidence fields, provider reference persistence per method, gateway return method-key mapping, gateway webhook method-key mapping, and gateway fallback/disable behavior.
 
 ## Completed foundations
 
@@ -66,6 +66,7 @@ Status: updated after customer-facing installment status, staff collection track
 - Provider reference persistence per method stores selected method/provider reference evidence on checkout payment attempts.
 - Gateway return handling maps payment results back to the selected method key.
 - Gateway webhook handling maps trusted payment events back to the selected method key.
+- Gateway fallback/disable behavior rejects disabled selected methods before provider routing.
 
 ## Remaining implementation phases
 
@@ -90,7 +91,7 @@ Deliverables:
 Keep the current provider config, but make gateway selection method-aware.
 
 Deliverables:
-- Gateway fallback/disable behavior when a method is turned off.
+- Done for this phase; future gateway refund/void behavior is tracked in P6.
 
 ### Phase P6 — Refunds and reversals per method
 
@@ -140,4 +141,4 @@ Deliverables:
 
 ## Recommended next slice
 
-Start **Phase P5 — gateway fallback/disable behavior**. Keep it narrow: ensure disabled gateway methods fall back to safe manual handling before moving into P6 refunds/reversals.
+Start **Phase P6 — gateway refund/void adapter boundary**. Keep it narrow: add the method-aware refund/void adapter contract before wiring provider-specific refund behavior.
