@@ -30,7 +30,24 @@ export async function GET(request: Request) {
     search: optionalParam(url.searchParams.get('orderSearch'))
   });
 
-  const header = ['Created', 'Order', 'Customer', 'Phone', 'Status', 'Payment', 'Payment method', 'Payment provider', 'Manual review', 'Items', 'Total'];
+  const header = [
+    'Created',
+    'Order',
+    'Customer',
+    'Phone',
+    'Status',
+    'Payment',
+    'Payment method',
+    'Payment provider',
+    'Manual review',
+    'Wallet refund total',
+    'Wallet refund currency',
+    'Wallet refund entry',
+    'Wallet refund idempotency',
+    'Wallet refunded at',
+    'Items',
+    'Total'
+  ];
   const rows = orders.map((order) => [
     order.createdAt.toISOString(),
     order.orderNumber,
@@ -41,6 +58,11 @@ export async function GET(request: Request) {
     paymentMethodName(order),
     order.latestPaymentProvider || '',
     order.latestPaymentRequiresManualReview ? 'yes' : 'no',
+    order.latestWalletRefundTotalCents ?? '',
+    order.latestWalletRefundCurrency || '',
+    order.latestWalletRefundEntryId || '',
+    order.latestWalletRefundIdempotencyKey || '',
+    order.latestWalletRefundedAt || '',
     order.itemCount,
     `${order.totalCents / 100} ${order.currency}`
   ]);
