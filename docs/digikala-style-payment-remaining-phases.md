@@ -1,6 +1,6 @@
 # DigiKala-Style Payment System — Remaining Phases
 
-Status: updated after wallet receipt visibility merged.
+Status: updated after admin wallet reversal visibility merged.
 
 ## Completed foundations
 
@@ -33,17 +33,11 @@ Status: updated after wallet receipt visibility merged.
 - Payment-attempt refund metadata and full-refund transition to refunded.
 - Customer-facing wallet refund receipt/details in account wallet history.
 - Wallet refund receipt metadata display in customer wallet history.
+- Admin order/payment visibility for wallet refund metadata.
+- Staff-facing wallet refund receipt details in admin orders and CSV exports.
+- Method-aware wallet refund status fields on admin order summaries.
 
 ## Remaining implementation phases
-
-### Phase P2 — Wallet reversal admin visibility
-
-Complete admin visibility around wallet reversals.
-
-Deliverables:
-- Admin order/payment timeline visibility for wallet reversals.
-- Method-aware wallet refund status in admin order/payment views.
-- Staff-facing wallet refund receipt metadata display.
 
 ### Phase P3 — Installment/credit purchase workflow
 
@@ -127,4 +121,4 @@ Deliverables:
 
 ## Recommended next slice
 
-Start with **Phase P2 — wallet reversal admin visibility**. Customer wallet history now shows receipt details; the next useful capability is staff-facing wallet refund metadata in admin order/payment views.
+Start with **Phase P3 — installment/credit purchase request capture**. Wallet and manual-transfer foundations are now usable enough to move to the next DigiKala-style payment lane.
