@@ -6,6 +6,7 @@ import { listCustomerInstallmentScheduleStatuses, type CustomerInstallmentSchedu
 import { getCustomerSession, listCustomerOrdersForSession } from '@/lib/customers/customer-account-repository';
 import { getCustomerSessionCookie } from '@/lib/customers/customer-session-cookie';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
+import { customerInstallmentApprovalMessage } from '@/lib/localization/customer-installment-message-copy';
 import {
   customerOrderDateLocale,
   customerOrderItemCountLabel,
@@ -71,11 +72,13 @@ function InstallmentStatusCard({
   metadata,
   schedule,
   currency,
+  orderNumber,
   locale
 }: {
   metadata: Record<string, unknown>;
   schedule?: CustomerInstallmentScheduleStatus;
   currency: string;
+  orderNumber: string;
   locale?: string | null;
 }) {
   const copy = installmentCopy(locale);
@@ -83,16 +86,27 @@ function InstallmentStatusCard({
   const requestedTerm = numberMetadataValue(metadata.installmentRequestedTermMonths);
   const approvedTerm = numberMetadataValue(metadata.installmentApprovedTermMonths) ?? schedule?.termMonths;
   const downPaymentCents = numberMetadataValue(metadata.installmentDownPaymentCents) ?? schedule?.downPaymentCents;
+  const approvalMessage = customerInstallmentApprovalMessage(metadata, orderNumber, locale);
 
   return (
     <section className="mt-5 rounded-3xl border border-olive/20 bg-cream p-4 text-sm text-stone-700">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-olive">{copy.title}</p>
-          <h3 className="mt-1 font-display text-3xl text-rosewood">{installmentStatusLabel(approvalStatus, locale)}</h3>
+          <h3 className="mt-1 font-display text-3xl text-rosewood">{approvalMessage?.statusLabel ?? installmentStatusLabel(approvalStatus, locale)}</h3>
         </div>
         {schedule ? <span className="rounded-full border border-olive/20 bg-white px-3 py-1 text-xs font-semibold text-olive">{schedule.status.replace(/_/g, ' ')}</span> : null}
       </div>
+      {approvalMessage ? (
+        <div className="mt-4 rounded-2xl border border-olive/10 bg-white p-3">
+          <h4 className="font-semibold text-rosewood">{approvalMessage.title}</h4>
+          <p className="mt-2 leading-6 text-stone-700">{approvalMessage.body}</p>
+          <details className="mt-3 rounded-xl bg-cream/70 p-3">
+            <summary className="cursor-pointer font-semibold text-olive">{approvalMessage.emailSubject}</summary>
+            <p className="mt-2 whitespace-pre-line text-stone-700">{approvalMessage.emailBody}</p>
+          </details>
+        </div>
+      ) : null}
       <dl className="mt-4 grid gap-3 sm:grid-cols-3">
         <div className="rounded-2xl bg-white p-3"><dt className="font-semibold text-stone-500">{approvedTerm ? copy.approvedTerm : copy.requestedTerm}</dt><dd className="mt-1 text-stone-900">{approvedTerm ?? requestedTerm ?? '—'} {approvedTerm || requestedTerm ? copy.months : ''}</dd></div>
         <div className="rounded-2xl bg-white p-3"><dt className="font-semibold text-stone-500">{copy.downPayment}</dt><dd className="mt-1 text-stone-900">{downPaymentCents !== undefined ? formatMinorUnitAmount(downPaymentCents, currency) : '—'}</dd></div>
@@ -249,7 +263,7 @@ export default async function CustomerOrderHistoryPage() {
                     {order.items.length > 3 ? <p className="text-xs text-stone-500">+ {customerOrderMoreItemLabel(order.items.length - 3, locale)}</p> : null}
                   </div>
 
-                  {isInstallment ? <InstallmentStatusCard metadata={metadata} schedule={installmentStatus} currency={order.currency} locale={locale} /> : null}
+                  {isInstallment ? <InstallmentStatusCard metadata={metadata} schedule={installmentStatus} currency={order.currency} orderNumber={order.orderNumber} locale={locale} /> : null}
 
                   <div className="mt-5 flex flex-wrap gap-3">
                     {publicHref ? (
