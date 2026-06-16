@@ -4,13 +4,15 @@ import { redirect } from 'next/navigation';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
 import { formatMinorUnitAmount } from '@/lib/catalog';
-import { assertCodCollectionStatus, assertCodSettlementStatus, updateCodCollectionStatus } from '@/lib/checkout/cod-collection-service';
+import { assertCodCollectionStatus, assertCodSettlementStatus, recordCodAdjustment, updateCodCollectionStatus } from '@/lib/checkout/cod-collection-service';
+import type { CodAdjustmentOperation } from '@/lib/checkout/cod-adjustment-tracking';
 import { COD_COLLECTION_STATUSES, COD_SETTLEMENT_STATUSES } from '@/lib/checkout/payment-method-checkout-selection';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
 const inputClass = 'rounded-2xl border border-rosewood/15 bg-white px-3 py-2 text-sm text-stone-800 outline-none focus:border-rosewood';
+const COD_ADJUSTMENT_OPERATIONS: CodAdjustmentOperation[] = ['adjustment', 'refund', 'void'];
 
 function stringFormValue(formData: FormData, name: string) {
   const value = formData.get(name);
@@ -35,10 +37,17 @@ function textMetadata(value: string | number | boolean | undefined) {
   return String(value);
 }
 
+function assertCodAdjustmentOperation(value: string): CodAdjustmentOperation {
+  if ((COD_ADJUSTMENT_OPERATIONS as readonly string[]).includes(value)) return value as CodAdjustmentOperation;
+  throw new Error(`Unknown COD adjustment operation: ${value}`);
+}
+
 function statusBanner(status?: string) {
   if (status === 'cod-collection-updated') return 'COD collection status updated.';
+  if (status === 'cod-adjustment-recorded') return 'COD adjustment evidence recorded.';
   if (status === 'cod-collection-invalid') return 'COD collection status was invalid.';
   if (status === 'cod-settlement-invalid') return 'COD settlement status was invalid.';
+  if (status === 'cod-adjustment-invalid') return 'COD adjustment operation was invalid.';
   if (status === 'cod-collection-not-found') return 'COD payment attempt was not found.';
   if (status === 'cod-collection-not-cod') return 'Only COD payment attempts can be updated here.';
   return undefined;
@@ -55,6 +64,7 @@ function collectionFailureStatus(error: unknown) {
   const message = error instanceof Error ? error.message : '';
   if (message.includes('Unknown COD collection status')) return 'cod-collection-invalid';
   if (message.includes('Unknown COD settlement status')) return 'cod-settlement-invalid';
+  if (message.includes('Unknown COD adjustment operation')) return 'cod-adjustment-invalid';
   if (message.includes('COD payment attempt not found')) return 'cod-collection-not-found';
   if (message.includes('Only COD payment attempts')) return 'cod-collection-not-cod';
   return undefined;
@@ -105,7 +115,11 @@ async function listCodCollectionRows() {
       settlementStatus: textMetadata(metadata.codSettlementStatus) ?? 'pending',
       settlementReference: textMetadata(metadata.codSettlementReference),
       settlementSettledAt: textMetadata(metadata.codSettlementSettledAt),
-      settlementUpdatedAt: textMetadata(metadata.codSettlementUpdatedAt)
+      settlementUpdatedAt: textMetadata(metadata.codSettlementUpdatedAt),
+      adjustmentOperation: textMetadata(metadata.codAdjustmentOperation),
+      adjustmentStatus: textMetadata(metadata.codAdjustmentStatus),
+      adjustmentRecordedAt: textMetadata(metadata.codAdjustmentRecordedAt),
+      adjustmentNote: textMetadata(metadata.codAdjustmentNote)
     }));
 }
 
@@ -166,10 +180,57 @@ async function updateCodCollectionFormAction(formData: FormData) {
   redirect('/admin/payments/cod-collections?status=cod-collection-updated');
 }
 
+async function recordCodAdjustmentFormAction(formData: FormData) {
+  'use server';
+
+  const actor = await assertAdminRole('owner');
+  const orderId = stringFormValue(formData, 'orderId');
+  const paymentAttemptId = stringFormValue(formData, 'paymentAttemptId');
+  const note = stringFormValue(formData, 'adjustmentNote');
+  let operation: CodAdjustmentOperation;
+  let result: Awaited<ReturnType<typeof recordCodAdjustment>>;
+
+  try {
+    operation = assertCodAdjustmentOperation(stringFormValue(formData, 'codAdjustmentOperation'));
+    result = await recordCodAdjustment({
+      orderId,
+      paymentAttemptId,
+      operation,
+      note,
+      actorLabel: actor.label,
+      actorRole: actor.role
+    });
+  } catch (error) {
+    const status = collectionFailureStatus(error);
+    if (status) redirect(`/admin/payments/cod-collections?status=${status}`);
+    throw error;
+  }
+
+  await recordAdminAuditLog({
+    action: 'order.payment.cod.adjustment_recorded',
+    entity: 'checkoutOrder',
+    entityId: result.order.id,
+    summary: `Recorded COD ${result.operation} evidence for order ${result.order.orderNumber}`,
+    metadata: {
+      paymentAttemptId: result.paymentAttempt.id,
+      operation: result.operation,
+      fromPaymentStatus: result.fromPaymentStatus,
+      fromCollectionStatus: result.fromCollectionStatus,
+      noteAdded: Boolean(note)
+    }
+  });
+
+  revalidatePath('/admin');
+  revalidatePath('/admin/orders');
+  revalidatePath(`/admin/orders/${orderId}`);
+  revalidatePath('/admin/payments/cod-collections');
+  redirect('/admin/payments/cod-collections?status=cod-adjustment-recorded');
+}
+
 export default async function AdminCodCollectionPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
-  await assertAdminRole('staff');
-  const [{ status }, rows] = await Promise.all([searchParams, listCodCollectionRows()]);
+  const [actor, { status }, rows] = await Promise.all([assertAdminRole('staff'), searchParams, listCodCollectionRows()]);
   const banner = statusBanner(status);
+  const canRecordCodAdjustments = actor.role === 'owner';
 
   return (
     <main id="main-content" tabIndex={-1} className="mx-auto max-w-7xl px-5 py-14">
@@ -210,6 +271,8 @@ export default async function AdminCodCollectionPage({ searchParams }: { searchP
                 {row.settlementUpdatedAt ? <p><strong>Settlement updated:</strong> {row.settlementUpdatedAt}</p> : null}
                 {row.collectionUpdatedAt ? <p><strong>Collection updated:</strong> {row.collectionUpdatedAt}</p> : null}
                 {row.collectionNote ? <p><strong>Latest note:</strong> {row.collectionNote}</p> : null}
+                {row.adjustmentStatus ? <p><strong>Latest adjustment:</strong> {row.adjustmentStatus} ({row.adjustmentOperation ?? 'adjustment'}){row.adjustmentRecordedAt ? ` · ${row.adjustmentRecordedAt}` : ''}</p> : null}
+                {row.adjustmentNote ? <p><strong>Adjustment note:</strong> {row.adjustmentNote}</p> : null}
               </div>
 
               <form action={updateCodCollectionFormAction} className="mt-4 grid gap-3 rounded-3xl border border-current/10 bg-white/60 p-4 md:grid-cols-2 xl:grid-cols-[12rem_12rem_1fr_1fr_auto]">
@@ -240,6 +303,26 @@ export default async function AdminCodCollectionPage({ searchParams }: { searchP
                   <button type="submit" className="rounded-full bg-rosewood px-5 py-2 text-sm font-semibold text-white">Save COD collection</button>
                 </div>
               </form>
+
+              {canRecordCodAdjustments ? (
+                <form action={recordCodAdjustmentFormAction} className="mt-3 grid gap-3 rounded-3xl border border-current/10 bg-white/70 p-4 md:grid-cols-[12rem_1fr_auto]">
+                  <input type="hidden" name="orderId" value={row.order.id} />
+                  <input type="hidden" name="paymentAttemptId" value={row.id} />
+                  <label className="grid gap-2 text-sm font-semibold">
+                    Adjustment type
+                    <select name="codAdjustmentOperation" defaultValue="adjustment" className={inputClass}>
+                      {COD_ADJUSTMENT_OPERATIONS.map((value) => <option key={value} value={value}>{value}</option>)}
+                    </select>
+                  </label>
+                  <label className="grid gap-2 text-sm font-semibold">
+                    Owner note
+                    <input name="adjustmentNote" className={inputClass} placeholder="Adjustment, refund, or void evidence" />
+                  </label>
+                  <div className="flex items-end">
+                    <button type="submit" className="rounded-full border border-rosewood/20 bg-white px-5 py-2 text-sm font-semibold text-rosewood">Record COD adjustment</button>
+                  </div>
+                </form>
+              ) : null}
             </article>
           ))}
         </section>
