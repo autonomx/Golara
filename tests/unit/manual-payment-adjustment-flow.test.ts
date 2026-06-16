@@ -22,6 +22,7 @@ export async function runManualPaymentAdjustmentFlowTests() {
   const statusService = source('lib/checkout/checkout-status-service.ts');
   const refundTracking = source('lib/checkout/manual-transfer-refund-tracking.ts');
   const installmentReversal = source('lib/checkout/installment-reversal-boundary.ts');
+  const installmentPersistence = source('lib/checkout/installment-reversal-persistence.ts');
   const paymentRoadmap = source('docs/digikala-style-payment-remaining-phases.md');
 
   const trackingMetadata = buildManualTransferRefundTrackingMetadata({
@@ -153,8 +154,17 @@ export async function runManualPaymentAdjustmentFlowTests() {
   assert.equal(installmentReversal.includes('@prisma/client'), false);
   assert.equal(installmentReversal.includes('prisma.'), false);
 
+  assert.match(installmentPersistence, /persistInstallmentReversalBoundary/);
+  assert.match(installmentPersistence, /buildInstallmentReversalBoundaryMetadata/);
+  assert.match(installmentPersistence, /UPDATE "InstallmentPaymentPlan"/);
+  assert.match(installmentPersistence, /UPDATE "InstallmentPaymentScheduleEntry"/);
+  assert.match(installmentPersistence, /payment\.installment\.reversal\.\$\{operation\}/);
+  assert.match(installmentPersistence, /affectedScheduleEntries/);
+  assert.match(installmentPersistence, /nextPlanStatusFor/);
+
   assert.ok(paymentRoadmap.includes('Installment cancellation/refund metadata boundary normalizes cancellation and refund evidence before wiring plan and schedule persistence.'));
-  assert.ok(paymentRoadmap.includes('Start **Phase P6 — wire installment cancellation/refund boundary into plan and schedule persistence**'));
+  assert.ok(paymentRoadmap.includes('Installment cancellation/refund plan and schedule persistence stores reversal metadata on installment plans, eligible schedule entries, and order timelines.'));
+  assert.ok(paymentRoadmap.includes('Start **Phase P6 — wire installment cancellation/refund owner admin action**'));
 
   console.log('manual-payment-adjustment-flow.test.ts passed');
 }

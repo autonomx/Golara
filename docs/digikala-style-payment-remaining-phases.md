@@ -1,6 +1,6 @@
 # DigiKala-Style Payment System — Remaining Phases
 
-Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, the COD fulfillment completion guard, COD settlement/reconciliation fields, method-specific gateway adapter mapping, gateway production readiness evidence fields, provider reference persistence per method, gateway return method-key mapping, gateway webhook method-key mapping, gateway fallback/disable behavior, the P6 gateway refund/void adapter boundary, the P6 manual-transfer refund tracking metadata boundary, the P6 manual-transfer refund action persistence, and the P6 installment cancellation/refund metadata boundary.
+Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, the COD fulfillment completion guard, COD settlement/reconciliation fields, method-specific gateway adapter mapping, gateway production readiness evidence fields, provider reference persistence per method, gateway return method-key mapping, gateway webhook method-key mapping, gateway fallback/disable behavior, the P6 gateway refund/void adapter boundary, the P6 manual-transfer refund tracking metadata boundary, the P6 manual-transfer refund action persistence, the P6 installment cancellation/refund metadata boundary, and the P6 installment reversal plan/schedule persistence boundary.
 
 ## Completed foundations
 
@@ -72,6 +72,7 @@ Status: updated after customer-facing installment status, staff collection track
 - Manual-transfer refund action persistence stores refund/void tracking metadata on owner refund and void transitions.
 - Completed checkpoint: Start **Phase P6 — wire manual-transfer refund tracking into admin actions** is now complete.
 - Installment cancellation/refund metadata boundary normalizes cancellation and refund evidence before wiring plan and schedule persistence.
+- Installment cancellation/refund plan and schedule persistence stores reversal metadata on installment plans, eligible schedule entries, and order timelines.
 
 ## Remaining implementation phases
 
@@ -103,7 +104,7 @@ Deliverables:
 Make refund behavior method-aware across all payment lanes.
 
 Deliverables:
-- Installment cancellation/refund plan and schedule persistence workflow.
+- Installment cancellation/refund owner admin action wiring.
 - COD adjustment workflow.
 - Admin refund/reversal status timeline.
 
@@ -144,4 +145,4 @@ Deliverables:
 
 ## Recommended next slice
 
-Start **Phase P6 — wire installment cancellation/refund boundary into plan and schedule persistence**. Keep it narrow: persist the boundary metadata on installment plans and schedule entries before adding COD adjustment or unified reversal timelines.
+Start **Phase P6 — wire installment cancellation/refund owner admin action**. Keep it narrow: expose the persistence service through an owner-only admin action before adding COD adjustment or unified reversal timelines.
