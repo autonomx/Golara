@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
 import { reviewInstallmentPaymentAttempt, type InstallmentReviewOutcome } from '@/lib/checkout/installment-review';
@@ -24,6 +25,12 @@ function optionalNumberValue(formData: FormData, key: string) {
 function parseOutcome(value: string): InstallmentReviewOutcome {
   if (value === 'approved' || value === 'rejected' || value === 'needs_follow_up') return value;
   throw new Error('Unsupported installment review outcome.');
+}
+
+function statusForOutcome(outcome: InstallmentReviewOutcome) {
+  if (outcome === 'approved') return 'installment-approved';
+  if (outcome === 'rejected') return 'installment-rejected';
+  return 'installment-follow-up';
 }
 
 export async function reviewInstallmentAction(formData: FormData) {
@@ -59,5 +66,5 @@ export async function reviewInstallmentAction(formData: FormData) {
   revalidatePath('/admin/payments/installments');
   revalidatePath('/admin/orders');
   revalidatePath(`/admin/orders/${orderId}`);
-  return { ok: true, outcome };
+  redirect(`/admin/payments/installments?status=${statusForOutcome(outcome)}`);
 }
