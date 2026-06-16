@@ -2,7 +2,11 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import type { CheckoutOrderSummary } from '../../lib/catalog';
-import { summarizeSettlementByPaymentMethod } from '../../lib/checkout/payment-method-settlement-summary';
+import {
+  summarizeManualTransferSettlementTotals,
+  summarizeSettlementByPaymentMethod,
+  summarizeWalletLiabilityBalances
+} from '../../lib/checkout/payment-method-settlement-summary';
 import {
   planPaymentSettlementReconciliation,
   summarizePaymentSettlementPlans
@@ -38,6 +42,12 @@ export async function runPaymentSettlementReconciliationTests() {
   const methodSummaryHelper = source('lib/checkout/payment-method-settlement-summary.ts');
   assert.match(methodSummaryHelper, /export type MethodSettlementSummary/);
   assert.match(methodSummaryHelper, /export function summarizeSettlementByPaymentMethod/);
+  assert.match(methodSummaryHelper, /export function summarizeManualTransferSettlementTotals/);
+  assert.match(methodSummaryHelper, /export function summarizeWalletLiabilityBalances/);
+  assert.match(methodSummaryHelper, /WalletLiabilityBalance/);
+  assert.match(methodSummaryHelper, /availableLiabilityCents/);
+  assert.match(methodSummaryHelper, /reservedLiabilityCents/);
+  assert.match(methodSummaryHelper, /walletCapturedTotalCents/);
   assert.match(methodSummaryHelper, /timelineEvidenceCount/);
   assert.match(methodSummaryHelper, /latestCodCollectionStatus/);
   assert.match(methodSummaryHelper, /latestCodSettlementMode/);
@@ -45,7 +55,9 @@ export async function runPaymentSettlementReconciliationTests() {
 
   const roadmap = source('docs/digikala-style-payment-remaining-phases.md');
   assert.match(roadmap, /Method-level settlement summary groups orders by selected payment method/);
-  assert.match(roadmap, /Start \*\*Phase P7 — manual transfer received\/pending totals\*\*/);
+  assert.match(roadmap, /Manual-transfer settlement totals summarize received, pending-review, needs-follow-up, and rejected buckets/);
+  assert.match(roadmap, /Wallet liability balance summarizes available and reserved customer wallet balances/);
+  assert.match(roadmap, /Start \*\*Phase P7 — COD collection totals\*\*/);
 
   const webhookService = source('lib/checkout/payment-webhook-service.ts');
   assert.match(
@@ -211,11 +223,66 @@ export async function runPaymentSettlementReconciliationTests() {
   assert.equal(wallet.timelineEvidenceCount, 1);
   assert.deepEqual(wallet.latestEvidenceTitles, ['Wallet refund recorded']);
 
+  const walletLiability = summarizeWalletLiabilityBalances([
+    {
+      id: 'wallet-1',
+      customerId: 'customer-1',
+      currency: 'TOMAN',
+      availableBalanceCents: 12000,
+      reservedBalanceCents: 3000,
+      lifetimeCreditCents: 20000,
+      lifetimeDebitCents: 5000,
+      entryCount: 4,
+      lastEntryAt: new Date('2026-06-01T10:00:00.000Z')
+    },
+    {
+      id: 'wallet-2',
+      customerId: 'customer-2',
+      currency: 'TOMAN',
+      availableBalanceCents: 8000,
+      reservedBalanceCents: 0,
+      lifetimeCreditCents: 9000,
+      lifetimeDebitCents: 1000,
+      entryCount: 2,
+      lastEntryAt: '2026-06-02T11:00:00.000Z'
+    },
+    {
+      id: 'wallet-cad',
+      customerId: 'customer-3',
+      currency: 'CAD',
+      availableBalanceCents: 5000,
+      reservedBalanceCents: 500
+    }
+  ], methodSummaries, 'TOMAN');
+  assert.equal(walletLiability.currency, 'TOMAN');
+  assert.equal(walletLiability.walletCount, 2);
+  assert.equal(walletLiability.availableLiabilityCents, 20000);
+  assert.equal(walletLiability.reservedLiabilityCents, 3000);
+  assert.equal(walletLiability.totalLiabilityCents, 23000);
+  assert.equal(walletLiability.lifetimeCreditCents, 29000);
+  assert.equal(walletLiability.lifetimeDebitCents, 6000);
+  assert.equal(walletLiability.ledgerEntryCount, 6);
+  assert.equal(walletLiability.latestWalletActivityAt, '2026-06-02T11:00:00.000Z');
+  assert.deepEqual(walletLiability.walletMethodKeys, []);
+
+  const walletOrderLiability = summarizeWalletLiabilityBalances([], methodSummaries, 'CAD');
+  assert.equal(walletOrderLiability.walletOrderCount, 2);
+  assert.equal(walletOrderLiability.walletCapturedTotalCents, 5000);
+  assert.equal(walletOrderLiability.walletRefundedTotalCents, 3000);
+  assert.deepEqual(walletOrderLiability.walletMethodKeys, ['wallet']);
+  assert.equal(walletOrderLiability.walletTimelineEvidenceCount, 1);
+
   const manual = methodSummaries.find((summary) => summary.methodKey === 'manual_transfer');
   assert.ok(manual, 'Expected manual transfer settlement summary');
   assert.equal(manual.manualReviewRequiredCount, 1);
   assert.equal(manual.outstandingTotalCents, 7000);
   assert.equal(manual.statusCounts.pending, 1);
+
+  const manualTotals = summarizeManualTransferSettlementTotals(methodSummaries, 'CAD');
+  assert.deepEqual(manualTotals.methodKeys, ['manual_transfer']);
+  assert.equal(manualTotals.pendingReviewCount, 1);
+  assert.equal(manualTotals.pendingReviewTotalCents, 7000);
+  assert.equal(manualTotals.manualReviewRequiredCount, 1);
 
   const cod = methodSummaries.find((summary) => summary.methodKey === 'cod');
   assert.ok(cod, 'Expected COD settlement summary');
