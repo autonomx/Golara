@@ -62,13 +62,13 @@ export async function updateCodCollectionStatus(input: CodCollectionUpdateInput)
     if (!isCodAttemptMetadata(metadata)) throw new Error('Only COD payment attempts can update delivery collection status.');
 
     const fromStatus = typeof metadata.codCollectionStatus === 'string' ? metadata.codCollectionStatus : 'pending';
-    const nextMetadata: Prisma.InputJsonObject = {
+    const nextMetadata = {
       ...metadata,
       codCollectionStatus: input.status,
       codCollectionUpdatedAt: updatedAt,
       codCollectionUpdatedBy: actorLabel ?? 'staff',
       codCollectionUpdatedByRole: actorRole ?? 'staff'
-    };
+    } as Prisma.InputJsonObject;
     if (note) nextMetadata.codCollectionNote = note;
 
     const paymentAttempt = await tx.checkoutPaymentAttempt.update({
