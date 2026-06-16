@@ -1,6 +1,6 @@
 # DigiKala-Style Payment System — Remaining Phases
 
-Status: updated after installment schedule foundation merged.
+Status: updated after installment approval-to-schedule wiring merged.
 
 ## Completed foundations
 
@@ -47,6 +47,9 @@ Status: updated after installment schedule foundation merged.
 - Idempotent installment schedule creation service for approved payment attempts.
 - Installment schedule metadata persisted onto payment-attempt metadata.
 - Order timeline event for installment schedule creation.
+- Installment approval flow creates the plan/schedule from the admin review path.
+- Installment approval form supports optional first due date.
+- Installment approval audit metadata records schedule plan ID and entry count.
 
 ## Remaining implementation phases
 
@@ -55,7 +58,6 @@ Status: updated after installment schedule foundation merged.
 Continue installment as an approval workflow first, then leave provider integration behind a future adapter.
 
 Remaining deliverables:
-- Wire approved installment review into schedule creation/admin flow.
 - Customer-facing approval and schedule status.
 - Installment collection/payment tracking against schedule entries.
 - Optional future provider adapter boundary.
@@ -130,4 +132,4 @@ Deliverables:
 
 ## Recommended next slice
 
-Continue **Phase P3 — wire installment approval into schedule creation/admin flow**. Schedule tables and creation helpers now exist, but approval needs a staff-safe path to create and expose the schedule before customer-facing status and receivables can be completed.
+Continue **Phase P3 — customer-facing installment approval and schedule status**. Approved requests now create schedules from the admin flow, but customers still need a safe account/order status view before receivables tracking and reminders are completed.
