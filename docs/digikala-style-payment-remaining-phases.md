@@ -1,6 +1,6 @@
 # DigiKala-Style Payment System — Remaining Phases
 
-Status: updated after installment admin review workflow merged.
+Status: updated after installment schedule foundation merged.
 
 ## Completed foundations
 
@@ -43,6 +43,10 @@ Status: updated after installment admin review workflow merged.
 - Owner-only installment approval, rejection, and follow-up workflow.
 - Installment review audit logging and metadata persistence for reviewer, timestamp, approved term, down payment, and review note.
 - Installment rejection transition to failed payment status while approval/follow-up remains pending for schedule setup.
+- Installment plan and schedule tables.
+- Idempotent installment schedule creation service for approved payment attempts.
+- Installment schedule metadata persisted onto payment-attempt metadata.
+- Order timeline event for installment schedule creation.
 
 ## Remaining implementation phases
 
@@ -51,9 +55,9 @@ Status: updated after installment admin review workflow merged.
 Continue installment as an approval workflow first, then leave provider integration behind a future adapter.
 
 Remaining deliverables:
-- Payment/order state machine for approved credit and pending schedule setup.
-- Due-date/installment schedule model.
-- Customer-facing approval status.
+- Wire approved installment review into schedule creation/admin flow.
+- Customer-facing approval and schedule status.
+- Installment collection/payment tracking against schedule entries.
 - Optional future provider adapter boundary.
 
 ### Phase P4 — Cash/pay-on-delivery workflow
@@ -126,4 +130,4 @@ Deliverables:
 
 ## Recommended next slice
 
-Continue **Phase P3 — installment schedule/state foundation**. The approval queue is live, but approved installment requests still need a schedule/state model before customer-facing status, receivables, and cancellation/refund workflows can be completed.
+Continue **Phase P3 — wire installment approval into schedule creation/admin flow**. Schedule tables and creation helpers now exist, but approval needs a staff-safe path to create and expose the schedule before customer-facing status and receivables can be completed.
