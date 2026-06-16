@@ -1,5 +1,6 @@
 import { strict as assert } from 'node:assert';
 import { readFileSync } from 'node:fs';
+import { customerInstallmentApprovalMessage } from '@/lib/localization/customer-installment-message-copy';
 import {
   customerOrderDateLocale,
   customerOrderItemCountLabel,
@@ -17,6 +18,7 @@ import { customerWalletReceiptDetails } from '@/lib/localization/customer-wallet
 const source = readFileSync('app/account/orders/page.tsx', 'utf8');
 const walletSource = readFileSync('app/account/wallet/page.tsx', 'utf8');
 const copySource = readFileSync('lib/localization/customer-order-copy.ts', 'utf8');
+const installmentMessageCopySource = readFileSync('lib/localization/customer-installment-message-copy.ts', 'utf8');
 const walletReceiptCopySource = readFileSync('lib/localization/customer-wallet-receipt-copy.ts', 'utf8');
 
 function has(fragment: string) {
@@ -29,6 +31,10 @@ function walletHas(fragment: string) {
 
 function copyHas(fragment: string) {
   assert.ok(copySource.includes(fragment), `Expected customer order copy source to include: ${fragment}`);
+}
+
+function installmentMessageCopyHas(fragment: string) {
+  assert.ok(installmentMessageCopySource.includes(fragment), `Expected installment message copy source to include: ${fragment}`);
 }
 
 function walletReceiptCopyHas(fragment: string) {
@@ -86,6 +92,11 @@ for (const fragment of [
   'customerOrderPaymentSummary(latestAttempt?.status, locale)',
   'customerOrderMethodConfirmation(metadata, locale)',
   'customerOrderManualTransferInstructions(metadata, order.orderNumber, locale)',
+  'customerInstallmentApprovalMessage(metadata, orderNumber, locale)',
+  'approvalMessage.title',
+  'approvalMessage.body',
+  'approvalMessage.emailSubject',
+  'approvalMessage.emailBody',
   'methodConfirmation.methodLabel ?? methodConfirmation.title',
   'methodConfirmation.body',
   'manualTransferInstructions.referenceLabel',
@@ -119,6 +130,26 @@ for (const fragment of [
   'راهنمای انتقال بانکی'
 ]) {
   copyHas(fragment);
+}
+
+for (const fragment of [
+  'CustomerInstallmentApprovalMessage',
+  'pending_review',
+  'approved',
+  'rejected',
+  'needs_follow_up',
+  'Installment request approved',
+  'Installment request not approved',
+  'Installment request needs follow-up',
+  'درخواست اقساط تایید شد',
+  'درخواست اقساط تایید نشد',
+  'درخواست اقساط نیازمند پیگیری است',
+  'emailSubject',
+  'emailBody',
+  'installmentApprovalStatus',
+  'installment-credit'
+]) {
+  installmentMessageCopyHas(fragment);
 }
 
 for (const fragment of [
@@ -175,6 +206,24 @@ assert.ok(manualInstructions?.emailSubject.includes('GOL-1001'));
 assert.ok(manualInstructions?.emailBody.includes('ABC-123'));
 assert.ok(customerOrderManualTransferInstructions({ paymentMethodType: 'wallet' }, 'GOL-1002', 'en') === null);
 assert.ok(customerOrderManualTransferInstructions({ paymentMethodKey: 'bank-transfer' }, 'GOL-1003', 'fa')?.emailSubject.includes('GOL-1003'));
+
+const approvedInstallmentMessage = customerInstallmentApprovalMessage({
+  paymentMethodType: 'installment',
+  installmentApprovalStatus: 'approved'
+}, 'GOL-3001', 'en');
+assert.equal(approvedInstallmentMessage?.status, 'approved');
+assert.ok(approvedInstallmentMessage?.title.includes('approved'));
+assert.ok(approvedInstallmentMessage?.emailSubject.includes('GOL-3001'));
+
+const rejectedInstallmentMessage = customerInstallmentApprovalMessage({
+  paymentMethodKey: 'installment-credit',
+  installmentApprovalStatus: 'rejected'
+}, 'GOL-3002', 'fa');
+assert.equal(rejectedInstallmentMessage?.status, 'rejected');
+assert.ok(rejectedInstallmentMessage?.title.includes('اقساط'));
+assert.ok(customerInstallmentApprovalMessage({ paymentMethodType: 'wallet' }, 'GOL-3003', 'en') === null);
+assert.equal(customerInstallmentApprovalMessage({ paymentMethodType: 'installment' }, 'GOL-3004', 'en')?.status, 'pending_review');
+assert.equal(customerInstallmentApprovalMessage({ paymentMethodType: 'installment', installmentApprovalStatus: 'needs_follow_up' }, 'GOL-3005', 'en')?.status, 'needs_follow_up');
 
 const walletDebitReceipt = customerWalletReceiptDetails({
   entryType: 'checkout_capture',
