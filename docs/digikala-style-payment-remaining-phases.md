@@ -1,6 +1,6 @@
 # DigiKala-Style Payment System — Remaining Phases
 
-Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, and COD staff collection controls.
+Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, and the COD fulfillment completion guard.
 
 ## Completed foundations
 
@@ -59,6 +59,7 @@ Status: updated after customer-facing installment status, staff collection track
 - COD selected-method state persisted on checkout payment attempts with pending delivery collection metadata.
 - COD delivery collection status read model surfaced in admin order summaries and CSV exports.
 - COD staff collection controls for pending, collected, failed, and waived outcomes with timeline and audit evidence.
+- COD fulfillment completion guard prevents delivered fulfillment unless COD collection is collected or waived.
 
 ## Remaining implementation phases
 
@@ -77,7 +78,6 @@ Implement COD as a fulfillment-linked collection workflow.
 
 Deliverables:
 - Settlement/reconciliation fields for delivery collections.
-- Rules to prevent fulfillment completion without required collection state.
 
 ### Phase P5 — Gateway adapter expansion
 
@@ -138,4 +138,4 @@ Deliverables:
 
 ## Recommended next slice
 
-Start **Phase P4 — COD fulfillment completion guard**. Keep it narrow: prevent or flag fulfillment completion when COD still requires delivery collection and the collection status is pending or failed, while leaving settlement dashboards for the later reconciliation phase.
+Start **Phase P4 — COD settlement/reconciliation fields**. Keep it narrow: persist settlement evidence/status for COD delivery collections without building the full P7 dashboard yet.
