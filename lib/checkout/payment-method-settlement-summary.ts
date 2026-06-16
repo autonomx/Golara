@@ -21,11 +21,29 @@ export type MethodSettlementSummary = {
   refundedTotalCents: number;
   outstandingTotalCents: number;
   statusCounts: MethodSettlementStatusCounts;
+  rawStatusCounts: Record<string, number>;
+  totalCentsByStatus: Record<string, number>;
   codCollectionStatuses: Record<string, number>;
   codSettlementModes: Record<string, number>;
   manualReviewRequiredCount: number;
   timelineEvidenceCount: number;
   latestEvidenceTitles: string[];
+};
+
+export type ManualTransferSettlementTotals = {
+  methodKeys: string[];
+  currency: string;
+  orderCount: number;
+  receivedCount: number;
+  pendingReviewCount: number;
+  needsFollowUpCount: number;
+  rejectedCount: number;
+  receivedTotalCents: number;
+  pendingReviewTotalCents: number;
+  needsFollowUpTotalCents: number;
+  rejectedTotalCents: number;
+  manualReviewRequiredCount: number;
+  timelineEvidenceCount: number;
 };
 
 const REVERSAL_EVIDENCE_PATTERNS = [
@@ -42,6 +60,14 @@ const REVERSAL_EVIDENCE_PATTERNS = [
   'collection'
 ];
 
+const MANUAL_TRANSFER_METHOD_KEYS = new Set([
+  'manual_transfer',
+  'bank_transfer',
+  'card_to_card',
+  'manual',
+  'offline_transfer'
+]);
+
 function cleanText(value: string | undefined, fallback: string) {
   const normalized = value?.trim();
   return normalized || fallback;
@@ -54,6 +80,11 @@ function normalizeStatus(value: string | undefined) {
 function incrementCounter(counter: Record<string, number>, key: string | undefined) {
   const normalized = cleanText(key, 'unknown').toLowerCase();
   counter[normalized] = (counter[normalized] || 0) + 1;
+}
+
+function incrementTotal(counter: Record<string, number>, key: string | undefined, amount: number) {
+  const normalized = cleanText(key, 'unknown').toLowerCase();
+  counter[normalized] = (counter[normalized] || 0) + amount;
 }
 
 function emptyStatusCounts(): MethodSettlementStatusCounts {
@@ -104,6 +135,8 @@ function createSummary(order: CheckoutOrderSummary): MethodSettlementSummary {
     refundedTotalCents: 0,
     outstandingTotalCents: 0,
     statusCounts: emptyStatusCounts(),
+    rawStatusCounts: {},
+    totalCentsByStatus: {},
     codCollectionStatuses: {},
     codSettlementModes: {},
     manualReviewRequiredCount: 0,
@@ -121,6 +154,8 @@ function addOrderToSummary(summary: MethodSettlementSummary, order: CheckoutOrde
   summary.orderCount += 1;
   summary.grossTotalCents += totalCents;
   summary.statusCounts[bucket] += 1;
+  incrementCounter(summary.rawStatusCounts, status);
+  incrementTotal(summary.totalCentsByStatus, status, totalCents);
 
   if (isPaidLike(status)) summary.paidTotalCents += totalCents;
   if (isRefundedLike(status)) summary.refundedTotalCents += order.latestWalletRefundTotalCents || totalCents;
@@ -134,6 +169,22 @@ function addOrderToSummary(summary: MethodSettlementSummary, order: CheckoutOrde
     if (!summary.latestEvidenceTitles.includes(evidence)) summary.latestEvidenceTitles.push(evidence);
     summary.latestEvidenceTitles = summary.latestEvidenceTitles.slice(0, 5);
   }
+}
+
+function isManualTransferSummary(summary: MethodSettlementSummary) {
+  return (
+    MANUAL_TRANSFER_METHOD_KEYS.has(summary.methodKey.toLowerCase()) ||
+    summary.methodType.toLowerCase() === 'manual_transfer' ||
+    summary.provider.toLowerCase() === 'manual'
+  );
+}
+
+function statusCount(summary: MethodSettlementSummary, status: string) {
+  return summary.rawStatusCounts[status] || 0;
+}
+
+function statusTotal(summary: MethodSettlementSummary, status: string) {
+  return summary.totalCentsByStatus[status] || 0;
 }
 
 export function summarizeSettlementByPaymentMethod(orders: CheckoutOrderSummary[]): MethodSettlementSummary[] {
@@ -150,4 +201,46 @@ export function summarizeSettlementByPaymentMethod(orders: CheckoutOrderSummary[
     if (right.grossTotalCents !== left.grossTotalCents) return right.grossTotalCents - left.grossTotalCents;
     return left.methodKey.localeCompare(right.methodKey);
   });
+}
+
+export function summarizeManualTransferSettlementTotals(
+  summaries: MethodSettlementSummary[],
+  currency = 'CAD'
+): ManualTransferSettlementTotals {
+  const normalizedCurrency = cleanText(currency, 'CAD').toUpperCase();
+  const methodKeys = new Set<string>();
+  const totals: ManualTransferSettlementTotals = {
+    methodKeys: [],
+    currency: normalizedCurrency,
+    orderCount: 0,
+    receivedCount: 0,
+    pendingReviewCount: 0,
+    needsFollowUpCount: 0,
+    rejectedCount: 0,
+    receivedTotalCents: 0,
+    pendingReviewTotalCents: 0,
+    needsFollowUpTotalCents: 0,
+    rejectedTotalCents: 0,
+    manualReviewRequiredCount: 0,
+    timelineEvidenceCount: 0
+  };
+
+  for (const summary of summaries) {
+    if (!isManualTransferSummary(summary) || summary.currency !== normalizedCurrency) continue;
+    methodKeys.add(summary.methodKey);
+    totals.orderCount += summary.orderCount;
+    totals.receivedCount += statusCount(summary, 'received') + statusCount(summary, 'paid') + statusCount(summary, 'captured');
+    totals.pendingReviewCount += statusCount(summary, 'pending_review') + statusCount(summary, 'pending');
+    totals.needsFollowUpCount += statusCount(summary, 'needs_follow_up');
+    totals.rejectedCount += statusCount(summary, 'rejected') + statusCount(summary, 'failed');
+    totals.receivedTotalCents += statusTotal(summary, 'received') + statusTotal(summary, 'paid') + statusTotal(summary, 'captured');
+    totals.pendingReviewTotalCents += statusTotal(summary, 'pending_review') + statusTotal(summary, 'pending');
+    totals.needsFollowUpTotalCents += statusTotal(summary, 'needs_follow_up');
+    totals.rejectedTotalCents += statusTotal(summary, 'rejected') + statusTotal(summary, 'failed');
+    totals.manualReviewRequiredCount += summary.manualReviewRequiredCount;
+    totals.timelineEvidenceCount += summary.timelineEvidenceCount;
+  }
+
+  totals.methodKeys = Array.from(methodKeys).sort();
+  return totals;
 }
