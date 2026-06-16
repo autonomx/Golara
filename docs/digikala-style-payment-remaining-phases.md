@@ -1,6 +1,6 @@
 # DigiKala-Style Payment System — Remaining Phases
 
-Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, the COD fulfillment completion guard, COD settlement/reconciliation fields, and method-specific gateway adapter mapping.
+Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, the COD fulfillment completion guard, COD settlement/reconciliation fields, method-specific gateway adapter mapping, and gateway production readiness evidence fields.
 
 ## Completed foundations
 
@@ -55,13 +55,14 @@ Status: updated after customer-facing installment status, staff collection track
 - Installment collection/payment tracking service for scheduled entries.
 - Staff-facing installment collection controls for paid, failed, and waived schedule entries.
 - Installment collection metadata, plan status updates, order timeline entries, and admin audit logs.
-- Installment cancellation/refund workflow explicitly deferred to Phase P6 after customer status and staff collection tracking.
+- Installment cancellation/refunds are intentionally deferred to Phase P6 after customer status and staff collection tracking.
 - COD selected-method state persisted on checkout payment attempts with pending delivery collection metadata.
 - COD delivery collection status read model surfaced in admin order summaries and CSV exports.
 - COD staff collection controls for pending, collected, failed, and waived outcomes with timeline and audit evidence.
 - COD fulfillment completion guard prevents delivered fulfillment unless COD collection is collected or waived.
 - COD settlement/reconciliation fields persist settlement status and evidence on delivery collections.
 - Method-specific gateway adapter mapping is now explicit in checkout provider resolution.
+- Gateway production readiness evidence fields persist method/provider evidence for Iranian IPG and ZarinPal checkout attempts.
 
 ## Remaining implementation phases
 
@@ -86,7 +87,6 @@ Deliverables:
 Keep the current provider config, but make gateway selection method-aware.
 
 Deliverables:
-- Iranian IPG/ZarinPal production readiness evidence fields.
 - Provider reference persistence per method.
 - Return/webhook mapping back to selected method key.
 - Gateway fallback/disable behavior when a method is turned off.
@@ -139,4 +139,4 @@ Deliverables:
 
 ## Recommended next slice
 
-Start **Phase P5 — gateway production readiness evidence fields**. Keep it narrow: persist method-level readiness evidence for Iranian IPG/ZarinPal before expanding webhook/return mapping.
+Start **Phase P5 — provider reference persistence per method**. Keep it narrow: expose selected method/provider reference evidence before expanding return/webhook mapping.
