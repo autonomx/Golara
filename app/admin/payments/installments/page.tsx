@@ -1,5 +1,6 @@
 import { CreditCard } from 'lucide-react';
 import { AdminActionBanner } from '@/components/admin/AdminActionBanner';
+import { getAdminIdentity } from '@/lib/admin-auth';
 import { requireAdminRouteSession } from '@/lib/admin-page-auth-boundary';
 import { formatMinorUnitAmount } from '@/lib/catalog';
 import { listInstallmentReviewQueue } from '@/lib/checkout/installment-review';
@@ -24,7 +25,8 @@ function hiddenFields(item: { orderId: string; id: string }, outcome: string) {
 }
 
 export default async function AdminInstallmentPaymentsPage({ searchParams }: { searchParams: PageSearchParams }) {
-  const admin = await requireAdminRouteSession();
+  await requireAdminRouteSession();
+  const admin = await getAdminIdentity();
   const { status, message } = await searchParams;
   const items = await listInstallmentReviewQueue();
   const canReview = admin.role === 'owner';
