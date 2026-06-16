@@ -75,6 +75,7 @@ Status: updated after customer-facing installment status, staff collection track
 - Installment cancellation/refund plan and schedule persistence stores reversal metadata on installment plans, eligible schedule entries, and order timelines.
 - Installment cancellation/refund owner admin action records owner-triggered cancellation/refund reversals from the installment operations page.
 - COD adjustment/refund metadata boundary normalizes adjustment, refund, and void evidence before owner action persistence.
+- Completed checkpoint: Start **Phase P6 — COD adjustment workflow** is now complete.
 
 ## Remaining implementation phases
 
