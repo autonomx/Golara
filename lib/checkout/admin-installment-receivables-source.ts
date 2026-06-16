@@ -1,3 +1,5 @@
+import 'server-only';
+
 import { hasDatabase, prisma } from '@/lib/prisma';
 import type { InstallmentReceivableScheduleEntryInput } from '@/lib/checkout/payment-method-settlement-summary';
 
