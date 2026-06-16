@@ -13,6 +13,7 @@ import {
   type CheckoutPaymentStatus
 } from '@/lib/checkout/checkout-state-machine';
 import { confirmOrderFulfillmentCapacityReservation, releaseOrderFulfillmentCapacityReservation } from '@/lib/checkout/fulfillment-capacity-service';
+import { buildManualTransferRefundTrackingMetadata } from '@/lib/checkout/manual-transfer-refund-tracking';
 import { commitOrderInventoryReservations, releaseOrderInventoryReservations } from '@/lib/inventory/inventory-reservation-service';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
@@ -73,6 +74,12 @@ function isCodPaymentMetadata(metadata: JsonMetadata) {
 
 function codCollectionStatus(metadata: JsonMetadata) {
   return typeof metadata.codCollectionStatus === 'string' ? metadata.codCollectionStatus : 'pending';
+}
+
+function manualTransferRefundOperation(status: CheckoutPaymentStatus) {
+  if (status === 'refunded') return 'refund';
+  if (status === 'cancelled') return 'void';
+  return undefined;
 }
 
 function assertDatabaseReady() {
@@ -193,15 +200,53 @@ export async function transitionCheckoutPaymentStatus(input: PaymentTransitionIn
   assertDatabaseReady();
 
   const updated = await prisma.$transaction(async (tx) => {
-    const payment = await tx.checkoutPaymentAttempt.findUnique({ where: { id: input.paymentAttemptId }, select: { id: true, orderId: true, status: true } });
+    const payment = await tx.checkoutPaymentAttempt.findUnique({
+      where: { id: input.paymentAttemptId },
+      select: {
+        id: true,
+        orderId: true,
+        status: true,
+        provider: true,
+        amountCents: true,
+        currency: true,
+        providerReference: true,
+        metadata: true
+      }
+    });
     if (!payment) throw new Error(`Checkout payment attempt not found: ${input.paymentAttemptId}`);
 
     const from = assertCheckoutPaymentStatus(payment.status);
     throwIllegalTransition(canTransitionCheckoutPaymentStatus(from, input.to));
 
+    const operation = payment.provider === 'manual' ? manualTransferRefundOperation(input.to) : undefined;
+    const trackingMetadata = operation && from !== input.to
+      ? buildManualTransferRefundTrackingMetadata({
+        operation,
+        paymentAttemptId: payment.id,
+        orderId: payment.orderId,
+        fromStatus: from,
+        amountCents: payment.amountCents,
+        currency: payment.currency,
+        providerReference: payment.providerReference,
+        manualPaymentReference: typeof metadataObject(payment.metadata).manualPaymentReference === 'string' ? metadataObject(payment.metadata).manualPaymentReference as string : null,
+        note: input.note,
+        actorLabel: input.actorLabel,
+        actorRole: input.actorRole,
+        recordedAt: new Date().toISOString()
+      })
+      : undefined;
+    const nextMetadata = trackingMetadata ? { ...metadataObject(payment.metadata), ...trackingMetadata } : undefined;
+
     const result = from === input.to
       ? payment
-      : await tx.checkoutPaymentAttempt.update({ where: { id: payment.id }, data: { status: input.to }, select: { id: true, orderId: true, status: true } });
+      : await tx.checkoutPaymentAttempt.update({
+        where: { id: payment.id },
+        data: {
+          status: input.to,
+          ...(nextMetadata ? { metadata: nextMetadata } : {})
+        },
+        select: { id: true, orderId: true, status: true }
+      });
 
     if (from !== input.to) {
       await tx.checkoutOrderTimelineEvent.create({
@@ -212,7 +257,7 @@ export async function transitionCheckoutPaymentStatus(input: PaymentTransitionIn
           note: timelineNote(input.note),
           actorLabel: timelineActorLabel(input.actorLabel),
           actorRole: timelineActorRole(input.actorRole),
-          metadata: { from, to: input.to, paymentAttemptId: payment.id }
+          metadata: { from, to: input.to, paymentAttemptId: payment.id, ...(trackingMetadata ?? {}) }
         }
       });
     }
