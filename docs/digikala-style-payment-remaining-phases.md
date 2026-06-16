@@ -1,6 +1,6 @@
 # DigiKala-Style Payment System — Remaining Phases
 
-Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, the COD fulfillment completion guard, COD settlement/reconciliation fields, method-specific gateway adapter mapping, and gateway production readiness evidence fields.
+Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, the COD fulfillment completion guard, COD settlement/reconciliation fields, method-specific gateway adapter mapping, gateway production readiness evidence fields, and provider reference persistence per method.
 
 ## Completed foundations
 
@@ -63,6 +63,7 @@ Status: updated after customer-facing installment status, staff collection track
 - COD settlement/reconciliation fields persist settlement status and evidence on delivery collections.
 - Method-specific gateway adapter mapping is now explicit in checkout provider resolution.
 - Gateway production readiness evidence fields persist method/provider evidence for Iranian IPG and ZarinPal checkout attempts.
+- Provider reference persistence per method stores selected method/provider reference evidence on checkout payment attempts.
 
 ## Remaining implementation phases
 
@@ -87,7 +88,6 @@ Deliverables:
 Keep the current provider config, but make gateway selection method-aware.
 
 Deliverables:
-- Provider reference persistence per method.
 - Return/webhook mapping back to selected method key.
 - Gateway fallback/disable behavior when a method is turned off.
 
@@ -139,4 +139,4 @@ Deliverables:
 
 ## Recommended next slice
 
-Start **Phase P5 — provider reference persistence per method**. Keep it narrow: expose selected method/provider reference evidence before expanding return/webhook mapping.
+Start **Phase P5 — return/webhook mapping back to selected method key**. Keep it narrow: preserve selected method keys through gateway return handling before adding broader webhook behavior.
