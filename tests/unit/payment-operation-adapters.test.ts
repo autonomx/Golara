@@ -285,7 +285,8 @@ export async function runPaymentOperationAdaptersTests() {
   assert.ok(phase33Docs.includes('no live Stripe or ZarinPal refund/void HTTP calls'));
 
   assert.ok(paymentRoadmap.includes('Gateway refund/void adapter boundary maps selected method metadata to the existing refund/void provider adapters.'));
-  assert.ok(paymentRoadmap.includes('Start **Phase P6 — manual-transfer refund tracking**'));
+  assert.ok(paymentRoadmap.includes('Manual-transfer refund tracking metadata boundary normalizes refund/void evidence before wiring admin persistence.'));
+  assert.ok(paymentRoadmap.includes('Start **Phase P6 — wire manual-transfer refund tracking into admin actions**'));
 
   console.log('payment-operation-adapters.test.ts passed');
 }
