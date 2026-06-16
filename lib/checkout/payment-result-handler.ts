@@ -20,6 +20,8 @@ type CheckoutResultInput = {
   authority?: string;
 };
 
+type CheckoutResultMetadata = Record<string, string | number | boolean>;
+
 type ZarinpalVerifyResponse = {
   data?: {
     code?: number;
@@ -44,6 +46,25 @@ function zarinpalVerifyUrl() {
 function zarinpalAmount(amountCents: number) {
   const multiplier = Number.parseInt(process.env.ZARINPAL_AMOUNT_MULTIPLIER || '1', 10);
   return amountCents * (Number.isFinite(multiplier) && multiplier > 0 ? multiplier : 1);
+}
+
+function metadataRecord(value: unknown) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {} as Record<string, unknown>;
+  return value as Record<string, unknown>;
+}
+
+function selectedMethodReturnMetadata(value: unknown): CheckoutResultMetadata {
+  const metadata = metadataRecord(value);
+  const methodKey = typeof metadata.paymentMethodKey === 'string' ? metadata.paymentMethodKey : undefined;
+  if (!methodKey) return {};
+
+  return {
+    paymentResultMethodKey: methodKey,
+    paymentResultMethodType: typeof metadata.paymentMethodType === 'string' ? metadata.paymentMethodType : '',
+    paymentResultProviderKey: typeof metadata.paymentProviderKey === 'string' ? metadata.paymentProviderKey : '',
+    paymentResultProvider: typeof metadata.paymentProvider === 'string' ? metadata.paymentProvider : '',
+    paymentResultProviderRoutingKind: typeof metadata.paymentProviderRoutingKind === 'string' ? metadata.paymentProviderRoutingKind : ''
+  };
 }
 
 async function verifyZarinpalPayment(input: { amountCents: number; authority?: string; status: CheckoutResultStatus }) {
@@ -151,6 +172,7 @@ export async function applyCheckoutResult(input: CheckoutResultInput) {
   if (!order) throw new Error('Order result reference was not found.');
 
   const latestAttempt = order.paymentAttempts[0];
+  const selectedMethodMetadata = selectedMethodReturnMetadata(latestAttempt?.metadata);
   const verification = await verifyProviderResult({
     provider: provider || latestAttempt?.provider,
     status: requestedStatus,
@@ -173,6 +195,7 @@ export async function applyCheckoutResult(input: CheckoutResultInput) {
         status: transition.nextAttemptStatus,
         providerReference: verification.providerReference || latestAttempt.providerReference,
         metadata: {
+          ...selectedMethodMetadata,
           requestedStatus,
           resultStatus: status,
           provider: provider || latestAttempt.provider,
@@ -196,6 +219,7 @@ export async function applyCheckoutResult(input: CheckoutResultInput) {
                 type: 'payment_result',
                 title: checkoutResultEventTitle(status),
                 metadata: {
+                  ...selectedMethodMetadata,
                   requestedStatus,
                   resultStatus: status,
                   provider: provider || latestAttempt?.provider || '',
