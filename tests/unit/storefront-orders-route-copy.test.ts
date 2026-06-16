@@ -12,16 +12,27 @@ import {
   type CustomerOrderCopyKey,
   type CustomerOrderMethodConfirmationKey
 } from '@/lib/localization/customer-order-copy';
+import { customerWalletReceiptDetails } from '@/lib/localization/customer-wallet-receipt-copy';
 
 const source = readFileSync('app/account/orders/page.tsx', 'utf8');
+const walletSource = readFileSync('app/account/wallet/page.tsx', 'utf8');
 const copySource = readFileSync('lib/localization/customer-order-copy.ts', 'utf8');
+const walletReceiptCopySource = readFileSync('lib/localization/customer-wallet-receipt-copy.ts', 'utf8');
 
 function has(fragment: string) {
   assert.ok(source.includes(fragment), `Expected order history route source to include: ${fragment}`);
 }
 
+function walletHas(fragment: string) {
+  assert.ok(walletSource.includes(fragment), `Expected wallet route source to include: ${fragment}`);
+}
+
 function copyHas(fragment: string) {
   assert.ok(copySource.includes(fragment), `Expected customer order copy source to include: ${fragment}`);
+}
+
+function walletReceiptCopyHas(fragment: string) {
+  assert.ok(walletReceiptCopySource.includes(fragment), `Expected wallet receipt copy source to include: ${fragment}`);
 }
 
 for (const key of [
@@ -110,6 +121,33 @@ for (const fragment of [
   copyHas(fragment);
 }
 
+for (const fragment of [
+  'customerWalletReceiptDetails(entry, locale)',
+  'receipt.title',
+  'receipt.body',
+  'receipt.statusLabel',
+  'receipt.paymentAttemptLabel',
+  'receipt.idempotencyLabel'
+]) {
+  walletHas(fragment);
+}
+
+for (const fragment of [
+  'CustomerWalletReceiptDetails',
+  'walletDebit',
+  'walletRefund',
+  'checkout_capture',
+  'refund_credit',
+  'walletCapturedAt',
+  'refundedAt',
+  'Wallet debit receipt',
+  'Wallet refund receipt',
+  'رسید برداشت از کیف پول',
+  'رسید بازگشت وجه به کیف پول'
+]) {
+  walletReceiptCopyHas(fragment);
+}
+
 assert.equal(customerOrderDateLocale('en'), 'en-CA');
 assert.equal(customerOrderDateLocale('fa'), 'fa-IR');
 assert.equal(customerOrderItemCountLabel(1, 'en'), '1 item');
@@ -137,5 +175,41 @@ assert.ok(manualInstructions?.emailSubject.includes('GOL-1001'));
 assert.ok(manualInstructions?.emailBody.includes('ABC-123'));
 assert.ok(customerOrderManualTransferInstructions({ paymentMethodType: 'wallet' }, 'GOL-1002', 'en') === null);
 assert.ok(customerOrderManualTransferInstructions({ paymentMethodKey: 'bank-transfer' }, 'GOL-1003', 'fa')?.emailSubject.includes('GOL-1003'));
+
+const walletDebitReceipt = customerWalletReceiptDetails({
+  entryType: 'checkout_capture',
+  direction: 'capture',
+  status: 'captured',
+  orderId: 'order-1',
+  paymentAttemptId: 'pay-1',
+  idempotencyKey: 'wallet:checkout_capture:pay-1',
+  metadata: {
+    orderNumber: 'GOL-2001',
+    paymentAttemptId: 'pay-1',
+    walletCapturedAt: '2026-06-01T10:00:00.000Z'
+  }
+}, 'en');
+assert.equal(walletDebitReceipt?.kind, 'walletDebit');
+assert.equal(walletDebitReceipt?.orderNumber, 'GOL-2001');
+assert.ok(walletDebitReceipt?.title.includes('Debit') || walletDebitReceipt?.title.includes('debit'));
+assert.ok(walletDebitReceipt?.eventAt);
+
+const walletRefundReceipt = customerWalletReceiptDetails({
+  entryType: 'refund_credit',
+  direction: 'credit',
+  status: 'posted',
+  orderId: 'order-2',
+  paymentAttemptId: 'pay-2',
+  idempotencyKey: 'wallet:refund:pay-2',
+  metadata: {
+    orderNumber: 'GOL-2002',
+    paymentAttemptId: 'pay-2',
+    refundedAt: '2026-06-02T10:00:00.000Z'
+  }
+}, 'fa');
+assert.equal(walletRefundReceipt?.kind, 'walletRefund');
+assert.equal(walletRefundReceipt?.orderNumber, 'GOL-2002');
+assert.ok(walletRefundReceipt?.title.includes('کیف پول'));
+assert.ok(customerWalletReceiptDetails({ entryType: 'admin_credit', direction: 'credit', status: 'posted' }, 'en') === null);
 
 console.log('storefront order history route copy guard passed');

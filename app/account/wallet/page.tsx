@@ -7,6 +7,7 @@ import { getCustomerSessionCookie } from '@/lib/customers/customer-session-cooki
 import { getCustomerWalletAccountHistory, walletEntryMetadataObject } from '@/lib/checkout/customer-wallet-account-history';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { getCustomerCopyDirection } from '@/lib/localization/customer-copy';
+import { customerWalletReceiptDetails } from '@/lib/localization/customer-wallet-receipt-copy';
 import { hasDatabase } from '@/lib/prisma';
 import type { CustomerWalletLedgerEntry } from '@/lib/checkout/customer-wallet-ledger';
 
@@ -29,11 +30,6 @@ type WalletCopy = {
   order: string;
   reference: string;
   note: string;
-  refundReceipt: string;
-  refundStatus: string;
-  refundPayment: string;
-  refundedAt: string;
-  idempotencyKey: string;
 };
 
 function walletCopy(locale?: string | null): WalletCopy {
@@ -54,12 +50,7 @@ function walletCopy(locale?: string | null): WalletCopy {
       emptyBody: 'پس از شارژ کیف پول، پرداخت با اعتبار فروشگاه، یا بازگشت وجه، تاریخچه اینجا نمایش داده می‌شود.',
       order: 'سفارش',
       reference: 'شناسه مرجع',
-      note: 'یادداشت',
-      refundReceipt: 'رسید بازگشت وجه',
-      refundStatus: 'وضعیت بازگشت وجه',
-      refundPayment: 'شناسه پرداخت',
-      refundedAt: 'زمان بازگشت وجه',
-      idempotencyKey: 'کلید یکتایی'
+      note: 'یادداشت'
     };
   }
 
@@ -79,12 +70,7 @@ function walletCopy(locale?: string | null): WalletCopy {
     emptyBody: 'Wallet credits, store-credit payments, and wallet refunds will appear here once activity is posted.',
     order: 'Order',
     reference: 'Reference',
-    note: 'Note',
-    refundReceipt: 'Refund receipt',
-    refundStatus: 'Refund status',
-    refundPayment: 'Payment attempt',
-    refundedAt: 'Refunded at',
-    idempotencyKey: 'Idempotency key'
+    note: 'Note'
   };
 }
 
@@ -93,12 +79,6 @@ function formatDate(value: Date, locale?: string | null) {
     dateStyle: 'medium',
     timeStyle: 'short'
   }).format(value);
-}
-
-function formatOptionalDate(value: unknown, locale?: string | null) {
-  if (typeof value !== 'string' && !(value instanceof Date)) return undefined;
-  const date = value instanceof Date ? value : new Date(value);
-  return Number.isFinite(date.getTime()) ? formatDate(date, locale) : undefined;
 }
 
 function entryAmountPrefix(entry: CustomerWalletLedgerEntry) {
@@ -117,18 +97,6 @@ function metadataText(value: unknown) {
 function entryReference(entry: CustomerWalletLedgerEntry) {
   const metadata = walletEntryMetadataObject(entry.metadata);
   return metadataText(metadata.orderNumber ?? metadata.paymentAttemptId ?? metadata.source);
-}
-
-function walletRefundReceiptDetails(entry: CustomerWalletLedgerEntry, locale?: string | null) {
-  if (entry.entryType !== 'refund_credit') return undefined;
-  const metadata = walletEntryMetadataObject(entry.metadata);
-  return {
-    orderNumber: metadataText(metadata.orderNumber ?? entry.orderId),
-    paymentAttemptId: metadataText(metadata.paymentAttemptId ?? entry.paymentAttemptId),
-    refundedAt: formatOptionalDate(metadata.refundedAt, locale),
-    idempotencyKey: metadataText(entry.idempotencyKey),
-    status: entry.status.replace(/_/g, ' ')
-  };
 }
 
 export default async function CustomerWalletPage() {
@@ -203,7 +171,7 @@ export default async function CustomerWalletPage() {
             <div className="mt-5 grid gap-3">
               {history.entries.map((entry) => {
                 const reference = entryReference(entry);
-                const refundReceipt = walletRefundReceiptDetails(entry, locale);
+                const receipt = customerWalletReceiptDetails(entry, locale);
                 return (
                   <article key={entry.id} className="rounded-3xl border border-rosewood/10 bg-cream p-5">
                     <div className="flex flex-wrap items-start justify-between gap-4">
@@ -219,15 +187,16 @@ export default async function CustomerWalletPage() {
                       {reference ? <p><strong>{copy.reference}:</strong> {reference}</p> : null}
                       {entry.note ? <p><strong>{copy.note}:</strong> {entry.note}</p> : null}
                     </div>
-                    {refundReceipt ? (
+                    {receipt ? (
                       <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
-                        <p className="font-semibold uppercase tracking-[0.18em] text-emerald-800">{copy.refundReceipt}</p>
+                        <p className="font-semibold uppercase tracking-[0.18em] text-emerald-800">{receipt.title}</p>
+                        <p className="mt-2 leading-6">{receipt.body}</p>
                         <div className="mt-3 grid gap-1">
-                          <p><strong>{copy.refundStatus}:</strong> {refundReceipt.status}</p>
-                          {refundReceipt.orderNumber ? <p><strong>{copy.order}:</strong> {refundReceipt.orderNumber}</p> : null}
-                          {refundReceipt.paymentAttemptId ? <p><strong>{copy.refundPayment}:</strong> {refundReceipt.paymentAttemptId}</p> : null}
-                          {refundReceipt.refundedAt ? <p><strong>{copy.refundedAt}:</strong> {refundReceipt.refundedAt}</p> : null}
-                          {refundReceipt.idempotencyKey ? <p><strong>{copy.idempotencyKey}:</strong> {refundReceipt.idempotencyKey}</p> : null}
+                          <p><strong>{receipt.statusLabel}:</strong> {receipt.status}</p>
+                          {receipt.orderNumber ? <p><strong>{receipt.orderLabel}:</strong> {receipt.orderNumber}</p> : null}
+                          {receipt.paymentAttemptId ? <p><strong>{receipt.paymentAttemptLabel}:</strong> {receipt.paymentAttemptId}</p> : null}
+                          {receipt.eventAt ? <p><strong>{receipt.eventAtLabel}:</strong> {receipt.eventAt}</p> : null}
+                          {receipt.idempotencyKey ? <p><strong>{receipt.idempotencyLabel}:</strong> {receipt.idempotencyKey}</p> : null}
                         </div>
                       </div>
                     ) : null}
