@@ -81,6 +81,7 @@ Status: updated after customer-facing installment status, staff collection track
 - Admin refund/reversal status timeline classifies refund, void, cancellation, and adjustment events across payment lanes.
 - Completed checkpoint: Start **Phase P6 — admin refund/reversal status timeline** is now complete.
 - Method-level settlement summary groups orders by selected payment method, provider, currency, status, COD collection evidence, and timeline evidence.
+- Completed checkpoint: Start **Phase P7 — method-level settlement summary** is now complete.
 
 ## Remaining implementation phases
 
