@@ -1,6 +1,6 @@
 # DigiKala-Style Payment System — Remaining Phases
 
-Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, the COD fulfillment completion guard, COD settlement/reconciliation fields, method-specific gateway adapter mapping, gateway production readiness evidence fields, provider reference persistence per method, gateway return method-key mapping, gateway webhook method-key mapping, gateway fallback/disable behavior, the P6 gateway refund/void adapter boundary, the P6 manual-transfer refund tracking metadata boundary, the P6 manual-transfer refund action persistence, the P6 installment cancellation/refund metadata boundary, the P6 installment reversal plan/schedule persistence boundary, the P6 installment cancellation/refund owner admin action, the P6 COD adjustment/refund metadata boundary, the P6 COD adjustment owner/admin action, the P6 admin refund/reversal status timeline, the P7 method-level settlement summary, the P7 manual-transfer settlement totals, the P7 wallet liability balance, the P7 COD collection totals, the P7 installment receivables summary, the P7 exportable reconciliation CSV formatter, the P7 owner-only admin reconciliation CSV route, the P7 dashboard panels for settlement summaries, the P8 method-specific order confirmation copy, the P8 manual-transfer instruction copy, and the P8 wallet debit/refund receipt copy.
+Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, the COD fulfillment completion guard, COD settlement/reconciliation fields, method-specific gateway adapter mapping, gateway production readiness evidence fields, provider reference persistence per method, gateway return method-key mapping, gateway webhook method-key mapping, gateway fallback/disable behavior, the P6 gateway refund/void adapter boundary, the P6 manual-transfer refund tracking metadata boundary, the P6 manual-transfer refund action persistence, the P6 installment cancellation/refund metadata boundary, the P6 installment reversal plan/schedule persistence boundary, the P6 installment cancellation/refund owner admin action, the P6 COD adjustment/refund metadata boundary, the P6 COD adjustment owner/admin action, the P6 admin refund/reversal status timeline, the P7 method-level settlement summary, the P7 manual-transfer settlement totals, the P7 wallet liability balance, the P7 COD collection totals, the P7 installment receivables summary, the P7 exportable reconciliation CSV formatter, the P7 owner-only admin reconciliation CSV route, the P7 dashboard panels for settlement summaries, the P8 method-specific order confirmation copy, the P8 manual-transfer instruction copy, the P8 wallet debit/refund receipt copy, and the P8 installment approval/rejection messages.
 
 ## Completed foundations
 
@@ -102,6 +102,8 @@ Status: updated after customer-facing installment status, staff collection track
 - Completed checkpoint: Start **Phase P8 — manual-transfer instructions in order detail and emails** is now complete.
 - Wallet debit/refund receipt copy renders deterministic customer-facing wallet payment and refund receipts from ledger metadata.
 - Completed checkpoint: Start **Phase P8 — wallet debit/refund receipts** is now complete.
+- Installment approval/rejection messages render deterministic status guidance and email-ready copy from installment metadata.
+- Completed checkpoint: Start **Phase P8 — installment approval/rejection messages** is now complete.
 
 ## Remaining implementation phases
 
@@ -150,7 +152,7 @@ Deliverables:
 - Method-specific order confirmation copy is complete.
 - Manual-transfer instructions in order detail and emails are complete.
 - Wallet debit/refund receipts are complete.
-- Installment approval/rejection messages.
+- Installment approval/rejection messages are complete.
 - COD collection reminders.
 - Notification persistence and retry evidence.
 
@@ -167,4 +169,4 @@ Deliverables:
 
 ## Recommended next slice
 
-Start **Phase P8 — installment approval/rejection messages**. Keep it narrow: extend customer order surfaces with deterministic installment approval/rejection messaging before adding notification persistence.
+Start **Phase P8 — COD collection reminders**. Keep it narrow: add deterministic COD collection reminder copy on customer order surfaces before adding notification persistence.
