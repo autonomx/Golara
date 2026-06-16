@@ -24,7 +24,8 @@ export async function runOrderActivityTimelineAttributionTests() {
   assert.match(helper, /manualTransferRefundOperation/);
   assert.match(helper, /installmentReversalOperation/);
   assert.match(helper, /codAdjustmentOperation/);
-  assert.match(helper, /reversal: buildAdminOrderReversalStatusSummary\(event\)/);
+  assert.match(helper, /const reversal = buildAdminOrderReversalStatusSummary\(event\)/);
+  assert.match(helper, /\.\.\.\(reversal \? \{ reversal \} : \{\}\)/);
 
   assert.match(repository, /import \{ mapAdminOrderActivityTimeline \} from '@\/lib\/checkout\/admin-order-activity-timeline'/);
   assert.match(repository, /activityTimeline: mapAdminOrderActivityTimeline\(order\.timelineEvents\)/);
