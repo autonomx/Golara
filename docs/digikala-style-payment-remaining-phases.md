@@ -1,6 +1,6 @@
 # DigiKala-Style Payment System — Remaining Phases
 
-Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, the COD fulfillment completion guard, COD settlement/reconciliation fields, method-specific gateway adapter mapping, gateway production readiness evidence fields, provider reference persistence per method, gateway return method-key mapping, gateway webhook method-key mapping, gateway fallback/disable behavior, the P6 gateway refund/void adapter boundary, and the P6 manual-transfer refund tracking metadata boundary.
+Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, the COD fulfillment completion guard, COD settlement/reconciliation fields, method-specific gateway adapter mapping, gateway production readiness evidence fields, provider reference persistence per method, gateway return method-key mapping, gateway webhook method-key mapping, gateway fallback/disable behavior, the P6 gateway refund/void adapter boundary, the P6 manual-transfer refund tracking metadata boundary, and the P6 manual-transfer refund action persistence.
 
 ## Completed foundations
 
@@ -69,6 +69,8 @@ Status: updated after customer-facing installment status, staff collection track
 - Gateway fallback/disable behavior rejects disabled selected methods before provider routing.
 - Gateway refund/void adapter boundary maps selected method metadata to the existing refund/void provider adapters.
 - Manual-transfer refund tracking metadata boundary normalizes refund/void evidence before wiring admin persistence.
+- Manual-transfer refund action persistence stores refund/void tracking metadata on owner refund and void transitions.
+- Completed checkpoint: Start **Phase P6 — wire manual-transfer refund tracking into admin actions** is now complete.
 
 ## Remaining implementation phases
 
@@ -100,7 +102,6 @@ Deliverables:
 Make refund behavior method-aware across all payment lanes.
 
 Deliverables:
-- Wire manual-transfer refund tracking metadata into the admin refund/void action.
 - Installment cancellation/refund workflow (deferred from P3 after customer status and staff collection tracking).
 - COD adjustment workflow.
 - Admin refund/reversal status timeline.
@@ -142,4 +143,4 @@ Deliverables:
 
 ## Recommended next slice
 
-Start **Phase P6 — wire manual-transfer refund tracking into admin actions**. Keep it narrow: persist the manual-transfer refund metadata on owner refund/void transitions before adding installment or COD reversal workflows.
+Start **Phase P6 — installment cancellation/refund workflow**. Keep it narrow: define the installment cancellation/refund state boundary before adding COD adjustment or unified reversal timelines.

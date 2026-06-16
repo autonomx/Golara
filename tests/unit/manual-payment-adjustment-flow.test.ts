@@ -71,14 +71,24 @@ export async function runManualPaymentAdjustmentFlowTests() {
   assert.match(manualTransition, /transitionCheckoutPaymentStatus\(\{[\s\S]*paymentAttemptId,[\s\S]*to,[\s\S]*note:[\s\S]*actorLabel:[\s\S]*actorRole:/);
   assert.match(manualTransition, /recordAdminAuditLog\(\{[\s\S]*entity:\s*'checkoutOrder',[\s\S]*entityId:\s*attempt\.order\.id/);
   assert.match(manualTransition, /metadata:\s*\{[\s\S]*paymentAttemptId:\s*updated\.id,[\s\S]*from:\s*attempt\.status,[\s\S]*to[\s\S]*\}/);
-  assert.doesNotMatch(manualTransition, /providerReference/);
+
+  assert.match(statusService, /import \{ buildManualTransferRefundTrackingMetadata \}/);
+  assert.match(statusService, /function manualTransferRefundOperation\(status: CheckoutPaymentStatus\)/);
+  assert.match(statusService, /if \(status === 'refunded'\) return 'refund'/);
+  assert.match(statusService, /if \(status === 'cancelled'\) return 'void'/);
+  assert.match(statusService, /provider:\s*true,[\s\S]*amountCents:\s*true,[\s\S]*currency:\s*true,[\s\S]*providerReference:\s*true,[\s\S]*metadata:\s*true/);
+  assert.match(statusService, /payment\.provider === 'manual' \? manualTransferRefundOperation\(input\.to\) : undefined/);
+  assert.match(statusService, /buildManualTransferRefundTrackingMetadata\(\{[\s\S]*operation,[\s\S]*paymentAttemptId:\s*payment\.id,[\s\S]*orderId:\s*payment\.orderId,[\s\S]*fromStatus:\s*from,[\s\S]*amountCents:\s*payment\.amountCents,[\s\S]*currency:\s*payment\.currency/);
+  assert.match(statusService, /const nextMetadata = trackingMetadata \? \{ \.\.\.metadataObject\(payment\.metadata\), \.\.\.trackingMetadata \} : undefined/);
+  assert.match(statusService, /metadata:\s*nextMetadata/);
+  assert.match(statusService, /metadata:\s*\{ from, to: input\.to, paymentAttemptId: payment\.id, \.\.\.\(trackingMetadata \?\? \{\}\) \}/);
 
   assert.match(statusService, /async function applyPaymentCapacityLifecycle/);
   assert.match(statusService, /status === 'failed' \|\| status === 'cancelled' \|\| status === 'refunded'/);
   assert.match(statusService, /releaseOrderFulfillmentCapacityReservation\(orderId, 'released'\)/);
   assert.match(statusService, /releaseOrderInventoryReservations\(orderId\)/);
   assert.match(statusService, /type:\s*'payment_status_changed'/);
-  assert.match(statusService, /metadata:\s*\{\s*from,\s*to:\s*input\.to,\s*paymentAttemptId:\s*payment\.id\s*\}/);
+  assert.match(statusService, /metadata:\s*\{ from, to: input\.to, paymentAttemptId: payment\.id/);
 
   assert.match(detail, /canRefund = attempt\.provider === 'manual' && attempt\.status === 'paid'/);
   assert.match(detail, /canVoid = attempt\.provider === 'manual'/);
