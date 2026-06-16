@@ -123,10 +123,24 @@ export async function runPaymentReconciliationCsvExportTests() {
   assert.match(csv, /"driver_cash":1/);
   assert.match(csv, /"plan-1\|plan-2"/);
 
+  const route = source('app/admin/payments/reconciliation/csv/route.ts');
+  assert.match(route, /await assertAdminRole\('owner'\)/);
+  assert.match(route, /listAdminCheckoutOrdersForExport/);
+  assert.match(route, /listCustomerWalletSummaries/);
+  assert.match(route, /listInstallmentReceivableScheduleEntries/);
+  assert.match(route, /summarizeSettlementByPaymentMethod/);
+  assert.match(route, /summarizeManualTransferSettlementTotals/);
+  assert.match(route, /summarizeWalletLiabilityBalances/);
+  assert.match(route, /summarizeCodCollectionSettlementTotals/);
+  assert.match(route, /summarizeInstallmentReceivables/);
+  assert.match(route, /formatPaymentReconciliationCsv/);
+  assert.match(route, /Content-Disposition': 'attachment; filename="golara-reconciliation\.csv"/);
+
   const roadmap = source('docs/digikala-style-payment-remaining-phases.md');
   assert.match(roadmap, /Exportable reconciliation CSV formatter emits method-level, manual-transfer, wallet, COD, and installment receivables summaries/);
-  assert.match(roadmap, /Completed checkpoint: Start \*\*Phase P7 — exportable reconciliation CSVs\*\* is now complete/);
-  assert.match(roadmap, /Start \*\*Phase P7 — admin reconciliation CSV route wiring\*\*/);
+  assert.match(roadmap, /Admin reconciliation CSV route is owner-only and uses the reconciliation formatter with existing P7 read models/);
+  assert.match(roadmap, /Completed checkpoint: Start \*\*Phase P7 — admin reconciliation CSV route wiring\*\* is now complete/);
+  assert.match(roadmap, /Start \*\*Phase P7 — dashboard panels for settlement summaries\*\*/);
 
   console.log('payment-reconciliation-csv-export.test.ts passed');
 }
