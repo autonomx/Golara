@@ -29,6 +29,7 @@ type PaymentAttemptLookup = {
   provider: string;
   providerReference: string | null;
   status: string;
+  metadata: unknown;
   order: {
     id: string;
     orderNumber: string;
@@ -37,6 +38,25 @@ type PaymentAttemptLookup = {
     timelineEvents: { title: string; createdAt: Date }[];
   };
 };
+
+function metadataRecord(value: unknown) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {} as Record<string, unknown>;
+  return value as Record<string, unknown>;
+}
+
+function selectedMethodWebhookMetadata(value: unknown): Record<string, string> {
+  const metadata = metadataRecord(value);
+  const methodKey = typeof metadata.paymentMethodKey === 'string' ? metadata.paymentMethodKey : undefined;
+  if (!methodKey) return {};
+
+  return {
+    paymentWebhookMethodKey: methodKey,
+    paymentWebhookMethodType: typeof metadata.paymentMethodType === 'string' ? metadata.paymentMethodType : '',
+    paymentWebhookProviderKey: typeof metadata.paymentProviderKey === 'string' ? metadata.paymentProviderKey : '',
+    paymentWebhookProvider: typeof metadata.paymentProvider === 'string' ? metadata.paymentProvider : '',
+    paymentWebhookProviderRoutingKind: typeof metadata.paymentProviderRoutingKind === 'string' ? metadata.paymentProviderRoutingKind : ''
+  };
+}
 
 function isPaymentAttemptCorroborated(input: {
   attempt: PaymentAttemptLookup;
@@ -59,6 +79,7 @@ async function findPaymentAttemptForWebhook(input: {
     provider: true,
     providerReference: true,
     status: true,
+    metadata: true,
     order: {
       select: {
         id: true,
@@ -236,6 +257,7 @@ export async function recordPaymentWebhookEvent(input: PaymentWebhookEventInput)
     plan
   });
   const initialMetadata = {
+    ...selectedMethodWebhookMetadata(paymentAttempt.metadata),
     ...persistenceInput.metadata,
     webhookStateReason: statePlan.reason,
     webhookNextOrderStatus: statePlan.nextOrderStatus,
