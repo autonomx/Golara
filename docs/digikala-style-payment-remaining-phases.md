@@ -1,6 +1,6 @@
 # DigiKala-Style Payment System — Remaining Phases
 
-Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, the COD fulfillment completion guard, COD settlement/reconciliation fields, method-specific gateway adapter mapping, gateway production readiness evidence fields, provider reference persistence per method, and gateway return method-key mapping.
+Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, the COD fulfillment completion guard, COD settlement/reconciliation fields, method-specific gateway adapter mapping, gateway production readiness evidence fields, provider reference persistence per method, gateway return method-key mapping, and gateway webhook method-key mapping.
 
 ## Completed foundations
 
@@ -65,6 +65,7 @@ Status: updated after customer-facing installment status, staff collection track
 - Gateway production readiness evidence fields persist method/provider evidence for Iranian IPG and ZarinPal checkout attempts.
 - Provider reference persistence per method stores selected method/provider reference evidence on checkout payment attempts.
 - Gateway return handling maps payment results back to the selected method key.
+- Gateway webhook handling maps trusted payment events back to the selected method key.
 
 ## Remaining implementation phases
 
@@ -89,7 +90,6 @@ Deliverables:
 Keep the current provider config, but make gateway selection method-aware.
 
 Deliverables:
-- Webhook mapping back to selected method key.
 - Gateway fallback/disable behavior when a method is turned off.
 
 ### Phase P6 — Refunds and reversals per method
@@ -140,4 +140,4 @@ Deliverables:
 
 ## Recommended next slice
 
-Start **Phase P5 — webhook mapping back to selected method key**. Keep it narrow: preserve selected method keys through trusted webhook handling before adding gateway fallback behavior.
+Start **Phase P5 — gateway fallback/disable behavior**. Keep it narrow: ensure disabled gateway methods fall back to safe manual handling before moving into P6 refunds/reversals.
