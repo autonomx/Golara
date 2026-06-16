@@ -15,12 +15,17 @@ import {
   type CustomerOrderMethodConfirmationKey
 } from '@/lib/localization/customer-order-copy';
 import { customerWalletReceiptDetails } from '@/lib/localization/customer-wallet-receipt-copy';
+import {
+  appendCustomerNotificationAttemptEvidence,
+  customerNotificationEvidence
+} from '@/lib/notifications/customer-notification-evidence';
 
 const source = readFileSync('app/account/orders/page.tsx', 'utf8');
 const walletSource = readFileSync('app/account/wallet/page.tsx', 'utf8');
 const copySource = readFileSync('lib/localization/customer-order-copy.ts', 'utf8');
 const installmentMessageCopySource = readFileSync('lib/localization/customer-installment-message-copy.ts', 'utf8');
 const walletReceiptCopySource = readFileSync('lib/localization/customer-wallet-receipt-copy.ts', 'utf8');
+const notificationEvidenceSource = readFileSync('lib/notifications/customer-notification-evidence.ts', 'utf8');
 
 function has(fragment: string) {
   assert.ok(source.includes(fragment), `Expected order history route source to include: ${fragment}`);
@@ -40,6 +45,10 @@ function installmentMessageCopyHas(fragment: string) {
 
 function walletReceiptCopyHas(fragment: string) {
   assert.ok(walletReceiptCopySource.includes(fragment), `Expected wallet receipt copy source to include: ${fragment}`);
+}
+
+function notificationEvidenceHas(fragment: string) {
+  assert.ok(notificationEvidenceSource.includes(fragment), `Expected notification evidence source to include: ${fragment}`);
 }
 
 for (const key of [
@@ -203,6 +212,24 @@ for (const fragment of [
   walletReceiptCopyHas(fragment);
 }
 
+for (const fragment of [
+  'CustomerNotificationTemplateKey',
+  'method_confirmation',
+  'manual_transfer_instructions',
+  'wallet_receipt',
+  'installment_status',
+  'cod_collection_reminder',
+  'customerNotificationEvidence',
+  'customerNotificationAttemptEvidence',
+  'appendCustomerNotificationAttemptEvidence',
+  'notificationEvidenceVersion',
+  'p8-notification-v1',
+  'notificationRetryable',
+  'customerNotificationAttempts'
+]) {
+  notificationEvidenceHas(fragment);
+}
+
 assert.equal(customerOrderDateLocale('en'), 'en-CA');
 assert.equal(customerOrderDateLocale('fa'), 'fa-IR');
 assert.equal(customerOrderItemCountLabel(1, 'en'), '1 item');
@@ -298,5 +325,47 @@ assert.equal(walletRefundReceipt?.kind, 'walletRefund');
 assert.equal(walletRefundReceipt?.orderNumber, 'GOL-2002');
 assert.ok(walletRefundReceipt?.title.includes('کیف پول'));
 assert.ok(customerWalletReceiptDetails({ entryType: 'admin_credit', direction: 'credit', status: 'posted' }, 'en') === null);
+
+const failedNotificationEvidence = customerNotificationEvidence({
+  templateKey: 'manual_transfer_instructions',
+  channel: 'email',
+  status: 'failed',
+  locale: 'en',
+  recipient: 'customer@example.test',
+  orderNumber: 'GOL-5001',
+  paymentAttemptId: 'pay-5001',
+  selectedPaymentMethodKey: 'bank-transfer',
+  subject: 'Manual-transfer instructions for order GOL-5001',
+  bodyPreview: 'Keep your transfer evidence ready.',
+  attemptNumber: 1,
+  maxAttempts: 3,
+  nextRetryAt: '2026-06-03T10:00:00.000Z',
+  failedAt: '2026-06-03T09:00:00.000Z',
+  lastError: 'smtp-timeout'
+});
+assert.equal(failedNotificationEvidence.notificationEvidenceVersion, 'p8-notification-v1');
+assert.equal(failedNotificationEvidence.notificationRetryable, true);
+assert.equal(failedNotificationEvidence.customerNotificationAttempts[0]?.lastError, 'smtp-timeout');
+assert.equal(failedNotificationEvidence.customerNotificationAttempts[0]?.nextRetryAt, '2026-06-03T10:00:00.000Z');
+
+const retriedNotificationEvidence = appendCustomerNotificationAttemptEvidence(failedNotificationEvidence, {
+  templateKey: 'manual_transfer_instructions',
+  channel: 'email',
+  status: 'sent',
+  locale: 'en',
+  recipient: 'customer@example.test',
+  orderNumber: 'GOL-5001',
+  paymentAttemptId: 'pay-5001',
+  selectedPaymentMethodKey: 'bank-transfer',
+  attemptNumber: 2,
+  maxAttempts: 3,
+  sentAt: new Date('2026-06-03T10:05:00.000Z'),
+  providerMessageId: 'message-5001'
+});
+assert.equal(retriedNotificationEvidence.notificationStatus, 'sent');
+assert.equal(retriedNotificationEvidence.notificationRetryable, false);
+assert.equal(retriedNotificationEvidence.customerNotificationAttempts.length, 2);
+assert.equal(retriedNotificationEvidence.customerNotificationAttempts[1]?.sentAt, '2026-06-03T10:05:00.000Z');
+assert.equal(retriedNotificationEvidence.customerNotificationAttempts[1]?.providerMessageId, 'message-5001');
 
 console.log('storefront order history route copy guard passed');
