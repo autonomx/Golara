@@ -46,6 +46,36 @@ export type ManualTransferSettlementTotals = {
   timelineEvidenceCount: number;
 };
 
+export type WalletLiabilityBalanceInput = {
+  id?: string | null;
+  customerId?: string | null;
+  currency?: string | null;
+  availableBalanceCents?: number | null;
+  reservedBalanceCents?: number | null;
+  lifetimeCreditCents?: number | null;
+  lifetimeDebitCents?: number | null;
+  lastEntryAt?: Date | string | null;
+  entryCount?: number | null;
+};
+
+export type WalletLiabilityBalance = {
+  currency: string;
+  walletCount: number;
+  availableLiabilityCents: number;
+  reservedLiabilityCents: number;
+  totalLiabilityCents: number;
+  lifetimeCreditCents: number;
+  lifetimeDebitCents: number;
+  ledgerEntryCount: number;
+  latestWalletActivityAt: string | null;
+  walletMethodKeys: string[];
+  walletOrderCount: number;
+  walletCapturedTotalCents: number;
+  walletRefundedTotalCents: number;
+  walletOutstandingOrderTotalCents: number;
+  walletTimelineEvidenceCount: number;
+};
+
 const REVERSAL_EVIDENCE_PATTERNS = [
   'refund',
   'refunded',
@@ -68,13 +98,31 @@ const MANUAL_TRANSFER_METHOD_KEYS = new Set([
   'offline_transfer'
 ]);
 
-function cleanText(value: string | undefined, fallback: string) {
+const WALLET_METHOD_KEYS = new Set(['wallet', 'customer_wallet', 'store_credit']);
+
+function cleanText(value: string | undefined | null, fallback: string) {
   const normalized = value?.trim();
   return normalized || fallback;
 }
 
 function normalizeStatus(value: string | undefined) {
   return cleanText(value, 'unknown').toLowerCase();
+}
+
+function normalizeCurrency(value?: string | null) {
+  return cleanText(value, 'CAD').toUpperCase();
+}
+
+function normalizeMinorUnit(value?: number | null) {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.floor(value as number));
+}
+
+function normalizeActivityTime(value?: Date | string | null) {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString();
 }
 
 function incrementCounter(counter: Record<string, number>, key: string | undefined) {
@@ -118,7 +166,7 @@ function evidenceTitle(title: string | undefined) {
 function summaryKey(order: CheckoutOrderSummary) {
   const methodKey = cleanText(order.latestPaymentMethodKey, cleanText(order.latestPaymentProvider, 'unknown'));
   const provider = cleanText(order.latestPaymentProvider, 'unknown');
-  const currency = cleanText(order.currency, 'CAD').toUpperCase();
+  const currency = normalizeCurrency(order.currency);
   return `${methodKey}::${provider}::${currency}`;
 }
 
@@ -128,7 +176,7 @@ function createSummary(order: CheckoutOrderSummary): MethodSettlementSummary {
     methodLabel: cleanText(order.latestPaymentMethodLabel, cleanText(order.latestPaymentMethodKey, 'Unknown method')),
     methodType: cleanText(order.latestPaymentMethodType, 'unknown'),
     provider: cleanText(order.latestPaymentProvider, 'unknown'),
-    currency: cleanText(order.currency, 'CAD').toUpperCase(),
+    currency: normalizeCurrency(order.currency),
     orderCount: 0,
     grossTotalCents: 0,
     paidTotalCents: 0,
@@ -179,12 +227,40 @@ function isManualTransferSummary(summary: MethodSettlementSummary) {
   );
 }
 
+function isWalletSummary(summary: MethodSettlementSummary) {
+  return (
+    WALLET_METHOD_KEYS.has(summary.methodKey.toLowerCase()) ||
+    summary.methodType.toLowerCase() === 'wallet' ||
+    summary.provider.toLowerCase() === 'wallet'
+  );
+}
+
 function statusCount(summary: MethodSettlementSummary, status: string) {
   return summary.rawStatusCounts[status] || 0;
 }
 
 function statusTotal(summary: MethodSettlementSummary, status: string) {
   return summary.totalCentsByStatus[status] || 0;
+}
+
+function emptyWalletLiability(currency: string): WalletLiabilityBalance {
+  return {
+    currency,
+    walletCount: 0,
+    availableLiabilityCents: 0,
+    reservedLiabilityCents: 0,
+    totalLiabilityCents: 0,
+    lifetimeCreditCents: 0,
+    lifetimeDebitCents: 0,
+    ledgerEntryCount: 0,
+    latestWalletActivityAt: null,
+    walletMethodKeys: [],
+    walletOrderCount: 0,
+    walletCapturedTotalCents: 0,
+    walletRefundedTotalCents: 0,
+    walletOutstandingOrderTotalCents: 0,
+    walletTimelineEvidenceCount: 0
+  };
 }
 
 export function summarizeSettlementByPaymentMethod(orders: CheckoutOrderSummary[]): MethodSettlementSummary[] {
@@ -207,7 +283,7 @@ export function summarizeManualTransferSettlementTotals(
   summaries: MethodSettlementSummary[],
   currency = 'CAD'
 ): ManualTransferSettlementTotals {
-  const normalizedCurrency = cleanText(currency, 'CAD').toUpperCase();
+  const normalizedCurrency = normalizeCurrency(currency);
   const methodKeys = new Set<string>();
   const totals: ManualTransferSettlementTotals = {
     methodKeys: [],
@@ -243,4 +319,43 @@ export function summarizeManualTransferSettlementTotals(
 
   totals.methodKeys = Array.from(methodKeys).sort();
   return totals;
+}
+
+export function summarizeWalletLiabilityBalances(
+  wallets: WalletLiabilityBalanceInput[],
+  summaries: MethodSettlementSummary[],
+  currency = 'TOMAN'
+): WalletLiabilityBalance {
+  const normalizedCurrency = normalizeCurrency(currency);
+  const liability = emptyWalletLiability(normalizedCurrency);
+  const walletMethodKeys = new Set<string>();
+
+  for (const wallet of wallets) {
+    if (normalizeCurrency(wallet.currency) !== normalizedCurrency) continue;
+    liability.walletCount += 1;
+    liability.availableLiabilityCents += normalizeMinorUnit(wallet.availableBalanceCents);
+    liability.reservedLiabilityCents += normalizeMinorUnit(wallet.reservedBalanceCents);
+    liability.lifetimeCreditCents += normalizeMinorUnit(wallet.lifetimeCreditCents);
+    liability.lifetimeDebitCents += normalizeMinorUnit(wallet.lifetimeDebitCents);
+    liability.ledgerEntryCount += normalizeMinorUnit(wallet.entryCount);
+
+    const activityAt = normalizeActivityTime(wallet.lastEntryAt);
+    if (activityAt && (!liability.latestWalletActivityAt || activityAt > liability.latestWalletActivityAt)) {
+      liability.latestWalletActivityAt = activityAt;
+    }
+  }
+
+  for (const summary of summaries) {
+    if (!isWalletSummary(summary) || summary.currency !== normalizedCurrency) continue;
+    walletMethodKeys.add(summary.methodKey);
+    liability.walletOrderCount += summary.orderCount;
+    liability.walletCapturedTotalCents += summary.paidTotalCents;
+    liability.walletRefundedTotalCents += summary.refundedTotalCents;
+    liability.walletOutstandingOrderTotalCents += summary.outstandingTotalCents;
+    liability.walletTimelineEvidenceCount += summary.timelineEvidenceCount;
+  }
+
+  liability.totalLiabilityCents = liability.availableLiabilityCents + liability.reservedLiabilityCents;
+  liability.walletMethodKeys = Array.from(walletMethodKeys).sort();
+  return liability;
 }
