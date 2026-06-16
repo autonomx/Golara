@@ -48,6 +48,20 @@ export type CustomerOrderManualTransferInstructions = {
   emailBody: string;
 };
 
+export type CustomerOrderCodCollectionReminder = {
+  title: string;
+  body: string;
+  statusLabel: string;
+  settlementLabel: string;
+  settlementReferenceLabel: string;
+  noSettlementReferenceLabel: string;
+  collectionStatus: string;
+  settlementStatus?: string;
+  settlementReference?: string;
+  emailSubject: string;
+  emailBody: string;
+};
+
 type CustomerOrderCopyRegistry = Record<CustomerOrderCopyLocale, Record<CustomerOrderCopyKey, string>>;
 type CustomerOrderMethodConfirmationRegistry = Record<CustomerOrderCopyLocale, Record<CustomerOrderMethodConfirmationKey, { title: string; body: string }>>;
 type CustomerOrderManualTransferInstructionRegistry = Record<CustomerOrderCopyLocale, {
@@ -59,6 +73,19 @@ type CustomerOrderManualTransferInstructionRegistry = Record<CustomerOrderCopyLo
   emailSubject: string;
   emailBodyIntro: string;
   emailEvidenceIntro: string;
+}>;
+type CustomerOrderCodCollectionReminderRegistry = Record<CustomerOrderCopyLocale, {
+  title: string;
+  body: string;
+  statusLabel: string;
+  settlementLabel: string;
+  settlementReferenceLabel: string;
+  noSettlementReferenceLabel: string;
+  emailSubject: string;
+  emailBodyIntro: string;
+  emailEvidenceIntro: string;
+  statusLabels: Record<string, string>;
+  settlementStatusLabels: Record<string, string>;
 }>;
 
 const customerOrderCopy: CustomerOrderCopyRegistry = {
@@ -128,7 +155,7 @@ const customerOrderMethodConfirmationCopy: CustomerOrderMethodConfirmationRegist
     },
     cod: {
       title: 'Pay on delivery selected',
-      body: 'Your order will be collected at delivery. Staff collection status and settlement evidence are tracked with the order.'
+      body: 'Please keep the delivery amount ready for collection. Staff collection status, settlement evidence, and any follow-up reminders stay attached to this order.'
     }
   },
   fa: {
@@ -150,7 +177,7 @@ const customerOrderMethodConfirmationCopy: CustomerOrderMethodConfirmationRegist
     },
     cod: {
       title: 'پرداخت هنگام تحویل انتخاب شده است',
-      body: 'مبلغ این سفارش هنگام تحویل دریافت می‌شود. وضعیت دریافت توسط کارکنان و شواهد تسویه همراه سفارش ثبت می‌شود.'
+      body: 'لطفاً مبلغ سفارش را هنگام تحویل آماده نگه دارید. وضعیت دریافت، شواهد تسویه و یادآوری‌های پیگیری همراه سفارش ثبت می‌شود.'
     }
   }
 };
@@ -175,6 +202,57 @@ const manualTransferInstructionCopy: CustomerOrderManualTransferInstructionRegis
     emailSubject: 'راهنمای انتقال بانکی سفارش {{orderNumber}}',
     emailBodyIntro: 'این سفارش از روش انتقال بانکی استفاده می‌کند. لطفاً شماره پیگیری و لینک رسید را تا پایان بررسی تیم پشتیبانی نگه دارید.',
     emailEvidenceIntro: 'مدارک ثبت‌شده برای این سفارش:'
+  }
+};
+
+const codCollectionReminderCopy: CustomerOrderCodCollectionReminderRegistry = {
+  en: {
+    title: 'Cash-on-delivery reminder',
+    body: 'Please keep the delivery payment ready. We will update this order when staff record collection or a waiver at delivery.',
+    statusLabel: 'Collection status',
+    settlementLabel: 'Settlement status',
+    settlementReferenceLabel: 'Settlement reference',
+    noSettlementReferenceLabel: 'No settlement reference has been recorded yet.',
+    emailSubject: 'Cash-on-delivery reminder for order {{orderNumber}}',
+    emailBodyIntro: 'Your order uses cash on delivery. Please keep the collection amount ready for the delivery team.',
+    emailEvidenceIntro: 'Current COD collection evidence:',
+    statusLabels: {
+      pending: 'Pending collection',
+      collected: 'Collected at delivery',
+      failed: 'Collection needs follow-up',
+      waived: 'Collection waived'
+    },
+    settlementStatusLabels: {
+      pending: 'Settlement pending',
+      collected: 'Settlement collected',
+      failed: 'Settlement failed',
+      waived: 'Settlement waived',
+      settled: 'Settlement completed'
+    }
+  },
+  fa: {
+    title: 'یادآوری پرداخت هنگام تحویل',
+    body: 'لطفاً مبلغ پرداخت هنگام تحویل را آماده نگه دارید. پس از ثبت دریافت یا معافیت توسط کارکنان، وضعیت این سفارش به‌روزرسانی می‌شود.',
+    statusLabel: 'وضعیت دریافت',
+    settlementLabel: 'وضعیت تسویه',
+    settlementReferenceLabel: 'شناسه تسویه',
+    noSettlementReferenceLabel: 'هنوز شناسه تسویه‌ای برای این سفارش ثبت نشده است.',
+    emailSubject: 'یادآوری پرداخت هنگام تحویل سفارش {{orderNumber}}',
+    emailBodyIntro: 'این سفارش با پرداخت هنگام تحویل ثبت شده است. لطفاً مبلغ دریافت را برای تیم تحویل آماده نگه دارید.',
+    emailEvidenceIntro: 'شواهد فعلی دریافت COD:',
+    statusLabels: {
+      pending: 'در انتظار دریافت',
+      collected: 'هنگام تحویل دریافت شد',
+      failed: 'دریافت نیازمند پیگیری است',
+      waived: 'دریافت معاف شد'
+    },
+    settlementStatusLabels: {
+      pending: 'تسویه در انتظار است',
+      collected: 'تسویه دریافت شد',
+      failed: 'تسویه ناموفق بود',
+      waived: 'تسویه معاف شد',
+      settled: 'تسویه تکمیل شد'
+    }
   }
 };
 
@@ -208,6 +286,10 @@ function normalizedMetadataMethodType(metadata: Record<string, unknown>) {
 
 function isManualTransferMethod(metadata: Record<string, unknown>) {
   return normalizedMetadataMethodType(metadata) === 'manual_transfer' || normalizedMetadataMethodKey(metadata) === 'bank-transfer';
+}
+
+function isCodMethod(metadata: Record<string, unknown>) {
+  return normalizedMetadataMethodType(metadata) === 'cod' || normalizedMetadataMethodKey(metadata) === 'cash-on-delivery' || metadata.codPaymentSelected === true || metadata.codRequiresDeliveryCollection === true;
 }
 
 export function customerOrderMethodConfirmation(
@@ -265,6 +347,48 @@ export function customerOrderManualTransferInstructions(
     noEvidenceLabel: copy.noEvidenceLabel,
     reference,
     proofUrl,
+    emailSubject,
+    emailBody
+  };
+}
+
+export function customerOrderCodCollectionReminder(
+  metadata?: Record<string, unknown> | null,
+  orderNumber = '',
+  locale?: string | null
+): CustomerOrderCodCollectionReminder | null {
+  if (!metadata || !isCodMethod(metadata)) return null;
+
+  const normalizedLocale = normalizeCustomerOrderCopyLocale(locale);
+  const copy = codCollectionReminderCopy[normalizedLocale];
+  const collectionStatus = metadataText(metadata.codCollectionStatus) ?? 'pending';
+  const settlementStatus = metadataText(metadata.codSettlementStatus);
+  const settlementReference = metadataText(metadata.codSettlementReference);
+  const collectionStatusLabel = copy.statusLabels[collectionStatus] ?? collectionStatus.replace(/_/g, ' ');
+  const settlementStatusLabel = settlementStatus
+    ? copy.settlementStatusLabels[settlementStatus] ?? settlementStatus.replace(/_/g, ' ')
+    : copy.settlementStatusLabels.pending;
+  const emailSubject = copy.emailSubject.replace('{{orderNumber}}', orderNumber || '—');
+  const evidenceLines = [
+    `${copy.statusLabel}: ${collectionStatusLabel}`,
+    `${copy.settlementLabel}: ${settlementStatusLabel}`,
+    settlementReference ? `${copy.settlementReferenceLabel}: ${settlementReference}` : undefined
+  ].filter(Boolean) as string[];
+  const emailBody = [
+    copy.emailBodyIntro,
+    `${copy.emailEvidenceIntro}\n${evidenceLines.join('\n')}`
+  ].join('\n\n');
+
+  return {
+    title: copy.title,
+    body: copy.body,
+    statusLabel: copy.statusLabel,
+    settlementLabel: copy.settlementLabel,
+    settlementReferenceLabel: copy.settlementReferenceLabel,
+    noSettlementReferenceLabel: copy.noSettlementReferenceLabel,
+    collectionStatus: collectionStatusLabel,
+    settlementStatus: settlementStatusLabel,
+    settlementReference,
     emailSubject,
     emailBody
   };
