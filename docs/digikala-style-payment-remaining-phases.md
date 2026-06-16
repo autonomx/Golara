@@ -1,6 +1,6 @@
 # DigiKala-Style Payment System — Remaining Phases
 
-Status: updated after wallet/store-credit checkout capture merged.
+Status: updated after customer wallet history merged.
 
 ## Completed foundations
 
@@ -22,19 +22,22 @@ Status: updated after wallet/store-credit checkout capture merged.
 - Wallet checkout idempotency keys for reservation/capture ledger entries.
 - Wallet checkout double-spend protection through locked balance rows and insufficient-balance rejection.
 - Wallet checkout inventory/capacity confirmation after capture.
+- Customer account wallet history page.
+- Customer wallet balance summary and ledger-entry history.
+- Account overview navigation to wallet history.
 
 ## Remaining implementation phases
 
-### Phase P2 — Wallet/store-credit refunds and customer history
+### Phase P2 — Wallet/store-credit refunds and reversal visibility
 
-Complete customer/admin wallet visibility and wallet reversal behavior.
+Complete wallet reversal behavior and timeline evidence.
 
 Deliverables:
 - Refund-to-wallet support.
-- Customer account wallet history page.
-- Admin/customer timeline visibility for wallet debits, credits, and reversals.
+- Admin/customer timeline visibility for wallet reversals.
 - Wallet refund receipt metadata.
 - Wallet refund idempotency and reversal guards.
+- Method-aware wallet refund status in admin order/payment views.
 
 ### Phase P3 — Installment/credit purchase workflow
 
@@ -119,4 +122,4 @@ Deliverables:
 
 ## Recommended next slice
 
-Start with **Phase P2 — Wallet/store-credit customer history or refund-to-wallet support**. Wallet checkout can now capture funds safely; the next useful capability is either customer-visible wallet history or method-aware refund entries back into the wallet ledger.
+Start with **Phase P2 — refund-to-wallet support**. Wallet checkout can now capture funds and customers can review wallet history; the next useful capability is method-aware wallet refunds/reversal entries back into the wallet ledger.
