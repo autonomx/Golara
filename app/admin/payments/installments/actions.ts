@@ -1,8 +1,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { requireAdminActionSession } from '@/lib/admin-action-auth-boundary';
-import { recordAdminAuditLog } from '@/lib/cms/catalog-repository';
+import { assertAdminRole } from '@/lib/admin-auth';
+import { recordAdminAuditLog } from '@/lib/admin-audit-log';
 import { reviewInstallmentPaymentAttempt, type InstallmentReviewOutcome } from '@/lib/checkout/installment-review';
 
 function textValue(formData: FormData, key: string) {
@@ -27,9 +27,7 @@ function parseOutcome(value: string): InstallmentReviewOutcome {
 }
 
 export async function reviewInstallmentAction(formData: FormData) {
-  const admin = await requireAdminActionSession();
-  if (admin.role !== 'owner') throw new Error('Only owners can review installment requests.');
-
+  const admin = await assertAdminRole('owner');
   const orderId = textValue(formData, 'orderId');
   const paymentAttemptId = textValue(formData, 'paymentAttemptId');
   const outcome = parseOutcome(textValue(formData, 'outcome'));
@@ -40,7 +38,7 @@ export async function reviewInstallmentAction(formData: FormData) {
     approvedTermMonths: optionalNumberValue(formData, 'approvedTermMonths'),
     downPaymentCents: optionalNumberValue(formData, 'downPaymentCents'),
     note: optionalTextValue(formData, 'note'),
-    actorLabel: admin.label ?? admin.email,
+    actorLabel: admin.label,
     actorRole: admin.role
   });
 
@@ -49,7 +47,13 @@ export async function reviewInstallmentAction(formData: FormData) {
     entity: 'checkoutPaymentAttempt',
     entityId: paymentAttemptId,
     summary: `Installment request for order ${reviewed.order.orderNumber} marked ${outcome}.`,
-    actor: admin
+    metadata: {
+      orderId,
+      outcome,
+      approvedTermMonths: reviewed.approvedTermMonths ?? null,
+      downPaymentCents: reviewed.downPaymentCents ?? null,
+      noteAdded: Boolean(optionalTextValue(formData, 'note'))
+    }
   });
 
   revalidatePath('/admin/payments/installments');
