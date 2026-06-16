@@ -70,6 +70,7 @@ Status: updated after customer-facing installment status, staff collection track
 - Gateway refund/void adapter boundary maps selected method metadata to the existing refund/void provider adapters.
 - Manual-transfer refund tracking metadata boundary normalizes refund/void evidence before wiring admin persistence.
 - Manual-transfer refund action persistence stores refund/void tracking metadata on owner refund and void transitions.
+- Completed checkpoint: Start **Phase P6 — wire manual-transfer refund tracking into admin actions** is now complete.
 
 ## Remaining implementation phases
 
