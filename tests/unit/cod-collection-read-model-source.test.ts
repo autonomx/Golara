@@ -40,9 +40,9 @@ for (const fragment of [
   'COD collection status',
   'COD collection provider',
   'COD settlement mode',
-  'order.latestCodCollectionStatus || \'\'',
-  'order.latestCodCollectionProviderKey || \'\'',
-  'order.latestCodSettlementMode || \''
+  "order.latestCodCollectionStatus || ''",
+  "order.latestCodCollectionProviderKey || ''",
+  "order.latestCodSettlementMode || ''"
 ]) {
   assert.ok(csvRoute.includes(fragment), `Expected COD CSV export fragment: ${fragment}`);
 }
