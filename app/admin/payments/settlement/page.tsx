@@ -1,8 +1,19 @@
 import Link from 'next/link';
 
 import { AdminPageShell } from '@/components/admin/AdminPageShell';
+import { AdminPaymentReconciliationDashboardPanels } from '@/components/admin/AdminPaymentReconciliationDashboardPanels';
 import { AdminPaymentSettlementSummaryPanel } from '@/components/admin/AdminPaymentSettlementSummaryPanel';
 import { getAdminIdentity, isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
+import { listAdminCheckoutOrdersForExport } from '@/lib/checkout/admin-order-repository';
+import { listInstallmentReceivableScheduleEntries } from '@/lib/checkout/admin-installment-receivables-source';
+import { listCustomerWalletSummaries } from '@/lib/checkout/customer-wallet-ledger';
+import {
+  summarizeCodCollectionSettlementTotals,
+  summarizeInstallmentReceivables,
+  summarizeManualTransferSettlementTotals,
+  summarizeSettlementByPaymentMethod,
+  summarizeWalletLiabilityBalances
+} from '@/lib/checkout/payment-method-settlement-summary';
 import { paymentSettlementService, type PaymentSettlementSummary } from '@/lib/checkout/payment-settlement-service';
 import { listAdminCategories, listAdminProducts, listMedia } from '@/lib/cms/catalog-repository';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
@@ -27,12 +38,16 @@ export default async function AdminPaymentSettlementPage() {
   const authenticated = await isAdminAuthenticated();
   const authConfigured = isAdminAuthConfigured();
   const identity = await getAdminIdentity();
-  const [summary, products, categories, media] = await Promise.all([
+  const [summary, orders, wallets, installmentEntries, products, categories, media] = await Promise.all([
     authenticated ? paymentSettlementService.summary(50) : Promise.resolve(emptySettlementSummary),
+    authenticated ? listAdminCheckoutOrdersForExport({}) : Promise.resolve([]),
+    authenticated ? listCustomerWalletSummaries(500) : Promise.resolve([]),
+    authenticated ? listInstallmentReceivableScheduleEntries(500) : Promise.resolve([]),
     listAdminProducts(),
     listAdminCategories(),
     listMedia()
   ]);
+  const methodSummaries = summarizeSettlementByPaymentMethod(orders);
 
   return (
     <AdminPageShell
@@ -56,6 +71,7 @@ export default async function AdminPaymentSettlementPage() {
               <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">{t('Review recent payment webhook events and compare provider-reported settlement data against checkout orders.')}</p>
             </div>
             <div className="flex flex-wrap gap-2">
+              <Link href="/admin/payments/reconciliation/csv" className="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-800">{t('Export reconciliation CSV')}</Link>
               <Link href="/admin/payments/operations" className="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-800">{t('Payment operations')}</Link>
               <Link href="/admin/payments/operations/providers" className="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-800">{t('Provider readiness')}</Link>
               <Link href="/admin/payments/operations/history" className="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-800">{t('Operation history')}</Link>
@@ -72,6 +88,15 @@ export default async function AdminPaymentSettlementPage() {
         </section>
 
         {authenticated ? <AdminPaymentSettlementSummaryPanel summary={summary} /> : null}
+        {authenticated ? (
+          <AdminPaymentReconciliationDashboardPanels
+            methodSummaries={methodSummaries}
+            manualTransferTotals={summarizeManualTransferSettlementTotals(methodSummaries, 'CAD')}
+            walletLiability={summarizeWalletLiabilityBalances(wallets, methodSummaries, 'TOMAN')}
+            codCollectionTotals={summarizeCodCollectionSettlementTotals(methodSummaries, 'CAD')}
+            installmentReceivables={summarizeInstallmentReceivables(installmentEntries, 'TOMAN')}
+          />
+        ) : null}
       </div>
     </AdminPageShell>
   );
