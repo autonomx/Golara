@@ -1,6 +1,6 @@
 # DigiKala-Style Payment System — Remaining Phases
 
-Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, and the COD fulfillment completion guard.
+Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, the COD fulfillment completion guard, and COD settlement/reconciliation fields.
 
 ## Completed foundations
 
@@ -60,6 +60,7 @@ Status: updated after customer-facing installment status, staff collection track
 - COD delivery collection status read model surfaced in admin order summaries and CSV exports.
 - COD staff collection controls for pending, collected, failed, and waived outcomes with timeline and audit evidence.
 - COD fulfillment completion guard prevents delivered fulfillment unless COD collection is collected or waived.
+- COD settlement/reconciliation fields persist settlement status and evidence on delivery collections.
 
 ## Remaining implementation phases
 
@@ -77,7 +78,7 @@ Remaining deliverables:
 Implement COD as a fulfillment-linked collection workflow.
 
 Deliverables:
-- Settlement/reconciliation fields for delivery collections.
+- Done for this phase; future COD adjustment/refund behavior is tracked in P6 and dashboard totals are tracked in P7.
 
 ### Phase P5 — Gateway adapter expansion
 
@@ -138,4 +139,4 @@ Deliverables:
 
 ## Recommended next slice
 
-Start **Phase P4 — COD settlement/reconciliation fields**. Keep it narrow: persist settlement evidence/status for COD delivery collections without building the full P7 dashboard yet.
+Start **Phase P5 — Gateway adapter expansion**. Keep it narrow: add method-specific gateway adapter mapping so selected gateway methods persist provider evidence consistently before expanding production readiness fields.
