@@ -34,8 +34,8 @@ export async function runCheckoutCreationBoundaryTests() {
   );
   assert.match(
     checkoutActionSource,
-    /const attempt = await createCheckoutPaymentAttempt\(\{\s*orderId: order\.id,\s*provider: paymentMethodSelection\.selection\.provider,\s*metadata: \{\s*\.\.\.checkoutPaymentMethodMetadata\(paymentMethodSelection\.selection\),\s*\.\.\.manualTransferMetadata\(formData, paymentMethodSelection\.selection\.methodType\)\s*\}\s*\}\);/s,
-    'checkout action must create payment attempts with the order id, selected provider, selected-method metadata, and optional manual-transfer metadata'
+    /const attempt = await createCheckoutPaymentAttempt\(\{\s*orderId: order\.id,\s*provider: paymentMethodSelection\.selection\.provider,\s*metadata: \{\s*\.\.\.checkoutPaymentMethodMetadata\(paymentMethodSelection\.selection\),\s*\.\.\.manualTransferMetadata\(formData, paymentMethodSelection\.selection\.methodType\),\s*\.\.\.installmentRequestMetadata\(formData, paymentMethodSelection\.selection\.methodType\)\s*\}\s*\}\);/s,
+    'checkout action must create payment attempts with the order id, selected provider, selected-method metadata, manual-transfer metadata, and installment request metadata'
   );
   assert.match(
     checkoutActionSource,
@@ -46,6 +46,21 @@ export async function runCheckoutCreationBoundaryTests() {
     checkoutActionSource,
     /\.\.\.\(manualPaymentReference \? \{ manualPaymentReference \} : \{\}\),\s*\.\.\.\(manualPaymentProofUrl \? \{ manualPaymentProofUrl \} : \{\}\),/s,
     'manual-transfer metadata must omit empty reference/proof fields instead of persisting undefined values'
+  );
+  assert.match(
+    checkoutActionSource,
+    /function installmentRequestMetadata\(formData: FormData, methodType: string\) \{\s*if \(methodType !== 'installment'\) return \{\};/s,
+    'installment request metadata must only be accepted for installment payment methods'
+  );
+  assert.match(
+    checkoutActionSource,
+    /installmentApprovalStatus: 'pending_review'/,
+    'installment request metadata must mark the approval request as pending review'
+  );
+  assert.match(
+    checkoutActionSource,
+    /\.\.\.\(installmentRequestedTermMonths \? \{ installmentRequestedTermMonths \} : \{\}\),\s*\.\.\.\(installmentRequestNote \? \{ installmentRequestNote \} : \{\}\)/s,
+    'installment metadata must omit empty request fields instead of persisting undefined values'
   );
   assert.match(
     checkoutActionSource,
