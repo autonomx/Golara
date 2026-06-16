@@ -58,6 +58,9 @@ type AdminOrderPanelCopy = {
   paymentMethod: string;
   manualReview: string;
   provider: string;
+  codCollection: string;
+  codCollectionStatus: string;
+  codSettlement: string;
   walletRefund: string;
   walletRefundReceipt: string;
   walletRefundedAt: string;
@@ -113,6 +116,9 @@ const copy: Record<AdminLocale, AdminOrderPanelCopy> = {
     paymentMethod: 'Payment method',
     manualReview: 'Manual review',
     provider: 'Provider',
+    codCollection: 'COD collection',
+    codCollectionStatus: 'Collection status',
+    codSettlement: 'Settlement',
     walletRefund: 'Wallet refund',
     walletRefundReceipt: 'Wallet refund receipt',
     walletRefundedAt: 'Refunded',
@@ -166,6 +172,9 @@ const copy: Record<AdminLocale, AdminOrderPanelCopy> = {
     paymentMethod: 'روش پرداخت',
     manualReview: 'بررسی دستی',
     provider: 'ارائه‌دهنده',
+    codCollection: 'دریافت وجه در محل',
+    codCollectionStatus: 'وضعیت دریافت',
+    codSettlement: 'تسویه',
     walletRefund: 'بازگشت به کیف پول',
     walletRefundReceipt: 'رسید بازگشت کیف پول',
     walletRefundedAt: 'زمان بازگشت',
@@ -227,6 +236,10 @@ function hasWalletRefundMetadata(order: CheckoutOrderSummary) {
   return Boolean(order.latestWalletRefundEntryId || order.latestWalletRefundTotalCents || order.latestWalletRefundIdempotencyKey || order.latestWalletRefundedAt);
 }
 
+function hasCodCollectionMetadata(order: CheckoutOrderSummary) {
+  return Boolean(order.latestCodCollectionStatus || order.latestCodCollectionProviderKey || order.latestCodSettlementMode || order.latestCodRequiresDeliveryCollection);
+}
+
 function FilterInput({ label, name, defaultValue, placeholder }: { label: string; name: string; defaultValue?: string; placeholder?: string }) {
   return (
     <label className="grid gap-2 text-sm font-semibold text-rosewood">
@@ -267,6 +280,19 @@ function OrderStatusForm({ order, labels, statusLabel }: { order: CheckoutOrderS
       </label>
       <button className="rounded-full bg-rosewood px-4 py-2 text-xs font-semibold text-white outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30" type="submit">{labels.saveOrder}</button>
     </form>
+  );
+}
+
+function CodCollectionSummary({ order, labels }: { order: CheckoutOrderSummary; labels: AdminOrderPanelCopy }) {
+  if (!hasCodCollectionMetadata(order)) return null;
+
+  return (
+    <div className="mt-3 rounded-2xl border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900">
+      <p className="font-semibold">{labels.codCollection}</p>
+      {order.latestCodCollectionStatus ? <p className="mt-1">{labels.codCollectionStatus}: {order.latestCodCollectionStatus}</p> : null}
+      {order.latestCodCollectionProviderKey ? <p className="mt-1">{labels.provider}: {order.latestCodCollectionProviderKey}</p> : null}
+      {order.latestCodSettlementMode ? <p className="mt-1">{labels.codSettlement}: {order.latestCodSettlementMode}</p> : null}
+    </div>
   );
 }
 
@@ -381,6 +407,7 @@ export async function AdminOrderPanel({ orderPage, filters, locale }: { orderPag
                       {methodName ? <p className="font-semibold text-stone-700">{methodName}</p> : <p className="text-xs text-stone-400">—</p>}
                       {order.latestPaymentProvider ? <p className="mt-1 text-xs text-stone-500">{labels.provider}: {order.latestPaymentProvider}</p> : null}
                       {order.latestPaymentRequiresManualReview ? <span className="mt-2 inline-flex rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800">{labels.manualReview}</span> : null}
+                      <CodCollectionSummary order={order} labels={labels} />
                       <WalletRefundSummary order={order} labels={labels} locale={activeLocale} />
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 align-top font-semibold text-rosewood">
