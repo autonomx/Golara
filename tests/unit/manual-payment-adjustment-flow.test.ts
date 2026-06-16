@@ -19,6 +19,8 @@ function between(sourceText: string, start: string, end: string) {
 export async function runManualPaymentAdjustmentFlowTests() {
   const actions = source('app/admin/order-actions.ts');
   const detail = source('app/admin/orders/[orderId]/page.tsx');
+  const installmentActions = source('app/admin/payments/installments/actions.ts');
+  const installmentPage = source('app/admin/payments/installments/page.tsx');
   const statusService = source('lib/checkout/checkout-status-service.ts');
   const refundTracking = source('lib/checkout/manual-transfer-refund-tracking.ts');
   const installmentReversal = source('lib/checkout/installment-reversal-boundary.ts');
@@ -162,9 +164,27 @@ export async function runManualPaymentAdjustmentFlowTests() {
   assert.match(installmentPersistence, /affectedScheduleEntries/);
   assert.match(installmentPersistence, /nextPlanStatusFor/);
 
+  assert.match(installmentActions, /persistInstallmentReversalBoundary/);
+  assert.match(installmentActions, /parseReversalOperation/);
+  assert.match(installmentActions, /export async function reverseInstallmentPlanAction/);
+  assert.match(installmentActions, /assertAdminRole\('owner'\)/);
+  assert.match(installmentActions, /requestedAmountCents:\s*optionalNumberValue\(formData, 'requestedAmountCents'\)/);
+  assert.match(installmentActions, /action:\s*`payment\.installment\.reversal\.\$\{operation\}`/);
+  assert.match(installmentActions, /entity:\s*'installmentPaymentPlan'/);
+  assert.match(installmentActions, /affectedScheduleEntries:\s*reversed\.affectedScheduleEntries/);
+  assert.match(installmentActions, /redirect\(`\/admin\/payments\/installments\?status=\$\{statusForReversalOperation\(operation\)\}`\)/);
+
+  assert.match(installmentPage, /reverseInstallmentPlanAction/);
+  assert.match(installmentPage, /hiddenReversalFields\(entry, 'refund'\)/);
+  assert.match(installmentPage, /hiddenReversalFields\(entry, 'cancel'\)/);
+  assert.match(installmentPage, /Record installment refund/);
+  assert.match(installmentPage, /Cancel installment plan/);
+  assert.match(installmentPage, /Only owners can approve, reject, cancel, or refund installment plans/);
+
   assert.ok(paymentRoadmap.includes('Installment cancellation/refund metadata boundary normalizes cancellation and refund evidence before wiring plan and schedule persistence.'));
   assert.ok(paymentRoadmap.includes('Installment cancellation/refund plan and schedule persistence stores reversal metadata on installment plans, eligible schedule entries, and order timelines.'));
-  assert.ok(paymentRoadmap.includes('Start **Phase P6 — wire installment cancellation/refund owner admin action**'));
+  assert.ok(paymentRoadmap.includes('Installment cancellation/refund owner admin action records owner-triggered cancellation/refund reversals from the installment operations page.'));
+  assert.ok(paymentRoadmap.includes('Start **Phase P6 — COD adjustment workflow**'));
 
   console.log('manual-payment-adjustment-flow.test.ts passed');
 }
