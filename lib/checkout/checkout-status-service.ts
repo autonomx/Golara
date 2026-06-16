@@ -1,5 +1,6 @@
 import 'server-only';
 
+import type { Prisma } from '@prisma/client';
 import {
   assertCheckoutFulfillmentStatus,
   assertCheckoutOrderStatus,
@@ -18,6 +19,7 @@ import { hasDatabase, prisma } from '@/lib/prisma';
 const TIMELINE_NOTE_MAX_LENGTH = 1000;
 const TIMELINE_ACTOR_LABEL_MAX_LENGTH = 120;
 const TIMELINE_ACTOR_ROLE_MAX_LENGTH = 80;
+const COD_COLLECTION_READY_FOR_DELIVERY_STATUSES = new Set<string>(['collected', 'waived']);
 
 type TransitionActor = {
   actorLabel?: string;
@@ -35,6 +37,8 @@ type PaymentTransitionInput = TransitionActor & {
   to: CheckoutPaymentStatus;
   note?: string;
 };
+
+type JsonMetadata = Record<string, Prisma.JsonValue>;
 
 function timelineTitle(kind: string, from: string, to: string) {
   return `${kind} status changed from ${from} to ${to}`;
@@ -56,6 +60,19 @@ function timelineActorLabel(value?: string) {
 
 function timelineActorRole(value?: string) {
   return boundedOptionalText(value, TIMELINE_ACTOR_ROLE_MAX_LENGTH);
+}
+
+function metadataObject(value: Prisma.JsonValue | null | undefined): JsonMetadata {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return { ...(value as JsonMetadata) };
+}
+
+function isCodPaymentMetadata(metadata: JsonMetadata) {
+  return metadata.codPaymentSelected === true || metadata.codRequiresDeliveryCollection === true || metadata.paymentMethodType === 'cod';
+}
+
+function codCollectionStatus(metadata: JsonMetadata) {
+  return typeof metadata.codCollectionStatus === 'string' ? metadata.codCollectionStatus : 'pending';
 }
 
 function assertDatabaseReady() {
@@ -133,6 +150,22 @@ export async function transitionCheckoutFulfillmentStatus(input: TransitionInput
 
     const from = assertCheckoutFulfillmentStatus(order.fulfillmentStatus);
     throwIllegalTransition(canTransitionCheckoutFulfillmentStatus(from, input.to));
+
+    if (input.to === 'delivered') {
+      const paymentAttempts = await tx.checkoutPaymentAttempt.findMany({
+        where: { orderId: order.id },
+        select: { id: true, metadata: true }
+      });
+      const codPaymentAttempt = paymentAttempts.find((attempt) => isCodPaymentMetadata(metadataObject(attempt.metadata)));
+
+      if (codPaymentAttempt) {
+        const metadata = metadataObject(codPaymentAttempt.metadata);
+        const collectionStatus = codCollectionStatus(metadata);
+        if (!COD_COLLECTION_READY_FOR_DELIVERY_STATUSES.has(collectionStatus)) {
+          throw new Error(`COD collection must be collected or waived before fulfillment can be marked delivered. Current status: ${collectionStatus}.`);
+        }
+      }
+    }
 
     const updated = from === input.to
       ? order
