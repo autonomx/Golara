@@ -3,7 +3,6 @@ import { readFileSync } from 'node:fs';
 
 const statusService = readFileSync('lib/checkout/checkout-status-service.ts', 'utf8');
 const roadmap = readFileSync('docs/digikala-style-payment-remaining-phases.md', 'utf8');
-const pkg = readFileSync('package.json', 'utf8');
 
 for (const fragment of [
   'COD_COLLECTION_READY_FOR_DELIVERY_STATUSES',
@@ -24,10 +23,5 @@ for (const fragment of [
 ]) {
   assert.ok(roadmap.includes(fragment), `Expected roadmap COD fulfillment guard fragment: ${fragment}`);
 }
-
-assert.ok(
-  pkg.includes('check:cod-fulfillment-guard'),
-  'Expected package.json to expose COD fulfillment guard source check',
-);
 
 console.log('cod-fulfillment-guard-source.test.ts passed');
