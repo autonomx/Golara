@@ -61,6 +61,7 @@
     "check:wallet-checkout-capture": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/wallet-checkout-capture-source.test.ts",
     "check:customer-wallet-history": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/customer-wallet-history-source.test.ts",
     "check:admin-wallet-reversal-visibility": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/admin-wallet-reversal-visibility.test.ts",
+    "check:installment-review-workflow": "node --require ./tests/setup/server-only-register.cjs --import tsx tests/unit/installment-review-workflow-source.test.ts",
     "check:secrets": "node tools/check-secrets.mjs",
     "check:storefront-performance": "node tools/check-storefront-performance-budget.mjs",
     "smoke:routes": "node tools/smoke-routes.mjs",
