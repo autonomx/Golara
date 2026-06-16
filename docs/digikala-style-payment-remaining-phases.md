@@ -1,6 +1,6 @@
 # DigiKala-Style Payment System — Remaining Phases
 
-Status: updated after customer-facing installment status and installment collection tracking implementation.
+Status: updated after customer-facing installment status, staff collection tracking, and the P3 cancellation/refund deferral decision.
 
 ## Completed foundations
 
@@ -55,15 +55,17 @@ Status: updated after customer-facing installment status and installment collect
 - Installment collection/payment tracking service for scheduled entries.
 - Staff-facing installment collection controls for paid, failed, and waived schedule entries.
 - Installment collection metadata, plan status updates, order timeline entries, and admin audit logs.
+- Installment cancellation/refund workflow explicitly deferred to Phase P6 after customer status and staff collection tracking.
 
 ## Remaining implementation phases
 
 ### Phase P3 — Installment/credit purchase workflow
 
-Continue installment as an approval workflow first, then leave provider integration behind a future adapter.
+Continue installment as an approval and collection workflow first, then leave provider integration behind a future adapter.
+
+Deferral decision: installment cancellation/refunds are intentionally deferred to Phase P6 so method-aware refund and reversal behavior can be handled consistently across wallet, gateway, manual-transfer, installment, and COD lanes. No active cancellation/refund deliverable remains in P3.
 
 Remaining deliverables:
-- Installment cancellation/refund workflow or defer to P6.
 - Optional future provider adapter boundary.
 
 ### Phase P4 — Cash/pay-on-delivery workflow
@@ -95,7 +97,7 @@ Make refund behavior method-aware across all payment lanes.
 Deliverables:
 - Gateway refund/void adapter boundary.
 - Manual-transfer refund tracking.
-- Installment cancellation/refund workflow.
+- Installment cancellation/refund workflow (deferred from P3 after customer status and staff collection tracking).
 - COD adjustment workflow.
 - Admin refund/reversal status timeline.
 
@@ -136,4 +138,4 @@ Deliverables:
 
 ## Recommended next slice
 
-Continue **Phase P3 — installment cancellation/refund decision**. Customer status and staff collection tracking are now covered; the next narrow slice should either defer installment cancellation/refund formally to P6 or add a minimal cancellation/refund workflow before starting COD.
+Start **Phase P4 — COD selected-method state on orders**. Preserve COD as an order/payment selected-method state first, then follow with delivery collection status and staff controls in separate narrow slices.
