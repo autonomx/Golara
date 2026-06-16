@@ -7,6 +7,7 @@ import {
   type CodCollectionStatus,
   type CodSettlementStatus
 } from '@/lib/checkout/payment-method-checkout-selection';
+import { buildCodAdjustmentTrackingMetadata, type CodAdjustmentOperation } from '@/lib/checkout/cod-adjustment-tracking';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
 type CodCollectionUpdateInput = {
@@ -17,6 +18,15 @@ type CodCollectionUpdateInput = {
   settlementStatus?: CodSettlementStatus;
   settlementReference?: string;
   settlementSettledAt?: string;
+  actorLabel?: string;
+  actorRole?: string;
+};
+
+type CodAdjustmentRecordInput = {
+  orderId: string;
+  paymentAttemptId: string;
+  operation: CodAdjustmentOperation;
+  note?: string;
   actorLabel?: string;
   actorRole?: string;
 };
@@ -51,6 +61,10 @@ function isCodAttemptMetadata(metadata: JsonMetadata) {
 function boundedOptionalText(value: string | undefined, maxLength: number) {
   const normalized = value?.trim();
   return normalized ? normalized.slice(0, maxLength) : undefined;
+}
+
+function textMetadata(value: Prisma.JsonValue | undefined) {
+  return typeof value === 'string' ? value : null;
 }
 
 export async function updateCodCollectionStatus(input: CodCollectionUpdateInput) {
@@ -131,6 +145,97 @@ export async function updateCodCollectionStatus(input: CodCollectionUpdateInput)
       toStatus: input.status,
       fromSettlementStatus,
       toSettlementStatus: input.settlementStatus ?? fromSettlementStatus
+    };
+  });
+}
+
+export async function recordCodAdjustment(input: CodAdjustmentRecordInput) {
+  if (!hasDatabase()) throw new Error('DATABASE_URL is required for COD adjustment records.');
+
+  const note = boundedOptionalText(input.note, NOTE_MAX_LENGTH);
+  const actorLabel = boundedOptionalText(input.actorLabel, ACTOR_LABEL_MAX_LENGTH);
+  const actorRole = boundedOptionalText(input.actorRole, ACTOR_ROLE_MAX_LENGTH);
+  const recordedAt = new Date().toISOString();
+
+  return prisma.$transaction(async (tx) => {
+    const attempt = await tx.checkoutPaymentAttempt.findFirst({
+      where: { id: input.paymentAttemptId, orderId: input.orderId },
+      select: {
+        id: true,
+        provider: true,
+        status: true,
+        amountCents: true,
+        currency: true,
+        providerReference: true,
+        metadata: true,
+        order: { select: { id: true, orderNumber: true } }
+      }
+    });
+
+    if (!attempt) throw new Error('COD payment attempt not found.');
+    const metadata = metadataObject(attempt.metadata);
+    if (!isCodAttemptMetadata(metadata)) throw new Error('Only COD payment attempts can record delivery payment adjustments.');
+
+    const fromCollectionStatus = typeof metadata.codCollectionStatus === 'string' ? metadata.codCollectionStatus : 'pending';
+    const trackingMetadata = buildCodAdjustmentTrackingMetadata({
+      operation: input.operation,
+      paymentAttemptId: attempt.id,
+      orderId: attempt.order.id,
+      fromPaymentStatus: attempt.status,
+      fromCollectionStatus,
+      amountCents: attempt.amountCents,
+      currency: attempt.currency,
+      collectionStatus: textMetadata(metadata.codCollectionStatus),
+      settlementStatus: textMetadata(metadata.codSettlementStatus),
+      settlementReference: textMetadata(metadata.codSettlementReference),
+      providerReference: attempt.providerReference ?? textMetadata(metadata.codAdjustmentProviderReference),
+      note,
+      actorLabel,
+      actorRole,
+      recordedAt
+    });
+
+    const nextMetadata = {
+      ...metadata,
+      ...trackingMetadata
+    } as Prisma.InputJsonObject;
+
+    const paymentAttempt = await tx.checkoutPaymentAttempt.update({
+      where: { id: attempt.id },
+      data: { metadata: nextMetadata },
+      select: {
+        id: true,
+        provider: true,
+        metadata: true,
+        order: { select: { id: true, orderNumber: true } }
+      }
+    });
+
+    await tx.checkoutOrderTimelineEvent.create({
+      data: {
+        orderId: attempt.order.id,
+        type: 'cod_adjustment_recorded',
+        title: `COD ${input.operation} recorded`,
+        note,
+        actorLabel,
+        actorRole,
+        metadata: {
+          paymentAttemptId: attempt.id,
+          operation: input.operation,
+          fromPaymentStatus: attempt.status,
+          fromCollectionStatus,
+          provider: attempt.provider,
+          ...trackingMetadata
+        }
+      }
+    });
+
+    return {
+      order: paymentAttempt.order,
+      paymentAttempt,
+      operation: input.operation,
+      fromPaymentStatus: attempt.status,
+      fromCollectionStatus
     };
   });
 }
