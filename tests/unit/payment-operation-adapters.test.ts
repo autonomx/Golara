@@ -16,6 +16,10 @@ import {
   normalizeZarinPalPaymentOperationResponse,
   type ProviderPaymentOperationRequest
 } from '../../lib/checkout/payment-operation-adapters';
+import {
+  refundVoidAdapterBoundaryMetadata,
+  resolvePaymentOperationAdapterProviderForMethod
+} from '../../lib/checkout/payment-operation-method-boundary';
 
 function source(path: string) {
   return readFileSync(path, 'utf8');
@@ -36,13 +40,33 @@ const operation = {
 
 export async function runPaymentOperationAdaptersTests() {
   const adapterSource = source('lib/checkout/payment-operation-adapters.ts');
+  const methodBoundarySource = source('lib/checkout/payment-operation-method-boundary.ts');
   const phase33Docs = source('docs/production-roadmap-phase33-payment-operations.md');
+  const paymentRoadmap = source('docs/digikala-style-payment-remaining-phases.md');
 
   assert.equal(normalizePaymentOperationAdapterProvider(' Stripe '), 'stripe');
   assert.equal(normalizePaymentOperationAdapterProvider('zarin-pal'), 'zarinpal');
   assert.equal(normalizePaymentOperationAdapterProvider('assisted'), 'manual');
   assert.equal(normalizePaymentOperationAdapterProvider('inquiry'), 'manual');
   assert.equal(normalizePaymentOperationAdapterProvider('other'), 'unknown');
+
+  assert.equal(resolvePaymentOperationAdapterProviderForMethod({ methodKey: 'zarinpal', methodType: 'gateway', provider: 'zarinpal' }), 'zarinpal');
+  assert.equal(resolvePaymentOperationAdapterProviderForMethod({ methodKey: 'iranian-ipg', methodType: 'gateway', provider: 'iranian' }), 'zarinpal');
+  assert.equal(resolvePaymentOperationAdapterProviderForMethod({ methodKey: 'stripe-card', methodType: 'gateway', providerKey: 'stripe' }), 'stripe');
+  assert.equal(resolvePaymentOperationAdapterProviderForMethod({ methodKey: 'wallet', methodType: 'wallet' }), 'manual');
+  assert.equal(resolvePaymentOperationAdapterProviderForMethod({ methodKey: 'unknown-gateway', methodType: 'gateway' }), 'unknown');
+  assert.equal(resolvePaymentOperationAdapterProviderForMethod({ metadata: { paymentMethodKey: 'domestic-ipg', paymentMethodType: 'gateway', paymentProvider: 'iranian' } }), 'zarinpal');
+
+  const boundaryMetadata = refundVoidAdapterBoundaryMetadata({
+    methodKey: 'iranian-ipg',
+    methodType: 'gateway',
+    provider: 'iranian',
+    providerKey: 'domestic-ipg'
+  });
+  assert.equal(boundaryMetadata.gatewayRefundVoidBoundaryVersion, 'p6.gateway-refund-void-boundary.v1');
+  assert.equal(boundaryMetadata.gatewayRefundVoidAdapterProvider, 'zarinpal');
+  assert.equal(boundaryMetadata.gatewayRefundVoidSupportsRefund, true);
+  assert.equal(boundaryMetadata.gatewayRefundVoidSupportsVoid, true);
 
   const stripe = createMockPaymentOperationAdapter('stripe');
   const stripeResult = await stripe.execute(operation);
@@ -243,6 +267,14 @@ export async function runPaymentOperationAdaptersTests() {
   assert.equal(adapterSource.includes('CheckoutOrder" SET'), false);
   assert.equal(adapterSource.includes('CheckoutPaymentAttempt" SET'), false);
 
+  assert.ok(methodBoundarySource.includes('GATEWAY_REFUND_VOID_ADAPTER_BOUNDARY_VERSION'));
+  assert.ok(methodBoundarySource.includes('METHOD_KEY_REFUND_VOID_ADAPTERS'));
+  assert.ok(methodBoundarySource.includes('PROVIDER_REFUND_VOID_ADAPTERS'));
+  assert.ok(methodBoundarySource.includes('resolvePaymentOperationAdapterProviderForMethod'));
+  assert.ok(methodBoundarySource.includes('refundVoidAdapterBoundaryMetadata'));
+  assert.equal(methodBoundarySource.includes('@prisma/client'), false);
+  assert.equal(methodBoundarySource.includes('prisma.'), false);
+
   assert.ok(phase33Docs.includes('provider operation adapter contract'));
   assert.ok(phase33Docs.includes('provider-specific request/response mappers'));
   assert.ok(phase33Docs.includes('symbolic provider endpoints'));
@@ -251,6 +283,9 @@ export async function runPaymentOperationAdaptersTests() {
   assert.ok(phase33Docs.includes('tests/unit/payment-operation-adapters.test.ts'));
   assert.ok(phase33Docs.includes('raising the runner count from 118 to 119 files'));
   assert.ok(phase33Docs.includes('no live Stripe or ZarinPal refund/void HTTP calls'));
+
+  assert.ok(paymentRoadmap.includes('Gateway refund/void adapter boundary maps selected method metadata to the existing refund/void provider adapters.'));
+  assert.ok(paymentRoadmap.includes('Start **Phase P6 — manual-transfer refund tracking**'));
 
   console.log('payment-operation-adapters.test.ts passed');
 }
