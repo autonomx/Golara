@@ -1,6 +1,6 @@
 # DigiKala-Style Payment System — Remaining Phases
 
-Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, the COD fulfillment completion guard, COD settlement/reconciliation fields, method-specific gateway adapter mapping, gateway production readiness evidence fields, provider reference persistence per method, gateway return method-key mapping, gateway webhook method-key mapping, gateway fallback/disable behavior, the P6 gateway refund/void adapter boundary, the P6 manual-transfer refund tracking metadata boundary, the P6 manual-transfer refund action persistence, the P6 installment cancellation/refund metadata boundary, the P6 installment reversal plan/schedule persistence boundary, the P6 installment cancellation/refund owner admin action, the P6 COD adjustment/refund metadata boundary, the P6 COD adjustment owner/admin action, the P6 admin refund/reversal status timeline, and the P7 method-level settlement summary.
+Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, the COD fulfillment completion guard, COD settlement/reconciliation fields, method-specific gateway adapter mapping, gateway production readiness evidence fields, provider reference persistence per method, gateway return method-key mapping, gateway webhook method-key mapping, gateway fallback/disable behavior, the P6 gateway refund/void adapter boundary, the P6 manual-transfer refund tracking metadata boundary, the P6 manual-transfer refund action persistence, the P6 installment cancellation/refund metadata boundary, the P6 installment reversal plan/schedule persistence boundary, the P6 installment cancellation/refund owner admin action, the P6 COD adjustment/refund metadata boundary, the P6 COD adjustment owner/admin action, the P6 admin refund/reversal status timeline, the P7 method-level settlement summary, and the P7 manual-transfer settlement totals.
 
 ## Completed foundations
 
@@ -82,6 +82,8 @@ Status: updated after customer-facing installment status, staff collection track
 - Completed checkpoint: Start **Phase P6 — admin refund/reversal status timeline** is now complete.
 - Method-level settlement summary groups orders by selected payment method, provider, currency, status, COD collection evidence, and timeline evidence.
 - Completed checkpoint: Start **Phase P7 — method-level settlement summary** is now complete.
+- Manual-transfer settlement totals summarize received, pending-review, needs-follow-up, and rejected buckets.
+- Completed checkpoint: Start **Phase P7 — manual transfer received/pending totals** is now complete.
 
 ## Remaining implementation phases
 
@@ -120,7 +122,6 @@ Deliverables:
 Unify settlement views across all DigiKala-style methods.
 
 Deliverables:
-- Manual transfer received/pending totals.
 - Wallet liability balance.
 - COD collection totals.
 - Installment receivables summary.
@@ -151,4 +152,4 @@ Deliverables:
 
 ## Recommended next slice
 
-Start **Phase P7 — manual transfer received/pending totals**. Keep it narrow: use the method-level settlement summary to surface manual-transfer received, pending-review, and needs-follow-up totals before adding dashboard panels or CSV exports.
+Start **Phase P7 — wallet liability balance**. Keep it narrow: summarize outstanding wallet liability from wallet balances and wallet-selected payment metadata before adding dashboard panels or CSV exports.
