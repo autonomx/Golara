@@ -15,6 +15,10 @@ function statusMessageKey(status?: string): CustomerCopyKey | undefined {
   return undefined;
 }
 
+function walletLinkLabel(locale?: string | null) {
+  return locale?.toLowerCase().startsWith('fa') ? 'کیف پول' : 'Wallet';
+}
+
 export default async function AccountPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   const [{ status }, token, storefrontLocale] = await Promise.all([searchParams, getCustomerSessionCookie(), resolveStorefrontLocale()]);
   const session = hasDatabase() ? await getCustomerSession(token) : null;
@@ -63,6 +67,9 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                 </Link>
                 <Link href="/account/orders" className="rounded-full border border-rosewood/20 px-6 py-3 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20">
                   {copy('account.orderHistory')}
+                </Link>
+                <Link href="/account/wallet" className="rounded-full border border-olive/30 bg-cream px-6 py-3 text-sm font-semibold text-olive outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20">
+                  {walletLinkLabel(locale)}
                 </Link>
                 <form action={logoutCustomerAction}>
                   <button type="submit" className="rounded-full border border-rosewood/20 px-6 py-3 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20">
