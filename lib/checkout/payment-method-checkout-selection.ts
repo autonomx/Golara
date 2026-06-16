@@ -5,6 +5,8 @@ export const COD_COLLECTION_STATUSES = ['pending', 'collected', 'failed', 'waive
 export type CodCollectionStatus = typeof COD_COLLECTION_STATUSES[number];
 export const COD_SETTLEMENT_STATUSES = ['pending', 'settled', 'disputed'] as const;
 export type CodSettlementStatus = typeof COD_SETTLEMENT_STATUSES[number];
+export const GATEWAY_READINESS_EVIDENCE_VERSION = 'p5.gateway-readiness.v1';
+const GATEWAY_READINESS_PROVIDERS = new Set<CheckoutPaymentProviderName>(['iranian', 'zarinpal']);
 type CheckoutPaymentMetadataFragment = Record<string, string | number | boolean | string[]>;
 
 export type CheckoutPaymentMethodSelection = {
@@ -65,6 +67,24 @@ export function resolveCheckoutPaymentMethodSelection(settings: PaymentMethodSet
   };
 }
 
+function gatewayProductionReadinessMetadata(selection: CheckoutPaymentMethodSelection): CheckoutPaymentMetadataFragment {
+  if (selection.methodType !== 'gateway') return {};
+  if (!GATEWAY_READINESS_PROVIDERS.has(selection.provider)) return {};
+
+  return {
+    gatewayReadinessEvidenceVersion: GATEWAY_READINESS_EVIDENCE_VERSION,
+    gatewayReadinessState: 'pending-production-evidence',
+    gatewayReadinessMethodKey: selection.methodKey,
+    gatewayReadinessProvider: selection.provider,
+    gatewayReadinessProviderKey: selection.providerKey,
+    gatewayReadinessRequiredCurrency: 'TOMAN',
+    gatewayReadinessRequiresMerchantId: true,
+    gatewayReadinessRequiresReturnMapping: true,
+    gatewayReadinessRequiresWebhookMapping: true,
+    gatewayReadinessSettlementMode: selection.settlementMode
+  };
+}
+
 export function checkoutPaymentMethodMetadata(selection: CheckoutPaymentMethodSelection) {
   return {
     paymentMethodKey: selection.methodKey,
@@ -75,7 +95,8 @@ export function checkoutPaymentMethodMetadata(selection: CheckoutPaymentMethodSe
     paymentProviderRoutingKind: checkoutProviderRoutingKind(selection.provider),
     paymentCaptureMode: selection.captureMode,
     paymentSettlementMode: selection.settlementMode,
-    paymentRequiresManualReview: selection.requiresManualReview
+    paymentRequiresManualReview: selection.requiresManualReview,
+    ...gatewayProductionReadinessMetadata(selection)
   };
 }
 
