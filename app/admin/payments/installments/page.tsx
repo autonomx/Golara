@@ -5,7 +5,7 @@ import { requireAdminRouteSession } from '@/lib/admin-page-auth-boundary';
 import { formatMinorUnitAmount } from '@/lib/catalog';
 import { listInstallmentCollectionQueue } from '@/lib/checkout/installment-collection';
 import { listInstallmentReviewQueue } from '@/lib/checkout/installment-review';
-import { collectInstallmentScheduleEntryAction, reviewInstallmentAction } from './actions';
+import { collectInstallmentScheduleEntryAction, reverseInstallmentPlanAction, reviewInstallmentAction } from './actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,6 +38,15 @@ function hiddenCollectionFields(item: { id: string }, outcome: string) {
   );
 }
 
+function hiddenReversalFields(item: { planId: string }, operation: string) {
+  return (
+    <>
+      <input type="hidden" name="planId" value={item.planId} />
+      <input type="hidden" name="operation" value={operation} />
+    </>
+  );
+}
+
 export default async function AdminInstallmentPaymentsPage({ searchParams }: { searchParams: PageSearchParams }) {
   await requireAdminRouteSession();
   const admin = await getAdminIdentity();
@@ -58,7 +67,7 @@ export default async function AdminInstallmentPaymentsPage({ searchParams }: { s
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-rosewood">Payments / Installments</p>
               <h1 className="mt-2 flex items-center gap-3 text-3xl font-bold text-stone-950"><CreditCard aria-hidden="true" className="h-7 w-7" /> Installment operations</h1>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">Review installment and credit purchase requests, then track staff collection state against approved schedule entries. Approval creates the schedule from the approved term and first-due date; collection actions update schedule entries, plan state, order timeline, and audit evidence.</p>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">Review installment and credit purchase requests, track staff collection state against approved schedule entries, and let owners record cancellation/refund reversals against active plans. Approval creates the schedule from the approved term and first-due date; collection and reversal actions update schedule entries, plan state, order timeline, and audit evidence.</p>
             </div>
             <div className="grid gap-2 text-sm font-semibold text-stone-700">
               <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">{items.length} pending/reviewable</div>
@@ -69,7 +78,7 @@ export default async function AdminInstallmentPaymentsPage({ searchParams }: { s
 
         <AdminActionBanner status={status} message={message} />
 
-        {!canReview ? <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">Only owners can approve or reject installment requests. This queue is visible for operational awareness.</section> : null}
+        {!canReview ? <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">Only owners can approve, reject, cancel, or refund installment plans. This queue is visible for operational awareness.</section> : null}
 
         <section className="grid gap-4">
           <div>
@@ -140,7 +149,7 @@ export default async function AdminInstallmentPaymentsPage({ searchParams }: { s
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-400">Collection queue</p>
             <h2 className="mt-1 text-2xl font-bold text-stone-950">Scheduled installment payments</h2>
-            <p className="mt-1 text-sm text-stone-600">Staff can mark scheduled receivables as paid, failed, or waived. Paid/waived entries become final; failed entries remain visible for follow-up.</p>
+            <p className="mt-1 text-sm text-stone-600">Staff can mark scheduled receivables as paid, failed, or waived. Owners can cancel/refund active plans from the same queue before moving to broader reversal dashboards.</p>
           </div>
           {collectionItems.length === 0 ? <div className="rounded-2xl border border-dashed border-stone-300 bg-white p-8 text-center text-sm text-stone-500">No installment schedule entries are awaiting collection.</div> : null}
           {collectionItems.map((entry) => (
@@ -188,6 +197,27 @@ export default async function AdminInstallmentPaymentsPage({ searchParams }: { s
                         <textarea name="note" rows={2} className="rounded-lg border border-stone-200 px-3 py-2" />
                       </label>
                       <button disabled={!canCollect} className="rounded-full bg-stone-700 px-4 py-2 text-sm font-bold text-white disabled:bg-stone-300">Waive</button>
+                    </form>
+                  </div>
+
+                  <div className="grid gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-amber-700">Owner reversal</p>
+                    <form action={reverseInstallmentPlanAction} className="grid gap-2 rounded-xl bg-white p-3">
+                      {hiddenReversalFields(entry, 'refund')}
+                      <label className="grid gap-1 text-sm font-semibold text-stone-700">Refund amount cents
+                        <input name="requestedAmountCents" inputMode="numeric" defaultValue={entry.totalCents} className="rounded-lg border border-stone-200 px-3 py-2" />
+                      </label>
+                      <label className="grid gap-1 text-sm font-semibold text-stone-700">Refund note
+                        <textarea name="note" rows={2} className="rounded-lg border border-stone-200 px-3 py-2" />
+                      </label>
+                      <button disabled={!canReview} className="rounded-full bg-amber-700 px-4 py-2 text-sm font-bold text-white disabled:bg-stone-300">Record installment refund</button>
+                    </form>
+                    <form action={reverseInstallmentPlanAction} className="grid gap-2 rounded-xl bg-white p-3">
+                      {hiddenReversalFields(entry, 'cancel')}
+                      <label className="grid gap-1 text-sm font-semibold text-stone-700">Cancellation note
+                        <textarea name="note" rows={2} className="rounded-lg border border-stone-200 px-3 py-2" />
+                      </label>
+                      <button disabled={!canReview} className="rounded-full bg-red-700 px-4 py-2 text-sm font-bold text-white disabled:bg-stone-300">Cancel installment plan</button>
                     </form>
                   </div>
                 </div>
