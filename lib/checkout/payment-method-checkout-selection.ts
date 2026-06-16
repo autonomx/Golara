@@ -20,9 +20,11 @@ export type CheckoutPaymentMethodSelection = {
   requiresManualReview: boolean;
 };
 
+export type CheckoutPaymentMethodSelectionFailureCode = 'payment-method-disabled' | 'payment-method-unavailable' | 'payment-method-required';
+
 export type CheckoutPaymentMethodSelectionResult =
   | { ok: true; selection: CheckoutPaymentMethodSelection; methods: PaymentMethodSetting[] }
-  | { ok: false; code: 'payment-method-unavailable' | 'payment-method-required'; methods: PaymentMethodSetting[] };
+  | { ok: false; code: CheckoutPaymentMethodSelectionFailureCode; methods: PaymentMethodSetting[] };
 
 const manualReviewProvider: CheckoutPaymentProviderName = 'manual';
 
@@ -35,6 +37,12 @@ function activeMethods(settings: PaymentMethodSetting[]) {
   return settings.filter((setting) => setting.isActive).sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
+function requestedDisabledMethod(settings: PaymentMethodSetting[], requestedKey?: string | null) {
+  const normalizedKey = requestedKey?.trim();
+  if (!normalizedKey) return undefined;
+  return settings.find((method) => method.key === normalizedKey && !method.isActive);
+}
+
 function preferredMethod(methods: PaymentMethodSetting[], requestedKey?: string | null) {
   const normalizedKey = requestedKey?.trim();
   if (normalizedKey) return methods.find((method) => method.key === normalizedKey);
@@ -42,7 +50,9 @@ function preferredMethod(methods: PaymentMethodSetting[], requestedKey?: string 
 }
 
 export function resolveCheckoutPaymentMethodSelection(settings: PaymentMethodSetting[], requestedKey?: string | null): CheckoutPaymentMethodSelectionResult {
+  const disabledMethod = requestedDisabledMethod(settings, requestedKey);
   const methods = activeMethods(settings);
+  if (disabledMethod) return { ok: false, code: 'payment-method-disabled', methods };
   if (methods.length === 0) return { ok: false, code: 'payment-method-required', methods };
 
   const method = preferredMethod(methods, requestedKey);
