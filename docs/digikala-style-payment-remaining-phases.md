@@ -1,6 +1,6 @@
 # DigiKala-Style Payment System — Remaining Phases
 
-Status: updated after installment request capture merged.
+Status: updated after installment admin review workflow merged.
 
 ## Completed foundations
 
@@ -39,6 +39,10 @@ Status: updated after installment request capture merged.
 - Installment/credit request capture at checkout.
 - Installment checkout metadata with pending-review approval status.
 - Installment requested-term and customer-note capture without undefined metadata persistence.
+- Installment admin review queue.
+- Owner-only installment approval, rejection, and follow-up workflow.
+- Installment review audit logging and metadata persistence for reviewer, timestamp, approved term, down payment, and review note.
+- Installment rejection transition to failed payment status while approval/follow-up remains pending for schedule setup.
 
 ## Remaining implementation phases
 
@@ -47,8 +51,7 @@ Status: updated after installment request capture merged.
 Continue installment as an approval workflow first, then leave provider integration behind a future adapter.
 
 Remaining deliverables:
-- Admin approval/rejection workflow.
-- Payment/order state machine for pending credit approval.
+- Payment/order state machine for approved credit and pending schedule setup.
 - Due-date/installment schedule model.
 - Customer-facing approval status.
 - Optional future provider adapter boundary.
@@ -123,4 +126,4 @@ Deliverables:
 
 ## Recommended next slice
 
-Continue **Phase P3 — installment/credit admin approval workflow**. Checkout now captures installment requests and marks them pending review, but staff still needs an approval/rejection queue and schedule foundation before installment orders can advance safely.
+Continue **Phase P3 — installment schedule/state foundation**. The approval queue is live, but approved installment requests still need a schedule/state model before customer-facing status, receivables, and cancellation/refund workflows can be completed.
