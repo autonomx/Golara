@@ -62,6 +62,15 @@ function textMetadataValue(value: Prisma.JsonValue | undefined) {
   return undefined;
 }
 
+function numberMetadataValue(value: Prisma.JsonValue | undefined) {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number.parseInt(value, 10);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+}
+
 function booleanMetadataValue(value: Prisma.JsonValue | undefined) {
   if (typeof value === 'boolean') return value;
   if (typeof value === 'string') return value.toLowerCase() === 'true';
@@ -113,6 +122,11 @@ function mapOrderSummary(order: DbOrderSummary): CheckoutOrderSummary {
     latestPaymentMethodLabel: textMetadataValue(paymentMetadata.paymentMethodLabel),
     latestPaymentMethodType: textMetadataValue(paymentMetadata.paymentMethodType),
     latestPaymentRequiresManualReview: booleanMetadataValue(paymentMetadata.paymentRequiresManualReview),
+    latestWalletRefundEntryId: textMetadataValue(paymentMetadata.walletRefundEntryId),
+    latestWalletRefundIdempotencyKey: textMetadataValue(paymentMetadata.walletRefundIdempotencyKey),
+    latestWalletRefundedAt: textMetadataValue(paymentMetadata.walletRefundedAt),
+    latestWalletRefundTotalCents: numberMetadataValue(paymentMetadata.walletRefundTotalCents),
+    latestWalletRefundCurrency: textMetadataValue(paymentMetadata.walletRefundCurrency),
     latestTimelineTitle: order.timelineEvents[0]?.title,
     createdAt: order.createdAt
   };
