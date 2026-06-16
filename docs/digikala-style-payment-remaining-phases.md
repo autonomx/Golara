@@ -1,6 +1,6 @@
 # DigiKala-Style Payment System — Remaining Phases
 
-Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, the COD fulfillment completion guard, and COD settlement/reconciliation fields.
+Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, the COD fulfillment completion guard, COD settlement/reconciliation fields, and method-specific gateway adapter mapping.
 
 ## Completed foundations
 
@@ -61,6 +61,7 @@ Status: updated after customer-facing installment status, staff collection track
 - COD staff collection controls for pending, collected, failed, and waived outcomes with timeline and audit evidence.
 - COD fulfillment completion guard prevents delivered fulfillment unless COD collection is collected or waived.
 - COD settlement/reconciliation fields persist settlement status and evidence on delivery collections.
+- Method-specific gateway adapter mapping is now explicit in checkout provider resolution.
 
 ## Remaining implementation phases
 
@@ -85,7 +86,6 @@ Deliverables:
 Keep the current provider config, but make gateway selection method-aware.
 
 Deliverables:
-- Method-specific gateway adapter mapping.
 - Iranian IPG/ZarinPal production readiness evidence fields.
 - Provider reference persistence per method.
 - Return/webhook mapping back to selected method key.
@@ -139,4 +139,4 @@ Deliverables:
 
 ## Recommended next slice
 
-Start **Phase P5 — Gateway adapter expansion**. Keep it narrow: add method-specific gateway adapter mapping so selected gateway methods persist provider evidence consistently before expanding production readiness fields.
+Start **Phase P5 — gateway production readiness evidence fields**. Keep it narrow: persist method-level readiness evidence for Iranian IPG/ZarinPal before expanding webhook/return mapping.

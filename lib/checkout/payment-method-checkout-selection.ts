@@ -1,5 +1,4 @@
-import type { CheckoutPaymentProviderName } from '@/lib/checkout/payment-provider-alias-core';
-import { normalizeCheckoutProviderName } from '@/lib/checkout/payment-provider-alias-core';
+import { checkoutProviderRoutingKind, resolvePaymentMethodGatewayAdapter, type CheckoutPaymentProviderName } from '@/lib/checkout/payment-provider-alias-core';
 import type { PaymentMethodSetting } from '@/lib/settings/payment-method-settings';
 
 export const COD_COLLECTION_STATUSES = ['pending', 'collected', 'failed', 'waived'] as const;
@@ -26,7 +25,7 @@ export type CheckoutPaymentMethodSelectionResult =
 const manualReviewProvider: CheckoutPaymentProviderName = 'manual';
 
 function methodProvider(method: PaymentMethodSetting): CheckoutPaymentProviderName {
-  if (method.methodType === 'gateway') return normalizeCheckoutProviderName(method.providerKey || 'zarinpal');
+  if (method.methodType === 'gateway') return resolvePaymentMethodGatewayAdapter({ methodKey: method.key, providerKey: method.providerKey });
   return manualReviewProvider;
 }
 
@@ -72,6 +71,8 @@ export function checkoutPaymentMethodMetadata(selection: CheckoutPaymentMethodSe
     paymentMethodLabel: selection.label,
     paymentMethodType: selection.methodType,
     paymentProviderKey: selection.providerKey,
+    paymentProvider: selection.provider,
+    paymentProviderRoutingKind: checkoutProviderRoutingKind(selection.provider),
     paymentCaptureMode: selection.captureMode,
     paymentSettlementMode: selection.settlementMode,
     paymentRequiresManualReview: selection.requiresManualReview
