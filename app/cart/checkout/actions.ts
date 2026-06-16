@@ -5,7 +5,7 @@ import { clearCartTokenCookie, getCartTokenCookie } from '@/lib/cart/cart-cookie
 import { claimCartForCheckout, completeCartCheckout, releaseCartCheckoutClaim } from '@/lib/cart/cart-repository';
 import { checkoutActionNextPath } from '@/lib/checkout/checkout-action-next-path';
 import { captureCustomerWalletCheckoutPayment } from '@/lib/checkout/customer-wallet-checkout-capture';
-import { checkoutPaymentMethodMetadata, resolveCheckoutPaymentMethodSelection } from '@/lib/checkout/payment-method-checkout-selection';
+import { checkoutPaymentMethodMetadata, codSelectedMethodMetadata, resolveCheckoutPaymentMethodSelection } from '@/lib/checkout/payment-method-checkout-selection';
 import { createOrderDraft } from '@/lib/checkout/order-draft-repository';
 import { createCheckoutPaymentAttempt } from '@/lib/checkout/payment-provider';
 import { addCustomerAddress, upsertCustomerProfile } from '@/lib/customers/customer-repository';
@@ -139,6 +139,7 @@ export async function createCartCheckoutAction(formData: FormData) {
         provider: paymentMethodSelection.selection.provider,
         metadata: {
           ...checkoutPaymentMethodMetadata(paymentMethodSelection.selection),
+          ...codSelectedMethodMetadata(paymentMethodSelection.selection),
           ...manualTransferMetadata(formData, paymentMethodSelection.selection.methodType),
           ...installmentRequestMetadata(formData, paymentMethodSelection.selection.methodType)
         }
