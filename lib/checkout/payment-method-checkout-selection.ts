@@ -2,6 +2,10 @@ import type { CheckoutPaymentProviderName } from '@/lib/checkout/payment-provide
 import { normalizeCheckoutProviderName } from '@/lib/checkout/payment-provider-alias-core';
 import type { PaymentMethodSetting } from '@/lib/settings/payment-method-settings';
 
+export const COD_COLLECTION_STATUSES = ['pending', 'collected', 'failed', 'waived'] as const;
+export type CodCollectionStatus = typeof COD_COLLECTION_STATUSES[number];
+type CheckoutPaymentMetadataFragment = Record<string, string | number | boolean | string[]>;
+
 export type CheckoutPaymentMethodSelection = {
   methodKey: string;
   label: string;
@@ -69,5 +73,17 @@ export function checkoutPaymentMethodMetadata(selection: CheckoutPaymentMethodSe
     paymentCaptureMode: selection.captureMode,
     paymentSettlementMode: selection.settlementMode,
     paymentRequiresManualReview: selection.requiresManualReview
+  };
+}
+
+export function codSelectedMethodMetadata(selection: CheckoutPaymentMethodSelection): CheckoutPaymentMetadataFragment {
+  if (selection.methodType !== 'cod') return {};
+
+  return {
+    codPaymentSelected: true,
+    codCollectionStatus: 'pending' satisfies CodCollectionStatus,
+    codCollectionProviderKey: selection.providerKey,
+    codSettlementMode: selection.settlementMode,
+    codRequiresDeliveryCollection: true
   };
 }

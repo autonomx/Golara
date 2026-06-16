@@ -1,6 +1,6 @@
 # DigiKala-Style Payment System — Remaining Phases
 
-Status: updated after customer-facing installment status, staff collection tracking, and the P3 cancellation/refund deferral decision.
+Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, and COD selected-method state.
 
 ## Completed foundations
 
@@ -56,6 +56,7 @@ Status: updated after customer-facing installment status, staff collection track
 - Staff-facing installment collection controls for paid, failed, and waived schedule entries.
 - Installment collection metadata, plan status updates, order timeline entries, and admin audit logs.
 - Installment cancellation/refund workflow explicitly deferred to Phase P6 after customer status and staff collection tracking.
+- COD selected-method state persisted on checkout payment attempts with pending delivery collection metadata.
 
 ## Remaining implementation phases
 
@@ -73,7 +74,6 @@ Remaining deliverables:
 Implement COD as a fulfillment-linked collection workflow.
 
 Deliverables:
-- COD selected-method state on orders.
 - Delivery collection status: pending, collected, failed, waived.
 - Staff controls for collection confirmation.
 - Settlement/reconciliation fields for delivery collections.
@@ -138,4 +138,4 @@ Deliverables:
 
 ## Recommended next slice
 
-Start **Phase P4 — COD selected-method state on orders**. Preserve COD as an order/payment selected-method state first, then follow with delivery collection status and staff controls in separate narrow slices.
+Start **Phase P4 — delivery collection status read model**. Preserve COD as a fulfillment-linked collection workflow by adding a staff-readable pending/collected/failed/waived status model before adding staff mutation controls.

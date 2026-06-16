@@ -34,8 +34,8 @@ export async function runCheckoutCreationBoundaryTests() {
   );
   assert.match(
     checkoutActionSource,
-    /const attempt = await createCheckoutPaymentAttempt\(\{\s*orderId: order\.id,\s*provider: paymentMethodSelection\.selection\.provider,\s*metadata: \{\s*\.\.\.checkoutPaymentMethodMetadata\(paymentMethodSelection\.selection\),\s*\.\.\.manualTransferMetadata\(formData, paymentMethodSelection\.selection\.methodType\),\s*\.\.\.installmentRequestMetadata\(formData, paymentMethodSelection\.selection\.methodType\)\s*\}\s*\}\);/s,
-    'checkout action must create payment attempts with the order id, selected provider, selected-method metadata, manual-transfer metadata, and installment request metadata'
+    /const attempt = await createCheckoutPaymentAttempt\(\{\s*orderId: order\.id,\s*provider: paymentMethodSelection\.selection\.provider,\s*metadata: \{\s*\.\.\.checkoutPaymentMethodMetadata\(paymentMethodSelection\.selection\),\s*\.\.\.codSelectedMethodMetadata\(paymentMethodSelection\.selection\),\s*\.\.\.manualTransferMetadata\(formData, paymentMethodSelection\.selection\.methodType\),\s*\.\.\.installmentRequestMetadata\(formData, paymentMethodSelection\.selection\.methodType\)\s*\}\s*\}\);/s,
+    'checkout action must create payment attempts with the order id, selected provider, selected-method metadata, COD metadata, manual-transfer metadata, and installment request metadata'
   );
   assert.match(
     checkoutActionSource,
