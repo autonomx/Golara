@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 
 import type { CheckoutOrderSummary } from '../../lib/catalog';
 import {
+  summarizeCodCollectionSettlementTotals,
   summarizeManualTransferSettlementTotals,
   summarizeSettlementByPaymentMethod,
   summarizeWalletLiabilityBalances
@@ -41,13 +42,18 @@ export async function runPaymentSettlementReconciliationTests() {
 
   const methodSummaryHelper = source('lib/checkout/payment-method-settlement-summary.ts');
   assert.match(methodSummaryHelper, /export type MethodSettlementSummary/);
+  assert.match(methodSummaryHelper, /export type CodCollectionSettlementTotals/);
   assert.match(methodSummaryHelper, /export function summarizeSettlementByPaymentMethod/);
   assert.match(methodSummaryHelper, /export function summarizeManualTransferSettlementTotals/);
+  assert.match(methodSummaryHelper, /export function summarizeCodCollectionSettlementTotals/);
   assert.match(methodSummaryHelper, /export function summarizeWalletLiabilityBalances/);
   assert.match(methodSummaryHelper, /WalletLiabilityBalance/);
   assert.match(methodSummaryHelper, /availableLiabilityCents/);
   assert.match(methodSummaryHelper, /reservedLiabilityCents/);
   assert.match(methodSummaryHelper, /walletCapturedTotalCents/);
+  assert.match(methodSummaryHelper, /collectedTotalCents/);
+  assert.match(methodSummaryHelper, /pendingCollectionTotalCents/);
+  assert.match(methodSummaryHelper, /ownerAdjustmentEvidenceCount/);
   assert.match(methodSummaryHelper, /timelineEvidenceCount/);
   assert.match(methodSummaryHelper, /latestCodCollectionStatus/);
   assert.match(methodSummaryHelper, /latestCodSettlementMode/);
@@ -57,7 +63,9 @@ export async function runPaymentSettlementReconciliationTests() {
   assert.match(roadmap, /Method-level settlement summary groups orders by selected payment method/);
   assert.match(roadmap, /Manual-transfer settlement totals summarize received, pending-review, needs-follow-up, and rejected buckets/);
   assert.match(roadmap, /Wallet liability balance summarizes available and reserved customer wallet balances/);
-  assert.match(roadmap, /Start \*\*Phase P7 — COD collection totals\*\*/);
+  assert.match(roadmap, /COD collection totals summarize collected, pending, failed, waived, settlement mode, and owner adjustment evidence/);
+  assert.match(roadmap, /Completed checkpoint: Start \*\*Phase P7 — COD collection totals\*\* is now complete/);
+  assert.match(roadmap, /Start \*\*Phase P7 — installment receivables summary\*\*/);
 
   const webhookService = source('lib/checkout/payment-webhook-service.ts');
   assert.match(
@@ -209,6 +217,37 @@ export async function runPaymentSettlementReconciliationTests() {
       latestCodCollectionStatus: 'collected',
       latestCodSettlementMode: 'driver_cash',
       latestTimelineTitle: 'COD collection settlement recorded'
+    }),
+    order({
+      id: 'cod-pending',
+      totalCents: 4000,
+      latestPaymentStatus: 'pending',
+      latestPaymentProvider: 'cod',
+      latestPaymentMethodKey: 'cod',
+      latestPaymentMethodLabel: 'Cash on delivery',
+      latestPaymentMethodType: 'cod'
+    }),
+    order({
+      id: 'cod-waived',
+      totalCents: 2500,
+      latestPaymentStatus: 'paid',
+      latestPaymentProvider: 'cod',
+      latestPaymentMethodKey: 'cod',
+      latestPaymentMethodLabel: 'Cash on delivery',
+      latestPaymentMethodType: 'cod',
+      latestCodCollectionStatus: 'waived',
+      latestCodSettlementMode: 'owner_waived',
+      latestTimelineTitle: 'COD adjustment recorded'
+    }),
+    order({
+      id: 'cod-failed',
+      totalCents: 1500,
+      latestPaymentStatus: 'failed',
+      latestPaymentProvider: 'cod',
+      latestPaymentMethodKey: 'cod',
+      latestPaymentMethodLabel: 'Cash on delivery',
+      latestPaymentMethodType: 'cod',
+      latestCodCollectionStatus: 'failed'
     })
   ]);
 
@@ -286,9 +325,26 @@ export async function runPaymentSettlementReconciliationTests() {
 
   const cod = methodSummaries.find((summary) => summary.methodKey === 'cod');
   assert.ok(cod, 'Expected COD settlement summary');
-  assert.deepEqual(cod.codCollectionStatuses, { collected: 1 });
-  assert.deepEqual(cod.codSettlementModes, { driver_cash: 1 });
-  assert.equal(cod.timelineEvidenceCount, 1);
+  assert.deepEqual(cod.codCollectionStatuses, { collected: 1, pending: 1, waived: 1, failed: 1 });
+  assert.deepEqual(cod.totalCentsByCodCollectionStatus, { collected: 9000, pending: 4000, waived: 2500, failed: 1500 });
+  assert.deepEqual(cod.codSettlementModes, { driver_cash: 1, owner_waived: 1 });
+  assert.equal(cod.timelineEvidenceCount, 2);
+
+  const codTotals = summarizeCodCollectionSettlementTotals(methodSummaries, 'CAD');
+  assert.deepEqual(codTotals.methodKeys, ['cod']);
+  assert.equal(codTotals.orderCount, 4);
+  assert.equal(codTotals.collectedCount, 1);
+  assert.equal(codTotals.pendingCollectionCount, 1);
+  assert.equal(codTotals.failedCollectionCount, 1);
+  assert.equal(codTotals.waivedCollectionCount, 1);
+  assert.equal(codTotals.collectedTotalCents, 9000);
+  assert.equal(codTotals.pendingCollectionTotalCents, 4000);
+  assert.equal(codTotals.failedCollectionTotalCents, 1500);
+  assert.equal(codTotals.waivedCollectionTotalCents, 2500);
+  assert.deepEqual(codTotals.collectionStatuses, { collected: 1, pending: 1, waived: 1, failed: 1 });
+  assert.deepEqual(codTotals.settlementModes, { driver_cash: 1, owner_waived: 1 });
+  assert.equal(codTotals.ownerAdjustmentEvidenceCount, 1);
+  assert.equal(codTotals.timelineEvidenceCount, 2);
 
   console.log('payment-settlement-reconciliation.test.ts passed');
 }
