@@ -164,6 +164,7 @@ export type WarehouseLocation = {
   region?: string;
   countryCode: string;
   postalCode?: string;
+  phone?: string;
   isActive: boolean;
   sortOrder: number;
   updatedAt?: Date;
