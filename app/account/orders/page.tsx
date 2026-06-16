@@ -9,6 +9,7 @@ import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import {
   customerOrderDateLocale,
   customerOrderItemCountLabel,
+  customerOrderManualTransferInstructions,
   customerOrderMethodConfirmation,
   customerOrderMoreItemLabel,
   customerOrderPaymentSummary,
@@ -186,6 +187,7 @@ export default async function CustomerOrderHistoryPage() {
               const installmentStatus = latestAttempt ? installmentStatusByAttemptId.get(latestAttempt.id) : undefined;
               const publicHref = order.publicLookupToken ? `/orders/${order.publicLookupToken}` : undefined;
               const methodConfirmation = customerOrderMethodConfirmation(metadata, locale);
+              const manualTransferInstructions = customerOrderManualTransferInstructions(metadata, order.orderNumber, locale);
               return (
                 <article key={order.id} className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
                   <div className="flex flex-wrap items-start justify-between gap-4">
@@ -205,6 +207,35 @@ export default async function CustomerOrderHistoryPage() {
                       <p className="text-xs font-bold uppercase tracking-[0.18em] text-olive">{methodConfirmation.methodLabel ?? methodConfirmation.title}</p>
                       <h3 className="mt-1 font-display text-3xl text-rosewood">{methodConfirmation.title}</h3>
                       <p className="mt-2 leading-6">{methodConfirmation.body}</p>
+                    </section>
+                  ) : null}
+
+                  {manualTransferInstructions ? (
+                    <section className="mt-5 rounded-3xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-700">{manualTransferInstructions.title}</p>
+                      <p className="mt-2 leading-6">{manualTransferInstructions.body}</p>
+                      {manualTransferInstructions.reference || manualTransferInstructions.proofUrl ? (
+                        <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+                          {manualTransferInstructions.reference ? (
+                            <div className="rounded-2xl bg-white p-3">
+                              <dt className="font-semibold text-amber-700">{manualTransferInstructions.referenceLabel}</dt>
+                              <dd className="mt-1 break-words text-stone-900">{manualTransferInstructions.reference}</dd>
+                            </div>
+                          ) : null}
+                          {manualTransferInstructions.proofUrl ? (
+                            <div className="rounded-2xl bg-white p-3">
+                              <dt className="font-semibold text-amber-700">{manualTransferInstructions.proofUrlLabel}</dt>
+                              <dd className="mt-1 break-words text-stone-900">{manualTransferInstructions.proofUrl}</dd>
+                            </div>
+                          ) : null}
+                        </dl>
+                      ) : (
+                        <p className="mt-4 rounded-2xl bg-white p-3 text-stone-700">{manualTransferInstructions.noEvidenceLabel}</p>
+                      )}
+                      <details className="mt-4 rounded-2xl bg-white p-3">
+                        <summary className="cursor-pointer font-semibold text-amber-800">{manualTransferInstructions.emailSubject}</summary>
+                        <p className="mt-2 whitespace-pre-line text-stone-700">{manualTransferInstructions.emailBody}</p>
+                      </details>
                     </section>
                   ) : null}
 
