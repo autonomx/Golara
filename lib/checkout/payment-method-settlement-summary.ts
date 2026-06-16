@@ -95,6 +95,37 @@ export type WalletLiabilityBalance = {
   walletTimelineEvidenceCount: number;
 };
 
+export type InstallmentReceivableScheduleEntryInput = {
+  id?: string | null;
+  planId?: string | null;
+  currency?: string | null;
+  amountCents?: number | null;
+  paidAmountCents?: number | null;
+  status?: string | null;
+  dueAt?: Date | string | null;
+  paidAt?: Date | string | null;
+};
+
+export type InstallmentReceivablesSummary = {
+  currency: string;
+  planIds: string[];
+  entryCount: number;
+  paidCount: number;
+  pendingCount: number;
+  failedCount: number;
+  waivedCount: number;
+  overdueCount: number;
+  remainingCount: number;
+  paidTotalCents: number;
+  pendingTotalCents: number;
+  failedTotalCents: number;
+  waivedTotalCents: number;
+  overdueTotalCents: number;
+  remainingTotalCents: number;
+  latestDueAt: string | null;
+  nextDueAt: string | null;
+};
+
 const REVERSAL_EVIDENCE_PATTERNS = [
   'refund',
   'refunded',
@@ -120,6 +151,9 @@ const MANUAL_TRANSFER_METHOD_KEYS = new Set([
 const WALLET_METHOD_KEYS = new Set(['wallet', 'customer_wallet', 'store_credit']);
 const COD_METHOD_KEYS = new Set(['cod', 'cash_on_delivery', 'cash-on-delivery', 'pay_on_delivery', 'pay-on-delivery']);
 const COD_PENDING_COLLECTION_STATUSES = new Set(['pending', 'pending_delivery', 'ready_for_delivery', 'uncollected']);
+const INSTALLMENT_PAID_STATUSES = new Set(['paid', 'collected']);
+const INSTALLMENT_FAILED_STATUSES = new Set(['failed', 'rejected']);
+const INSTALLMENT_WAIVED_STATUSES = new Set(['waived', 'cancelled', 'canceled']);
 
 function cleanText(value: string | undefined | null, fallback: string) {
   const normalized = value?.trim();
@@ -144,6 +178,12 @@ function normalizeActivityTime(value?: Date | string | null) {
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return null;
   return date.toISOString();
+}
+
+function parseTime(value?: Date | string | null) {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
 function incrementCounter(counter: Record<string, number>, key: string | undefined | null) {
@@ -359,6 +399,28 @@ function emptyWalletLiability(currency: string): WalletLiabilityBalance {
   };
 }
 
+function emptyInstallmentReceivables(currency: string): InstallmentReceivablesSummary {
+  return {
+    currency,
+    planIds: [],
+    entryCount: 0,
+    paidCount: 0,
+    pendingCount: 0,
+    failedCount: 0,
+    waivedCount: 0,
+    overdueCount: 0,
+    remainingCount: 0,
+    paidTotalCents: 0,
+    pendingTotalCents: 0,
+    failedTotalCents: 0,
+    waivedTotalCents: 0,
+    overdueTotalCents: 0,
+    remainingTotalCents: 0,
+    latestDueAt: null,
+    nextDueAt: null
+  };
+}
+
 export function summarizeSettlementByPaymentMethod(orders: CheckoutOrderSummary[]): MethodSettlementSummary[] {
   const summaries = new Map<string, MethodSettlementSummary>();
 
@@ -484,4 +546,65 @@ export function summarizeWalletLiabilityBalances(
   liability.totalLiabilityCents = liability.availableLiabilityCents + liability.reservedLiabilityCents;
   liability.walletMethodKeys = Array.from(walletMethodKeys).sort();
   return liability;
+}
+
+export function summarizeInstallmentReceivables(
+  scheduleEntries: InstallmentReceivableScheduleEntryInput[],
+  currency = 'CAD',
+  asOf: Date | string = new Date()
+): InstallmentReceivablesSummary {
+  const normalizedCurrency = normalizeCurrency(currency);
+  const asOfDate = parseTime(asOf) || new Date();
+  const planIds = new Set<string>();
+  const summary = emptyInstallmentReceivables(normalizedCurrency);
+
+  for (const entry of scheduleEntries) {
+    if (normalizeCurrency(entry.currency) !== normalizedCurrency) continue;
+    const status = normalizeStatus(entry.status);
+    const amountCents = normalizeMinorUnit(entry.amountCents);
+    const paidAmountCents = normalizeMinorUnit(entry.paidAmountCents);
+    const dueAt = parseTime(entry.dueAt);
+    const dueAtIso = dueAt?.toISOString() || null;
+    const remainingCents = Math.max(0, amountCents - paidAmountCents);
+    const isPaid = INSTALLMENT_PAID_STATUSES.has(status);
+    const isFailed = INSTALLMENT_FAILED_STATUSES.has(status);
+    const isWaived = INSTALLMENT_WAIVED_STATUSES.has(status);
+    const isOverdue = !isPaid && !isWaived && !!dueAt && dueAt < asOfDate;
+
+    summary.entryCount += 1;
+    if (entry.planId) planIds.add(entry.planId);
+    if (dueAtIso && (!summary.latestDueAt || dueAtIso > summary.latestDueAt)) summary.latestDueAt = dueAtIso;
+    if (dueAtIso && dueAt >= asOfDate && (!summary.nextDueAt || dueAtIso < summary.nextDueAt)) summary.nextDueAt = dueAtIso;
+
+    if (isPaid) {
+      summary.paidCount += 1;
+      summary.paidTotalCents += paidAmountCents || amountCents;
+      continue;
+    }
+
+    if (isWaived) {
+      summary.waivedCount += 1;
+      summary.waivedTotalCents += amountCents;
+      continue;
+    }
+
+    if (isFailed) {
+      summary.failedCount += 1;
+      summary.failedTotalCents += remainingCents || amountCents;
+    } else {
+      summary.pendingCount += 1;
+      summary.pendingTotalCents += remainingCents || amountCents;
+    }
+
+    if (isOverdue) {
+      summary.overdueCount += 1;
+      summary.overdueTotalCents += remainingCents || amountCents;
+    }
+
+    summary.remainingCount += 1;
+    summary.remainingTotalCents += remainingCents || amountCents;
+  }
+
+  summary.planIds = Array.from(planIds).sort();
+  return summary;
 }
