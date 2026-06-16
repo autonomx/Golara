@@ -54,6 +54,20 @@ function manualTransferMetadata(formData: FormData, methodType: string) {
   };
 }
 
+function installmentRequestMetadata(formData: FormData, methodType: string) {
+  if (methodType !== 'installment') return {};
+  const requestedTerm = stringField(formData, 'installmentRequestedTermMonths');
+  const installmentRequestNote = boundedStringField(formData, 'installmentRequestNote', 320);
+  const allowedTerms = new Set(['3', '6', '12', '18']);
+  const installmentRequestedTermMonths = allowedTerms.has(requestedTerm) ? Number.parseInt(requestedTerm, 10) : 0;
+  return {
+    installmentRequestAcknowledged: true,
+    installmentApprovalStatus: 'pending_review',
+    ...(installmentRequestedTermMonths ? { installmentRequestedTermMonths } : {}),
+    ...(installmentRequestNote ? { installmentRequestNote } : {})
+  };
+}
+
 export async function createCartCheckoutAction(formData: FormData) {
   // Enforce same-origin policy for checkout to prevent CSRF attacks
   await assertSameOriginServerAction();
@@ -125,7 +139,8 @@ export async function createCartCheckoutAction(formData: FormData) {
         provider: paymentMethodSelection.selection.provider,
         metadata: {
           ...checkoutPaymentMethodMetadata(paymentMethodSelection.selection),
-          ...manualTransferMetadata(formData, paymentMethodSelection.selection.methodType)
+          ...manualTransferMetadata(formData, paymentMethodSelection.selection.methodType),
+          ...installmentRequestMetadata(formData, paymentMethodSelection.selection.methodType)
         }
       });
       let paymentAttemptForRedirect = attempt;
