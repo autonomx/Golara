@@ -58,6 +58,10 @@ type AdminOrderPanelCopy = {
   paymentMethod: string;
   manualReview: string;
   provider: string;
+  walletRefund: string;
+  walletRefundReceipt: string;
+  walletRefundedAt: string;
+  idempotencyKey: string;
   previous: string;
   next: string;
   page: string;
@@ -109,6 +113,10 @@ const copy: Record<AdminLocale, AdminOrderPanelCopy> = {
     paymentMethod: 'Payment method',
     manualReview: 'Manual review',
     provider: 'Provider',
+    walletRefund: 'Wallet refund',
+    walletRefundReceipt: 'Wallet refund receipt',
+    walletRefundedAt: 'Refunded',
+    idempotencyKey: 'Idempotency',
     previous: 'Previous',
     next: 'Next',
     page: 'Page'
@@ -158,6 +166,10 @@ const copy: Record<AdminLocale, AdminOrderPanelCopy> = {
     paymentMethod: 'روش پرداخت',
     manualReview: 'بررسی دستی',
     provider: 'ارائه‌دهنده',
+    walletRefund: 'بازگشت به کیف پول',
+    walletRefundReceipt: 'رسید بازگشت کیف پول',
+    walletRefundedAt: 'زمان بازگشت',
+    idempotencyKey: 'کلید یکتایی',
     previous: 'قبلی',
     next: 'بعدی',
     page: 'صفحه'
@@ -173,6 +185,13 @@ function formatDate(value: Date, locale?: SupportedLocale | string | null) {
     dateStyle: 'medium',
     timeStyle: 'short'
   }).format(value);
+}
+
+function formatOptionalDate(value?: string, locale?: SupportedLocale | string | null) {
+  if (!value) return undefined;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return formatDate(parsed, locale);
 }
 
 const filterInputClass = 'rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20';
@@ -202,6 +221,10 @@ function orderExportQuery(filters: AdminOrderFilters, format: 'csv' | 'print') {
 
 function paymentMethodName(order: CheckoutOrderSummary) {
   return order.latestPaymentMethodLabel || order.latestPaymentMethodKey || order.latestPaymentProvider;
+}
+
+function hasWalletRefundMetadata(order: CheckoutOrderSummary) {
+  return Boolean(order.latestWalletRefundEntryId || order.latestWalletRefundTotalCents || order.latestWalletRefundIdempotencyKey || order.latestWalletRefundedAt);
 }
 
 function FilterInput({ label, name, defaultValue, placeholder }: { label: string; name: string; defaultValue?: string; placeholder?: string }) {
@@ -244,6 +267,23 @@ function OrderStatusForm({ order, labels, statusLabel }: { order: CheckoutOrderS
       </label>
       <button className="rounded-full bg-rosewood px-4 py-2 text-xs font-semibold text-white outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30" type="submit">{labels.saveOrder}</button>
     </form>
+  );
+}
+
+function WalletRefundSummary({ order, labels, locale }: { order: CheckoutOrderSummary; labels: AdminOrderPanelCopy; locale: SupportedLocale | string | null }) {
+  if (!hasWalletRefundMetadata(order)) return null;
+  const refundedAt = formatOptionalDate(order.latestWalletRefundedAt, locale);
+
+  return (
+    <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
+      <p className="font-semibold">{labels.walletRefundReceipt}</p>
+      {typeof order.latestWalletRefundTotalCents === 'number' ? (
+        <p className="mt-1">{labels.walletRefund}: {formatMinorUnitAmount(order.latestWalletRefundTotalCents, order.latestWalletRefundCurrency || order.currency, localeKey(locale) === 'fa' ? 'fa-IR' : 'en-CA')}</p>
+      ) : null}
+      {refundedAt ? <p className="mt-1">{labels.walletRefundedAt}: {refundedAt}</p> : null}
+      {order.latestWalletRefundEntryId ? <p className="mt-1 break-all">Entry: {order.latestWalletRefundEntryId}</p> : null}
+      {order.latestWalletRefundIdempotencyKey ? <p className="mt-1 break-all">{labels.idempotencyKey}: {order.latestWalletRefundIdempotencyKey}</p> : null}
+    </div>
   );
 }
 
@@ -341,6 +381,7 @@ export async function AdminOrderPanel({ orderPage, filters, locale }: { orderPag
                       {methodName ? <p className="font-semibold text-stone-700">{methodName}</p> : <p className="text-xs text-stone-400">—</p>}
                       {order.latestPaymentProvider ? <p className="mt-1 text-xs text-stone-500">{labels.provider}: {order.latestPaymentProvider}</p> : null}
                       {order.latestPaymentRequiresManualReview ? <span className="mt-2 inline-flex rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800">{labels.manualReview}</span> : null}
+                      <WalletRefundSummary order={order} labels={labels} locale={activeLocale} />
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 align-top font-semibold text-rosewood">
                       {formatMinorUnitAmount(order.totalCents, order.currency)}
