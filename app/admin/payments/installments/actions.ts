@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { assertAdminRole } from '@/lib/admin-auth';
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
+import { collectInstallmentScheduleEntry, type InstallmentCollectionOutcome } from '@/lib/checkout/installment-collection';
 import { reviewInstallmentPaymentAttempt, type InstallmentReviewOutcome } from '@/lib/checkout/installment-review';
 import { createInstallmentScheduleForApprovedAttempt } from '@/lib/checkout/installment-schedule-foundation';
 
@@ -35,10 +36,21 @@ function parseOutcome(value: string): InstallmentReviewOutcome {
   throw new Error('Unsupported installment review outcome.');
 }
 
+function parseCollectionOutcome(value: string): InstallmentCollectionOutcome {
+  if (value === 'paid' || value === 'failed' || value === 'waived') return value;
+  throw new Error('Unsupported installment collection outcome.');
+}
+
 function statusForOutcome(outcome: InstallmentReviewOutcome, scheduleCreated: boolean) {
   if (outcome === 'approved') return scheduleCreated ? 'installment-approved-scheduled' : 'installment-approved';
   if (outcome === 'rejected') return 'installment-rejected';
   return 'installment-follow-up';
+}
+
+function statusForCollectionOutcome(outcome: InstallmentCollectionOutcome) {
+  if (outcome === 'paid') return 'installment-collection-paid';
+  if (outcome === 'waived') return 'installment-collection-waived';
+  return 'installment-collection-failed';
 }
 
 export async function reviewInstallmentAction(formData: FormData) {
@@ -91,4 +103,44 @@ export async function reviewInstallmentAction(formData: FormData) {
   revalidatePath('/admin/orders');
   revalidatePath(`/admin/orders/${orderId}`);
   redirect(`/admin/payments/installments?status=${statusForOutcome(outcome, Boolean(schedulePlanId))}`);
+}
+
+export async function collectInstallmentScheduleEntryAction(formData: FormData) {
+  const admin = await assertAdminRole('staff');
+  const entryId = textValue(formData, 'entryId');
+  const outcome = parseCollectionOutcome(textValue(formData, 'outcome'));
+  if (!entryId) throw new Error('Installment schedule entry is required.');
+
+  const collected = await collectInstallmentScheduleEntry({
+    entryId,
+    outcome,
+    collectedAmountCents: optionalNumberValue(formData, 'collectedAmountCents'),
+    providerReference: optionalTextValue(formData, 'providerReference'),
+    note: optionalTextValue(formData, 'note'),
+    actorLabel: admin.label,
+    actorRole: admin.role
+  });
+
+  await recordAdminAuditLog({
+    action: 'payment.installment.collection',
+    entity: 'installmentPaymentScheduleEntry',
+    entityId: entryId,
+    summary: `Installment payment ${collected.sequence} for order ${collected.orderNumber} marked ${outcome}.`,
+    metadata: {
+      orderId: collected.orderId,
+      paymentAttemptId: collected.paymentAttemptId,
+      planId: collected.planId,
+      sequence: collected.sequence,
+      outcome,
+      nextPlanStatus: collected.nextPlanStatus,
+      collectedAmountCents: collected.collectedAmountCents ?? null,
+      providerReference: collected.providerReference ?? null,
+      noteAdded: Boolean(optionalTextValue(formData, 'note'))
+    }
+  });
+
+  revalidatePath('/admin/payments/installments');
+  revalidatePath('/admin/orders');
+  revalidatePath(`/admin/orders/${collected.orderId}`);
+  redirect(`/admin/payments/installments?status=${statusForCollectionOutcome(outcome)}`);
 }
