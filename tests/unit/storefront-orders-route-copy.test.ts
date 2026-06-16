@@ -2,6 +2,7 @@ import { strict as assert } from 'node:assert';
 import { readFileSync } from 'node:fs';
 import { customerInstallmentApprovalMessage } from '@/lib/localization/customer-installment-message-copy';
 import {
+  customerOrderCodCollectionReminder,
   customerOrderDateLocale,
   customerOrderItemCountLabel,
   customerOrderManualTransferInstructions,
@@ -92,6 +93,7 @@ for (const fragment of [
   'customerOrderPaymentSummary(latestAttempt?.status, locale)',
   'customerOrderMethodConfirmation(metadata, locale)',
   'customerOrderManualTransferInstructions(metadata, order.orderNumber, locale)',
+  'customerOrderCodCollectionReminder(metadata, order.orderNumber, locale)',
   'customerInstallmentApprovalMessage(metadata, orderNumber, locale)',
   'approvalMessage.title',
   'approvalMessage.body',
@@ -103,6 +105,11 @@ for (const fragment of [
   'manualTransferInstructions.proofUrlLabel',
   'manualTransferInstructions.emailSubject',
   'manualTransferInstructions.emailBody',
+  'codCollectionReminder.statusLabel',
+  'codCollectionReminder.settlementLabel',
+  'codCollectionReminder.settlementReferenceLabel',
+  'codCollectionReminder.emailSubject',
+  'codCollectionReminder.emailBody',
   'customerOrderItemCountLabel(order.items.reduce((sum, item) => sum + item.quantity, 0), locale)',
   'customerOrderMoreItemLabel(order.items.length - 3, locale)',
   "copy('eyebrow')",
@@ -128,6 +135,23 @@ for (const fragment of [
   'emailBody',
   'Manual-transfer instructions',
   'راهنمای انتقال بانکی'
+]) {
+  copyHas(fragment);
+}
+
+for (const fragment of [
+  'CustomerOrderCodCollectionReminder',
+  'codPaymentSelected',
+  'codRequiresDeliveryCollection',
+  'codCollectionStatus',
+  'codSettlementStatus',
+  'codSettlementReference',
+  'Cash-on-delivery reminder',
+  'Please keep the delivery payment ready',
+  'یادآوری پرداخت هنگام تحویل',
+  'لطفاً مبلغ پرداخت هنگام تحویل را آماده نگه دارید',
+  'emailSubject',
+  'emailBody'
 ]) {
   copyHas(fragment);
 }
@@ -206,6 +230,20 @@ assert.ok(manualInstructions?.emailSubject.includes('GOL-1001'));
 assert.ok(manualInstructions?.emailBody.includes('ABC-123'));
 assert.ok(customerOrderManualTransferInstructions({ paymentMethodType: 'wallet' }, 'GOL-1002', 'en') === null);
 assert.ok(customerOrderManualTransferInstructions({ paymentMethodKey: 'bank-transfer' }, 'GOL-1003', 'fa')?.emailSubject.includes('GOL-1003'));
+
+const codReminder = customerOrderCodCollectionReminder({
+  paymentMethodType: 'cod',
+  codCollectionStatus: 'collected',
+  codSettlementStatus: 'settled',
+  codSettlementReference: 'COD-SETTLE-1'
+}, 'GOL-4001', 'en');
+assert.equal(codReminder?.collectionStatus, 'Collected at delivery');
+assert.equal(codReminder?.settlementStatus, 'Settlement completed');
+assert.equal(codReminder?.settlementReference, 'COD-SETTLE-1');
+assert.ok(codReminder?.emailSubject.includes('GOL-4001'));
+assert.ok(codReminder?.emailBody.includes('COD-SETTLE-1'));
+assert.ok(customerOrderCodCollectionReminder({ paymentMethodType: 'wallet' }, 'GOL-4002', 'en') === null);
+assert.ok(customerOrderCodCollectionReminder({ paymentMethodKey: 'cash-on-delivery', codCollectionStatus: 'failed' }, 'GOL-4003', 'fa')?.emailBody.includes('پیگیری'));
 
 const approvedInstallmentMessage = customerInstallmentApprovalMessage({
   paymentMethodType: 'installment',

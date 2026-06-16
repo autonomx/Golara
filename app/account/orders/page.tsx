@@ -8,6 +8,7 @@ import { getCustomerSessionCookie } from '@/lib/customers/customer-session-cooki
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { customerInstallmentApprovalMessage } from '@/lib/localization/customer-installment-message-copy';
 import {
+  customerOrderCodCollectionReminder,
   customerOrderDateLocale,
   customerOrderItemCountLabel,
   customerOrderManualTransferInstructions,
@@ -202,6 +203,7 @@ export default async function CustomerOrderHistoryPage() {
               const publicHref = order.publicLookupToken ? `/orders/${order.publicLookupToken}` : undefined;
               const methodConfirmation = customerOrderMethodConfirmation(metadata, locale);
               const manualTransferInstructions = customerOrderManualTransferInstructions(metadata, order.orderNumber, locale);
+              const codCollectionReminder = customerOrderCodCollectionReminder(metadata, order.orderNumber, locale);
               return (
                 <article key={order.id} className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
                   <div className="flex flex-wrap items-start justify-between gap-4">
@@ -249,6 +251,31 @@ export default async function CustomerOrderHistoryPage() {
                       <details className="mt-4 rounded-2xl bg-white p-3">
                         <summary className="cursor-pointer font-semibold text-amber-800">{manualTransferInstructions.emailSubject}</summary>
                         <p className="mt-2 whitespace-pre-line text-stone-700">{manualTransferInstructions.emailBody}</p>
+                      </details>
+                    </section>
+                  ) : null}
+
+                  {codCollectionReminder ? (
+                    <section className="mt-5 rounded-3xl border border-olive/20 bg-olive/5 p-4 text-sm text-stone-700">
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-olive">{codCollectionReminder.title}</p>
+                      <p className="mt-2 leading-6">{codCollectionReminder.body}</p>
+                      <dl className="mt-4 grid gap-3 sm:grid-cols-3">
+                        <div className="rounded-2xl bg-white p-3">
+                          <dt className="font-semibold text-olive">{codCollectionReminder.statusLabel}</dt>
+                          <dd className="mt-1 text-stone-900">{codCollectionReminder.collectionStatus}</dd>
+                        </div>
+                        <div className="rounded-2xl bg-white p-3">
+                          <dt className="font-semibold text-olive">{codCollectionReminder.settlementLabel}</dt>
+                          <dd className="mt-1 text-stone-900">{codCollectionReminder.settlementStatus ?? '—'}</dd>
+                        </div>
+                        <div className="rounded-2xl bg-white p-3">
+                          <dt className="font-semibold text-olive">{codCollectionReminder.settlementReferenceLabel}</dt>
+                          <dd className="mt-1 break-words text-stone-900">{codCollectionReminder.settlementReference ?? codCollectionReminder.noSettlementReferenceLabel}</dd>
+                        </div>
+                      </dl>
+                      <details className="mt-4 rounded-2xl bg-white p-3">
+                        <summary className="cursor-pointer font-semibold text-olive">{codCollectionReminder.emailSubject}</summary>
+                        <p className="mt-2 whitespace-pre-line text-stone-700">{codCollectionReminder.emailBody}</p>
                       </details>
                     </section>
                   ) : null}
