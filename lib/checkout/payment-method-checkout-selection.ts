@@ -4,6 +4,8 @@ import type { PaymentMethodSetting } from '@/lib/settings/payment-method-setting
 
 export const COD_COLLECTION_STATUSES = ['pending', 'collected', 'failed', 'waived'] as const;
 export type CodCollectionStatus = typeof COD_COLLECTION_STATUSES[number];
+export const COD_SETTLEMENT_STATUSES = ['pending', 'settled', 'disputed'] as const;
+export type CodSettlementStatus = typeof COD_SETTLEMENT_STATUSES[number];
 type CheckoutPaymentMetadataFragment = Record<string, string | number | boolean | string[]>;
 
 export type CheckoutPaymentMethodSelection = {
@@ -84,6 +86,7 @@ export function codSelectedMethodMetadata(selection: CheckoutPaymentMethodSelect
     codCollectionStatus: 'pending' satisfies CodCollectionStatus,
     codCollectionProviderKey: selection.providerKey,
     codSettlementMode: selection.settlementMode,
+    codSettlementStatus: 'pending' satisfies CodSettlementStatus,
     codRequiresDeliveryCollection: true
   };
 }
