@@ -34,7 +34,7 @@ export type AdminOrderActivityTimelineEntry = {
   actor: AdminOrderTimelineActor;
   source: AdminOrderActivityTimelineSource;
   attributionLabel: string;
-  reversal: AdminOrderReversalStatusSummary | null;
+  reversal?: AdminOrderReversalStatusSummary;
   createdAt: Date;
 };
 
@@ -119,6 +119,7 @@ export function buildAdminOrderReversalStatusSummary(event: Pick<AdminOrderTimel
 export function mapAdminOrderActivityTimeline(events: AdminOrderTimelineEventLike[]): AdminOrderActivityTimelineEntry[] {
   return events.map((event) => {
     const attribution = buildAdminOrderActivityAttribution(event);
+    const reversal = buildAdminOrderReversalStatusSummary(event);
     return {
       id: event.id,
       type: event.type,
@@ -127,7 +128,7 @@ export function mapAdminOrderActivityTimeline(events: AdminOrderTimelineEventLik
       actor: attribution.actor,
       source: attribution.source,
       attributionLabel: attribution.attributionLabel,
-      reversal: buildAdminOrderReversalStatusSummary(event),
+      ...(reversal ? { reversal } : {}),
       createdAt: event.createdAt
     };
   });
