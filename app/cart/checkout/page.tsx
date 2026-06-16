@@ -26,7 +26,17 @@ function checkoutPaymentMethodCopy(locale?: string | null) {
       transferReference: 'شماره پیگیری پرداخت (اختیاری)',
       transferReferencePlaceholder: 'مثلاً 123456789',
       transferProofUrl: 'لینک رسید پرداخت (اختیاری)',
-      transferProofUrlPlaceholder: 'https://...'
+      transferProofUrlPlaceholder: 'https://...',
+      installmentTitle: 'درخواست خرید اقساطی یا اعتباری',
+      installmentBody: 'در این مرحله سفارش ثبت می‌شود و تیم گل‌آرا درخواست اعتبار یا اقساط را بررسی می‌کند. پرداخت تا زمان تأیید دستی کامل نمی‌شود.',
+      installmentTerm: 'بازه پیشنهادی اقساط',
+      installmentTermPlaceholder: 'انتخاب بازه',
+      installmentTermThree: '۳ ماهه',
+      installmentTermSix: '۶ ماهه',
+      installmentTermTwelve: '۱۲ ماهه',
+      installmentTermEighteen: '۱۸ ماهه',
+      installmentNote: 'توضیح درخواست اعتبار (اختیاری)',
+      installmentNotePlaceholder: 'اگر محدودیت بودجه، زمان‌بندی یا توضیحی دارید بنویسید.'
     };
   }
 
@@ -41,7 +51,17 @@ function checkoutPaymentMethodCopy(locale?: string | null) {
     transferReference: 'Payment tracking/reference number (optional)',
     transferReferencePlaceholder: 'For example, 123456789',
     transferProofUrl: 'Payment receipt link (optional)',
-    transferProofUrlPlaceholder: 'https://...'
+    transferProofUrlPlaceholder: 'https://...',
+    installmentTitle: 'Installment or credit purchase request',
+    installmentBody: 'The order is created first, then Golara reviews the credit/installment request. Payment is not completed until staff approval.',
+    installmentTerm: 'Preferred installment term',
+    installmentTermPlaceholder: 'Choose a term',
+    installmentTermThree: '3 months',
+    installmentTermSix: '6 months',
+    installmentTermTwelve: '12 months',
+    installmentTermEighteen: '18 months',
+    installmentNote: 'Credit request note (optional)',
+    installmentNotePlaceholder: 'Share timing, budget, or approval details the team should review.'
   };
 }
 
@@ -162,6 +182,7 @@ export default async function CartCheckoutPage({ searchParams }: { searchParams:
                 {activePaymentMethods.length ? activePaymentMethods.map((method, index) => {
                   const notes = buildPaymentMethodReadinessNotes(method, process.env);
                   const showManualTransferInstructions = method.methodType === 'manual_transfer';
+                  const showInstallmentRequest = method.methodType === 'installment';
                   return (
                     <label key={method.key} className="grid cursor-pointer gap-2 rounded-2xl border border-rosewood/10 bg-white p-4 text-sm text-stone-700 shadow-sm transition hover:border-rosewood/30 has-[:checked]:border-rosewood has-[:checked]:ring-4 has-[:checked]:ring-olive/15">
                       <span className="flex flex-wrap items-center gap-3">
@@ -183,6 +204,28 @@ export default async function CartCheckoutPage({ searchParams }: { searchParams:
                             <span className="grid gap-1 font-semibold text-rosewood">
                               {paymentCopy.transferProofUrl}
                               <input name="manualPaymentProofUrl" type="url" maxLength={240} placeholder={paymentCopy.transferProofUrlPlaceholder} className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 font-normal text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20" />
+                            </span>
+                          </span>
+                        </span>
+                      ) : null}
+                      {showInstallmentRequest ? (
+                        <span className="grid gap-3 rounded-2xl border border-amber-300/60 bg-amber-50 p-4 text-sm text-stone-700">
+                          <span className="font-semibold text-amber-900">{paymentCopy.installmentTitle}</span>
+                          <span className="leading-6">{paymentCopy.installmentBody}</span>
+                          <span className="grid gap-3 md:grid-cols-2">
+                            <span className="grid gap-1 font-semibold text-rosewood">
+                              {paymentCopy.installmentTerm}
+                              <select name="installmentRequestedTermMonths" defaultValue="" className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 font-normal text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20">
+                                <option value="">{paymentCopy.installmentTermPlaceholder}</option>
+                                <option value="3">{paymentCopy.installmentTermThree}</option>
+                                <option value="6">{paymentCopy.installmentTermSix}</option>
+                                <option value="12">{paymentCopy.installmentTermTwelve}</option>
+                                <option value="18">{paymentCopy.installmentTermEighteen}</option>
+                              </select>
+                            </span>
+                            <span className="grid gap-1 font-semibold text-rosewood">
+                              {paymentCopy.installmentNote}
+                              <input name="installmentRequestNote" maxLength={320} placeholder={paymentCopy.installmentNotePlaceholder} className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 font-normal text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20" />
                             </span>
                           </span>
                         </span>
