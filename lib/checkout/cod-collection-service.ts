@@ -67,9 +67,9 @@ export async function updateCodCollectionStatus(input: CodCollectionUpdateInput)
       codCollectionStatus: input.status,
       codCollectionUpdatedAt: updatedAt,
       codCollectionUpdatedBy: actorLabel ?? 'staff',
-      codCollectionUpdatedByRole: actorRole ?? 'staff'
+      codCollectionUpdatedByRole: actorRole ?? 'staff',
+      ...(note ? { codCollectionNote: note } : {})
     } as Prisma.InputJsonObject;
-    if (note) nextMetadata.codCollectionNote = note;
 
     const paymentAttempt = await tx.checkoutPaymentAttempt.update({
       where: { id: attempt.id },
