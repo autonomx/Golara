@@ -1,6 +1,6 @@
 # DigiKala-Style Payment System — Remaining Phases
 
-Status: updated after admin wallet reversal visibility merged.
+Status: updated after installment request capture merged.
 
 ## Completed foundations
 
@@ -36,15 +36,17 @@ Status: updated after admin wallet reversal visibility merged.
 - Admin order/payment visibility for wallet refund metadata.
 - Staff-facing wallet refund receipt details in admin orders and CSV exports.
 - Method-aware wallet refund status fields on admin order summaries.
+- Installment/credit request capture at checkout.
+- Installment checkout metadata with pending-review approval status.
+- Installment requested-term and customer-note capture without undefined metadata persistence.
 
 ## Remaining implementation phases
 
 ### Phase P3 — Installment/credit purchase workflow
 
-Implement installment as an approval workflow first, then leave provider integration behind a future adapter.
+Continue installment as an approval workflow first, then leave provider integration behind a future adapter.
 
-Deliverables:
-- Installment request capture at checkout.
+Remaining deliverables:
 - Admin approval/rejection workflow.
 - Payment/order state machine for pending credit approval.
 - Due-date/installment schedule model.
@@ -121,4 +123,4 @@ Deliverables:
 
 ## Recommended next slice
 
-Start with **Phase P3 — installment/credit purchase request capture**. Wallet and manual-transfer foundations are now usable enough to move to the next DigiKala-style payment lane.
+Continue **Phase P3 — installment/credit admin approval workflow**. Checkout now captures installment requests and marks them pending review, but staff still needs an approval/rejection queue and schedule foundation before installment orders can advance safely.
