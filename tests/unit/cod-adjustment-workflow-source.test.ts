@@ -7,6 +7,8 @@ import {
 } from '../../lib/checkout/cod-adjustment-tracking';
 
 const helper = readFileSync('lib/checkout/cod-adjustment-tracking.ts', 'utf8');
+const service = readFileSync('lib/checkout/cod-collection-service.ts', 'utf8');
+const page = readFileSync('app/admin/payments/cod-collections/page.tsx', 'utf8');
 const roadmap = readFileSync('docs/digikala-style-payment-remaining-phases.md', 'utf8');
 
 const metadata = buildCodAdjustmentTrackingMetadata({
@@ -76,8 +78,33 @@ for (const fragment of [
 }
 
 for (const fragment of [
+  'recordCodAdjustment',
+  'buildCodAdjustmentTrackingMetadata({',
+  "type: 'cod_adjustment_recorded'",
+  'tx.checkoutPaymentAttempt.update',
+  'tx.checkoutOrderTimelineEvent.create',
+  'Only COD payment attempts can record delivery payment adjustments'
+]) {
+  assert.ok(service.includes(fragment), `Expected COD adjustment service fragment: ${fragment}`);
+}
+
+for (const fragment of [
+  'recordCodAdjustmentFormAction',
+  "assertAdminRole('owner')",
+  'COD_ADJUSTMENT_OPERATIONS',
+  'codAdjustmentOperation',
+  "action: 'order.payment.cod.adjustment_recorded'",
+  'Record COD adjustment'
+]) {
+  assert.ok(page.includes(fragment), `Expected COD adjustment page fragment: ${fragment}`);
+}
+
+for (const fragment of [
   'COD adjustment/refund metadata boundary normalizes adjustment, refund, and void evidence before owner action persistence.',
-  'Start **Phase P6 — wire COD adjustment metadata into owner/admin actions**'
+  'Start **Phase P6 — COD adjustment workflow**',
+  'COD adjustment owner/admin action records owner-triggered adjustment, refund, and void evidence on COD payment attempts and order timelines.',
+  'Start **Phase P6 — wire COD adjustment metadata into owner/admin actions** is now complete.',
+  'Start **Phase P6 — admin refund/reversal status timeline**'
 ]) {
   assert.ok(roadmap.includes(fragment), `Expected COD adjustment roadmap fragment: ${fragment}`);
 }
