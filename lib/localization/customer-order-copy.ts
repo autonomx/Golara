@@ -36,8 +36,30 @@ export type CustomerOrderMethodConfirmation = {
   methodLabel?: string;
 };
 
+export type CustomerOrderManualTransferInstructions = {
+  title: string;
+  body: string;
+  referenceLabel: string;
+  proofUrlLabel: string;
+  noEvidenceLabel: string;
+  reference?: string;
+  proofUrl?: string;
+  emailSubject: string;
+  emailBody: string;
+};
+
 type CustomerOrderCopyRegistry = Record<CustomerOrderCopyLocale, Record<CustomerOrderCopyKey, string>>;
 type CustomerOrderMethodConfirmationRegistry = Record<CustomerOrderCopyLocale, Record<CustomerOrderMethodConfirmationKey, { title: string; body: string }>>;
+type CustomerOrderManualTransferInstructionRegistry = Record<CustomerOrderCopyLocale, {
+  title: string;
+  body: string;
+  referenceLabel: string;
+  proofUrlLabel: string;
+  noEvidenceLabel: string;
+  emailSubject: string;
+  emailBodyIntro: string;
+  emailEvidenceIntro: string;
+}>;
 
 const customerOrderCopy: CustomerOrderCopyRegistry = {
   en: {
@@ -133,6 +155,29 @@ const customerOrderMethodConfirmationCopy: CustomerOrderMethodConfirmationRegist
   }
 };
 
+const manualTransferInstructionCopy: CustomerOrderManualTransferInstructionRegistry = {
+  en: {
+    title: 'Manual-transfer instructions',
+    body: 'If you have already sent the transfer, keep the reference and receipt link below. If you have not paid yet, our team will use these same instructions when contacting you by email.',
+    referenceLabel: 'Tracking/reference number',
+    proofUrlLabel: 'Receipt or proof link',
+    noEvidenceLabel: 'No transfer evidence has been attached yet.',
+    emailSubject: 'Manual-transfer instructions for order {{orderNumber}}',
+    emailBodyIntro: 'Your order uses manual transfer. Please keep your tracking/reference number and receipt link available until staff review is complete.',
+    emailEvidenceIntro: 'Evidence recorded for this order:'
+  },
+  fa: {
+    title: 'راهنمای انتقال بانکی',
+    body: 'اگر انتقال را انجام داده‌اید، شناسه پیگیری و لینک رسید زیر را نگه دارید. اگر هنوز پرداخت نکرده‌اید، تیم ما همین راهنما را هنگام تماس ایمیلی برای شما ارسال می‌کند.',
+    referenceLabel: 'شماره پیگیری پرداخت',
+    proofUrlLabel: 'لینک رسید یا مدرک پرداخت',
+    noEvidenceLabel: 'هنوز مدرک انتقالی برای این سفارش ثبت نشده است.',
+    emailSubject: 'راهنمای انتقال بانکی سفارش {{orderNumber}}',
+    emailBodyIntro: 'این سفارش از روش انتقال بانکی استفاده می‌کند. لطفاً شماره پیگیری و لینک رسید را تا پایان بررسی تیم پشتیبانی نگه دارید.',
+    emailEvidenceIntro: 'مدارک ثبت‌شده برای این سفارش:'
+  }
+};
+
 export function normalizeCustomerOrderCopyLocale(locale?: string | null): CustomerOrderCopyLocale {
   return locale?.toLowerCase().startsWith('fa') ? 'fa' : 'en';
 }
@@ -161,6 +206,10 @@ function normalizedMetadataMethodType(metadata: Record<string, unknown>) {
   return metadataText(metadata.paymentMethodType)?.toLowerCase();
 }
 
+function isManualTransferMethod(metadata: Record<string, unknown>) {
+  return normalizedMetadataMethodType(metadata) === 'manual_transfer' || normalizedMetadataMethodKey(metadata) === 'bank-transfer';
+}
+
 export function customerOrderMethodConfirmation(
   metadata?: Record<string, unknown> | null,
   locale?: string | null
@@ -184,6 +233,40 @@ export function customerOrderMethodConfirmation(
     key,
     methodLabel,
     ...getCustomerOrderMethodConfirmationCopy(key, locale)
+  };
+}
+
+export function customerOrderManualTransferInstructions(
+  metadata?: Record<string, unknown> | null,
+  orderNumber = '',
+  locale?: string | null
+): CustomerOrderManualTransferInstructions | null {
+  if (!metadata || !isManualTransferMethod(metadata)) return null;
+
+  const normalizedLocale = normalizeCustomerOrderCopyLocale(locale);
+  const copy = manualTransferInstructionCopy[normalizedLocale];
+  const reference = metadataText(metadata.manualPaymentReference);
+  const proofUrl = metadataText(metadata.manualPaymentProofUrl);
+  const emailSubject = copy.emailSubject.replace('{{orderNumber}}', orderNumber || '—');
+  const evidenceLines = [
+    reference ? `${copy.referenceLabel}: ${reference}` : undefined,
+    proofUrl ? `${copy.proofUrlLabel}: ${proofUrl}` : undefined
+  ].filter(Boolean) as string[];
+  const emailBody = [
+    copy.emailBodyIntro,
+    evidenceLines.length ? `${copy.emailEvidenceIntro}\n${evidenceLines.join('\n')}` : copy.noEvidenceLabel
+  ].join('\n\n');
+
+  return {
+    title: copy.title,
+    body: copy.body,
+    referenceLabel: copy.referenceLabel,
+    proofUrlLabel: copy.proofUrlLabel,
+    noEvidenceLabel: copy.noEvidenceLabel,
+    reference,
+    proofUrl,
+    emailSubject,
+    emailBody
   };
 }
 
