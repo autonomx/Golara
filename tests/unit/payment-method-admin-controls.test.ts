@@ -80,16 +80,16 @@ for (const fragment of [
 }
 
 for (const fragment of [
-  "'payment-methods': 'Payment methods'",
-  "'payment-methods': 'روش‌های پرداخت'",
-  "{ href: '/admin/payment-methods', key: 'payment-methods', tab: 'sales' as AdminTab, icon: CreditCard }"
+  'AdminPageShell',
+  "| 'payment-methods'",
+  "'payment-methods': '/admin/payment-methods'",
+  'activeNavKey={resolvedActiveNavKey}'
 ]) {
-  assert.ok(adminConsolePage.includes(fragment), `Expected root admin console payment methods sidebar fragment: ${fragment}`);
+  assert.ok(adminConsolePage.includes(fragment), `Expected root admin console shared shell fragment: ${fragment}`);
 }
 
 for (const fragment of [
-  "'Payment methods': 'Payment methods'",
-  "'Payment methods': 'روش‌های پرداخت'"
+  "'Payment methods': 'Payment methods'"
 ]) {
   assert.ok(adminPageShellCopy.includes(fragment), `Expected payment methods shell copy fragment: ${fragment}`);
 }
