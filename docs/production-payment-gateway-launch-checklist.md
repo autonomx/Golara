@@ -2,9 +2,9 @@
 
 Last updated: 2026-06-16
 
-Use this checklist before enabling `CHECKOUT_MODE="gateway"` in a production deployment. It supplements `docs/PRODUCTION_CHECKLIST.md`, `docs/production-roadmap-phase32-payment-webhooks.md`, `docs/production-roadmap-phase32-payment-webhook-smoke-tests.md`, `docs/production-roadmap-phase32-payment-webhook-validation-evidence.md`, and `docs/production-roadmap-phase32-settlement-migration-contract.md`.
+Use this checklist before enabling `CHECKOUT_MODE="gateway"` in a production deployment. It supplements `docs/PRODUCTION_CHECKLIST.md`, `docs/production-payment-launch-evidence-bundle.md`, `docs/production-roadmap-phase32-payment-webhooks.md`, `docs/production-roadmap-phase32-payment-webhook-smoke-tests.md`, `docs/production-roadmap-phase32-payment-webhook-validation-evidence.md`, and `docs/production-roadmap-phase32-settlement-migration-contract.md`.
 
-This checklist is not required for an inquiry-first launch where checkout remains `CHECKOUT_MODE="inquiry"`. When multiple DigiKala-style payment methods are enabled, complete the method-level readiness gate and smoke checklist below before final owner sign-off.
+This checklist is not required for an inquiry-first launch where checkout remains `CHECKOUT_MODE="inquiry"`. When multiple DigiKala-style payment methods are enabled, complete the method-level readiness gate, smoke checklist, and production evidence bundle below before final owner sign-off.
 
 ## 1. Scope confirmation
 
@@ -99,6 +99,12 @@ For each enabled method, confirm:
 - Settlement/reconciliation dashboards and CSV export include the method after activity is recorded.
 - Rollback or disable instructions are known for the method before launch.
 
+Record the target-environment packet in:
+
+```text
+docs/production-payment-launch-evidence-bundle.md
+```
+
 Method-specific smoke expectations:
 
 - Gateway/IPG: create a provider-backed checkout, verify return/webhook method-key mapping, provider reference persistence, settlement dashboard visibility, and duplicate event safety.
@@ -164,4 +170,4 @@ If gateway checkout fails validation:
 
 ## Current status
 
-This checklist is repository documentation and does not claim production/staging validation has been completed. Provider-generated webhook validation, target-environment migration verification, method-level readiness evidence, smoke-test evidence capture, and final gateway launch sign-off remain operator tasks.
+This checklist is repository documentation and does not claim production/staging validation has been completed. Provider-generated webhook validation, target-environment migration verification, method-level readiness evidence, smoke-test evidence capture, launch evidence bundle completion, and final gateway launch sign-off remain operator tasks.
