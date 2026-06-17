@@ -4,6 +4,9 @@ import { readFileSync } from 'node:fs';
 const service = readFileSync('lib/settings/payment-method-settings.ts', 'utf8');
 const action = readFileSync('app/admin/payment-methods/actions.ts', 'utf8');
 const panel = readFileSync('components/admin/AdminPaymentMethodSettingsPanel.tsx', 'utf8');
+const paymentMethodsPage = readFileSync('app/admin/payment-methods/page.tsx', 'utf8');
+const adminPageShell = readFileSync('components/admin/AdminPageShell.tsx', 'utf8');
+const adminPageShellCopy = readFileSync('lib/localization/admin-page-shell-copy.ts', 'utf8');
 const launchChecklist = readFileSync('docs/production-payment-gateway-launch-checklist.md', 'utf8');
 
 for (const fragment of [
@@ -55,6 +58,31 @@ for (const fragment of [
   'smoke evidence is reviewed per method before sign-off'
 ]) {
   assert.ok(panel.includes(fragment), `Expected payment method readiness warning fragment: ${fragment}`);
+}
+
+for (const fragment of [
+  "activeNavKey=\"payment-methods\"",
+  "activeTab=\"sales\"",
+  "returnTo=\"/admin/payment-methods\"",
+  'AdminPageShell',
+  'AdminPaymentMethodSettingsPanel'
+]) {
+  assert.ok(paymentMethodsPage.includes(fragment), `Expected payment methods page shell fragment: ${fragment}`);
+}
+
+for (const fragment of [
+  "| 'payment-methods'",
+  "'payment-methods': 'Payment methods'",
+  "{ href: '/admin/payment-methods', key: 'payment-methods', icon: CreditCard }"
+]) {
+  assert.ok(adminPageShell.includes(fragment), `Expected payment methods sidebar fragment: ${fragment}`);
+}
+
+for (const fragment of [
+  "'Payment methods': 'Payment methods'",
+  "'Payment methods': 'روش‌های پرداخت'"
+]) {
+  assert.ok(adminPageShellCopy.includes(fragment), `Expected payment methods shell copy fragment: ${fragment}`);
 }
 
 for (const fragment of [
