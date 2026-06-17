@@ -8,6 +8,7 @@ function source(path: string) {
 export async function runPaymentGatewayLaunchDocsTests() {
   const checklist = source('docs/production-payment-gateway-launch-checklist.md');
   const evidenceBundle = source('docs/production-payment-launch-evidence-bundle.md');
+  const localE2eRunbook = source('docs/local-e2e-commerce-validation-runbook.md');
   const remainingPhases = source('docs/digikala-style-payment-remaining-phases.md');
   const productionChecklist = source('docs/PRODUCTION_CHECKLIST.md');
   const phase32 = source('docs/production-roadmap-phase32-payment-webhooks.md');
@@ -64,6 +65,30 @@ export async function runPaymentGatewayLaunchDocsTests() {
   assert.match(evidenceBundle, /APP_MODE="production" npm run check:deploy-readiness/);
   assert.match(evidenceBundle, /PAYMENT_SETTLEMENT_MIGRATION_CONFIRMED=true/);
   assert.match(evidenceBundle, /Target-environment payment validation/);
+
+  assert.match(localE2eRunbook, /Local E2E Commerce Validation Runbook/);
+  assert.match(localE2eRunbook, /does \*\*not\*\* claim that local, staging, or production validation has been completed/);
+  assert.match(localE2eRunbook, /npm run typecheck/);
+  assert.match(localE2eRunbook, /npm run test:unit/);
+  assert.match(localE2eRunbook, /npm run test:functional/);
+  assert.match(localE2eRunbook, /npm run test:api/);
+  assert.match(localE2eRunbook, /npm run test:nonbrowser/);
+  assert.match(localE2eRunbook, /npm run test:e2e/);
+  assert.match(localE2eRunbook, /npm run test:e2e:production-like/);
+  assert.match(localE2eRunbook, /npm run build/);
+  assert.match(localE2eRunbook, /npm run check:performance-budget/);
+  assert.match(localE2eRunbook, /npm run check:routes/);
+  assert.match(localE2eRunbook, /APP_MODE="production" CHECKOUT_MODE="inquiry" npm run check:deploy-readiness/);
+  assert.match(localE2eRunbook, /APP_MODE="production" CHECKOUT_MODE="gateway" npm run check:deploy-readiness/);
+  assert.match(localE2eRunbook, /production secrets/);
+  assert.match(localE2eRunbook, /provider-generated webhooks/);
+  assert.match(localE2eRunbook, /\/admin\/payment-methods/);
+  assert.match(localE2eRunbook, /\/admin\/payments\/settlement/);
+  assert.match(localE2eRunbook, /\/admin\/payments\/alerts/);
+  assert.match(localE2eRunbook, /\/admin\/payments\/reconciliation\/csv/);
+  assert.match(localE2eRunbook, /rollback to inquiry\/manual checkout/i);
+  assert.doesNotMatch(localE2eRunbook, /PAYMENT_SETTLEMENT_MIGRATION_CONFIRMED="true"/);
+  assert.doesNotMatch(localE2eRunbook, /PAYMENT_WEBHOOK_SMOKE_TESTS_CONFIRMED="true"/);
 
   assert.match(remainingPhases, /P10 production launch evidence bundle template/);
   assert.match(remainingPhases, /Completed checkpoint: Start \*\*Phase P10 — production launch evidence bundle\*\* is now complete/);
