@@ -1,6 +1,6 @@
 # DigiKala-Style Payment System — Remaining Phases
 
-Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, the COD fulfillment completion guard, COD settlement/reconciliation fields, method-specific gateway adapter mapping, gateway production readiness evidence fields, provider reference persistence per method, gateway return method-key mapping, gateway webhook method-key mapping, gateway fallback/disable behavior, the P6 gateway refund/void adapter boundary, the P6 manual-transfer refund tracking metadata boundary, the P6 manual-transfer refund action persistence, the P6 installment cancellation/refund metadata boundary, the P6 installment reversal plan/schedule persistence boundary, the P6 installment cancellation/refund owner admin action, the P6 COD adjustment/refund metadata boundary, the P6 COD adjustment owner/admin action, the P6 admin refund/reversal status timeline, the P7 method-level settlement summary, the P7 manual-transfer settlement totals, the P7 wallet liability balance, the P7 COD collection totals, the P7 installment receivables summary, the P7 exportable reconciliation CSV formatter, the P7 owner-only admin reconciliation CSV route, the P7 dashboard panels for settlement summaries, the P8 method-specific order confirmation copy, the P8 manual-transfer instruction copy, the P8 wallet debit/refund receipt copy, the P8 installment approval/rejection messages, the P8 COD collection reminders, the P8 notification persistence and retry evidence boundary, the P8 transport retry wiring for customer notifications, the P8 admin delivery visibility read model for customer notifications, the P9 readiness gate per payment method boundary, the P9 admin warning visibility for enabled methods missing required operational evidence, the P9 smoke-test checklist per payment method, and the P9 launch checklist updates.
+Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, the COD fulfillment completion guard, COD settlement/reconciliation fields, method-specific gateway adapter mapping, gateway production readiness evidence fields, provider reference persistence per method, gateway return method-key mapping, gateway webhook method-key mapping, gateway fallback/disable behavior, the P6 gateway refund/void adapter boundary, the P6 manual-transfer refund tracking metadata boundary, the P6 manual-transfer refund action persistence, the P6 installment cancellation/refund metadata boundary, the P6 installment reversal plan/schedule persistence boundary, the P6 installment cancellation/refund owner admin action, the P6 COD adjustment/refund metadata boundary, the P6 COD adjustment owner/admin action, the P6 admin refund/reversal status timeline, the P7 method-level settlement summary, the P7 manual-transfer settlement totals, the P7 wallet liability balance, the P7 COD collection totals, the P7 installment receivables summary, the P7 exportable reconciliation CSV formatter, the P7 owner-only admin reconciliation CSV route, the P7 dashboard panels for settlement summaries, the P8 method-specific order confirmation copy, the P8 manual-transfer instruction copy, the P8 wallet debit/refund receipt copy, the P8 installment approval/rejection messages, the P8 COD collection reminders, the P8 notification persistence and retry evidence boundary, the P8 transport retry wiring for customer notifications, the P8 admin delivery visibility read model for customer notifications, the P9 readiness gate per payment method boundary, the P9 admin warning visibility for enabled methods missing required operational evidence, the P9 smoke-test checklist per payment method, the P9 launch checklist updates, and the P9 CI/source guards for method-specific production safety.
 
 ## Completed foundations
 
@@ -119,6 +119,7 @@ Status: updated after customer-facing installment status, staff collection track
 - Completed checkpoint: Start **Phase P9 — smoke-test checklist per method** is now complete.
 - Launch checklist updates connect the production gateway checklist and admin readiness copy to the method-level readiness gate, warning panel, and smoke checklist.
 - Completed checkpoint: Start **Phase P9 — launch checklist updates** is now complete.
+- CI/source guards keep the readiness gate, smoke checklist, admin warning panel, launch checklist, and checkout method selection wired while preserving non-blocking checkout behavior.
 
 ## Remaining implementation phases
 
@@ -175,8 +176,17 @@ Deliverables:
 - Done: admin warning when enabled methods lack required operational evidence.
 - Done: smoke-test checklist per method.
 - Done: launch checklist updates.
-- CI/source guards for method-specific production safety.
+- Done: CI/source guards for method-specific production safety.
+
+### Phase P10 — Production launch evidence bundle
+
+Consolidate repo-side readiness evidence into an operator-facing launch packet without claiming target-environment validation has been completed.
+
+Deliverables:
+- Target-environment evidence packet for configured payment methods.
+- Admin/export snapshot references for readiness warnings, settlement dashboards, notification delivery visibility, and reconciliation CSV output.
+- Final go/no-go checklist alignment with the existing launch audit and payment launch checklist.
 
 ## Recommended next slice
 
-Start **Phase P9 — CI/source guards for method-specific production safety**. Keep it narrow: add source guards that ensure the readiness gate, admin warnings, smoke checklist, and launch checklist stay wired without changing runtime checkout behavior.
+Start **Phase P10 — production launch evidence bundle**. Keep it narrow: add a documentation/read-model checklist that references P7 dashboards, P8 communication evidence, P9 readiness/smoke gates, and the launch audit without claiming environment validation complete.
