@@ -10,6 +10,10 @@ export async function runPaymentGatewayLaunchDocsTests() {
   const productionChecklist = source('docs/PRODUCTION_CHECKLIST.md');
   const phase32 = source('docs/production-roadmap-phase32-payment-webhooks.md');
   const envExample = source('.env.example');
+  const readinessGate = source('lib/settings/payment-method-readiness-gate.ts');
+  const smokeChecklist = source('lib/settings/payment-method-smoke-checklist.ts');
+  const paymentMethodSettingsPanel = source('components/admin/AdminPaymentMethodSettingsPanel.tsx');
+  const checkoutAction = source('app/cart/checkout/actions.ts');
 
   assert.match(checklist, /Production Payment Gateway Launch Checklist/);
   assert.match(checklist, /CHECKOUT_MODE="gateway"/);
@@ -35,6 +39,20 @@ export async function runPaymentGatewayLaunchDocsTests() {
   assert.match(checklist, /Customer-facing order copy and receipt\/reminder copy/);
   assert.match(checklist, /method-specific smoke checklist/);
   assert.match(checklist, /advisory in the current codebase/);
+
+  assert.match(readinessGate, /blocksCheckout: false/);
+  assert.match(readinessGate, /checkoutBlockingCount: 0/);
+  assert.match(readinessGate, /PAYMENT_METHOD_READINESS_GATE_VERSION/);
+  assert.match(smokeChecklist, /blocksCheckout: false/);
+  assert.match(smokeChecklist, /checkoutBlockingCount: 0/);
+  assert.match(smokeChecklist, /PAYMENT_METHOD_SMOKE_CHECKLIST_VERSION/);
+  assert.match(paymentMethodSettingsPanel, /summarizePaymentMethodReadinessGates\(methods/);
+  assert.match(paymentMethodSettingsPanel, /Checkout remains non-blocking/);
+  assert.match(paymentMethodSettingsPanel, /production-payment-gateway-launch-checklist\.md/);
+  assert.doesNotMatch(checkoutAction, /payment-method-readiness-gate/);
+  assert.doesNotMatch(checkoutAction, /payment-method-smoke-checklist/);
+  assert.match(checkoutAction, /resolveCheckoutPaymentMethodSelection\(await paymentMethodSettingsService\.list\(\), paymentMethodKey\)/);
+  assert.match(checkoutAction, /metadata: checkoutPaymentMethodMetadata\(paymentMethodSelection\.selection\)/);
 
   assert.match(productionChecklist, /docs\/production-payment-gateway-launch-checklist\.md/);
   assert.match(productionChecklist, /docs\/production-roadmap-phase32-payment-webhook-validation-evidence\.md/);
