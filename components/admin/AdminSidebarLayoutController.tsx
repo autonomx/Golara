@@ -1,7 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { CreditCard, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 const storageKey = 'golara-admin-sidebar-collapsed';
@@ -23,6 +24,22 @@ export function AdminSidebarLayoutController() {
   }, [collapsed]);
 
   const showToggle = pathname !== '/admin/login';
+  const showRootPaymentMethodsLink = pathname === '/admin';
+
+  useEffect(() => {
+    const main = document.querySelector<HTMLElement>('main#main-content');
+    if (!main) return;
+
+    if (showRootPaymentMethodsLink) {
+      main.dataset.adminRootSidebarPaymentMethods = 'true';
+      return () => {
+        delete main.dataset.adminRootSidebarPaymentMethods;
+      };
+    }
+
+    delete main.dataset.adminRootSidebarPaymentMethods;
+    return undefined;
+  }, [showRootPaymentMethodsLink]);
 
   return (
     <>
@@ -84,11 +101,36 @@ export function AdminSidebarLayoutController() {
             flex: 0 0 auto;
           }
 
+          main#main-content[data-admin-root-sidebar-payment-methods='true'] aside nav a[href='/admin/payments/settlement'] {
+            margin-top: 2.75rem;
+          }
+
+          html[data-admin-sidebar-collapsed='true'] .admin-root-payment-methods-link {
+            left: 0.75rem;
+            width: 3rem;
+            overflow: hidden;
+            white-space: nowrap;
+          }
+
+          html[data-admin-sidebar-collapsed='true'] .admin-root-payment-methods-link span {
+            opacity: 0;
+          }
+
           html[data-admin-sidebar-collapsed='true'] nav[aria-label='Product pagination'] {
             left: 5.25rem !important;
           }
         }
       `}</style>
+      {showRootPaymentMethodsLink ? (
+        <Link
+          href="/admin/payment-methods"
+          aria-label="Payment methods"
+          className="admin-root-payment-methods-link fixed left-3 top-[22rem] z-40 hidden w-[16.5rem] items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-100 hover:text-stone-950 lg:inline-flex"
+        >
+          <CreditCard aria-hidden="true" className="h-4 w-4 flex-none" />
+          <span>Payment methods</span>
+        </Link>
+      ) : null}
       {showToggle ? (
         <button
           type="button"
