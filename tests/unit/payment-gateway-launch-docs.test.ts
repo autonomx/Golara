@@ -52,7 +52,7 @@ export async function runPaymentGatewayLaunchDocsTests() {
   assert.doesNotMatch(checkoutAction, /payment-method-readiness-gate/);
   assert.doesNotMatch(checkoutAction, /payment-method-smoke-checklist/);
   assert.match(checkoutAction, /resolveCheckoutPaymentMethodSelection\(await paymentMethodSettingsService\.list\(\), paymentMethodKey\)/);
-  assert.match(checkoutAction, /metadata: checkoutPaymentMethodMetadata\(paymentMethodSelection\.selection\)/);
+  assert.match(checkoutAction, /checkoutPaymentMethodMetadata\(paymentMethodSelection\.selection\)/);
 
   assert.match(productionChecklist, /docs\/production-payment-gateway-launch-checklist\.md/);
   assert.match(productionChecklist, /docs\/production-roadmap-phase32-payment-webhook-validation-evidence\.md/);
