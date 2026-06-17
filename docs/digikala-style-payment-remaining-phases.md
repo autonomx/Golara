@@ -1,6 +1,6 @@
 # DigiKala-Style Payment System — Remaining Phases
 
-Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, the COD fulfillment completion guard, COD settlement/reconciliation fields, method-specific gateway adapter mapping, gateway production readiness evidence fields, provider reference persistence per method, gateway return method-key mapping, gateway webhook method-key mapping, gateway fallback/disable behavior, the P6 gateway refund/void adapter boundary, the P6 manual-transfer refund tracking metadata boundary, the P6 manual-transfer refund action persistence, the P6 installment cancellation/refund metadata boundary, the P6 installment reversal plan/schedule persistence boundary, the P6 installment cancellation/refund owner admin action, the P6 COD adjustment/refund metadata boundary, the P6 COD adjustment owner/admin action, the P6 admin refund/reversal status timeline, the P7 method-level settlement summary, the P7 manual-transfer settlement totals, the P7 wallet liability balance, the P7 COD collection totals, the P7 installment receivables summary, the P7 exportable reconciliation CSV formatter, the P7 owner-only admin reconciliation CSV route, the P7 dashboard panels for settlement summaries, the P8 method-specific order confirmation copy, the P8 manual-transfer instruction copy, the P8 wallet debit/refund receipt copy, the P8 installment approval/rejection messages, the P8 COD collection reminders, and the P8 notification persistence and retry evidence boundary.
+Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, the COD fulfillment completion guard, COD settlement/reconciliation fields, method-specific gateway adapter mapping, gateway production readiness evidence fields, provider reference persistence per method, gateway return method-key mapping, gateway webhook method-key mapping, gateway fallback/disable behavior, the P6 gateway refund/void adapter boundary, the P6 manual-transfer refund tracking metadata boundary, the P6 manual-transfer refund action persistence, the P6 installment cancellation/refund metadata boundary, the P6 installment reversal plan/schedule persistence boundary, the P6 installment cancellation/refund owner admin action, the P6 COD adjustment/refund metadata boundary, the P6 COD adjustment owner/admin action, the P6 admin refund/reversal status timeline, the P7 method-level settlement summary, the P7 manual-transfer settlement totals, the P7 wallet liability balance, the P7 COD collection totals, the P7 installment receivables summary, the P7 exportable reconciliation CSV formatter, the P7 owner-only admin reconciliation CSV route, the P7 dashboard panels for settlement summaries, the P8 method-specific order confirmation copy, the P8 manual-transfer instruction copy, the P8 wallet debit/refund receipt copy, the P8 installment approval/rejection messages, the P8 COD collection reminders, the P8 notification persistence and retry evidence boundary, and the P8 transport retry wiring for customer notifications.
 
 ## Completed foundations
 
@@ -108,6 +108,8 @@ Status: updated after customer-facing installment status, staff collection track
 - Completed checkpoint: Start **Phase P8 — COD collection reminders** is now complete.
 - Notification persistence and retry evidence boundary normalizes customer communication channel, template, status, attempt, and retryability metadata before transport wiring.
 - Completed checkpoint: Start **Phase P8 — notification persistence and retry evidence** is now complete.
+- Transport retry wiring for customer notifications records queued, failed, retry-pending, sent, and skipped evidence before provider-specific delivery persistence.
+- Completed checkpoint: Start **Phase P8 — transport retry wiring for customer notifications** is now complete.
 
 ## Remaining implementation phases
 
@@ -159,7 +161,8 @@ Deliverables:
 - Installment approval/rejection messages are complete.
 - COD collection reminders are complete.
 - Notification persistence and retry evidence boundary is complete.
-- Transport retry wiring and admin delivery visibility.
+- Transport retry wiring is complete.
+- Admin delivery visibility.
 
 ### Phase P9 — Production readiness gates
 
@@ -174,4 +177,4 @@ Deliverables:
 
 ## Recommended next slice
 
-Start **Phase P8 — transport retry wiring for customer notifications**. Keep it narrow: wire notification evidence into a queued transport/retry service without changing customer copy surfaces.
+Start **Phase P8 — admin delivery visibility for customer notifications**. Keep it narrow: surface queued, failed, retry-pending, sent, and skipped notification evidence in admin order/payment views without changing transport providers.
