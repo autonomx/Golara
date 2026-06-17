@@ -79,5 +79,14 @@ export async function runCheckoutActionNextPathTests() {
   assert.match(checkoutPage, /<\/CheckoutFormShell>/);
   assert.doesNotMatch(checkoutPage, /<form action=\{createCartCheckoutAction\}/);
 
+  assert.match(checkoutPage, /function checkoutRequirementCopy/);
+  assert.match(checkoutPage, /requiredFieldsNotice: 'Required fields are marked Required\.'/);
+  assert.match(checkoutPage, /requiredFieldsNotice: 'فیلدهای ضروری با برچسب «ضروری» مشخص شده‌اند\.'/);
+  assert.match(checkoutPage, /function RequiredBadge\(\{ label \}: \{ label: string \}\)/);
+  assert.match(checkoutPage, /<RequiredBadge label=\{requirementCopy\.requiredLabel\} \/>/);
+  assert.match(checkoutPage, /<input name="city" required minLength=\{2\}/);
+  assert.match(checkoutPage, /<input name="phone" required minLength=\{7\}/);
+  assert.match(checkoutPage, /<input name="paymentMethodKey" type="radio" value=\{method\.key\} required/);
+
   console.log('checkout-action-next-path.test.ts passed');
 }
