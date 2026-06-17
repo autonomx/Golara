@@ -22,6 +22,7 @@ export function AdminPaymentMethodSettingsPanel({ methods, databaseReady }: { me
           <div>
             <p className="font-bold text-stone-950">Production evidence readiness</p>
             <p className="mt-1 max-w-3xl leading-6">This read-only gate warns owners when enabled methods are missing operational evidence. Checkout remains non-blocking until the launch gate is explicitly enforced.</p>
+            <p className="mt-2 max-w-3xl text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">Launch checklist: docs/production-payment-gateway-launch-checklist.md · smoke evidence is reviewed per method before sign-off.</p>
           </div>
           <span className="rounded-full bg-stone-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-stone-600">non-blocking</span>
         </div>
