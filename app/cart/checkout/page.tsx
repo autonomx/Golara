@@ -65,6 +65,28 @@ function checkoutPaymentMethodCopy(locale?: string | null) {
   };
 }
 
+function checkoutRequirementCopy(locale?: string | null) {
+  if (locale?.toLowerCase().startsWith('fa')) {
+    return {
+      requiredLabel: 'ضروری',
+      requiredFieldsNotice: 'فیلدهای ضروری با برچسب «ضروری» مشخص شده‌اند.'
+    };
+  }
+
+  return {
+    requiredLabel: 'Required',
+    requiredFieldsNotice: 'Required fields are marked Required.'
+  };
+}
+
+function RequiredBadge({ label }: { label: string }) {
+  return (
+    <span className="rounded-full bg-rosewood/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em] text-rosewood">
+      {label}
+    </span>
+  );
+}
+
 export default async function CartCheckoutPage({ searchParams }: { searchParams: Promise<{ checkout?: string }> }) {
   const [{ checkout }, cartToken, customerToken, paymentMethodSettings] = await Promise.all([searchParams, getCartTokenCookie(), getCustomerSessionCookie(), paymentMethodSettingsService.list()]);
   const [cart, customerSession] = hasDatabase()
@@ -74,6 +96,7 @@ export default async function CartCheckoutPage({ searchParams }: { searchParams:
   const dir = getCustomerCopyDirection(locale);
   const copy = (key: Parameters<typeof getCustomerCopy>[0]) => getCustomerCopy(key, locale);
   const paymentCopy = checkoutPaymentMethodCopy(locale);
+  const requirementCopy = checkoutRequirementCopy(locale);
   const message = getCheckoutFlowCopy(checkout, locale);
   const items = cart?.items ?? [];
   const subtotalCents = items.reduce((sum, item) => sum + item.product.priceCents * item.quantity, 0);
@@ -134,25 +157,38 @@ export default async function CartCheckoutPage({ searchParams }: { searchParams:
           <div className="mt-8 grid gap-6 lg:grid-cols-[2fr_1fr]">
             <CheckoutFormShell locale={locale} className="grid gap-5 rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
               <h2 className="font-display text-4xl text-rosewood">{copy('checkout.recipientDetails')}</h2>
+              <p className="text-sm leading-6 text-stone-600">{requirementCopy.requiredFieldsNotice}</p>
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="grid gap-2 text-sm font-semibold text-rosewood">
-                  {copy('checkout.recipientName')}
+                  <span className="flex flex-wrap items-center gap-2">
+                    {copy('checkout.recipientName')}
+                    <RequiredBadge label={requirementCopy.requiredLabel} />
+                  </span>
                   <input name="name" required minLength={2} defaultValue={defaultName} className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20" />
                 </label>
                 <label className="grid gap-2 text-sm font-semibold text-rosewood">
-                  {copy('common.phone')}
-                  <input name="phone" required defaultValue={defaultPhone} className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20" />
+                  <span className="flex flex-wrap items-center gap-2">
+                    {copy('common.phone')}
+                    <RequiredBadge label={requirementCopy.requiredLabel} />
+                  </span>
+                  <input name="phone" required minLength={7} defaultValue={defaultPhone} className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20" />
                 </label>
                 <label className="grid gap-2 text-sm font-semibold text-rosewood">
                   {copy('checkout.emailOptional')}
                   <input name="email" type="email" defaultValue={defaultEmail} className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20" />
                 </label>
                 <label className="grid gap-2 text-sm font-semibold text-rosewood">
-                  {copy('checkout.city')}
-                  <input name="city" defaultValue={defaultAddress?.city ?? ''} className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20" />
+                  <span className="flex flex-wrap items-center gap-2">
+                    {copy('checkout.city')}
+                    <RequiredBadge label={requirementCopy.requiredLabel} />
+                  </span>
+                  <input name="city" required minLength={2} defaultValue={defaultAddress?.city ?? ''} className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20" />
                 </label>
                 <label className="grid gap-2 text-sm font-semibold text-rosewood md:col-span-2">
-                  {copy('checkout.addressLine1')}
+                  <span className="flex flex-wrap items-center gap-2">
+                    {copy('checkout.addressLine1')}
+                    <RequiredBadge label={requirementCopy.requiredLabel} />
+                  </span>
                   <input name="addressLine1" required minLength={4} defaultValue={defaultAddress?.line1 ?? ''} className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20" />
                 </label>
                 <label className="grid gap-2 text-sm font-semibold text-rosewood md:col-span-2">
@@ -177,7 +213,12 @@ export default async function CartCheckoutPage({ searchParams }: { searchParams:
                 </label>
               </div>
               <fieldset className="grid gap-3 rounded-[1.5rem] border border-rosewood/10 bg-cream/70 p-4">
-                <legend className="px-1 text-sm font-bold uppercase tracking-[0.18em] text-olive">{paymentCopy.title}</legend>
+                <legend className="px-1 text-sm font-bold uppercase tracking-[0.18em] text-olive">
+                  <span className="flex flex-wrap items-center gap-2">
+                    {paymentCopy.title}
+                    <RequiredBadge label={requirementCopy.requiredLabel} />
+                  </span>
+                </legend>
                 <p className="text-sm leading-6 text-stone-700">{paymentCopy.body}</p>
                 {activePaymentMethods.length ? activePaymentMethods.map((method, index) => {
                   const notes = buildPaymentMethodReadinessNotes(method, process.env);
