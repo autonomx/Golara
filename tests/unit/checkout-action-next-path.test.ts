@@ -1,10 +1,15 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { checkoutActionNextPath } from '../../lib/checkout/checkout-action-next-path';
 
 const orderWithLookup = {
   orderNumber: 'GOL-1001',
   publicLookupToken: 'lookup-token'
 };
+
+function source(path: string) {
+  return readFileSync(path, 'utf8');
+}
 
 export async function runCheckoutActionNextPathTests() {
   assert.equal(checkoutActionNextPath(orderWithLookup, {
@@ -48,6 +53,31 @@ export async function runCheckoutActionNextPathTests() {
     status: 'redirect_required',
     redirectUrl: '   '
   }), '/orders/lookup-token');
+
+  const checkoutActions = source('app/cart/checkout/actions.ts');
+  const checkoutPage = source('app/cart/checkout/page.tsx');
+  const checkoutShell = source('app/cart/checkout/CheckoutFormShell.tsx');
+
+  assert.match(checkoutActions, /export type CartCheckoutActionState/);
+  assert.match(checkoutActions, /_previousState: CartCheckoutActionState/);
+  assert.match(checkoutActions, /return checkoutActionState\('name-required'\)/);
+  assert.match(checkoutActions, /return checkoutActionState\('phone-required'\)/);
+  assert.match(checkoutActions, /return checkoutActionState\('city-required'\)/);
+  assert.match(checkoutActions, /return checkoutActionState\('address-required'\)/);
+  assert.match(checkoutActions, /return checkoutActionState\(deliveryDateResult\.checkout\)/);
+  assert.match(checkoutActions, /return checkoutActionState\(deliveryWindowResult\.checkout\)/);
+  assert.match(checkoutActions, /return checkoutActionState\(paymentMethodSelection\.code\)/);
+  assert.doesNotMatch(checkoutActions, /if \(name\.length < 2\) redirect\(checkoutPath\('name-required'\)\)/);
+  assert.doesNotMatch(checkoutActions, /if \(city\.length < 2\) redirect\(checkoutPath\('city-required'\)\)/);
+
+  assert.match(checkoutShell, /'use client'/);
+  assert.match(checkoutShell, /useActionState\(createCartCheckoutAction, initialState\)/);
+  assert.match(checkoutShell, /role="alert"/);
+  assert.match(checkoutShell, /getCheckoutFlowCopy\(state\.checkout, locale\)/);
+
+  assert.match(checkoutPage, /<CheckoutFormShell locale=\{locale\}/);
+  assert.match(checkoutPage, /<\/CheckoutFormShell>/);
+  assert.doesNotMatch(checkoutPage, /<form action=\{createCartCheckoutAction\}/);
 
   console.log('checkout-action-next-path.test.ts passed');
 }
