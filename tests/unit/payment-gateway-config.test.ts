@@ -9,6 +9,11 @@ import {
   summarizePaymentMethodReadinessGates,
   type PaymentMethodReadinessEvidence
 } from '../../lib/settings/payment-method-readiness-gate';
+import {
+  buildPaymentMethodSmokeChecklist,
+  summarizePaymentMethodSmokeChecklists,
+  type PaymentMethodSmokeEvidence
+} from '../../lib/settings/payment-method-smoke-checklist';
 import { DEFAULT_DIGIKALA_PAYMENT_METHOD_SETTINGS } from '../../lib/settings/payment-method-settings';
 
 export async function runPaymentGatewayConfigTests() {
@@ -166,6 +171,115 @@ export async function runPaymentGatewayConfigTests() {
   assert.equal(disabledSummary.disabledCount, 1);
   assert.equal(disabledSummary.methods.find((method) => method.methodKey === 'wallet-credit')?.status, 'disabled');
   assert.equal(disabledSummary.checkoutBlockingCount, 0);
+
+  const gatewaySmoke = buildPaymentMethodSmokeChecklist(gatewayMethod, {
+    env: { ZARINPAL_MERCHANT_ID: 'merchant-1' },
+    readinessEvidence: completeEvidence['iranian-ipg'],
+    smokeEvidence: {
+      checkoutMethodVisible: true,
+      checkoutAttemptPersistsMethodKey: true,
+      customerConfirmationCopy: true,
+      adminOrderVisibility: true,
+      settlementDashboardVisibility: true,
+      reconciliationCsvExport: true,
+      gatewayReturnSmoke: true,
+      gatewayWebhookSmoke: true,
+      gatewayProviderReferenceSmoke: true
+    }
+  });
+  assert.equal(gatewaySmoke.status, 'complete');
+  assert.equal(gatewaySmoke.readinessStatus, 'ready');
+  assert.equal(gatewaySmoke.blocksCheckout, false);
+  assert.deepEqual(gatewaySmoke.missingEvidence, []);
+
+  const manualTransferMethod = DEFAULT_DIGIKALA_PAYMENT_METHOD_SETTINGS.find((method) => method.key === 'bank-transfer');
+  assert.ok(manualTransferMethod);
+  const manualTransferSmoke = buildPaymentMethodSmokeChecklist(manualTransferMethod, {
+    readinessEvidence: completeEvidence['bank-transfer'],
+    smokeEvidence: {
+      checkoutMethodVisible: true,
+      checkoutAttemptPersistsMethodKey: true,
+      customerConfirmationCopy: true,
+      adminOrderVisibility: true,
+      settlementDashboardVisibility: true,
+      reconciliationCsvExport: true,
+      manualTransferInstructionSmoke: true
+    }
+  });
+  assert.equal(manualTransferSmoke.status, 'missing-evidence');
+  assert.deepEqual(manualTransferSmoke.missingEvidence, ['manualTransferReviewSmoke']);
+
+  const allSmokeEvidence: Record<string, PaymentMethodSmokeEvidence> = {
+    'iranian-ipg': {
+      checkoutMethodVisible: true,
+      checkoutAttemptPersistsMethodKey: true,
+      customerConfirmationCopy: true,
+      adminOrderVisibility: true,
+      settlementDashboardVisibility: true,
+      reconciliationCsvExport: true,
+      gatewayReturnSmoke: true,
+      gatewayWebhookSmoke: true,
+      gatewayProviderReferenceSmoke: true
+    },
+    'wallet-credit': {
+      checkoutMethodVisible: true,
+      checkoutAttemptPersistsMethodKey: true,
+      customerConfirmationCopy: true,
+      adminOrderVisibility: true,
+      settlementDashboardVisibility: true,
+      reconciliationCsvExport: true,
+      walletDebitReceiptSmoke: true,
+      walletRefundReceiptSmoke: true
+    },
+    'installment-credit': {
+      checkoutMethodVisible: true,
+      checkoutAttemptPersistsMethodKey: true,
+      customerConfirmationCopy: true,
+      adminOrderVisibility: true,
+      settlementDashboardVisibility: true,
+      reconciliationCsvExport: true,
+      installmentReviewSmoke: true,
+      installmentScheduleSmoke: true
+    },
+    'bank-transfer': {
+      checkoutMethodVisible: true,
+      checkoutAttemptPersistsMethodKey: true,
+      customerConfirmationCopy: true,
+      adminOrderVisibility: true,
+      settlementDashboardVisibility: true,
+      reconciliationCsvExport: true,
+      manualTransferInstructionSmoke: true,
+      manualTransferReviewSmoke: true
+    },
+    'cash-on-delivery': {
+      checkoutMethodVisible: true,
+      checkoutAttemptPersistsMethodKey: true,
+      customerConfirmationCopy: true,
+      adminOrderVisibility: true,
+      settlementDashboardVisibility: true,
+      reconciliationCsvExport: true,
+      codCollectionSmoke: true,
+      codFulfillmentGuardSmoke: true
+    }
+  };
+  const smokeSummary = summarizePaymentMethodSmokeChecklists(DEFAULT_DIGIKALA_PAYMENT_METHOD_SETTINGS, {
+    env: { ZARINPAL_MERCHANT_ID: 'merchant-1' },
+    readinessEvidenceByMethodKey: completeEvidence,
+    smokeEvidenceByMethodKey: allSmokeEvidence
+  });
+  assert.equal(smokeSummary.enabledMethodCount, 5);
+  assert.equal(smokeSummary.completeCount, 5);
+  assert.equal(smokeSummary.missingEvidenceCount, 0);
+  assert.equal(smokeSummary.checkoutBlockingCount, 0);
+  assert.deepEqual(smokeSummary.missingEvidence, []);
+
+  const disabledSmokeSummary = summarizePaymentMethodSmokeChecklists(
+    DEFAULT_DIGIKALA_PAYMENT_METHOD_SETTINGS.map((method) => (method.key === 'wallet-credit' ? { ...method, isActive: false } : method)),
+    { smokeEvidenceByMethodKey: allSmokeEvidence }
+  );
+  assert.equal(disabledSmokeSummary.disabledCount, 1);
+  assert.equal(disabledSmokeSummary.methods.find((method) => method.methodKey === 'wallet-credit')?.status, 'disabled');
+  assert.equal(disabledSmokeSummary.checkoutBlockingCount, 0);
 
   console.log('payment-gateway-config.test.ts passed');
 }
