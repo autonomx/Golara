@@ -13,6 +13,7 @@ type AdminNavKey =
   | 'categories'
   | 'media'
   | 'orders'
+  | 'payment-methods'
   | 'payment-settlement'
   | 'payment-alerts'
   | 'inquiries'
@@ -57,6 +58,7 @@ const navLabels: Record<AdminNavKey, string> = {
   categories: 'Categories',
   media: 'Media library',
   orders: 'Orders',
+  'payment-methods': 'Payment methods',
   'payment-settlement': 'Payment settlement',
   'payment-alerts': 'Payment alerts',
   inquiries: 'Inquiries',
@@ -79,6 +81,7 @@ const sidebarSections = [
   ]},
   { label: 'Customer Ops', items: [
     { href: '/admin/orders', key: 'orders', icon: ShoppingBag },
+    { href: '/admin/payment-methods', key: 'payment-methods', icon: CreditCard },
     { href: '/admin/payments/settlement', key: 'payment-settlement', icon: CreditCard },
     { href: '/admin/payments/alerts', key: 'payment-alerts', icon: Bell },
     { href: '/admin/inquiries', key: 'inquiries', icon: Users },
