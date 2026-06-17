@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 const service = readFileSync('lib/settings/payment-method-settings.ts', 'utf8');
 const action = readFileSync('app/admin/payment-methods/actions.ts', 'utf8');
 const panel = readFileSync('components/admin/AdminPaymentMethodSettingsPanel.tsx', 'utf8');
+const launchChecklist = readFileSync('docs/production-payment-gateway-launch-checklist.md', 'utf8');
 
 for (const fragment of [
   'export type PaymentMethodControlsInput',
@@ -49,9 +50,26 @@ for (const fragment of [
   'Checkout remains non-blocking',
   'readinessSummary.needsEvidenceCount',
   'readinessSummary.checkoutBlockingCount',
-  'readinessGate.missingEvidence.join'
+  'readinessGate.missingEvidence.join',
+  'Launch checklist: docs/production-payment-gateway-launch-checklist.md',
+  'smoke evidence is reviewed per method before sign-off'
 ]) {
   assert.ok(panel.includes(fragment), `Expected payment method readiness warning fragment: ${fragment}`);
+}
+
+for (const fragment of [
+  '## 4. Method-level readiness and smoke evidence',
+  'review `/admin/payment-methods`',
+  'source-controlled smoke checklist for that method',
+  'Gateway/IPG: create a provider-backed checkout',
+  'Wallet/store credit: create a wallet-funded checkout',
+  'Manual transfer: submit reference/proof metadata',
+  'Installment: request approval',
+  'COD: create a COD order',
+  'This P9 readiness gate is advisory in the current codebase',
+  'method-level readiness evidence, smoke-test evidence capture'
+]) {
+  assert.ok(launchChecklist.includes(fragment), `Expected payment launch checklist fragment: ${fragment}`);
 }
 
 console.log('payment-method-admin-controls.test.ts passed');
