@@ -1,22 +1,24 @@
 # Production Payment Gateway Launch Checklist
 
-Last updated: 2026-06-04
+Last updated: 2026-06-16
 
-Use this checklist before enabling `CHECKOUT_MODE="gateway"` in a production deployment. It supplements `docs/PRODUCTION_CHECKLIST.md`, `docs/production-roadmap-phase32-payment-webhooks.md`, `docs/production-roadmap-phase32-payment-webhook-smoke-tests.md`, `docs/production-roadmap-phase32-payment-webhook-validation-evidence.md`, and `docs/production-roadmap-phase32-settlement-migration-contract.md`.
+Use this checklist before enabling `CHECKOUT_MODE="gateway"` in a production deployment or before launching any enabled DigiKala-style payment method as a real customer payment lane. It supplements `docs/PRODUCTION_CHECKLIST.md`, `docs/production-roadmap-phase32-payment-webhooks.md`, `docs/production-roadmap-phase32-payment-webhook-smoke-tests.md`, `docs/production-roadmap-phase32-payment-webhook-validation-evidence.md`, and `docs/production-roadmap-phase32-settlement-migration-contract.md`.
 
-This checklist is not required for an inquiry-first launch where checkout remains `CHECKOUT_MODE="inquiry"`.
+This checklist is not required for an inquiry-first launch where checkout remains `CHECKOUT_MODE="inquiry"` and all payment methods remain operationally disabled.
 
 ## 1. Scope confirmation
 
-Before enabling gateway checkout, record:
+Before enabling production payment lanes, record:
 
 - Target deployment environment.
 - Target git SHA.
-- Enabled providers: Stripe, ZarinPal, or both.
+- Enabled payment method keys from the admin payment method settings panel.
+- Enabled providers: Stripe, ZarinPal/Iranian IPG, wallet/store credit, manual-transfer/card-to-card, installment credit, COD, or another explicitly configured method.
 - Domestic checkout provider and currency.
 - Overseas checkout provider/fallback and currency.
 - Operator responsible for provider dashboard configuration.
 - Operator responsible for database migration verification.
+- Operator responsible for method-level smoke evidence capture.
 
 ## 2. Required gateway environment
 
@@ -75,7 +77,51 @@ Record the completed operator evidence in:
 docs/production-roadmap-phase32-payment-webhook-validation-evidence.md
 ```
 
-## 4. Deploy-readiness expectation
+## 4. Method-level production readiness gate
+
+Before promoting any enabled payment method, review the non-blocking readiness gate in:
+
+```text
+lib/settings/payment-method-readiness-gate.ts
+components/admin/AdminPaymentMethodSettingsPanel.tsx
+```
+
+Expected method-level evidence:
+
+- Gateway methods: merchant credentials, return mapping, webhook mapping, provider reference persistence, and refund/void adapter evidence.
+- Wallet/store-credit methods: ledger capture, refund receipt, and wallet liability dashboard evidence.
+- Manual-transfer/card-to-card methods: customer instructions, verification workflow, settlement totals, and refund/void tracking evidence.
+- Installment methods: review workflow, schedule persistence, receivables dashboard, and customer message evidence.
+- COD methods: collection controls, fulfillment guard, settlement evidence, and customer reminder evidence.
+
+Readiness warnings are visible to owners in the admin payment method settings panel. They are intentionally non-blocking until an operator explicitly treats missing evidence as a launch blocker. Do not interpret `checkoutBlockingCount=0` as production sign-off; it only means the current gate is advisory.
+
+## 5. Method-level smoke checklist
+
+For each enabled method, capture source-controlled smoke evidence using the checklist boundary in:
+
+```text
+lib/settings/payment-method-smoke-checklist.ts
+```
+
+Every enabled method should verify:
+
+- Checkout method is visible to eligible customers.
+- Checkout payment attempt persists the selected method key.
+- Customer confirmation/status copy renders for the selected method.
+- Admin order detail shows method/provider evidence.
+- Settlement dashboard includes the selected method.
+- Reconciliation CSV exports the selected method.
+
+Additional method-specific checks:
+
+- Gateway: return flow, trusted payment event flow, and provider-reference persistence.
+- Wallet/store credit: debit receipt and refund receipt in customer wallet history.
+- Manual transfer: customer transfer instructions and admin review status.
+- Installment: customer approval/rejection/follow-up message and receivables/schedule visibility.
+- COD: collection status visibility and fulfillment guard behavior.
+
+## 6. Deploy-readiness expectation
 
 Before promoting production gateway checkout, run:
 
@@ -89,8 +135,9 @@ Expected result:
 - Gateway-mode production must block when required webhook secrets are missing.
 - Gateway-mode production must block until settlement migration and webhook smoke-test confirmations are true.
 - Gateway-mode production may still warn when inquiry notification mode is log-only.
+- Method readiness and smoke checklist evidence remains advisory until an operator records launch sign-off.
 
-## 5. Provider dashboard checks
+## 7. Provider dashboard checks
 
 Stripe:
 
@@ -104,26 +151,29 @@ ZarinPal:
 - Shared signing/HMAC secret is copied to `ZARINPAL_WEBHOOK_SECRET` for the same environment.
 - Test successful, duplicate/replayed, failed/cancelled, and invalid-signature events.
 
-## 6. Admin verification
+## 8. Admin verification
 
-After provider-generated events are received, verify:
+After payment events and staff workflows are exercised, verify:
 
-- `/admin/payments/settlement` shows the latest settlement records.
-- The settlement summary source badge reports durable settlement records after `PaymentSettlementReconciliation` rows exist.
+- `/admin/payment-methods` shows readiness summary counts and no unexpected enabled-method evidence warnings.
+- `/admin/payments/settlement` shows the latest settlement records and P7 dashboard panels.
+- `/admin/payments/reconciliation/csv` exports method-level, manual-transfer, wallet, COD, and installment summaries.
 - `/admin/payments/alerts` shows expected failed/missing/stale/mismatch alerts and no unexpected alert for a successful payment.
 - Duplicate webhook replay does not double-apply payment/order transitions.
 - Missing or unknown provider references do not mutate unrelated orders.
+- Customer account order/wallet surfaces render P8 method-specific confirmation, instruction, receipt, installment, COD, and notification evidence copy where applicable.
 
-## 7. Rollback notes
+## 9. Rollback notes
 
-If gateway checkout fails validation:
+If gateway checkout or an enabled payment lane fails validation:
 
-1. Switch `CHECKOUT_MODE` back to `inquiry` or `assisted`.
-2. Keep provider dashboard endpoints disabled or pointed at staging until fixed.
-3. Preserve recorded webhook events and settlement records for diagnosis.
-4. Do not manually mark orders paid unless the provider dashboard confirms payment capture/settlement.
-5. Re-run the smoke-test runbook before re-enabling gateway mode.
+1. Switch `CHECKOUT_MODE` back to `inquiry` or `assisted` when online checkout is unsafe.
+2. Disable the affected method in `/admin/payment-methods` while preserving method evidence for diagnosis.
+3. Keep provider dashboard endpoints disabled or pointed at staging until fixed.
+4. Preserve recorded webhook events, payment attempts, order timelines, wallet ledgers, COD collection evidence, installment schedules, and settlement records for diagnosis.
+5. Do not manually mark orders paid unless the provider dashboard or method-specific operational evidence confirms payment capture/settlement.
+6. Re-run the method-level smoke-test checklist before re-enabling the payment lane.
 
 ## Current status
 
-This checklist is repository documentation and does not claim production/staging validation has been completed. Provider-generated webhook validation, target-environment migration verification, evidence capture, and final gateway launch sign-off remain operator tasks.
+This checklist is repository documentation and does not claim production/staging validation has been completed. Provider-generated webhook validation, target-environment migration verification, method-level smoke evidence capture, admin readiness warning review, and final payment launch sign-off remain operator tasks.
