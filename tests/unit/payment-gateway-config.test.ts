@@ -4,6 +4,12 @@ import {
   getPaymentGatewayReadiness,
   selectPaymentGatewayForOrder
 } from '../../lib/checkout/payment-gateway-config';
+import {
+  evaluatePaymentMethodReadinessGate,
+  summarizePaymentMethodReadinessGates,
+  type PaymentMethodReadinessEvidence
+} from '../../lib/settings/payment-method-readiness-gate';
+import { DEFAULT_DIGIKALA_PAYMENT_METHOD_SETTINGS } from '../../lib/settings/payment-method-settings';
 
 export async function runPaymentGatewayConfigTests() {
   assert.deepEqual(getPaymentGatewayConfig({}), {
@@ -85,6 +91,81 @@ export async function runPaymentGatewayConfigTests() {
     CHECKOUT_OVERSEAS_FALLBACK: 'whatsapp'
   });
   assert.equal(selectPaymentGatewayForOrder({ region: 'overseas', config: fallbackConfig }), 'whatsapp');
+
+  const gatewayMethod = DEFAULT_DIGIKALA_PAYMENT_METHOD_SETTINGS.find((method) => method.key === 'iranian-ipg');
+  assert.ok(gatewayMethod);
+  const gatewayGate = evaluatePaymentMethodReadinessGate(gatewayMethod, {
+    evidence: {
+      gatewayReturnMapping: true,
+      gatewayWebhookMapping: true,
+      gatewayProviderReference: true,
+      gatewayRefundVoidAdapter: true
+    }
+  });
+  assert.equal(gatewayGate.status, 'needs-evidence');
+  assert.equal(gatewayGate.blocksCheckout, false);
+  assert.deepEqual(gatewayGate.missingEvidence, ['gatewayMerchantCredentials']);
+
+  const completeGatewayGate = evaluatePaymentMethodReadinessGate(gatewayMethod, {
+    env: { ZARINPAL_MERCHANT_ID: 'merchant-1' },
+    evidence: {
+      gatewayReturnMapping: true,
+      gatewayWebhookMapping: true,
+      gatewayProviderReference: true,
+      gatewayRefundVoidAdapter: true
+    }
+  });
+  assert.equal(completeGatewayGate.status, 'ready');
+  assert.deepEqual(completeGatewayGate.missingEvidence, []);
+
+  const completeEvidence: Record<string, PaymentMethodReadinessEvidence> = {
+    'iranian-ipg': {
+      gatewayReturnMapping: true,
+      gatewayWebhookMapping: true,
+      gatewayProviderReference: true,
+      gatewayRefundVoidAdapter: true
+    },
+    'wallet-credit': {
+      walletLedgerCapture: true,
+      walletRefundReceipt: true,
+      walletLiabilityDashboard: true
+    },
+    'installment-credit': {
+      installmentReviewWorkflow: true,
+      installmentSchedulePersistence: true,
+      installmentReceivablesDashboard: true,
+      installmentCustomerMessages: true
+    },
+    'bank-transfer': {
+      manualTransferInstructions: true,
+      manualTransferVerification: true,
+      manualTransferSettlementTotals: true,
+      manualTransferRefundTracking: true
+    },
+    'cash-on-delivery': {
+      codCollectionControls: true,
+      codFulfillmentGuard: true,
+      codSettlementEvidence: true,
+      codCustomerReminder: true
+    }
+  };
+  const summary = summarizePaymentMethodReadinessGates(DEFAULT_DIGIKALA_PAYMENT_METHOD_SETTINGS, {
+    env: { ZARINPAL_MERCHANT_ID: 'merchant-1' },
+    evidenceByMethodKey: completeEvidence
+  });
+  assert.equal(summary.enabledMethodCount, 5);
+  assert.equal(summary.readyCount, 5);
+  assert.equal(summary.needsEvidenceCount, 0);
+  assert.equal(summary.checkoutBlockingCount, 0);
+  assert.deepEqual(summary.missingEvidence, []);
+
+  const disabledSummary = summarizePaymentMethodReadinessGates(
+    DEFAULT_DIGIKALA_PAYMENT_METHOD_SETTINGS.map((method) => (method.key === 'wallet-credit' ? { ...method, isActive: false } : method)),
+    { env: { ZARINPAL_MERCHANT_ID: 'merchant-1' }, evidenceByMethodKey: completeEvidence }
+  );
+  assert.equal(disabledSummary.disabledCount, 1);
+  assert.equal(disabledSummary.methods.find((method) => method.methodKey === 'wallet-credit')?.status, 'disabled');
+  assert.equal(disabledSummary.checkoutBlockingCount, 0);
 
   console.log('payment-gateway-config.test.ts passed');
 }

@@ -1,6 +1,6 @@
 # DigiKala-Style Payment System — Remaining Phases
 
-Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, the COD fulfillment completion guard, COD settlement/reconciliation fields, method-specific gateway adapter mapping, gateway production readiness evidence fields, provider reference persistence per method, gateway return method-key mapping, gateway webhook method-key mapping, gateway fallback/disable behavior, the P6 gateway refund/void adapter boundary, the P6 manual-transfer refund tracking metadata boundary, the P6 manual-transfer refund action persistence, the P6 installment cancellation/refund metadata boundary, the P6 installment reversal plan/schedule persistence boundary, the P6 installment cancellation/refund owner admin action, the P6 COD adjustment/refund metadata boundary, the P6 COD adjustment owner/admin action, the P6 admin refund/reversal status timeline, the P7 method-level settlement summary, the P7 manual-transfer settlement totals, the P7 wallet liability balance, the P7 COD collection totals, the P7 installment receivables summary, the P7 exportable reconciliation CSV formatter, the P7 owner-only admin reconciliation CSV route, the P7 dashboard panels for settlement summaries, the P8 method-specific order confirmation copy, the P8 manual-transfer instruction copy, the P8 wallet debit/refund receipt copy, the P8 installment approval/rejection messages, the P8 COD collection reminders, the P8 notification persistence and retry evidence boundary, the P8 transport retry wiring for customer notifications, and the P8 admin delivery visibility read model for customer notifications.
+Status: updated after customer-facing installment status, staff collection tracking, the P3 cancellation/refund deferral decision, COD selected-method state, the COD delivery collection read model, COD staff collection controls, the COD fulfillment completion guard, COD settlement/reconciliation fields, method-specific gateway adapter mapping, gateway production readiness evidence fields, provider reference persistence per method, gateway return method-key mapping, gateway webhook method-key mapping, gateway fallback/disable behavior, the P6 gateway refund/void adapter boundary, the P6 manual-transfer refund tracking metadata boundary, the P6 manual-transfer refund action persistence, the P6 installment cancellation/refund metadata boundary, the P6 installment reversal plan/schedule persistence boundary, the P6 installment cancellation/refund owner admin action, the P6 COD adjustment/refund metadata boundary, the P6 COD adjustment owner/admin action, the P6 admin refund/reversal status timeline, the P7 method-level settlement summary, the P7 manual-transfer settlement totals, the P7 wallet liability balance, the P7 COD collection totals, the P7 installment receivables summary, the P7 exportable reconciliation CSV formatter, the P7 owner-only admin reconciliation CSV route, the P7 dashboard panels for settlement summaries, the P8 method-specific order confirmation copy, the P8 manual-transfer instruction copy, the P8 wallet debit/refund receipt copy, the P8 installment approval/rejection messages, the P8 COD collection reminders, the P8 notification persistence and retry evidence boundary, the P8 transport retry wiring for customer notifications, the P8 admin delivery visibility read model for customer notifications, and the P9 readiness gate per payment method boundary.
 
 ## Completed foundations
 
@@ -112,6 +112,8 @@ Status: updated after customer-facing installment status, staff collection track
 - Completed checkpoint: Start **Phase P8 — transport retry wiring for customer notifications** is now complete.
 - Admin delivery visibility for customer notifications normalizes queued, failed, retry-pending, sent, and skipped communication evidence for admin order/payment surfaces.
 - Completed checkpoint: Start **Phase P8 — admin delivery visibility for customer notifications** is now complete.
+- Readiness gate per payment method evaluates configured payment methods against required production evidence without blocking checkout.
+- Completed checkpoint: Start **Phase P9 — readiness gate per payment method** is now complete.
 
 ## Remaining implementation phases
 
@@ -164,7 +166,7 @@ Deliverables:
 Extend existing payment production gates to cover all configured methods.
 
 Deliverables:
-- Readiness gate per payment method.
+- Done: readiness gate per payment method.
 - Admin warning when enabled methods lack required operational evidence.
 - Smoke-test checklist per method.
 - Launch checklist updates.
@@ -172,4 +174,4 @@ Deliverables:
 
 ## Recommended next slice
 
-Start **Phase P9 — readiness gate per payment method**. Keep it narrow: add a read-only readiness-gate helper that evaluates configured methods against required production evidence without blocking checkout yet.
+Start **Phase P9 — admin warning when enabled methods lack required operational evidence**. Keep it narrow: surface the read-only readiness gate summary in admin settings without blocking checkout yet.
