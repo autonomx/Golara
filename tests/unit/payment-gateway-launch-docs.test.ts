@@ -23,6 +23,19 @@ export async function runPaymentGatewayLaunchDocsTests() {
   assert.match(checklist, /evidence capture/);
   assert.match(checklist, /Roll back to `CHECKOUT_MODE="inquiry"`|Switch `CHECKOUT_MODE` back to `inquiry`/);
 
+  assert.match(checklist, /lib\/settings\/payment-method-readiness-gate\.ts/);
+  assert.match(checklist, /lib\/settings\/payment-method-smoke-checklist\.ts/);
+  assert.match(checklist, /components\/admin\/AdminPaymentMethodSettingsPanel\.tsx/);
+  assert.match(checklist, /\/admin\/payment-methods/);
+  assert.match(checklist, /\/admin\/payments\/reconciliation\/csv/);
+  assert.match(checklist, /wallet liability dashboard evidence/);
+  assert.match(checklist, /manual-transfer\/card-to-card methods/);
+  assert.match(checklist, /installment methods/);
+  assert.match(checklist, /COD methods/);
+  assert.match(checklist, /Customer account order\/wallet surfaces render P8 method-specific confirmation/);
+  assert.match(checklist, /method-level smoke-test checklist/);
+  assert.match(checklist, /checkoutBlockingCount=0/);
+
   assert.match(productionChecklist, /docs\/production-payment-gateway-launch-checklist\.md/);
   assert.match(productionChecklist, /docs\/production-roadmap-phase32-payment-webhook-validation-evidence\.md/);
   assert.match(productionChecklist, /docs\/production-roadmap-phase32-settlement-migration-contract\.md/);
