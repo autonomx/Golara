@@ -81,6 +81,14 @@ docs/production-roadmap-phase32-payment-webhook-validation-evidence.md
 
 Before final launch sign-off, review `/admin/payment-methods` and record the non-blocking readiness summary for every enabled payment method.
 
+Source-controlled readiness surfaces:
+
+```text
+lib/settings/payment-method-readiness-gate.ts
+lib/settings/payment-method-smoke-checklist.ts
+components/admin/AdminPaymentMethodSettingsPanel.tsx
+```
+
 For each enabled method, confirm:
 
 - The readiness warning panel has no unexpected missing operational evidence.
