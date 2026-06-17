@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { createCartCheckoutAction } from '@/app/cart/checkout/actions';
+import { CheckoutFormShell } from '@/app/cart/checkout/CheckoutFormShell';
 import { SiteHeader } from '@/components/SiteHeader';
 import { getCartTokenCookie } from '@/lib/cart/cart-cookie';
 import { getCartByToken } from '@/lib/cart/cart-repository';
@@ -132,7 +132,7 @@ export default async function CartCheckoutPage({ searchParams }: { searchParams:
 
         {items.length > 0 ? (
           <div className="mt-8 grid gap-6 lg:grid-cols-[2fr_1fr]">
-            <form action={createCartCheckoutAction} className="grid gap-5 rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
+            <CheckoutFormShell locale={locale} className="grid gap-5 rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm">
               <h2 className="font-display text-4xl text-rosewood">{copy('checkout.recipientDetails')}</h2>
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="grid gap-2 text-sm font-semibold text-rosewood">
@@ -237,7 +237,7 @@ export default async function CartCheckoutPage({ searchParams }: { searchParams:
               <button type="submit" className="rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30">
                 {copy('checkout.createOrderAndPay')}
               </button>
-            </form>
+            </CheckoutFormShell>
 
             <aside className="rounded-[2rem] border border-rosewood/10 bg-white p-6 shadow-sm lg:sticky lg:top-24 lg:self-start">
               <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">{copy('checkout.orderSummary')}</p>

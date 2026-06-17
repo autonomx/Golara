@@ -29,7 +29,7 @@ export async function runCheckoutCreationBoundaryTests() {
   assertOrder(checkoutActionSource, 'await completeCartCheckout(token)', 'await clearCartTokenCookie()', 'checkout action');
   assert.match(
     checkoutActionSource,
-    /const paymentMethodSelection = resolveCheckoutPaymentMethodSelection\(await paymentMethodSettingsService\.list\(\), paymentMethodKey\);\s*if \(!paymentMethodSelection\.ok\) redirect\(checkoutPath\(paymentMethodSelection\.code\)\);/s,
+    /const paymentMethodSelection = resolveCheckoutPaymentMethodSelection\(await paymentMethodSettingsService\.list\(\), paymentMethodKey\);\s*if \(!paymentMethodSelection\.ok\) return checkoutActionState\(paymentMethodSelection\.code\);/s,
     'checkout action must validate the selected payment method before order/payment creation'
   );
   assert.match(
