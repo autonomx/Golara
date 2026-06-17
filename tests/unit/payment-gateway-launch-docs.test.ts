@@ -7,6 +7,8 @@ function source(path: string) {
 
 export async function runPaymentGatewayLaunchDocsTests() {
   const checklist = source('docs/production-payment-gateway-launch-checklist.md');
+  const evidenceBundle = source('docs/production-payment-launch-evidence-bundle.md');
+  const remainingPhases = source('docs/digikala-style-payment-remaining-phases.md');
   const productionChecklist = source('docs/PRODUCTION_CHECKLIST.md');
   const phase32 = source('docs/production-roadmap-phase32-payment-webhooks.md');
   const envExample = source('.env.example');
@@ -22,6 +24,7 @@ export async function runPaymentGatewayLaunchDocsTests() {
   assert.match(checklist, /docs\/production-roadmap-phase32-payment-webhook-smoke-tests\.md/);
   assert.match(checklist, /docs\/production-roadmap-phase32-payment-webhook-validation-evidence\.md/);
   assert.match(checklist, /docs\/production-roadmap-phase32-settlement-migration-contract\.md/);
+  assert.match(checklist, /docs\/production-payment-launch-evidence-bundle\.md/);
   assert.match(checklist, /admin\/payments\/settlement/);
   assert.match(checklist, /admin\/payments\/alerts/);
   assert.match(checklist, /evidence capture/);
@@ -39,6 +42,32 @@ export async function runPaymentGatewayLaunchDocsTests() {
   assert.match(checklist, /Customer-facing order copy and receipt\/reminder copy/);
   assert.match(checklist, /method-specific smoke checklist/);
   assert.match(checklist, /advisory in the current codebase/);
+
+  assert.match(evidenceBundle, /Production Payment Launch Evidence Bundle/);
+  assert.match(evidenceBundle, /does \*\*not\*\* claim that staging or production validation has been completed/);
+  assert.match(evidenceBundle, /Target environment and deployment URL/);
+  assert.match(evidenceBundle, /missing operational evidence keys/);
+  assert.match(evidenceBundle, /lib\/settings\/payment-method-readiness-gate\.ts/);
+  assert.match(evidenceBundle, /lib\/settings\/payment-method-smoke-checklist\.ts/);
+  assert.match(evidenceBundle, /\/admin\/payment-methods/);
+  assert.match(evidenceBundle, /\/admin\/payments\/settlement/);
+  assert.match(evidenceBundle, /\/admin\/payments\/reconciliation\/csv/);
+  assert.match(evidenceBundle, /Notification delivery evidence/);
+  assert.match(evidenceBundle, /Gateway\/IPG/);
+  assert.match(evidenceBundle, /Wallet\/store credit/);
+  assert.match(evidenceBundle, /Manual transfer\/card-to-card/);
+  assert.match(evidenceBundle, /Installment\/credit/);
+  assert.match(evidenceBundle, /COD/);
+  assert.match(evidenceBundle, /docs\/LAUNCH_AUDIT\.md/);
+  assert.match(evidenceBundle, /docs\/PRODUCTION_CHECKLIST\.md/);
+  assert.match(evidenceBundle, /docs\/production-payment-gateway-launch-checklist\.md/);
+  assert.match(evidenceBundle, /APP_MODE="production" npm run check:deploy-readiness/);
+  assert.match(evidenceBundle, /PAYMENT_SETTLEMENT_MIGRATION_CONFIRMED=true/);
+  assert.match(evidenceBundle, /Target-environment payment validation/);
+
+  assert.match(remainingPhases, /P10 production launch evidence bundle template/);
+  assert.match(remainingPhases, /Completed checkpoint: Start \*\*Phase P10 — production launch evidence bundle\*\* is now complete/);
+  assert.match(remainingPhases, /Collect target-environment P10 evidence outside source control/);
 
   assert.match(readinessGate, /blocksCheckout: false/);
   assert.match(readinessGate, /checkoutBlockingCount: 0/);
