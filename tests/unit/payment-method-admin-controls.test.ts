@@ -49,7 +49,9 @@ for (const fragment of [
   'Checkout remains non-blocking',
   'readinessSummary.needsEvidenceCount',
   'readinessSummary.checkoutBlockingCount',
-  'readinessGate.missingEvidence.join'
+  'readinessGate.missingEvidence.join',
+  'Launch checklist: docs/production-payment-gateway-launch-checklist.md',
+  'smoke evidence is reviewed per method before sign-off'
 ]) {
   assert.ok(panel.includes(fragment), `Expected payment method readiness warning fragment: ${fragment}`);
 }
