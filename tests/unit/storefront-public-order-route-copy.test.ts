@@ -65,7 +65,11 @@ for (const fragment of [
   'localeHref(token, \'en\', result)',
   'localeHref(token, \'fa\', result)',
   'aria-current={!isFa ? \'page\' : undefined}',
-  'aria-current={isFa ? \'page\' : undefined}'
+  'aria-current={isFa ? \'page\' : undefined}',
+  "const metricCardClass = 'min-w-0 rounded-3xl border border-rosewood/10 bg-cream p-5';",
+  "const totalValueClass = 'mt-2 max-w-full break-words font-display text-2xl leading-tight text-rosewood sm:text-3xl [overflow-wrap:anywhere]';",
+  '<div className="mt-8 grid gap-4 md:grid-cols-2">',
+  '<p className={totalValueClass} dir="ltr">{formatMinorUnitAmount(order.totalCents, order.currency)}</p>'
 ]) {
   has(fragment);
 }

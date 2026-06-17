@@ -8,6 +8,8 @@ import { getPublicOrderByToken } from '@/lib/checkout/public-order-repository';
 export const dynamic = 'force-dynamic';
 
 const languageLinkClass = 'rounded-full border border-rosewood/15 px-4 py-2 text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20';
+const metricCardClass = 'min-w-0 rounded-3xl border border-rosewood/10 bg-cream p-5';
+const totalValueClass = 'mt-2 max-w-full break-words font-display text-2xl leading-tight text-rosewood sm:text-3xl [overflow-wrap:anywhere]';
 
 function formatDate(value: Date, locale?: string) {
   return new Intl.DateTimeFormat(locale || 'en-CA', {
@@ -97,20 +99,20 @@ export default async function PublicOrderStatusPage({ params, searchParams }: { 
           <ResultBanner result={result} locale={normalizedLocale} isFa={isFa} />
           <PaymentGuidancePanel status={latestAttempt?.status} locale={normalizedLocale} title={copy.paymentGuidance} />
 
-          <div className="mt-8 grid gap-4 md:grid-cols-4">
-            <div className="rounded-3xl border border-rosewood/10 bg-cream p-5">
+          <div className="mt-8 grid gap-4 md:grid-cols-2">
+            <div className={metricCardClass}>
               <p className={smallLabelClass(isFa)}>{copy.total}</p>
-              <p className="mt-2 font-display text-3xl text-rosewood" dir="ltr">{formatMinorUnitAmount(order.totalCents, order.currency)}</p>
+              <p className={totalValueClass} dir="ltr">{formatMinorUnitAmount(order.totalCents, order.currency)}</p>
             </div>
-            <div className="rounded-3xl border border-rosewood/10 bg-cream p-5">
+            <div className={metricCardClass}>
               <p className={smallLabelClass(isFa)}>{copy.orderMode}</p>
               <p className="mt-2 text-sm font-semibold capitalize text-rosewood">{labelFor({}, order.checkoutMode)}</p>
             </div>
-            <div className="rounded-3xl border border-rosewood/10 bg-cream p-5">
+            <div className={metricCardClass}>
               <p className={smallLabelClass(isFa)}>{copy.fulfillment}</p>
               <p className="mt-2 text-sm font-semibold text-rosewood">{fulfillmentStatusLabel(order.fulfillmentStatus, normalizedLocale)}</p>
             </div>
-            <div className="rounded-3xl border border-rosewood/10 bg-cream p-5">
+            <div className={metricCardClass}>
               <p className={smallLabelClass(isFa)}>{copy.created}</p>
               <p className="mt-2 text-sm font-semibold text-rosewood">{formatDate(order.createdAt, normalizedLocale)}</p>
             </div>
