@@ -6,6 +6,7 @@ const action = readFileSync('app/admin/payment-methods/actions.ts', 'utf8');
 const panel = readFileSync('components/admin/AdminPaymentMethodSettingsPanel.tsx', 'utf8');
 const paymentMethodsPage = readFileSync('app/admin/payment-methods/page.tsx', 'utf8');
 const adminPageShell = readFileSync('components/admin/AdminPageShell.tsx', 'utf8');
+const adminConsolePage = readFileSync('app/admin/AdminConsolePage.tsx', 'utf8');
 const adminPageShellCopy = readFileSync('lib/localization/admin-page-shell-copy.ts', 'utf8');
 const launchChecklist = readFileSync('docs/production-payment-gateway-launch-checklist.md', 'utf8');
 
@@ -76,6 +77,14 @@ for (const fragment of [
   "{ href: '/admin/payment-methods', key: 'payment-methods', icon: CreditCard }"
 ]) {
   assert.ok(adminPageShell.includes(fragment), `Expected payment methods sidebar fragment: ${fragment}`);
+}
+
+for (const fragment of [
+  "'payment-methods': 'Payment methods'",
+  "'payment-methods': 'روش‌های پرداخت'",
+  "{ href: '/admin/payment-methods', key: 'payment-methods', tab: 'sales' as AdminTab, icon: CreditCard }"
+]) {
+  assert.ok(adminConsolePage.includes(fragment), `Expected root admin console payment methods sidebar fragment: ${fragment}`);
 }
 
 for (const fragment of [
