@@ -6,6 +6,7 @@ const action = readFileSync('app/admin/payment-methods/actions.ts', 'utf8');
 const panel = readFileSync('components/admin/AdminPaymentMethodSettingsPanel.tsx', 'utf8');
 const paymentMethodsPage = readFileSync('app/admin/payment-methods/page.tsx', 'utf8');
 const adminPageShell = readFileSync('components/admin/AdminPageShell.tsx', 'utf8');
+const adminSidebarLayoutController = readFileSync('components/admin/AdminSidebarLayoutController.tsx', 'utf8');
 const adminPageShellCopy = readFileSync('lib/localization/admin-page-shell-copy.ts', 'utf8');
 const launchChecklist = readFileSync('docs/production-payment-gateway-launch-checklist.md', 'utf8');
 
@@ -76,6 +77,16 @@ for (const fragment of [
   "{ href: '/admin/payment-methods', key: 'payment-methods', icon: CreditCard }"
 ]) {
   assert.ok(adminPageShell.includes(fragment), `Expected payment methods sidebar fragment: ${fragment}`);
+}
+
+for (const fragment of [
+  "pathname === '/admin'",
+  "href=\"/admin/payment-methods\"",
+  'admin-root-payment-methods-link',
+  "main#main-content[data-admin-root-sidebar-payment-methods='true'] aside nav a[href='/admin/payments/settlement']",
+  "delete main.dataset.adminRootSidebarPaymentMethods"
+]) {
+  assert.ok(adminSidebarLayoutController.includes(fragment), `Expected root admin payment methods sidebar compatibility fragment: ${fragment}`);
 }
 
 for (const fragment of [
