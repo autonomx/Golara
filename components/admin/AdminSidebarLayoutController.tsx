@@ -26,6 +26,21 @@ export function AdminSidebarLayoutController() {
   const showToggle = pathname !== '/admin/login';
   const showRootPaymentMethodsLink = pathname === '/admin';
 
+  useEffect(() => {
+    const main = document.querySelector<HTMLElement>('main#main-content');
+    if (!main) return;
+
+    if (showRootPaymentMethodsLink) {
+      main.dataset.adminRootSidebarPaymentMethods = 'true';
+      return () => {
+        delete main.dataset.adminRootSidebarPaymentMethods;
+      };
+    }
+
+    delete main.dataset.adminRootSidebarPaymentMethods;
+    return undefined;
+  }, [showRootPaymentMethodsLink]);
+
   return (
     <>
       <style>{`
