@@ -41,5 +41,13 @@ export async function runAdminPageShellCopyTests() {
   assert.match(shellSource, /t\('media'\)/);
   assert.doesNotMatch(shellSource, /const copy = \{/);
 
+  const globalStyles = readFileSync('app/globals.css', 'utf8');
+  assert.match(globalStyles, /#main-content table tbody tr \{/);
+  assert.match(globalStyles, /#main-content table tbody tr:hover,/);
+  assert.match(globalStyles, /#main-content table tbody tr:focus-within \{/);
+  assert.match(globalStyles, /transform: translateY\(-2px\) scale\(1\.005\);/);
+  assert.match(globalStyles, /box-shadow: 0 12px 24px rgba\(68, 64, 60, 0\.14\);/);
+  assert.match(globalStyles, /prefers-reduced-motion: reduce/);
+
   console.log('admin-page-shell-copy.test.ts passed');
 }
