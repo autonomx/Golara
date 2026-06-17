@@ -41,4 +41,17 @@ for (const fragment of [
   assert.ok(panel.includes(fragment), `Expected payment method panel fragment: ${fragment}`);
 }
 
+for (const fragment of [
+  "summarizePaymentMethodReadinessGates(methods, { env: process.env })",
+  'Production evidence readiness',
+  'Enabled methods missing operational evidence',
+  'Missing operational evidence',
+  'Checkout remains non-blocking',
+  'readinessSummary.needsEvidenceCount',
+  'readinessSummary.checkoutBlockingCount',
+  'readinessGate.missingEvidence.join'
+]) {
+  assert.ok(panel.includes(fragment), `Expected payment method readiness warning fragment: ${fragment}`);
+}
+
 console.log('payment-method-admin-controls.test.ts passed');
