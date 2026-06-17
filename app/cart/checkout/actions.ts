@@ -14,6 +14,14 @@ import { assertSameOriginServerAction } from '@/lib/server-action-origin';
 import { warnWithRedactedError } from '@/lib/security/redacted-logging';
 import { paymentMethodSettingsService } from '@/lib/settings/payment-method-settings';
 
+export type CartCheckoutActionState = {
+  checkout: string | null;
+};
+
+function checkoutActionState(checkout: string): CartCheckoutActionState {
+  return { checkout };
+}
+
 function stringField(formData: FormData, name: string, fallback = '') {
   const value = formData.get(name);
   if (typeof value !== 'string') return fallback;
@@ -28,19 +36,27 @@ function checkoutPath(status: string) {
   return `/cart/checkout?checkout=${encodeURIComponent(status)}`;
 }
 
-function optionalDeliveryDate(formData: FormData) {
+type DeliveryDateResult =
+  | { ok: true; date?: Date }
+  | { ok: false; checkout: string };
+
+function optionalDeliveryDate(formData: FormData): DeliveryDateResult {
   const raw = stringField(formData, 'deliveryDate');
-  if (!raw) return undefined;
+  if (!raw) return { ok: true };
   const date = new Date(raw);
-  if (Number.isNaN(date.getTime())) redirect(checkoutPath('delivery-date-invalid'));
-  return date;
+  if (Number.isNaN(date.getTime())) return { ok: false, checkout: 'delivery-date-invalid' };
+  return { ok: true, date };
 }
 
-function deliveryWindowField(formData: FormData) {
+type DeliveryWindowResult =
+  | { ok: true; deliveryWindow: string }
+  | { ok: false; checkout: string };
+
+function deliveryWindowField(formData: FormData): DeliveryWindowResult {
   const value = stringField(formData, 'deliveryWindow');
-  if (!value) return '';
-  if (!/^\d{2}:\d{2}-\d{2}:\d{2}$/.test(value)) redirect(checkoutPath('delivery-window-invalid'));
-  return value;
+  if (!value) return { ok: true, deliveryWindow: '' };
+  if (!/^\d{2}:\d{2}-\d{2}:\d{2}$/.test(value)) return { ok: false, checkout: 'delivery-window-invalid' };
+  return { ok: true, deliveryWindow: value };
 }
 
 function manualTransferMetadata(formData: FormData, methodType: string) {
@@ -68,7 +84,10 @@ function installmentRequestMetadata(formData: FormData, methodType: string) {
   };
 }
 
-export async function createCartCheckoutAction(formData: FormData) {
+export async function createCartCheckoutAction(
+  _previousState: CartCheckoutActionState,
+  formData: FormData
+): Promise<CartCheckoutActionState> {
   // Enforce same-origin policy for checkout to prevent CSRF attacks
   await assertSameOriginServerAction();
   if (!hasDatabase()) redirect(checkoutPath('database-required'));
@@ -82,20 +101,25 @@ export async function createCartCheckoutAction(formData: FormData) {
   const city = stringField(formData, 'city');
   const line1 = stringField(formData, 'addressLine1');
   const paymentMethodKey = stringField(formData, 'paymentMethodKey');
-  const deliveryDate = optionalDeliveryDate(formData);
-  const deliveryWindow = deliveryWindowField(formData);
+  const deliveryDateResult = optionalDeliveryDate(formData);
+  const deliveryWindowResult = deliveryWindowField(formData);
 
-  if (name.length < 2) redirect(checkoutPath('name-required'));
-  if (phone.length < 7) redirect(checkoutPath('phone-required'));
-  if (city.length < 2) redirect(checkoutPath('city-required'));
-  if (line1.length < 4) redirect(checkoutPath('address-required'));
+  if (!deliveryDateResult.ok) return checkoutActionState(deliveryDateResult.checkout);
+  if (!deliveryWindowResult.ok) return checkoutActionState(deliveryWindowResult.checkout);
+  if (name.length < 2) return checkoutActionState('name-required');
+  if (phone.length < 7) return checkoutActionState('phone-required');
+  if (city.length < 2) return checkoutActionState('city-required');
+  if (line1.length < 4) return checkoutActionState('address-required');
 
   const paymentMethodSelection = resolveCheckoutPaymentMethodSelection(await paymentMethodSettingsService.list(), paymentMethodKey);
-  if (!paymentMethodSelection.ok) redirect(checkoutPath(paymentMethodSelection.code));
+  if (!paymentMethodSelection.ok) return checkoutActionState(paymentMethodSelection.code);
 
+  const deliveryDate = deliveryDateResult.date;
+  const deliveryWindow = deliveryWindowResult.deliveryWindow;
   let redirectTarget = '';
   let claimAcquired = false;
   let checkoutCompleted = false;
+  let formState: CartCheckoutActionState | null = null;
 
   try {
     const cart = await claimCartForCheckout(token);
@@ -161,12 +185,13 @@ export async function createCartCheckoutAction(formData: FormData) {
     }
   } catch (error) {
     warnWithRedactedError('cart', 'failed to create checkout order', error);
-    redirectTarget = checkoutPath('failed');
+    formState = checkoutActionState('failed');
   }
 
   if (claimAcquired && !checkoutCompleted) {
     await releaseCartCheckoutClaim(token);
   }
 
+  if (formState) return formState;
   redirect(redirectTarget);
 }
