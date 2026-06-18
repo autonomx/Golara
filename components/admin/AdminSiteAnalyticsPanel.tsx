@@ -9,11 +9,12 @@ const copy = {
   en: {
     eyebrow: 'Site analytics',
     title: 'Storefront traffic and funnel',
-    body: 'Privacy-safe first-party site events for page views, product views, search, cart, and checkout activity. Admin routes are excluded.',
+    body: 'Privacy-safe first-party site events for page views, product/category views, search, cart, checkout, and payment-method selection. Admin routes are excluded.',
     totalEvents: 'Total site events',
     recentEvents: 'Last 30 days',
     uniquePaths: 'Unique paths',
     pageViews: 'Page views',
+    productViews: 'Product views',
     eventTypes: 'Events by type',
     eventTypesBody: 'Shows which storefront interactions are being captured.',
     topPages: 'Top pages',
@@ -24,7 +25,10 @@ const copy = {
     checkoutFunnelBody: 'High-level funnel from page/product views through cart and checkout completion.',
     topSearchTerms: 'Top search terms',
     topSearchTermsBody: 'Search terms submitted by customers, capped and normalized for safe reporting.',
-    productViews: 'Product views',
+    topProducts: 'Top product views',
+    topProductsBody: 'Product detail views grouped by product slug from storefront traffic.',
+    topCategories: 'Top category views',
+    topCategoriesBody: 'Category detail views grouped by category slug from storefront traffic.',
     addToCart: 'Add to cart',
     checkoutStarted: 'Checkout started',
     checkoutCompleted: 'Checkout completed',
@@ -34,11 +38,12 @@ const copy = {
   fa: {
     eyebrow: 'تحلیل سایت',
     title: 'ترافیک فروشگاه و قیف خرید',
-    body: 'رویدادهای داخلی و حریم‌خصوصی‌محور برای بازدید صفحه، بازدید محصول، جستجو، سبد و پرداخت. مسیرهای مدیریت ثبت نمی‌شوند.',
+    body: 'رویدادهای داخلی و حریم‌خصوصی‌محور برای بازدید صفحه، محصول/دسته، جستجو، سبد، پرداخت و انتخاب روش پرداخت. مسیرهای مدیریت ثبت نمی‌شوند.',
     totalEvents: 'کل رویدادهای سایت',
     recentEvents: '۳۰ روز گذشته',
     uniquePaths: 'مسیرهای یکتا',
     pageViews: 'بازدید صفحه',
+    productViews: 'بازدید محصول',
     eventTypes: 'رویدادها بر اساس نوع',
     eventTypesBody: 'نشان می‌دهد کدام تعامل‌های فروشگاه ثبت می‌شوند.',
     topPages: 'صفحه‌های برتر',
@@ -49,7 +54,10 @@ const copy = {
     checkoutFunnelBody: 'نمای کلی قیف از بازدید صفحه/محصول تا سبد و تکمیل پرداخت.',
     topSearchTerms: 'عبارت‌های جستجوی برتر',
     topSearchTermsBody: 'عبارت‌های جستجوی ارسال‌شده توسط مشتریان، محدود و نرمال‌شده برای گزارش امن.',
-    productViews: 'بازدید محصول',
+    topProducts: 'بازدید محصولات برتر',
+    topProductsBody: 'بازدید صفحه محصول بر اساس اسلاگ محصول در ترافیک فروشگاه.',
+    topCategories: 'بازدید دسته‌های برتر',
+    topCategoriesBody: 'بازدید صفحه دسته بر اساس اسلاگ دسته در ترافیک فروشگاه.',
     addToCart: 'افزودن به سبد',
     checkoutStarted: 'شروع پرداخت',
     checkoutCompleted: 'تکمیل پرداخت',
@@ -103,6 +111,16 @@ export async function AdminSiteAnalyticsPanel({ summary }: { summary: SiteAnalyt
     value: row.count,
     displayValue: String(row.count)
   }));
+  const productRows = summary.topProductViews.map((row) => ({
+    label: row.label,
+    value: row.count,
+    displayValue: String(row.count)
+  }));
+  const categoryRows = summary.topCategoryViews.map((row) => ({
+    label: row.label,
+    value: row.count,
+    displayValue: String(row.count)
+  }));
   const searchRows = summary.topSearchTerms.map((row) => ({
     label: row.label,
     value: row.count,
@@ -125,11 +143,12 @@ export async function AdminSiteAnalyticsPanel({ summary }: { summary: SiteAnalyt
           <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">{labels.body}</p>
         </div>
       </div>
-      <div className="mt-6 grid gap-3 md:grid-cols-4">
+      <div className="mt-6 grid gap-3 md:grid-cols-5">
         <Metric label={labels.totalEvents} value={summary.totalEvents} />
         <Metric label={labels.recentEvents} value={summary.recentEvents} />
         <Metric label={labels.uniquePaths} value={summary.uniquePaths} />
         <Metric label={labels.pageViews} value={summary.checkoutFunnel.pageViews} />
+        <Metric label={labels.productViews} value={summary.checkoutFunnel.productViews} />
       </div>
       <div className="mt-6 rounded-lg border border-stone-200 bg-stone-50 p-4">
         <div className="grid gap-4 xl:grid-cols-3">
@@ -167,6 +186,20 @@ export async function AdminSiteAnalyticsPanel({ summary }: { summary: SiteAnalyt
             title={labels.topSearchTerms}
             description={labels.topSearchTermsBody}
             rows={searchRows}
+            emptyLabel={labels.noChartData}
+            valueLabel={labels.count}
+          />
+          <AdminAnalyticsBarChart
+            title={labels.topProducts}
+            description={labels.topProductsBody}
+            rows={productRows}
+            emptyLabel={labels.noChartData}
+            valueLabel={labels.count}
+          />
+          <AdminAnalyticsBarChart
+            title={labels.topCategories}
+            description={labels.topCategoriesBody}
+            rows={categoryRows}
             emptyLabel={labels.noChartData}
             valueLabel={labels.count}
           />
