@@ -7,7 +7,7 @@ import { getStorefrontCopyDirection } from '@/lib/localization/storefront-copy';
 import { createAdminPageShellTranslator } from '@/lib/localization/admin-page-shell-copy';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 
-type AdminNavKey =
+export type AdminNavKey =
   | 'overview'
   | 'products'
   | 'categories'
