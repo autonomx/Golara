@@ -1,13 +1,15 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { addOrderLineItemAction, addOrderTimelineNoteAction, markOrderManualPaymentAction, refundManualPaymentAttemptAction, removeOrderLineItemAction, updateOrderCustomerAssignmentAction, updateOrderDiscountAction, updateOrderFulfillmentAction, updateOrderLineItemQuantityAction, voidManualPaymentAttemptAction } from '@/app/admin/order-actions';
-import { SiteHeader } from '@/components/SiteHeader';
-import { assertAdminRole } from '@/lib/admin-auth';
+import { AdminPageShell } from '@/components/admin/AdminPageShell';
+import { assertAdminRole, isAdminAuthConfigured } from '@/lib/admin-auth';
 import { formatMinorUnitAmount } from '@/lib/catalog';
 import { listAdminOrderCustomerAssignmentOptions } from '@/lib/checkout/admin-order-assignment-repository';
 import { isAdminOrderLineEditable, listAdminOrderLineProductOptions } from '@/lib/checkout/admin-order-line-repository';
 import { getAdminCheckoutOrder } from '@/lib/checkout/admin-order-repository';
 import { CHECKOUT_FULFILLMENT_STATUSES } from '@/lib/checkout/checkout-state-machine';
+import { listAdminCategories, listAdminProducts, listMedia } from '@/lib/cms/catalog-repository';
+import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 
 export const dynamic = 'force-dynamic';
 
@@ -203,12 +205,16 @@ function StatusBanner({ status }: { status?: string }) {
   if (status === 'fulfillment-updated') {
     return <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">Fulfillment details updated.</div>;
   }
+  if (status === 'fulfillment-status-invalid') {
+    return <div className="mb-6 rounded-3xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-950">Delivered was not saved. For cash-on-delivery orders, record cash collection as collected or waived before selecting Delivered.</div>;
+  }
   return null;
 }
 
 export default async function AdminOrderDetailPage({ params, searchParams }: { params: Promise<{ orderId: string }>; searchParams: Promise<{ status?: string }> }) {
-  await assertAdminRole('staff');
-  const [{ orderId }, { status }] = await Promise.all([params, searchParams]);
+  const identity = await assertAdminRole('staff');
+  const locale = await resolveStorefrontLocale();
+  const [{ orderId }, { status }, products, categories, media] = await Promise.all([params, searchParams, listAdminProducts(), listAdminCategories(), listMedia()]);
   const order = await getAdminCheckoutOrder(orderId);
   if (!order) notFound();
   const canEditLineItems = isAdminOrderLineEditable(order.status);
@@ -225,21 +231,31 @@ export default async function AdminOrderDetailPage({ params, searchParams }: { p
   const canMarkManualPayment = order.status !== 'cancelled' && latestPaymentStatus !== 'paid';
 
   return (
-    <main id="main-content" tabIndex={-1}>
-      <SiteHeader />
-      <section className="mx-auto max-w-7xl px-5 py-14">
+    <AdminPageShell
+      activeTab="sales"
+      activeNavKey="orders"
+      authenticated={true}
+      authConfigured={isAdminAuthConfigured()}
+      adminLabel={identity.label ?? identity.email}
+      locale={locale}
+      returnTo={`/admin/orders/${order.id}`}
+      productCount={products.length}
+      categoryCount={categories.length}
+      mediaCount={media.length}
+    >
+      <div className="mx-auto w-full max-w-7xl">
         <StatusBanner status={status} />
         <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">Admin order</p>
-            <h1 className="mt-3 font-display text-5xl text-rosewood">{order.orderNumber}</h1>
+            <h1 className="mt-3 break-words font-display text-4xl text-rosewood sm:text-5xl">{order.orderNumber}</h1>
             <p className="mt-4 text-stone-600">Created {formatDate(order.createdAt)} · {order.checkoutMode} · {order.status} · {order.fulfillmentStatus}</p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Link href={`/admin/orders/${order.id}/packing-slip`} className="rounded-full bg-rosewood px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20">
               Packing slip
             </Link>
-            <Link href="/admin#orders" className="rounded-full border border-rosewood/15 bg-white px-5 py-3 text-sm font-semibold text-rosewood">
+            <Link href="/admin/orders" className="rounded-full border border-rosewood/15 bg-white px-5 py-3 text-sm font-semibold text-rosewood">
               Back to orders
             </Link>
           </div>
@@ -301,7 +317,7 @@ export default async function AdminOrderDetailPage({ params, searchParams }: { p
                   </tbody>
                 </table>
               </div>
-              <div className="mt-5 grid gap-2 text-sm text-stone-700 sm:max-w-sm sm:ml-auto">
+              <div className="mt-5 grid gap-2 text-sm text-stone-700 sm:ml-auto sm:max-w-sm">
                 <div className="flex justify-between"><span>Subtotal</span><strong>{formatMinorUnitAmount(order.subtotalCents, order.currency)}</strong></div>
                 <div className="flex justify-between"><span>Delivery</span><strong>{formatMinorUnitAmount(order.deliveryCents, order.currency)}</strong></div>
                 <div className="flex justify-between"><span>Discount</span><strong>{formatMinorUnitAmount(order.discountCents, order.currency)}</strong></div>
@@ -347,8 +363,13 @@ export default async function AdminOrderDetailPage({ params, searchParams }: { p
                 <p><strong>Courier phone:</strong> {order.courierPhone || 'Not set'}</p>
                 <p><strong>Note:</strong> {order.fulfillmentNote || 'None'}</p>
               </div>
+              <div id="cash-delivery-checkpoint" className="mt-4 rounded-3xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
+                <p className="font-semibold">Cash-on-delivery checkpoint</p>
+                <p className="mt-1">For cash-on-delivery orders, record cash collection as collected or waived before selecting Delivered.</p>
+                <Link href="/admin/payments/cod-collections" className="mt-3 inline-flex rounded-full border border-amber-300 bg-white px-4 py-2 text-xs font-semibold text-amber-950">Open cash collections</Link>
+              </div>
               <form action={fulfillmentAction} className="mt-5 grid gap-3 rounded-3xl border border-rosewood/10 bg-cream p-4">
-                <label className="grid gap-2 text-sm font-semibold text-rosewood">Fulfillment status<select name="fulfillmentStatus" defaultValue={order.fulfillmentStatus} className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800">{fulfillmentStatuses.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
+                <label className="grid gap-2 text-sm font-semibold text-rosewood">Fulfillment status<select name="fulfillmentStatus" defaultValue={order.fulfillmentStatus} aria-describedby="cash-delivery-checkpoint" className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800">{fulfillmentStatuses.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
                 <label className="grid gap-2 text-sm font-semibold text-rosewood">Courier name<input name="courierName" defaultValue={order.courierName || ''} className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800" /></label>
                 <label className="grid gap-2 text-sm font-semibold text-rosewood">Courier phone<input name="courierPhone" defaultValue={order.courierPhone || ''} className="rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800" /></label>
                 <label className="grid gap-2 text-sm font-semibold text-rosewood">Fulfillment note<textarea name="fulfillmentNote" defaultValue={order.fulfillmentNote || ''} className="min-h-24 rounded-2xl border border-rosewood/15 bg-white px-4 py-3 text-stone-800" /></label>
@@ -416,7 +437,7 @@ export default async function AdminOrderDetailPage({ params, searchParams }: { p
             </section>
           </aside>
         </div>
-      </section>
-    </main>
+      </div>
+    </AdminPageShell>
   );
 }
