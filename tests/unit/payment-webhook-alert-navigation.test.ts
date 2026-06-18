@@ -11,6 +11,7 @@ function assertAdminCopyKey(adminCopy: string, key: string) {
 
 export async function runPaymentWebhookAlertNavigationTests() {
   const adminConsole = source('app/admin/AdminConsolePage.tsx');
+  const adminPageShell = source('components/admin/AdminPageShell.tsx');
   const alertPage = source('app/admin/payments/alerts/page.tsx');
   const adminCopy = source('lib/localization/admin-copy.ts');
   const routeCopyKeys = [
@@ -24,13 +25,14 @@ export async function runPaymentWebhookAlertNavigationTests() {
     'Admin authentication is not configured yet.'
   ];
 
-  assert.match(adminConsole, /Bell/);
-  assert.ok(adminConsole.includes("href: '/admin/payments/alerts'"));
-  assert.ok(adminConsole.includes("key: 'payment-alerts'"));
-  assert.ok(adminConsole.includes("'payment-alerts': 'Payment alerts'"));
-  assert.ok(adminConsole.includes("'payment-alerts': 'هشدارهای پرداخت'"));
+  assert.ok(adminConsole.includes('AdminPageShell, type AdminNavKey'));
+  assert.ok(adminConsole.includes("'payment-alerts': '/admin/payments/alerts'"));
   assert.match(adminConsole, /Payment webhook alerts/);
   assert.match(adminConsole, /هشدارهای وبهوک پرداخت/);
+  assert.match(adminPageShell, /Bell/);
+  assert.ok(adminPageShell.includes("href: '/admin/payments/alerts'"));
+  assert.ok(adminPageShell.includes("key: 'payment-alerts'"));
+  assert.ok(adminPageShell.includes("'payment-alerts': 'Payment alerts'"));
   assert.ok(alertPage.includes('AdminPageShell'));
   assert.ok(alertPage.includes('activeNavKey="payment-alerts"'));
   assert.match(alertPage, /AdminPaymentWebhookAlertsPanel/);

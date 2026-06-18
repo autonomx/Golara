@@ -5,6 +5,7 @@ const service = readFileSync('lib/settings/payment-method-settings.ts', 'utf8');
 const action = readFileSync('app/admin/payment-methods/actions.ts', 'utf8');
 const panel = readFileSync('components/admin/AdminPaymentMethodSettingsPanel.tsx', 'utf8');
 const paymentMethodsPage = readFileSync('app/admin/payment-methods/page.tsx', 'utf8');
+const adminConsole = readFileSync('app/admin/AdminConsolePage.tsx', 'utf8');
 const adminPageShell = readFileSync('components/admin/AdminPageShell.tsx', 'utf8');
 const adminSidebarLayoutController = readFileSync('components/admin/AdminSidebarLayoutController.tsx', 'utf8');
 const adminPageShellCopy = readFileSync('lib/localization/admin-page-shell-copy.ts', 'utf8');
@@ -66,12 +67,24 @@ for (const fragment of [
   "activeTab=\"sales\"",
   "returnTo=\"/admin/payment-methods\"",
   'AdminPageShell',
-  'AdminPaymentMethodSettingsPanel'
+  'AdminPaymentMethodSettingsPanel',
+  'Configure checkout payment methods independently from provider credentials.'
 ]) {
   assert.ok(paymentMethodsPage.includes(fragment), `Expected payment methods page shell fragment: ${fragment}`);
 }
 
 for (const fragment of [
+  'AdminPageShell, type AdminNavKey',
+  "'payment-methods': '/admin/payment-methods'",
+  "'payment-methods': { eyebrow: 'Admin / Payments', title: 'Payment methods'",
+  "resolvedActiveNavKey = isAdminNavKey(activeNavKey) ? activeNavKey : defaultNavKeyForTab(activeTab)",
+  '<AdminPageShell activeTab={activeTab} activeNavKey={resolvedActiveNavKey}'
+]) {
+  assert.ok(adminConsole.includes(fragment), `Expected root admin shared shell payment methods fragment: ${fragment}`);
+}
+
+for (const fragment of [
+  'export type AdminNavKey',
   "| 'payment-methods'",
   "'payment-methods': 'Payment methods'",
   "{ href: '/admin/payment-methods', key: 'payment-methods', icon: CreditCard }"
@@ -81,12 +94,11 @@ for (const fragment of [
 
 for (const fragment of [
   "pathname === '/admin'",
-  "href=\"/admin/payment-methods\"",
   'admin-root-payment-methods-link',
   "main#main-content[data-admin-root-sidebar-payment-methods='true'] aside nav a[href='/admin/payments/settlement']",
-  "delete main.dataset.adminRootSidebarPaymentMethods"
+  'adminRootSidebarPaymentMethods'
 ]) {
-  assert.ok(adminSidebarLayoutController.includes(fragment), `Expected root admin payment methods sidebar compatibility fragment: ${fragment}`);
+  assert.ok(!adminSidebarLayoutController.includes(fragment), `Root admin must not use payment methods compatibility overlay fragment: ${fragment}`);
 }
 
 for (const fragment of [

@@ -115,12 +115,14 @@ export function runLocalizationBundleSourceGuardTests() {
 }
 
 {
-  const content = source('app/admin/AdminConsolePage.tsx');
-  includes(content, "import { LanguageSwitcher } from '@/components/LanguageSwitcher';", 'admin console should reuse the storefront language switcher');
-  includes(content, 'function adminReturnPath', 'admin console should build a return path for locale switching');
-  includes(content, '<LanguageSwitcher locale={locale} returnTo={returnTo} />', 'admin top bar should render the locale switcher');
-  includes(content, 'returnTo={languageReturnTo}', 'admin console should keep locale switching on the active admin page');
-  includes(content, 'locale={locale}', 'admin console should pass active locale into child admin modules');
+  const adminConsole = source('app/admin/AdminConsolePage.tsx');
+  const adminPageShell = source('components/admin/AdminPageShell.tsx');
+  includes(adminConsole, "import { AdminPageShell, type AdminNavKey } from '@/components/admin/AdminPageShell';", 'admin console should reuse the shared admin page shell');
+  includes(adminConsole, 'function adminReturnPath', 'admin console should build a return path for locale switching');
+  includes(adminConsole, 'returnTo={languageReturnTo}', 'admin console should keep locale switching on the active admin page');
+  includes(adminConsole, 'locale={locale}', 'admin console should pass active locale into child admin modules');
+  includes(adminPageShell, "import { LanguageSwitcher } from '@/components/LanguageSwitcher';", 'shared admin shell should reuse the storefront language switcher');
+  includes(adminPageShell, '<LanguageSwitcher locale={locale} returnTo={returnTo} />', 'shared admin top bar should render the locale switcher');
 }
 
 {
