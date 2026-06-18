@@ -71,7 +71,7 @@ const copy = {
   }
 } as const;
 
-type SitePanelCopy = typeof copy.en;
+type SitePanelCopy = Record<string, string>;
 
 function localeKey(locale?: SupportedLocale | string | null): AdminLocale {
   return locale?.toLowerCase().startsWith('fa') ? 'fa' : 'en';
