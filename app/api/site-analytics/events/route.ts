@@ -26,6 +26,7 @@ const MAX_LOCALE_LENGTH = 16;
 const MAX_ID_LENGTH = 80;
 const MAX_SEARCH_TERM_LENGTH = 120;
 const MAX_SESSION_LENGTH = 96;
+const MAX_ATTRIBUTION_LENGTH = 80;
 
 function normalizeString(value: unknown, maxLength: number) {
   if (typeof value !== 'string') return undefined;
@@ -46,10 +47,22 @@ function normalizeEventType(value: unknown): SiteAnalyticsEventType | undefined 
 }
 
 function normalizeMetadata(value: unknown) {
-  const source = typeof value === 'object' && value && !Array.isArray(value) ? value as { paymentMethodKey?: unknown } : {};
+  const source = typeof value === 'object' && value && !Array.isArray(value)
+    ? value as {
+      paymentMethodKey?: unknown;
+      utmSource?: unknown;
+      utmMedium?: unknown;
+      utmCampaign?: unknown;
+      referrerDomain?: unknown;
+    }
+    : {};
   return {
     capturedBy: 'first_party_site_analytics',
-    paymentMethodKey: normalizeString(source.paymentMethodKey, MAX_ID_LENGTH) ?? null
+    paymentMethodKey: normalizeString(source.paymentMethodKey, MAX_ID_LENGTH) ?? null,
+    utmSource: normalizeString(source.utmSource, MAX_ATTRIBUTION_LENGTH) ?? null,
+    utmMedium: normalizeString(source.utmMedium, MAX_ATTRIBUTION_LENGTH) ?? null,
+    utmCampaign: normalizeString(source.utmCampaign, MAX_ATTRIBUTION_LENGTH) ?? null,
+    referrerDomain: normalizeString(source.referrerDomain, MAX_ATTRIBUTION_LENGTH) ?? null
   };
 }
 
