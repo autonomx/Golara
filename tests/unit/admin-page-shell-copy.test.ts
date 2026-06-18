@@ -90,6 +90,12 @@ export async function runAdminPageShellCopyTests() {
   assert.match(analyticsRouteSource, /Download business CSV/);
   assert.match(analyticsRouteSource, /Download site CSV/);
   assert.match(analyticsRouteSource, /raw visitor sessions are not exported/);
+  assert.match(analyticsRouteSource, /id="analytics-privacy-retention"/);
+  assert.match(analyticsRouteSource, /Privacy and retention/);
+  assert.match(analyticsRouteSource, /NEXT_PUBLIC_SITE_ANALYTICS_ENABLED=false/);
+  assert.match(analyticsRouteSource, /raw site events up to 180 days/);
+  assert.match(analyticsRouteSource, /site-analytics-privacy-retention-policy\.md/);
+  assert.match(analyticsRouteSource, /sectionHref\('analytics-privacy-retention', rangeDays\)/);
   assert.match(analyticsRouteSource, /id="analytics-section-index"/);
   assert.match(analyticsRouteSource, /sectionHref\('order-analytics', rangeDays\)/);
   assert.match(analyticsRouteSource, /sectionHref\('business-analytics-charts', rangeDays\)/);
@@ -102,6 +108,16 @@ export async function runAdminPageShellCopyTests() {
   assert.match(analyticsRouteSource, /sectionHref\('readiness-analytics', rangeDays\)/);
   assert.match(analyticsRouteSource, /aria-label=\{labels\.sectionLabel\}/);
   assert.match(analyticsRouteSource, /Jump directly to the analytics area you need/);
+
+  const policySource = readFileSync('docs/site-analytics-privacy-retention-policy.md', 'utf8');
+  assert.match(policySource, /not a third-party tracking system/);
+  assert.match(policySource, /Do Not Track/);
+  assert.match(policySource, /raw event retention/);
+  assert.match(policySource, /NEXT_PUBLIC_SITE_ANALYTICS_ENABLED=false/);
+
+  const publicPolicySource = readFileSync('public/docs/site-analytics-privacy-retention-policy.md', 'utf8');
+  assert.match(publicPolicySource, /Aggregate CSV exports/);
+  assert.match(publicPolicySource, /raw visitor sessions/);
 
   const analyticsExportRouteSource = readFileSync('app/admin/analytics/export/route.ts', 'utf8');
   assert.match(analyticsExportRouteSource, /assertAdminRole\('owner'\)/);
