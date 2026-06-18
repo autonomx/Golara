@@ -29,32 +29,31 @@ const copy = {
     excludesCancelledRefunded: 'excludes cancelled/refunded',
     averageOrderValue: 'Average order value',
     openOrders: 'Open orders',
-    recentOrders: 'Recent orders',
-    recentRevenue: 'Recent revenue',
-    last30Days: 'last 30 days',
+    recentOrders: 'Range orders',
+    recentRevenue: 'Range revenue',
     completed: 'Completed',
     cancelled: 'Cancelled',
     currency: 'Currency',
     orders: 'Orders',
     aov: 'AOV',
     businessCharts: 'Business analytics charts',
-    businessChartsBody: 'Fast visual breakdowns for order state, revenue distribution, operational flow, payment method mix, discount usage, and 30-day trends, with accessible data tables included.',
-    trendCharts: '30-day trend charts',
-    trendChartsBody: 'Daily order, revenue, and average order value trends for the latest rolling 30-day window.',
+    businessChartsBody: 'Fast visual breakdowns for order state, revenue distribution, operational flow, payment method mix, discount usage, and selected-range trends, with accessible data tables included.',
+    trendCharts: 'Trend charts',
+    trendChartsBody: 'Daily order, revenue, and average order value trends for the selected analytics range.',
     operationalCharts: 'Operational breakdown charts',
-    operationalChartsBody: 'Highlights where orders sit operationally, which payment methods are being used, and whether discounts are materially affecting the order sample.',
+    operationalChartsBody: 'Highlights where orders sit operationally, which payment methods are being used, and whether discounts are materially affecting the selected order sample.',
     ordersOverTime: 'Orders over time',
-    ordersOverTimeBody: 'Daily order count for the latest 30 days.',
+    ordersOverTimeBody: 'Daily order count for the selected analytics range.',
     revenueOverTime: 'Revenue over time',
-    revenueOverTimeBody: 'Eligible daily revenue for the latest 30 days, excluding cancelled/refunded/voided orders.',
+    revenueOverTimeBody: 'Eligible daily revenue for the selected range, excluding cancelled/refunded/voided orders.',
     aovOverTime: 'Average order value over time',
-    aovOverTimeBody: 'Daily average order value based on eligible revenue and order count.',
+    aovOverTimeBody: 'Daily average order value based on eligible revenue and order count for the selected range.',
     statusBreakdown: 'Orders by status',
-    statusBreakdownBody: 'Shows how the current order backlog is distributed across lifecycle states.',
+    statusBreakdownBody: 'Shows how the selected order sample is distributed across lifecycle states.',
     revenueByCurrency: 'Revenue by currency',
-    revenueByCurrencyBody: 'Eligible revenue grouped by currency for the most recent order sample.',
+    revenueByCurrencyBody: 'Eligible revenue grouped by currency for the selected order sample.',
     fulfillmentByStatus: 'Fulfillment by status',
-    fulfillmentByStatusBody: 'Shows where orders are sitting in the fulfillment workflow.',
+    fulfillmentByStatusBody: 'Shows where selected-range orders are sitting in the fulfillment workflow.',
     paymentProviderMix: 'Payment method mix',
     paymentProviderMixBody: 'Counts payment attempts by provider/method so staff can see how customers are paying.',
     discountImpact: 'Discount usage impact',
@@ -77,32 +76,31 @@ const copy = {
     excludesCancelledRefunded: 'بدون سفارش‌های لغوشده یا بازپرداخت‌شده',
     averageOrderValue: 'میانگین ارزش سفارش',
     openOrders: 'سفارش‌های باز',
-    recentOrders: 'سفارش‌های اخیر',
-    recentRevenue: 'درآمد اخیر',
-    last30Days: '۳۰ روز گذشته',
+    recentOrders: 'سفارش‌های بازه',
+    recentRevenue: 'درآمد بازه',
     completed: 'تکمیل‌شده',
     cancelled: 'لغوشده',
     currency: 'ارز',
     orders: 'سفارش‌ها',
     aov: 'میانگین سفارش',
     businessCharts: 'نمودارهای تحلیل کسب‌وکار',
-    businessChartsBody: 'نمای سریع وضعیت سفارش، توزیع درآمد، جریان عملیات، ترکیب روش پرداخت، مصرف تخفیف و روند ۳۰ روزه، همراه با جدول داده دسترس‌پذیر.',
-    trendCharts: 'نمودار روند ۳۰ روزه',
-    trendChartsBody: 'روند روزانه سفارش، درآمد و میانگین ارزش سفارش برای بازه ۳۰ روزه اخیر.',
+    businessChartsBody: 'نمای سریع وضعیت سفارش، توزیع درآمد، جریان عملیات، ترکیب روش پرداخت، مصرف تخفیف و روند بازه انتخاب‌شده، همراه با جدول داده دسترس‌پذیر.',
+    trendCharts: 'نمودار روند',
+    trendChartsBody: 'روند روزانه سفارش، درآمد و میانگین ارزش سفارش برای بازه انتخاب‌شده.',
     operationalCharts: 'نمودارهای تفکیک عملیاتی',
     operationalChartsBody: 'نشان می‌دهد سفارش‌ها در کدام مرحله عملیاتی هستند، مشتریان از چه روش‌های پرداختی استفاده می‌کنند و تخفیف‌ها چه اثری روی نمونه سفارش‌ها دارند.',
     ordersOverTime: 'سفارش‌ها در طول زمان',
-    ordersOverTimeBody: 'تعداد سفارش روزانه برای ۳۰ روز اخیر.',
+    ordersOverTimeBody: 'تعداد سفارش روزانه برای بازه انتخاب‌شده.',
     revenueOverTime: 'درآمد در طول زمان',
-    revenueOverTimeBody: 'درآمد روزانه قابل محاسبه برای ۳۰ روز اخیر، بدون سفارش‌های لغوشده، بازپرداخت‌شده یا باطل‌شده.',
+    revenueOverTimeBody: 'درآمد روزانه قابل محاسبه برای بازه انتخاب‌شده، بدون سفارش‌های لغوشده، بازپرداخت‌شده یا باطل‌شده.',
     aovOverTime: 'میانگین ارزش سفارش در طول زمان',
-    aovOverTimeBody: 'میانگین روزانه ارزش سفارش بر اساس درآمد قابل محاسبه و تعداد سفارش.',
+    aovOverTimeBody: 'میانگین روزانه ارزش سفارش بر اساس درآمد قابل محاسبه و تعداد سفارش برای بازه انتخاب‌شده.',
     statusBreakdown: 'سفارش‌ها بر اساس وضعیت',
-    statusBreakdownBody: 'نشان می‌دهد بار سفارش فعلی بین وضعیت‌های چرخه سفارش چگونه توزیع شده است.',
+    statusBreakdownBody: 'نشان می‌دهد نمونه سفارش انتخاب‌شده بین وضعیت‌های چرخه سفارش چگونه توزیع شده است.',
     revenueByCurrency: 'درآمد بر اساس ارز',
-    revenueByCurrencyBody: 'درآمد قابل محاسبه بر اساس ارز برای نمونه اخیر سفارش‌ها.',
+    revenueByCurrencyBody: 'درآمد قابل محاسبه بر اساس ارز برای نمونه سفارش انتخاب‌شده.',
     fulfillmentByStatus: 'ارسال بر اساس وضعیت',
-    fulfillmentByStatusBody: 'نشان می‌دهد سفارش‌ها در کدام مرحله اجرای سفارش قرار دارند.',
+    fulfillmentByStatusBody: 'نشان می‌دهد سفارش‌های بازه انتخاب‌شده در کدام مرحله اجرای سفارش قرار دارند.',
     paymentProviderMix: 'ترکیب روش پرداخت',
     paymentProviderMixBody: 'تلاش‌های پرداخت را بر اساس ارائه‌دهنده/روش می‌شمارد تا تیم بداند مشتریان چگونه پرداخت می‌کنند.',
     discountImpact: 'اثر مصرف تخفیف',
@@ -136,6 +134,10 @@ function formatDateLabel(value: string, locale: SupportedLocale | string | null 
   return new Intl.DateTimeFormat(localeKey(locale) === 'fa' ? 'fa-IR' : 'en-CA', { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(date);
 }
 
+function formatRangeLabel(days: number, locale: SupportedLocale | string | null | undefined) {
+  return localeKey(locale) === 'fa' ? `${days} روز گذشته` : `last ${days} days`;
+}
+
 function Metric({ label, value, detail }: { label: string; value: string | number; detail?: string }) {
   return (
     <div className="rounded-md border border-stone-200 bg-stone-50 p-3 text-sm">
@@ -150,6 +152,7 @@ export async function AdminOrderRevenueSummaryPanel({ summary }: { summary: Orde
   const locale = await resolveStorefrontLocale();
   const labels = copy[localeKey(locale)];
   const primaryCurrency = summary.primaryCurrency;
+  const rangeLabel = formatRangeLabel(summary.analyticsRangeDays, locale);
   const dailyTrendRows = summary.recentDaily.map((point) => ({ ...point, label: formatDateLabel(point.date, locale) }));
   const orderTrendChartRows = dailyTrendRows.map((point) => ({
     label: point.label,
@@ -222,21 +225,26 @@ export async function AdminOrderRevenueSummaryPanel({ summary }: { summary: Orde
             <h2 className="mt-1 text-2xl font-bold text-stone-950">{labels.title}</h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">{labels.body}</p>
           </div>
-          <span className="rounded-full bg-olive/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-olive">
-            {primaryCurrency}
-          </span>
+          <div className="flex flex-wrap gap-2">
+            <span className="rounded-full bg-stone-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-stone-600">
+              {rangeLabel}
+            </span>
+            <span className="rounded-full bg-olive/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-olive">
+              {primaryCurrency}
+            </span>
+          </div>
         </div>
         <div className="mt-6 grid gap-3 md:grid-cols-4">
-          <Metric label={labels.totalOrders} value={summary.totalOrders} />
-          <Metric label={labels.revenue} value={formatRevenueCents(summary.totalRevenueCents, primaryCurrency)} detail={labels.excludesCancelledRefunded} />
-          <Metric label={labels.averageOrderValue} value={formatRevenueCents(summary.averageOrderValueCents, primaryCurrency)} />
-          <Metric label={labels.openOrders} value={summary.openOrders} />
+          <Metric label={labels.totalOrders} value={summary.totalOrders} detail={rangeLabel} />
+          <Metric label={labels.revenue} value={formatRevenueCents(summary.totalRevenueCents, primaryCurrency)} detail={`${labels.excludesCancelledRefunded} · ${rangeLabel}`} />
+          <Metric label={labels.averageOrderValue} value={formatRevenueCents(summary.averageOrderValueCents, primaryCurrency)} detail={rangeLabel} />
+          <Metric label={labels.openOrders} value={summary.openOrders} detail={rangeLabel} />
         </div>
         <div className="mt-3 grid gap-3 md:grid-cols-4">
-          <Metric label={labels.recentOrders} value={summary.recentOrders} detail={labels.last30Days} />
-          <Metric label={labels.recentRevenue} value={formatRevenueCents(summary.recentRevenueCents, primaryCurrency)} detail={labels.last30Days} />
-          <Metric label={labels.completed} value={summary.completedOrders} />
-          <Metric label={labels.cancelled} value={summary.cancelledOrders} />
+          <Metric label={labels.recentOrders} value={summary.recentOrders} detail={rangeLabel} />
+          <Metric label={labels.recentRevenue} value={formatRevenueCents(summary.recentRevenueCents, primaryCurrency)} detail={rangeLabel} />
+          <Metric label={labels.completed} value={summary.completedOrders} detail={rangeLabel} />
+          <Metric label={labels.cancelled} value={summary.cancelledOrders} detail={rangeLabel} />
         </div>
         <div id="business-analytics-charts" className="mt-6 scroll-mt-24 rounded-lg border border-stone-200 bg-stone-50 p-4">
           <div>
