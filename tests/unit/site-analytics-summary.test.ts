@@ -54,7 +54,7 @@ export async function runSiteAnalyticsSummaryTests() {
   assert.equal(summary.topCategoryViews[0].label, 'flowers');
   assert.equal(summary.topSearchTerms[0].label, 'orchid');
   assert.equal(summary.topTrafficSources[0].label, 'Direct/unknown');
-  assert.equal(summary.topTrafficSources[0].count, 5);
+  assert.equal(summary.topTrafficSources[0].count, 6);
   assert.equal(summary.topTrafficSources.some((row) => row.label === 'newsletter'), true);
   assert.equal(summary.topTrafficCampaigns[0].label, 'spring-launch');
   assert.equal(summary.topTrafficCampaigns[0].count, 3);
