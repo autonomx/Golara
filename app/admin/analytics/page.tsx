@@ -1,10 +1,12 @@
 import Link from 'next/link';
 
+import { AdminCategorySalesAnalyticsPanel } from '@/components/admin/AdminCategorySalesAnalyticsPanel';
 import { AdminOrderRevenueSummaryPanel } from '@/components/admin/AdminOrderRevenueSummaryPanel';
 import { AdminPageShell } from '@/components/admin/AdminPageShell';
 import { AdminProductSalesAnalyticsPanel } from '@/components/admin/AdminProductSalesAnalyticsPanel';
 import { AdminSiteAnalyticsPanel } from '@/components/admin/AdminSiteAnalyticsPanel';
 import { ADMIN_ANALYTICS_RANGE_DAYS, normalizeAdminAnalyticsRangeDays } from '@/lib/analytics/admin-analytics-range';
+import { EMPTY_CATEGORY_SALES_ANALYTICS_SUMMARY, categorySalesAnalyticsService } from '@/lib/analytics/category-sales-analytics';
 import { requireAdminRouteSession } from '@/lib/admin-page-auth-boundary';
 import { getAdminIdentity, isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
 import { EMPTY_ORDER_REVENUE_SUMMARY, orderRevenueSummaryService } from '@/lib/analytics/order-revenue-summary';
@@ -44,6 +46,7 @@ const copy = {
     businessSummary: 'Business summary',
     businessCharts: 'Business charts',
     productSales: 'Product sales',
+    categorySales: 'Category sales',
     siteFunnel: 'Site funnel',
     privacyControls: 'Privacy',
     productPerformance: 'Products',
@@ -77,6 +80,7 @@ const copy = {
     businessSummary: 'خلاصه کسب‌وکار',
     businessCharts: 'نمودارهای کسب‌وکار',
     productSales: 'فروش محصول',
+    categorySales: 'فروش دسته‌بندی',
     siteFunnel: 'قیف سایت',
     privacyControls: 'حریم خصوصی',
     productPerformance: 'محصولات',
@@ -120,6 +124,7 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
     { href: sectionHref('order-analytics', rangeDays), label: labels.businessSummary },
     { href: sectionHref('business-analytics-charts', rangeDays), label: labels.businessCharts },
     { href: sectionHref('product-sales-analytics', rangeDays), label: labels.productSales },
+    { href: sectionHref('category-sales-analytics', rangeDays), label: labels.categorySales },
     { href: sectionHref('site-analytics', rangeDays), label: labels.siteFunnel },
     { href: sectionHref('analytics-privacy-retention', rangeDays), label: labels.privacyControls },
     { href: sectionHref('product-analytics', rangeDays), label: labels.productPerformance },
@@ -132,12 +137,21 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
   const authenticated = await isAdminAuthenticated();
   const authConfigured = isAdminAuthConfigured();
   const identity = await getAdminIdentity();
-  const [products, categories, media, orderRevenueSummary, productSalesAnalyticsSummary, siteAnalyticsSummary] = await Promise.all([
+  const [
+    products,
+    categories,
+    media,
+    orderRevenueSummary,
+    productSalesAnalyticsSummary,
+    categorySalesAnalyticsSummary,
+    siteAnalyticsSummary
+  ] = await Promise.all([
     listAdminProducts(),
     listAdminCategories(),
     listMedia(),
     authenticated ? orderRevenueSummaryService.summary({ rangeDays }) : Promise.resolve({ ...EMPTY_ORDER_REVENUE_SUMMARY, analyticsRangeDays: rangeDays }),
     authenticated ? productSalesAnalyticsService.summary({ rangeDays }) : Promise.resolve({ ...EMPTY_PRODUCT_SALES_ANALYTICS_SUMMARY, analyticsRangeDays: rangeDays }),
+    authenticated ? categorySalesAnalyticsService.summary({ rangeDays }) : Promise.resolve({ ...EMPTY_CATEGORY_SALES_ANALYTICS_SUMMARY, analyticsRangeDays: rangeDays }),
     authenticated ? siteAnalyticsSummaryService.summary({ rangeDays }) : Promise.resolve({ ...EMPTY_SITE_ANALYTICS_SUMMARY, analyticsRangeDays: rangeDays })
   ]);
 
@@ -207,7 +221,7 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
           <div id="analytics-privacy-retention" className="mt-4 scroll-mt-24 rounded-lg border border-blue-200 bg-blue-50 p-4">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-800">{labels.privacyEyebrow}</p>
             <p className="mt-1 text-sm leading-6 text-blue-950">{labels.privacyBody}</p>
-            <ul className="mt-3 grid gap-2 text-sm leading-6 text-blue-950">
+            <ul className="mt-3 grid gap-2 text-sm text-blue-950 sm:grid-cols-2">
               <li>{labels.disableLabel}</li>
               <li>{labels.retentionLabel}</li>
             </ul>
@@ -236,6 +250,7 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
         </section>
         <AdminOrderRevenueSummaryPanel summary={orderRevenueSummary} />
         <AdminProductSalesAnalyticsPanel summary={productSalesAnalyticsSummary} />
+        <AdminCategorySalesAnalyticsPanel summary={categorySalesAnalyticsSummary} />
         <AdminSiteAnalyticsPanel summary={siteAnalyticsSummary} />
       </div>
     </AdminPageShell>
