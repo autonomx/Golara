@@ -50,6 +50,8 @@ export type SiteAnalyticsSummary = {
   uniquePaths: number;
   byEventType: SiteAnalyticsBreakdownRow[];
   topPages: SiteAnalyticsBreakdownRow[];
+  topProductViews: SiteAnalyticsBreakdownRow[];
+  topCategoryViews: SiteAnalyticsBreakdownRow[];
   topSearchTerms: SiteAnalyticsBreakdownRow[];
   checkoutFunnel: SiteAnalyticsFunnel;
   recentDaily: SiteAnalyticsDailyPoint[];
@@ -77,6 +79,8 @@ export const EMPTY_SITE_ANALYTICS_SUMMARY: SiteAnalyticsSummary = {
   uniquePaths: 0,
   byEventType: [],
   topPages: [],
+  topProductViews: [],
+  topCategoryViews: [],
   topSearchTerms: [],
   checkoutFunnel: {
     pageViews: 0,
@@ -149,6 +153,8 @@ export function buildSiteAnalyticsSummary(rows: SiteAnalyticsSourceRow[], now = 
   const recentCutoff = new Date(now.getTime() - 30 * DAY_MS);
   const typeBuckets = new Map<string, number>();
   const pathBuckets = new Map<string, number>();
+  const productBuckets = new Map<string, number>();
+  const categoryBuckets = new Map<string, number>();
   const searchBuckets = new Map<string, number>();
   const pathSet = new Set<string>();
   const funnel: SiteAnalyticsFunnel = {
@@ -170,7 +176,13 @@ export function buildSiteAnalyticsSummary(rows: SiteAnalyticsSourceRow[], now = 
     if (row.createdAt >= recentCutoff) recentEvents += 1;
 
     if (eventType === 'page_view') funnel.pageViews += 1;
-    if (eventType === 'product_view') funnel.productViews += 1;
+    if (eventType === 'product_view') {
+      funnel.productViews += 1;
+      incrementBucket(productBuckets, normalizeLabel(row.productId, path));
+    }
+    if (eventType === 'category_view') {
+      incrementBucket(categoryBuckets, normalizeLabel(row.categoryId, path));
+    }
     if (eventType === 'add_to_cart') funnel.addToCart += 1;
     if (eventType === 'checkout_started') funnel.checkoutStarted += 1;
     if (eventType === 'checkout_completed') funnel.checkoutCompleted += 1;
@@ -186,6 +198,8 @@ export function buildSiteAnalyticsSummary(rows: SiteAnalyticsSourceRow[], now = 
     uniquePaths: pathSet.size,
     byEventType: buildBreakdownRows(typeBuckets),
     topPages: buildBreakdownRows(pathBuckets),
+    topProductViews: buildBreakdownRows(productBuckets),
+    topCategoryViews: buildBreakdownRows(categoryBuckets),
     topSearchTerms: buildBreakdownRows(searchBuckets),
     checkoutFunnel: funnel,
     recentDaily: buildRecentDailyPoints(rows, now),
