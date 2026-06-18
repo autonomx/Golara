@@ -20,32 +20,38 @@ export async function runSiteAnalyticsSummaryTests() {
     { eventType: 'page_view', path: '/', locale: 'en-CA', createdAt: new Date('2026-06-18T10:00:00Z') },
     { eventType: 'page_view', path: '/products/rose', locale: 'en-CA', createdAt: new Date('2026-06-18T11:00:00Z') },
     { eventType: 'product_view', path: '/products/rose', productId: 'rose', locale: 'en-CA', createdAt: new Date('2026-06-18T11:05:00Z') },
-    { eventType: 'search_submitted', path: '/search', searchTerm: 'orchid', locale: 'en-CA', createdAt: new Date('2026-06-17T11:05:00Z') },
-    { eventType: 'add_to_cart', path: '/cart', locale: 'en-CA', createdAt: new Date('2026-06-17T11:10:00Z') },
-    { eventType: 'checkout_started', path: '/checkout', locale: 'en-CA', createdAt: new Date('2026-06-17T11:15:00Z') },
+    { eventType: 'category_view', path: '/categories/flowers', categoryId: 'flowers', locale: 'en-CA', createdAt: new Date('2026-06-18T11:06:00Z') },
+    { eventType: 'search_submitted', path: '/products', searchTerm: 'orchid', locale: 'en-CA', createdAt: new Date('2026-06-17T11:05:00Z') },
+    { eventType: 'add_to_cart', path: '/cart', productId: 'rose', locale: 'en-CA', createdAt: new Date('2026-06-17T11:10:00Z') },
+    { eventType: 'checkout_started', path: '/cart/checkout', locale: 'en-CA', createdAt: new Date('2026-06-17T11:15:00Z') },
+    { eventType: 'payment_method_selected', path: '/cart/checkout', locale: 'en-CA', createdAt: new Date('2026-06-17T11:16:00Z') },
     { eventType: 'checkout_completed', path: '/orders/example', locale: 'en-CA', createdAt: new Date('2026-06-17T11:20:00Z') }
   ], now);
 
-  assert.equal(summary.totalEvents, 7);
-  assert.equal(summary.recentEvents, 7);
-  assert.equal(summary.uniquePaths, 5);
+  assert.equal(summary.totalEvents, 9);
+  assert.equal(summary.recentEvents, 9);
+  assert.equal(summary.uniquePaths, 6);
   assert.equal(summary.checkoutFunnel.pageViews, 2);
   assert.equal(summary.checkoutFunnel.productViews, 1);
   assert.equal(summary.checkoutFunnel.addToCart, 1);
   assert.equal(summary.checkoutFunnel.checkoutStarted, 1);
   assert.equal(summary.checkoutFunnel.checkoutCompleted, 1);
-  assert.equal(summary.topPages[0].label, '/products/rose');
+  assert.equal(summary.topPages[0].label, '/cart/checkout');
   assert.equal(summary.topPages[0].count, 2);
+  assert.equal(summary.topProductViews[0].label, 'rose');
+  assert.equal(summary.topCategoryViews[0].label, 'flowers');
   assert.equal(summary.topSearchTerms[0].label, 'orchid');
   assert.equal(summary.recentDaily.length, 30);
   assert.equal(summary.recentDaily[29].date, '2026-06-18');
-  assert.equal(summary.recentDaily[29].eventCount, 3);
+  assert.equal(summary.recentDaily[29].eventCount, 4);
 
   assert.match(service, /export type SiteAnalyticsEventType/);
   assert.match(service, /SITE_ANALYTICS_EVENT_TYPES/);
   assert.match(service, /buildSiteAnalyticsSummary/);
+  assert.match(service, /topProductViews/);
+  assert.match(service, /topCategoryViews/);
   assert.match(service, /siteAnalyticsSummaryService/);
-  assert.match(service, /SELECT "eventType", "path", "locale", "productId", "categoryId", "searchTerm", "createdAt" FROM "SiteAnalyticsEvent"/);
+  assert.match(service, /SELECT "eventType", "path", "locale", "productId", "categoryId", "searchTerm", "createdAt"/);
   assert.match(service, /isMissingSiteAnalyticsTableError/);
 
   assert.match(panel, /export async function AdminSiteAnalyticsPanel/);
@@ -55,11 +61,15 @@ export async function runSiteAnalyticsSummaryTests() {
   assert.match(panel, /Events by type/);
   assert.match(panel, /Top pages/);
   assert.match(panel, /Checkout funnel/);
+  assert.match(panel, /Top product views/);
+  assert.match(panel, /Top category views/);
 
   assert.match(route, /assertSameOriginServerAction/);
   assert.match(route, /MAX_BODY_BYTES = 4096/);
   assert.match(route, /normalizePath/);
   assert.match(route, /startsWith\('\/admin\/'\)/);
+  assert.match(route, /normalizeMetadata/);
+  assert.match(route, /paymentMethodKey/);
   assert.match(route, /recordSiteAnalyticsEvent/);
   assert.match(route, /INSERT INTO "SiteAnalyticsEvent"/);
   assert.match(route, /site_analytics_event_table_missing/);
@@ -70,6 +80,14 @@ export async function runSiteAnalyticsSummaryTests() {
   assert.match(reporter, /ADMIN_OR_SYSTEM_PATH_PREFIXES/);
   assert.match(reporter, /sendBeacon/);
   assert.match(reporter, /page_view/);
+  assert.match(reporter, /product_view/);
+  assert.match(reporter, /category_view/);
+  assert.match(reporter, /search_submitted/);
+  assert.match(reporter, /add_to_cart/);
+  assert.match(reporter, /checkout_started/);
+  assert.match(reporter, /checkout_completed/);
+  assert.match(reporter, /payment_method_selected/);
+  assert.doesNotMatch(reporter, /useSearchParams/);
 
   assert.match(layout, /StorefrontSiteAnalyticsReporter/);
   assert.match(layout, /<StorefrontSiteAnalyticsReporter \/>/);
