@@ -27,6 +27,8 @@ export async function runSiteAnalyticsSummaryTests() {
     { eventType: 'checkout_started', path: '/cart/checkout', locale: 'en-CA', createdAt: new Date('2026-06-17T11:15:00Z') },
     { eventType: 'payment_method_selected', path: '/cart/checkout', locale: 'en-CA', createdAt: new Date('2026-06-17T11:16:00Z') },
     { eventType: 'checkout_completed', path: '/orders/example', locale: 'en-CA', createdAt: new Date('2026-06-17T11:20:00Z') },
+    { eventType: 'page_view', path: '/previous', locale: 'en-CA', createdAt: new Date('2026-05-10T11:20:00Z') },
+    { eventType: 'checkout_completed', path: '/orders/previous', locale: 'en-CA', createdAt: new Date('2026-05-10T11:25:00Z') },
     { eventType: 'page_view', path: '/old', locale: 'en-CA', createdAt: new Date('2026-04-01T11:20:00Z') }
   ];
   const summary = buildSiteAnalyticsSummary(rows, now);
@@ -40,6 +42,11 @@ export async function runSiteAnalyticsSummaryTests() {
   assert.equal(summary.checkoutFunnel.addToCart, 1);
   assert.equal(summary.checkoutFunnel.checkoutStarted, 1);
   assert.equal(summary.checkoutFunnel.checkoutCompleted, 1);
+  assert.equal(summary.comparison.totalEvents.previousValue, 2);
+  assert.equal(summary.comparison.totalEvents.absoluteChange, 7);
+  assert.equal(summary.comparison.pageViews.previousValue, 1);
+  assert.equal(summary.comparison.checkoutCompleted.previousValue, 1);
+  assert.equal(summary.comparison.checkoutCompleted.direction, 'flat');
   assert.equal(summary.topPages[0].label, '/cart/checkout');
   assert.equal(summary.topPages[0].count, 2);
   assert.equal(summary.topProductViews[0].label, 'rose');
@@ -52,6 +59,8 @@ export async function runSiteAnalyticsSummaryTests() {
   const sevenDaySummary = buildSiteAnalyticsSummary(rows, now, { rangeDays: 7 });
   assert.equal(sevenDaySummary.analyticsRangeDays, 7);
   assert.equal(sevenDaySummary.totalEvents, 9);
+  assert.equal(sevenDaySummary.comparison.totalEvents.previousValue, 0);
+  assert.equal(sevenDaySummary.comparison.totalEvents.percentChange, null);
   assert.equal(sevenDaySummary.recentDaily.length, 7);
   assert.equal(sevenDaySummary.recentDaily[0].date, '2026-06-12');
   assert.equal(sevenDaySummary.topPages.some((row) => row.label === '/old'), false);
@@ -59,14 +68,21 @@ export async function runSiteAnalyticsSummaryTests() {
   assert.match(rangeHelper, /ADMIN_ANALYTICS_RANGE_DAYS = \[7, 30, 90\]/);
   assert.match(rangeHelper, /normalizeAdminAnalyticsRangeDays/);
   assert.match(rangeHelper, /getAdminAnalyticsRangeStart/);
+  assert.match(rangeHelper, /getAdminAnalyticsPreviousRangeStart/);
   assert.match(rangeHelper, /isWithinAdminAnalyticsRange/);
+  assert.match(rangeHelper, /isWithinAdminAnalyticsPreviousRange/);
 
   assert.match(service, /export type SiteAnalyticsEventType/);
   assert.match(service, /SITE_ANALYTICS_EVENT_TYPES/);
   assert.match(service, /buildSiteAnalyticsSummary/);
   assert.match(service, /analyticsRangeDays: AdminAnalyticsRangeDays/);
   assert.match(service, /scopedRows = rows\.filter/);
-  assert.match(service, /WHERE "createdAt" >= \$\{getAdminAnalyticsRangeStart\(now, rangeDays\)\}/);
+  assert.match(service, /previousRows = rows\.filter/);
+  assert.match(service, /export type SiteAnalyticsComparisonSummary/);
+  assert.match(service, /comparison: SiteAnalyticsComparisonSummary/);
+  assert.match(service, /buildSiteAnalyticsComparison/);
+  assert.match(service, /WHERE "createdAt" >= \$\{getAdminAnalyticsPreviousRangeStart\(now, rangeDays\)\}/);
+  assert.match(service, /LIMIT 10000/);
   assert.match(service, /topProductViews/);
   assert.match(service, /topCategoryViews/);
   assert.match(service, /siteAnalyticsSummaryService/);
@@ -84,6 +100,10 @@ export async function runSiteAnalyticsSummaryTests() {
   assert.match(panel, /Checkout funnel/);
   assert.match(panel, /Top product views/);
   assert.match(panel, /Top category views/);
+  assert.match(panel, /formatComparisonDelta/);
+  assert.match(panel, /vs previous range/);
+  assert.match(panel, /summary\.comparison\.totalEvents/);
+  assert.match(panel, /summary\.comparison\.checkoutCompleted/);
 
   assert.match(route, /assertSameOriginServerAction/);
   assert.match(route, /MAX_BODY_BYTES = 4096/);

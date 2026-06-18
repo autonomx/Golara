@@ -1,7 +1,10 @@
 import 'server-only';
 
+import { buildAnalyticsComparisonDelta, type AnalyticsComparisonDelta } from '@/lib/analytics/analytics-comparison';
 import {
+  getAdminAnalyticsPreviousRangeStart,
   getAdminAnalyticsRangeStart,
+  isWithinAdminAnalyticsPreviousRange,
   isWithinAdminAnalyticsRange,
   normalizeAdminAnalyticsRangeDays,
   startOfUtcDay,
@@ -64,6 +67,14 @@ export type OrderDiscountImpactSummary = {
   undiscountedRevenueCents: number;
 };
 
+export type OrderRevenueComparisonSummary = {
+  totalOrders: AnalyticsComparisonDelta;
+  totalRevenueCents: AnalyticsComparisonDelta;
+  averageOrderValueCents: AnalyticsComparisonDelta;
+  openOrders: AnalyticsComparisonDelta;
+  completedOrders: AnalyticsComparisonDelta;
+};
+
 export type OrderRevenueSummary = {
   totalOrders: number;
   totalRevenueCents: number;
@@ -78,6 +89,7 @@ export type OrderRevenueSummary = {
   byFulfillmentStatus: OrderOperationalStatusSummary[];
   byPaymentProvider: PaymentProviderRevenueSummary[];
   discountImpact: OrderDiscountImpactSummary;
+  comparison: OrderRevenueComparisonSummary;
   recentDaily: OrderRevenueDailyPoint[];
   analyticsRangeDays: AdminAnalyticsRangeDays;
   primaryCurrency: string;
@@ -92,6 +104,7 @@ const REVENUE_EXCLUDED_STATUSES = new Set(['cancelled', 'canceled', 'refunded', 
 const COMPLETED_STATUSES = new Set(['completed', 'fulfilled', 'delivered', 'closed']);
 const CANCELLED_STATUSES = new Set(['cancelled', 'canceled', 'voided']);
 const DAY_MS = 24 * 60 * 60 * 1000;
+const ZERO_DELTA = buildAnalyticsComparisonDelta(0, 0);
 
 export const EMPTY_ORDER_REVENUE_SUMMARY: OrderRevenueSummary = {
   totalOrders: 0,
@@ -112,6 +125,13 @@ export const EMPTY_ORDER_REVENUE_SUMMARY: OrderRevenueSummary = {
     totalDiscountCents: 0,
     discountedRevenueCents: 0,
     undiscountedRevenueCents: 0
+  },
+  comparison: {
+    totalOrders: ZERO_DELTA,
+    totalRevenueCents: ZERO_DELTA,
+    averageOrderValueCents: ZERO_DELTA,
+    openOrders: ZERO_DELTA,
+    completedOrders: ZERO_DELTA
   },
   recentDaily: [],
   analyticsRangeDays: 30,
@@ -207,9 +227,49 @@ function buildPaymentProviderRows(buckets: Map<string, { attemptCount: number; o
     .sort((a, b) => b.attemptCount - a.attemptCount || b.amountCents - a.amountCents || a.provider.localeCompare(b.provider));
 }
 
+type OrderComparisonSnapshot = {
+  totalOrders: number;
+  totalRevenueCents: number;
+  averageOrderValueCents: number;
+  openOrders: number;
+  completedOrders: number;
+};
+
+function buildOrderComparisonSnapshot(rows: OrderRevenueSourceRow[]): OrderComparisonSnapshot {
+  let totalRevenueCents = 0;
+  let completedOrders = 0;
+  let cancelledOrders = 0;
+
+  for (const row of rows) {
+    const status = normalizeStatus(row.status);
+    if (isCompletedOrderStatus(status)) completedOrders += 1;
+    if (isCancelledOrderStatus(status)) cancelledOrders += 1;
+    totalRevenueCents += isRevenueEligibleStatus(status) ? normalizeRevenueCents(row.totalCents) : 0;
+  }
+
+  return {
+    totalOrders: rows.length,
+    totalRevenueCents,
+    averageOrderValueCents: rows.length ? Math.round(totalRevenueCents / rows.length) : 0,
+    openOrders: Math.max(0, rows.length - completedOrders - cancelledOrders),
+    completedOrders
+  };
+}
+
+function buildOrderRevenueComparison(current: OrderComparisonSnapshot, previous: OrderComparisonSnapshot): OrderRevenueComparisonSummary {
+  return {
+    totalOrders: buildAnalyticsComparisonDelta(current.totalOrders, previous.totalOrders),
+    totalRevenueCents: buildAnalyticsComparisonDelta(current.totalRevenueCents, previous.totalRevenueCents),
+    averageOrderValueCents: buildAnalyticsComparisonDelta(current.averageOrderValueCents, previous.averageOrderValueCents),
+    openOrders: buildAnalyticsComparisonDelta(current.openOrders, previous.openOrders),
+    completedOrders: buildAnalyticsComparisonDelta(current.completedOrders, previous.completedOrders)
+  };
+}
+
 export function buildOrderRevenueSummary(rows: OrderRevenueSourceRow[], now = new Date(), options: OrderRevenueSummaryOptions = {}): OrderRevenueSummary {
   const analyticsRangeDays = normalizeAdminAnalyticsRangeDays(options.rangeDays);
   const scopedRows = rows.filter((row) => isWithinAdminAnalyticsRange(row.createdAt, now, analyticsRangeDays));
+  const previousRows = rows.filter((row) => isWithinAdminAnalyticsPreviousRange(row.createdAt, now, analyticsRangeDays));
   const cutoff = getAdminAnalyticsRangeStart(now, analyticsRangeDays);
   const byStatus: Record<string, number> = {};
   const currencyBuckets = new Map<string, { orderCount: number; revenueCents: number }>();
@@ -281,14 +341,22 @@ export function buildOrderRevenueSummary(rows: OrderRevenueSourceRow[], now = ne
     averageOrderValueCents: bucket.orderCount ? Math.round(bucket.revenueCents / bucket.orderCount) : 0
   })).sort((a, b) => b.revenueCents - a.revenueCents || a.currency.localeCompare(b.currency));
   const primaryCurrency = byCurrency[0]?.currency ?? EMPTY_ORDER_REVENUE_SUMMARY.primaryCurrency;
-
-  return {
+  const currentSnapshot: OrderComparisonSnapshot = {
     totalOrders: scopedRows.length,
     totalRevenueCents,
     averageOrderValueCents: scopedRows.length ? Math.round(totalRevenueCents / scopedRows.length) : 0,
+    openOrders: Math.max(0, scopedRows.length - completedOrders - cancelledOrders),
+    completedOrders
+  };
+  const previousSnapshot = buildOrderComparisonSnapshot(previousRows);
+
+  return {
+    totalOrders: currentSnapshot.totalOrders,
+    totalRevenueCents,
+    averageOrderValueCents: currentSnapshot.averageOrderValueCents,
     recentOrders,
     recentRevenueCents,
-    openOrders: Math.max(0, scopedRows.length - completedOrders - cancelledOrders),
+    openOrders: currentSnapshot.openOrders,
     completedOrders,
     cancelledOrders,
     byStatus: Object.fromEntries(Object.entries(byStatus).sort(([a], [b]) => a.localeCompare(b))),
@@ -302,6 +370,7 @@ export function buildOrderRevenueSummary(rows: OrderRevenueSourceRow[], now = ne
       discountedRevenueCents,
       undiscountedRevenueCents
     },
+    comparison: buildOrderRevenueComparison(currentSnapshot, previousSnapshot),
     recentDaily: buildRecentDailyPoints(scopedRows, now, analyticsRangeDays),
     analyticsRangeDays,
     primaryCurrency,
@@ -318,11 +387,11 @@ export const orderRevenueSummaryService = {
     const rows = await prisma.checkoutOrder.findMany({
       where: {
         createdAt: {
-          gte: getAdminAnalyticsRangeStart(now, rangeDays)
+          gte: getAdminAnalyticsPreviousRangeStart(now, rangeDays)
         }
       },
       orderBy: { createdAt: 'desc' },
-      take: 1000,
+      take: 2000,
       select: {
         id: true,
         status: true,

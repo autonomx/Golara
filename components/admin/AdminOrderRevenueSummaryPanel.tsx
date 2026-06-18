@@ -6,6 +6,7 @@ import { AdminInquiryOperationsSummaryPanel } from '@/components/admin/AdminInqu
 import { AdminLaunchReadinessHealthPanel } from '@/components/admin/AdminLaunchReadinessHealthPanel';
 import { AdminLowStockAlertsPanel } from '@/components/admin/AdminLowStockAlertsPanel';
 import { AdminRecentActivitySummaryPanel } from '@/components/admin/AdminRecentActivitySummaryPanel';
+import type { AnalyticsComparisonDelta } from '@/lib/analytics/analytics-comparison';
 import { bestSellingProductsService } from '@/lib/analytics/best-selling-products';
 import { failedPaymentNotificationAlertsService } from '@/lib/analytics/failed-payment-notification-alerts';
 import { fulfillmentQueueSummaryService } from '@/lib/analytics/fulfillment-queue-summary';
@@ -18,6 +19,7 @@ import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 
 type AdminLocale = 'en' | 'fa';
+type OrderPanelCopy = Record<string, string>;
 
 const copy = {
   en: {
@@ -65,7 +67,9 @@ const copy = {
     dataTable: 'View chart data',
     count: 'Count',
     amount: 'Amount',
-    attempts: 'Attempts'
+    attempts: 'Attempts',
+    vsPreviousRange: 'vs previous range',
+    noChangeVsPreviousRange: 'No change vs previous range'
   },
   fa: {
     eyebrow: 'تحلیل‌ها',
@@ -112,7 +116,9 @@ const copy = {
     dataTable: 'مشاهده جدول داده نمودار',
     count: 'تعداد',
     amount: 'مبلغ',
-    attempts: 'تلاش‌ها'
+    attempts: 'تلاش‌ها',
+    vsPreviousRange: 'نسبت به بازه قبلی',
+    noChangeVsPreviousRange: 'بدون تغییر نسبت به بازه قبلی'
   }
 } as const;
 
@@ -138,12 +144,33 @@ function formatRangeLabel(days: number, locale: SupportedLocale | string | null 
   return localeKey(locale) === 'fa' ? `${days} روز گذشته` : `last ${days} days`;
 }
 
-function Metric({ label, value, detail }: { label: string; value: string | number; detail?: string }) {
+function formatComparisonDelta(delta: AnalyticsComparisonDelta, labels: OrderPanelCopy, formatAbsoluteValue = (value: number) => String(value)) {
+  if (delta.direction === 'flat') return labels.noChangeVsPreviousRange;
+  if (delta.percentChange === null) {
+    const sign = delta.absoluteChange > 0 ? '+' : '-';
+    return `${sign}${formatAbsoluteValue(Math.abs(delta.absoluteChange))} ${labels.vsPreviousRange}`;
+  }
+  const sign = delta.percentChange > 0 ? '+' : '';
+  return `${sign}${delta.percentChange.toFixed(1)}% ${labels.vsPreviousRange}`;
+}
+
+function comparisonTone(delta: AnalyticsComparisonDelta) {
+  if (delta.direction === 'up') return 'text-emerald-700';
+  if (delta.direction === 'down') return 'text-rose-700';
+  return 'text-stone-500';
+}
+
+function Metric({ label, value, detail, delta, formatDeltaAbsolute }: { label: string; value: string | number; detail?: string; delta?: AnalyticsComparisonDelta; formatDeltaAbsolute?: (value: number) => string }) {
+  const locale = localeKey(undefined);
+  const labels = copy[locale];
+  const deltaLabel = delta ? formatComparisonDelta(delta, labels, formatDeltaAbsolute) : null;
+
   return (
     <div className="rounded-md border border-stone-200 bg-stone-50 p-3 text-sm">
       <p className="font-bold text-stone-950">{value}</p>
       <p className="text-stone-600">{label}</p>
       {detail ? <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-stone-400">{detail}</p> : null}
+      {delta && deltaLabel ? <p className={`mt-1 text-xs font-bold ${comparisonTone(delta)}`}>{deltaLabel}</p> : null}
     </div>
   );
 }
@@ -153,6 +180,7 @@ export async function AdminOrderRevenueSummaryPanel({ summary }: { summary: Orde
   const labels = copy[localeKey(locale)];
   const primaryCurrency = summary.primaryCurrency;
   const rangeLabel = formatRangeLabel(summary.analyticsRangeDays, locale);
+  const formatRevenueDelta = (value: number) => formatRevenueCents(value, primaryCurrency);
   const dailyTrendRows = summary.recentDaily.map((point) => ({ ...point, label: formatDateLabel(point.date, locale) }));
   const orderTrendChartRows = dailyTrendRows.map((point) => ({
     label: point.label,
@@ -235,15 +263,15 @@ export async function AdminOrderRevenueSummaryPanel({ summary }: { summary: Orde
           </div>
         </div>
         <div className="mt-6 grid gap-3 md:grid-cols-4">
-          <Metric label={labels.totalOrders} value={summary.totalOrders} detail={rangeLabel} />
-          <Metric label={labels.revenue} value={formatRevenueCents(summary.totalRevenueCents, primaryCurrency)} detail={`${labels.excludesCancelledRefunded} · ${rangeLabel}`} />
-          <Metric label={labels.averageOrderValue} value={formatRevenueCents(summary.averageOrderValueCents, primaryCurrency)} detail={rangeLabel} />
-          <Metric label={labels.openOrders} value={summary.openOrders} detail={rangeLabel} />
+          <Metric label={labels.totalOrders} value={summary.totalOrders} detail={rangeLabel} delta={summary.comparison.totalOrders} />
+          <Metric label={labels.revenue} value={formatRevenueCents(summary.totalRevenueCents, primaryCurrency)} detail={`${labels.excludesCancelledRefunded} · ${rangeLabel}`} delta={summary.comparison.totalRevenueCents} formatDeltaAbsolute={formatRevenueDelta} />
+          <Metric label={labels.averageOrderValue} value={formatRevenueCents(summary.averageOrderValueCents, primaryCurrency)} detail={rangeLabel} delta={summary.comparison.averageOrderValueCents} formatDeltaAbsolute={formatRevenueDelta} />
+          <Metric label={labels.openOrders} value={summary.openOrders} detail={rangeLabel} delta={summary.comparison.openOrders} />
         </div>
         <div className="mt-3 grid gap-3 md:grid-cols-4">
           <Metric label={labels.recentOrders} value={summary.recentOrders} detail={rangeLabel} />
           <Metric label={labels.recentRevenue} value={formatRevenueCents(summary.recentRevenueCents, primaryCurrency)} detail={rangeLabel} />
-          <Metric label={labels.completed} value={summary.completedOrders} detail={rangeLabel} />
+          <Metric label={labels.completed} value={summary.completedOrders} detail={rangeLabel} delta={summary.comparison.completedOrders} />
           <Metric label={labels.cancelled} value={summary.cancelledOrders} detail={rangeLabel} />
         </div>
         <div id="business-analytics-charts" className="mt-6 scroll-mt-24 rounded-lg border border-stone-200 bg-stone-50 p-4">

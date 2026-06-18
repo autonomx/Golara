@@ -1,7 +1,10 @@
 import 'server-only';
 
+import { buildAnalyticsComparisonDelta, type AnalyticsComparisonDelta } from '@/lib/analytics/analytics-comparison';
 import {
+  getAdminAnalyticsPreviousRangeStart,
   getAdminAnalyticsRangeStart,
+  isWithinAdminAnalyticsPreviousRange,
   isWithinAdminAnalyticsRange,
   normalizeAdminAnalyticsRangeDays,
   startOfUtcDay,
@@ -52,6 +55,14 @@ export type SiteAnalyticsFunnel = {
   checkoutCompleted: number;
 };
 
+export type SiteAnalyticsComparisonSummary = {
+  totalEvents: AnalyticsComparisonDelta;
+  uniquePaths: AnalyticsComparisonDelta;
+  pageViews: AnalyticsComparisonDelta;
+  productViews: AnalyticsComparisonDelta;
+  checkoutCompleted: AnalyticsComparisonDelta;
+};
+
 export type SiteAnalyticsSummary = {
   totalEvents: number;
   recentEvents: number;
@@ -62,6 +73,7 @@ export type SiteAnalyticsSummary = {
   topCategoryViews: SiteAnalyticsBreakdownRow[];
   topSearchTerms: SiteAnalyticsBreakdownRow[];
   checkoutFunnel: SiteAnalyticsFunnel;
+  comparison: SiteAnalyticsComparisonSummary;
   recentDaily: SiteAnalyticsDailyPoint[];
   analyticsRangeDays: AdminAnalyticsRangeDays;
   generatedAt: Date;
@@ -73,6 +85,7 @@ export type SiteAnalyticsSummaryOptions = {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const TOP_ROW_LIMIT = 8;
+const ZERO_DELTA = buildAnalyticsComparisonDelta(0, 0);
 
 export const SITE_ANALYTICS_EVENT_TYPES = new Set<SiteAnalyticsEventType>([
   'page_view',
@@ -100,6 +113,13 @@ export const EMPTY_SITE_ANALYTICS_SUMMARY: SiteAnalyticsSummary = {
     addToCart: 0,
     checkoutStarted: 0,
     checkoutCompleted: 0
+  },
+  comparison: {
+    totalEvents: ZERO_DELTA,
+    uniquePaths: ZERO_DELTA,
+    pageViews: ZERO_DELTA,
+    productViews: ZERO_DELTA,
+    checkoutCompleted: ZERO_DELTA
   },
   recentDaily: [],
   analyticsRangeDays: 30,
@@ -158,9 +178,51 @@ function buildRecentDailyPoints(rows: SiteAnalyticsSourceRow[], now: Date, range
   return Array.from(buckets.entries()).map(([date, eventCount]) => ({ date, eventCount }));
 }
 
+type SiteComparisonSnapshot = {
+  totalEvents: number;
+  uniquePaths: number;
+  pageViews: number;
+  productViews: number;
+  checkoutCompleted: number;
+};
+
+function buildSiteComparisonSnapshot(rows: SiteAnalyticsSourceRow[]): SiteComparisonSnapshot {
+  const pathSet = new Set<string>();
+  let pageViews = 0;
+  let productViews = 0;
+  let checkoutCompleted = 0;
+
+  for (const row of rows) {
+    const eventType = normalizeEventType(row.eventType);
+    pathSet.add(normalizePath(row.path));
+    if (eventType === 'page_view') pageViews += 1;
+    if (eventType === 'product_view') productViews += 1;
+    if (eventType === 'checkout_completed') checkoutCompleted += 1;
+  }
+
+  return {
+    totalEvents: rows.length,
+    uniquePaths: pathSet.size,
+    pageViews,
+    productViews,
+    checkoutCompleted
+  };
+}
+
+function buildSiteAnalyticsComparison(current: SiteComparisonSnapshot, previous: SiteComparisonSnapshot): SiteAnalyticsComparisonSummary {
+  return {
+    totalEvents: buildAnalyticsComparisonDelta(current.totalEvents, previous.totalEvents),
+    uniquePaths: buildAnalyticsComparisonDelta(current.uniquePaths, previous.uniquePaths),
+    pageViews: buildAnalyticsComparisonDelta(current.pageViews, previous.pageViews),
+    productViews: buildAnalyticsComparisonDelta(current.productViews, previous.productViews),
+    checkoutCompleted: buildAnalyticsComparisonDelta(current.checkoutCompleted, previous.checkoutCompleted)
+  };
+}
+
 export function buildSiteAnalyticsSummary(rows: SiteAnalyticsSourceRow[], now = new Date(), options: SiteAnalyticsSummaryOptions = {}): SiteAnalyticsSummary {
   const analyticsRangeDays = normalizeAdminAnalyticsRangeDays(options.rangeDays);
   const scopedRows = rows.filter((row) => isWithinAdminAnalyticsRange(row.createdAt, now, analyticsRangeDays));
+  const previousRows = rows.filter((row) => isWithinAdminAnalyticsPreviousRange(row.createdAt, now, analyticsRangeDays));
   const recentCutoff = getAdminAnalyticsRangeStart(now, analyticsRangeDays);
   const typeBuckets = new Map<string, number>();
   const pathBuckets = new Map<string, number>();
@@ -203,6 +265,15 @@ export function buildSiteAnalyticsSummary(rows: SiteAnalyticsSourceRow[], now = 
     }
   }
 
+  const currentSnapshot: SiteComparisonSnapshot = {
+    totalEvents: scopedRows.length,
+    uniquePaths: pathSet.size,
+    pageViews: funnel.pageViews,
+    productViews: funnel.productViews,
+    checkoutCompleted: funnel.checkoutCompleted
+  };
+  const previousSnapshot = buildSiteComparisonSnapshot(previousRows);
+
   return {
     totalEvents: scopedRows.length,
     recentEvents,
@@ -213,6 +284,7 @@ export function buildSiteAnalyticsSummary(rows: SiteAnalyticsSourceRow[], now = 
     topCategoryViews: buildBreakdownRows(categoryBuckets),
     topSearchTerms: buildBreakdownRows(searchBuckets),
     checkoutFunnel: funnel,
+    comparison: buildSiteAnalyticsComparison(currentSnapshot, previousSnapshot),
     recentDaily: buildRecentDailyPoints(scopedRows, now, analyticsRangeDays),
     analyticsRangeDays,
     generatedAt: now
@@ -242,9 +314,9 @@ export const siteAnalyticsSummaryService = {
       const rows = await prisma.$queryRaw<RawSiteAnalyticsSourceRow[]>`
         SELECT "eventType", "path", "locale", "productId", "categoryId", "searchTerm", "createdAt"
         FROM "SiteAnalyticsEvent"
-        WHERE "createdAt" >= ${getAdminAnalyticsRangeStart(now, rangeDays)}
+        WHERE "createdAt" >= ${getAdminAnalyticsPreviousRangeStart(now, rangeDays)}
         ORDER BY "createdAt" DESC
-        LIMIT 5000
+        LIMIT 10000
       `;
 
       return buildSiteAnalyticsSummary(normalizeRawSiteAnalyticsRows(rows), now, { rangeDays });
