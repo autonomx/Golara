@@ -11,6 +11,10 @@ import {
   databaseSummary,
   getReadinessCopy,
   notificationReadyDetail,
+  readinessCardLabel,
+  readinessIssueDetail,
+  readinessIssueLine,
+  readinessIssueSummary,
   readinessModeLine,
   readinessProvidersLine,
   runtimeModeDetail,
@@ -47,10 +51,13 @@ const statusClasses: Record<ReadinessStatus, string> = {
 
 const statusLabels: Record<ReadinessStatus, string> = { ready: 'Ready', warning: 'Needs decision', blocked: 'Blocked' };
 
-function issueLines(readiness: { blockers: Array<{ code: string; detail: string }>; warnings: Array<{ code: string; detail: string }> }) {
+function issueLines(
+  readiness: { blockers: Array<{ code: string; summary: string; detail: string }>; warnings: Array<{ code: string; summary: string; detail: string }> },
+  locale?: SupportedLocale | string | null
+) {
   return [
-    ...readiness.blockers.map((issue) => `${issue.code}: ${issue.detail}`),
-    ...readiness.warnings.map((issue) => `${issue.code}: ${issue.detail}`)
+    ...readiness.blockers.map((issue) => readinessIssueLine(issue, locale)),
+    ...readiness.warnings.map((issue) => readinessIssueLine(issue, locale))
   ];
 }
 
@@ -59,20 +66,22 @@ function notificationReadinessStatus(
   locale?: SupportedLocale | string | null
 ): Pick<ReadinessItem, 'status' | 'summary' | 'detail' | 'extras'> {
   if (readiness.blockers.length > 0) {
+    const issue = readiness.blockers[0];
     return {
       status: 'blocked',
-      summary: readiness.blockers[0]?.summary ?? getReadinessCopy('Inquiry notifications are blocked.', locale),
-      detail: readiness.blockers[0]?.detail ?? getReadinessCopy('Fix notification blockers before relying on automated alerting.', locale),
-      extras: issueLines(readiness)
+      summary: readinessIssueSummary(issue, 'Inquiry notifications are blocked.', locale),
+      detail: readinessIssueDetail(issue, 'Fix notification blockers before relying on automated alerting.', locale),
+      extras: issueLines(readiness, locale)
     };
   }
 
   if (readiness.warnings.length > 0) {
+    const issue = readiness.warnings[0];
     return {
       status: 'warning',
-      summary: readiness.warnings[0]?.summary ?? getReadinessCopy('Inquiry notifications need an operating decision.', locale),
-      detail: readiness.warnings[0]?.detail ?? getReadinessCopy('Confirm the manual monitoring process before launch.', locale),
-      extras: issueLines(readiness)
+      summary: readinessIssueSummary(issue, 'Inquiry notifications need an operating decision.', locale),
+      detail: readinessIssueDetail(issue, 'Confirm the manual monitoring process before launch.', locale),
+      extras: issueLines(readiness, locale)
     };
   }
 
@@ -91,20 +100,22 @@ function checkoutReadinessStatus(
   const providerLine = readinessProvidersLine(readiness.providers, locale);
 
   if (readiness.blockers.length > 0) {
+    const issue = readiness.blockers[0];
     return {
       status: 'blocked',
-      summary: readiness.blockers[0]?.summary ?? getReadinessCopy('Checkout readiness is blocked.', locale),
-      detail: readiness.blockers[0]?.detail ?? getReadinessCopy('Fix checkout configuration blockers before enabling gateway mode.', locale),
-      extras: [readinessModeLine(readiness.mode, locale), providerLine, ...issueLines(readiness)]
+      summary: readinessIssueSummary(issue, 'Checkout readiness is blocked.', locale),
+      detail: readinessIssueDetail(issue, 'Fix checkout configuration blockers before enabling gateway mode.', locale),
+      extras: [readinessModeLine(readiness.mode, locale), providerLine, ...issueLines(readiness, locale)]
     };
   }
 
   if (readiness.warnings.length > 0) {
+    const issue = readiness.warnings[0];
     return {
       status: 'warning',
-      summary: readiness.warnings[0]?.summary ?? getReadinessCopy('Checkout readiness needs an operating decision.', locale),
-      detail: readiness.warnings[0]?.detail ?? getReadinessCopy('Confirm checkout mode and fallback process before launch.', locale),
-      extras: [readinessModeLine(readiness.mode, locale), providerLine, ...issueLines(readiness)]
+      summary: readinessIssueSummary(issue, 'Checkout readiness needs an operating decision.', locale),
+      detail: readinessIssueDetail(issue, 'Confirm checkout mode and fallback process before launch.', locale),
+      extras: [readinessModeLine(readiness.mode, locale), providerLine, ...issueLines(readiness, locale)]
     };
   }
 
@@ -179,15 +190,15 @@ export function AdminReadinessPanel({ runtimeReadiness, authConfigured, authenti
       detail: adminAuthDetail(authConfigured, locale)
     },
     {
-      label: `Inquiry notifications (${notificationReadiness.mode})`,
+      label: readinessCardLabel('Inquiry notifications', notificationReadiness.mode, locale),
       ...notificationStatus
     },
     {
-      label: `Checkout (${checkoutReadiness.mode})`,
+      label: readinessCardLabel('Checkout', checkoutReadiness.mode, locale),
       ...checkoutStatus
     },
     {
-      label: `Media storage (${runtimeReadiness.mediaStorage.provider})`,
+      label: readinessCardLabel('Media storage', runtimeReadiness.mediaStorage.provider, locale),
       ...mediaStatus
     }
   ];

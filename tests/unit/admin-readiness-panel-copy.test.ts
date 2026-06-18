@@ -3,7 +3,15 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { getAdminCopy } from '@/lib/localization/admin-copy';
-import { getReadinessCopy } from '@/lib/localization/admin-readiness-copy';
+import {
+  getReadinessCopy,
+  readinessCardLabel,
+  readinessIssueDetail,
+  readinessIssueLine,
+  readinessIssueSummary,
+  readinessModeLine,
+  readinessProvidersLine
+} from '@/lib/localization/admin-readiness-copy';
 
 const repoRoot = process.cwd();
 const panelSource = readFileSync(join(repoRoot, 'components/admin/AdminReadinessPanel.tsx'), 'utf8');
@@ -46,9 +54,47 @@ const readinessFallbacks = [
 ];
 
 for (const key of readinessFallbacks) {
-  assert.ok(panelSource.includes(`getReadinessCopy(${JSON.stringify(key)}, locale)`) || panelSource.includes(`getReadinessCopy('${key.replace(/'/g, "\\'")}', locale)`), `${key} fallback must stay routed through readiness copy`);
   assert.notEqual(getReadinessCopy(key, 'fa'), key, `${key} must resolve to Persian readiness copy`);
 }
+
+const screenshotRegressionStrings = [
+  'Checkout remains inquiry-first.',
+  'Products continue to route through inquiry/staff follow-up instead of direct payment.',
+  'Inquiry notifications are log-only.',
+  'Staff must monitor the admin inbox until webhook, email, or WhatsApp delivery is configured.',
+  'checkout_inquiry_mode',
+  'overseas_whatsapp_fallback',
+  'notification_log_only',
+  'manual',
+  'inquiry',
+  'log'
+];
+
+for (const key of screenshotRegressionStrings) {
+  assert.notEqual(getReadinessCopy(key, 'fa'), key, `${key} must resolve to Persian readiness copy`);
+}
+
+const checkoutIssue = {
+  code: 'checkout_inquiry_mode',
+  summary: 'Checkout remains inquiry-first.',
+  detail: 'Products continue to route through inquiry/staff follow-up instead of direct payment.'
+};
+const notificationIssue = {
+  code: 'notification_log_only',
+  summary: 'Inquiry notifications are log-only.',
+  detail: 'Staff must monitor the admin inbox until webhook, email, or WhatsApp delivery is configured.'
+};
+
+assert.ok(readinessIssueSummary(checkoutIssue, 'Checkout readiness needs an operating decision.', 'fa').includes('پرداخت'), 'checkout issue summary must localize to Persian');
+assert.ok(readinessIssueDetail(checkoutIssue, 'Confirm checkout mode and fallback process before launch.', 'fa').includes('محصولات'), 'checkout issue detail must localize to Persian');
+assert.ok(readinessIssueLine(checkoutIssue, 'fa').includes('حالت درخواست مشتری'), 'checkout issue code must localize to Persian');
+assert.ok(readinessIssueSummary(notificationIssue, 'Inquiry notifications need an operating decision.', 'fa').includes('اعلان'), 'notification issue summary must localize to Persian');
+assert.ok(readinessIssueDetail(notificationIssue, 'Confirm the manual monitoring process before launch.', 'fa').includes('صندوق'), 'notification issue detail must localize to Persian');
+assert.ok(readinessIssueLine(notificationIssue, 'fa').includes('اعلان ها'), 'notification issue code must localize to Persian');
+assert.equal(readinessModeLine('inquiry', 'fa'), 'حالت: درخواست مشتری');
+assert.equal(readinessProvidersLine(['manual'], 'fa'), 'ارائه دهندگان: دستی');
+assert.equal(readinessCardLabel('Checkout', 'inquiry', 'fa'), 'پرداخت (درخواست مشتری)');
+assert.equal(readinessCardLabel('Inquiry notifications', 'log', 'fa'), 'اعلان های درخواست مشتری (ثبت در گزارش ها)');
 
 const readinessHelpers = [
   'runtimeModeSummary',
@@ -60,7 +106,11 @@ const readinessHelpers = [
   'adminAuthSummary',
   'adminAuthDetail',
   'notificationReadyDetail',
-  'checkoutReadyDetail'
+  'checkoutReadyDetail',
+  'readinessIssueSummary',
+  'readinessIssueDetail',
+  'readinessIssueLine',
+  'readinessCardLabel'
 ];
 for (const helper of readinessHelpers) {
   assert.ok(panelSource.includes(`${helper}(`), `${helper} must remain wired into the readiness panel`);
