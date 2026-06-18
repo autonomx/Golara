@@ -74,18 +74,12 @@ function isMissingSiteAnalyticsTableError(error: unknown) {
 }
 
 async function recordSiteAnalyticsEvent(event: NonNullable<ReturnType<typeof normalizePayload>>) {
-  await prisma.$executeRawUnsafe(
-    'INSERT INTO "SiteAnalyticsEvent" ("eventType", "path", "query", "locale", "productId", "categoryId", "searchTerm", "anonymousSessionId", "metadata") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)',
-    event.eventType,
-    event.path,
-    event.query ?? null,
-    event.locale ?? null,
-    event.productId ?? null,
-    event.categoryId ?? null,
-    event.searchTerm ?? null,
-    event.anonymousSessionId ?? null,
-    JSON.stringify(event.metadata)
-  );
+  await prisma.$executeRaw`
+    INSERT INTO "SiteAnalyticsEvent"
+      ("eventType", "path", "query", "locale", "productId", "categoryId", "searchTerm", "anonymousSessionId", "metadata")
+    VALUES
+      (${event.eventType}, ${event.path}, ${event.query ?? null}, ${event.locale ?? null}, ${event.productId ?? null}, ${event.categoryId ?? null}, ${event.searchTerm ?? null}, ${event.anonymousSessionId ?? null}, ${JSON.stringify(event.metadata)}::jsonb)
+  `;
 }
 
 export async function POST(request: Request) {
