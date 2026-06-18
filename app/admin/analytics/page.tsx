@@ -2,11 +2,13 @@ import Link from 'next/link';
 
 import { AdminOrderRevenueSummaryPanel } from '@/components/admin/AdminOrderRevenueSummaryPanel';
 import { AdminPageShell } from '@/components/admin/AdminPageShell';
+import { AdminProductSalesAnalyticsPanel } from '@/components/admin/AdminProductSalesAnalyticsPanel';
 import { AdminSiteAnalyticsPanel } from '@/components/admin/AdminSiteAnalyticsPanel';
 import { ADMIN_ANALYTICS_RANGE_DAYS, normalizeAdminAnalyticsRangeDays } from '@/lib/analytics/admin-analytics-range';
 import { requireAdminRouteSession } from '@/lib/admin-page-auth-boundary';
 import { getAdminIdentity, isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
 import { EMPTY_ORDER_REVENUE_SUMMARY, orderRevenueSummaryService } from '@/lib/analytics/order-revenue-summary';
+import { EMPTY_PRODUCT_SALES_ANALYTICS_SUMMARY, productSalesAnalyticsService } from '@/lib/analytics/product-sales-analytics';
 import { EMPTY_SITE_ANALYTICS_SUMMARY, siteAnalyticsSummaryService } from '@/lib/analytics/site-analytics-summary';
 import { listAdminCategories, listAdminProducts, listMedia } from '@/lib/cms/catalog-repository';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
@@ -41,6 +43,7 @@ const copy = {
     sectionLabel: 'Jump to analytics section',
     businessSummary: 'Business summary',
     businessCharts: 'Business charts',
+    productSales: 'Product sales',
     siteFunnel: 'Site funnel',
     privacyControls: 'Privacy',
     productPerformance: 'Products',
@@ -73,6 +76,7 @@ const copy = {
     sectionLabel: 'رفتن به بخش تحلیل',
     businessSummary: 'خلاصه کسب‌وکار',
     businessCharts: 'نمودارهای کسب‌وکار',
+    productSales: 'فروش محصول',
     siteFunnel: 'قیف سایت',
     privacyControls: 'حریم خصوصی',
     productPerformance: 'محصولات',
@@ -115,6 +119,7 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
   const sectionLinks = [
     { href: sectionHref('order-analytics', rangeDays), label: labels.businessSummary },
     { href: sectionHref('business-analytics-charts', rangeDays), label: labels.businessCharts },
+    { href: sectionHref('product-sales-analytics', rangeDays), label: labels.productSales },
     { href: sectionHref('site-analytics', rangeDays), label: labels.siteFunnel },
     { href: sectionHref('analytics-privacy-retention', rangeDays), label: labels.privacyControls },
     { href: sectionHref('product-analytics', rangeDays), label: labels.productPerformance },
@@ -127,11 +132,12 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
   const authenticated = await isAdminAuthenticated();
   const authConfigured = isAdminAuthConfigured();
   const identity = await getAdminIdentity();
-  const [products, categories, media, orderRevenueSummary, siteAnalyticsSummary] = await Promise.all([
+  const [products, categories, media, orderRevenueSummary, productSalesAnalyticsSummary, siteAnalyticsSummary] = await Promise.all([
     listAdminProducts(),
     listAdminCategories(),
     listMedia(),
     authenticated ? orderRevenueSummaryService.summary({ rangeDays }) : Promise.resolve({ ...EMPTY_ORDER_REVENUE_SUMMARY, analyticsRangeDays: rangeDays }),
+    authenticated ? productSalesAnalyticsService.summary({ rangeDays }) : Promise.resolve({ ...EMPTY_PRODUCT_SALES_ANALYTICS_SUMMARY, analyticsRangeDays: rangeDays }),
     authenticated ? siteAnalyticsSummaryService.summary({ rangeDays }) : Promise.resolve({ ...EMPTY_SITE_ANALYTICS_SUMMARY, analyticsRangeDays: rangeDays })
   ]);
 
@@ -228,8 +234,9 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
             </nav>
           </div>
         </section>
-        <AdminSiteAnalyticsPanel summary={siteAnalyticsSummary} />
         <AdminOrderRevenueSummaryPanel summary={orderRevenueSummary} />
+        <AdminProductSalesAnalyticsPanel summary={productSalesAnalyticsSummary} />
+        <AdminSiteAnalyticsPanel summary={siteAnalyticsSummary} />
       </div>
     </AdminPageShell>
   );
