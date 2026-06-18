@@ -14,7 +14,7 @@ function listFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const path = join(dir, entry.name);
     if (entry.isDirectory()) return listFiles(path);
-    return [path.replace(/\\/g, '/')];
+    return [path.replaceAll(String.fromCharCode(92), '/')];
   });
 }
 
@@ -118,6 +118,37 @@ function runMigrationCoverageFunctionalTests() {
   assert.ok(migrations.some((file) => file.includes('20260602043000_add_product_pim_schema_parity')), 'Product PIM schema parity migration should exist before variant stock controls');
 }
 
+function runSiteAnalyticsFunctionalCoverageTests() {
+  const layout = source('app/layout.tsx');
+  const reporter = source('components/StorefrontSiteAnalyticsReporter.tsx');
+  const route = source('app/api/site-analytics/events/route.ts');
+  const service = source('lib/analytics/site-analytics-summary.ts');
+  const panel = source('components/admin/AdminSiteAnalyticsPanel.tsx');
+  const analyticsPage = source('app/admin/analytics/page.tsx');
+  const migration = source('prisma/migrations/20260618193000_add_site_analytics_events/migration.sql');
+
+  assert.match(layout, /StorefrontSiteAnalyticsReporter/);
+  assert.match(reporter, /NEXT_PUBLIC_SITE_ANALYTICS_ENABLED/);
+  assert.match(reporter, /navigator\.doNotTrack/);
+  assert.match(reporter, /ADMIN_OR_SYSTEM_PATH_PREFIXES/);
+  assert.match(reporter, /page_view/);
+  assert.match(route, /assertSameOriginServerAction/);
+  assert.match(route, /MAX_BODY_BYTES = 4096/);
+  assert.match(route, /INSERT INTO "SiteAnalyticsEvent"/);
+  assert.match(route, /site_analytics_event_table_missing/);
+  assert.match(service, /buildSiteAnalyticsSummary/);
+  assert.match(service, /siteAnalyticsSummaryService/);
+  assert.match(service, /SELECT "eventType", "path", "locale", "productId", "categoryId", "searchTerm", "createdAt"/);
+  assert.match(service, /FROM "SiteAnalyticsEvent"/);
+  assert.match(panel, /AdminSiteAnalyticsPanel/);
+  assert.match(panel, /Storefront traffic and funnel/);
+  assert.match(panel, /Checkout funnel/);
+  assert.match(analyticsPage, /AdminSiteAnalyticsPanel/);
+  assert.match(analyticsPage, /siteAnalyticsSummaryService\.summary/);
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS "SiteAnalyticsEvent"/);
+  assert.match(migration, /anonymousSessionId/);
+}
+
 function runFunctionalSuiteStructureTests() {
   const requiredFiles = [
     'tests/unit/run-tests.ts',
@@ -136,6 +167,7 @@ async function main() {
   runGracefulDatabaseDriftFallbackTests();
   runProductionReadinessFunctionalCoverageTests();
   runMigrationCoverageFunctionalTests();
+  runSiteAnalyticsFunctionalCoverageTests();
   runFunctionalSuiteStructureTests();
   console.log('functional tests passed');
 }

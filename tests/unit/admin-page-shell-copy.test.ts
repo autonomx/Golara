@@ -67,8 +67,11 @@ export async function runAdminPageShellCopyTests() {
   assert.match(analyticsRouteSource, /activeNavKey="analytics"/);
   assert.match(analyticsRouteSource, /returnTo="\/admin\/analytics"/);
   assert.match(analyticsRouteSource, /AdminOrderRevenueSummaryPanel/);
+  assert.match(analyticsRouteSource, /AdminSiteAnalyticsPanel/);
   assert.match(analyticsRouteSource, /orderRevenueSummaryService\.summary/);
-  assert.match(analyticsRouteSource, /lightweight server-rendered business charts/);
+  assert.match(analyticsRouteSource, /siteAnalyticsSummaryService\.summary/);
+  assert.match(analyticsRouteSource, /lightweight server-rendered business and site charts/);
+  assert.match(analyticsRouteSource, /privacy-safe first-party events/);
 
   const chartPrimitiveSource = readFileSync('components/admin/AdminAnalyticsChartPrimitives.tsx', 'utf8');
   assert.match(chartPrimitiveSource, /AdminAnalyticsBarChart/);
