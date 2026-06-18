@@ -38,9 +38,11 @@ const copy = {
     orders: 'Orders',
     aov: 'AOV',
     businessCharts: 'Business analytics charts',
-    businessChartsBody: 'Fast visual breakdowns for order state, revenue distribution, and 30-day trends, with accessible data tables included.',
+    businessChartsBody: 'Fast visual breakdowns for order state, revenue distribution, operational flow, payment method mix, discount usage, and 30-day trends, with accessible data tables included.',
     trendCharts: '30-day trend charts',
     trendChartsBody: 'Daily order, revenue, and average order value trends for the latest rolling 30-day window.',
+    operationalCharts: 'Operational breakdown charts',
+    operationalChartsBody: 'Highlights where orders sit operationally, which payment methods are being used, and whether discounts are materially affecting the order sample.',
     ordersOverTime: 'Orders over time',
     ordersOverTimeBody: 'Daily order count for the latest 30 days.',
     revenueOverTime: 'Revenue over time',
@@ -51,10 +53,20 @@ const copy = {
     statusBreakdownBody: 'Shows how the current order backlog is distributed across lifecycle states.',
     revenueByCurrency: 'Revenue by currency',
     revenueByCurrencyBody: 'Eligible revenue grouped by currency for the most recent order sample.',
+    fulfillmentByStatus: 'Fulfillment by status',
+    fulfillmentByStatusBody: 'Shows where orders are sitting in the fulfillment workflow.',
+    paymentProviderMix: 'Payment method mix',
+    paymentProviderMixBody: 'Counts payment attempts by provider/method so staff can see how customers are paying.',
+    discountImpact: 'Discount usage impact',
+    discountImpactBody: 'Compares discounted and non-discounted orders and surfaces total discount value.',
+    discountedOrders: 'Discounted orders',
+    undiscountedOrders: 'Orders without discount',
+    totalDiscount: 'Total discount',
     noChartData: 'No analytics data is available yet.',
     dataTable: 'View chart data',
     count: 'Count',
-    amount: 'Amount'
+    amount: 'Amount',
+    attempts: 'Attempts'
   },
   fa: {
     eyebrow: 'تحلیل‌ها',
@@ -74,9 +86,11 @@ const copy = {
     orders: 'سفارش‌ها',
     aov: 'میانگین سفارش',
     businessCharts: 'نمودارهای تحلیل کسب‌وکار',
-    businessChartsBody: 'نمای سریع وضعیت سفارش، توزیع درآمد و روند ۳۰ روزه، همراه با جدول داده دسترس‌پذیر.',
+    businessChartsBody: 'نمای سریع وضعیت سفارش، توزیع درآمد، جریان عملیات، ترکیب روش پرداخت، مصرف تخفیف و روند ۳۰ روزه، همراه با جدول داده دسترس‌پذیر.',
     trendCharts: 'نمودار روند ۳۰ روزه',
     trendChartsBody: 'روند روزانه سفارش، درآمد و میانگین ارزش سفارش برای بازه ۳۰ روزه اخیر.',
+    operationalCharts: 'نمودارهای تفکیک عملیاتی',
+    operationalChartsBody: 'نشان می‌دهد سفارش‌ها در کدام مرحله عملیاتی هستند، مشتریان از چه روش‌های پرداختی استفاده می‌کنند و تخفیف‌ها چه اثری روی نمونه سفارش‌ها دارند.',
     ordersOverTime: 'سفارش‌ها در طول زمان',
     ordersOverTimeBody: 'تعداد سفارش روزانه برای ۳۰ روز اخیر.',
     revenueOverTime: 'درآمد در طول زمان',
@@ -87,10 +101,20 @@ const copy = {
     statusBreakdownBody: 'نشان می‌دهد بار سفارش فعلی بین وضعیت‌های چرخه سفارش چگونه توزیع شده است.',
     revenueByCurrency: 'درآمد بر اساس ارز',
     revenueByCurrencyBody: 'درآمد قابل محاسبه بر اساس ارز برای نمونه اخیر سفارش‌ها.',
+    fulfillmentByStatus: 'ارسال بر اساس وضعیت',
+    fulfillmentByStatusBody: 'نشان می‌دهد سفارش‌ها در کدام مرحله اجرای سفارش قرار دارند.',
+    paymentProviderMix: 'ترکیب روش پرداخت',
+    paymentProviderMixBody: 'تلاش‌های پرداخت را بر اساس ارائه‌دهنده/روش می‌شمارد تا تیم بداند مشتریان چگونه پرداخت می‌کنند.',
+    discountImpact: 'اثر مصرف تخفیف',
+    discountImpactBody: 'سفارش‌های دارای تخفیف و بدون تخفیف را مقایسه می‌کند و ارزش کل تخفیف را نشان می‌دهد.',
+    discountedOrders: 'سفارش‌های دارای تخفیف',
+    undiscountedOrders: 'سفارش‌های بدون تخفیف',
+    totalDiscount: 'کل تخفیف',
     noChartData: 'هنوز داده تحلیلی موجود نیست.',
     dataTable: 'مشاهده جدول داده نمودار',
     count: 'تعداد',
-    amount: 'مبلغ'
+    amount: 'مبلغ',
+    attempts: 'تلاش‌ها'
   }
 } as const;
 
@@ -151,6 +175,34 @@ export async function AdminOrderRevenueSummaryPanel({ summary }: { summary: Orde
     displayValue: formatRevenueCents(row.revenueCents, row.currency),
     detail: `${row.orderCount} ${labels.orders}`
   }));
+  const fulfillmentChartRows = summary.byFulfillmentStatus.map((row) => ({
+    label: formatStatusLabel(row.status),
+    value: row.orderCount,
+    displayValue: String(row.orderCount),
+    detail: formatRevenueCents(row.revenueCents, primaryCurrency)
+  }));
+  const paymentProviderChartRows = summary.byPaymentProvider.map((row) => ({
+    label: formatStatusLabel(row.provider),
+    value: row.attemptCount,
+    displayValue: String(row.attemptCount),
+    detail: `${row.orderCount} ${labels.orders} · ${formatRevenueCents(row.amountCents, row.currency)}`
+  }));
+  const discountImpactChartRows = summary.totalOrders
+    ? [
+        {
+          label: labels.discountedOrders,
+          value: summary.discountImpact.discountedOrders,
+          displayValue: String(summary.discountImpact.discountedOrders),
+          detail: `${labels.totalDiscount}: ${formatRevenueCents(summary.discountImpact.totalDiscountCents, primaryCurrency)}`
+        },
+        {
+          label: labels.undiscountedOrders,
+          value: summary.discountImpact.undiscountedOrders,
+          displayValue: String(summary.discountImpact.undiscountedOrders),
+          detail: formatRevenueCents(summary.discountImpact.undiscountedRevenueCents, primaryCurrency)
+        }
+      ]
+    : [];
   const [inquiryOperationsSummary, bestSellingProductsSummary, lowStockAlertsSummary, fulfillmentQueueSummary, recentActivitySummary, failedPaymentNotificationAlertsSummary, launchReadinessHealthSummary] = await Promise.all([
     inquiryOperationsSummaryService.summary(),
     bestSellingProductsService.summary(),
@@ -233,6 +285,33 @@ export async function AdminOrderRevenueSummaryPanel({ summary }: { summary: Orde
               emptyLabel={labels.noChartData}
               valueLabel={labels.amount}
             />
+          </div>
+          <div className="mt-4 rounded-lg border border-stone-200 bg-white/70 p-4">
+            <p className="text-sm font-bold text-stone-950">{labels.operationalCharts}</p>
+            <p className="mt-1 text-sm leading-6 text-stone-600">{labels.operationalChartsBody}</p>
+            <div className="mt-4 grid gap-4 xl:grid-cols-3">
+              <AdminAnalyticsBarChart
+                title={labels.fulfillmentByStatus}
+                description={labels.fulfillmentByStatusBody}
+                rows={fulfillmentChartRows}
+                emptyLabel={labels.noChartData}
+                valueLabel={labels.count}
+              />
+              <AdminAnalyticsBarChart
+                title={labels.paymentProviderMix}
+                description={labels.paymentProviderMixBody}
+                rows={paymentProviderChartRows}
+                emptyLabel={labels.noChartData}
+                valueLabel={labels.attempts}
+              />
+              <AdminAnalyticsBarChart
+                title={labels.discountImpact}
+                description={labels.discountImpactBody}
+                rows={discountImpactChartRows}
+                emptyLabel={labels.noChartData}
+                valueLabel={labels.count}
+              />
+            </div>
           </div>
         </div>
         {summary.byCurrency.length ? (
