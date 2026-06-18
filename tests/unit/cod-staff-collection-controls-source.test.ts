@@ -27,7 +27,13 @@ for (const fragment of [
   "redirect('/admin/payments/cod-collections?status=cod-collection-updated')",
   'COD_COLLECTION_STATUSES.map',
   'Save COD collection',
-  'Collection status'
+  'Collection status',
+  "import { AdminPageShell } from '@/components/admin/AdminPageShell';",
+  '<AdminPageShell',
+  'activeNavKey="payment-settlement"',
+  'returnTo="/admin/payments/cod-collections"',
+  'resolveStorefrontLocale()',
+  'isAdminAuthConfigured()'
 ]) {
   assert.ok(page.includes(fragment), `Expected COD collection controls page fragment: ${fragment}`);
 }
