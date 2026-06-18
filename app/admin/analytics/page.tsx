@@ -31,12 +31,18 @@ const copy = {
     exportBody: 'Download aggregate analytics for the selected range. Exports use summaries and charts only; raw visitor sessions are not exported.',
     businessCsv: 'Download business CSV',
     siteCsv: 'Download site CSV',
+    privacyEyebrow: 'Privacy and retention',
+    privacyBody: 'First-party site analytics stay operational and privacy-safe: admin/API routes are excluded, Do Not Track is honored, exports remain aggregate-only, and raw event retention should stay limited.',
+    privacyDoc: 'Read privacy and retention policy',
+    disableLabel: 'Disable storefront analytics with NEXT_PUBLIC_SITE_ANALYTICS_ENABLED=false.',
+    retentionLabel: 'Retention target: raw site events up to 180 days; prefer aggregate summaries for long-lived reporting.',
     sectionEyebrow: 'Analytics sections',
     sectionBody: 'Jump directly to the analytics area you need instead of scrolling through the full workspace.',
     sectionLabel: 'Jump to analytics section',
     businessSummary: 'Business summary',
     businessCharts: 'Business charts',
     siteFunnel: 'Site funnel',
+    privacyControls: 'Privacy',
     productPerformance: 'Products',
     inventoryPressure: 'Inventory',
     fulfillmentOps: 'Fulfillment',
@@ -57,12 +63,18 @@ const copy = {
     exportBody: 'تحلیل‌های تجمیعی بازه انتخاب‌شده را دانلود کنید. خروجی‌ها فقط از خلاصه‌ها و نمودارها استفاده می‌کنند و نشست خام بازدیدکننده صادر نمی‌شود.',
     businessCsv: 'دانلود CSV کسب‌وکار',
     siteCsv: 'دانلود CSV سایت',
+    privacyEyebrow: 'حریم خصوصی و نگهداری',
+    privacyBody: 'تحلیل داخلی سایت عملیاتی و حریم‌خصوصی‌محور می‌ماند: مسیرهای مدیریت و API ثبت نمی‌شوند، Do Not Track رعایت می‌شود، خروجی‌ها تجمیعی هستند و نگهداری رویداد خام باید محدود بماند.',
+    privacyDoc: 'خواندن سیاست حریم خصوصی و نگهداری',
+    disableLabel: 'برای غیرفعال‌کردن تحلیل سایت، NEXT_PUBLIC_SITE_ANALYTICS_ENABLED=false را تنظیم کنید.',
+    retentionLabel: 'هدف نگهداری: رویداد خام سایت حداکثر تا ۱۸۰ روز؛ برای گزارش‌های بلندمدت از خلاصه‌های تجمیعی استفاده شود.',
     sectionEyebrow: 'بخش‌های تحلیل',
     sectionBody: 'بدون پیمایش کل صفحه، مستقیم به بخش تحلیلی موردنیاز بروید.',
     sectionLabel: 'رفتن به بخش تحلیل',
     businessSummary: 'خلاصه کسب‌وکار',
     businessCharts: 'نمودارهای کسب‌وکار',
     siteFunnel: 'قیف سایت',
+    privacyControls: 'حریم خصوصی',
     productPerformance: 'محصولات',
     inventoryPressure: 'موجودی',
     fulfillmentOps: 'ارسال',
@@ -104,6 +116,7 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
     { href: sectionHref('order-analytics', rangeDays), label: labels.businessSummary },
     { href: sectionHref('business-analytics-charts', rangeDays), label: labels.businessCharts },
     { href: sectionHref('site-analytics', rangeDays), label: labels.siteFunnel },
+    { href: sectionHref('analytics-privacy-retention', rangeDays), label: labels.privacyControls },
     { href: sectionHref('product-analytics', rangeDays), label: labels.productPerformance },
     { href: sectionHref('inventory-analytics', rangeDays), label: labels.inventoryPressure },
     { href: sectionHref('fulfillment-analytics', rangeDays), label: labels.fulfillmentOps },
@@ -184,6 +197,20 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
                 {labels.siteCsv}
               </Link>
             </div>
+          </div>
+          <div id="analytics-privacy-retention" className="mt-4 scroll-mt-24 rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-800">{labels.privacyEyebrow}</p>
+            <p className="mt-1 text-sm leading-6 text-blue-950">{labels.privacyBody}</p>
+            <ul className="mt-3 grid gap-2 text-sm leading-6 text-blue-950">
+              <li>{labels.disableLabel}</li>
+              <li>{labels.retentionLabel}</li>
+            </ul>
+            <Link
+              href="/docs/site-analytics-privacy-retention-policy.md"
+              className="mt-3 inline-flex rounded-full border border-blue-300 bg-white px-4 py-2 text-sm font-bold text-blue-800 hover:bg-blue-100"
+            >
+              {labels.privacyDoc}
+            </Link>
           </div>
           <div id="analytics-section-index" className="mt-4 rounded-lg border border-stone-200 bg-stone-50 p-4">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">{labels.sectionEyebrow}</p>
