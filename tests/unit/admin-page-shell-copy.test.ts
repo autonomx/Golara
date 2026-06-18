@@ -68,10 +68,26 @@ export async function runAdminPageShellCopyTests() {
   assert.match(analyticsRouteSource, /returnTo="\/admin\/analytics"/);
   assert.match(analyticsRouteSource, /AdminOrderRevenueSummaryPanel/);
   assert.match(analyticsRouteSource, /orderRevenueSummaryService\.summary/);
+  assert.match(analyticsRouteSource, /lightweight server-rendered business charts/);
+
+  const chartPrimitiveSource = readFileSync('components/admin/AdminAnalyticsChartPrimitives.tsx', 'utf8');
+  assert.match(chartPrimitiveSource, /AdminAnalyticsBarChart/);
+  assert.match(chartPrimitiveSource, /AdminAnalyticsChartDatum/);
+  assert.match(chartPrimitiveSource, /role="list"/);
+  assert.match(chartPrimitiveSource, /<details/);
+  assert.match(chartPrimitiveSource, /<table/);
+  assert.match(chartPrimitiveSource, /aria-label=\{title\}/);
+  assert.match(chartPrimitiveSource, /style=\{\{ width: `\$\{percent\}%` \}\}/);
 
   const revenueSource = readFileSync('components/admin/AdminOrderRevenueSummaryPanel.tsx', 'utf8');
   assert.match(revenueSource, /id="order-analytics"/);
   assert.match(revenueSource, /scroll-mt-24/);
+  assert.match(revenueSource, /AdminAnalyticsBarChart/);
+  assert.match(revenueSource, /id="business-analytics-charts"/);
+  assert.match(revenueSource, /summary\.byStatus/);
+  assert.match(revenueSource, /summary\.byCurrency\.map/);
+  assert.match(revenueSource, /Orders by status/);
+  assert.match(revenueSource, /Revenue by currency/);
 
   const globalStyles = readFileSync('app/globals.css', 'utf8');
   assert.match(globalStyles, /#main-content table tbody tr \{/);
