@@ -15,6 +15,7 @@ import {
   isRevenueEligibleStatus,
   normalizeRevenueCents
 } from '../../lib/analytics/order-revenue-summary';
+import { buildProductSalesAnalyticsSummary } from '../../lib/analytics/product-sales-analytics';
 
 function source(path: string) {
   return readFileSync(path, 'utf8');
@@ -24,6 +25,9 @@ export async function runOrderRevenueSummaryTests() {
   const comparisonHelper = source('lib/analytics/analytics-comparison.ts');
   const rangeHelper = source('lib/analytics/admin-analytics-range.ts');
   const service = source('lib/analytics/order-revenue-summary.ts');
+  const productSalesService = source('lib/analytics/product-sales-analytics.ts');
+  const productSalesPanel = source('components/admin/AdminProductSalesAnalyticsPanel.tsx');
+  const analyticsPage = source('app/admin/analytics/page.tsx');
   const panel = source('components/admin/AdminOrderRevenueSummaryPanel.tsx');
   const consolePage = source('app/admin/AdminConsolePage.tsx');
   const roadmap = source('docs/ADMIN_SALEOR_PARITY_ROADMAP.md');
@@ -126,6 +130,23 @@ export async function runOrderRevenueSummaryTests() {
   assert.equal(sevenDaySummary.recentDaily[0].date, '2026-05-27');
   assert.equal(sevenDaySummary.recentDaily[6].date, '2026-06-02');
 
+  const productSalesRows = [
+    { orderId: '1', orderStatus: 'completed', currency: 'CAD', productId: 'rose-id', productTitle: 'Rose Bouquet', productCode: 'ROSE', quantity: 2, lineTotalCents: 12000, createdAt: new Date('2026-06-01T12:00:00Z') },
+    { orderId: '2', orderStatus: 'pending', currency: 'CAD', productId: 'rose-id', productTitle: 'Rose Bouquet', productCode: 'ROSE', quantity: 1, lineTotalCents: 6000, createdAt: new Date('2026-05-30T12:00:00Z') },
+    { orderId: '3', orderStatus: 'completed', currency: 'CAD', productId: 'orchid-id', productTitle: 'Orchid', productCode: 'ORCHID', quantity: 1, lineTotalCents: 9000, createdAt: new Date('2026-05-29T12:00:00Z') },
+    { orderId: '4', orderStatus: 'cancelled', currency: 'CAD', productId: 'orchid-id', productTitle: 'Orchid', productCode: 'ORCHID', quantity: 10, lineTotalCents: 90000, createdAt: new Date('2026-05-29T12:00:00Z') },
+    { orderId: '5', orderStatus: 'completed', currency: 'CAD', productId: 'old-id', productTitle: 'Old Product', productCode: 'OLD', quantity: 2, lineTotalCents: 4000, createdAt: new Date('2026-04-01T12:00:00Z') }
+  ];
+  const productSalesSummary = buildProductSalesAnalyticsSummary(productSalesRows, now);
+  assert.equal(productSalesSummary.analyticsRangeDays, 30);
+  assert.equal(productSalesSummary.rows[0].label, 'Rose Bouquet');
+  assert.equal(productSalesSummary.rows[0].quantitySold, 3);
+  assert.equal(productSalesSummary.rows[0].orderCount, 2);
+  assert.equal(productSalesSummary.rows[0].revenueCents, 18000);
+  assert.equal(productSalesSummary.rows[0].averageUnitRevenueCents, 6000);
+  assert.equal(productSalesSummary.rows.some((row) => row.label === 'Old Product'), false);
+  assert.equal(productSalesSummary.rows.some((row) => row.revenueCents === 90000), false);
+
   assert.match(comparisonHelper, /export type AnalyticsComparisonDelta/);
   assert.match(comparisonHelper, /buildAnalyticsComparisonDelta/);
   assert.match(comparisonHelper, /percentChange = previous > 0/);
@@ -165,6 +186,27 @@ export async function runOrderRevenueSummaryTests() {
   assert.match(service, /discountCents: true/);
   assert.match(service, /fulfillmentStatus: true/);
   assert.match(service, /REVENUE_EXCLUDED_STATUSES/);
+
+  assert.match(productSalesService, /export type ProductSalesAnalyticsSummary/);
+  assert.match(productSalesService, /buildProductSalesAnalyticsSummary/);
+  assert.match(productSalesService, /isRevenueEligibleStatus\(row\.orderStatus\)/);
+  assert.match(productSalesService, /prisma\.checkoutOrderItem\.findMany/);
+  assert.match(productSalesService, /lineTotalCents: true/);
+  assert.match(productSalesService, /productTitle: true/);
+  assert.match(productSalesService, /productSalesAnalyticsService/);
+  assert.match(productSalesService, /take: 5000/);
+
+  assert.match(productSalesPanel, /export async function AdminProductSalesAnalyticsPanel/);
+  assert.match(productSalesPanel, /Product sales performance/);
+  assert.match(productSalesPanel, /id="product-sales-analytics"/);
+  assert.match(productSalesPanel, /Units sold by product/);
+  assert.match(productSalesPanel, /Revenue by product/);
+  assert.match(productSalesPanel, /AdminAnalyticsBarChart/);
+
+  assert.match(analyticsPage, /AdminProductSalesAnalyticsPanel/);
+  assert.match(analyticsPage, /productSalesAnalyticsService\.summary\(\{ rangeDays \}\)/);
+  assert.match(analyticsPage, /EMPTY_PRODUCT_SALES_ANALYTICS_SUMMARY/);
+  assert.match(analyticsPage, /sectionHref\('product-sales-analytics', rangeDays\)/);
 
   assert.match(panel, /export async function AdminOrderRevenueSummaryPanel/);
   assert.match(panel, /Order count and revenue/);
