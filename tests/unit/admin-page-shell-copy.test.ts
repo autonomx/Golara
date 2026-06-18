@@ -84,6 +84,12 @@ export async function runAdminPageShellCopyTests() {
   assert.match(analyticsRouteSource, /AdminSiteAnalyticsPanel/);
   assert.match(analyticsRouteSource, /lightweight server-rendered business and site charts/);
   assert.match(analyticsRouteSource, /privacy-safe first-party events/);
+  assert.match(analyticsRouteSource, /id="analytics-csv-exports"/);
+  assert.match(analyticsRouteSource, /exportHref\('business', rangeDays\)/);
+  assert.match(analyticsRouteSource, /exportHref\('site', rangeDays\)/);
+  assert.match(analyticsRouteSource, /Download business CSV/);
+  assert.match(analyticsRouteSource, /Download site CSV/);
+  assert.match(analyticsRouteSource, /raw visitor sessions are not exported/);
   assert.match(analyticsRouteSource, /id="analytics-section-index"/);
   assert.match(analyticsRouteSource, /sectionHref\('order-analytics', rangeDays\)/);
   assert.match(analyticsRouteSource, /sectionHref\('business-analytics-charts', rangeDays\)/);
@@ -96,6 +102,17 @@ export async function runAdminPageShellCopyTests() {
   assert.match(analyticsRouteSource, /sectionHref\('readiness-analytics', rangeDays\)/);
   assert.match(analyticsRouteSource, /aria-label=\{labels\.sectionLabel\}/);
   assert.match(analyticsRouteSource, /Jump directly to the analytics area you need/);
+
+  const analyticsExportRouteSource = readFileSync('app/admin/analytics/export/route.ts', 'utf8');
+  assert.match(analyticsExportRouteSource, /assertAdminRole\('owner'\)/);
+  assert.match(analyticsExportRouteSource, /normalizeAdminAnalyticsRangeDays\(url\.searchParams\.get\('range'\)\)/);
+  assert.match(analyticsExportRouteSource, /normalizeReport\(url\.searchParams\.get\('report'\)\)/);
+  assert.match(analyticsExportRouteSource, /orderRevenueSummaryService\.summary\(\{ rangeDays \}\)/);
+  assert.match(analyticsExportRouteSource, /siteAnalyticsSummaryService\.summary\(\{ rangeDays \}\)/);
+  assert.match(analyticsExportRouteSource, /text\/csv; charset=utf-8/);
+  assert.match(analyticsExportRouteSource, /golara-analytics-\$\{report\}-\$\{rangeDays\}d\.csv/);
+  assert.match(analyticsExportRouteSource, /raw session export/);
+  assert.match(analyticsExportRouteSource, /Revenue excludes cancelled\/refunded\/voided orders/);
 
   const chartPrimitiveSource = readFileSync('components/admin/AdminAnalyticsChartPrimitives.tsx', 'utf8');
   assert.match(chartPrimitiveSource, /AdminAnalyticsBarChart/);
