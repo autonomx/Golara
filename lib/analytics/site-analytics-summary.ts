@@ -51,6 +51,13 @@ export type SiteAnalyticsBreakdownRow = {
   count: number;
 };
 
+export type SiteAnalyticsProductConversionRow = {
+  label: string;
+  productViews: number;
+  addToCart: number;
+  viewToCartRatePercent: number;
+};
+
 export type SiteAnalyticsDailyPoint = {
   date: string;
   eventCount: number;
@@ -84,6 +91,7 @@ export type SiteAnalyticsSummary = {
   topTrafficSources: SiteAnalyticsBreakdownRow[];
   topTrafficCampaigns: SiteAnalyticsBreakdownRow[];
   topReferrerDomains: SiteAnalyticsBreakdownRow[];
+  productConversions: SiteAnalyticsProductConversionRow[];
   checkoutFunnel: SiteAnalyticsFunnel;
   comparison: SiteAnalyticsComparisonSummary;
   recentDaily: SiteAnalyticsDailyPoint[];
@@ -122,6 +130,7 @@ export const EMPTY_SITE_ANALYTICS_SUMMARY: SiteAnalyticsSummary = {
   topTrafficSources: [],
   topTrafficCampaigns: [],
   topReferrerDomains: [],
+  productConversions: [],
   checkoutFunnel: {
     pageViews: 0,
     productViews: 0,
@@ -197,6 +206,19 @@ function buildBreakdownRows(map: Map<string, number>, limit = TOP_ROW_LIMIT): Si
     .slice(0, limit);
 }
 
+function buildProductConversionRows(buckets: Map<string, { productViews: number; addToCart: number }>, limit = TOP_ROW_LIMIT): SiteAnalyticsProductConversionRow[] {
+  return Array.from(buckets.entries())
+    .map(([label, bucket]) => ({
+      label,
+      productViews: bucket.productViews,
+      addToCart: bucket.addToCart,
+      viewToCartRatePercent: bucket.productViews ? Math.round((bucket.addToCart / bucket.productViews) * 1000) / 10 : 0
+    }))
+    .filter((row) => row.productViews > 0 || row.addToCart > 0)
+    .sort((a, b) => b.addToCart - a.addToCart || b.productViews - a.productViews || b.viewToCartRatePercent - a.viewToCartRatePercent || a.label.localeCompare(b.label))
+    .slice(0, limit);
+}
+
 function buildRecentDailyPoints(rows: SiteAnalyticsSourceRow[], now: Date, rangeDays: AdminAnalyticsRangeDays): SiteAnalyticsDailyPoint[] {
   const end = startOfUtcDay(now);
   const start = new Date(end.getTime() - (rangeDays - 1) * DAY_MS);
@@ -267,6 +289,7 @@ export function buildSiteAnalyticsSummary(rows: SiteAnalyticsSourceRow[], now = 
   const typeBuckets = new Map<string, number>();
   const pathBuckets = new Map<string, number>();
   const productBuckets = new Map<string, number>();
+  const productConversionBuckets = new Map<string, { productViews: number; addToCart: number }>();
   const categoryBuckets = new Map<string, number>();
   const searchBuckets = new Map<string, number>();
   const sourceBuckets = new Map<string, number>();
@@ -286,6 +309,7 @@ export function buildSiteAnalyticsSummary(rows: SiteAnalyticsSourceRow[], now = 
     const eventType = normalizeEventType(row.eventType);
     const path = normalizePath(row.path);
     const metadata = row.metadata ?? null;
+    const productLabel = normalizeLabel(row.productId, path);
     incrementBucket(typeBuckets, eventType);
     incrementBucket(pathBuckets, path);
     incrementBucket(sourceBuckets, normalizeLabel(metadata?.utmSource, 'Direct/unknown'));
@@ -299,12 +323,20 @@ export function buildSiteAnalyticsSummary(rows: SiteAnalyticsSourceRow[], now = 
     if (eventType === 'page_view') funnel.pageViews += 1;
     if (eventType === 'product_view') {
       funnel.productViews += 1;
-      incrementBucket(productBuckets, normalizeLabel(row.productId, path));
+      incrementBucket(productBuckets, productLabel);
+      const bucket = productConversionBuckets.get(productLabel) ?? { productViews: 0, addToCart: 0 };
+      bucket.productViews += 1;
+      productConversionBuckets.set(productLabel, bucket);
     }
     if (eventType === 'category_view') {
       incrementBucket(categoryBuckets, normalizeLabel(row.categoryId, path));
     }
-    if (eventType === 'add_to_cart') funnel.addToCart += 1;
+    if (eventType === 'add_to_cart') {
+      funnel.addToCart += 1;
+      const bucket = productConversionBuckets.get(productLabel) ?? { productViews: 0, addToCart: 0 };
+      bucket.addToCart += 1;
+      productConversionBuckets.set(productLabel, bucket);
+    }
     if (eventType === 'checkout_started') funnel.checkoutStarted += 1;
     if (eventType === 'checkout_completed') funnel.checkoutCompleted += 1;
 
@@ -334,6 +366,7 @@ export function buildSiteAnalyticsSummary(rows: SiteAnalyticsSourceRow[], now = 
     topTrafficSources: buildBreakdownRows(sourceBuckets),
     topTrafficCampaigns: buildBreakdownRows(campaignBuckets),
     topReferrerDomains: buildBreakdownRows(referrerBuckets),
+    productConversions: buildProductConversionRows(productConversionBuckets),
     checkoutFunnel: funnel,
     comparison: buildSiteAnalyticsComparison(currentSnapshot, previousSnapshot),
     recentDaily: buildRecentDailyPoints(scopedRows, now, analyticsRangeDays),

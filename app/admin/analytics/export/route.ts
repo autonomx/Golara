@@ -111,6 +111,12 @@ function buildSiteAnalyticsCsv(rangeDays: number, summary: Awaited<ReturnType<ty
     rows.push(['site', 'top_product_views', 'event_count', row.label, row.count, 'Aggregate product id/path only']);
   }
 
+  for (const row of summary.productConversions) {
+    rows.push(['site', 'product_conversion', 'product_views', row.label, row.productViews, 'Aggregate product id/path only']);
+    rows.push(['site', 'product_conversion', 'add_to_cart', row.label, row.addToCart, 'Aggregate product id/path only']);
+    rows.push(['site', 'product_conversion', 'view_to_cart_percent', row.label, row.viewToCartRatePercent, 'Derived from aggregate product views and add-to-cart events']);
+  }
+
   for (const row of summary.topCategoryViews) {
     rows.push(['site', 'top_category_views', 'event_count', row.label, row.count, 'Aggregate category id/path only']);
   }
