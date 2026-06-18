@@ -14,14 +14,15 @@ export async function runSiteAnalyticsSummaryTests() {
   const reporter = source('components/StorefrontSiteAnalyticsReporter.tsx');
   const layout = source('app/layout.tsx');
   const analyticsPage = source('app/admin/analytics/page.tsx');
+  const exportRoute = source('app/admin/analytics/export/route.ts');
   const migration = source('prisma/migrations/20260618193000_add_site_analytics_events/migration.sql');
 
   const now = new Date('2026-06-18T12:00:00Z');
   const rows = [
-    { eventType: 'page_view', path: '/', locale: 'en-CA', createdAt: new Date('2026-06-18T10:00:00Z') },
-    { eventType: 'page_view', path: '/products/rose', locale: 'en-CA', createdAt: new Date('2026-06-18T11:00:00Z') },
-    { eventType: 'product_view', path: '/products/rose', productId: 'rose', locale: 'en-CA', createdAt: new Date('2026-06-18T11:05:00Z') },
-    { eventType: 'category_view', path: '/categories/flowers', categoryId: 'flowers', locale: 'en-CA', createdAt: new Date('2026-06-18T11:06:00Z') },
+    { eventType: 'page_view', path: '/', locale: 'en-CA', metadata: { utmSource: 'google', utmMedium: 'cpc', utmCampaign: 'spring-launch', referrerDomain: 'search.example' }, createdAt: new Date('2026-06-18T10:00:00Z') },
+    { eventType: 'page_view', path: '/products/rose', locale: 'en-CA', metadata: { utmSource: 'newsletter', utmMedium: 'email', utmCampaign: 'spring-launch' }, createdAt: new Date('2026-06-18T11:00:00Z') },
+    { eventType: 'product_view', path: '/products/rose', productId: 'rose', locale: 'en-CA', metadata: { utmSource: 'newsletter', utmCampaign: 'spring-launch' }, createdAt: new Date('2026-06-18T11:05:00Z') },
+    { eventType: 'category_view', path: '/categories/flowers', categoryId: 'flowers', locale: 'en-CA', metadata: { referrerDomain: 'partner.example' }, createdAt: new Date('2026-06-18T11:06:00Z') },
     { eventType: 'search_submitted', path: '/products', searchTerm: 'orchid', locale: 'en-CA', createdAt: new Date('2026-06-17T11:05:00Z') },
     { eventType: 'add_to_cart', path: '/cart', productId: 'rose', locale: 'en-CA', createdAt: new Date('2026-06-17T11:10:00Z') },
     { eventType: 'checkout_started', path: '/cart/checkout', locale: 'en-CA', createdAt: new Date('2026-06-17T11:15:00Z') },
@@ -52,6 +53,13 @@ export async function runSiteAnalyticsSummaryTests() {
   assert.equal(summary.topProductViews[0].label, 'rose');
   assert.equal(summary.topCategoryViews[0].label, 'flowers');
   assert.equal(summary.topSearchTerms[0].label, 'orchid');
+  assert.equal(summary.topTrafficSources[0].label, 'Direct/unknown');
+  assert.equal(summary.topTrafficSources[0].count, 6);
+  assert.equal(summary.topTrafficSources.some((row) => row.label === 'newsletter'), true);
+  assert.equal(summary.topTrafficCampaigns[0].label, 'spring-launch');
+  assert.equal(summary.topTrafficCampaigns[0].count, 3);
+  assert.equal(summary.topReferrerDomains.some((row) => row.label === 'search.example'), true);
+  assert.equal(summary.topReferrerDomains.some((row) => row.label === 'partner.example'), true);
   assert.equal(summary.recentDaily.length, 30);
   assert.equal(summary.recentDaily[29].date, '2026-06-18');
   assert.equal(summary.recentDaily[29].eventCount, 4);
@@ -73,6 +81,7 @@ export async function runSiteAnalyticsSummaryTests() {
   assert.match(rangeHelper, /isWithinAdminAnalyticsPreviousRange/);
 
   assert.match(service, /export type SiteAnalyticsEventType/);
+  assert.match(service, /export type SiteAnalyticsAttributionMetadata/);
   assert.match(service, /SITE_ANALYTICS_EVENT_TYPES/);
   assert.match(service, /buildSiteAnalyticsSummary/);
   assert.match(service, /analyticsRangeDays: AdminAnalyticsRangeDays/);
@@ -81,16 +90,22 @@ export async function runSiteAnalyticsSummaryTests() {
   assert.match(service, /export type SiteAnalyticsComparisonSummary/);
   assert.match(service, /comparison: SiteAnalyticsComparisonSummary/);
   assert.match(service, /buildSiteAnalyticsComparison/);
+  assert.match(service, /topTrafficSources/);
+  assert.match(service, /topTrafficCampaigns/);
+  assert.match(service, /topReferrerDomains/);
+  assert.match(service, /normalizeMetadata/);
+  assert.match(service, /metadata: normalizeMetadata\(row\.metadata\)/);
   assert.match(service, /WHERE "createdAt" >= \$\{getAdminAnalyticsPreviousRangeStart\(now, rangeDays\)\}/);
   assert.match(service, /LIMIT 10000/);
   assert.match(service, /topProductViews/);
   assert.match(service, /topCategoryViews/);
   assert.match(service, /siteAnalyticsSummaryService/);
-  assert.match(service, /SELECT "eventType", "path", "locale", "productId", "categoryId", "searchTerm", "createdAt"/);
+  assert.match(service, /SELECT "eventType", "path", "locale", "productId", "categoryId", "searchTerm", "metadata", "createdAt"/);
   assert.match(service, /isMissingSiteAnalyticsTableError/);
 
   assert.match(panel, /export async function AdminSiteAnalyticsPanel/);
   assert.match(panel, /Storefront traffic and funnel/);
+  assert.match(panel, /campaign attribution/);
   assert.match(panel, /formatRangeLabel\(summary\.analyticsRangeDays/);
   assert.match(panel, /Selected range/);
   assert.match(panel, /AdminAnalyticsTrendChart/);
@@ -100,6 +115,12 @@ export async function runSiteAnalyticsSummaryTests() {
   assert.match(panel, /Checkout funnel/);
   assert.match(panel, /Top product views/);
   assert.match(panel, /Top category views/);
+  assert.match(panel, /Top traffic sources/);
+  assert.match(panel, /Top campaigns/);
+  assert.match(panel, /Top referrer domains/);
+  assert.match(panel, /summary\.topTrafficSources/);
+  assert.match(panel, /summary\.topTrafficCampaigns/);
+  assert.match(panel, /summary\.topReferrerDomains/);
   assert.match(panel, /formatComparisonDelta/);
   assert.match(panel, /vs previous range/);
   assert.match(panel, /summary\.comparison\.totalEvents/);
@@ -111,6 +132,10 @@ export async function runSiteAnalyticsSummaryTests() {
   assert.match(route, /startsWith\('\/admin\/'\)/);
   assert.match(route, /normalizeMetadata/);
   assert.match(route, /paymentMethodKey/);
+  assert.match(route, /utmSource/);
+  assert.match(route, /utmMedium/);
+  assert.match(route, /utmCampaign/);
+  assert.match(route, /referrerDomain/);
   assert.match(route, /recordSiteAnalyticsEvent/);
   assert.match(route, /INSERT INTO "SiteAnalyticsEvent"/);
   assert.match(route, /site_analytics_event_table_missing/);
@@ -128,6 +153,11 @@ export async function runSiteAnalyticsSummaryTests() {
   assert.match(reporter, /checkout_started/);
   assert.match(reporter, /checkout_completed/);
   assert.match(reporter, /payment_method_selected/);
+  assert.match(reporter, /utm_source/);
+  assert.match(reporter, /utm_medium/);
+  assert.match(reporter, /utm_campaign/);
+  assert.match(reporter, /referrerDomain/);
+  assert.match(reporter, /sessionStorage/);
   assert.doesNotMatch(reporter, /useSearchParams/);
 
   assert.match(layout, /StorefrontSiteAnalyticsReporter/);
@@ -139,6 +169,11 @@ export async function runSiteAnalyticsSummaryTests() {
   assert.match(analyticsPage, /privacy-safe first-party events/);
   assert.match(analyticsPage, /Analytics range/);
   assert.match(analyticsPage, /ADMIN_ANALYTICS_RANGE_DAYS/);
+
+  assert.match(exportRoute, /top_traffic_sources/);
+  assert.match(exportRoute, /top_traffic_campaigns/);
+  assert.match(exportRoute, /top_referrer_domains/);
+  assert.match(exportRoute, /full URLs are not exported/);
 
   assert.match(migration, /CREATE TABLE IF NOT EXISTS "SiteAnalyticsEvent"/);
   assert.match(migration, /anonymousSessionId/);

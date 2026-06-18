@@ -10,7 +10,7 @@ const copy = {
   en: {
     eyebrow: 'Site analytics',
     title: 'Storefront traffic and funnel',
-    body: 'Privacy-safe first-party site events for page views, product/category views, search, cart, checkout, and payment-method selection. Admin routes are excluded.',
+    body: 'Privacy-safe first-party site events for page views, product/category views, search, cart, checkout, payment-method selection, and campaign attribution. Admin routes are excluded.',
     totalEvents: 'Total site events',
     recentEvents: 'Selected range',
     uniquePaths: 'Unique paths',
@@ -30,6 +30,12 @@ const copy = {
     topProductsBody: 'Product detail views grouped by product slug from storefront traffic.',
     topCategories: 'Top category views',
     topCategoriesBody: 'Category detail views grouped by category slug from storefront traffic.',
+    topSources: 'Top traffic sources',
+    topSourcesBody: 'UTM source attribution for storefront events, with direct or unattributed traffic grouped together.',
+    topCampaigns: 'Top campaigns',
+    topCampaignsBody: 'UTM campaign values captured from first-party page traffic.',
+    topReferrers: 'Top referrer domains',
+    topReferrersBody: 'External referrer domains only. Full referrer URLs are never exported or shown.',
     addToCart: 'Add to cart',
     checkoutStarted: 'Checkout started',
     checkoutCompleted: 'Checkout completed',
@@ -41,7 +47,7 @@ const copy = {
   fa: {
     eyebrow: 'تحلیل سایت',
     title: 'ترافیک فروشگاه و قیف خرید',
-    body: 'رویدادهای داخلی و حریم‌خصوصی‌محور برای بازدید صفحه، محصول/دسته، جستجو، سبد، پرداخت و انتخاب روش پرداخت. مسیرهای مدیریت ثبت نمی‌شوند.',
+    body: 'رویدادهای داخلی و حریم‌خصوصی‌محور برای بازدید صفحه، محصول/دسته، جستجو، سبد، پرداخت، انتخاب روش پرداخت و انتساب کمپین. مسیرهای مدیریت ثبت نمی‌شوند.',
     totalEvents: 'کل رویدادهای سایت',
     recentEvents: 'بازه انتخاب‌شده',
     uniquePaths: 'مسیرهای یکتا',
@@ -61,6 +67,12 @@ const copy = {
     topProductsBody: 'بازدید صفحه محصول بر اساس اسلاگ محصول در ترافیک فروشگاه.',
     topCategories: 'بازدید دسته‌های برتر',
     topCategoriesBody: 'بازدید صفحه دسته بر اساس اسلاگ دسته در ترافیک فروشگاه.',
+    topSources: 'منابع ترافیک برتر',
+    topSourcesBody: 'انتساب UTM source برای رویدادهای فروشگاه؛ ترافیک مستقیم یا بدون انتساب یکجا گروه‌بندی می‌شود.',
+    topCampaigns: 'کمپین‌های برتر',
+    topCampaignsBody: 'مقادیر UTM campaign ثبت‌شده از ترافیک داخلی صفحه.',
+    topReferrers: 'دامنه‌های ارجاع‌دهنده برتر',
+    topReferrersBody: 'فقط دامنه ارجاع‌دهنده خارجی نمایش داده می‌شود. URL کامل ارجاع‌دهنده هرگز صادر یا نمایش داده نمی‌شود.',
     addToCart: 'افزودن به سبد',
     checkoutStarted: 'شروع پرداخت',
     checkoutCompleted: 'تکمیل پرداخت',
@@ -158,6 +170,21 @@ export async function AdminSiteAnalyticsPanel({ summary }: { summary: SiteAnalyt
     value: row.count,
     displayValue: String(row.count)
   }));
+  const sourceRows = summary.topTrafficSources.map((row) => ({
+    label: row.label,
+    value: row.count,
+    displayValue: String(row.count)
+  }));
+  const campaignRows = summary.topTrafficCampaigns.map((row) => ({
+    label: row.label,
+    value: row.count,
+    displayValue: String(row.count)
+  }));
+  const referrerRows = summary.topReferrerDomains.map((row) => ({
+    label: row.label,
+    value: row.count,
+    displayValue: String(row.count)
+  }));
   const funnelRows = [
     { label: labels.pageViews, value: summary.checkoutFunnel.pageViews, displayValue: String(summary.checkoutFunnel.pageViews) },
     { label: labels.productViews, value: summary.checkoutFunnel.productViews, displayValue: String(summary.checkoutFunnel.productViews) },
@@ -236,6 +263,29 @@ export async function AdminSiteAnalyticsPanel({ summary }: { summary: SiteAnalyt
             title={labels.topCategories}
             description={labels.topCategoriesBody}
             rows={categoryRows}
+            emptyLabel={labels.noChartData}
+            valueLabel={labels.count}
+          />
+        </div>
+        <div className="mt-4 grid gap-4 lg:grid-cols-3">
+          <AdminAnalyticsBarChart
+            title={labels.topSources}
+            description={labels.topSourcesBody}
+            rows={sourceRows}
+            emptyLabel={labels.noChartData}
+            valueLabel={labels.count}
+          />
+          <AdminAnalyticsBarChart
+            title={labels.topCampaigns}
+            description={labels.topCampaignsBody}
+            rows={campaignRows}
+            emptyLabel={labels.noChartData}
+            valueLabel={labels.count}
+          />
+          <AdminAnalyticsBarChart
+            title={labels.topReferrers}
+            description={labels.topReferrersBody}
+            rows={referrerRows}
             emptyLabel={labels.noChartData}
             valueLabel={labels.count}
           />

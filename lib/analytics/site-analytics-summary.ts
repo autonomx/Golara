@@ -23,6 +23,13 @@ export type SiteAnalyticsEventType =
   | 'checkout_completed'
   | 'payment_method_selected';
 
+export type SiteAnalyticsAttributionMetadata = {
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  referrerDomain?: string | null;
+};
+
 export type SiteAnalyticsSourceRow = {
   eventType: string;
   path: string;
@@ -30,10 +37,12 @@ export type SiteAnalyticsSourceRow = {
   productId?: string | null;
   categoryId?: string | null;
   searchTerm?: string | null;
+  metadata?: SiteAnalyticsAttributionMetadata | null;
   createdAt: Date;
 };
 
-type RawSiteAnalyticsSourceRow = Omit<SiteAnalyticsSourceRow, 'createdAt'> & {
+type RawSiteAnalyticsSourceRow = Omit<SiteAnalyticsSourceRow, 'createdAt' | 'metadata'> & {
+  metadata?: unknown;
   createdAt: Date | string;
 };
 
@@ -72,6 +81,9 @@ export type SiteAnalyticsSummary = {
   topProductViews: SiteAnalyticsBreakdownRow[];
   topCategoryViews: SiteAnalyticsBreakdownRow[];
   topSearchTerms: SiteAnalyticsBreakdownRow[];
+  topTrafficSources: SiteAnalyticsBreakdownRow[];
+  topTrafficCampaigns: SiteAnalyticsBreakdownRow[];
+  topReferrerDomains: SiteAnalyticsBreakdownRow[];
   checkoutFunnel: SiteAnalyticsFunnel;
   comparison: SiteAnalyticsComparisonSummary;
   recentDaily: SiteAnalyticsDailyPoint[];
@@ -107,6 +119,9 @@ export const EMPTY_SITE_ANALYTICS_SUMMARY: SiteAnalyticsSummary = {
   topProductViews: [],
   topCategoryViews: [],
   topSearchTerms: [],
+  topTrafficSources: [],
+  topTrafficCampaigns: [],
+  topReferrerDomains: [],
   checkoutFunnel: {
     pageViews: 0,
     productViews: 0,
@@ -140,6 +155,31 @@ function normalizePath(value?: string | null) {
 function normalizeLabel(value?: string | null, fallback = 'Unknown') {
   const trimmed = value?.trim();
   return trimmed ? trimmed.slice(0, 120) : fallback;
+}
+
+function normalizeOptionalLabel(value: unknown) {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim().replace(/\s+/g, ' ');
+  return trimmed ? trimmed.slice(0, 120) : null;
+}
+
+function normalizeMetadata(value: unknown): SiteAnalyticsAttributionMetadata | null {
+  let parsed = value;
+  if (typeof value === 'string') {
+    try {
+      parsed = JSON.parse(value) as unknown;
+    } catch {
+      return null;
+    }
+  }
+  if (typeof parsed !== 'object' || !parsed || Array.isArray(parsed)) return null;
+  const source = parsed as Record<string, unknown>;
+  return {
+    utmSource: normalizeOptionalLabel(source.utmSource),
+    utmMedium: normalizeOptionalLabel(source.utmMedium),
+    utmCampaign: normalizeOptionalLabel(source.utmCampaign),
+    referrerDomain: normalizeOptionalLabel(source.referrerDomain)
+  };
 }
 
 function utcDateKey(value: Date) {
@@ -229,6 +269,9 @@ export function buildSiteAnalyticsSummary(rows: SiteAnalyticsSourceRow[], now = 
   const productBuckets = new Map<string, number>();
   const categoryBuckets = new Map<string, number>();
   const searchBuckets = new Map<string, number>();
+  const sourceBuckets = new Map<string, number>();
+  const campaignBuckets = new Map<string, number>();
+  const referrerBuckets = new Map<string, number>();
   const pathSet = new Set<string>();
   const funnel: SiteAnalyticsFunnel = {
     pageViews: 0,
@@ -242,9 +285,14 @@ export function buildSiteAnalyticsSummary(rows: SiteAnalyticsSourceRow[], now = 
   for (const row of scopedRows) {
     const eventType = normalizeEventType(row.eventType);
     const path = normalizePath(row.path);
+    const metadata = row.metadata ?? null;
     incrementBucket(typeBuckets, eventType);
     incrementBucket(pathBuckets, path);
+    incrementBucket(sourceBuckets, normalizeLabel(metadata?.utmSource, 'Direct/unknown'));
     pathSet.add(path);
+
+    if (metadata?.utmCampaign) incrementBucket(campaignBuckets, normalizeLabel(metadata.utmCampaign));
+    if (metadata?.referrerDomain) incrementBucket(referrerBuckets, normalizeLabel(metadata.referrerDomain));
 
     if (row.createdAt >= recentCutoff) recentEvents += 1;
 
@@ -283,6 +331,9 @@ export function buildSiteAnalyticsSummary(rows: SiteAnalyticsSourceRow[], now = 
     topProductViews: buildBreakdownRows(productBuckets),
     topCategoryViews: buildBreakdownRows(categoryBuckets),
     topSearchTerms: buildBreakdownRows(searchBuckets),
+    topTrafficSources: buildBreakdownRows(sourceBuckets),
+    topTrafficCampaigns: buildBreakdownRows(campaignBuckets),
+    topReferrerDomains: buildBreakdownRows(referrerBuckets),
     checkoutFunnel: funnel,
     comparison: buildSiteAnalyticsComparison(currentSnapshot, previousSnapshot),
     recentDaily: buildRecentDailyPoints(scopedRows, now, analyticsRangeDays),
@@ -294,6 +345,7 @@ export function buildSiteAnalyticsSummary(rows: SiteAnalyticsSourceRow[], now = 
 function normalizeRawSiteAnalyticsRows(rows: RawSiteAnalyticsSourceRow[]): SiteAnalyticsSourceRow[] {
   return rows.map((row) => ({
     ...row,
+    metadata: normalizeMetadata(row.metadata),
     createdAt: row.createdAt instanceof Date ? row.createdAt : new Date(row.createdAt)
   })).filter((row) => !Number.isNaN(row.createdAt.getTime()));
 }
@@ -312,7 +364,7 @@ export const siteAnalyticsSummaryService = {
 
     try {
       const rows = await prisma.$queryRaw<RawSiteAnalyticsSourceRow[]>`
-        SELECT "eventType", "path", "locale", "productId", "categoryId", "searchTerm", "createdAt"
+        SELECT "eventType", "path", "locale", "productId", "categoryId", "searchTerm", "metadata", "createdAt"
         FROM "SiteAnalyticsEvent"
         WHERE "createdAt" >= ${getAdminAnalyticsPreviousRangeStart(now, rangeDays)}
         ORDER BY "createdAt" DESC

@@ -90,7 +90,7 @@ function runProductionReadinessFunctionalCoverageTests() {
     'Add launch/readiness health cards.'
   ];
 
-  for (const item of phase10Items) assert.match(roadmap, new RegExp(`- \\[x\\] ${item.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}`));
+  for (const item of phase10Items) assert.match(roadmap, new RegExp(`- \\[x\\] ${item.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
   for (const check of requiredChecks) assert.match(packageJson, new RegExp(`"${check}"`));
 }
 
@@ -132,17 +132,31 @@ function runSiteAnalyticsFunctionalCoverageTests() {
   assert.match(reporter, /navigator\.doNotTrack/);
   assert.match(reporter, /ADMIN_OR_SYSTEM_PATH_PREFIXES/);
   assert.match(reporter, /page_view/);
+  assert.match(reporter, /utm_source/);
+  assert.match(reporter, /utm_medium/);
+  assert.match(reporter, /utm_campaign/);
+  assert.match(reporter, /referrerDomain/);
   assert.match(route, /assertSameOriginServerAction/);
   assert.match(route, /MAX_BODY_BYTES = 4096/);
+  assert.match(route, /utmSource/);
+  assert.match(route, /utmMedium/);
+  assert.match(route, /utmCampaign/);
+  assert.match(route, /referrerDomain/);
   assert.match(route, /INSERT INTO "SiteAnalyticsEvent"/);
   assert.match(route, /site_analytics_event_table_missing/);
   assert.match(service, /buildSiteAnalyticsSummary/);
   assert.match(service, /siteAnalyticsSummaryService/);
-  assert.match(service, /SELECT "eventType", "path", "locale", "productId", "categoryId", "searchTerm", "createdAt"/);
+  assert.match(service, /SELECT "eventType", "path", "locale", "productId", "categoryId", "searchTerm", "metadata", "createdAt"/);
+  assert.match(service, /topTrafficSources/);
+  assert.match(service, /topTrafficCampaigns/);
+  assert.match(service, /topReferrerDomains/);
   assert.match(service, /FROM "SiteAnalyticsEvent"/);
   assert.match(panel, /AdminSiteAnalyticsPanel/);
   assert.match(panel, /Storefront traffic and funnel/);
   assert.match(panel, /Checkout funnel/);
+  assert.match(panel, /Top traffic sources/);
+  assert.match(panel, /Top campaigns/);
+  assert.match(panel, /Top referrer domains/);
   assert.match(analyticsPage, /AdminSiteAnalyticsPanel/);
   assert.match(analyticsPage, /siteAnalyticsSummaryService\.summary/);
   assert.match(migration, /CREATE TABLE IF NOT EXISTS "SiteAnalyticsEvent"/);
