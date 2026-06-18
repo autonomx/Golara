@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 
 const service = readFileSync('lib/checkout/cod-collection-service.ts', 'utf8');
 const page = readFileSync('app/admin/payments/cod-collections/page.tsx', 'utf8');
+const shell = readFileSync('components/admin/AdminPageShell.tsx', 'utf8');
 const roadmap = readFileSync('docs/digikala-style-payment-remaining-phases.md', 'utf8');
 const pkg = readFileSync('package.json', 'utf8');
 
@@ -27,9 +28,23 @@ for (const fragment of [
   "redirect('/admin/payments/cod-collections?status=cod-collection-updated')",
   'COD_COLLECTION_STATUSES.map',
   'Save COD collection',
-  'Collection status'
+  'Collection status',
+  "import { AdminPageShell } from '@/components/admin/AdminPageShell';",
+  '<AdminPageShell',
+  'activeNavKey="cod-collections"',
+  'returnTo="/admin/payments/cod-collections"',
+  'resolveStorefrontLocale()',
+  'isAdminAuthConfigured()'
 ]) {
   assert.ok(page.includes(fragment), `Expected COD collection controls page fragment: ${fragment}`);
+}
+
+for (const fragment of [
+  "| 'cod-collections'",
+  "'cod-collections': 'Cash collections'",
+  "{ href: '/admin/payments/cod-collections', key: 'cod-collections', icon: CreditCard }"
+]) {
+  assert.ok(shell.includes(fragment), `Expected shared admin shell COD collections nav fragment: ${fragment}`);
 }
 
 for (const fragment of [
