@@ -72,10 +72,15 @@ export async function runAdminPageShellCopyTests() {
 
   const chartPrimitiveSource = readFileSync('components/admin/AdminAnalyticsChartPrimitives.tsx', 'utf8');
   assert.match(chartPrimitiveSource, /AdminAnalyticsBarChart/);
+  assert.match(chartPrimitiveSource, /AdminAnalyticsTrendChart/);
   assert.match(chartPrimitiveSource, /AdminAnalyticsChartDatum/);
   assert.match(chartPrimitiveSource, /role="list"/);
+  assert.match(chartPrimitiveSource, /role="img"/);
   assert.match(chartPrimitiveSource, /<details/);
   assert.match(chartPrimitiveSource, /<table/);
+  assert.match(chartPrimitiveSource, /<svg/);
+  assert.match(chartPrimitiveSource, /<polyline/);
+  assert.match(chartPrimitiveSource, /viewBox="0 0 100 100"/);
   assert.match(chartPrimitiveSource, /aria-label=\{title\}/);
   assert.match(chartPrimitiveSource, /style=\{\{ width: `\$\{percent\}%` \}\}/);
 
@@ -83,9 +88,14 @@ export async function runAdminPageShellCopyTests() {
   assert.match(revenueSource, /id="order-analytics"/);
   assert.match(revenueSource, /scroll-mt-24/);
   assert.match(revenueSource, /AdminAnalyticsBarChart/);
+  assert.match(revenueSource, /AdminAnalyticsTrendChart/);
   assert.match(revenueSource, /id="business-analytics-charts"/);
+  assert.match(revenueSource, /summary\.recentDaily\.map/);
   assert.match(revenueSource, /summary\.byStatus/);
   assert.match(revenueSource, /summary\.byCurrency\.map/);
+  assert.match(revenueSource, /Orders over time/);
+  assert.match(revenueSource, /Revenue over time/);
+  assert.match(revenueSource, /Average order value over time/);
   assert.match(revenueSource, /Orders by status/);
   assert.match(revenueSource, /Revenue by currency/);
 
