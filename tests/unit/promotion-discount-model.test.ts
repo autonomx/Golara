@@ -9,6 +9,8 @@ export async function runPromotionDiscountModelTests() {
   const migration = source('prisma/migrations/20260602130000_add_promotion_discount_model/migration.sql');
   const schema = source('prisma/schema.prisma');
   const repository = source('lib/promotions/promotion-discount-repository.ts');
+  const adminDiscountAction = source('app/admin/discounts/actions.ts');
+  const adminDiscountWorkspace = source('components/admin/AdminModulePlaceholder.tsx');
 
   assert.match(migration, /CREATE TABLE IF NOT EXISTS "PromotionDiscount"/);
   assert.match(migration, /"discountType" TEXT NOT NULL/);
@@ -42,6 +44,43 @@ export async function runPromotionDiscountModelTests() {
   assert.match(repository, /export async function createPromotionDiscount/);
   assert.match(repository, /INSERT INTO "PromotionDiscount"/);
   assert.match(repository, /action: 'promotion.discount.create'/);
+
+  for (const marker of [
+    "import { createPromotionDiscount } from '@/lib/promotions/promotion-discount-repository'",
+    "import { createPromotionVoucher } from '@/lib/promotions/promotion-voucher-repository'",
+    'export async function createAdminDiscountAction',
+    "await assertAdminRole('owner')",
+    "requiredString(formData, 'name')",
+    "requiredString(formData, 'discountType')",
+    "intField(formData, 'value')",
+    "optionalIntField(formData, 'minimumSubtotalCents')",
+    "optionalString(formData, 'voucherCode')",
+    'await createPromotionVoucher',
+    "revalidatePath('/admin/discounts')",
+    "redirect(discountReturnPath('discount-created'"
+  ]) {
+    assert.ok(adminDiscountAction.includes(marker), `admin discount action must include ${marker}`);
+  }
+
+  for (const marker of [
+    "import { createAdminDiscountAction } from '@/app/admin/discounts/actions'",
+    'function AdminDiscountCreateForm',
+    'id="create-discount"',
+    'action={createAdminDiscountAction}',
+    'name="name"',
+    'name="discountType"',
+    'name="value"',
+    'name="currency"',
+    'name="status"',
+    'name="minimumSubtotalCents"',
+    'name="voucherCode"',
+    'name="voucherStatus"',
+    'Create discount',
+    'Promotion campaigns',
+    '<AdminDiscountCreateForm disabled={!workspace.available} locale={locale} />'
+  ]) {
+    assert.ok(adminDiscountWorkspace.includes(marker), `admin discount workspace must include ${marker}`);
+  }
 
   console.log('promotion-discount-model.test.ts passed');
 }

@@ -1,3 +1,4 @@
+import { createAdminDiscountAction } from '@/app/admin/discounts/actions';
 import { hasDatabase, prisma } from '@/lib/prisma';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 import { adminLocaleKey, createAdminTranslator } from '@/lib/localization/admin-copy';
@@ -62,6 +63,9 @@ type PromotionWorkspace = {
   discounts: DiscountRow[];
   storeCredits: StoreCreditRow[];
 };
+
+const discountInputClass = 'rounded-lg border border-rosewood/15 bg-white px-3 py-2 text-sm text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100';
+const discountLabelClass = 'grid gap-1.5 text-sm font-semibold text-rosewood';
 
 function statusClasses(status: string) {
   if (status === 'active') return 'bg-emerald-50 text-emerald-700 ring-emerald-200';
@@ -161,6 +165,127 @@ async function listPromotionWorkspace(): Promise<PromotionWorkspace> {
   }
 }
 
+function AdminDiscountCreateForm({ disabled, locale }: { disabled: boolean; locale?: SupportedLocale | string | null }) {
+  const t = createAdminTranslator(locale);
+  const pt = createAdminPromotionWorkspaceTranslator(locale);
+
+  return (
+    <form id="create-discount" action={createAdminDiscountAction} className="mt-6 rounded-lg border border-rosewood/15 bg-rosewood/5 p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="text-lg font-bold text-stone-950">{t('Create discount')}</h3>
+          <p className="mt-1 max-w-3xl text-sm leading-6 text-stone-600">
+            {t('Create a discount campaign and optionally attach the first voucher code customers can enter at checkout.')}
+          </p>
+        </div>
+        <span className="rounded-full bg-white px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-rosewood ring-1 ring-rosewood/15">{t('Admin only')}</span>
+      </div>
+
+      <fieldset disabled={disabled} className="mt-5 grid gap-4 disabled:opacity-60">
+        <div className="grid gap-4 lg:grid-cols-3">
+          <label className={discountLabelClass}>
+            {t('Discount name')}
+            <input className={discountInputClass} name="name" placeholder="Summer roses" required />
+          </label>
+          <label className={discountLabelClass}>
+            {t('Slug')}
+            <input className={discountInputClass} name="slug" placeholder="summer-roses" />
+          </label>
+          <label className={discountLabelClass}>
+            {t('Currency')}
+            <input className={discountInputClass} name="currency" defaultValue="TOMAN" required />
+          </label>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-4">
+          <label className={discountLabelClass}>
+            {t('Discount type')}
+            <select className={discountInputClass} name="discountType" defaultValue="percentage" required>
+              <option value="percentage">{t('Percentage')}</option>
+              <option value="fixed_amount">{t('Fixed amount')}</option>
+            </select>
+          </label>
+          <label className={discountLabelClass}>
+            {t('Value')}
+            <input className={discountInputClass} name="value" type="number" min="0" step="1" placeholder="10" required />
+          </label>
+          <label className={discountLabelClass}>
+            {t('Status')}
+            <select className={discountInputClass} name="status" defaultValue="draft" required>
+              <option value="draft">{pt('draft')}</option>
+              <option value="active">{pt('active')}</option>
+              <option value="paused">{pt('paused')}</option>
+              <option value="archived">{pt('archived')}</option>
+            </select>
+          </label>
+          <label className={discountLabelClass}>
+            {t('Minimum subtotal')}
+            <input className={discountInputClass} name="minimumSubtotalCents" type="number" min="0" step="1" placeholder="500000" />
+          </label>
+        </div>
+
+        <label className={discountLabelClass}>
+          {t('Description')}
+          <textarea className={`${discountInputClass} min-h-20`} name="description" placeholder={t('Internal note for staff')} />
+        </label>
+
+        <div className="grid gap-4 lg:grid-cols-4">
+          <label className={discountLabelClass}>
+            {t('Starts at')}
+            <input className={discountInputClass} name="startsAt" type="date" />
+          </label>
+          <label className={discountLabelClass}>
+            {t('Ends at')}
+            <input className={discountInputClass} name="endsAt" type="date" />
+          </label>
+          <label className={discountLabelClass}>
+            {t('Usage limit')}
+            <input className={discountInputClass} name="usageLimit" type="number" min="1" step="1" placeholder="100" />
+          </label>
+          <label className="flex items-center gap-3 rounded-lg border border-rosewood/15 bg-white px-3 py-2 text-sm font-semibold text-rosewood">
+            <input name="isActive" type="checkbox" defaultChecked className="h-4 w-4 rounded border-rosewood/30 text-rosewood" />
+            {t('Active')}
+          </label>
+        </div>
+
+        <div className="rounded-lg border border-stone-200 bg-white p-4">
+          <h4 className="text-sm font-bold uppercase tracking-[0.16em] text-stone-600">{t('Optional voucher code')}</h4>
+          <div className="mt-4 grid gap-4 lg:grid-cols-4">
+            <label className={discountLabelClass}>
+              {t('Voucher code')}
+              <input className={discountInputClass} name="voucherCode" placeholder="SUMMER10" />
+            </label>
+            <label className={discountLabelClass}>
+              {t('Voucher status')}
+              <select className={discountInputClass} name="voucherStatus" defaultValue="draft">
+                <option value="draft">{pt('draft')}</option>
+                <option value="active">{pt('active')}</option>
+                <option value="paused">{pt('paused')}</option>
+                <option value="archived">{pt('archived')}</option>
+              </select>
+            </label>
+            <label className={discountLabelClass}>
+              {t('Voucher usage limit')}
+              <input className={discountInputClass} name="voucherUsageLimit" type="number" min="1" step="1" placeholder="100" />
+            </label>
+            <label className="flex items-center gap-3 rounded-lg border border-rosewood/15 bg-stone-50 px-3 py-2 text-sm font-semibold text-rosewood">
+              <input name="voucherIsActive" type="checkbox" defaultChecked className="h-4 w-4 rounded border-rosewood/30 text-rosewood" />
+              {t('Voucher active')}
+            </label>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <button type="submit" className="rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition hover:-translate-y-0.5 focus-visible:ring-4 focus-visible:ring-olive/30 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none">
+            {t('Create discount')}
+          </button>
+          {disabled ? <p className="text-sm text-amber-700">{t('Connect the database and sign in as an owner to create discounts.')}</p> : null}
+        </div>
+      </fieldset>
+    </form>
+  );
+}
+
 async function AdminDiscountWorkspace({ eyebrow, title, body, items, locale }: AdminModulePlaceholderProps) {
   const t = createAdminTranslator(locale);
   const pt = createAdminPromotionWorkspaceTranslator(locale);
@@ -206,9 +331,11 @@ async function AdminDiscountWorkspace({ eyebrow, title, body, items, locale }: A
         ))}
       </div>
 
+      <AdminDiscountCreateForm disabled={!workspace.available} locale={locale} />
+
       <div className="mt-6 overflow-hidden rounded-lg border border-stone-200">
         <div className="border-b border-stone-200 bg-stone-50 px-4 py-3">
-          <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-stone-600">{t('Seeded promotion campaigns')}</h3>
+          <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-stone-600">{t('Promotion campaigns')}</h3>
         </div>
         {workspace.discounts.length ? (
           <div className="overflow-x-auto">
