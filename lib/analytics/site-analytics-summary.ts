@@ -22,6 +22,10 @@ export type SiteAnalyticsSourceRow = {
   createdAt: Date;
 };
 
+type RawSiteAnalyticsSourceRow = Omit<SiteAnalyticsSourceRow, 'createdAt'> & {
+  createdAt: Date | string;
+};
+
 export type SiteAnalyticsBreakdownRow = {
   label: string;
   count: number;
@@ -189,6 +193,13 @@ export function buildSiteAnalyticsSummary(rows: SiteAnalyticsSourceRow[], now = 
   };
 }
 
+function normalizeRawSiteAnalyticsRows(rows: RawSiteAnalyticsSourceRow[]): SiteAnalyticsSourceRow[] {
+  return rows.map((row) => ({
+    ...row,
+    createdAt: row.createdAt instanceof Date ? row.createdAt : new Date(row.createdAt)
+  })).filter((row) => !Number.isNaN(row.createdAt.getTime()));
+}
+
 function isMissingSiteAnalyticsTableError(error: unknown) {
   const code = typeof error === 'object' && error && 'code' in error ? String((error as { code?: unknown }).code) : '';
   const message = error instanceof Error ? error.message : '';
@@ -200,21 +211,11 @@ export const siteAnalyticsSummaryService = {
     if (!hasDatabase()) return { ...EMPTY_SITE_ANALYTICS_SUMMARY, generatedAt: new Date() };
 
     try {
-      const rows = await prisma.siteAnalyticsEvent.findMany({
-        orderBy: { createdAt: 'desc' },
-        take: 5000,
-        select: {
-          eventType: true,
-          path: true,
-          locale: true,
-          productId: true,
-          categoryId: true,
-          searchTerm: true,
-          createdAt: true
-        }
-      });
+      const rows = await prisma.$queryRawUnsafe<RawSiteAnalyticsSourceRow[]>(
+        'SELECT "eventType", "path", "locale", "productId", "categoryId", "searchTerm", "createdAt" FROM "SiteAnalyticsEvent" ORDER BY "createdAt" DESC LIMIT 5000'
+      );
 
-      return buildSiteAnalyticsSummary(rows);
+      return buildSiteAnalyticsSummary(normalizeRawSiteAnalyticsRows(rows));
     } catch (error) {
       if (isMissingSiteAnalyticsTableError(error)) {
         return { ...EMPTY_SITE_ANALYTICS_SUMMARY, generatedAt: new Date() };
