@@ -17,14 +17,14 @@ const copy = {
     title: 'Analytics workspace',
     body: 'Business analytics, order health, inventory pressure, inquiry operations, recent activity, and readiness signals in one place.',
     badge: 'Dedicated analytics page',
-    note: 'This first slice reuses the existing operations analytics panels. Chart primitives and site event analytics can be added here next without crowding the Overview page.'
+    note: 'This workspace now includes lightweight server-rendered business charts with accessible data-table fallbacks. Site event analytics can be added here next without crowding the Overview page.'
   },
   fa: {
     eyebrow: 'مدیریت / تحلیل‌ها',
     title: 'فضای کاری تحلیل‌ها',
     body: 'تحلیل کسب‌وکار، وضعیت سفارش، فشار موجودی، عملیات درخواست‌ها، فعالیت اخیر و سیگنال‌های آمادگی در یک صفحه.',
     badge: 'صفحه اختصاصی تحلیل‌ها',
-    note: 'این مرحله اول از پنل‌های تحلیلی موجود استفاده می‌کند. نمودارها و تحلیل رویدادهای سایت می‌توانند در مرحله بعد همین‌جا اضافه شوند بدون اینکه صفحه نمای کلی شلوغ شود.'
+    note: 'این فضا اکنون نمودارهای سبک تحلیل کسب‌وکار را با جدول داده دسترس‌پذیر نمایش می‌دهد. تحلیل رویدادهای سایت می‌تواند در مرحله بعد همین‌جا اضافه شود بدون اینکه صفحه نمای کلی شلوغ شود.'
   }
 } as const;
 
