@@ -12,6 +12,7 @@ export async function runAdminPageShellCopyTests() {
   assert.equal(fa('Security'), 'امنیت');
   assert.equal(fa('Analytics'), 'تحلیل‌ها');
   assert.equal(fa('Order analytics'), 'تحلیل سفارش‌ها');
+  assert.equal(fa('Business metrics, orders, inventory, and site signals.'), 'شاخص‌های کسب‌وکار، سفارش‌ها، موجودی و سیگنال‌های سایت.');
   assert.equal(fa('Store'), 'فروشگاه');
   assert.equal(fa('Customer Ops'), 'عملیات مشتری');
   assert.equal(fa('System'), 'سیستم');
@@ -33,6 +34,7 @@ export async function runAdminPageShellCopyTests() {
   assert.match(helperSource, /Overview sections/);
   assert.match(helperSource, /Jump to overview section/);
   assert.match(helperSource, /Order analytics/);
+  assert.match(helperSource, /Business metrics, orders, inventory, and site signals\./);
   assert.match(helperSource, /Store configuration, staff access, and providers\./);
 
   const shellSource = readFileSync('components/admin/AdminPageShell.tsx', 'utf8');
@@ -43,6 +45,9 @@ export async function runAdminPageShellCopyTests() {
   assert.match(shellSource, /t\('Overview sections'\)/);
   assert.match(shellSource, /AdminOverviewJumpNav/);
   assert.match(shellSource, /props\.activeNavKey === 'overview'/);
+  assert.match(shellSource, /href: '\/admin\/analytics'/);
+  assert.match(shellSource, /key: 'analytics'/);
+  assert.match(shellSource, /tab === 'analytics'/);
   assert.match(shellSource, /href: '#readiness'/);
   assert.match(shellSource, /href: '#security'/);
   assert.match(shellSource, /href: '#order-analytics'/);
@@ -56,6 +61,13 @@ export async function runAdminPageShellCopyTests() {
   assert.match(shellSource, /categoryCount === 1 \? 'category' : 'categories'/);
   assert.match(shellSource, /t\('media'\)/);
   assert.doesNotMatch(shellSource, /const copy = \{/);
+
+  const analyticsRouteSource = readFileSync('app/admin/analytics/page.tsx', 'utf8');
+  assert.match(analyticsRouteSource, /activeTab="analytics"/);
+  assert.match(analyticsRouteSource, /activeNavKey="analytics"/);
+  assert.match(analyticsRouteSource, /returnTo="\/admin\/analytics"/);
+  assert.match(analyticsRouteSource, /AdminOrderRevenueSummaryPanel/);
+  assert.match(analyticsRouteSource, /orderRevenueSummaryService\.summary/);
 
   const revenueSource = readFileSync('components/admin/AdminOrderRevenueSummaryPanel.tsx', 'utf8');
   assert.match(revenueSource, /id="order-analytics"/);
