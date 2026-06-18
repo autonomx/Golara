@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { buildAnalyticsComparisonDelta } from '../../lib/analytics/analytics-comparison';
 import {
+  getAdminAnalyticsPreviousRangeEnd,
+  getAdminAnalyticsPreviousRangeStart,
   getAdminAnalyticsRangeStart,
   normalizeAdminAnalyticsRangeDays
 } from '../../lib/analytics/admin-analytics-range';
@@ -18,6 +21,7 @@ function source(path: string) {
 }
 
 export async function runOrderRevenueSummaryTests() {
+  const comparisonHelper = source('lib/analytics/analytics-comparison.ts');
   const rangeHelper = source('lib/analytics/admin-analytics-range.ts');
   const service = source('lib/analytics/order-revenue-summary.ts');
   const panel = source('components/admin/AdminOrderRevenueSummaryPanel.tsx');
@@ -37,6 +41,16 @@ export async function runOrderRevenueSummaryTests() {
   assert.equal(normalizeAdminAnalyticsRangeDays('90'), 90);
   assert.equal(normalizeAdminAnalyticsRangeDays('999'), 30);
   assert.equal(getAdminAnalyticsRangeStart(new Date('2026-06-02T12:00:00Z'), 7).toISOString(), '2026-05-27T00:00:00.000Z');
+  assert.equal(getAdminAnalyticsPreviousRangeStart(new Date('2026-06-02T12:00:00Z'), 7).toISOString(), '2026-05-20T00:00:00.000Z');
+  assert.equal(getAdminAnalyticsPreviousRangeEnd(new Date('2026-06-02T12:00:00Z'), 7).toISOString(), '2026-05-26T00:00:00.000Z');
+  assert.deepEqual(buildAnalyticsComparisonDelta(30, 20), {
+    currentValue: 30,
+    previousValue: 20,
+    absoluteChange: 10,
+    percentChange: 50,
+    direction: 'up'
+  });
+  assert.equal(buildAnalyticsComparisonDelta(3, 0).percentChange, null);
 
   const now = new Date('2026-06-02T12:00:00Z');
   const rows = [
@@ -60,7 +74,8 @@ export async function runOrderRevenueSummaryTests() {
       paymentAttempts: [{ provider: 'zarinpal', status: 'created', amountCents: 5000, currency: 'CAD' }]
     },
     { id: '3', status: 'cancelled', fulfillmentStatus: 'cancelled', currency: 'CAD', totalCents: 2500, createdAt: new Date('2026-05-31T12:00:00Z') },
-    { id: '4', status: 'fulfilled', fulfillmentStatus: 'out_for_delivery', currency: 'USD', totalCents: 2000, createdAt: new Date('2026-04-01T12:00:00Z') }
+    { id: '4', status: 'fulfilled', fulfillmentStatus: 'out_for_delivery', currency: 'USD', totalCents: 2000, createdAt: new Date('2026-04-01T12:00:00Z') },
+    { id: '5', status: 'completed', fulfillmentStatus: 'delivered', currency: 'CAD', totalCents: 5000, createdAt: new Date('2026-05-02T12:00:00Z') }
   ];
   const summary = buildOrderRevenueSummary(rows, now);
 
@@ -85,6 +100,11 @@ export async function runOrderRevenueSummaryTests() {
   assert.equal(summary.discountImpact.totalDiscountCents, 1000);
   assert.equal(summary.discountImpact.discountedRevenueCents, 10000);
   assert.equal(summary.discountImpact.undiscountedRevenueCents, 5000);
+  assert.equal(summary.comparison.totalOrders.previousValue, 1);
+  assert.equal(summary.comparison.totalOrders.absoluteChange, 2);
+  assert.equal(summary.comparison.totalRevenueCents.previousValue, 5000);
+  assert.equal(summary.comparison.totalRevenueCents.percentChange, 200);
+  assert.equal(summary.comparison.averageOrderValueCents.direction, 'flat');
   assert.equal(summary.recentDaily.length, 30);
   assert.equal(summary.recentDaily[0].date, '2026-05-04');
   assert.equal(summary.recentDaily[29].date, '2026-06-02');
@@ -100,26 +120,41 @@ export async function runOrderRevenueSummaryTests() {
   assert.equal(sevenDaySummary.analyticsRangeDays, 7);
   assert.equal(sevenDaySummary.totalOrders, 2);
   assert.equal(sevenDaySummary.totalRevenueCents, 10000);
+  assert.equal(sevenDaySummary.comparison.totalOrders.previousValue, 1);
+  assert.equal(sevenDaySummary.comparison.totalRevenueCents.previousValue, 5000);
   assert.equal(sevenDaySummary.recentDaily.length, 7);
   assert.equal(sevenDaySummary.recentDaily[0].date, '2026-05-27');
   assert.equal(sevenDaySummary.recentDaily[6].date, '2026-06-02');
 
+  assert.match(comparisonHelper, /export type AnalyticsComparisonDelta/);
+  assert.match(comparisonHelper, /buildAnalyticsComparisonDelta/);
+  assert.match(comparisonHelper, /percentChange = previous > 0/);
+
   assert.match(rangeHelper, /ADMIN_ANALYTICS_RANGE_DAYS = \[7, 30, 90\]/);
   assert.match(rangeHelper, /normalizeAdminAnalyticsRangeDays/);
   assert.match(rangeHelper, /getAdminAnalyticsRangeStart/);
+  assert.match(rangeHelper, /getAdminAnalyticsPreviousRangeStart/);
+  assert.match(rangeHelper, /getAdminAnalyticsPreviousRangeEnd/);
   assert.match(rangeHelper, /isWithinAdminAnalyticsRange/);
+  assert.match(rangeHelper, /isWithinAdminAnalyticsPreviousRange/);
 
   assert.match(service, /export type OrderRevenueSummary/);
   assert.match(service, /export type OrderRevenueDailyPoint/);
   assert.match(service, /export type OrderOperationalStatusSummary/);
   assert.match(service, /export type PaymentProviderRevenueSummary/);
   assert.match(service, /export type OrderDiscountImpactSummary/);
+  assert.match(service, /export type OrderRevenueComparisonSummary/);
+  assert.match(service, /comparison: OrderRevenueComparisonSummary/);
   assert.match(service, /analyticsRangeDays: AdminAnalyticsRangeDays/);
   assert.match(service, /buildRecentDailyPoints/);
   assert.match(service, /for \(let offset = 0; offset < rangeDays; offset \+= 1\)/);
   assert.match(service, /recentDaily: buildRecentDailyPoints\(scopedRows, now, analyticsRangeDays\)/);
   assert.match(service, /scopedRows = rows\.filter/);
-  assert.match(service, /createdAt: \{\s*gte: getAdminAnalyticsRangeStart\(now, rangeDays\)/s);
+  assert.match(service, /previousRows = rows\.filter/);
+  assert.match(service, /buildOrderRevenueComparison/);
+  assert.match(service, /getAdminAnalyticsPreviousRangeStart\(now, rangeDays\)/);
+  assert.match(service, /createdAt: \{\s*gte: getAdminAnalyticsPreviousRangeStart\(now, rangeDays\)/s);
+  assert.match(service, /take: 2000/);
   assert.match(service, /byFulfillmentStatus: buildOperationalStatusRows\(fulfillmentBuckets\)/);
   assert.match(service, /byPaymentProvider: buildPaymentProviderRows\(paymentProviderBuckets\)/);
   assert.match(service, /discountImpact: \{/);
@@ -148,6 +183,11 @@ export async function runOrderRevenueSummaryTests() {
   assert.match(panel, /summary\.byFulfillmentStatus\.map/);
   assert.match(panel, /summary\.byPaymentProvider\.map/);
   assert.match(panel, /summary\.discountImpact\.discountedOrders/);
+  assert.match(panel, /formatComparisonDelta/);
+  assert.match(panel, /vs previous range/);
+  assert.match(panel, /summary\.comparison\.totalOrders/);
+  assert.match(panel, /summary\.comparison\.totalRevenueCents/);
+  assert.match(panel, /summary\.comparison\.averageOrderValueCents/);
 
   assert.match(consolePage, /AdminOrderRevenueSummaryPanel/);
   assert.match(consolePage, /EMPTY_ORDER_REVENUE_SUMMARY/);
