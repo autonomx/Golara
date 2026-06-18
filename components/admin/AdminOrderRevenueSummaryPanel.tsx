@@ -1,3 +1,4 @@
+import { AdminAnalyticsBarChart } from '@/components/admin/AdminAnalyticsChartPrimitives';
 import { AdminBestSellingProductsPanel } from '@/components/admin/AdminBestSellingProductsPanel';
 import { AdminFailedPaymentNotificationAlertsPanel } from '@/components/admin/AdminFailedPaymentNotificationAlertsPanel';
 import { AdminFulfillmentQueueSummaryPanel } from '@/components/admin/AdminFulfillmentQueueSummaryPanel';
@@ -35,7 +36,17 @@ const copy = {
     cancelled: 'Cancelled',
     currency: 'Currency',
     orders: 'Orders',
-    aov: 'AOV'
+    aov: 'AOV',
+    businessCharts: 'Business analytics charts',
+    businessChartsBody: 'Fast visual breakdowns for order state and revenue distribution, with accessible data tables included.',
+    statusBreakdown: 'Orders by status',
+    statusBreakdownBody: 'Shows how the current order backlog is distributed across lifecycle states.',
+    revenueByCurrency: 'Revenue by currency',
+    revenueByCurrencyBody: 'Eligible revenue grouped by currency for the most recent order sample.',
+    noChartData: 'No analytics data is available yet.',
+    dataTable: 'View chart data',
+    count: 'Count',
+    amount: 'Amount'
   },
   fa: {
     eyebrow: 'تحلیل‌ها',
@@ -53,12 +64,30 @@ const copy = {
     cancelled: 'لغوشده',
     currency: 'ارز',
     orders: 'سفارش‌ها',
-    aov: 'میانگین سفارش'
+    aov: 'میانگین سفارش',
+    businessCharts: 'نمودارهای تحلیل کسب‌وکار',
+    businessChartsBody: 'نمای سریع وضعیت سفارش و توزیع درآمد، همراه با جدول داده دسترس‌پذیر.',
+    statusBreakdown: 'سفارش‌ها بر اساس وضعیت',
+    statusBreakdownBody: 'نشان می‌دهد بار سفارش فعلی بین وضعیت‌های چرخه سفارش چگونه توزیع شده است.',
+    revenueByCurrency: 'درآمد بر اساس ارز',
+    revenueByCurrencyBody: 'درآمد قابل محاسبه بر اساس ارز برای نمونه اخیر سفارش‌ها.',
+    noChartData: 'هنوز داده تحلیلی موجود نیست.',
+    dataTable: 'مشاهده جدول داده نمودار',
+    count: 'تعداد',
+    amount: 'مبلغ'
   }
 } as const;
 
 function localeKey(locale?: SupportedLocale | string | null): AdminLocale {
   return locale?.toLowerCase().startsWith('fa') ? 'fa' : 'en';
+}
+
+function formatStatusLabel(value: string) {
+  return value
+    .split('_')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ') || 'Unknown';
 }
 
 function Metric({ label, value, detail }: { label: string; value: string | number; detail?: string }) {
@@ -75,6 +104,15 @@ export async function AdminOrderRevenueSummaryPanel({ summary }: { summary: Orde
   const locale = await resolveStorefrontLocale();
   const labels = copy[localeKey(locale)];
   const primaryCurrency = summary.primaryCurrency;
+  const statusChartRows = Object.entries(summary.byStatus)
+    .map(([status, count]) => ({ label: formatStatusLabel(status), value: count, displayValue: String(count) }))
+    .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
+  const currencyRevenueChartRows = summary.byCurrency.map((row) => ({
+    label: row.currency,
+    value: row.revenueCents,
+    displayValue: formatRevenueCents(row.revenueCents, row.currency),
+    detail: `${row.orderCount} ${labels.orders}`
+  }));
   const [inquiryOperationsSummary, bestSellingProductsSummary, lowStockAlertsSummary, fulfillmentQueueSummary, recentActivitySummary, failedPaymentNotificationAlertsSummary, launchReadinessHealthSummary] = await Promise.all([
     inquiryOperationsSummaryService.summary(),
     bestSellingProductsService.summary(),
@@ -109,6 +147,28 @@ export async function AdminOrderRevenueSummaryPanel({ summary }: { summary: Orde
           <Metric label={labels.recentRevenue} value={formatRevenueCents(summary.recentRevenueCents, primaryCurrency)} detail={labels.last30Days} />
           <Metric label={labels.completed} value={summary.completedOrders} />
           <Metric label={labels.cancelled} value={summary.cancelledOrders} />
+        </div>
+        <div id="business-analytics-charts" className="mt-6 scroll-mt-24 rounded-lg border border-stone-200 bg-stone-50 p-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">{labels.businessCharts}</p>
+            <p className="mt-1 max-w-3xl text-sm leading-6 text-stone-600">{labels.businessChartsBody}</p>
+          </div>
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+            <AdminAnalyticsBarChart
+              title={labels.statusBreakdown}
+              description={labels.statusBreakdownBody}
+              rows={statusChartRows}
+              emptyLabel={labels.noChartData}
+              valueLabel={labels.count}
+            />
+            <AdminAnalyticsBarChart
+              title={labels.revenueByCurrency}
+              description={labels.revenueByCurrencyBody}
+              rows={currencyRevenueChartRows}
+              emptyLabel={labels.noChartData}
+              valueLabel={labels.amount}
+            />
+          </div>
         </div>
         {summary.byCurrency.length ? (
           <div className="mt-6 overflow-hidden rounded-md border border-stone-200">
