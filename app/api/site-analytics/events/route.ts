@@ -73,6 +73,21 @@ function isMissingSiteAnalyticsTableError(error: unknown) {
   return code === 'P2021' || code === 'P2022' || /SiteAnalyticsEvent|site analytics/i.test(message);
 }
 
+async function recordSiteAnalyticsEvent(event: NonNullable<ReturnType<typeof normalizePayload>>) {
+  await prisma.$executeRawUnsafe(
+    'INSERT INTO "SiteAnalyticsEvent" ("eventType", "path", "query", "locale", "productId", "categoryId", "searchTerm", "anonymousSessionId", "metadata") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)',
+    event.eventType,
+    event.path,
+    event.query ?? null,
+    event.locale ?? null,
+    event.productId ?? null,
+    event.categoryId ?? null,
+    event.searchTerm ?? null,
+    event.anonymousSessionId ?? null,
+    JSON.stringify(event.metadata)
+  );
+}
+
 export async function POST(request: Request) {
   try {
     // Same-origin CSRF boundary for browser-sent first-party site analytics writes.
@@ -104,7 +119,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    await prisma.siteAnalyticsEvent.create({ data: event });
+    await recordSiteAnalyticsEvent(event);
   } catch (error) {
     if (isMissingSiteAnalyticsTableError(error)) {
       console.info('site_analytics_event_table_missing', event);
