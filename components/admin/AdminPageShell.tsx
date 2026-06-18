@@ -26,11 +26,12 @@ export type AdminNavKey =
   | 'staff'
   | 'settings';
 
-type AdminTab = 'overview' | 'catalog' | 'content' | 'sales' | 'customers' | 'discounts' | 'settings';
+type AdminShellNavKey = AdminNavKey | 'analytics';
+type AdminTab = 'overview' | 'analytics' | 'catalog' | 'content' | 'sales' | 'customers' | 'discounts' | 'settings';
 
 type AdminPageShellProps = {
   activeTab: AdminTab;
-  activeNavKey: AdminNavKey;
+  activeNavKey: AdminShellNavKey;
   authenticated: boolean;
   authConfigured: boolean;
   adminLabel?: string | null;
@@ -44,6 +45,7 @@ type AdminPageShellProps = {
 
 const adminTabs = [
   { key: 'overview', label: 'Overview', description: 'Readiness, access, audit, and security.', icon: LayoutDashboard },
+  { key: 'analytics', label: 'Analytics', description: 'Business metrics, orders, inventory, and site signals.', icon: BarChart3 },
   { key: 'catalog', label: 'Catalog', description: 'Products, categories, subcategories, and media.', icon: Package },
   { key: 'content', label: 'Content', description: 'Homepage copy and translations.', icon: FileText },
   { key: 'sales', label: 'Sales', description: 'Orders and customer inquiries.', icon: ShoppingBag },
@@ -52,8 +54,9 @@ const adminTabs = [
   { key: 'settings', label: 'Settings', description: 'Store configuration, staff access, and providers.', icon: Settings }
 ] as const;
 
-const navLabels: Record<AdminNavKey, string> = {
+const navLabels: Record<AdminShellNavKey, string> = {
   overview: 'Overview',
+  analytics: 'Analytics',
   products: 'Products',
   categories: 'Categories',
   media: 'Media library',
@@ -75,6 +78,7 @@ const navLabels: Record<AdminNavKey, string> = {
 const sidebarSections = [
   { label: 'Store', items: [
     { href: '/admin', key: 'overview', icon: LayoutDashboard },
+    { href: '/admin/analytics', key: 'analytics', icon: BarChart3 },
     { href: '/admin/products', key: 'products', icon: Package },
     { href: '/admin/categories', key: 'categories', icon: ClipboardList },
     { href: '/admin/media', key: 'media', icon: ImageIcon }
@@ -109,6 +113,7 @@ const overviewJumpLinks = [
 ] as const;
 
 function tabHref(tab: AdminTab) {
+  if (tab === 'analytics') return '/admin/analytics';
   if (tab === 'catalog') return '/admin/products';
   if (tab === 'content') return '/admin/homepage';
   if (tab === 'sales') return '/admin/orders';
