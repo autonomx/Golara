@@ -84,6 +84,18 @@ export async function runAdminPageShellCopyTests() {
   assert.match(analyticsRouteSource, /AdminSiteAnalyticsPanel/);
   assert.match(analyticsRouteSource, /lightweight server-rendered business and site charts/);
   assert.match(analyticsRouteSource, /privacy-safe first-party events/);
+  assert.match(analyticsRouteSource, /id="analytics-section-index"/);
+  assert.match(analyticsRouteSource, /sectionHref\('order-analytics', rangeDays\)/);
+  assert.match(analyticsRouteSource, /sectionHref\('business-analytics-charts', rangeDays\)/);
+  assert.match(analyticsRouteSource, /sectionHref\('site-analytics', rangeDays\)/);
+  assert.match(analyticsRouteSource, /sectionHref\('product-analytics', rangeDays\)/);
+  assert.match(analyticsRouteSource, /sectionHref\('inventory-analytics', rangeDays\)/);
+  assert.match(analyticsRouteSource, /sectionHref\('fulfillment-analytics', rangeDays\)/);
+  assert.match(analyticsRouteSource, /sectionHref\('payment-analytics', rangeDays\)/);
+  assert.match(analyticsRouteSource, /sectionHref\('inquiry-operations', rangeDays\)/);
+  assert.match(analyticsRouteSource, /sectionHref\('readiness-analytics', rangeDays\)/);
+  assert.match(analyticsRouteSource, /aria-label=\{labels\.sectionLabel\}/);
+  assert.match(analyticsRouteSource, /Jump directly to the analytics area you need/);
 
   const chartPrimitiveSource = readFileSync('components/admin/AdminAnalyticsChartPrimitives.tsx', 'utf8');
   assert.match(chartPrimitiveSource, /AdminAnalyticsBarChart/);
@@ -114,6 +126,13 @@ export async function runAdminPageShellCopyTests() {
   assert.match(revenueSource, /Average order value over time/);
   assert.match(revenueSource, /Orders by status/);
   assert.match(revenueSource, /Revenue by currency/);
+  assert.match(revenueSource, /id="inquiry-operations"/);
+  assert.match(revenueSource, /id="product-analytics"/);
+  assert.match(revenueSource, /id="inventory-analytics"/);
+  assert.match(revenueSource, /id="fulfillment-analytics"/);
+  assert.match(revenueSource, /id="activity-analytics"/);
+  assert.match(revenueSource, /id="payment-analytics"/);
+  assert.match(revenueSource, /id="readiness-analytics"/);
 
   const globalStyles = readFileSync('app/globals.css', 'utf8');
   assert.match(globalStyles, /#main-content table tbody tr \{/);
