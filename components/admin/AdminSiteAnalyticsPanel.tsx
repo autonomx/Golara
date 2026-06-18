@@ -11,16 +11,16 @@ const copy = {
     title: 'Storefront traffic and funnel',
     body: 'Privacy-safe first-party site events for page views, product/category views, search, cart, checkout, and payment-method selection. Admin routes are excluded.',
     totalEvents: 'Total site events',
-    recentEvents: 'Last 30 days',
+    recentEvents: 'Selected range',
     uniquePaths: 'Unique paths',
     pageViews: 'Page views',
     productViews: 'Product views',
     eventTypes: 'Events by type',
-    eventTypesBody: 'Shows which storefront interactions are being captured.',
+    eventTypesBody: 'Shows which storefront interactions are being captured in the selected range.',
     topPages: 'Top pages',
-    topPagesBody: 'Most-viewed storefront paths in the event sample.',
+    topPagesBody: 'Most-viewed storefront paths in the selected event sample.',
     dailyEvents: 'Site events over time',
-    dailyEventsBody: 'Daily first-party site events for the latest rolling 30-day window.',
+    dailyEventsBody: 'Daily first-party site events for the selected analytics range.',
     checkoutFunnel: 'Checkout funnel',
     checkoutFunnelBody: 'High-level funnel from page/product views through cart and checkout completion.',
     topSearchTerms: 'Top search terms',
@@ -40,16 +40,16 @@ const copy = {
     title: 'ترافیک فروشگاه و قیف خرید',
     body: 'رویدادهای داخلی و حریم‌خصوصی‌محور برای بازدید صفحه، محصول/دسته، جستجو، سبد، پرداخت و انتخاب روش پرداخت. مسیرهای مدیریت ثبت نمی‌شوند.',
     totalEvents: 'کل رویدادهای سایت',
-    recentEvents: '۳۰ روز گذشته',
+    recentEvents: 'بازه انتخاب‌شده',
     uniquePaths: 'مسیرهای یکتا',
     pageViews: 'بازدید صفحه',
     productViews: 'بازدید محصول',
     eventTypes: 'رویدادها بر اساس نوع',
-    eventTypesBody: 'نشان می‌دهد کدام تعامل‌های فروشگاه ثبت می‌شوند.',
+    eventTypesBody: 'نشان می‌دهد کدام تعامل‌های فروشگاه در بازه انتخاب‌شده ثبت می‌شوند.',
     topPages: 'صفحه‌های برتر',
-    topPagesBody: 'پربازدیدترین مسیرهای فروشگاه در نمونه رویدادها.',
+    topPagesBody: 'پربازدیدترین مسیرهای فروشگاه در نمونه رویدادهای انتخاب‌شده.',
     dailyEvents: 'رویدادهای سایت در طول زمان',
-    dailyEventsBody: 'رویدادهای روزانه داخلی سایت برای بازه ۳۰ روزه اخیر.',
+    dailyEventsBody: 'رویدادهای روزانه داخلی سایت برای بازه انتخاب‌شده.',
     checkoutFunnel: 'قیف پرداخت',
     checkoutFunnelBody: 'نمای کلی قیف از بازدید صفحه/محصول تا سبد و تکمیل پرداخت.',
     topSearchTerms: 'عبارت‌های جستجوی برتر',
@@ -76,6 +76,10 @@ function formatDateLabel(value: string, locale: SupportedLocale | string | null 
   return new Intl.DateTimeFormat(localeKey(locale) === 'fa' ? 'fa-IR' : 'en-CA', { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(date);
 }
 
+function formatRangeLabel(days: number, locale: SupportedLocale | string | null | undefined) {
+  return localeKey(locale) === 'fa' ? `${days} روز گذشته` : `last ${days} days`;
+}
+
 function formatEventLabel(value: string) {
   return value
     .split('_')
@@ -84,11 +88,12 @@ function formatEventLabel(value: string) {
     .join(' ') || 'Unknown';
 }
 
-function Metric({ label, value }: { label: string; value: string | number }) {
+function Metric({ label, value, detail }: { label: string; value: string | number; detail?: string }) {
   return (
     <div className="rounded-md border border-stone-200 bg-stone-50 p-3 text-sm">
       <p className="font-bold text-stone-950">{value}</p>
       <p className="text-stone-600">{label}</p>
+      {detail ? <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-stone-400">{detail}</p> : null}
     </div>
   );
 }
@@ -96,6 +101,7 @@ function Metric({ label, value }: { label: string; value: string | number }) {
 export async function AdminSiteAnalyticsPanel({ summary }: { summary: SiteAnalyticsSummary }) {
   const locale = await resolveStorefrontLocale();
   const labels = copy[localeKey(locale)];
+  const rangeLabel = formatRangeLabel(summary.analyticsRangeDays, locale);
   const dailyRows = summary.recentDaily.map((point) => ({
     label: formatDateLabel(point.date, locale),
     value: point.eventCount,
@@ -142,13 +148,16 @@ export async function AdminSiteAnalyticsPanel({ summary }: { summary: SiteAnalyt
           <h2 className="mt-1 text-2xl font-bold text-stone-950">{labels.title}</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">{labels.body}</p>
         </div>
+        <span className="rounded-full bg-stone-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-stone-600">
+          {rangeLabel}
+        </span>
       </div>
       <div className="mt-6 grid gap-3 md:grid-cols-5">
-        <Metric label={labels.totalEvents} value={summary.totalEvents} />
-        <Metric label={labels.recentEvents} value={summary.recentEvents} />
-        <Metric label={labels.uniquePaths} value={summary.uniquePaths} />
-        <Metric label={labels.pageViews} value={summary.checkoutFunnel.pageViews} />
-        <Metric label={labels.productViews} value={summary.checkoutFunnel.productViews} />
+        <Metric label={labels.totalEvents} value={summary.totalEvents} detail={rangeLabel} />
+        <Metric label={labels.recentEvents} value={summary.recentEvents} detail={rangeLabel} />
+        <Metric label={labels.uniquePaths} value={summary.uniquePaths} detail={rangeLabel} />
+        <Metric label={labels.pageViews} value={summary.checkoutFunnel.pageViews} detail={rangeLabel} />
+        <Metric label={labels.productViews} value={summary.checkoutFunnel.productViews} detail={rangeLabel} />
       </div>
       <div className="mt-6 rounded-lg border border-stone-200 bg-stone-50 p-4">
         <div className="grid gap-4 xl:grid-cols-3">

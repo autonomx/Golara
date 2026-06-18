@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
+  getAdminAnalyticsRangeStart,
+  normalizeAdminAnalyticsRangeDays
+} from '../../lib/analytics/admin-analytics-range';
+import {
   buildOrderRevenueSummary,
   formatRevenueCents,
   isCancelledOrderStatus,
@@ -14,6 +18,7 @@ function source(path: string) {
 }
 
 export async function runOrderRevenueSummaryTests() {
+  const rangeHelper = source('lib/analytics/admin-analytics-range.ts');
   const service = source('lib/analytics/order-revenue-summary.ts');
   const panel = source('components/admin/AdminOrderRevenueSummaryPanel.tsx');
   const consolePage = source('app/admin/AdminConsolePage.tsx');
@@ -28,9 +33,13 @@ export async function runOrderRevenueSummaryTests() {
   assert.equal(isCancelledOrderStatus('Canceled'), true);
   assert.equal(formatRevenueCents(12345, 'CAD'), '$123.45');
   assert.equal(formatRevenueCents(250000, 'TOMAN'), '2500.00 TOMAN');
+  assert.equal(normalizeAdminAnalyticsRangeDays('7'), 7);
+  assert.equal(normalizeAdminAnalyticsRangeDays('90'), 90);
+  assert.equal(normalizeAdminAnalyticsRangeDays('999'), 30);
+  assert.equal(getAdminAnalyticsRangeStart(new Date('2026-06-02T12:00:00Z'), 7).toISOString(), '2026-05-27T00:00:00.000Z');
 
   const now = new Date('2026-06-02T12:00:00Z');
-  const summary = buildOrderRevenueSummary([
+  const rows = [
     {
       id: '1',
       status: 'completed',
@@ -52,29 +61,30 @@ export async function runOrderRevenueSummaryTests() {
     },
     { id: '3', status: 'cancelled', fulfillmentStatus: 'cancelled', currency: 'CAD', totalCents: 2500, createdAt: new Date('2026-05-31T12:00:00Z') },
     { id: '4', status: 'fulfilled', fulfillmentStatus: 'out_for_delivery', currency: 'USD', totalCents: 2000, createdAt: new Date('2026-04-01T12:00:00Z') }
-  ], now);
+  ];
+  const summary = buildOrderRevenueSummary(rows, now);
 
-  assert.equal(summary.totalOrders, 4);
-  assert.equal(summary.totalRevenueCents, 17000);
-  assert.equal(summary.averageOrderValueCents, 4250);
+  assert.equal(summary.analyticsRangeDays, 30);
+  assert.equal(summary.totalOrders, 3);
+  assert.equal(summary.totalRevenueCents, 15000);
+  assert.equal(summary.averageOrderValueCents, 5000);
   assert.equal(summary.recentOrders, 3);
   assert.equal(summary.recentRevenueCents, 15000);
   assert.equal(summary.openOrders, 1);
-  assert.equal(summary.completedOrders, 2);
+  assert.equal(summary.completedOrders, 1);
   assert.equal(summary.cancelledOrders, 1);
   assert.equal(summary.byStatus.cancelled, 1);
   assert.equal(summary.byCurrency[0].currency, 'CAD');
   assert.equal(summary.byCurrency[0].revenueCents, 15000);
-  assert.equal(summary.byCurrency[1].currency, 'USD');
   assert.equal(summary.byFulfillmentStatus[0].orderCount, 1);
   assert.equal(summary.byFulfillmentStatus.some((row) => row.status === 'not_scheduled'), true);
   assert.equal(summary.byPaymentProvider.length, 2);
   assert.equal(summary.byPaymentProvider[0].attemptCount, 1);
   assert.equal(summary.discountImpact.discountedOrders, 1);
-  assert.equal(summary.discountImpact.undiscountedOrders, 3);
+  assert.equal(summary.discountImpact.undiscountedOrders, 2);
   assert.equal(summary.discountImpact.totalDiscountCents, 1000);
   assert.equal(summary.discountImpact.discountedRevenueCents, 10000);
-  assert.equal(summary.discountImpact.undiscountedRevenueCents, 7000);
+  assert.equal(summary.discountImpact.undiscountedRevenueCents, 5000);
   assert.equal(summary.recentDaily.length, 30);
   assert.equal(summary.recentDaily[0].date, '2026-05-04');
   assert.equal(summary.recentDaily[29].date, '2026-06-02');
@@ -86,14 +96,30 @@ export async function runOrderRevenueSummaryTests() {
   assert.equal(mayThirtyFirst?.orderCount, 1);
   assert.equal(mayThirtyFirst?.revenueCents, 0);
 
+  const sevenDaySummary = buildOrderRevenueSummary(rows, now, { rangeDays: 7 });
+  assert.equal(sevenDaySummary.analyticsRangeDays, 7);
+  assert.equal(sevenDaySummary.totalOrders, 2);
+  assert.equal(sevenDaySummary.totalRevenueCents, 10000);
+  assert.equal(sevenDaySummary.recentDaily.length, 7);
+  assert.equal(sevenDaySummary.recentDaily[0].date, '2026-05-27');
+  assert.equal(sevenDaySummary.recentDaily[6].date, '2026-06-02');
+
+  assert.match(rangeHelper, /ADMIN_ANALYTICS_RANGE_DAYS = \[7, 30, 90\]/);
+  assert.match(rangeHelper, /normalizeAdminAnalyticsRangeDays/);
+  assert.match(rangeHelper, /getAdminAnalyticsRangeStart/);
+  assert.match(rangeHelper, /isWithinAdminAnalyticsRange/);
+
   assert.match(service, /export type OrderRevenueSummary/);
   assert.match(service, /export type OrderRevenueDailyPoint/);
   assert.match(service, /export type OrderOperationalStatusSummary/);
   assert.match(service, /export type PaymentProviderRevenueSummary/);
   assert.match(service, /export type OrderDiscountImpactSummary/);
+  assert.match(service, /analyticsRangeDays: AdminAnalyticsRangeDays/);
   assert.match(service, /buildRecentDailyPoints/);
-  assert.match(service, /RECENT_DAILY_POINT_COUNT = 30/);
-  assert.match(service, /recentDaily: buildRecentDailyPoints\(rows, now\)/);
+  assert.match(service, /for \(let offset = 0; offset < rangeDays; offset \+= 1\)/);
+  assert.match(service, /recentDaily: buildRecentDailyPoints\(scopedRows, now, analyticsRangeDays\)/);
+  assert.match(service, /scopedRows = rows\.filter/);
+  assert.match(service, /createdAt: \{\s*gte: getAdminAnalyticsRangeStart\(now, rangeDays\)/s);
   assert.match(service, /byFulfillmentStatus: buildOperationalStatusRows\(fulfillmentBuckets\)/);
   assert.match(service, /byPaymentProvider: buildPaymentProviderRows\(paymentProviderBuckets\)/);
   assert.match(service, /discountImpact: \{/);
@@ -107,8 +133,9 @@ export async function runOrderRevenueSummaryTests() {
 
   assert.match(panel, /export async function AdminOrderRevenueSummaryPanel/);
   assert.match(panel, /Order count and revenue/);
-  assert.match(panel, /formatRevenueCents/);
-  assert.match(panel, /Recent revenue/);
+  assert.match(panel, /formatRangeLabel\(summary\.analyticsRangeDays/);
+  assert.match(panel, /Range revenue/);
+  assert.match(panel, /selected analytics range/);
   assert.match(panel, /summary\.recentDaily\.map/);
   assert.match(panel, /AdminAnalyticsTrendChart/);
   assert.match(panel, /Orders over time/);

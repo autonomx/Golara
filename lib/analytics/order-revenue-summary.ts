@@ -1,5 +1,13 @@
 import 'server-only';
 
+import {
+  getAdminAnalyticsRangeStart,
+  isWithinAdminAnalyticsRange,
+  normalizeAdminAnalyticsRangeDays,
+  startOfUtcDay,
+  type AdminAnalyticsRangeDays,
+  type AdminAnalyticsRangeInput
+} from '@/lib/analytics/admin-analytics-range';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
 export type OrderRevenuePaymentAttemptSourceRow = {
@@ -71,15 +79,19 @@ export type OrderRevenueSummary = {
   byPaymentProvider: PaymentProviderRevenueSummary[];
   discountImpact: OrderDiscountImpactSummary;
   recentDaily: OrderRevenueDailyPoint[];
+  analyticsRangeDays: AdminAnalyticsRangeDays;
   primaryCurrency: string;
   generatedAt: Date;
+};
+
+export type OrderRevenueSummaryOptions = {
+  rangeDays?: AdminAnalyticsRangeInput;
 };
 
 const REVENUE_EXCLUDED_STATUSES = new Set(['cancelled', 'canceled', 'refunded', 'voided']);
 const COMPLETED_STATUSES = new Set(['completed', 'fulfilled', 'delivered', 'closed']);
 const CANCELLED_STATUSES = new Set(['cancelled', 'canceled', 'voided']);
 const DAY_MS = 24 * 60 * 60 * 1000;
-const RECENT_DAILY_POINT_COUNT = 30;
 
 export const EMPTY_ORDER_REVENUE_SUMMARY: OrderRevenueSummary = {
   totalOrders: 0,
@@ -102,6 +114,7 @@ export const EMPTY_ORDER_REVENUE_SUMMARY: OrderRevenueSummary = {
     undiscountedRevenueCents: 0
   },
   recentDaily: [],
+  analyticsRangeDays: 30,
   primaryCurrency: 'CAD',
   generatedAt: new Date(0)
 };
@@ -113,10 +126,6 @@ function normalizeStatus(value?: string | null) {
 function normalizeCurrency(value?: string | null) {
   const normalized = value?.trim().toUpperCase().replace(/[^A-Z]/g, '');
   return normalized || 'CAD';
-}
-
-function startOfUtcDay(value: Date) {
-  return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
 }
 
 function utcDateKey(value: Date) {
@@ -151,12 +160,12 @@ export function formatRevenueCents(value: number, currency = 'CAD') {
   }
 }
 
-function buildRecentDailyPoints(rows: OrderRevenueSourceRow[], now: Date): OrderRevenueDailyPoint[] {
+function buildRecentDailyPoints(rows: OrderRevenueSourceRow[], now: Date, rangeDays: AdminAnalyticsRangeDays): OrderRevenueDailyPoint[] {
   const end = startOfUtcDay(now);
-  const start = new Date(end.getTime() - (RECENT_DAILY_POINT_COUNT - 1) * DAY_MS);
+  const start = new Date(end.getTime() - (rangeDays - 1) * DAY_MS);
   const buckets = new Map<string, { orderCount: number; revenueCents: number }>();
 
-  for (let offset = 0; offset < RECENT_DAILY_POINT_COUNT; offset += 1) {
+  for (let offset = 0; offset < rangeDays; offset += 1) {
     const day = new Date(start.getTime() + offset * DAY_MS);
     buckets.set(utcDateKey(day), { orderCount: 0, revenueCents: 0 });
   }
@@ -198,8 +207,10 @@ function buildPaymentProviderRows(buckets: Map<string, { attemptCount: number; o
     .sort((a, b) => b.attemptCount - a.attemptCount || b.amountCents - a.amountCents || a.provider.localeCompare(b.provider));
 }
 
-export function buildOrderRevenueSummary(rows: OrderRevenueSourceRow[], now = new Date()): OrderRevenueSummary {
-  const cutoff = new Date(now.getTime() - 30 * DAY_MS);
+export function buildOrderRevenueSummary(rows: OrderRevenueSourceRow[], now = new Date(), options: OrderRevenueSummaryOptions = {}): OrderRevenueSummary {
+  const analyticsRangeDays = normalizeAdminAnalyticsRangeDays(options.rangeDays);
+  const scopedRows = rows.filter((row) => isWithinAdminAnalyticsRange(row.createdAt, now, analyticsRangeDays));
+  const cutoff = getAdminAnalyticsRangeStart(now, analyticsRangeDays);
   const byStatus: Record<string, number> = {};
   const currencyBuckets = new Map<string, { orderCount: number; revenueCents: number }>();
   const fulfillmentBuckets = new Map<string, { orderCount: number; revenueCents: number }>();
@@ -214,7 +225,7 @@ export function buildOrderRevenueSummary(rows: OrderRevenueSourceRow[], now = ne
   let discountedRevenueCents = 0;
   let undiscountedRevenueCents = 0;
 
-  for (const row of rows) {
+  for (const row of scopedRows) {
     const status = normalizeStatus(row.status);
     const fulfillmentStatus = normalizeStatus(row.fulfillmentStatus ?? 'not_scheduled');
     const currency = normalizeCurrency(row.currency);
@@ -272,12 +283,12 @@ export function buildOrderRevenueSummary(rows: OrderRevenueSourceRow[], now = ne
   const primaryCurrency = byCurrency[0]?.currency ?? EMPTY_ORDER_REVENUE_SUMMARY.primaryCurrency;
 
   return {
-    totalOrders: rows.length,
+    totalOrders: scopedRows.length,
     totalRevenueCents,
-    averageOrderValueCents: rows.length ? Math.round(totalRevenueCents / rows.length) : 0,
+    averageOrderValueCents: scopedRows.length ? Math.round(totalRevenueCents / scopedRows.length) : 0,
     recentOrders,
     recentRevenueCents,
-    openOrders: Math.max(0, rows.length - completedOrders - cancelledOrders),
+    openOrders: Math.max(0, scopedRows.length - completedOrders - cancelledOrders),
     completedOrders,
     cancelledOrders,
     byStatus: Object.fromEntries(Object.entries(byStatus).sort(([a], [b]) => a.localeCompare(b))),
@@ -286,22 +297,30 @@ export function buildOrderRevenueSummary(rows: OrderRevenueSourceRow[], now = ne
     byPaymentProvider: buildPaymentProviderRows(paymentProviderBuckets),
     discountImpact: {
       discountedOrders,
-      undiscountedOrders: Math.max(0, rows.length - discountedOrders),
+      undiscountedOrders: Math.max(0, scopedRows.length - discountedOrders),
       totalDiscountCents,
       discountedRevenueCents,
       undiscountedRevenueCents
     },
-    recentDaily: buildRecentDailyPoints(rows, now),
+    recentDaily: buildRecentDailyPoints(scopedRows, now, analyticsRangeDays),
+    analyticsRangeDays,
     primaryCurrency,
     generatedAt: now
   };
 }
 
 export const orderRevenueSummaryService = {
-  async summary(): Promise<OrderRevenueSummary> {
-    if (!hasDatabase()) return { ...EMPTY_ORDER_REVENUE_SUMMARY, generatedAt: new Date() };
+  async summary(options: OrderRevenueSummaryOptions = {}): Promise<OrderRevenueSummary> {
+    const now = new Date();
+    const rangeDays = normalizeAdminAnalyticsRangeDays(options.rangeDays);
+    if (!hasDatabase()) return { ...EMPTY_ORDER_REVENUE_SUMMARY, analyticsRangeDays: rangeDays, generatedAt: now };
 
     const rows = await prisma.checkoutOrder.findMany({
+      where: {
+        createdAt: {
+          gte: getAdminAnalyticsRangeStart(now, rangeDays)
+        }
+      },
       orderBy: { createdAt: 'desc' },
       take: 1000,
       select: {
@@ -323,6 +342,6 @@ export const orderRevenueSummaryService = {
       }
     });
 
-    return buildOrderRevenueSummary(rows);
+    return buildOrderRevenueSummary(rows, now, { rangeDays });
   }
 };
