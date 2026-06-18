@@ -246,7 +246,7 @@ export default async function AdminCodCollectionPage({ searchParams }: { searchP
   return (
     <AdminPageShell
       activeTab="sales"
-      activeNavKey="cod-collections"
+      activeNavKey="payment-settlement"
       authenticated={true}
       authConfigured={isAdminAuthConfigured()}
       adminLabel={actor.label ?? actor.email}
