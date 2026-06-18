@@ -1,4 +1,5 @@
 import { AdminAnalyticsBarChart, AdminAnalyticsTrendChart } from '@/components/admin/AdminAnalyticsChartPrimitives';
+import type { AnalyticsComparisonDelta } from '@/lib/analytics/analytics-comparison';
 import type { SiteAnalyticsSummary } from '@/lib/analytics/site-analytics-summary';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import type { SupportedLocale } from '@/lib/i18n/locales';
@@ -33,7 +34,9 @@ const copy = {
     checkoutStarted: 'Checkout started',
     checkoutCompleted: 'Checkout completed',
     noChartData: 'No site analytics events are available yet.',
-    count: 'Count'
+    count: 'Count',
+    vsPreviousRange: 'vs previous range',
+    noChangeVsPreviousRange: 'No change vs previous range'
   },
   fa: {
     eyebrow: 'تحلیل سایت',
@@ -62,9 +65,13 @@ const copy = {
     checkoutStarted: 'شروع پرداخت',
     checkoutCompleted: 'تکمیل پرداخت',
     noChartData: 'هنوز رویداد تحلیل سایت موجود نیست.',
-    count: 'تعداد'
+    count: 'تعداد',
+    vsPreviousRange: 'نسبت به بازه قبلی',
+    noChangeVsPreviousRange: 'بدون تغییر نسبت به بازه قبلی'
   }
 } as const;
+
+type SitePanelCopy = typeof copy.en;
 
 function localeKey(locale?: SupportedLocale | string | null): AdminLocale {
   return locale?.toLowerCase().startsWith('fa') ? 'fa' : 'en';
@@ -88,12 +95,31 @@ function formatEventLabel(value: string) {
     .join(' ') || 'Unknown';
 }
 
-function Metric({ label, value, detail }: { label: string; value: string | number; detail?: string }) {
+function formatComparisonDelta(delta: AnalyticsComparisonDelta, labels: SitePanelCopy) {
+  if (delta.direction === 'flat') return labels.noChangeVsPreviousRange;
+  if (delta.percentChange === null) {
+    const sign = delta.absoluteChange > 0 ? '+' : '-';
+    return `${sign}${Math.abs(delta.absoluteChange)} ${labels.vsPreviousRange}`;
+  }
+  const sign = delta.percentChange > 0 ? '+' : '';
+  return `${sign}${delta.percentChange.toFixed(1)}% ${labels.vsPreviousRange}`;
+}
+
+function comparisonTone(delta: AnalyticsComparisonDelta) {
+  if (delta.direction === 'up') return 'text-emerald-700';
+  if (delta.direction === 'down') return 'text-rose-700';
+  return 'text-stone-500';
+}
+
+function Metric({ label, value, detail, delta, labels }: { label: string; value: string | number; detail?: string; delta?: AnalyticsComparisonDelta; labels: SitePanelCopy }) {
+  const deltaLabel = delta ? formatComparisonDelta(delta, labels) : null;
+
   return (
     <div className="rounded-md border border-stone-200 bg-stone-50 p-3 text-sm">
       <p className="font-bold text-stone-950">{value}</p>
       <p className="text-stone-600">{label}</p>
       {detail ? <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-stone-400">{detail}</p> : null}
+      {delta && deltaLabel ? <p className={`mt-1 text-xs font-bold ${comparisonTone(delta)}`}>{deltaLabel}</p> : null}
     </div>
   );
 }
@@ -152,12 +178,13 @@ export async function AdminSiteAnalyticsPanel({ summary }: { summary: SiteAnalyt
           {rangeLabel}
         </span>
       </div>
-      <div className="mt-6 grid gap-3 md:grid-cols-5">
-        <Metric label={labels.totalEvents} value={summary.totalEvents} detail={rangeLabel} />
-        <Metric label={labels.recentEvents} value={summary.recentEvents} detail={rangeLabel} />
-        <Metric label={labels.uniquePaths} value={summary.uniquePaths} detail={rangeLabel} />
-        <Metric label={labels.pageViews} value={summary.checkoutFunnel.pageViews} detail={rangeLabel} />
-        <Metric label={labels.productViews} value={summary.checkoutFunnel.productViews} detail={rangeLabel} />
+      <div className="mt-6 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+        <Metric label={labels.totalEvents} value={summary.totalEvents} detail={rangeLabel} delta={summary.comparison.totalEvents} labels={labels} />
+        <Metric label={labels.recentEvents} value={summary.recentEvents} detail={rangeLabel} labels={labels} />
+        <Metric label={labels.uniquePaths} value={summary.uniquePaths} detail={rangeLabel} delta={summary.comparison.uniquePaths} labels={labels} />
+        <Metric label={labels.pageViews} value={summary.checkoutFunnel.pageViews} detail={rangeLabel} delta={summary.comparison.pageViews} labels={labels} />
+        <Metric label={labels.productViews} value={summary.checkoutFunnel.productViews} detail={rangeLabel} delta={summary.comparison.productViews} labels={labels} />
+        <Metric label={labels.checkoutCompleted} value={summary.checkoutFunnel.checkoutCompleted} detail={rangeLabel} delta={summary.comparison.checkoutCompleted} labels={labels} />
       </div>
       <div className="mt-6 rounded-lg border border-stone-200 bg-stone-50 p-4">
         <div className="grid gap-4 xl:grid-cols-3">
