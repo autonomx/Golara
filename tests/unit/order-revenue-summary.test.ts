@@ -49,8 +49,22 @@ export async function runOrderRevenueSummaryTests() {
   assert.equal(summary.byCurrency[0].currency, 'CAD');
   assert.equal(summary.byCurrency[0].revenueCents, 15000);
   assert.equal(summary.byCurrency[1].currency, 'USD');
+  assert.equal(summary.recentDaily.length, 30);
+  assert.equal(summary.recentDaily[0].date, '2026-05-04');
+  assert.equal(summary.recentDaily[29].date, '2026-06-02');
+  const juneFirst = summary.recentDaily.find((point) => point.date === '2026-06-01');
+  assert.equal(juneFirst?.orderCount, 1);
+  assert.equal(juneFirst?.revenueCents, 10000);
+  assert.equal(juneFirst?.averageOrderValueCents, 10000);
+  const mayThirtyFirst = summary.recentDaily.find((point) => point.date === '2026-05-31');
+  assert.equal(mayThirtyFirst?.orderCount, 1);
+  assert.equal(mayThirtyFirst?.revenueCents, 0);
 
   assert.match(service, /export type OrderRevenueSummary/);
+  assert.match(service, /export type OrderRevenueDailyPoint/);
+  assert.match(service, /buildRecentDailyPoints/);
+  assert.match(service, /RECENT_DAILY_POINT_COUNT = 30/);
+  assert.match(service, /recentDaily: buildRecentDailyPoints\(rows, now\)/);
   assert.match(service, /buildOrderRevenueSummary/);
   assert.match(service, /orderRevenueSummaryService = \{/);
   assert.match(service, /prisma\.checkoutOrder\.findMany/);
@@ -60,6 +74,11 @@ export async function runOrderRevenueSummaryTests() {
   assert.match(panel, /Order count and revenue/);
   assert.match(panel, /formatRevenueCents/);
   assert.match(panel, /Recent revenue/);
+  assert.match(panel, /summary\.recentDaily\.map/);
+  assert.match(panel, /AdminAnalyticsTrendChart/);
+  assert.match(panel, /Orders over time/);
+  assert.match(panel, /Revenue over time/);
+  assert.match(panel, /Average order value over time/);
 
   assert.match(consolePage, /AdminOrderRevenueSummaryPanel/);
   assert.match(consolePage, /EMPTY_ORDER_REVENUE_SUMMARY/);
