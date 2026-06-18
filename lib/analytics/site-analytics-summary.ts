@@ -1,5 +1,13 @@
 import 'server-only';
 
+import {
+  getAdminAnalyticsRangeStart,
+  isWithinAdminAnalyticsRange,
+  normalizeAdminAnalyticsRangeDays,
+  startOfUtcDay,
+  type AdminAnalyticsRangeDays,
+  type AdminAnalyticsRangeInput
+} from '@/lib/analytics/admin-analytics-range';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
 export type SiteAnalyticsEventType =
@@ -55,11 +63,15 @@ export type SiteAnalyticsSummary = {
   topSearchTerms: SiteAnalyticsBreakdownRow[];
   checkoutFunnel: SiteAnalyticsFunnel;
   recentDaily: SiteAnalyticsDailyPoint[];
+  analyticsRangeDays: AdminAnalyticsRangeDays;
   generatedAt: Date;
 };
 
+export type SiteAnalyticsSummaryOptions = {
+  rangeDays?: AdminAnalyticsRangeInput;
+};
+
 const DAY_MS = 24 * 60 * 60 * 1000;
-const RECENT_DAILY_POINT_COUNT = 30;
 const TOP_ROW_LIMIT = 8;
 
 export const SITE_ANALYTICS_EVENT_TYPES = new Set<SiteAnalyticsEventType>([
@@ -90,6 +102,7 @@ export const EMPTY_SITE_ANALYTICS_SUMMARY: SiteAnalyticsSummary = {
     checkoutCompleted: 0
   },
   recentDaily: [],
+  analyticsRangeDays: 30,
   generatedAt: new Date(0)
 };
 
@@ -109,10 +122,6 @@ function normalizeLabel(value?: string | null, fallback = 'Unknown') {
   return trimmed ? trimmed.slice(0, 120) : fallback;
 }
 
-function startOfUtcDay(value: Date) {
-  return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
-}
-
 function utcDateKey(value: Date) {
   return startOfUtcDay(value).toISOString().slice(0, 10);
 }
@@ -128,12 +137,12 @@ function buildBreakdownRows(map: Map<string, number>, limit = TOP_ROW_LIMIT): Si
     .slice(0, limit);
 }
 
-function buildRecentDailyPoints(rows: SiteAnalyticsSourceRow[], now: Date): SiteAnalyticsDailyPoint[] {
+function buildRecentDailyPoints(rows: SiteAnalyticsSourceRow[], now: Date, rangeDays: AdminAnalyticsRangeDays): SiteAnalyticsDailyPoint[] {
   const end = startOfUtcDay(now);
-  const start = new Date(end.getTime() - (RECENT_DAILY_POINT_COUNT - 1) * DAY_MS);
+  const start = new Date(end.getTime() - (rangeDays - 1) * DAY_MS);
   const buckets = new Map<string, number>();
 
-  for (let offset = 0; offset < RECENT_DAILY_POINT_COUNT; offset += 1) {
+  for (let offset = 0; offset < rangeDays; offset += 1) {
     const day = new Date(start.getTime() + offset * DAY_MS);
     buckets.set(utcDateKey(day), 0);
   }
@@ -149,8 +158,10 @@ function buildRecentDailyPoints(rows: SiteAnalyticsSourceRow[], now: Date): Site
   return Array.from(buckets.entries()).map(([date, eventCount]) => ({ date, eventCount }));
 }
 
-export function buildSiteAnalyticsSummary(rows: SiteAnalyticsSourceRow[], now = new Date()): SiteAnalyticsSummary {
-  const recentCutoff = new Date(now.getTime() - 30 * DAY_MS);
+export function buildSiteAnalyticsSummary(rows: SiteAnalyticsSourceRow[], now = new Date(), options: SiteAnalyticsSummaryOptions = {}): SiteAnalyticsSummary {
+  const analyticsRangeDays = normalizeAdminAnalyticsRangeDays(options.rangeDays);
+  const scopedRows = rows.filter((row) => isWithinAdminAnalyticsRange(row.createdAt, now, analyticsRangeDays));
+  const recentCutoff = getAdminAnalyticsRangeStart(now, analyticsRangeDays);
   const typeBuckets = new Map<string, number>();
   const pathBuckets = new Map<string, number>();
   const productBuckets = new Map<string, number>();
@@ -166,7 +177,7 @@ export function buildSiteAnalyticsSummary(rows: SiteAnalyticsSourceRow[], now = 
   };
   let recentEvents = 0;
 
-  for (const row of rows) {
+  for (const row of scopedRows) {
     const eventType = normalizeEventType(row.eventType);
     const path = normalizePath(row.path);
     incrementBucket(typeBuckets, eventType);
@@ -193,7 +204,7 @@ export function buildSiteAnalyticsSummary(rows: SiteAnalyticsSourceRow[], now = 
   }
 
   return {
-    totalEvents: rows.length,
+    totalEvents: scopedRows.length,
     recentEvents,
     uniquePaths: pathSet.size,
     byEventType: buildBreakdownRows(typeBuckets),
@@ -202,7 +213,8 @@ export function buildSiteAnalyticsSummary(rows: SiteAnalyticsSourceRow[], now = 
     topCategoryViews: buildBreakdownRows(categoryBuckets),
     topSearchTerms: buildBreakdownRows(searchBuckets),
     checkoutFunnel: funnel,
-    recentDaily: buildRecentDailyPoints(rows, now),
+    recentDaily: buildRecentDailyPoints(scopedRows, now, analyticsRangeDays),
+    analyticsRangeDays,
     generatedAt: now
   };
 }
@@ -221,21 +233,24 @@ function isMissingSiteAnalyticsTableError(error: unknown) {
 }
 
 export const siteAnalyticsSummaryService = {
-  async summary(): Promise<SiteAnalyticsSummary> {
-    if (!hasDatabase()) return { ...EMPTY_SITE_ANALYTICS_SUMMARY, generatedAt: new Date() };
+  async summary(options: SiteAnalyticsSummaryOptions = {}): Promise<SiteAnalyticsSummary> {
+    const now = new Date();
+    const rangeDays = normalizeAdminAnalyticsRangeDays(options.rangeDays);
+    if (!hasDatabase()) return { ...EMPTY_SITE_ANALYTICS_SUMMARY, analyticsRangeDays: rangeDays, generatedAt: now };
 
     try {
       const rows = await prisma.$queryRaw<RawSiteAnalyticsSourceRow[]>`
         SELECT "eventType", "path", "locale", "productId", "categoryId", "searchTerm", "createdAt"
         FROM "SiteAnalyticsEvent"
+        WHERE "createdAt" >= ${getAdminAnalyticsRangeStart(now, rangeDays)}
         ORDER BY "createdAt" DESC
         LIMIT 5000
       `;
 
-      return buildSiteAnalyticsSummary(normalizeRawSiteAnalyticsRows(rows));
+      return buildSiteAnalyticsSummary(normalizeRawSiteAnalyticsRows(rows), now, { rangeDays });
     } catch (error) {
       if (isMissingSiteAnalyticsTableError(error)) {
-        return { ...EMPTY_SITE_ANALYTICS_SUMMARY, generatedAt: new Date() };
+        return { ...EMPTY_SITE_ANALYTICS_SUMMARY, analyticsRangeDays: rangeDays, generatedAt: now };
       }
       throw error;
     }
