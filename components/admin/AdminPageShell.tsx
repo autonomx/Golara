@@ -15,6 +15,7 @@ export type AdminNavKey =
   | 'orders'
   | 'payment-methods'
   | 'payment-settlement'
+  | 'cod-collections'
   | 'payment-alerts'
   | 'inquiries'
   | 'customers'
@@ -60,6 +61,7 @@ const navLabels: Record<AdminNavKey, string> = {
   orders: 'Orders',
   'payment-methods': 'Payment methods',
   'payment-settlement': 'Payment settlement',
+  'cod-collections': 'Cash collections',
   'payment-alerts': 'Payment alerts',
   inquiries: 'Inquiries',
   customers: 'Customers',
@@ -83,6 +85,7 @@ const sidebarSections = [
     { href: '/admin/orders', key: 'orders', icon: ShoppingBag },
     { href: '/admin/payment-methods', key: 'payment-methods', icon: CreditCard },
     { href: '/admin/payments/settlement', key: 'payment-settlement', icon: CreditCard },
+    { href: '/admin/payments/cod-collections', key: 'cod-collections', icon: CreditCard },
     { href: '/admin/payments/alerts', key: 'payment-alerts', icon: Bell },
     { href: '/admin/inquiries', key: 'inquiries', icon: Users },
     { href: '/admin/customers', key: 'customers', icon: Users },
