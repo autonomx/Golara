@@ -2,12 +2,22 @@ import 'server-only';
 
 import { hasDatabase, prisma } from '@/lib/prisma';
 
+export type OrderRevenuePaymentAttemptSourceRow = {
+  provider: string;
+  status: string;
+  amountCents: number;
+  currency: string;
+};
+
 export type OrderRevenueSourceRow = {
   id: string;
   status: string;
+  fulfillmentStatus?: string | null;
   currency: string;
   totalCents: number;
+  discountCents?: number | null;
   createdAt: Date;
+  paymentAttempts?: OrderRevenuePaymentAttemptSourceRow[];
 };
 
 export type CurrencyRevenueSummary = {
@@ -24,6 +34,28 @@ export type OrderRevenueDailyPoint = {
   averageOrderValueCents: number;
 };
 
+export type OrderOperationalStatusSummary = {
+  status: string;
+  orderCount: number;
+  revenueCents: number;
+};
+
+export type PaymentProviderRevenueSummary = {
+  provider: string;
+  attemptCount: number;
+  orderCount: number;
+  amountCents: number;
+  currency: string;
+};
+
+export type OrderDiscountImpactSummary = {
+  discountedOrders: number;
+  undiscountedOrders: number;
+  totalDiscountCents: number;
+  discountedRevenueCents: number;
+  undiscountedRevenueCents: number;
+};
+
 export type OrderRevenueSummary = {
   totalOrders: number;
   totalRevenueCents: number;
@@ -35,6 +67,9 @@ export type OrderRevenueSummary = {
   cancelledOrders: number;
   byStatus: Record<string, number>;
   byCurrency: CurrencyRevenueSummary[];
+  byFulfillmentStatus: OrderOperationalStatusSummary[];
+  byPaymentProvider: PaymentProviderRevenueSummary[];
+  discountImpact: OrderDiscountImpactSummary;
   recentDaily: OrderRevenueDailyPoint[];
   primaryCurrency: string;
   generatedAt: Date;
@@ -57,6 +92,15 @@ export const EMPTY_ORDER_REVENUE_SUMMARY: OrderRevenueSummary = {
   cancelledOrders: 0,
   byStatus: {},
   byCurrency: [],
+  byFulfillmentStatus: [],
+  byPaymentProvider: [],
+  discountImpact: {
+    discountedOrders: 0,
+    undiscountedOrders: 0,
+    totalDiscountCents: 0,
+    discountedRevenueCents: 0,
+    undiscountedRevenueCents: 0
+  },
   recentDaily: [],
   primaryCurrency: 'CAD',
   generatedAt: new Date(0)
@@ -136,20 +180,46 @@ function buildRecentDailyPoints(rows: OrderRevenueSourceRow[], now: Date): Order
   }));
 }
 
+function buildOperationalStatusRows(buckets: Map<string, { orderCount: number; revenueCents: number }>): OrderOperationalStatusSummary[] {
+  return Array.from(buckets.entries())
+    .map(([status, bucket]) => ({ status, orderCount: bucket.orderCount, revenueCents: bucket.revenueCents }))
+    .sort((a, b) => b.orderCount - a.orderCount || b.revenueCents - a.revenueCents || a.status.localeCompare(b.status));
+}
+
+function buildPaymentProviderRows(buckets: Map<string, { attemptCount: number; orderIds: Set<string>; amountCents: number; currency: string }>): PaymentProviderRevenueSummary[] {
+  return Array.from(buckets.entries())
+    .map(([provider, bucket]) => ({
+      provider,
+      attemptCount: bucket.attemptCount,
+      orderCount: bucket.orderIds.size,
+      amountCents: bucket.amountCents,
+      currency: bucket.currency
+    }))
+    .sort((a, b) => b.attemptCount - a.attemptCount || b.amountCents - a.amountCents || a.provider.localeCompare(b.provider));
+}
+
 export function buildOrderRevenueSummary(rows: OrderRevenueSourceRow[], now = new Date()): OrderRevenueSummary {
   const cutoff = new Date(now.getTime() - 30 * DAY_MS);
   const byStatus: Record<string, number> = {};
   const currencyBuckets = new Map<string, { orderCount: number; revenueCents: number }>();
+  const fulfillmentBuckets = new Map<string, { orderCount: number; revenueCents: number }>();
+  const paymentProviderBuckets = new Map<string, { attemptCount: number; orderIds: Set<string>; amountCents: number; currency: string }>();
   let totalRevenueCents = 0;
   let recentOrders = 0;
   let recentRevenueCents = 0;
   let completedOrders = 0;
   let cancelledOrders = 0;
+  let discountedOrders = 0;
+  let totalDiscountCents = 0;
+  let discountedRevenueCents = 0;
+  let undiscountedRevenueCents = 0;
 
   for (const row of rows) {
     const status = normalizeStatus(row.status);
+    const fulfillmentStatus = normalizeStatus(row.fulfillmentStatus ?? 'not_scheduled');
     const currency = normalizeCurrency(row.currency);
     const revenueCents = isRevenueEligibleStatus(status) ? normalizeRevenueCents(row.totalCents) : 0;
+    const discountCents = normalizeRevenueCents(row.discountCents ?? 0);
     byStatus[status] = (byStatus[status] ?? 0) + 1;
     if (isCompletedOrderStatus(status)) completedOrders += 1;
     if (isCancelledOrderStatus(status)) cancelledOrders += 1;
@@ -158,10 +228,39 @@ export function buildOrderRevenueSummary(rows: OrderRevenueSourceRow[], now = ne
       recentRevenueCents += revenueCents;
     }
     totalRevenueCents += revenueCents;
+
+    if (discountCents > 0) {
+      discountedOrders += 1;
+      totalDiscountCents += discountCents;
+      discountedRevenueCents += revenueCents;
+    } else {
+      undiscountedRevenueCents += revenueCents;
+    }
+
     const bucket = currencyBuckets.get(currency) ?? { orderCount: 0, revenueCents: 0 };
     bucket.orderCount += 1;
     bucket.revenueCents += revenueCents;
     currencyBuckets.set(currency, bucket);
+
+    const fulfillmentBucket = fulfillmentBuckets.get(fulfillmentStatus) ?? { orderCount: 0, revenueCents: 0 };
+    fulfillmentBucket.orderCount += 1;
+    fulfillmentBucket.revenueCents += revenueCents;
+    fulfillmentBuckets.set(fulfillmentStatus, fulfillmentBucket);
+
+    for (const attempt of row.paymentAttempts ?? []) {
+      const provider = normalizeStatus(attempt.provider);
+      const providerCurrency = normalizeCurrency(attempt.currency || currency);
+      const providerBucket = paymentProviderBuckets.get(provider) ?? {
+        attemptCount: 0,
+        orderIds: new Set<string>(),
+        amountCents: 0,
+        currency: providerCurrency
+      };
+      providerBucket.attemptCount += 1;
+      providerBucket.orderIds.add(row.id);
+      providerBucket.amountCents += normalizeRevenueCents(attempt.amountCents);
+      paymentProviderBuckets.set(provider, providerBucket);
+    }
   }
 
   const byCurrency = Array.from(currencyBuckets.entries()).map(([currency, bucket]) => ({
@@ -183,6 +282,15 @@ export function buildOrderRevenueSummary(rows: OrderRevenueSourceRow[], now = ne
     cancelledOrders,
     byStatus: Object.fromEntries(Object.entries(byStatus).sort(([a], [b]) => a.localeCompare(b))),
     byCurrency,
+    byFulfillmentStatus: buildOperationalStatusRows(fulfillmentBuckets),
+    byPaymentProvider: buildPaymentProviderRows(paymentProviderBuckets),
+    discountImpact: {
+      discountedOrders,
+      undiscountedOrders: Math.max(0, rows.length - discountedOrders),
+      totalDiscountCents,
+      discountedRevenueCents,
+      undiscountedRevenueCents
+    },
     recentDaily: buildRecentDailyPoints(rows, now),
     primaryCurrency,
     generatedAt: now
@@ -199,9 +307,19 @@ export const orderRevenueSummaryService = {
       select: {
         id: true,
         status: true,
+        fulfillmentStatus: true,
         currency: true,
         totalCents: true,
-        createdAt: true
+        discountCents: true,
+        createdAt: true,
+        paymentAttempts: {
+          select: {
+            provider: true,
+            status: true,
+            amountCents: true,
+            currency: true
+          }
+        }
       }
     });
 
