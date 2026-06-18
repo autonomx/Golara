@@ -375,13 +375,27 @@ export async function AdminOrderRevenueSummaryPanel({ summary }: { summary: Orde
           </div>
         ) : null}
       </section>
-      <AdminInquiryOperationsSummaryPanel summary={inquiryOperationsSummary} locale={locale} />
-      <AdminBestSellingProductsPanel summary={bestSellingProductsSummary} locale={locale} />
-      <AdminLowStockAlertsPanel summary={lowStockAlertsSummary} locale={locale} />
-      <AdminFulfillmentQueueSummaryPanel summary={fulfillmentQueueSummary} locale={locale} />
-      <AdminRecentActivitySummaryPanel summary={recentActivitySummary} locale={locale} />
-      <AdminFailedPaymentNotificationAlertsPanel summary={failedPaymentNotificationAlertsSummary} locale={locale} />
-      <AdminLaunchReadinessHealthPanel summary={launchReadinessHealthSummary} locale={locale} />
+      <div id="inquiry-operations" className="scroll-mt-24">
+        <AdminInquiryOperationsSummaryPanel summary={inquiryOperationsSummary} locale={locale} />
+      </div>
+      <div id="product-analytics" className="scroll-mt-24">
+        <AdminBestSellingProductsPanel summary={bestSellingProductsSummary} locale={locale} />
+      </div>
+      <div id="inventory-analytics" className="scroll-mt-24">
+        <AdminLowStockAlertsPanel summary={lowStockAlertsSummary} locale={locale} />
+      </div>
+      <div id="fulfillment-analytics" className="scroll-mt-24">
+        <AdminFulfillmentQueueSummaryPanel summary={fulfillmentQueueSummary} locale={locale} />
+      </div>
+      <div id="activity-analytics" className="scroll-mt-24">
+        <AdminRecentActivitySummaryPanel summary={recentActivitySummary} locale={locale} />
+      </div>
+      <div id="payment-analytics" className="scroll-mt-24">
+        <AdminFailedPaymentNotificationAlertsPanel summary={failedPaymentNotificationAlertsSummary} locale={locale} />
+      </div>
+      <div id="readiness-analytics" className="scroll-mt-24">
+        <AdminLaunchReadinessHealthPanel summary={launchReadinessHealthSummary} locale={locale} />
+      </div>
     </>
   );
 }
