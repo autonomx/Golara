@@ -1,8 +1,10 @@
 import { AdminOrderRevenueSummaryPanel } from '@/components/admin/AdminOrderRevenueSummaryPanel';
 import { AdminPageShell } from '@/components/admin/AdminPageShell';
+import { AdminSiteAnalyticsPanel } from '@/components/admin/AdminSiteAnalyticsPanel';
 import { requireAdminRouteSession } from '@/lib/admin-page-auth-boundary';
 import { getAdminIdentity, isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
 import { EMPTY_ORDER_REVENUE_SUMMARY, orderRevenueSummaryService } from '@/lib/analytics/order-revenue-summary';
+import { EMPTY_SITE_ANALYTICS_SUMMARY, siteAnalyticsSummaryService } from '@/lib/analytics/site-analytics-summary';
 import { listAdminCategories, listAdminProducts, listMedia } from '@/lib/cms/catalog-repository';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import type { SupportedLocale } from '@/lib/i18n/locales';
@@ -15,16 +17,16 @@ const copy = {
   en: {
     eyebrow: 'Admin / Analytics',
     title: 'Analytics workspace',
-    body: 'Business analytics, order health, inventory pressure, inquiry operations, recent activity, and readiness signals in one place.',
+    body: 'Business analytics, site analytics, order health, inventory pressure, inquiry operations, recent activity, and readiness signals in one place.',
     badge: 'Dedicated analytics page',
-    note: 'This workspace now includes lightweight server-rendered business charts with accessible data-table fallbacks. Site event analytics can be added here next without crowding the Overview page.'
+    note: 'This workspace includes lightweight server-rendered business and site charts with accessible data-table fallbacks. Site analytics uses privacy-safe first-party events and excludes admin routes.'
   },
   fa: {
     eyebrow: 'مدیریت / تحلیل‌ها',
     title: 'فضای کاری تحلیل‌ها',
-    body: 'تحلیل کسب‌وکار، وضعیت سفارش، فشار موجودی، عملیات درخواست‌ها، فعالیت اخیر و سیگنال‌های آمادگی در یک صفحه.',
+    body: 'تحلیل کسب‌وکار، تحلیل سایت، وضعیت سفارش، فشار موجودی، عملیات درخواست‌ها، فعالیت اخیر و سیگنال‌های آمادگی در یک صفحه.',
     badge: 'صفحه اختصاصی تحلیل‌ها',
-    note: 'این فضا اکنون نمودارهای سبک تحلیل کسب‌وکار را با جدول داده دسترس‌پذیر نمایش می‌دهد. تحلیل رویدادهای سایت می‌تواند در مرحله بعد همین‌جا اضافه شود بدون اینکه صفحه نمای کلی شلوغ شود.'
+    note: 'این فضا نمودارهای سبک کسب‌وکار و سایت را با جدول داده دسترس‌پذیر نمایش می‌دهد. تحلیل سایت از رویدادهای داخلی و حریم‌خصوصی‌محور استفاده می‌کند و مسیرهای مدیریت را ثبت نمی‌کند.'
   }
 } as const;
 
@@ -40,11 +42,12 @@ export default async function AdminAnalyticsPage() {
   const authenticated = await isAdminAuthenticated();
   const authConfigured = isAdminAuthConfigured();
   const identity = await getAdminIdentity();
-  const [products, categories, media, orderRevenueSummary] = await Promise.all([
+  const [products, categories, media, orderRevenueSummary, siteAnalyticsSummary] = await Promise.all([
     listAdminProducts(),
     listAdminCategories(),
     listMedia(),
-    authenticated ? orderRevenueSummaryService.summary() : Promise.resolve(EMPTY_ORDER_REVENUE_SUMMARY)
+    authenticated ? orderRevenueSummaryService.summary() : Promise.resolve(EMPTY_ORDER_REVENUE_SUMMARY),
+    authenticated ? siteAnalyticsSummaryService.summary() : Promise.resolve(EMPTY_SITE_ANALYTICS_SUMMARY)
   ]);
 
   return (
@@ -72,6 +75,7 @@ export default async function AdminAnalyticsPage() {
           </div>
           <p className="mt-4 rounded-md border border-stone-200 bg-stone-50 px-4 py-3 text-sm leading-6 text-stone-600">{labels.note}</p>
         </section>
+        <AdminSiteAnalyticsPanel summary={siteAnalyticsSummary} />
         <AdminOrderRevenueSummaryPanel summary={orderRevenueSummary} />
       </div>
     </AdminPageShell>
