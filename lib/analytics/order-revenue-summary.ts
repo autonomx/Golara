@@ -17,6 +17,13 @@ export type CurrencyRevenueSummary = {
   averageOrderValueCents: number;
 };
 
+export type OrderRevenueDailyPoint = {
+  date: string;
+  orderCount: number;
+  revenueCents: number;
+  averageOrderValueCents: number;
+};
+
 export type OrderRevenueSummary = {
   totalOrders: number;
   totalRevenueCents: number;
@@ -28,6 +35,7 @@ export type OrderRevenueSummary = {
   cancelledOrders: number;
   byStatus: Record<string, number>;
   byCurrency: CurrencyRevenueSummary[];
+  recentDaily: OrderRevenueDailyPoint[];
   primaryCurrency: string;
   generatedAt: Date;
 };
@@ -35,6 +43,8 @@ export type OrderRevenueSummary = {
 const REVENUE_EXCLUDED_STATUSES = new Set(['cancelled', 'canceled', 'refunded', 'voided']);
 const COMPLETED_STATUSES = new Set(['completed', 'fulfilled', 'delivered', 'closed']);
 const CANCELLED_STATUSES = new Set(['cancelled', 'canceled', 'voided']);
+const DAY_MS = 24 * 60 * 60 * 1000;
+const RECENT_DAILY_POINT_COUNT = 30;
 
 export const EMPTY_ORDER_REVENUE_SUMMARY: OrderRevenueSummary = {
   totalOrders: 0,
@@ -47,6 +57,7 @@ export const EMPTY_ORDER_REVENUE_SUMMARY: OrderRevenueSummary = {
   cancelledOrders: 0,
   byStatus: {},
   byCurrency: [],
+  recentDaily: [],
   primaryCurrency: 'CAD',
   generatedAt: new Date(0)
 };
@@ -58,6 +69,14 @@ function normalizeStatus(value?: string | null) {
 function normalizeCurrency(value?: string | null) {
   const normalized = value?.trim().toUpperCase().replace(/[^A-Z]/g, '');
   return normalized || 'CAD';
+}
+
+function startOfUtcDay(value: Date) {
+  return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
+}
+
+function utcDateKey(value: Date) {
+  return startOfUtcDay(value).toISOString().slice(0, 10);
 }
 
 export function normalizeRevenueCents(value?: number | null) {
@@ -88,8 +107,37 @@ export function formatRevenueCents(value: number, currency = 'CAD') {
   }
 }
 
+function buildRecentDailyPoints(rows: OrderRevenueSourceRow[], now: Date): OrderRevenueDailyPoint[] {
+  const end = startOfUtcDay(now);
+  const start = new Date(end.getTime() - (RECENT_DAILY_POINT_COUNT - 1) * DAY_MS);
+  const buckets = new Map<string, { orderCount: number; revenueCents: number }>();
+
+  for (let offset = 0; offset < RECENT_DAILY_POINT_COUNT; offset += 1) {
+    const day = new Date(start.getTime() + offset * DAY_MS);
+    buckets.set(utcDateKey(day), { orderCount: 0, revenueCents: 0 });
+  }
+
+  for (const row of rows) {
+    const day = startOfUtcDay(row.createdAt);
+    if (day < start || day > end) continue;
+    const key = utcDateKey(day);
+    const bucket = buckets.get(key);
+    if (!bucket) continue;
+    const status = normalizeStatus(row.status);
+    bucket.orderCount += 1;
+    bucket.revenueCents += isRevenueEligibleStatus(status) ? normalizeRevenueCents(row.totalCents) : 0;
+  }
+
+  return Array.from(buckets.entries()).map(([date, bucket]) => ({
+    date,
+    orderCount: bucket.orderCount,
+    revenueCents: bucket.revenueCents,
+    averageOrderValueCents: bucket.orderCount ? Math.round(bucket.revenueCents / bucket.orderCount) : 0
+  }));
+}
+
 export function buildOrderRevenueSummary(rows: OrderRevenueSourceRow[], now = new Date()): OrderRevenueSummary {
-  const cutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const cutoff = new Date(now.getTime() - 30 * DAY_MS);
   const byStatus: Record<string, number> = {};
   const currencyBuckets = new Map<string, { orderCount: number; revenueCents: number }>();
   let totalRevenueCents = 0;
@@ -135,6 +183,7 @@ export function buildOrderRevenueSummary(rows: OrderRevenueSourceRow[], now = ne
     cancelledOrders,
     byStatus: Object.fromEntries(Object.entries(byStatus).sort(([a], [b]) => a.localeCompare(b))),
     byCurrency,
+    recentDaily: buildRecentDailyPoints(rows, now),
     primaryCurrency,
     generatedAt: now
   };
