@@ -45,6 +45,14 @@ function normalizeEventType(value: unknown): SiteAnalyticsEventType | undefined 
   return SITE_ANALYTICS_EVENT_TYPES.has(eventType as SiteAnalyticsEventType) ? eventType as SiteAnalyticsEventType : undefined;
 }
 
+function normalizeMetadata(value: unknown) {
+  const source = typeof value === 'object' && value && !Array.isArray(value) ? value as { paymentMethodKey?: unknown } : {};
+  return {
+    capturedBy: 'first_party_site_analytics',
+    paymentMethodKey: normalizeString(source.paymentMethodKey, MAX_ID_LENGTH) ?? null
+  };
+}
+
 function normalizePayload(payload: SiteAnalyticsPayload) {
   const eventType = normalizeEventType(payload.eventType);
   const path = normalizePath(payload.path);
@@ -61,7 +69,7 @@ function normalizePayload(payload: SiteAnalyticsPayload) {
     searchTerm: normalizeString(payload.searchTerm, MAX_SEARCH_TERM_LENGTH),
     anonymousSessionId: normalizeString(payload.anonymousSessionId, MAX_SESSION_LENGTH),
     metadata: {
-      capturedBy: 'first_party_site_analytics',
+      ...normalizeMetadata(payload.metadata),
       timestamp: typeof payload.timestamp === 'number' && Number.isFinite(payload.timestamp) ? Math.max(0, Math.round(payload.timestamp)) : null
     }
   };
