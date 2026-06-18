@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 type SiteAnalyticsEventType =
   | 'page_view'
@@ -49,9 +49,9 @@ function getAnonymousSessionId() {
   }
 }
 
-function getLocationSearch(queryString?: string) {
-  const value = queryString ?? (typeof window === 'undefined' ? '' : window.location.search);
-  return value.replace(/^\?/, '').slice(0, 320);
+function getLocationSearch() {
+  if (typeof window === 'undefined') return '';
+  return window.location.search.replace(/^\?/, '').slice(0, 320);
 }
 
 function normalizeSlugSegment(value: string) {
@@ -68,18 +68,18 @@ function segmentAfter(pathname: string, prefix: string) {
   return segment ? normalizeSlugSegment(segment) : undefined;
 }
 
-function searchTermFromQuery(queryString: string) {
-  const value = new URLSearchParams(queryString).get('q')?.trim().replace(/\s+/g, ' ');
+function currentSearchTerm() {
+  const value = new URLSearchParams(getLocationSearch()).get('q')?.trim().replace(/\s+/g, ' ');
   return value ? value.slice(0, MAX_SEARCH_TERM_LENGTH) : undefined;
 }
 
-function sendSiteAnalyticsEvent(eventType: SiteAnalyticsEventType, path: string, options: SiteAnalyticsEventOptions = {}, queryString?: string) {
+function sendSiteAnalyticsEvent(eventType: SiteAnalyticsEventType, path: string, options: SiteAnalyticsEventOptions = {}) {
   if (!shouldReportSiteAnalytics(path)) return;
 
   const payload = JSON.stringify({
     eventType,
     path,
-    query: getLocationSearch(queryString),
+    query: getLocationSearch(),
     locale: typeof document === 'undefined' ? undefined : document.documentElement.lang,
     productId: options.productId,
     categoryId: options.categoryId,
@@ -102,48 +102,46 @@ function sendSiteAnalyticsEvent(eventType: SiteAnalyticsEventType, path: string,
   }).catch(() => undefined);
 }
 
-function reportPathDerivedSiteEvents(pathname: string, queryString: string) {
-  sendSiteAnalyticsEvent('page_view', pathname, {}, queryString);
+function reportPathDerivedSiteEvents(pathname: string) {
+  sendSiteAnalyticsEvent('page_view', pathname);
 
   const productSlug = segmentAfter(pathname, '/products/');
   if (productSlug) {
-    sendSiteAnalyticsEvent('product_view', pathname, { productId: productSlug }, queryString);
+    sendSiteAnalyticsEvent('product_view', pathname, { productId: productSlug });
   }
 
   const categorySlug = segmentAfter(pathname, '/categories/');
   if (categorySlug) {
-    sendSiteAnalyticsEvent('category_view', pathname, { categoryId: categorySlug }, queryString);
+    sendSiteAnalyticsEvent('category_view', pathname, { categoryId: categorySlug });
   }
 
   if (pathname === '/products') {
-    const searchTerm = searchTermFromQuery(queryString);
+    const searchTerm = currentSearchTerm();
     if (searchTerm) {
-      sendSiteAnalyticsEvent('search_submitted', pathname, { searchTerm }, queryString);
+      sendSiteAnalyticsEvent('search_submitted', pathname, { searchTerm });
     }
   }
 
-  if (pathname === '/cart' && new URLSearchParams(queryString).get('cart') === 'added') {
-    sendSiteAnalyticsEvent('add_to_cart', pathname, {}, queryString);
+  if (pathname === '/cart' && new URLSearchParams(getLocationSearch()).get('cart') === 'added') {
+    sendSiteAnalyticsEvent('add_to_cart', pathname);
   }
 
   if (pathname === '/cart/checkout') {
-    sendSiteAnalyticsEvent('checkout_started', pathname, {}, queryString);
+    sendSiteAnalyticsEvent('checkout_started', pathname);
   }
 
   if (pathname.startsWith('/orders/')) {
-    sendSiteAnalyticsEvent('checkout_completed', pathname, {}, queryString);
+    sendSiteAnalyticsEvent('checkout_completed', pathname);
   }
 }
 
 export function StorefrontSiteAnalyticsReporter() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const queryString = searchParams.toString();
 
   useEffect(() => {
     if (!pathname) return;
-    reportPathDerivedSiteEvents(pathname, queryString);
-  }, [pathname, queryString]);
+    reportPathDerivedSiteEvents(pathname);
+  }, [pathname]);
 
   useEffect(() => {
     if (!pathname) return;
@@ -154,12 +152,12 @@ export function StorefrontSiteAnalyticsReporter() {
       if (target.name !== 'paymentMethodKey' || target.type !== 'radio' || !target.checked) return;
       sendSiteAnalyticsEvent('payment_method_selected', pathname, {
         metadata: { paymentMethodKey: target.value.slice(0, MAX_ID_LENGTH) }
-      }, queryString);
+      });
     }
 
     document.addEventListener('change', handlePaymentMethodSelection);
     return () => document.removeEventListener('change', handlePaymentMethodSelection);
-  }, [pathname, queryString]);
+  }, [pathname]);
 
   return null;
 }
