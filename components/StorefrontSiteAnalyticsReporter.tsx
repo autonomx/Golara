@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 type SiteAnalyticsEventType =
   | 'page_view'
@@ -40,13 +40,18 @@ function getAnonymousSessionId() {
   }
 }
 
-function sendSiteAnalyticsEvent(eventType: SiteAnalyticsEventType, path: string, search: string) {
+function getLocationSearch() {
+  if (typeof window === 'undefined') return '';
+  return window.location.search.replace(/^\?/, '').slice(0, 320);
+}
+
+function sendSiteAnalyticsEvent(eventType: SiteAnalyticsEventType, path: string) {
   if (!shouldReportSiteAnalytics(path)) return;
 
   const payload = JSON.stringify({
     eventType,
     path,
-    query: search,
+    query: getLocationSearch(),
     locale: typeof document === 'undefined' ? undefined : document.documentElement.lang,
     anonymousSessionId: getAnonymousSessionId(),
     timestamp: Date.now()
@@ -67,13 +72,11 @@ function sendSiteAnalyticsEvent(eventType: SiteAnalyticsEventType, path: string,
 
 export function StorefrontSiteAnalyticsReporter() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const search = searchParams?.toString() || '';
 
   useEffect(() => {
     if (!pathname) return;
-    sendSiteAnalyticsEvent('page_view', pathname, search);
-  }, [pathname, search]);
+    sendSiteAnalyticsEvent('page_view', pathname);
+  }, [pathname]);
 
   return null;
 }
