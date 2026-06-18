@@ -7,6 +7,11 @@ export async function runAdminPageShellCopyTests() {
   assert.equal(fa('Operations console'), 'کنسول عملیات');
   assert.equal(fa('Admin navigation'), 'ناوبری مدیریت');
   assert.equal(fa('Admin workspaces'), 'بخش‌های مدیریت');
+  assert.equal(fa('Overview sections'), 'بخش‌های نمای کلی');
+  assert.equal(fa('Jump to overview section'), 'رفتن به بخش نمای کلی');
+  assert.equal(fa('Security'), 'امنیت');
+  assert.equal(fa('Analytics'), 'تحلیل‌ها');
+  assert.equal(fa('Order analytics'), 'تحلیل سفارش‌ها');
   assert.equal(fa('Store'), 'فروشگاه');
   assert.equal(fa('Customer Ops'), 'عملیات مشتری');
   assert.equal(fa('System'), 'سیستم');
@@ -25,6 +30,9 @@ export async function runAdminPageShellCopyTests() {
   assert.match(helperSource, /createAdminPageShellTranslator/);
   assert.match(helperSource, /Operations console/);
   assert.match(helperSource, /Payment settlement/);
+  assert.match(helperSource, /Overview sections/);
+  assert.match(helperSource, /Jump to overview section/);
+  assert.match(helperSource, /Order analytics/);
   assert.match(helperSource, /Store configuration, staff access, and providers\./);
 
   const shellSource = readFileSync('components/admin/AdminPageShell.tsx', 'utf8');
@@ -32,6 +40,14 @@ export async function runAdminPageShellCopyTests() {
   assert.match(shellSource, /t\('Operations console'\)/);
   assert.match(shellSource, /t\('Admin navigation'\)/);
   assert.match(shellSource, /t\('Admin workspaces'\)/);
+  assert.match(shellSource, /t\('Overview sections'\)/);
+  assert.match(shellSource, /AdminOverviewJumpNav/);
+  assert.match(shellSource, /props\.activeNavKey === 'overview'/);
+  assert.match(shellSource, /href: '#readiness'/);
+  assert.match(shellSource, /href: '#security'/);
+  assert.match(shellSource, /href: '#order-analytics'/);
+  assert.match(shellSource, /href: '#staff-readiness'/);
+  assert.match(shellSource, /href: '#audit-log'/);
   assert.match(shellSource, /t\(section\.label\)/);
   assert.match(shellSource, /t\(navLabels\[item\.key\]\)/);
   assert.match(shellSource, /t\(current\.label\)/);
@@ -40,6 +56,10 @@ export async function runAdminPageShellCopyTests() {
   assert.match(shellSource, /categoryCount === 1 \? 'category' : 'categories'/);
   assert.match(shellSource, /t\('media'\)/);
   assert.doesNotMatch(shellSource, /const copy = \{/);
+
+  const revenueSource = readFileSync('components/admin/AdminOrderRevenueSummaryPanel.tsx', 'utf8');
+  assert.match(revenueSource, /id="order-analytics"/);
+  assert.match(revenueSource, /scroll-mt-24/);
 
   const globalStyles = readFileSync('app/globals.css', 'utf8');
   assert.match(globalStyles, /#main-content table tbody tr \{/);
