@@ -1,4 +1,4 @@
-import { AdminAnalyticsBarChart } from '@/components/admin/AdminAnalyticsChartPrimitives';
+import { AdminAnalyticsBarChart, AdminAnalyticsTrendChart } from '@/components/admin/AdminAnalyticsChartPrimitives';
 import { AdminBestSellingProductsPanel } from '@/components/admin/AdminBestSellingProductsPanel';
 import { AdminFailedPaymentNotificationAlertsPanel } from '@/components/admin/AdminFailedPaymentNotificationAlertsPanel';
 import { AdminFulfillmentQueueSummaryPanel } from '@/components/admin/AdminFulfillmentQueueSummaryPanel';
@@ -38,7 +38,15 @@ const copy = {
     orders: 'Orders',
     aov: 'AOV',
     businessCharts: 'Business analytics charts',
-    businessChartsBody: 'Fast visual breakdowns for order state and revenue distribution, with accessible data tables included.',
+    businessChartsBody: 'Fast visual breakdowns for order state, revenue distribution, and 30-day trends, with accessible data tables included.',
+    trendCharts: '30-day trend charts',
+    trendChartsBody: 'Daily order, revenue, and average order value trends for the latest rolling 30-day window.',
+    ordersOverTime: 'Orders over time',
+    ordersOverTimeBody: 'Daily order count for the latest 30 days.',
+    revenueOverTime: 'Revenue over time',
+    revenueOverTimeBody: 'Eligible daily revenue for the latest 30 days, excluding cancelled/refunded/voided orders.',
+    aovOverTime: 'Average order value over time',
+    aovOverTimeBody: 'Daily average order value based on eligible revenue and order count.',
     statusBreakdown: 'Orders by status',
     statusBreakdownBody: 'Shows how the current order backlog is distributed across lifecycle states.',
     revenueByCurrency: 'Revenue by currency',
@@ -66,7 +74,15 @@ const copy = {
     orders: 'سفارش‌ها',
     aov: 'میانگین سفارش',
     businessCharts: 'نمودارهای تحلیل کسب‌وکار',
-    businessChartsBody: 'نمای سریع وضعیت سفارش و توزیع درآمد، همراه با جدول داده دسترس‌پذیر.',
+    businessChartsBody: 'نمای سریع وضعیت سفارش، توزیع درآمد و روند ۳۰ روزه، همراه با جدول داده دسترس‌پذیر.',
+    trendCharts: 'نمودار روند ۳۰ روزه',
+    trendChartsBody: 'روند روزانه سفارش، درآمد و میانگین ارزش سفارش برای بازه ۳۰ روزه اخیر.',
+    ordersOverTime: 'سفارش‌ها در طول زمان',
+    ordersOverTimeBody: 'تعداد سفارش روزانه برای ۳۰ روز اخیر.',
+    revenueOverTime: 'درآمد در طول زمان',
+    revenueOverTimeBody: 'درآمد روزانه قابل محاسبه برای ۳۰ روز اخیر، بدون سفارش‌های لغوشده، بازپرداخت‌شده یا باطل‌شده.',
+    aovOverTime: 'میانگین ارزش سفارش در طول زمان',
+    aovOverTimeBody: 'میانگین روزانه ارزش سفارش بر اساس درآمد قابل محاسبه و تعداد سفارش.',
     statusBreakdown: 'سفارش‌ها بر اساس وضعیت',
     statusBreakdownBody: 'نشان می‌دهد بار سفارش فعلی بین وضعیت‌های چرخه سفارش چگونه توزیع شده است.',
     revenueByCurrency: 'درآمد بر اساس ارز',
@@ -90,6 +106,12 @@ function formatStatusLabel(value: string) {
     .join(' ') || 'Unknown';
 }
 
+function formatDateLabel(value: string, locale: SupportedLocale | string | null | undefined) {
+  const date = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat(localeKey(locale) === 'fa' ? 'fa-IR' : 'en-CA', { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(date);
+}
+
 function Metric({ label, value, detail }: { label: string; value: string | number; detail?: string }) {
   return (
     <div className="rounded-md border border-stone-200 bg-stone-50 p-3 text-sm">
@@ -104,6 +126,22 @@ export async function AdminOrderRevenueSummaryPanel({ summary }: { summary: Orde
   const locale = await resolveStorefrontLocale();
   const labels = copy[localeKey(locale)];
   const primaryCurrency = summary.primaryCurrency;
+  const dailyTrendRows = summary.recentDaily.map((point) => ({ ...point, label: formatDateLabel(point.date, locale) }));
+  const orderTrendChartRows = dailyTrendRows.map((point) => ({
+    label: point.label,
+    value: point.orderCount,
+    displayValue: String(point.orderCount)
+  }));
+  const revenueTrendChartRows = dailyTrendRows.map((point) => ({
+    label: point.label,
+    value: point.revenueCents,
+    displayValue: formatRevenueCents(point.revenueCents, primaryCurrency)
+  }));
+  const averageOrderValueTrendRows = dailyTrendRows.map((point) => ({
+    label: point.label,
+    value: point.averageOrderValueCents,
+    displayValue: formatRevenueCents(point.averageOrderValueCents, primaryCurrency)
+  }));
   const statusChartRows = Object.entries(summary.byStatus)
     .map(([status, count]) => ({ label: formatStatusLabel(status), value: count, displayValue: String(count) }))
     .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
@@ -152,6 +190,33 @@ export async function AdminOrderRevenueSummaryPanel({ summary }: { summary: Orde
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">{labels.businessCharts}</p>
             <p className="mt-1 max-w-3xl text-sm leading-6 text-stone-600">{labels.businessChartsBody}</p>
+          </div>
+          <div className="mt-4 rounded-lg border border-stone-200 bg-white/70 p-4">
+            <p className="text-sm font-bold text-stone-950">{labels.trendCharts}</p>
+            <p className="mt-1 text-sm leading-6 text-stone-600">{labels.trendChartsBody}</p>
+            <div className="mt-4 grid gap-4 xl:grid-cols-3">
+              <AdminAnalyticsTrendChart
+                title={labels.ordersOverTime}
+                description={labels.ordersOverTimeBody}
+                rows={orderTrendChartRows}
+                emptyLabel={labels.noChartData}
+                valueLabel={labels.count}
+              />
+              <AdminAnalyticsTrendChart
+                title={labels.revenueOverTime}
+                description={labels.revenueOverTimeBody}
+                rows={revenueTrendChartRows}
+                emptyLabel={labels.noChartData}
+                valueLabel={labels.amount}
+              />
+              <AdminAnalyticsTrendChart
+                title={labels.aovOverTime}
+                description={labels.aovOverTimeBody}
+                rows={averageOrderValueTrendRows}
+                emptyLabel={labels.noChartData}
+                valueLabel={labels.amount}
+              />
+            </div>
           </div>
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
             <AdminAnalyticsBarChart
