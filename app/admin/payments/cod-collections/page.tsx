@@ -1,12 +1,15 @@
 import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { assertAdminRole } from '@/lib/admin-auth';
+import { AdminPageShell } from '@/components/admin/AdminPageShell';
+import { assertAdminRole, isAdminAuthConfigured } from '@/lib/admin-auth';
 import { recordAdminAuditLog } from '@/lib/admin-audit-log';
 import { formatMinorUnitAmount } from '@/lib/catalog';
 import { assertCodCollectionStatus, assertCodSettlementStatus, recordCodAdjustment, updateCodCollectionStatus } from '@/lib/checkout/cod-collection-service';
 import type { CodAdjustmentOperation } from '@/lib/checkout/cod-adjustment-tracking';
 import { COD_COLLECTION_STATUSES, COD_SETTLEMENT_STATUSES } from '@/lib/checkout/payment-method-checkout-selection';
+import { listAdminCategories, listAdminProducts, listMedia } from '@/lib/cms/catalog-repository';
+import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -228,105 +231,126 @@ async function recordCodAdjustmentFormAction(formData: FormData) {
 }
 
 export default async function AdminCodCollectionPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
-  const [actor, { status }, rows] = await Promise.all([assertAdminRole('staff'), searchParams, listCodCollectionRows()]);
+  const [actor, { status }, rows, locale, products, categories, media] = await Promise.all([
+    assertAdminRole('staff'),
+    searchParams,
+    listCodCollectionRows(),
+    resolveStorefrontLocale(),
+    listAdminProducts(),
+    listAdminCategories(),
+    listMedia()
+  ]);
   const banner = statusBanner(status);
   const canRecordCodAdjustments = actor.role === 'owner';
 
   return (
-    <main id="main-content" tabIndex={-1} className="mx-auto max-w-7xl px-5 py-14">
-      <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">COD collections</p>
-          <h1 className="mt-3 font-display text-5xl text-rosewood">Delivery collection controls</h1>
-          <p className="mt-4 max-w-3xl text-sm leading-6 text-stone-600">Mark cash/pay-on-delivery collections as pending, collected, failed, or waived while preserving staff notes, settlement evidence, order timeline events, and admin audit metadata.</p>
+    <AdminPageShell
+      activeTab="sales"
+      activeNavKey="cod-collections"
+      authenticated={true}
+      authConfigured={isAdminAuthConfigured()}
+      adminLabel={actor.label ?? actor.email}
+      locale={locale}
+      returnTo="/admin/payments/cod-collections"
+      productCount={products.length}
+      categoryCount={categories.length}
+      mediaCount={media.length}
+    >
+      <div className="mx-auto w-full max-w-7xl">
+        <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">COD collections</p>
+            <h1 className="mt-3 font-display text-5xl text-rosewood">Delivery collection controls</h1>
+            <p className="mt-4 max-w-3xl text-sm leading-6 text-stone-600">Mark cash/pay-on-delivery collections as pending, collected, failed, or waived while preserving staff notes, settlement evidence, order timeline events, and admin audit metadata.</p>
+          </div>
+          <Link href="/admin/orders" className="rounded-full border border-rosewood/15 bg-white px-5 py-3 text-sm font-semibold text-rosewood">Back to orders</Link>
         </div>
-        <Link href="/admin#orders" className="rounded-full border border-rosewood/15 bg-white px-5 py-3 text-sm font-semibold text-rosewood">Back to orders</Link>
-      </div>
 
-      {banner ? <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">{banner}</div> : null}
+        {banner ? <div className="mb-6 rounded-3xl border border-olive/20 bg-cream p-4 text-sm font-semibold text-olive">{banner}</div> : null}
 
-      {rows.length === 0 ? (
-        <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 text-sm text-stone-700 shadow-sm">No COD collection attempts are waiting in the latest payment-attempt sample.</section>
-      ) : (
-        <section className="grid gap-4">
-          {rows.map((row) => (
-            <article key={row.id} className={`rounded-[2rem] border p-5 shadow-sm ${collectionTone(row.collectionStatus)}`}>
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <Link href={`/admin/orders/${row.order.id}`} className="font-semibold underline decoration-current/30 underline-offset-4">{row.order.orderNumber}</Link>
-                  <p className="mt-1 text-xs opacity-80">Order {row.order.status} · Fulfillment {row.order.fulfillmentStatus}</p>
-                  <p className="mt-1 text-xs opacity-80">Customer: {row.order.customer?.displayName || row.order.recipientName || 'Guest'} · {row.order.customer?.phone || row.order.recipientPhone || 'No phone'}</p>
+        {rows.length === 0 ? (
+          <section className="rounded-[2rem] border border-rosewood/10 bg-white p-6 text-sm text-stone-700 shadow-sm">No COD collection attempts are waiting in the latest payment-attempt sample.</section>
+        ) : (
+          <section className="grid gap-4">
+            {rows.map((row) => (
+              <article key={row.id} className={`rounded-[2rem] border p-5 shadow-sm ${collectionTone(row.collectionStatus)}`}>
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <Link href={`/admin/orders/${row.order.id}`} className="font-semibold underline decoration-current/30 underline-offset-4">{row.order.orderNumber}</Link>
+                    <p className="mt-1 text-xs opacity-80">Order {row.order.status} · Fulfillment {row.order.fulfillmentStatus}</p>
+                    <p className="mt-1 text-xs opacity-80">Customer: {row.order.customer?.displayName || row.order.recipientName || 'Guest'} · {row.order.customer?.phone || row.order.recipientPhone || 'No phone'}</p>
+                  </div>
+                  <span className="rounded-full border border-current/20 px-3 py-1 text-xs font-semibold">{row.collectionStatus}</span>
                 </div>
-                <span className="rounded-full border border-current/20 px-3 py-1 text-xs font-semibold">{row.collectionStatus}</span>
-              </div>
 
-              <div className="mt-4 grid gap-1 text-xs">
-                <p><strong>Attempt amount:</strong> {formatMinorUnitAmount(row.amountCents, row.currency)}</p>
-                <p><strong>Order total:</strong> {formatMinorUnitAmount(row.order.totalCents, row.order.currency)}</p>
-                {row.providerKey ? <p><strong>Provider key:</strong> {row.providerKey}</p> : null}
-                {row.settlementMode ? <p><strong>Settlement mode:</strong> {row.settlementMode}</p> : null}
-                <p><strong>Settlement status:</strong> {row.settlementStatus}</p>
-                {row.settlementReference ? <p><strong>Settlement reference:</strong> {row.settlementReference}</p> : null}
-                {row.settlementSettledAt ? <p><strong>Settled at:</strong> {row.settlementSettledAt}</p> : null}
-                {row.settlementUpdatedAt ? <p><strong>Settlement updated:</strong> {row.settlementUpdatedAt}</p> : null}
-                {row.collectionUpdatedAt ? <p><strong>Collection updated:</strong> {row.collectionUpdatedAt}</p> : null}
-                {row.collectionNote ? <p><strong>Latest note:</strong> {row.collectionNote}</p> : null}
-                {row.adjustmentStatus ? <p><strong>Latest adjustment:</strong> {row.adjustmentStatus} ({row.adjustmentOperation ?? 'adjustment'}){row.adjustmentRecordedAt ? ` · ${row.adjustmentRecordedAt}` : ''}</p> : null}
-                {row.adjustmentNote ? <p><strong>Adjustment note:</strong> {row.adjustmentNote}</p> : null}
-              </div>
-
-              <form action={updateCodCollectionFormAction} className="mt-4 grid gap-3 rounded-3xl border border-current/10 bg-white/60 p-4 md:grid-cols-2 xl:grid-cols-[12rem_12rem_1fr_1fr_auto]">
-                <input type="hidden" name="orderId" value={row.order.id} />
-                <input type="hidden" name="paymentAttemptId" value={row.id} />
-                <label className="grid gap-2 text-sm font-semibold">
-                  Collection status
-                  <select name="codCollectionStatus" defaultValue={row.collectionStatus} className={inputClass}>
-                    {COD_COLLECTION_STATUSES.map((value) => <option key={value} value={value}>{value}</option>)}
-                  </select>
-                </label>
-                <label className="grid gap-2 text-sm font-semibold">
-                  Settlement status
-                  <select name="codSettlementStatus" defaultValue={row.settlementStatus} className={inputClass}>
-                    {COD_SETTLEMENT_STATUSES.map((value) => <option key={value} value={value}>{value}</option>)}
-                  </select>
-                </label>
-                <label className="grid gap-2 text-sm font-semibold">
-                  Settlement reference
-                  <input name="settlementReference" className={inputClass} placeholder="Courier batch, receipt, or reconciliation ID" defaultValue={row.settlementReference ?? ''} />
-                </label>
-                <label className="grid gap-2 text-sm font-semibold">
-                  Staff note
-                  <input name="note" className={inputClass} placeholder="Delivery collection evidence or failure reason" />
-                </label>
-                <input type="hidden" name="settlementSettledAt" value={row.settlementSettledAt ?? ''} />
-                <div className="flex items-end">
-                  <button type="submit" className="rounded-full bg-rosewood px-5 py-2 text-sm font-semibold text-white">Save COD collection</button>
+                <div className="mt-4 grid gap-1 text-xs">
+                  <p><strong>Attempt amount:</strong> {formatMinorUnitAmount(row.amountCents, row.currency)}</p>
+                  <p><strong>Order total:</strong> {formatMinorUnitAmount(row.order.totalCents, row.order.currency)}</p>
+                  {row.providerKey ? <p><strong>Provider key:</strong> {row.providerKey}</p> : null}
+                  {row.settlementMode ? <p><strong>Settlement mode:</strong> {row.settlementMode}</p> : null}
+                  <p><strong>Settlement status:</strong> {row.settlementStatus}</p>
+                  {row.settlementReference ? <p><strong>Settlement reference:</strong> {row.settlementReference}</p> : null}
+                  {row.settlementSettledAt ? <p><strong>Settled at:</strong> {row.settlementSettledAt}</p> : null}
+                  {row.settlementUpdatedAt ? <p><strong>Settlement updated:</strong> {row.settlementUpdatedAt}</p> : null}
+                  {row.collectionUpdatedAt ? <p><strong>Collection updated:</strong> {row.collectionUpdatedAt}</p> : null}
+                  {row.collectionNote ? <p><strong>Latest note:</strong> {row.collectionNote}</p> : null}
+                  {row.adjustmentStatus ? <p><strong>Latest adjustment:</strong> {row.adjustmentStatus} ({row.adjustmentOperation ?? 'adjustment'}){row.adjustmentRecordedAt ? ` · ${row.adjustmentRecordedAt}` : ''}</p> : null}
+                  {row.adjustmentNote ? <p><strong>Adjustment note:</strong> {row.adjustmentNote}</p> : null}
                 </div>
-              </form>
 
-              {canRecordCodAdjustments ? (
-                <form action={recordCodAdjustmentFormAction} className="mt-3 grid gap-3 rounded-3xl border border-current/10 bg-white/70 p-4 md:grid-cols-[12rem_1fr_auto]">
+                <form action={updateCodCollectionFormAction} className="mt-4 grid gap-3 rounded-3xl border border-current/10 bg-white/60 p-4 md:grid-cols-2 xl:grid-cols-[12rem_12rem_1fr_1fr_auto]">
                   <input type="hidden" name="orderId" value={row.order.id} />
                   <input type="hidden" name="paymentAttemptId" value={row.id} />
                   <label className="grid gap-2 text-sm font-semibold">
-                    Adjustment type
-                    <select name="codAdjustmentOperation" defaultValue="adjustment" className={inputClass}>
-                      {COD_ADJUSTMENT_OPERATIONS.map((value) => <option key={value} value={value}>{value}</option>)}
+                    Collection status
+                    <select name="codCollectionStatus" defaultValue={row.collectionStatus} className={inputClass}>
+                      {COD_COLLECTION_STATUSES.map((value) => <option key={value} value={value}>{value}</option>)}
                     </select>
                   </label>
                   <label className="grid gap-2 text-sm font-semibold">
-                    Owner note
-                    <input name="adjustmentNote" className={inputClass} placeholder="Adjustment, refund, or void evidence" />
+                    Settlement status
+                    <select name="codSettlementStatus" defaultValue={row.settlementStatus} className={inputClass}>
+                      {COD_SETTLEMENT_STATUSES.map((value) => <option key={value} value={value}>{value}</option>)}
+                    </select>
                   </label>
+                  <label className="grid gap-2 text-sm font-semibold">
+                    Settlement reference
+                    <input name="settlementReference" className={inputClass} placeholder="Courier batch, receipt, or reconciliation ID" defaultValue={row.settlementReference ?? ''} />
+                  </label>
+                  <label className="grid gap-2 text-sm font-semibold">
+                    Staff note
+                    <input name="note" className={inputClass} placeholder="Delivery collection evidence or failure reason" />
+                  </label>
+                  <input type="hidden" name="settlementSettledAt" value={row.settlementSettledAt ?? ''} />
                   <div className="flex items-end">
-                    <button type="submit" className="rounded-full border border-rosewood/20 bg-white px-5 py-2 text-sm font-semibold text-rosewood">Record COD adjustment</button>
+                    <button type="submit" className="rounded-full bg-rosewood px-5 py-2 text-sm font-semibold text-white">Save COD collection</button>
                   </div>
                 </form>
-              ) : null}
-            </article>
-          ))}
-        </section>
-      )}
-    </main>
+
+                {canRecordCodAdjustments ? (
+                  <form action={recordCodAdjustmentFormAction} className="mt-3 grid gap-3 rounded-3xl border border-current/10 bg-white/70 p-4 md:grid-cols-[12rem_1fr_auto]">
+                    <input type="hidden" name="orderId" value={row.order.id} />
+                    <input type="hidden" name="paymentAttemptId" value={row.id} />
+                    <label className="grid gap-2 text-sm font-semibold">
+                      Adjustment type
+                      <select name="codAdjustmentOperation" defaultValue="adjustment" className={inputClass}>
+                        {COD_ADJUSTMENT_OPERATIONS.map((value) => <option key={value} value={value}>{value}</option>)}
+                      </select>
+                    </label>
+                    <label className="grid gap-2 text-sm font-semibold">
+                      Owner note
+                      <input name="adjustmentNote" className={inputClass} placeholder="Adjustment, refund, or void evidence" />
+                    </label>
+                    <div className="flex items-end">
+                      <button type="submit" className="rounded-full border border-rosewood/20 bg-white px-5 py-2 text-sm font-semibold text-rosewood">Record COD adjustment</button>
+                    </div>
+                  </form>
+                ) : null}
+              </article>
+            ))}
+          </section>
+        )}
+      </div>
+    </AdminPageShell>
   );
 }
