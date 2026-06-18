@@ -26,7 +26,19 @@ const copy = {
     note: 'This workspace includes lightweight server-rendered business and site charts with accessible data-table fallbacks. Site analytics uses privacy-safe first-party events and excludes admin routes.',
     rangeEyebrow: 'Analytics range',
     rangeBody: 'Change the reporting window for business and site charts without leaving the analytics workspace.',
-    rangeSuffix: 'days'
+    rangeSuffix: 'days',
+    sectionEyebrow: 'Analytics sections',
+    sectionBody: 'Jump directly to the analytics area you need instead of scrolling through the full workspace.',
+    sectionLabel: 'Jump to analytics section',
+    businessSummary: 'Business summary',
+    businessCharts: 'Business charts',
+    siteFunnel: 'Site funnel',
+    productPerformance: 'Products',
+    inventoryPressure: 'Inventory',
+    fulfillmentOps: 'Fulfillment',
+    paymentAlerts: 'Payments',
+    inquiryOps: 'Inquiries',
+    readinessHealth: 'Readiness'
   },
   fa: {
     eyebrow: 'مدیریت / تحلیل‌ها',
@@ -36,7 +48,19 @@ const copy = {
     note: 'این فضا نمودارهای سبک کسب‌وکار و سایت را با جدول داده دسترس‌پذیر نمایش می‌دهد. تحلیل سایت از رویدادهای داخلی و حریم‌خصوصی‌محور استفاده می‌کند و مسیرهای مدیریت را ثبت نمی‌کند.',
     rangeEyebrow: 'بازه تحلیل',
     rangeBody: 'بازه گزارش نمودارهای کسب‌وکار و سایت را بدون خروج از فضای تحلیل تغییر دهید.',
-    rangeSuffix: 'روز'
+    rangeSuffix: 'روز',
+    sectionEyebrow: 'بخش‌های تحلیل',
+    sectionBody: 'بدون پیمایش کل صفحه، مستقیم به بخش تحلیلی موردنیاز بروید.',
+    sectionLabel: 'رفتن به بخش تحلیل',
+    businessSummary: 'خلاصه کسب‌وکار',
+    businessCharts: 'نمودارهای کسب‌وکار',
+    siteFunnel: 'قیف سایت',
+    productPerformance: 'محصولات',
+    inventoryPressure: 'موجودی',
+    fulfillmentOps: 'ارسال',
+    paymentAlerts: 'پرداخت‌ها',
+    inquiryOps: 'درخواست‌ها',
+    readinessHealth: 'آمادگی'
   }
 } as const;
 
@@ -52,6 +76,10 @@ function rangeHref(days: number) {
   return `/admin/analytics?range=${days}`;
 }
 
+function sectionHref(anchor: string, days: number) {
+  return `${rangeHref(days)}#${anchor}`;
+}
+
 export default async function AdminAnalyticsPage({ searchParams }: { searchParams?: Promise<SearchParams> }) {
   await requireAdminRouteSession();
 
@@ -60,6 +88,17 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
   const params = searchParams ? await searchParams : {};
   const rangeDays = normalizeAdminAnalyticsRangeDays(firstParam(params.range));
   const returnTo = rangeHref(rangeDays);
+  const sectionLinks = [
+    { href: sectionHref('order-analytics', rangeDays), label: labels.businessSummary },
+    { href: sectionHref('business-analytics-charts', rangeDays), label: labels.businessCharts },
+    { href: sectionHref('site-analytics', rangeDays), label: labels.siteFunnel },
+    { href: sectionHref('product-analytics', rangeDays), label: labels.productPerformance },
+    { href: sectionHref('inventory-analytics', rangeDays), label: labels.inventoryPressure },
+    { href: sectionHref('fulfillment-analytics', rangeDays), label: labels.fulfillmentOps },
+    { href: sectionHref('payment-analytics', rangeDays), label: labels.paymentAlerts },
+    { href: sectionHref('inquiry-operations', rangeDays), label: labels.inquiryOps },
+    { href: sectionHref('readiness-analytics', rangeDays), label: labels.readinessHealth }
+  ];
   const authenticated = await isAdminAuthenticated();
   const authConfigured = isAdminAuthConfigured();
   const identity = await getAdminIdentity();
@@ -115,6 +154,21 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
                 );
               })}
             </div>
+          </div>
+          <div id="analytics-section-index" className="mt-4 rounded-lg border border-stone-200 bg-stone-50 p-4">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">{labels.sectionEyebrow}</p>
+            <p className="mt-1 text-sm leading-6 text-stone-600">{labels.sectionBody}</p>
+            <nav aria-label={labels.sectionLabel} className="mt-3 flex flex-wrap gap-2">
+              {sectionLinks.map((section) => (
+                <Link
+                  key={section.href}
+                  href={section.href}
+                  className="rounded-full border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-700 hover:border-olive hover:text-olive"
+                >
+                  {section.label}
+                </Link>
+              ))}
+            </nav>
           </div>
         </section>
         <AdminSiteAnalyticsPanel summary={siteAnalyticsSummary} />
