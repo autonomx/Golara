@@ -211,9 +211,12 @@ export const siteAnalyticsSummaryService = {
     if (!hasDatabase()) return { ...EMPTY_SITE_ANALYTICS_SUMMARY, generatedAt: new Date() };
 
     try {
-      const rows = await prisma.$queryRawUnsafe<RawSiteAnalyticsSourceRow[]>(
-        'SELECT "eventType", "path", "locale", "productId", "categoryId", "searchTerm", "createdAt" FROM "SiteAnalyticsEvent" ORDER BY "createdAt" DESC LIMIT 5000'
-      );
+      const rows = await prisma.$queryRaw<RawSiteAnalyticsSourceRow[]>`
+        SELECT "eventType", "path", "locale", "productId", "categoryId", "searchTerm", "createdAt"
+        FROM "SiteAnalyticsEvent"
+        ORDER BY "createdAt" DESC
+        LIMIT 5000
+      `;
 
       return buildSiteAnalyticsSummary(normalizeRawSiteAnalyticsRows(rows));
     } catch (error) {
