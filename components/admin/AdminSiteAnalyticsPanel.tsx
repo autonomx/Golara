@@ -10,7 +10,7 @@ const copy = {
   en: {
     eyebrow: 'Site analytics',
     title: 'Storefront traffic and funnel',
-    body: 'Privacy-safe first-party site events for page views, product/category views, search, cart, checkout, payment-method selection, and campaign attribution. Admin routes are excluded.',
+    body: 'Privacy-safe first-party site events for page views, product/category views, search, cart, checkout, payment-method selection, campaign attribution, and product view-to-cart conversion. Admin routes are excluded.',
     totalEvents: 'Total site events',
     recentEvents: 'Selected range',
     uniquePaths: 'Unique paths',
@@ -30,6 +30,8 @@ const copy = {
     topProductsBody: 'Product detail views grouped by product slug from storefront traffic.',
     topCategories: 'Top category views',
     topCategoriesBody: 'Category detail views grouped by category slug from storefront traffic.',
+    productConversion: 'Product view-to-cart conversion',
+    productConversionBody: 'Products receiving product views and add-to-cart signals in the selected range. The bar value is add-to-cart count; details show product views and conversion rate.',
     topSources: 'Top traffic sources',
     topSourcesBody: 'UTM source attribution for storefront events, with direct or unattributed traffic grouped together.',
     topCampaigns: 'Top campaigns',
@@ -39,6 +41,8 @@ const copy = {
     addToCart: 'Add to cart',
     checkoutStarted: 'Checkout started',
     checkoutCompleted: 'Checkout completed',
+    views: 'views',
+    viewToCart: 'view-to-cart',
     noChartData: 'No site analytics events are available yet.',
     count: 'Count',
     vsPreviousRange: 'vs previous range',
@@ -47,7 +51,7 @@ const copy = {
   fa: {
     eyebrow: 'تحلیل سایت',
     title: 'ترافیک فروشگاه و قیف خرید',
-    body: 'رویدادهای داخلی و حریم‌خصوصی‌محور برای بازدید صفحه، محصول/دسته، جستجو، سبد، پرداخت، انتخاب روش پرداخت و انتساب کمپین. مسیرهای مدیریت ثبت نمی‌شوند.',
+    body: 'رویدادهای داخلی و حریم‌خصوصی‌محور برای بازدید صفحه، محصول/دسته، جستجو، سبد، پرداخت، انتخاب روش پرداخت، انتساب کمپین و تبدیل بازدید محصول به سبد. مسیرهای مدیریت ثبت نمی‌شوند.',
     totalEvents: 'کل رویدادهای سایت',
     recentEvents: 'بازه انتخاب‌شده',
     uniquePaths: 'مسیرهای یکتا',
@@ -67,6 +71,8 @@ const copy = {
     topProductsBody: 'بازدید صفحه محصول بر اساس اسلاگ محصول در ترافیک فروشگاه.',
     topCategories: 'بازدید دسته‌های برتر',
     topCategoriesBody: 'بازدید صفحه دسته بر اساس اسلاگ دسته در ترافیک فروشگاه.',
+    productConversion: 'تبدیل بازدید محصول به سبد',
+    productConversionBody: 'محصولاتی که در بازه انتخاب‌شده بازدید محصول و سیگنال افزودن به سبد دارند. مقدار نمودار تعداد افزودن به سبد است؛ جزئیات بازدید محصول و نرخ تبدیل را نشان می‌دهد.',
     topSources: 'منابع ترافیک برتر',
     topSourcesBody: 'انتساب UTM source برای رویدادهای فروشگاه؛ ترافیک مستقیم یا بدون انتساب یکجا گروه‌بندی می‌شود.',
     topCampaigns: 'کمپین‌های برتر',
@@ -76,6 +82,8 @@ const copy = {
     addToCart: 'افزودن به سبد',
     checkoutStarted: 'شروع پرداخت',
     checkoutCompleted: 'تکمیل پرداخت',
+    views: 'بازدید',
+    viewToCart: 'تبدیل بازدید به سبد',
     noChartData: 'هنوز رویداد تحلیل سایت موجود نیست.',
     count: 'تعداد',
     vsPreviousRange: 'نسبت به بازه قبلی',
@@ -159,6 +167,12 @@ export async function AdminSiteAnalyticsPanel({ summary }: { summary: SiteAnalyt
     label: row.label,
     value: row.count,
     displayValue: String(row.count)
+  }));
+  const productConversionRows = summary.productConversions.map((row) => ({
+    label: row.label,
+    value: row.addToCart,
+    displayValue: String(row.addToCart),
+    detail: `${row.productViews} ${labels.views} · ${row.viewToCartRatePercent.toFixed(1)}% ${labels.viewToCart}`
   }));
   const categoryRows = summary.topCategoryViews.map((row) => ({
     label: row.label,
@@ -258,6 +272,13 @@ export async function AdminSiteAnalyticsPanel({ summary }: { summary: SiteAnalyt
             rows={productRows}
             emptyLabel={labels.noChartData}
             valueLabel={labels.count}
+          />
+          <AdminAnalyticsBarChart
+            title={labels.productConversion}
+            description={labels.productConversionBody}
+            rows={productConversionRows}
+            emptyLabel={labels.noChartData}
+            valueLabel={labels.addToCart}
           />
           <AdminAnalyticsBarChart
             title={labels.topCategories}
