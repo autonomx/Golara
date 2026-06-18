@@ -11,6 +11,7 @@ for (const fragment of [
   'tx.checkoutPaymentAttempt.findMany',
   'isCodPaymentMetadata(metadataObject(attempt.metadata))',
   'codCollectionStatus(metadata)',
+  'Unknown checkout fulfillment status: COD collection must be collected or waived before fulfillment can be marked delivered',
   'COD collection must be collected or waived before fulfillment can be marked delivered'
 ]) {
   assert.ok(statusService.includes(fragment), `Expected COD fulfillment guard fragment: ${fragment}`);

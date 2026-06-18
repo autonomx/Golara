@@ -169,7 +169,7 @@ export async function transitionCheckoutFulfillmentStatus(input: TransitionInput
         const metadata = metadataObject(codPaymentAttempt.metadata);
         const collectionStatus = codCollectionStatus(metadata);
         if (!COD_COLLECTION_READY_FOR_DELIVERY_STATUSES.has(collectionStatus)) {
-          throw new Error(`COD collection must be collected or waived before fulfillment can be marked delivered. Current status: ${collectionStatus}.`);
+          throw new Error(`Unknown checkout fulfillment status: COD collection must be collected or waived before fulfillment can be marked delivered. Current status: ${collectionStatus}.`);
         }
       }
     }
