@@ -27,7 +27,21 @@ export function getAdminAnalyticsRangeStart(now: Date, value?: AdminAnalyticsRan
   return new Date(startOfUtcDay(now).getTime() - (rangeDays - 1) * DAY_MS);
 }
 
+export function getAdminAnalyticsPreviousRangeStart(now: Date, value?: AdminAnalyticsRangeInput) {
+  const rangeDays = normalizeAdminAnalyticsRangeDays(value);
+  return new Date(getAdminAnalyticsRangeStart(now, rangeDays).getTime() - rangeDays * DAY_MS);
+}
+
+export function getAdminAnalyticsPreviousRangeEnd(now: Date, value?: AdminAnalyticsRangeInput) {
+  return new Date(getAdminAnalyticsRangeStart(now, value).getTime() - DAY_MS);
+}
+
 export function isWithinAdminAnalyticsRange(createdAt: Date, now: Date, value?: AdminAnalyticsRangeInput) {
   const day = startOfUtcDay(createdAt);
   return day >= getAdminAnalyticsRangeStart(now, value) && day <= startOfUtcDay(now);
+}
+
+export function isWithinAdminAnalyticsPreviousRange(createdAt: Date, now: Date, value?: AdminAnalyticsRangeInput) {
+  const day = startOfUtcDay(createdAt);
+  return day >= getAdminAnalyticsPreviousRangeStart(now, value) && day <= getAdminAnalyticsPreviousRangeEnd(now, value);
 }
