@@ -1,5 +1,6 @@
 import { AdminAnalyticsBarChart } from '@/components/admin/AdminAnalyticsChartPrimitives';
-import { formatRevenueCents, type ProductSalesAnalyticsSummary } from '@/lib/analytics/product-sales-analytics';
+import { formatRevenueCents } from '@/lib/analytics/order-revenue-summary';
+import type { ProductSalesAnalyticsSummary } from '@/lib/analytics/product-sales-analytics';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 
