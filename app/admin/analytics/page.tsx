@@ -27,6 +27,10 @@ const copy = {
     rangeEyebrow: 'Analytics range',
     rangeBody: 'Change the reporting window for business and site charts without leaving the analytics workspace.',
     rangeSuffix: 'days',
+    exportEyebrow: 'CSV exports',
+    exportBody: 'Download aggregate analytics for the selected range. Exports use summaries and charts only; raw visitor sessions are not exported.',
+    businessCsv: 'Download business CSV',
+    siteCsv: 'Download site CSV',
     sectionEyebrow: 'Analytics sections',
     sectionBody: 'Jump directly to the analytics area you need instead of scrolling through the full workspace.',
     sectionLabel: 'Jump to analytics section',
@@ -49,6 +53,10 @@ const copy = {
     rangeEyebrow: 'بازه تحلیل',
     rangeBody: 'بازه گزارش نمودارهای کسب‌وکار و سایت را بدون خروج از فضای تحلیل تغییر دهید.',
     rangeSuffix: 'روز',
+    exportEyebrow: 'خروجی CSV',
+    exportBody: 'تحلیل‌های تجمیعی بازه انتخاب‌شده را دانلود کنید. خروجی‌ها فقط از خلاصه‌ها و نمودارها استفاده می‌کنند و نشست خام بازدیدکننده صادر نمی‌شود.',
+    businessCsv: 'دانلود CSV کسب‌وکار',
+    siteCsv: 'دانلود CSV سایت',
     sectionEyebrow: 'بخش‌های تحلیل',
     sectionBody: 'بدون پیمایش کل صفحه، مستقیم به بخش تحلیلی موردنیاز بروید.',
     sectionLabel: 'رفتن به بخش تحلیل',
@@ -74,6 +82,10 @@ function firstParam(value: string | string[] | undefined) {
 
 function rangeHref(days: number) {
   return `/admin/analytics?range=${days}`;
+}
+
+function exportHref(report: 'business' | 'site', days: number) {
+  return `/admin/analytics/export?report=${report}&range=${days}`;
 }
 
 function sectionHref(anchor: string, days: number) {
@@ -153,6 +165,24 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
                   </Link>
                 );
               })}
+            </div>
+          </div>
+          <div id="analytics-csv-exports" className="mt-4 rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">{labels.exportEyebrow}</p>
+            <p className="mt-1 text-sm leading-6 text-stone-600">{labels.exportBody}</p>
+            <div className="mt-3 flex flex-wrap gap-2" aria-label={labels.exportEyebrow}>
+              <Link
+                href={exportHref('business', rangeDays)}
+                className="rounded-full border border-olive bg-white px-4 py-2 text-sm font-bold text-olive hover:bg-olive hover:text-white"
+              >
+                {labels.businessCsv}
+              </Link>
+              <Link
+                href={exportHref('site', rangeDays)}
+                className="rounded-full border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-700 hover:border-olive hover:text-olive"
+              >
+                {labels.siteCsv}
+              </Link>
             </div>
           </div>
           <div id="analytics-section-index" className="mt-4 rounded-lg border border-stone-200 bg-stone-50 p-4">
