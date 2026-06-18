@@ -19,7 +19,7 @@ import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 
 type AdminLocale = 'en' | 'fa';
-type OrderPanelCopy = typeof copy.en;
+type OrderPanelCopy = Record<string, string>;
 
 const copy = {
   en: {
