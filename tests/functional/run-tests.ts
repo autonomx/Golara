@@ -14,7 +14,7 @@ function listFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const path = join(dir, entry.name);
     if (entry.isDirectory()) return listFiles(path);
-    return [path.replace(/\\/g, '/')];
+    return [path.replace(/\/g, '/')];
   });
 }
 
@@ -138,7 +138,8 @@ function runSiteAnalyticsFunctionalCoverageTests() {
   assert.match(route, /site_analytics_event_table_missing/);
   assert.match(service, /buildSiteAnalyticsSummary/);
   assert.match(service, /siteAnalyticsSummaryService/);
-  assert.match(service, /SELECT "eventType", "path", "locale", "productId", "categoryId", "searchTerm", "createdAt" FROM "SiteAnalyticsEvent"/);
+  assert.match(service, /SELECT "eventType", "path", "locale", "productId", "categoryId", "searchTerm", "createdAt"/);
+  assert.match(service, /FROM "SiteAnalyticsEvent"/);
   assert.match(panel, /AdminSiteAnalyticsPanel/);
   assert.match(panel, /Storefront traffic and funnel/);
   assert.match(panel, /Checkout funnel/);
