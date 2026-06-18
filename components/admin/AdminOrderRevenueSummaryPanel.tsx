@@ -87,7 +87,7 @@ export async function AdminOrderRevenueSummaryPanel({ summary }: { summary: Orde
 
   return (
     <>
-      <section className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
+      <section id="order-analytics" className="scroll-mt-24 rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">{labels.eyebrow}</p>

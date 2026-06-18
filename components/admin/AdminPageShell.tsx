@@ -100,6 +100,14 @@ const sidebarSections = [
   ]}
 ] as const;
 
+const overviewJumpLinks = [
+  { href: '#readiness', label: 'Readiness', detail: 'Launch checks' },
+  { href: '#security', label: 'Security', detail: 'Security events' },
+  { href: '#order-analytics', label: 'Analytics', detail: 'Order analytics' },
+  { href: '#staff-readiness', label: 'Staff access', detail: 'Staff readiness' },
+  { href: '#audit-log', label: 'Audit log', detail: 'Audit trail' }
+] as const;
+
 function tabHref(tab: AdminTab) {
   if (tab === 'catalog') return '/admin/products';
   if (tab === 'content') return '/admin/homepage';
@@ -143,6 +151,23 @@ function AdminTopBar({ activeTab, productCount = 0, categoryCount = 0, mediaCoun
   return <header className="sticky top-0 z-20 border-b border-stone-200 bg-white/95 backdrop-blur"><div className="flex min-h-16 flex-wrap items-center justify-between gap-3 px-4 py-3 lg:px-6"><div className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-md border border-stone-200 bg-stone-50 text-stone-700"><ActiveIcon aria-hidden="true" className="h-4 w-4" /></span><div><h1 className="text-lg font-bold text-stone-950">{active.label}</h1><p className="text-xs font-medium text-stone-500">{active.description}</p></div></div><div className="flex flex-wrap items-center gap-2"><LanguageSwitcher locale={locale} returnTo={returnTo} /><span className="rounded-md border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-semibold text-stone-700">{productCount} {t(productCount === 1 ? 'product' : 'products')}</span><span className="rounded-md border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-semibold text-stone-700">{categoryCount} {t(categoryCount === 1 ? 'category' : 'categories')}</span><span className="rounded-md border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-semibold text-stone-700">{mediaCount} {t('media')}</span>{!authenticated ? <Link href="/admin/login" className="inline-flex items-center gap-2 rounded-md bg-rosewood px-4 py-2 text-sm font-semibold text-white"><LogIn aria-hidden="true" className="h-4 w-4" />{authConfigured ? t('Sign in') : t('Configure auth')}</Link> : null}</div></div></header>;
 }
 
+function AdminOverviewJumpNav({ locale }: { locale: SupportedLocale }) {
+  const t = createAdminPageShellTranslator(locale);
+  return (
+    <nav aria-label={t('Overview sections')} className="sticky top-16 z-10 border-b border-stone-200 bg-stone-50/95 px-4 py-3 backdrop-blur lg:px-6">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="mr-1 text-xs font-bold uppercase tracking-[0.16em] text-stone-500">{t('Jump to overview section')}</span>
+        {overviewJumpLinks.map((link) => (
+          <a key={link.href} href={link.href} className="rounded-md border border-stone-200 bg-white px-3 py-2 text-sm font-semibold text-stone-700 shadow-sm transition hover:border-rosewood/30 hover:text-rosewood focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/20">
+            <span>{t(link.label)}</span>
+            <span className="ml-2 text-xs font-medium text-stone-500">{t(link.detail)}</span>
+          </a>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
 export function AdminPageShell(props: AdminPageShellProps) {
   if (!props.authenticated) redirect('/admin/login');
 
@@ -153,6 +178,7 @@ export function AdminPageShell(props: AdminPageShellProps) {
         <div className="min-w-0">
           <AdminMobileNav activeTab={props.activeTab} locale={props.locale} />
           <AdminTopBar activeTab={props.activeTab} authenticated={props.authenticated} authConfigured={props.authConfigured} locale={props.locale} returnTo={props.returnTo} productCount={props.productCount} categoryCount={props.categoryCount} mediaCount={props.mediaCount} />
+          {props.activeNavKey === 'overview' ? <AdminOverviewJumpNav locale={props.locale} /> : null}
           <section className="grid gap-6 px-4 py-6 lg:px-6">{props.children}</section>
         </div>
       </div>
