@@ -35,9 +35,9 @@ function buildBusinessAnalyticsCsv(rangeDays: number, summary: Awaited<ReturnTyp
     ['business', 'summary', 'open_orders', 'Open orders', summary.openOrders, '', ''],
     ['business', 'summary', 'completed_orders', 'Completed orders', summary.completedOrders, '', ''],
     ['business', 'summary', 'cancelled_orders', 'Cancelled orders', summary.cancelledOrders, '', ''],
-    ['business', 'comparison', 'total_orders_delta', 'Total orders vs previous range', summary.comparison.totalOrders.delta, '', `${summary.comparison.totalOrders.percentChange ?? ''}`],
-    ['business', 'comparison', 'total_revenue_delta_cents', 'Revenue vs previous range', summary.comparison.totalRevenueCents.delta, summary.primaryCurrency, `${summary.comparison.totalRevenueCents.percentChange ?? ''}`],
-    ['business', 'comparison', 'average_order_value_delta_cents', 'AOV vs previous range', summary.comparison.averageOrderValueCents.delta, summary.primaryCurrency, `${summary.comparison.averageOrderValueCents.percentChange ?? ''}`]
+    ['business', 'comparison', 'total_orders_delta', 'Total orders vs previous range', summary.comparison.totalOrders.absoluteChange, '', `${summary.comparison.totalOrders.percentChange ?? ''}`],
+    ['business', 'comparison', 'total_revenue_delta_cents', 'Revenue vs previous range', summary.comparison.totalRevenueCents.absoluteChange, summary.primaryCurrency, `${summary.comparison.totalRevenueCents.percentChange ?? ''}`],
+    ['business', 'comparison', 'average_order_value_delta_cents', 'AOV vs previous range', summary.comparison.averageOrderValueCents.absoluteChange, summary.primaryCurrency, `${summary.comparison.averageOrderValueCents.percentChange ?? ''}`]
   ];
 
   for (const point of summary.recentDaily) {
@@ -84,10 +84,10 @@ function buildSiteAnalyticsCsv(rangeDays: number, summary: Awaited<ReturnType<ty
     ['site', 'summary', 'total_events', 'Total events', summary.totalEvents, ''],
     ['site', 'summary', 'recent_events', 'Recent events', summary.recentEvents, ''],
     ['site', 'summary', 'unique_paths', 'Unique paths', summary.uniquePaths, ''],
-    ['site', 'comparison', 'total_events_delta', 'Total events vs previous range', summary.comparison.totalEvents.delta, `${summary.comparison.totalEvents.percentChange ?? ''}`],
-    ['site', 'comparison', 'page_views_delta', 'Page views vs previous range', summary.comparison.pageViews.delta, `${summary.comparison.pageViews.percentChange ?? ''}`],
-    ['site', 'comparison', 'product_views_delta', 'Product views vs previous range', summary.comparison.productViews.delta, `${summary.comparison.productViews.percentChange ?? ''}`],
-    ['site', 'comparison', 'checkout_completed_delta', 'Checkout completed vs previous range', summary.comparison.checkoutCompleted.delta, `${summary.comparison.checkoutCompleted.percentChange ?? ''}`],
+    ['site', 'comparison', 'total_events_delta', 'Total events vs previous range', summary.comparison.totalEvents.absoluteChange, `${summary.comparison.totalEvents.percentChange ?? ''}`],
+    ['site', 'comparison', 'page_views_delta', 'Page views vs previous range', summary.comparison.pageViews.absoluteChange, `${summary.comparison.pageViews.percentChange ?? ''}`],
+    ['site', 'comparison', 'product_views_delta', 'Product views vs previous range', summary.comparison.productViews.absoluteChange, `${summary.comparison.productViews.percentChange ?? ''}`],
+    ['site', 'comparison', 'checkout_completed_delta', 'Checkout completed vs previous range', summary.comparison.checkoutCompleted.absoluteChange, `${summary.comparison.checkoutCompleted.percentChange ?? ''}`],
     ['site', 'funnel', 'page_views', 'Page views', summary.checkoutFunnel.pageViews, ''],
     ['site', 'funnel', 'product_views', 'Product views', summary.checkoutFunnel.productViews, ''],
     ['site', 'funnel', 'add_to_cart', 'Add to cart', summary.checkoutFunnel.addToCart, ''],
