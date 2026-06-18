@@ -62,14 +62,26 @@ export async function runAdminPageShellCopyTests() {
   assert.match(shellSource, /t\('media'\)/);
   assert.doesNotMatch(shellSource, /const copy = \{/);
 
+  const analyticsRangeSource = readFileSync('lib/analytics/admin-analytics-range.ts', 'utf8');
+  assert.match(analyticsRangeSource, /ADMIN_ANALYTICS_RANGE_DAYS = \[7, 30, 90\]/);
+  assert.match(analyticsRangeSource, /DEFAULT_ADMIN_ANALYTICS_RANGE_DAYS = 30/);
+  assert.match(analyticsRangeSource, /normalizeAdminAnalyticsRangeDays/);
+  assert.match(analyticsRangeSource, /getAdminAnalyticsRangeStart/);
+  assert.match(analyticsRangeSource, /isWithinAdminAnalyticsRange/);
+
   const analyticsRouteSource = readFileSync('app/admin/analytics/page.tsx', 'utf8');
   assert.match(analyticsRouteSource, /activeTab="analytics"/);
   assert.match(analyticsRouteSource, /activeNavKey="analytics"/);
-  assert.match(analyticsRouteSource, /returnTo="\/admin\/analytics"/);
+  assert.match(analyticsRouteSource, /returnTo=\{returnTo\}/);
+  assert.match(analyticsRouteSource, /type SearchParams = Record/);
+  assert.match(analyticsRouteSource, /normalizeAdminAnalyticsRangeDays\(firstParam\(params\.range\)\)/);
+  assert.match(analyticsRouteSource, /ADMIN_ANALYTICS_RANGE_DAYS\.map/);
+  assert.match(analyticsRouteSource, /href=\{rangeHref\(days\)\}/);
+  assert.match(analyticsRouteSource, /aria-current=\{active \? 'page' : undefined\}/);
+  assert.match(analyticsRouteSource, /orderRevenueSummaryService\.summary\(\{ rangeDays \}\)/);
+  assert.match(analyticsRouteSource, /siteAnalyticsSummaryService\.summary\(\{ rangeDays \}\)/);
   assert.match(analyticsRouteSource, /AdminOrderRevenueSummaryPanel/);
   assert.match(analyticsRouteSource, /AdminSiteAnalyticsPanel/);
-  assert.match(analyticsRouteSource, /orderRevenueSummaryService\.summary/);
-  assert.match(analyticsRouteSource, /siteAnalyticsSummaryService\.summary/);
   assert.match(analyticsRouteSource, /lightweight server-rendered business and site charts/);
   assert.match(analyticsRouteSource, /privacy-safe first-party events/);
 
@@ -93,6 +105,7 @@ export async function runAdminPageShellCopyTests() {
   assert.match(revenueSource, /AdminAnalyticsBarChart/);
   assert.match(revenueSource, /AdminAnalyticsTrendChart/);
   assert.match(revenueSource, /id="business-analytics-charts"/);
+  assert.match(revenueSource, /formatRangeLabel\(summary\.analyticsRangeDays/);
   assert.match(revenueSource, /summary\.recentDaily\.map/);
   assert.match(revenueSource, /summary\.byStatus/);
   assert.match(revenueSource, /summary\.byCurrency\.map/);
