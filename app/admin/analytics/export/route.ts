@@ -119,6 +119,18 @@ function buildSiteAnalyticsCsv(rangeDays: number, summary: Awaited<ReturnType<ty
     rows.push(['site', 'top_search_terms', 'event_count', row.label, row.count, 'Aggregate search term only']);
   }
 
+  for (const row of summary.topTrafficSources) {
+    rows.push(['site', 'top_traffic_sources', 'event_count', row.label, row.count, 'Aggregate UTM source only']);
+  }
+
+  for (const row of summary.topTrafficCampaigns) {
+    rows.push(['site', 'top_traffic_campaigns', 'event_count', row.label, row.count, 'Aggregate UTM campaign only']);
+  }
+
+  for (const row of summary.topReferrerDomains) {
+    rows.push(['site', 'top_referrer_domains', 'event_count', row.label, row.count, 'Aggregate external referrer domain only; full URLs are not exported']);
+  }
+
   return rows.map(csvRow).join('\n');
 }
 
