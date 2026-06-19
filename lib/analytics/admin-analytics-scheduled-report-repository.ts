@@ -6,7 +6,7 @@ import {
   type AdminAnalyticsScheduledReportReadRow
 } from './admin-analytics-scheduled-report-read-model';
 
-export type AdminAnalyticsScheduledReportRepositoryStatus = 'repository_read_contract_only';
+export type AdminAnalyticsScheduledReportRepositoryStatus = 'repository_read_contract_only' | 'repository_read_adapter_only';
 
 export type AdminAnalyticsScheduledReportRepositoryReadFilter = {
   field: 'ownerApproved' | 'isActive' | 'deliveryEnabled';
@@ -24,12 +24,30 @@ export type AdminAnalyticsScheduledReportRepositoryReadPlan = {
   returnsMetadataOnly: boolean;
 };
 
+export type AdminAnalyticsScheduledReportRepositoryReadArgs = {
+  select: Record<string, true>;
+  where: {
+    ownerApproved: true;
+    isActive: true;
+    deliveryEnabled: false;
+  };
+  orderBy: [{ cadence: 'asc' }, { reportKey: 'asc' }];
+  take: number;
+};
+
+export type AdminAnalyticsScheduledReportRepositoryReader = {
+  readScheduledReportMetadata: (
+    args: AdminAnalyticsScheduledReportRepositoryReadArgs
+  ) => Promise<AdminAnalyticsScheduledReportReadRow[]>;
+};
+
 export type AdminAnalyticsScheduledReportRepositoryContract = {
-  status: AdminAnalyticsScheduledReportRepositoryStatus;
+  status: 'repository_read_contract_only';
   enabled: boolean;
   tableName: 'AdminAnalyticsScheduledReport';
   repositoryReadsEnabled: boolean;
   repositoryWritesEnabled: boolean;
+  readAdapterAvailable: boolean;
   readEndpointEnabled: boolean;
   managementUiEnabled: boolean;
   deliveryExecutionEnabled: boolean;
@@ -103,6 +121,13 @@ function readModelContract(): AdminAnalyticsScheduledReportReadModelContract {
   return buildAdminAnalyticsScheduledReportReadModelContract();
 }
 
+function normalizeRows(rows: AdminAnalyticsScheduledReportReadRow[], limit: number): AdminAnalyticsScheduledReportReadDto[] {
+  return rows
+    .map((row) => normalizeAdminAnalyticsScheduledReportReadRow(row))
+    .filter((row): row is AdminAnalyticsScheduledReportReadDto => row !== null)
+    .slice(0, Math.max(0, Math.min(limit, 50)));
+}
+
 export function buildAdminAnalyticsScheduledReportRepositoryReadPlan(
   maxRows = 25
 ): AdminAnalyticsScheduledReportRepositoryReadPlan {
@@ -117,6 +142,22 @@ export function buildAdminAnalyticsScheduledReportRepositoryReadPlan(
   };
 }
 
+export function buildAdminAnalyticsScheduledReportRepositoryReadArgs(
+  maxRows = 25
+): AdminAnalyticsScheduledReportRepositoryReadArgs {
+  const readPlan = buildAdminAnalyticsScheduledReportRepositoryReadPlan(maxRows);
+  return {
+    select: Object.fromEntries(readPlan.selectFields.map((field) => [field, true])),
+    where: {
+      ownerApproved: true,
+      isActive: true,
+      deliveryEnabled: false
+    },
+    orderBy: [{ cadence: 'asc' }, { reportKey: 'asc' }],
+    take: readPlan.maxRows
+  };
+}
+
 export function buildAdminAnalyticsScheduledReportRepositoryContract(): AdminAnalyticsScheduledReportRepositoryContract {
   const readModel = readModelContract();
   return {
@@ -125,6 +166,7 @@ export function buildAdminAnalyticsScheduledReportRepositoryContract(): AdminAna
     tableName: readModel.tableName,
     repositoryReadsEnabled: false,
     repositoryWritesEnabled: false,
+    readAdapterAvailable: true,
     readEndpointEnabled: false,
     managementUiEnabled: false,
     deliveryExecutionEnabled: false,
@@ -135,7 +177,7 @@ export function buildAdminAnalyticsScheduledReportRepositoryContract(): AdminAna
     blockedOutputFields: [...readModel.blockedOutputFields],
     blockedOperations: [...BLOCKED_OPERATIONS],
     activationBlockers: [
-      'Prisma repository access not enabled',
+      'Prisma repository wiring not enabled',
       'owner approval audit evidence not recorded',
       'dry-run evidence not recorded',
       'read endpoint not configured',
@@ -150,13 +192,28 @@ export function buildAdminAnalyticsScheduledReportRepositoryPreview(
   rows: AdminAnalyticsScheduledReportReadRow[],
   limit = 10
 ): AdminAnalyticsScheduledReportRepositoryPreview {
-  const normalized = rows
-    .map((row) => normalizeAdminAnalyticsScheduledReportReadRow(row))
-    .filter((row): row is AdminAnalyticsScheduledReportReadDto => row !== null)
-    .slice(0, Math.max(0, Math.min(limit, 50)));
+  const normalized = normalizeRows(rows, limit);
 
   return {
     status: 'repository_read_contract_only',
+    enabled: false,
+    repositoryReadsEnabled: false,
+    deliveryExecutionEnabled: false,
+    rows: normalized,
+    omittedRowCount: Math.max(0, rows.length - normalized.length)
+  };
+}
+
+export async function readAdminAnalyticsScheduledReportsFromRepository(
+  reader: AdminAnalyticsScheduledReportRepositoryReader,
+  maxRows = 25
+): Promise<AdminAnalyticsScheduledReportRepositoryPreview> {
+  const args = buildAdminAnalyticsScheduledReportRepositoryReadArgs(maxRows);
+  const rows = await reader.readScheduledReportMetadata(args);
+  const normalized = normalizeRows(rows, args.take);
+
+  return {
+    status: 'repository_read_adapter_only',
     enabled: false,
     repositoryReadsEnabled: false,
     deliveryExecutionEnabled: false,
