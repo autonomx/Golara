@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 
 import { assertAdminRole } from '@/lib/admin-auth';
 import { normalizeAdminAnalyticsRangeDays } from '@/lib/analytics/admin-analytics-range';
+import { categorySalesAnalyticsService } from '@/lib/analytics/category-sales-analytics';
 import { orderRevenueSummaryService } from '@/lib/analytics/order-revenue-summary';
+import { productSalesAnalyticsService } from '@/lib/analytics/product-sales-analytics';
 import { siteAnalyticsSummaryService } from '@/lib/analytics/site-analytics-summary';
 
 type AnalyticsExportReport = 'business' | 'site';
@@ -24,7 +26,12 @@ function analyticsFilename(report: AnalyticsExportReport, rangeDays: number) {
   return `golara-analytics-${report}-${rangeDays}d.csv`;
 }
 
-function buildBusinessAnalyticsCsv(rangeDays: number, summary: Awaited<ReturnType<typeof orderRevenueSummaryService.summary>>) {
+function buildBusinessAnalyticsCsv(
+  rangeDays: number,
+  summary: Awaited<ReturnType<typeof orderRevenueSummaryService.summary>>,
+  productSalesSummary: Awaited<ReturnType<typeof productSalesAnalyticsService.summary>>,
+  categorySalesSummary: Awaited<ReturnType<typeof categorySalesAnalyticsService.summary>>
+) {
   const rows: unknown[][] = [
     ['report', 'section', 'metric', 'label', 'value', 'currency', 'notes'],
     ['business', 'metadata', 'range_days', 'selected range', rangeDays, '', ''],
@@ -72,6 +79,20 @@ function buildBusinessAnalyticsCsv(rangeDays: number, summary: Awaited<ReturnTyp
   rows.push(['business', 'discount_impact', 'total_discount_cents', 'Total discount cents', summary.discountImpact.totalDiscountCents, summary.primaryCurrency, '']);
   rows.push(['business', 'discount_impact', 'discounted_revenue_cents', 'Discounted revenue cents', summary.discountImpact.discountedRevenueCents, summary.primaryCurrency, '']);
   rows.push(['business', 'discount_impact', 'undiscounted_revenue_cents', 'Undiscounted revenue cents', summary.discountImpact.undiscountedRevenueCents, summary.primaryCurrency, '']);
+
+  for (const row of productSalesSummary.rows) {
+    const notes = `orders:${row.orderCount}; product_id:${row.productId}; product_code:${row.productCode ?? ''}`;
+    rows.push(['business', 'product_sales', 'units_sold', row.label, row.quantitySold, row.currency, notes]);
+    rows.push(['business', 'product_sales', 'revenue_cents', row.label, row.revenueCents, row.currency, notes]);
+    rows.push(['business', 'product_sales', 'average_unit_revenue_cents', row.label, row.averageUnitRevenueCents, row.currency, notes]);
+  }
+
+  for (const row of categorySalesSummary.rows) {
+    const notes = `orders:${row.orderCount}; category_id:${row.categoryId}; category_slug:${row.categorySlug ?? ''}`;
+    rows.push(['business', 'category_sales', 'units_sold', row.label, row.quantitySold, row.currency, notes]);
+    rows.push(['business', 'category_sales', 'revenue_cents', row.label, row.revenueCents, row.currency, notes]);
+    rows.push(['business', 'category_sales', 'average_unit_revenue_cents', row.label, row.averageUnitRevenueCents, row.currency, notes]);
+  }
 
   return rows.map(csvRow).join('\n');
 }
@@ -152,7 +173,14 @@ export async function GET(request: Request) {
   const report = normalizeReport(url.searchParams.get('report'));
   const csv = report === 'site'
     ? buildSiteAnalyticsCsv(rangeDays, await siteAnalyticsSummaryService.summary({ rangeDays }))
-    : buildBusinessAnalyticsCsv(rangeDays, await orderRevenueSummaryService.summary({ rangeDays }));
+    : buildBusinessAnalyticsCsv(
+      rangeDays,
+      ...(await Promise.all([
+        orderRevenueSummaryService.summary({ rangeDays }),
+        productSalesAnalyticsService.summary({ rangeDays }),
+        categorySalesAnalyticsService.summary({ rangeDays })
+      ]))
+    );
 
   return new NextResponse(csv, {
     headers: {
