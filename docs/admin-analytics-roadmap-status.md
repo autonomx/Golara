@@ -18,7 +18,7 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 - Site analytics event foundation with privacy-safe first-party events.
 - Traffic attribution using capped UTM fields and external referrer domains.
 - Owner-only aggregate Business CSV and Site CSV exports.
-- Scheduled report preview foundation that reuses the selected analytics range and aggregate Business/Site CSV paths.
+- Scheduled report preview and owner-approved configuration-plan foundation that reuses the selected analytics range and aggregate Business/Site CSV paths.
 - Saved dashboard view preset preview foundation that reuses the selected analytics range and existing section anchors.
 - Dashboard group header UI that uses the layout grouping contract while preserving the selected range, section index, anchors, and table fallback requirements.
 - Privacy and retention policy visibility.
@@ -30,7 +30,7 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 
 - Automated raw site-event deletion after production migration evidence and cleanup preview evidence are verified.
 - Future customer segmentation beyond aggregate order-count and recency bands, only after a separate privacy review.
-- Scheduled report persistence, delivery configuration, and owner approval workflow.
+- Scheduled report storage, delivery channel execution, retry visibility, and owner management UI.
 - Saved dashboard view persistence, role-policy persistence, and owner/staff management UI.
 - Collapsible dashboard groups or tabbed workspace behavior.
 
@@ -57,11 +57,11 @@ Any future customer cohort export must remain aggregate-only unless a separate e
 
 The range selector now supports both fixed presets and custom start/end dates. Presets and custom ranges resolve through the same contract across business analytics, site analytics, export routes, comparison deltas, section links, and panel labels.
 
-## Scheduled report preview note
+## Scheduled report configuration note
 
-The scheduled report foundation is preview-only. It defines weekly and monthly owner report options, selected-range metadata, and aggregate Business/Site CSV paths without creating saved schedules, delivery jobs, email sends, or background execution.
+The scheduled report foundation is configuration-plan only. It defines weekly and monthly owner report options, selected-range metadata, aggregate Business/Site CSV paths, owner-approval requirements, and activation blockers without saving active schedules, sending reports, creating timers, or running background jobs.
 
-Actual scheduled delivery remains pending until persistence, delivery configuration, and owner approval evidence are designed and validated.
+Actual scheduled delivery remains pending until schedule storage, delivery configuration, retry/failure visibility, disable controls, and owner approval evidence are designed and validated.
 
 ## Saved dashboard view preview note
 
@@ -96,6 +96,6 @@ Before treating site analytics as complete in production, verify:
 9. Custom preset and start/end ranges produce matching dashboard, section-link, and export windows.
 10. Customer cohort panels and CSV rows remain aggregate-only.
 11. Advanced aggregate cohort panels and CSV rows show only AOV/share/order-count/recency bands, never per-customer rows.
-12. Scheduled report previews preserve the selected range and aggregate Business/Site CSV paths without enabling delivery.
+12. Scheduled report previews and config plans preserve the selected range and aggregate Business/Site CSV paths without enabling delivery.
 13. Saved dashboard view presets preserve the selected range and existing section anchors without saving view state.
 14. Dashboard group headers preserve selected range links, the section index, existing anchors, and table fallback requirements without enabling collapsible groups or tabs.
