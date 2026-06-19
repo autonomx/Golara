@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { AdminAdvancedCustomerCohortAnalyticsPanel } from '@/components/admin/AdminAdvancedCustomerCohortAnalyticsPanel';
 import { AdminAnalyticsGuidancePanel } from '@/components/admin/AdminAnalyticsGuidancePanel';
 import { AdminAnalyticsLayoutGroupHeaders } from '@/components/admin/AdminAnalyticsLayoutGroupHeaders';
 import { AdminCategorySalesAnalyticsPanel } from '@/components/admin/AdminCategorySalesAnalyticsPanel';
@@ -71,6 +72,7 @@ const copy = {
     groupHeaders: 'Dashboard groups',
     guidanceCenter: 'Guidance',
     businessSummary: 'Business summary',
+    customerCohortsAdvanced: 'Advanced cohorts',
     businessCharts: 'Business charts',
     productSales: 'Product sales',
     categorySales: 'Category sales',
@@ -123,6 +125,7 @@ const copy = {
     groupHeaders: 'گروه‌های داشبورد',
     guidanceCenter: 'راهنما',
     businessSummary: 'خلاصه کسب‌وکار',
+    customerCohortsAdvanced: 'گروه‌های پیشرفته',
     businessCharts: 'نمودارهای کسب‌وکار',
     productSales: 'فروش محصول',
     categorySales: 'فروش دسته‌بندی',
@@ -180,6 +183,7 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
     { href: sectionHref('analytics-layout-groups', analyticsRange), label: labels.groupHeaders },
     { href: sectionHref('analytics-guidance', analyticsRange), label: labels.guidanceCenter },
     { href: sectionHref('order-analytics', analyticsRange), label: labels.businessSummary },
+    { href: sectionHref('customer-cohort-analytics', analyticsRange), label: labels.customerCohortsAdvanced },
     { href: sectionHref('business-analytics-charts', analyticsRange), label: labels.businessCharts },
     { href: sectionHref('product-sales-analytics', analyticsRange), label: labels.productSales },
     { href: sectionHref('category-sales-analytics', analyticsRange), label: labels.categorySales },
@@ -367,6 +371,7 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
           siteSummary={siteAnalyticsSummary}
         />
         <AdminOrderRevenueSummaryPanel summary={orderRevenueSummary} />
+        <AdminAdvancedCustomerCohortAnalyticsPanel summary={orderRevenueSummary} />
         <AdminProductSalesAnalyticsPanel summary={productSalesAnalyticsSummary} />
         <AdminCategorySalesAnalyticsPanel summary={categorySalesAnalyticsSummary} />
         <AdminSiteAnalyticsPanel summary={siteAnalyticsSummary} />
