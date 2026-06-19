@@ -201,7 +201,7 @@ export function buildAdminAnalyticsScheduledReportPrismaSchemaMapping(): AdminAn
     status: 'prisma_schema_mapping_contract_only',
     modelName: 'AdminAnalyticsScheduledReport',
     tableName: 'AdminAnalyticsScheduledReport',
-    mappedInSchemaPrisma: false,
+    mappedInSchemaPrisma: true,
     generatedClientAccessEnabled: false,
     repositoryReadsEnabled: false,
     repositoryWritesEnabled: false,
@@ -213,7 +213,6 @@ export function buildAdminAnalyticsScheduledReportPrismaSchemaMapping(): AdminAn
     indexes: INDEXES.map((index) => ({ ...index, fields: [...index.fields] })),
     jsonFields: ['reportTypes', 'lastDryRunSummary', 'metadata'],
     activationBlockers: [
-      'schema.prisma model block not applied',
       'generated Prisma client access not enabled',
       'repository wiring not enabled',
       'read endpoint not configured',

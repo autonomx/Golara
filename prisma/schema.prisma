@@ -874,3 +874,31 @@ model AdminAuditLog {
   @@index([actorEmail, createdAt])
   @@index([actorRole, createdAt])
 }
+
+model AdminAnalyticsScheduledReport {
+  id                String   @id @default(cuid())
+  reportKey         String
+  label             String
+  description       String?
+  cadence           String
+  rangeMode         String
+  rangeQuery        String
+  reportTypes       Json     @default("[\"business\", \"site\"]")
+  ownerApproved     Boolean  @default(false)
+  isActive          Boolean  @default(false)
+  deliveryEnabled   Boolean  @default(false)
+  deliveryChannel   String?
+  lastDryRunAt      DateTime?
+  lastDryRunSummary Json     @default("{}")
+  createdByRole     String   @default("owner")
+  createdByLabel    String?
+  metadata          Json     @default("{}")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now()) @updatedAt
+
+  @@unique([reportKey, cadence])
+  @@index([cadence, isActive])
+  @@index([ownerApproved, isActive])
+  @@index([deliveryEnabled, isActive])
+  @@index([createdAt])
+}

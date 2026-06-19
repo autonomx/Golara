@@ -44,18 +44,37 @@ function normalizeSchema(sourceText: string) {
   return sourceText.trim().replace(/\r\n/g, '\n');
 }
 
+function prismaModelBlock(schemaSource: string, modelName: string) {
+  const match = schemaSource.match(new RegExp(`model ${modelName} \\{[\\s\\S]*?\\r?\\n\\}`));
+  assert.ok(match, `schema.prisma should contain model ${modelName}`);
+  return match[0];
+}
+
+function sourceTree(directory: string): string {
+  return readdirSync(directory, { withFileTypes: true })
+    .flatMap((entry) => {
+      const entryPath = join(directory, entry.name);
+      if (entry.isDirectory()) return sourceTree(entryPath);
+      return /\.(?:ts|tsx)$/.test(entry.name) ? [source(entryPath)] : [];
+    })
+    .join('\n');
+}
+
 function runPrismaSchemaMappingChecks() {
   const mapping = buildAdminAnalyticsScheduledReportPrismaSchemaMapping();
   assert.equal(mapping.status, 'prisma_schema_mapping_contract_only');
   assert.equal(mapping.modelName, 'AdminAnalyticsScheduledReport');
   assert.equal(mapping.tableName, 'AdminAnalyticsScheduledReport');
-  assert.equal(mapping.mappedInSchemaPrisma, false);
+  assert.equal(mapping.mappedInSchemaPrisma, true);
   assert.equal(mapping.generatedClientAccessEnabled, false);
   assert.equal(mapping.repositoryReadsEnabled, false);
   assert.equal(mapping.repositoryWritesEnabled, false);
+  assert.equal(mapping.readEndpointEnabled, false);
+  assert.equal(mapping.managementUiEnabled, false);
+  assert.equal(mapping.scheduleActivationEnabled, false);
   assert.equal(mapping.deliveryExecutionEnabled, false);
   assert.deepEqual(mapping.jsonFields, ['reportTypes', 'lastDryRunSummary', 'metadata']);
-  assert.ok(mapping.activationBlockers.includes('schema.prisma model block not applied'));
+  assert.ok(!mapping.activationBlockers.includes('schema.prisma model block not applied'));
   assert.ok(mapping.activationBlockers.includes('generated Prisma client access not enabled'));
 
   const fields = new Map(mapping.fields.map((field) => [field.name, field]));
@@ -91,13 +110,19 @@ function runPrismaSchemaMappingChecks() {
   }
 
   const schemaSource = source('prisma/schema.prisma');
-  assert.doesNotMatch(schemaSource, /model AdminAnalyticsScheduledReport\s+\{/);
+  assert.match(schemaSource, /model AdminAnalyticsScheduledReport\s+\{/);
 
   const schemaFragment = source('prisma/schema.admin-analytics-scheduled-report.prisma');
+  assert.match(schemaFragment, /model AdminAnalyticsScheduledReport\s+\{/);
   assert.equal(
     normalizeSchema(schemaFragment),
     normalizeSchema(ADMIN_ANALYTICS_SCHEDULED_REPORT_PRISMA_MODEL_BLOCK),
     'schema fragment should exactly match the guarded Prisma model block'
+  );
+  assert.equal(
+    normalizeSchema(prismaModelBlock(schemaSource, 'AdminAnalyticsScheduledReport')),
+    normalizeSchema(schemaFragment),
+    'schema.prisma model should exactly match the checked schema fragment'
   );
   assert.match(schemaFragment, /@@unique\(\[reportKey, cadence\]\)/);
   assert.match(schemaFragment, /@@index\(\[ownerApproved, isActive\]\)/);
@@ -105,12 +130,31 @@ function runPrismaSchemaMappingChecks() {
 
   const helperSource = source('lib/analytics/admin-analytics-scheduled-report-prisma-schema.ts');
   assert.match(helperSource, /prisma_schema_mapping_contract_only/);
-  assert.match(helperSource, /mappedInSchemaPrisma: false/);
+  assert.match(helperSource, /mappedInSchemaPrisma: true/);
   assert.match(helperSource, /generatedClientAccessEnabled: false/);
   assert.match(helperSource, /repositoryReadsEnabled: false/);
   assert.match(helperSource, /repositoryWritesEnabled: false/);
   assert.match(helperSource, /deliveryExecutionEnabled: false/);
   assert.doesNotMatch(helperSource, /PrismaClient|prisma\.|\$queryRaw|findMany|create\(|update\(|upsert\(|delete\(|fetch\(|sendMail|transport|cron|schedule\.create|setInterval|setTimeout|\bPOST\b|\bPUT\b|\bPATCH\b|\bDELETE\b|localStorage|sessionStorage|cookies\(/);
+
+  const scheduledReportContractSource = [
+    helperSource,
+    source('lib/analytics/admin-analytics-scheduled-report-repository.ts'),
+    source('lib/analytics/admin-analytics-scheduled-report-read-model.ts'),
+    source('lib/analytics/admin-analytics-scheduled-report-storage.ts'),
+    source('lib/analytics/admin-analytics-scheduled-reports.ts')
+  ].join('\n');
+  assert.doesNotMatch(
+    scheduledReportContractSource,
+    /PrismaClient|prisma\.|\$queryRaw|findMany|create\(|update\(|upsert\(|delete\(|fetch\(|sendMail|transport|cron|schedule\.create|setInterval|setTimeout/,
+    'scheduled-report contracts should not add database, scheduler, timer, background, or delivery execution'
+  );
+
+  const appSource = sourceTree('app');
+  const componentSource = sourceTree('components');
+  const activeScheduledReportAccess = /AdminAnalyticsScheduledReport|admin-analytics-scheduled-report-repository|readAdminAnalyticsScheduledReportsFromRepository/;
+  assert.doesNotMatch(appSource, activeScheduledReportAccess, 'no scheduled-report read/save/update/remove endpoint should be active');
+  assert.doesNotMatch(componentSource, activeScheduledReportAccess, 'no scheduled-report management UI should be active');
 }
 
 export async function runScheduledReportRepositoryReadTests() {
