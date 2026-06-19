@@ -21,13 +21,33 @@ The Analytics page is functional and range-aware, but it now contains many panel
 
 The section index helps, but the page can still feel long.
 
+## Live preview contract
+
+A preview-only layout contract now groups the existing dashboard anchors into six high-level areas while preserving the selected analytics range:
+
+1. Overview
+2. Business
+3. Site
+4. Products and categories
+5. Operations
+6. Privacy and docs
+
+The preview contract records that:
+
+- group headers are not enabled yet
+- collapsible groups are not enabled yet
+- tabs are not enabled yet
+- the existing section index must be preserved
+- existing range links must be preserved
+- accessible table fallbacks remain required for chart panels
+
 ## Goal
 
 Make the page easier to scan without losing the current server-rendered, accessible chart approach.
 
 ## Recommended grouping
 
-Use high-level groups:
+Use the same high-level groups defined by the preview contract:
 
 1. Overview
 2. Business
@@ -50,11 +70,11 @@ Keep one page, but make lower-priority sections collapsible. This reduces vertic
 
 Add tabs or segmented controls for major analytics groups. This gives the cleanest UI, but requires careful URL and accessibility handling.
 
-## Recommended first slice
+## Recommended next slice
 
 Start with Option A:
 
-- Add stronger group headers.
+- Add stronger group headers based on the preview contract.
 - Keep the current section index.
 - Keep all existing panel anchors.
 - Do not change data services.
