@@ -72,6 +72,24 @@ function buildBusinessAnalyticsCsv(
   rows.push(['business', 'customer_cohorts', 'returning_known_customer_orders', 'Returning known-customer orders', summary.customerCohorts.returningKnownCustomerOrders, '', cohortNotes]);
   rows.push(['business', 'customer_cohorts', 'returning_known_customer_revenue_cents', 'Returning known-customer revenue cents', summary.customerCohorts.returningKnownCustomerRevenueCents, summary.primaryCurrency, cohortNotes]);
   rows.push(['business', 'customer_cohorts', 'returning_known_customer_order_rate_percent', 'Returning known-customer order rate percent', summary.customerCohorts.returningKnownCustomerOrderRatePercent, '', cohortNotes]);
+  rows.push(['business', 'advanced_customer_cohorts', 'known_customer_revenue_share_percent', 'Known-customer revenue share percent', summary.customerCohorts.advanced.knownCustomerRevenueSharePercent, '', cohortNotes]);
+
+  for (const row of summary.customerCohorts.advanced.averageOrderValueByCohort) {
+    rows.push(['business', 'advanced_customer_cohorts', 'cohort_average_order_value_cents', row.label, row.averageOrderValueCents, summary.primaryCurrency, cohortNotes]);
+    rows.push(['business', 'advanced_customer_cohorts', 'cohort_revenue_share_percent', row.label, row.revenueSharePercent, '', cohortNotes]);
+  }
+
+  for (const row of summary.customerCohorts.advanced.orderCountBands) {
+    rows.push(['business', 'advanced_customer_order_count_bands', 'known_customer_count', row.label, row.knownCustomerCount, '', cohortNotes]);
+    rows.push(['business', 'advanced_customer_order_count_bands', 'order_count', row.label, row.orderCount, '', cohortNotes]);
+    rows.push(['business', 'advanced_customer_order_count_bands', 'average_order_value_cents', row.label, row.averageOrderValueCents, summary.primaryCurrency, cohortNotes]);
+  }
+
+  for (const row of summary.customerCohorts.advanced.recencyBands) {
+    rows.push(['business', 'advanced_customer_recency_bands', 'known_customer_count', row.label, row.knownCustomerCount, '', cohortNotes]);
+    rows.push(['business', 'advanced_customer_recency_bands', 'order_count', row.label, row.orderCount, '', cohortNotes]);
+    rows.push(['business', 'advanced_customer_recency_bands', 'average_order_value_cents', row.label, row.averageOrderValueCents, summary.primaryCurrency, cohortNotes]);
+  }
 
   for (const point of summary.recentDaily) {
     rows.push(['business', 'daily', 'order_count', point.date, point.orderCount, '', '']);
