@@ -138,8 +138,11 @@ export async function runAdminPageShellCopyTests() {
   assert.match(guidancePanelSource, /admin-analytics-production-validation-runbook\.md/);
   assert.match(guidancePanelSource, /Open production validation runbook/);
   assert.match(guidancePanelSource, /Analytics implementation status/);
-  assert.match(guidancePanelSource, /Custom start\/end date range selector/);
+  assert.match(guidancePanelSource, /Preset and custom start\/end date range resolution/);
+  assert.match(guidancePanelSource, /Aggregate customer cohort order\/revenue buckets/);
   assert.match(guidancePanelSource, /retention cleanup job/);
+  assert.match(guidancePanelSource, /Scheduled analytics reports/);
+  assert.match(guidancePanelSource, /Saved dashboard views/);
   assert.match(guidancePanelSource, /Role-specific analytics visibility/);
 
   console.log('admin-page-shell-copy.test.ts passed');

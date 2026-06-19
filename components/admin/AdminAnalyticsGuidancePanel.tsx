@@ -44,14 +44,17 @@ const copy = {
     liveLabel: 'Live now',
     pendingLabel: 'Planned next',
     liveBusiness: 'Business charts and selected-range deltas',
+    liveCustomRange: 'Preset and custom start/end date range resolution',
     liveSite: 'First-party site funnel, attribution, and product view-to-cart analytics',
     liveSales: 'Product and category sales from checkout order lines',
+    liveCustomerCohorts: 'Aggregate customer cohort order/revenue buckets',
     liveExports: 'Aggregate business/site CSV exports',
     livePrivacy: 'Privacy/retention policy and disable guidance',
     liveRoleVisibility: 'Role-specific analytics visibility for owner-only exports and retention diagnostics',
-    pendingCustomRange: 'Custom start/end date range selector',
     pendingRetentionJob: 'Automated raw-event retention cleanup job',
-    pendingCustomerCohorts: 'Aggregate customer cohort metrics',
+    pendingAdvancedCohorts: 'Advanced aggregate customer cohort reporting',
+    pendingScheduledReports: 'Scheduled analytics reports',
+    pendingSavedViews: 'Saved dashboard views',
     statusLive: 'Live',
     statusNeedsData: 'Needs data',
     statusPlanned: 'Planned'
@@ -90,14 +93,17 @@ const copy = {
     liveLabel: 'اکنون فعال',
     pendingLabel: 'برنامه بعدی',
     liveBusiness: 'نمودارهای کسب‌وکار و مقایسه بازه انتخاب‌شده',
+    liveCustomRange: 'حل بازه‌های پیش‌فرض و تاریخ شروع/پایان سفارشی',
     liveSite: 'قیف سایت، انتساب ترافیک و تبدیل بازدید محصول به سبد',
     liveSales: 'فروش محصول و دسته‌بندی از ردیف‌های سفارش',
+    liveCustomerCohorts: 'گروه‌های تجمیعی سفارش/درآمد مشتری',
     liveExports: 'خروجی CSV تجمیعی کسب‌وکار و سایت',
     livePrivacy: 'سیاست حریم خصوصی/نگهداری و راهنمای غیرفعال‌سازی',
     liveRoleVisibility: 'نمایش تحلیل‌ها بر اساس نقش برای خروجی‌های مالک و وضعیت نگهداری',
-    pendingCustomRange: 'انتخابگر بازه تاریخ شروع/پایان سفارشی',
     pendingRetentionJob: 'کار خودکار پاک‌سازی رویدادهای خام پس از دوره نگهداری',
-    pendingCustomerCohorts: 'شاخص‌های تجمیعی گروه‌های مشتری',
+    pendingAdvancedCohorts: 'گزارش پیشرفته‌تر گروه‌های تجمیعی مشتری',
+    pendingScheduledReports: 'گزارش‌های زمان‌بندی‌شده تحلیل‌ها',
+    pendingSavedViews: 'نماهای ذخیره‌شده داشبورد',
     statusLive: 'فعال',
     statusNeedsData: 'نیازمند داده',
     statusPlanned: 'برنامه‌ریزی‌شده'
@@ -231,8 +237,10 @@ export async function AdminAnalyticsGuidancePanel({
           <h3 className="text-sm font-bold text-stone-950">{labels.liveLabel}</h3>
           <ul className="mt-3 grid gap-2 text-sm leading-6 text-stone-600">
             <li>{labels.liveBusiness}</li>
+            <li>{labels.liveCustomRange}</li>
             <li>{labels.liveSite}</li>
             <li>{labels.liveSales}</li>
+            <li>{labels.liveCustomerCohorts}</li>
             <li>{labels.liveExports}</li>
             <li>{labels.livePrivacy}</li>
             <li>{labels.liveRoleVisibility}</li>
@@ -241,9 +249,10 @@ export async function AdminAnalyticsGuidancePanel({
         <div className="rounded-lg border border-stone-200 bg-white p-4">
           <h3 className="text-sm font-bold text-stone-950">{labels.pendingLabel}</h3>
           <ul className="mt-3 grid gap-2 text-sm leading-6 text-stone-600">
-            <li>{labels.pendingCustomRange}</li>
             <li>{labels.pendingRetentionJob}</li>
-            <li>{labels.pendingCustomerCohorts}</li>
+            <li>{labels.pendingAdvancedCohorts}</li>
+            <li>{labels.pendingScheduledReports}</li>
+            <li>{labels.pendingSavedViews}</li>
           </ul>
         </div>
       </div>
