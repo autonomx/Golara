@@ -63,7 +63,7 @@ export async function runAdminPageShellCopyTests() {
   assert.doesNotMatch(shellSource, /const copy = \{/);
 
   const analyticsRangeSource = readFileSync('lib/analytics/admin-analytics-range.ts', 'utf8');
-  assert.match(analyticsRangeSource, /ADMIN_ANALYTICS_RANGE_DAYS = \[7, 30, 90\]/);
+  assert.match(analyticsRangeSource, /ADMIN_ANALYTICS_RANGE_DAYS = \[7, 30, 90, 365\]/);
   assert.match(analyticsRangeSource, /DEFAULT_ADMIN_ANALYTICS_RANGE_DAYS = 30/);
   assert.match(analyticsRangeSource, /normalizeAdminAnalyticsRangeDays/);
   assert.match(analyticsRangeSource, /getAdminAnalyticsRangeStart/);
@@ -80,6 +80,11 @@ export async function runAdminPageShellCopyTests() {
   assert.match(analyticsRouteSource, /aria-current=\{active \? 'page' : undefined\}/);
   assert.match(analyticsRouteSource, /orderRevenueSummaryService\.summary\(\{ rangeDays \}\)/);
   assert.match(analyticsRouteSource, /siteAnalyticsSummaryService\.summary\(\{ rangeDays \}\)/);
+  assert.match(analyticsRouteSource, /ownerOnlyAnalyticsControls = identity\.role === 'owner'/);
+  assert.match(analyticsRouteSource, /id="analytics-role-visibility"/);
+  assert.match(analyticsRouteSource, /exportOwnerOnly/);
+  assert.match(analyticsRouteSource, /ownerOnlyAnalyticsControls \? siteAnalyticsRetentionService\.summary\(\)/);
+  assert.match(analyticsRouteSource, /retentionOwnerOnly/);
   assert.match(analyticsRouteSource, /AdminOrderRevenueSummaryPanel/);
   assert.match(analyticsRouteSource, /AdminSiteAnalyticsPanel/);
   assert.match(analyticsRouteSource, /AdminAnalyticsGuidancePanel/);
