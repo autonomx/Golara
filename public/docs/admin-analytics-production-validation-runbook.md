@@ -6,19 +6,43 @@ Use this checklist after deployment before relying on `/admin/analytics` for ope
 
 - The Analytics page opens in the shared admin shell.
 - Range controls are available for 7, 30, 90, and 365 days.
+- Custom start/end date fields are available.
+- The selected range label matches the dashboard window being reviewed.
+- Section links preserve the selected preset or custom range.
 - Owner sessions can see aggregate CSV exports.
+- Business CSV and Site CSV URLs preserve the selected range.
 - The site analytics event table is available in production.
 - Storefront product, category, search, cart, checkout, payment method, and order-confirmation activity appears in the selected range.
 - Business/order charts update after eligible checkout orders exist.
 - Product and category sales panels update after eligible order lines exist.
+- Aggregate customer cohort panels update after eligible customer-linked orders exist.
 - Business CSV and Site CSV download successfully.
 - CSV exports contain aggregate rows only.
-- Raw visitor sessions, full referrer URLs, and raw analytics event payloads are not exported.
-- Retention status can read raw event counts and stale-event counts.
+- Customer cohort CSV rows remain aggregate-only for guest, known, first-time, and returning-customer buckets.
+- Visitor session details, full referrer URLs, analytics event payloads, customer names, phone numbers, emails, and per-customer rows are not exported.
+- Retention status can read event counts and stale-event counts.
+
+## Evidence record
+
+Record one validation note per pass:
+
+- Deployment or commit SHA:
+- Environment:
+- Operator:
+- Validation date/time:
+- Preset range checked:
+- Custom start date:
+- Custom end date:
+- Business CSV checked:
+- Site CSV checked:
+- Customer cohort aggregate rows checked:
+- Retention status checked:
+- Result: pass / fail / blocked
+- Follow-up issue or PR:
 
 ## If a panel is empty
 
-An empty panel is acceptable when the selected range has no matching traffic, orders, or sales. It is not acceptable if validation traffic and orders were created inside the selected range and the production event table is available.
+An empty panel is acceptable when the selected range has no matching traffic, orders, sales, or customer-linked orders. It is not acceptable if validation traffic and orders were created inside the selected range and the production event table is available.
 
 ## Privacy expectations
 
