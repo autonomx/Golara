@@ -1,10 +1,10 @@
 # Admin analytics scheduled report runbook
 
-This runbook covers the scheduled report configuration-plan, storage-schema, read-model, and repository-read contract foundations for `/admin/analytics`.
+This runbook covers the scheduled report configuration-plan, storage-schema, read-model, repository-read contract, and read-adapter foundations for `/admin/analytics`.
 
 ## Current scope
 
-The current scheduled report implementation is configuration, inactive storage, metadata-only read-model, and repository-read contract only.
+The current scheduled report implementation is configuration, inactive storage, metadata-only read-model, repository-read contract, and read-adapter foundation only.
 
 It defines:
 
@@ -19,13 +19,14 @@ It defines:
 - metadata-only persisted fields for selected range, report types, owner approval, active state, delivery state, and dry-run summary
 - metadata-only read-model normalization for future stored schedule rows
 - metadata-only repository-read query-plan fields
+- a read adapter that applies the same safe query args to a future reader
 - required future read filters for owner approval, active state, and delivery disabled state
 - allowed cadence and aggregate report type validation
 - disabled operator activation and delivery readiness
 - explicit disabled delivery state
 - explicit disabled schedule activation state
 
-It does not save active schedules, expose read routes, run repository reads, or send reports.
+It does not save active schedules, expose read routes, wire Prisma repository access, run active repository reads, or send reports.
 
 ## Validation steps
 
@@ -46,10 +47,12 @@ It does not save active schedules, expose read routes, run repository reads, or 
 15. Confirm operator activation and delivery readiness remain disabled.
 16. Confirm the repository-read contract exposes metadata-only select fields.
 17. Confirm the repository-read contract requires owner approval, active state, and delivery disabled filters.
-18. Confirm repository reads remain disabled.
-19. Confirm activation remains disabled.
-20. Confirm delivery is disabled.
-21. Confirm schedule execution is disabled.
+18. Confirm the read adapter builds the same safe query args.
+19. Confirm the read adapter keeps operator activation and delivery readiness disabled.
+20. Confirm active repository wiring remains disabled.
+21. Confirm activation remains disabled.
+22. Confirm delivery is disabled.
+23. Confirm schedule execution is disabled.
 
 ## Evidence record
 
@@ -76,7 +79,12 @@ For each validation run, record:
 - repository-read contract checked: yes/no
 - repository-read select fields metadata-only: yes/no
 - repository-read required filters checked: yes/no
-- repository reads enabled: must be no
+- read adapter checked: yes/no
+- read adapter query args checked: yes/no
+- read adapter operator activation enabled: must be no
+- read adapter delivery ready: must be no
+- active repository wiring enabled: must be no
+- repository writes enabled: must be no
 - owner approval required: must be yes
 - owner approved: must be no
 - active state enabled: must be no
@@ -90,7 +98,7 @@ For each validation run, record:
 Before enabling actual scheduled delivery, add and validate:
 
 - owner approval and disable controls
-- repository read path with audit evidence and required filters
+- Prisma repository wiring with required filters
 - repository write path with owner-managed controls
 - read endpoint with owner-scoped policy enforcement
 - delivery provider or channel plan
@@ -99,4 +107,4 @@ Before enabling actual scheduled delivery, add and validate:
 - tests proving delivery can be disabled globally
 - dry-run evidence for the exact CSV paths and selected reporting window
 
-Do not enable delivery until config-plan evidence, storage-schema evidence, read-model evidence, repository-read contract evidence, and owner approval workflow are documented.
+Do not enable delivery until config-plan evidence, storage-schema evidence, read-model evidence, repository-read contract evidence, read-adapter evidence, and owner approval workflow are documented.
