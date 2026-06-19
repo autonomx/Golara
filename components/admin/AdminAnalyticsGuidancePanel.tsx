@@ -26,6 +26,13 @@ const copy = {
     orderAction: 'Create or import checkout orders to populate business charts.',
     siteAction: 'Visit storefront product/category/checkout paths with analytics enabled to populate site charts.',
     salesAction: 'Complete eligible product orders to populate product and category sales charts.',
+    validationTitle: 'Production validation checklist',
+    validationBody: 'Before treating the dashboard as source-of-truth, validate the production analytics path end to end.',
+    validationMigration: 'Confirm the SiteAnalyticsEvent migration/table exists in the production database.',
+    validationEvents: 'Visit storefront product, category, search, cart, checkout, and order-confirmation paths and confirm events appear in the selected range.',
+    validationFunnel: 'Confirm checkout started, payment method selected, and checkout completed events are visible after a real or staging checkout.',
+    validationExports: 'Download Business CSV and Site CSV as an owner and confirm they contain aggregate rows for the selected range.',
+    validationRetention: 'Review raw-event retention status and stale-event counts before enabling any future cleanup job.',
     exportTitle: 'Using CSV exports',
     exportBody: 'Owner CSV exports are designed for reporting and reconciliation. Use Business CSV for order, revenue, product, category, payment, discount, and operations summaries. Use Site CSV for aggregate traffic, funnel, attribution, product-view, category-view, and search signals.',
     exportSafety: 'Exports stay aggregate-only: they do not include raw visitor sessions, full referrer URLs, or raw analytics event payloads.',
@@ -62,6 +69,13 @@ const copy = {
     orderAction: 'برای پر شدن نمودارهای کسب‌وکار، سفارش‌های پرداخت ایجاد یا وارد کنید.',
     siteAction: 'برای پر شدن نمودارهای سایت، مسیرهای محصول/دسته/پرداخت فروشگاه را با تحلیل فعال بازدید کنید.',
     salesAction: 'برای پر شدن نمودارهای فروش، سفارش‌های محصول معتبر را تکمیل کنید.',
+    validationTitle: 'چک‌لیست اعتبارسنجی تولید',
+    validationBody: 'پیش از تکیه بر داشبورد به عنوان منبع حقیقت، مسیر تحلیل تولید را انتها به انتها بررسی کنید.',
+    validationMigration: 'وجود جدول و migration مربوط به SiteAnalyticsEvent را در پایگاه داده تولید تأیید کنید.',
+    validationEvents: 'مسیرهای محصول، دسته‌بندی، جست‌وجو، سبد، پرداخت و تأیید سفارش را در فروشگاه بازدید کنید و نمایش رویدادها را در بازه انتخاب‌شده بررسی کنید.',
+    validationFunnel: 'پس از پرداخت واقعی یا staging، نمایش رویدادهای شروع پرداخت، انتخاب روش پرداخت و تکمیل پرداخت را تأیید کنید.',
+    validationExports: 'به عنوان مالک CSV کسب‌وکار و CSV سایت را دانلود کنید و ردیف‌های تجمیعی بازه انتخاب‌شده را بررسی کنید.',
+    validationRetention: 'پیش از فعال‌سازی هر کار پاک‌سازی آینده، وضعیت نگهداری رویداد خام و تعداد رویدادهای قدیمی را بررسی کنید.',
     exportTitle: 'استفاده از خروجی‌های CSV',
     exportBody: 'خروجی‌های CSV مالک برای گزارش‌گیری و تطبیق هستند. از CSV کسب‌وکار برای خلاصه سفارش، درآمد، محصول، دسته‌بندی، پرداخت، تخفیف و عملیات استفاده کنید. از CSV سایت برای سیگنال‌های تجمیعی ترافیک، قیف، انتساب، بازدید محصول، بازدید دسته‌بندی و جست‌وجو استفاده کنید.',
     exportSafety: 'خروجی‌ها فقط تجمیعی می‌مانند: نشست خام بازدیدکننده، URL کامل ارجاع‌دهنده یا payload خام رویداد تحلیل صادر نمی‌شود.',
@@ -163,6 +177,17 @@ export async function AdminAnalyticsGuidancePanel({
             <li>{labels.salesAction}</li>
           </ul>
         </div>
+      </div>
+      <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+        <h3 className="text-sm font-bold text-emerald-950">{labels.validationTitle}</h3>
+        <p className="mt-2 text-sm leading-6 text-emerald-950">{labels.validationBody}</p>
+        <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-emerald-950">
+          <li>{labels.validationMigration}</li>
+          <li>{labels.validationEvents}</li>
+          <li>{labels.validationFunnel}</li>
+          <li>{labels.validationExports}</li>
+          <li>{labels.validationRetention}</li>
+        </ul>
       </div>
       <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
         <h3 className="text-sm font-bold text-blue-950">{labels.exportTitle}</h3>

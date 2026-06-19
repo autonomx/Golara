@@ -126,6 +126,12 @@ export async function runAdminPageShellCopyTests() {
   assert.match(guidancePanelSource, /What to look at next/);
   assert.match(guidancePanelSource, /Current signal summary/);
   assert.match(guidancePanelSource, /When a chart is empty/);
+  assert.match(guidancePanelSource, /Production validation checklist/);
+  assert.match(guidancePanelSource, /Confirm the SiteAnalyticsEvent migration\/table exists/);
+  assert.match(guidancePanelSource, /Visit storefront product, category, search, cart, checkout, and order-confirmation paths/);
+  assert.match(guidancePanelSource, /checkout started, payment method selected, and checkout completed events/);
+  assert.match(guidancePanelSource, /Download Business CSV and Site CSV as an owner/);
+  assert.match(guidancePanelSource, /Review raw-event retention status and stale-event counts/);
   assert.match(guidancePanelSource, /Analytics implementation status/);
   assert.match(guidancePanelSource, /Custom start\/end date range selector/);
   assert.match(guidancePanelSource, /Automated raw-event retention cleanup job/);
