@@ -12,18 +12,18 @@ This page summarizes remaining Analytics improvements.
 - Aggregate CSV exports.
 - Scheduled report preview foundation for weekly/monthly owner report options using the selected range and aggregate CSV paths.
 - Saved dashboard view preset preview foundation using the selected range and existing section anchors.
-- Dashboard layout grouping preview foundation using the selected range and existing section anchors.
+- Dashboard group header UI using the selected range and existing section anchors.
 - Privacy and retention guidance.
 - Read-only retention status and cleanup preview.
 
 ## Planned next
 
-- Production validation evidence for custom ranges, exports, aggregate cohort panels, retention preview, scheduled report previews, saved view presets, and layout grouping preview.
+- Production validation evidence for custom ranges, exports, aggregate cohort panels, retention preview, scheduled report previews, saved view presets, and dashboard group headers.
 - Retention maintenance workflow.
 - Advanced aggregate customer cohort reporting.
 - Scheduled report persistence and delivery.
 - Saved dashboard view persistence.
-- Dashboard group header UI.
+- Collapsible dashboard groups or tabs, only if static group headers are not enough.
 
 ## Export safety
 
@@ -39,4 +39,4 @@ Saved view presets are preview-only. They preserve the selected range and existi
 
 ## Layout refinement safety
 
-Layout grouping previews are preview-only. They preserve selected range links, the existing section index, anchors, and accessible chart table fallback requirements without enabling group headers, collapsible groups, or tabs.
+Dashboard group headers are static links generated from the layout contract. They preserve selected range links, the existing section index, anchors, and accessible chart table fallback requirements without enabling collapsible groups or tabs.
