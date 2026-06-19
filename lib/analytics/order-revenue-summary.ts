@@ -67,6 +67,40 @@ export type OrderDiscountImpactSummary = {
   undiscountedRevenueCents: number;
 };
 
+export type OrderAdvancedCustomerCohortBucket = {
+  key: 'guest' | 'known_customer' | 'first_time_known_customer' | 'returning_known_customer';
+  label: string;
+  orderCount: number;
+  revenueCents: number;
+  averageOrderValueCents: number;
+  revenueSharePercent: number;
+};
+
+export type OrderKnownCustomerOrderCountBand = {
+  band: 'one_order' | 'two_orders' | 'three_plus_orders';
+  label: string;
+  knownCustomerCount: number;
+  orderCount: number;
+  revenueCents: number;
+  averageOrderValueCents: number;
+};
+
+export type OrderKnownCustomerRecencyBand = {
+  band: '0_30_days' | '31_90_days' | '91_365_days';
+  label: string;
+  knownCustomerCount: number;
+  orderCount: number;
+  revenueCents: number;
+  averageOrderValueCents: number;
+};
+
+export type OrderAdvancedCustomerCohortSummary = {
+  averageOrderValueByCohort: OrderAdvancedCustomerCohortBucket[];
+  orderCountBands: OrderKnownCustomerOrderCountBand[];
+  recencyBands: OrderKnownCustomerRecencyBand[];
+  knownCustomerRevenueSharePercent: number;
+};
+
 export type OrderCustomerCohortSummary = {
   guestOrders: number;
   guestRevenueCents: number;
@@ -78,6 +112,7 @@ export type OrderCustomerCohortSummary = {
   returningKnownCustomerOrders: number;
   returningKnownCustomerRevenueCents: number;
   returningKnownCustomerOrderRatePercent: number;
+  advanced: OrderAdvancedCustomerCohortSummary;
 };
 
 export type OrderRevenueComparisonSummary = {
@@ -127,6 +162,27 @@ const CANCELLED_STATUSES = new Set(['cancelled', 'canceled', 'voided']);
 const DAY_MS = 24 * 60 * 60 * 1000;
 const ZERO_DELTA = buildAnalyticsComparisonDelta(0, 0);
 const EMPTY_RANGE = resolveAdminAnalyticsRange(new Date(0));
+
+const EMPTY_ADVANCED_CUSTOMER_COHORTS: OrderAdvancedCustomerCohortSummary = {
+  averageOrderValueByCohort: [
+    { key: 'guest', label: 'Guest orders', orderCount: 0, revenueCents: 0, averageOrderValueCents: 0, revenueSharePercent: 0 },
+    { key: 'known_customer', label: 'Known-customer orders', orderCount: 0, revenueCents: 0, averageOrderValueCents: 0, revenueSharePercent: 0 },
+    { key: 'first_time_known_customer', label: 'First known-customer orders', orderCount: 0, revenueCents: 0, averageOrderValueCents: 0, revenueSharePercent: 0 },
+    { key: 'returning_known_customer', label: 'Returning known-customer orders', orderCount: 0, revenueCents: 0, averageOrderValueCents: 0, revenueSharePercent: 0 }
+  ],
+  orderCountBands: [
+    { band: 'one_order', label: '1 order', knownCustomerCount: 0, orderCount: 0, revenueCents: 0, averageOrderValueCents: 0 },
+    { band: 'two_orders', label: '2 orders', knownCustomerCount: 0, orderCount: 0, revenueCents: 0, averageOrderValueCents: 0 },
+    { band: 'three_plus_orders', label: '3+ orders', knownCustomerCount: 0, orderCount: 0, revenueCents: 0, averageOrderValueCents: 0 }
+  ],
+  recencyBands: [
+    { band: '0_30_days', label: '0-30 days', knownCustomerCount: 0, orderCount: 0, revenueCents: 0, averageOrderValueCents: 0 },
+    { band: '31_90_days', label: '31-90 days', knownCustomerCount: 0, orderCount: 0, revenueCents: 0, averageOrderValueCents: 0 },
+    { band: '91_365_days', label: '91-365 days', knownCustomerCount: 0, orderCount: 0, revenueCents: 0, averageOrderValueCents: 0 }
+  ],
+  knownCustomerRevenueSharePercent: 0
+};
+
 const EMPTY_ORDER_CUSTOMER_COHORTS: OrderCustomerCohortSummary = {
   guestOrders: 0,
   guestRevenueCents: 0,
@@ -137,7 +193,8 @@ const EMPTY_ORDER_CUSTOMER_COHORTS: OrderCustomerCohortSummary = {
   firstTimeKnownCustomerRevenueCents: 0,
   returningKnownCustomerOrders: 0,
   returningKnownCustomerRevenueCents: 0,
-  returningKnownCustomerOrderRatePercent: 0
+  returningKnownCustomerOrderRatePercent: 0,
+  advanced: EMPTY_ADVANCED_CUSTOMER_COHORTS
 };
 
 export const EMPTY_ORDER_REVENUE_SUMMARY: OrderRevenueSummary = {
@@ -199,6 +256,14 @@ function utcDateKey(value: Date) {
   return startOfUtcDay(value).toISOString().slice(0, 10);
 }
 
+function averageOrderValue(revenueCents: number, orderCount: number) {
+  return orderCount ? Math.round(revenueCents / orderCount) : 0;
+}
+
+function percentShare(numerator: number, denominator: number) {
+  return denominator > 0 ? Math.round((numerator / denominator) * 1000) / 10 : 0;
+}
+
 export function normalizeRevenueCents(value?: number | null) {
   if (!Number.isFinite(value ?? NaN)) return 0;
   return Math.max(0, Math.trunc(value ?? 0));
@@ -250,7 +315,7 @@ function buildRecentDailyPoints(rows: OrderRevenueSourceRow[], range: AdminAnaly
     date,
     orderCount: bucket.orderCount,
     revenueCents: bucket.revenueCents,
-    averageOrderValueCents: bucket.orderCount ? Math.round(bucket.revenueCents / bucket.orderCount) : 0
+    averageOrderValueCents: averageOrderValue(bucket.revenueCents, bucket.orderCount)
   }));
 }
 
@@ -280,6 +345,12 @@ type OrderComparisonSnapshot = {
   completedOrders: number;
 };
 
+type KnownCustomerAggregate = {
+  orderCount: number;
+  revenueCents: number;
+  latestOrderAt: Date;
+};
+
 function buildOrderComparisonSnapshot(rows: OrderRevenueSourceRow[]): OrderComparisonSnapshot {
   let totalRevenueCents = 0;
   let completedOrders = 0;
@@ -295,14 +366,111 @@ function buildOrderComparisonSnapshot(rows: OrderRevenueSourceRow[]): OrderCompa
   return {
     totalOrders: rows.length,
     totalRevenueCents,
-    averageOrderValueCents: rows.length ? Math.round(totalRevenueCents / rows.length) : 0,
+    averageOrderValueCents: averageOrderValue(totalRevenueCents, rows.length),
     openOrders: Math.max(0, rows.length - completedOrders - cancelledOrders),
     completedOrders
   };
 }
 
-function buildOrderCustomerCohorts(rows: OrderRevenueSourceRow[]): OrderCustomerCohortSummary {
+function createOrderCountBand(band: OrderKnownCustomerOrderCountBand['band'], label: string): OrderKnownCustomerOrderCountBand {
+  return { band, label, knownCustomerCount: 0, orderCount: 0, revenueCents: 0, averageOrderValueCents: 0 };
+}
+
+function createRecencyBand(band: OrderKnownCustomerRecencyBand['band'], label: string): OrderKnownCustomerRecencyBand {
+  return { band, label, knownCustomerCount: 0, orderCount: 0, revenueCents: 0, averageOrderValueCents: 0 };
+}
+
+function buildAdvancedCustomerCohorts(
+  range: AdminAnalyticsResolvedRange,
+  cohorts: Omit<OrderCustomerCohortSummary, 'advanced'>,
+  knownCustomerAggregates: Map<string, KnownCustomerAggregate>
+): OrderAdvancedCustomerCohortSummary {
+  const totalRevenueCents = cohorts.guestRevenueCents + cohorts.knownCustomerRevenueCents;
+  const averageOrderValueByCohort: OrderAdvancedCustomerCohortBucket[] = [
+    {
+      key: 'guest',
+      label: 'Guest orders',
+      orderCount: cohorts.guestOrders,
+      revenueCents: cohorts.guestRevenueCents,
+      averageOrderValueCents: averageOrderValue(cohorts.guestRevenueCents, cohorts.guestOrders),
+      revenueSharePercent: percentShare(cohorts.guestRevenueCents, totalRevenueCents)
+    },
+    {
+      key: 'known_customer',
+      label: 'Known-customer orders',
+      orderCount: cohorts.knownCustomerOrders,
+      revenueCents: cohorts.knownCustomerRevenueCents,
+      averageOrderValueCents: averageOrderValue(cohorts.knownCustomerRevenueCents, cohorts.knownCustomerOrders),
+      revenueSharePercent: percentShare(cohorts.knownCustomerRevenueCents, totalRevenueCents)
+    },
+    {
+      key: 'first_time_known_customer',
+      label: 'First known-customer orders',
+      orderCount: cohorts.firstTimeKnownCustomerOrders,
+      revenueCents: cohorts.firstTimeKnownCustomerRevenueCents,
+      averageOrderValueCents: averageOrderValue(cohorts.firstTimeKnownCustomerRevenueCents, cohorts.firstTimeKnownCustomerOrders),
+      revenueSharePercent: percentShare(cohorts.firstTimeKnownCustomerRevenueCents, totalRevenueCents)
+    },
+    {
+      key: 'returning_known_customer',
+      label: 'Returning known-customer orders',
+      orderCount: cohorts.returningKnownCustomerOrders,
+      revenueCents: cohorts.returningKnownCustomerRevenueCents,
+      averageOrderValueCents: averageOrderValue(cohorts.returningKnownCustomerRevenueCents, cohorts.returningKnownCustomerOrders),
+      revenueSharePercent: percentShare(cohorts.returningKnownCustomerRevenueCents, totalRevenueCents)
+    }
+  ];
+  const orderCountBands = new Map<OrderKnownCustomerOrderCountBand['band'], OrderKnownCustomerOrderCountBand>([
+    ['one_order', createOrderCountBand('one_order', '1 order')],
+    ['two_orders', createOrderCountBand('two_orders', '2 orders')],
+    ['three_plus_orders', createOrderCountBand('three_plus_orders', '3+ orders')]
+  ]);
+  const recencyBands = new Map<OrderKnownCustomerRecencyBand['band'], OrderKnownCustomerRecencyBand>([
+    ['0_30_days', createRecencyBand('0_30_days', '0-30 days')],
+    ['31_90_days', createRecencyBand('31_90_days', '31-90 days')],
+    ['91_365_days', createRecencyBand('91_365_days', '91-365 days')]
+  ]);
+
+  for (const aggregate of knownCustomerAggregates.values()) {
+    const orderBandKey = aggregate.orderCount <= 1 ? 'one_order' : aggregate.orderCount === 2 ? 'two_orders' : 'three_plus_orders';
+    const orderBand = orderCountBands.get(orderBandKey);
+    if (orderBand) {
+      orderBand.knownCustomerCount += 1;
+      orderBand.orderCount += aggregate.orderCount;
+      orderBand.revenueCents += aggregate.revenueCents;
+    }
+
+    const latestOrderDay = startOfUtcDay(aggregate.latestOrderAt);
+    const daysSinceLatestOrder = Math.max(0, Math.floor((range.endDate.getTime() - latestOrderDay.getTime()) / DAY_MS));
+    const recencyBandKey = daysSinceLatestOrder <= 30 ? '0_30_days' : daysSinceLatestOrder <= 90 ? '31_90_days' : '91_365_days';
+    const recencyBand = recencyBands.get(recencyBandKey);
+    if (recencyBand) {
+      recencyBand.knownCustomerCount += 1;
+      recencyBand.orderCount += aggregate.orderCount;
+      recencyBand.revenueCents += aggregate.revenueCents;
+    }
+  }
+
+  const finalizeOrderCountBand = (band: OrderKnownCustomerOrderCountBand): OrderKnownCustomerOrderCountBand => ({
+    ...band,
+    averageOrderValueCents: averageOrderValue(band.revenueCents, band.orderCount)
+  });
+  const finalizeRecencyBand = (band: OrderKnownCustomerRecencyBand): OrderKnownCustomerRecencyBand => ({
+    ...band,
+    averageOrderValueCents: averageOrderValue(band.revenueCents, band.orderCount)
+  });
+
+  return {
+    averageOrderValueByCohort,
+    orderCountBands: Array.from(orderCountBands.values()).map(finalizeOrderCountBand),
+    recencyBands: Array.from(recencyBands.values()).map(finalizeRecencyBand),
+    knownCustomerRevenueSharePercent: percentShare(cohorts.knownCustomerRevenueCents, totalRevenueCents)
+  };
+}
+
+function buildOrderCustomerCohorts(rows: OrderRevenueSourceRow[], range: AdminAnalyticsResolvedRange): OrderCustomerCohortSummary {
   const seenKnownCustomers = new Set<string>();
+  const knownCustomerAggregates = new Map<string, KnownCustomerAggregate>();
   let guestOrders = 0;
   let guestRevenueCents = 0;
   let knownCustomerOrders = 0;
@@ -326,6 +494,12 @@ function buildOrderCustomerCohorts(rows: OrderRevenueSourceRow[]): OrderCustomer
     knownCustomerOrders += 1;
     knownCustomerRevenueCents += revenueCents;
 
+    const knownCustomerAggregate = knownCustomerAggregates.get(accountKey) ?? { orderCount: 0, revenueCents: 0, latestOrderAt: row.createdAt };
+    knownCustomerAggregate.orderCount += 1;
+    knownCustomerAggregate.revenueCents += revenueCents;
+    if (row.createdAt > knownCustomerAggregate.latestOrderAt) knownCustomerAggregate.latestOrderAt = row.createdAt;
+    knownCustomerAggregates.set(accountKey, knownCustomerAggregate);
+
     if (seenKnownCustomers.has(accountKey)) {
       returningKnownCustomerOrders += 1;
       returningKnownCustomerRevenueCents += revenueCents;
@@ -336,7 +510,7 @@ function buildOrderCustomerCohorts(rows: OrderRevenueSourceRow[]): OrderCustomer
     }
   }
 
-  return {
+  const coreCohorts: Omit<OrderCustomerCohortSummary, 'advanced'> = {
     guestOrders,
     guestRevenueCents,
     knownCustomerOrders,
@@ -347,6 +521,11 @@ function buildOrderCustomerCohorts(rows: OrderRevenueSourceRow[]): OrderCustomer
     returningKnownCustomerOrders,
     returningKnownCustomerRevenueCents,
     returningKnownCustomerOrderRatePercent: knownCustomerOrders ? Math.round((returningKnownCustomerOrders / knownCustomerOrders) * 1000) / 10 : 0
+  };
+
+  return {
+    ...coreCohorts,
+    advanced: buildAdvancedCustomerCohorts(range, coreCohorts, knownCustomerAggregates)
   };
 }
 
@@ -432,13 +611,13 @@ export function buildOrderRevenueSummary(rows: OrderRevenueSourceRow[], now = ne
     currency,
     orderCount: bucket.orderCount,
     revenueCents: bucket.revenueCents,
-    averageOrderValueCents: bucket.orderCount ? Math.round(bucket.revenueCents / bucket.orderCount) : 0
+    averageOrderValueCents: averageOrderValue(bucket.revenueCents, bucket.orderCount)
   })).sort((a, b) => b.revenueCents - a.revenueCents || a.currency.localeCompare(b.currency));
   const primaryCurrency = byCurrency[0]?.currency ?? EMPTY_ORDER_REVENUE_SUMMARY.primaryCurrency;
   const currentSnapshot: OrderComparisonSnapshot = {
     totalOrders: scopedRows.length,
     totalRevenueCents,
-    averageOrderValueCents: scopedRows.length ? Math.round(totalRevenueCents / scopedRows.length) : 0,
+    averageOrderValueCents: averageOrderValue(totalRevenueCents, scopedRows.length),
     openOrders: Math.max(0, scopedRows.length - completedOrders - cancelledOrders),
     completedOrders
   };
@@ -464,7 +643,7 @@ export function buildOrderRevenueSummary(rows: OrderRevenueSourceRow[], now = ne
       discountedRevenueCents,
       undiscountedRevenueCents
     },
-    customerCohorts: buildOrderCustomerCohorts(scopedRows),
+    customerCohorts: buildOrderCustomerCohorts(scopedRows, analyticsRange),
     comparison: buildOrderRevenueComparison(currentSnapshot, previousSnapshot),
     recentDaily: buildRecentDailyPoints(scopedRows, analyticsRange),
     analyticsRangeDays: analyticsRange.rangeDays,
