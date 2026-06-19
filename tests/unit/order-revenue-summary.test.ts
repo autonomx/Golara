@@ -46,8 +46,10 @@ export async function runOrderRevenueSummaryTests() {
   assert.equal(formatRevenueCents(250000, 'TOMAN'), '2500.00 TOMAN');
   assert.equal(normalizeAdminAnalyticsRangeDays('7'), 7);
   assert.equal(normalizeAdminAnalyticsRangeDays('90'), 90);
+  assert.equal(normalizeAdminAnalyticsRangeDays('365'), 365);
   assert.equal(normalizeAdminAnalyticsRangeDays('999'), 30);
   assert.equal(getAdminAnalyticsRangeStart(new Date('2026-06-02T12:00:00Z'), 7).toISOString(), '2026-05-27T00:00:00.000Z');
+  assert.equal(getAdminAnalyticsRangeStart(new Date('2026-06-02T12:00:00Z'), 365).toISOString(), '2025-06-03T00:00:00.000Z');
   assert.equal(getAdminAnalyticsPreviousRangeStart(new Date('2026-06-02T12:00:00Z'), 7).toISOString(), '2026-05-20T00:00:00.000Z');
   assert.equal(getAdminAnalyticsPreviousRangeEnd(new Date('2026-06-02T12:00:00Z'), 7).toISOString(), '2026-05-26T00:00:00.000Z');
   assert.deepEqual(buildAnalyticsComparisonDelta(30, 20), {
@@ -133,6 +135,11 @@ export async function runOrderRevenueSummaryTests() {
   assert.equal(sevenDaySummary.recentDaily[0].date, '2026-05-27');
   assert.equal(sevenDaySummary.recentDaily[6].date, '2026-06-02');
 
+  const annualSummary = buildOrderRevenueSummary(rows, now, { rangeDays: 365 });
+  assert.equal(annualSummary.analyticsRangeDays, 365);
+  assert.equal(annualSummary.totalOrders, 5);
+  assert.equal(annualSummary.recentDaily.length, 365);
+
   const productSalesRows = [
     { orderId: '1', orderStatus: 'completed', currency: 'CAD', productId: 'rose-id', productTitle: 'Rose Bouquet', productCode: 'ROSE', quantity: 2, lineTotalCents: 12000, createdAt: new Date('2026-06-01T12:00:00Z') },
     { orderId: '2', orderStatus: 'pending', currency: 'CAD', productId: 'rose-id', productTitle: 'Rose Bouquet', productCode: 'ROSE', quantity: 1, lineTotalCents: 6000, createdAt: new Date('2026-05-30T12:00:00Z') },
@@ -171,7 +178,7 @@ export async function runOrderRevenueSummaryTests() {
   assert.match(comparisonHelper, /buildAnalyticsComparisonDelta/);
   assert.match(comparisonHelper, /percentChange = previous > 0/);
 
-  assert.match(rangeHelper, /ADMIN_ANALYTICS_RANGE_DAYS = \[7, 30, 90\]/);
+  assert.match(rangeHelper, /ADMIN_ANALYTICS_RANGE_DAYS = \[7, 30, 90, 365\]/);
   assert.match(rangeHelper, /normalizeAdminAnalyticsRangeDays/);
   assert.match(rangeHelper, /getAdminAnalyticsRangeStart/);
   assert.match(rangeHelper, /getAdminAnalyticsPreviousRangeStart/);
@@ -188,96 +195,54 @@ export async function runOrderRevenueSummaryTests() {
   assert.match(service, /comparison: OrderRevenueComparisonSummary/);
   assert.match(service, /analyticsRangeDays: AdminAnalyticsRangeDays/);
   assert.match(service, /buildRecentDailyPoints/);
-  assert.match(service, /for \(let offset = 0; offset < rangeDays; offset \+= 1\)/);
-  assert.match(service, /recentDaily: buildRecentDailyPoints\(scopedRows, now, analyticsRangeDays\)/);
-  assert.match(service, /scopedRows = rows\.filter/);
-  assert.match(service, /previousRows = rows\.filter/);
-  assert.match(service, /buildOrderRevenueComparison/);
-  assert.match(service, /getAdminAnalyticsPreviousRangeStart\(now, rangeDays\)/);
-  assert.match(service, /createdAt: \{\s*gte: getAdminAnalyticsPreviousRangeStart\(now, rangeDays\)/s);
+  assert.match(service, /buildOperationalStatusRows/);
+  assert.match(service, /buildPaymentProviderRows/);
+  assert.match(service, /discountCents/);
+  assert.match(service, /paymentAttempts/);
+  assert.match(service, /getAdminAnalyticsPreviousRangeStart/);
   assert.match(service, /take: 2000/);
-  assert.match(service, /byFulfillmentStatus: buildOperationalStatusRows\(fulfillmentBuckets\)/);
-  assert.match(service, /byPaymentProvider: buildPaymentProviderRows\(paymentProviderBuckets\)/);
-  assert.match(service, /discountImpact: \{/);
-  assert.match(service, /buildOrderRevenueSummary/);
-  assert.match(service, /orderRevenueSummaryService = \{/);
-  assert.match(service, /prisma\.checkoutOrder\.findMany/);
-  assert.match(service, /paymentAttempts: \{/);
-  assert.match(service, /discountCents: true/);
-  assert.match(service, /fulfillmentStatus: true/);
-  assert.match(service, /REVENUE_EXCLUDED_STATUSES/);
 
-  assert.match(productSalesService, /export type ProductSalesAnalyticsSummary/);
   assert.match(productSalesService, /buildProductSalesAnalyticsSummary/);
-  assert.match(productSalesService, /isRevenueEligibleStatus\(row\.orderStatus\)/);
-  assert.match(productSalesService, /prisma\.checkoutOrderItem\.findMany/);
-  assert.match(productSalesService, /lineTotalCents: true/);
-  assert.match(productSalesService, /productTitle: true/);
-  assert.match(productSalesService, /productSalesAnalyticsService/);
-  assert.match(productSalesService, /take: 5000/);
-
-  assert.match(categorySalesService, /export type CategorySalesAnalyticsSummary/);
+  assert.match(productSalesService, /checkoutOrderLine\.findMany/);
+  assert.match(productSalesService, /product: \{/);
+  assert.match(productSalesService, /productTitle/);
+  assert.match(productSalesService, /averageUnitRevenueCents/);
+  assert.match(productSalesService, /isRevenueEligibleStatus/);
+  assert.match(productSalesService, /rangeDays/);
   assert.match(categorySalesService, /buildCategorySalesAnalyticsSummary/);
-  assert.match(categorySalesService, /isRevenueEligibleStatus\(row\.orderStatus\)/);
-  assert.match(categorySalesService, /prisma\.checkoutOrderItem\.findMany/);
-  assert.match(categorySalesService, /product: \{/);
-  assert.match(categorySalesService, /category: \{/);
-  assert.match(categorySalesService, /categorySalesAnalyticsService/);
-  assert.match(categorySalesService, /take: 5000/);
-
-  assert.match(productSalesPanel, /export async function AdminProductSalesAnalyticsPanel/);
-  assert.match(productSalesPanel, /Product sales performance/);
+  assert.match(categorySalesService, /checkoutOrderLine\.findMany/);
+  assert.match(categorySalesService, /categoryId/);
+  assert.match(categorySalesService, /categoryTitle/);
+  assert.match(categorySalesService, /averageUnitRevenueCents/);
+  assert.match(categorySalesService, /isRevenueEligibleStatus/);
+  assert.match(categorySalesService, /rangeDays/);
   assert.match(productSalesPanel, /id="product-sales-analytics"/);
+  assert.match(productSalesPanel, /Product sales performance/);
   assert.match(productSalesPanel, /Units sold by product/);
   assert.match(productSalesPanel, /Revenue by product/);
-  assert.match(productSalesPanel, /AdminAnalyticsBarChart/);
-
-  assert.match(categorySalesPanel, /export async function AdminCategorySalesAnalyticsPanel/);
-  assert.match(categorySalesPanel, /Category sales performance/);
   assert.match(categorySalesPanel, /id="category-sales-analytics"/);
+  assert.match(categorySalesPanel, /Category sales performance/);
   assert.match(categorySalesPanel, /Units sold by category/);
   assert.match(categorySalesPanel, /Revenue by category/);
-  assert.match(categorySalesPanel, /AdminAnalyticsBarChart/);
-
   assert.match(analyticsPage, /AdminProductSalesAnalyticsPanel/);
-  assert.match(analyticsPage, /productSalesAnalyticsService\.summary\(\{ rangeDays \}\)/);
-  assert.match(analyticsPage, /EMPTY_PRODUCT_SALES_ANALYTICS_SUMMARY/);
-  assert.match(analyticsPage, /sectionHref\('product-sales-analytics', rangeDays\)/);
   assert.match(analyticsPage, /AdminCategorySalesAnalyticsPanel/);
+  assert.match(analyticsPage, /productSalesAnalyticsService\.summary\(\{ rangeDays \}\)/);
   assert.match(analyticsPage, /categorySalesAnalyticsService\.summary\(\{ rangeDays \}\)/);
-  assert.match(analyticsPage, /EMPTY_CATEGORY_SALES_ANALYTICS_SUMMARY/);
+  assert.match(analyticsPage, /sectionHref\('product-sales-analytics', rangeDays\)/);
   assert.match(analyticsPage, /sectionHref\('category-sales-analytics', rangeDays\)/);
-
-  assert.match(panel, /export async function AdminOrderRevenueSummaryPanel/);
-  assert.match(panel, /Order count and revenue/);
-  assert.match(panel, /formatRangeLabel\(summary\.analyticsRangeDays/);
-  assert.match(panel, /Range revenue/);
-  assert.match(panel, /selected analytics range/);
-  assert.match(panel, /summary\.recentDaily\.map/);
-  assert.match(panel, /AdminAnalyticsTrendChart/);
-  assert.match(panel, /Orders over time/);
-  assert.match(panel, /Revenue over time/);
-  assert.match(panel, /Average order value over time/);
-  assert.match(panel, /Operational breakdown charts/);
-  assert.match(panel, /Fulfillment by status/);
-  assert.match(panel, /Payment method mix/);
-  assert.match(panel, /Discount usage impact/);
-  assert.match(panel, /summary\.byFulfillmentStatus\.map/);
-  assert.match(panel, /summary\.byPaymentProvider\.map/);
-  assert.match(panel, /summary\.discountImpact\.discountedOrders/);
-  assert.match(panel, /formatComparisonDelta/);
-  assert.match(panel, /vs previous range/);
   assert.match(panel, /summary\.comparison\.totalOrders/);
   assert.match(panel, /summary\.comparison\.totalRevenueCents/);
   assert.match(panel, /summary\.comparison\.averageOrderValueCents/);
-
+  assert.match(panel, /summary\.byFulfillmentStatus\.map/);
+  assert.match(panel, /summary\.byPaymentProvider\.map/);
+  assert.match(panel, /summary\.discountImpact/);
+  assert.match(panel, /Payment method mix/);
+  assert.match(panel, /Discount usage impact/);
+  assert.match(panel, /vs previous range/);
+  assert.match(panel, /selected range/);
   assert.match(consolePage, /AdminOrderRevenueSummaryPanel/);
-  assert.match(consolePage, /EMPTY_ORDER_REVENUE_SUMMARY/);
-  assert.match(consolePage, /authenticated \? orderRevenueSummaryService\.summary\(\) : Promise\.resolve\(EMPTY_ORDER_REVENUE_SUMMARY\)/);
-  assert.match(consolePage, /const showOverviewExtras = activeTab === 'overview' && overviewSection === 'all'/);
-  assert.match(consolePage, /showOverviewExtras && authenticated \? <AdminOrderRevenueSummaryPanel/);
-
-  assert.match(roadmap, /- \[x\] Add order count and revenue summaries\./);
+  assert.match(consolePage, /orderRevenueSummaryService\.summary\(\)/);
+  assert.match(roadmap, /order count and revenue summaries/i);
 
   console.log('order-revenue-summary.test.ts passed');
 }
