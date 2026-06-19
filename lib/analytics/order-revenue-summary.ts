@@ -21,6 +21,7 @@ export type OrderRevenuePaymentAttemptSourceRow = {
 
 export type OrderRevenueSourceRow = {
   id: string;
+  customerId?: string | null;
   status: string;
   fulfillmentStatus?: string | null;
   currency: string;
@@ -66,6 +67,19 @@ export type OrderDiscountImpactSummary = {
   undiscountedRevenueCents: number;
 };
 
+export type OrderCustomerCohortSummary = {
+  guestOrders: number;
+  guestRevenueCents: number;
+  knownCustomerOrders: number;
+  knownCustomerRevenueCents: number;
+  knownCustomerCount: number;
+  firstTimeKnownCustomerOrders: number;
+  firstTimeKnownCustomerRevenueCents: number;
+  returningKnownCustomerOrders: number;
+  returningKnownCustomerRevenueCents: number;
+  returningKnownCustomerOrderRatePercent: number;
+};
+
 export type OrderRevenueComparisonSummary = {
   totalOrders: AnalyticsComparisonDelta;
   totalRevenueCents: AnalyticsComparisonDelta;
@@ -88,6 +102,7 @@ export type OrderRevenueSummary = {
   byFulfillmentStatus: OrderOperationalStatusSummary[];
   byPaymentProvider: PaymentProviderRevenueSummary[];
   discountImpact: OrderDiscountImpactSummary;
+  customerCohorts: OrderCustomerCohortSummary;
   comparison: OrderRevenueComparisonSummary;
   recentDaily: OrderRevenueDailyPoint[];
   analyticsRangeDays: number;
@@ -112,6 +127,18 @@ const CANCELLED_STATUSES = new Set(['cancelled', 'canceled', 'voided']);
 const DAY_MS = 24 * 60 * 60 * 1000;
 const ZERO_DELTA = buildAnalyticsComparisonDelta(0, 0);
 const EMPTY_RANGE = resolveAdminAnalyticsRange(new Date(0));
+const EMPTY_ORDER_CUSTOMER_COHORTS: OrderCustomerCohortSummary = {
+  guestOrders: 0,
+  guestRevenueCents: 0,
+  knownCustomerOrders: 0,
+  knownCustomerRevenueCents: 0,
+  knownCustomerCount: 0,
+  firstTimeKnownCustomerOrders: 0,
+  firstTimeKnownCustomerRevenueCents: 0,
+  returningKnownCustomerOrders: 0,
+  returningKnownCustomerRevenueCents: 0,
+  returningKnownCustomerOrderRatePercent: 0
+};
 
 export const EMPTY_ORDER_REVENUE_SUMMARY: OrderRevenueSummary = {
   totalOrders: 0,
@@ -133,6 +160,7 @@ export const EMPTY_ORDER_REVENUE_SUMMARY: OrderRevenueSummary = {
     discountedRevenueCents: 0,
     undiscountedRevenueCents: 0
   },
+  customerCohorts: EMPTY_ORDER_CUSTOMER_COHORTS,
   comparison: {
     totalOrders: ZERO_DELTA,
     totalRevenueCents: ZERO_DELTA,
@@ -273,6 +301,55 @@ function buildOrderComparisonSnapshot(rows: OrderRevenueSourceRow[]): OrderCompa
   };
 }
 
+function buildOrderCustomerCohorts(rows: OrderRevenueSourceRow[]): OrderCustomerCohortSummary {
+  const seenKnownCustomers = new Set<string>();
+  let guestOrders = 0;
+  let guestRevenueCents = 0;
+  let knownCustomerOrders = 0;
+  let knownCustomerRevenueCents = 0;
+  let firstTimeKnownCustomerOrders = 0;
+  let firstTimeKnownCustomerRevenueCents = 0;
+  let returningKnownCustomerOrders = 0;
+  let returningKnownCustomerRevenueCents = 0;
+
+  for (const row of [...rows].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime() || a.id.localeCompare(b.id))) {
+    const status = normalizeStatus(row.status);
+    const revenueCents = isRevenueEligibleStatus(status) ? normalizeRevenueCents(row.totalCents) : 0;
+    const accountKey = row.customerId?.trim();
+
+    if (!accountKey) {
+      guestOrders += 1;
+      guestRevenueCents += revenueCents;
+      continue;
+    }
+
+    knownCustomerOrders += 1;
+    knownCustomerRevenueCents += revenueCents;
+
+    if (seenKnownCustomers.has(accountKey)) {
+      returningKnownCustomerOrders += 1;
+      returningKnownCustomerRevenueCents += revenueCents;
+    } else {
+      seenKnownCustomers.add(accountKey);
+      firstTimeKnownCustomerOrders += 1;
+      firstTimeKnownCustomerRevenueCents += revenueCents;
+    }
+  }
+
+  return {
+    guestOrders,
+    guestRevenueCents,
+    knownCustomerOrders,
+    knownCustomerRevenueCents,
+    knownCustomerCount: seenKnownCustomers.size,
+    firstTimeKnownCustomerOrders,
+    firstTimeKnownCustomerRevenueCents,
+    returningKnownCustomerOrders,
+    returningKnownCustomerRevenueCents,
+    returningKnownCustomerOrderRatePercent: knownCustomerOrders ? Math.round((returningKnownCustomerOrders / knownCustomerOrders) * 1000) / 10 : 0
+  };
+}
+
 function buildOrderRevenueComparison(current: OrderComparisonSnapshot, previous: OrderComparisonSnapshot): OrderRevenueComparisonSummary {
   return {
     totalOrders: buildAnalyticsComparisonDelta(current.totalOrders, previous.totalOrders),
@@ -387,6 +464,7 @@ export function buildOrderRevenueSummary(rows: OrderRevenueSourceRow[], now = ne
       discountedRevenueCents,
       undiscountedRevenueCents
     },
+    customerCohorts: buildOrderCustomerCohorts(scopedRows),
     comparison: buildOrderRevenueComparison(currentSnapshot, previousSnapshot),
     recentDaily: buildRecentDailyPoints(scopedRows, analyticsRange),
     analyticsRangeDays: analyticsRange.rangeDays,
@@ -425,6 +503,7 @@ export const orderRevenueSummaryService = {
       take: 2000,
       select: {
         id: true,
+        customerId: true,
         status: true,
         fulfillmentStatus: true,
         currency: true,
