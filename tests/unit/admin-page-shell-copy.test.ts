@@ -82,6 +82,11 @@ export async function runAdminPageShellCopyTests() {
   assert.match(analyticsRouteSource, /siteAnalyticsSummaryService\.summary\(\{ rangeDays \}\)/);
   assert.match(analyticsRouteSource, /AdminOrderRevenueSummaryPanel/);
   assert.match(analyticsRouteSource, /AdminSiteAnalyticsPanel/);
+  assert.match(analyticsRouteSource, /AdminAnalyticsGuidancePanel/);
+  assert.match(analyticsRouteSource, /orderSummary=\{orderRevenueSummary\}/);
+  assert.match(analyticsRouteSource, /productSalesSummary=\{productSalesAnalyticsSummary\}/);
+  assert.match(analyticsRouteSource, /categorySalesSummary=\{categorySalesAnalyticsSummary\}/);
+  assert.match(analyticsRouteSource, /siteSummary=\{siteAnalyticsSummary\}/);
   assert.match(analyticsRouteSource, /lightweight server-rendered business and site charts/);
   assert.match(analyticsRouteSource, /privacy-safe first-party events/);
   assert.match(analyticsRouteSource, /id="analytics-csv-exports"/);
@@ -96,6 +101,8 @@ export async function runAdminPageShellCopyTests() {
   assert.match(analyticsRouteSource, /raw site events up to 180 days/);
   assert.match(analyticsRouteSource, /site-analytics-privacy-retention-policy\.md/);
   assert.match(analyticsRouteSource, /sectionHref\('analytics-privacy-retention', rangeDays\)/);
+  assert.match(analyticsRouteSource, /sectionHref\('analytics-guidance', rangeDays\)/);
+  assert.match(analyticsRouteSource, /Guidance/);
   assert.match(analyticsRouteSource, /id="analytics-section-index"/);
   assert.match(analyticsRouteSource, /sectionHref\('order-analytics', rangeDays\)/);
   assert.match(analyticsRouteSource, /sectionHref\('business-analytics-charts', rangeDays\)/);
@@ -108,6 +115,20 @@ export async function runAdminPageShellCopyTests() {
   assert.match(analyticsRouteSource, /sectionHref\('readiness-analytics', rangeDays\)/);
   assert.match(analyticsRouteSource, /aria-label=\{labels\.sectionLabel\}/);
   assert.match(analyticsRouteSource, /Jump directly to the analytics area you need/);
+
+  const guidancePanelSource = readFileSync('components/admin/AdminAnalyticsGuidancePanel.tsx', 'utf8');
+  assert.match(guidancePanelSource, /id="analytics-guidance"/);
+  assert.match(guidancePanelSource, /What to look at next/);
+  assert.match(guidancePanelSource, /Current signal summary/);
+  assert.match(guidancePanelSource, /When a chart is empty/);
+  assert.match(guidancePanelSource, /Analytics implementation status/);
+  assert.match(guidancePanelSource, /Custom start\/end date range selector/);
+  assert.match(guidancePanelSource, /Automated raw-event retention cleanup job/);
+  assert.match(guidancePanelSource, /Role-specific analytics visibility/);
+  assert.match(guidancePanelSource, /orderSummary\.totalOrders/);
+  assert.match(guidancePanelSource, /siteSummary\.totalEvents/);
+  assert.match(guidancePanelSource, /productSalesSummary\.rows\.length/);
+  assert.match(guidancePanelSource, /categorySalesSummary\.rows\.length/);
 
   const policySource = readFileSync('docs/site-analytics-privacy-retention-policy.md', 'utf8');
   assert.match(policySource, /not a third-party tracking system/);
