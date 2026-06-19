@@ -1,0 +1,17 @@
+# Admin analytics docs index
+
+Use this page as the starting point for analytics operations, validation, and privacy documentation.
+
+## Operator links
+
+- [Analytics operator checklist](./admin-analytics-operator-checklist.md)
+- [Analytics roadmap status](./admin-analytics-roadmap-status.md)
+- [Analytics production validation runbook](./admin-analytics-production-validation-runbook.md)
+- [Site analytics privacy and retention policy](./site-analytics-privacy-retention-policy.md)
+
+## When to use each document
+
+- Use the operator checklist before routine review or export.
+- Use the roadmap status to understand what is live and what remains planned.
+- Use the production validation runbook after deploy or database migration changes.
+- Use the privacy and retention policy when reviewing tracking, exports, and retention behavior.
