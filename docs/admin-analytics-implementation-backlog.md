@@ -1,6 +1,6 @@
 # Admin analytics implementation backlog
 
-This backlog tracks the remaining admin analytics work after the custom range, aggregate cohort, retention preview, scheduled report preview, and saved view preset foundation passes.
+This backlog tracks the remaining admin analytics work after the custom range, aggregate cohort, retention preview, scheduled report preview, saved view preset preview, and layout grouping preview foundation passes.
 
 ## Current live baseline
 
@@ -13,6 +13,7 @@ This backlog tracks the remaining admin analytics work after the custom range, a
 - Aggregate Business CSV and Site CSV exports.
 - Scheduled report preview foundation for weekly/monthly owner report options using the selected range and aggregate CSV paths.
 - Saved dashboard view preset preview foundation using the selected range and existing section anchors.
+- Dashboard layout grouping preview foundation using the selected range, section index, existing anchors, and chart table fallback requirements.
 - Privacy and retention documentation.
 - Read-only raw event retention status and cleanup preview.
 - Owner-only export and retention controls.
@@ -58,6 +59,18 @@ Completed baseline:
 - View saving is disabled.
 - Client-side and server-side saved state are disabled.
 - No persistence model, save endpoint, or analytics-calculation change is introduced.
+
+### Dashboard layout grouping preview foundation
+
+Completed baseline:
+
+- Dashboard layout groups are represented as preview-only metadata.
+- Groups reuse the selected analytics range and existing section anchors.
+- The contract covers Overview, Business, Site, Products and categories, Operations, and Privacy/docs.
+- Group header UI is disabled.
+- Collapsible groups are disabled.
+- Tabbed workspace behavior is disabled.
+- Existing section index, range links, anchors, and chart table fallback requirements are preserved.
 
 ## Remaining backlog items
 
@@ -120,21 +133,23 @@ Acceptance criteria:
 - Saved metadata is limited to view labels, selected range/filter metadata, and section anchors.
 - Persistence includes owner/staff management and delete/update behavior.
 
-### 5. Dashboard layout refinement
+### 5. Dashboard group header UI
 
 Goal: keep the analytics page readable as more panels are added.
 
 Acceptance criteria:
 
-- Consider tabs or collapsible sections for Business, Site, Products, Sales, Operations, Customers, and Privacy.
+- Use the preview grouping contract as the source for group labels and anchor groupings.
 - Preserve the existing section index and range links.
 - Keep accessible table fallbacks for charts.
+- Keep the page server-rendered and mobile-readable.
+- Do not introduce collapsible groups or tabs until the group-header pass is validated.
 
 ## Sequencing recommendation
 
-1. Production validation evidence for custom ranges, exports, aggregate cohort panels, retention preview, scheduled report previews, and saved view presets.
+1. Production validation evidence for custom ranges, exports, aggregate cohort panels, retention preview, scheduled report previews, saved view presets, and layout grouping preview.
 2. Automated retention cleanup preview, then guarded execution.
 3. Advanced aggregate cohort reporting.
 4. Scheduled report persistence and delivery.
 5. Saved dashboard view persistence.
-6. Dashboard layout refinement when the page starts feeling crowded.
+6. Dashboard group header UI, then collapsible groups or tabs only if needed.
