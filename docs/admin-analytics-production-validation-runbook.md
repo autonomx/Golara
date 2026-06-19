@@ -2,7 +2,7 @@
 
 This runbook validates the admin analytics workspace after deploy. It is intended for owner/admin operators before treating `/admin/analytics` as an operational source of truth.
 
-Use it to validate the production analytics path end to end: database migration, storefront event capture, checkout funnel capture, custom range parity, aggregate exports, customer cohort aggregates, retention status, cleanup preview evidence, scheduled report preview evidence, saved view preset evidence, and layout grouping preview evidence.
+Use it to validate the production analytics path end to end: database migration, storefront event capture, checkout funnel capture, custom range parity, aggregate exports, customer cohort aggregates, retention status, cleanup preview evidence, scheduled report preview evidence, saved view preset evidence, and dashboard group header evidence.
 
 ## Scope
 
@@ -17,7 +17,7 @@ Validate that the analytics page can show trustworthy aggregate data for:
 - aggregate CSV exports
 - scheduled report previews
 - saved dashboard view presets
-- dashboard layout grouping previews
+- dashboard group headers
 - privacy and retention status
 - raw-event cleanup preview without deletion
 
@@ -63,10 +63,11 @@ Validate that the analytics page can show trustworthy aggregate data for:
 28. Confirm scheduled report delivery and schedule persistence remain disabled.
 29. Confirm saved view presets preserve the selected range and existing section anchors.
 30. Confirm saved view persistence and client/server saved state remain disabled.
-31. Confirm layout grouping previews preserve the selected range, existing section anchors, section index expectations, and table fallback requirements.
-32. Confirm group-header UI, collapsible groups, and tabbed workspace behavior remain disabled until a separate UI pass.
-33. Confirm neither CSV contains visitor session details, full referrer URLs, analytics event payloads, customer names, phone numbers, emails, or per-customer rows.
-34. Confirm the cleanup preview does not delete raw events and that deletion remains disabled until production migration evidence and analytics-volume evidence are recorded.
+31. Confirm dashboard group headers render for Overview, Business, Site, Products and categories, Operations, and Privacy/docs.
+32. Confirm group-header links preserve the selected range, existing section anchors, section index expectations, and table fallback requirements.
+33. Confirm collapsible groups and tabbed workspace behavior remain disabled until a separate UI pass.
+34. Confirm neither CSV contains visitor session details, full referrer URLs, analytics event payloads, customer names, phone numbers, emails, or per-customer rows.
+35. Confirm the cleanup preview does not delete raw events and that deletion remains disabled until production migration evidence and analytics-volume evidence are recorded.
 
 ## Evidence record
 
@@ -89,11 +90,12 @@ Record one evidence note per validation pass:
 - Saved view persistence disabled:
 - Saved view selected range preserved:
 - Saved view section anchors preserved:
-- Layout grouping preview checked:
-- Layout selected range preserved:
-- Layout section anchors preserved:
-- Layout table fallback requirement preserved:
-- Layout group UI disabled:
+- Dashboard group headers checked:
+- Dashboard group selected range preserved:
+- Dashboard group section anchors preserved:
+- Dashboard group table fallback requirement preserved:
+- Collapsible groups disabled:
+- Tabs disabled:
 - Retention status checked:
 - Cleanup preview eligible stale-event count:
 - Cleanup preview deletion status:
@@ -104,7 +106,7 @@ Record one evidence note per validation pass:
 
 ## Expected result
 
-The analytics page should show aggregate business, site, range, export, customer cohort, scheduled-report preview, saved-view preset, layout grouping preview, retention, and cleanup-preview signals without exposing non-aggregate visitor or customer detail. Empty panels are acceptable only when the selected range has no matching traffic, orders, or production migration evidence.
+The analytics page should show aggregate business, site, range, export, customer cohort, scheduled-report preview, saved-view preset, dashboard group header, retention, and cleanup-preview signals without exposing non-aggregate visitor or customer detail. Empty panels are acceptable only when the selected range has no matching traffic, orders, or production migration evidence.
 
 ## Blockers
 
@@ -120,8 +122,8 @@ Do not treat analytics as source-of-truth if any of these are true:
 - scheduled report delivery or persistence is enabled without owner approval workflow
 - saved view presets do not preserve selected range and section anchors
 - saved view persistence is enabled before role policy and management UI are designed
-- layout grouping previews do not preserve selected range links and existing section anchors
-- layout group UI is enabled before mobile layout and accessibility evidence are recorded
+- dashboard group headers do not preserve selected range links and existing section anchors
+- collapsible groups or tabs are enabled before mobile layout and accessibility evidence are recorded
 - retention status cannot read the event table
 - cleanup preview cannot report eligibility status for stale raw events
 - cleanup preview indicates deletion is enabled before production evidence is recorded
@@ -133,5 +135,5 @@ Do not treat analytics as source-of-truth if any of these are true:
 - Customer cohort reporting must remain aggregate-only and privacy-safe.
 - Scheduled report previews must remain disabled for delivery until persistence, owner approval, and delivery controls are implemented.
 - Saved view presets must remain preview-only until persistence, role policy, and management UI are implemented.
-- Layout grouping previews must remain preview-only until group headers, mobile layout, and accessibility behavior are implemented and validated.
+- Dashboard group headers must remain static links until collapsible groups or tabs are implemented and validated separately.
 - Raw event deletion remains disabled until a separate guarded cleanup job is implemented, cleanup preview evidence is recorded, and production evidence exists.
