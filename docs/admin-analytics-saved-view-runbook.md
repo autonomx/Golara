@@ -1,10 +1,10 @@
 # Admin analytics saved view runbook
 
-This runbook documents the saved dashboard view persistence-plan and storage-schema foundation for `/admin/analytics`.
+This runbook documents the saved dashboard view persistence-plan, inactive storage schema, and read-model foundation for `/admin/analytics`.
 
 ## Current state
 
-The implementation remains inactive for operators. It defines named Analytics view presets that reuse the selected Analytics range and existing dashboard section anchors, layers a disabled persistence plan over those presets, and now includes an inactive storage schema foundation for future saved-view metadata.
+The implementation remains inactive for operators. It defines named Analytics view presets that reuse the selected Analytics range and existing dashboard section anchors, layers a disabled persistence plan over those presets, includes an inactive storage schema foundation for future saved-view metadata, and now includes a metadata-only read-model normalizer for future table rows.
 
 The current contract includes:
 
@@ -61,7 +61,24 @@ The inactive schema foundation adds the `AdminAnalyticsSavedView` migration tabl
 
 The unique key is `(viewKey, scope)` so the future management UI can prevent duplicate saved views inside the same visibility scope.
 
-No application repository uses this table yet.
+No application repository writes this table yet.
+
+## Read-model foundation
+
+The read-model foundation is metadata-only and inactive. It can normalize future `AdminAnalyticsSavedView` rows into DTOs that contain only:
+
+- id
+- view key and label
+- optional description
+- scope and audience
+- selected range mode and query
+- section anchors and first section anchor
+- owner approval flag
+- active flag
+
+The normalizer rejects invalid scope, invalid audience, missing range query, and rows without approved section anchors. It deduplicates anchors and keeps `activeForOperators=false` even when a row carries future approval flags.
+
+Repository reads are still disabled. No page, API route, or management UI calls the read model yet.
 
 ## Disabled until a later phase
 
@@ -73,15 +90,16 @@ Disabled paths:
 - save endpoint
 - update endpoint
 - remove endpoint
+- read endpoint
 - management UI
 - role policy persistence
-- repository reads or writes
+- active repository reads or writes
 
-Do not add an active save endpoint or management UI until permission enforcement, owner approval capture, audit logging, and rollback evidence are approved.
+Do not add an active save endpoint, read endpoint, or management UI until permission enforcement, owner approval capture, audit logging, rollback evidence, and source-of-truth ownership are approved.
 
 ## Validation checklist
 
-Before moving from schema foundation to active saved views, confirm:
+Before moving from schema/read-model foundation to active saved views, confirm:
 
 1. Presets keep the selected preset or custom date range in their URLs.
 2. Presets use existing section anchors only.
@@ -90,9 +108,10 @@ Before moving from schema foundation to active saved views, confirm:
 5. The persistence plan only allows saved-view metadata.
 6. Blocked fields include analytics rows, customer rows, raw event rows, customer contact fields, visitor/session identifiers, and export file contents.
 7. Owner approval is required and not yet recorded.
-8. Save/update/remove endpoints, repository access, and management UI remain disabled.
+8. Save/update/remove endpoints and management UI remain disabled.
 9. The `AdminAnalyticsSavedView` migration exists and stores metadata only.
-10. Source guards prove saved views do not alter analytics calculations.
+10. The read model returns metadata-only DTOs and keeps operator activation disabled.
+11. Source guards prove saved views do not alter analytics calculations.
 
 ## Future implementation notes
 
