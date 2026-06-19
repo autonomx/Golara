@@ -181,7 +181,7 @@ export function buildAdminAnalyticsScheduledReportRepositoryContract(): AdminAna
     blockedOutputFields: [...readModel.blockedOutputFields],
     blockedOperations: [...BLOCKED_OPERATIONS],
     activationBlockers: [
-      'Prisma repository wiring not enabled',
+      'Prisma repository access not enabled',
       'owner approval audit evidence not recorded',
       'dry-run evidence not recorded',
       'read endpoint not configured',
