@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { buildAdminAnalyticsLayoutPreview } from '../../lib/analytics/admin-analytics-layout';
 import { resolveAdminAnalyticsRange } from '../../lib/analytics/admin-analytics-range';
 import { buildAdminAnalyticsScheduledReportPreview } from '../../lib/analytics/admin-analytics-scheduled-reports';
 import { createAdminPageShellTranslator, getAdminPageShellCopy } from '../../lib/localization/admin-page-shell-copy';
@@ -90,6 +91,32 @@ export async function runAdminPageShellCopyTests() {
   assert.match(scheduledReportSource, /persistenceEnabled: false/);
   assert.match(scheduledReportSource, /adminAnalyticsRangeQueryString/);
   assert.doesNotMatch(scheduledReportSource, /sendMail|transport|cron|schedule\.create|setInterval|setTimeout/);
+
+  const layoutPreview = buildAdminAnalyticsLayoutPreview(scheduledReportRange);
+  assert.equal(layoutPreview.status, 'preview_only');
+  assert.equal(layoutPreview.enabled, false);
+  assert.equal(layoutPreview.groupHeadersEnabled, false);
+  assert.equal(layoutPreview.collapsibleGroupsEnabled, false);
+  assert.equal(layoutPreview.tabsEnabled, false);
+  assert.equal(layoutPreview.preservesSectionIndex, true);
+  assert.equal(layoutPreview.preservesRangeLinks, true);
+  assert.equal(layoutPreview.requiresAccessibleTableFallbacks, true);
+  assert.equal(layoutPreview.rangeQuery, 'start=2026-06-01&end=2026-06-15');
+  assert.deepEqual(
+    layoutPreview.groups.map((group) => group.key),
+    ['overview', 'business', 'site', 'products', 'operations', 'privacy-docs']
+  );
+  assert.ok(layoutPreview.groups.every((group) => group.href.startsWith(layoutPreview.workspaceHref)));
+  assert.ok(layoutPreview.groups.every((group) => group.sections.every((section) => section.keepsTableFallback)));
+
+  const layoutSource = readFileSync('lib/analytics/admin-analytics-layout.ts', 'utf8');
+  assert.match(layoutSource, /preview_only/);
+  assert.match(layoutSource, /groupHeadersEnabled: false/);
+  assert.match(layoutSource, /collapsibleGroupsEnabled: false/);
+  assert.match(layoutSource, /tabsEnabled: false/);
+  assert.match(layoutSource, /requiresAccessibleTableFallbacks: true/);
+  assert.match(layoutSource, /adminAnalyticsRangeQueryString/);
+  assert.doesNotMatch(layoutSource, /localStorage|sessionStorage|cookies\(|PrismaClient|prisma\.|create\(|update\(|upsert\(|delete\(/);
 
   const analyticsRouteSource = readFileSync('app/admin/analytics/page.tsx', 'utf8');
   assert.match(analyticsRouteSource, /activeTab="analytics"/);
