@@ -15,7 +15,7 @@ function source(path: string) {
 
 function migrationFiles() {
   return readdirSync('prisma/migrations')
-    .map((dir) => join('prisma/migrations', dir, 'migration.sql').replace(/\/g, '/'))
+    .map((dir) => join('prisma/migrations', dir, 'migration.sql').replace(/\\/g, '/'))
     .filter((path) => existsSync(path))
     .sort();
 }
