@@ -62,6 +62,17 @@ function buildBusinessAnalyticsCsv(
     ['business', 'comparison', 'average_order_value_delta_cents', 'AOV vs previous range', summary.comparison.averageOrderValueCents.absoluteChange, summary.primaryCurrency, `${summary.comparison.averageOrderValueCents.percentChange ?? ''}`]
   ];
 
+  const cohortNotes = 'Aggregate order cohort metrics only';
+  rows.push(['business', 'customer_cohorts', 'guest_orders', 'Guest orders', summary.customerCohorts.guestOrders, '', cohortNotes]);
+  rows.push(['business', 'customer_cohorts', 'guest_revenue_cents', 'Guest revenue cents', summary.customerCohorts.guestRevenueCents, summary.primaryCurrency, cohortNotes]);
+  rows.push(['business', 'customer_cohorts', 'known_customer_orders', 'Known-customer orders', summary.customerCohorts.knownCustomerOrders, '', cohortNotes]);
+  rows.push(['business', 'customer_cohorts', 'known_customer_revenue_cents', 'Known-customer revenue cents', summary.customerCohorts.knownCustomerRevenueCents, summary.primaryCurrency, cohortNotes]);
+  rows.push(['business', 'customer_cohorts', 'known_customer_count', 'Known customer count', summary.customerCohorts.knownCustomerCount, '', cohortNotes]);
+  rows.push(['business', 'customer_cohorts', 'first_time_known_customer_orders', 'First known-customer orders', summary.customerCohorts.firstTimeKnownCustomerOrders, '', cohortNotes]);
+  rows.push(['business', 'customer_cohorts', 'returning_known_customer_orders', 'Returning known-customer orders', summary.customerCohorts.returningKnownCustomerOrders, '', cohortNotes]);
+  rows.push(['business', 'customer_cohorts', 'returning_known_customer_revenue_cents', 'Returning known-customer revenue cents', summary.customerCohorts.returningKnownCustomerRevenueCents, summary.primaryCurrency, cohortNotes]);
+  rows.push(['business', 'customer_cohorts', 'returning_known_customer_order_rate_percent', 'Returning known-customer order rate percent', summary.customerCohorts.returningKnownCustomerOrderRatePercent, '', cohortNotes]);
+
   for (const point of summary.recentDaily) {
     rows.push(['business', 'daily', 'order_count', point.date, point.orderCount, '', '']);
     rows.push(['business', 'daily', 'revenue_cents', point.date, point.revenueCents, summary.primaryCurrency, '']);
@@ -135,17 +146,9 @@ function buildSiteAnalyticsCsv(range: AdminAnalyticsResolvedRange, summary: Awai
     rows.push(['site', 'daily', 'event_count', point.date, point.eventCount, '', '']);
   }
 
-  for (const row of summary.byEventType) {
-    rows.push(['site', 'events_by_type', 'event_count', row.label, row.count, '', '']);
-  }
-
-  for (const row of summary.topPages) {
-    rows.push(['site', 'top_pages', 'event_count', row.label, row.count, '', 'Aggregate path only']);
-  }
-
-  for (const row of summary.topProductViews) {
-    rows.push(['site', 'top_product_views', 'event_count', row.label, row.count, '', 'Aggregate product id/path only']);
-  }
+  for (const row of summary.byEventType) rows.push(['site', 'events_by_type', 'event_count', row.label, row.count, '', '']);
+  for (const row of summary.topPages) rows.push(['site', 'top_pages', 'event_count', row.label, row.count, '', 'Aggregate path only']);
+  for (const row of summary.topProductViews) rows.push(['site', 'top_product_views', 'event_count', row.label, row.count, '', 'Aggregate product id/path only']);
 
   for (const row of summary.productConversions) {
     rows.push(['site', 'product_conversion', 'product_views', row.label, row.productViews, '', 'Aggregate product id/path only']);
@@ -153,25 +156,11 @@ function buildSiteAnalyticsCsv(range: AdminAnalyticsResolvedRange, summary: Awai
     rows.push(['site', 'product_conversion', 'view_to_cart_percent', row.label, row.viewToCartRatePercent, '', 'Derived from aggregate product views and add-to-cart events']);
   }
 
-  for (const row of summary.topCategoryViews) {
-    rows.push(['site', 'top_category_views', 'event_count', row.label, row.count, '', 'Aggregate category id/path only']);
-  }
-
-  for (const row of summary.topSearchTerms) {
-    rows.push(['site', 'top_search_terms', 'event_count', row.label, row.count, '', 'Aggregate search term only']);
-  }
-
-  for (const row of summary.topTrafficSources) {
-    rows.push(['site', 'top_traffic_sources', 'event_count', row.label, row.count, '', 'Aggregate UTM source only']);
-  }
-
-  for (const row of summary.topTrafficCampaigns) {
-    rows.push(['site', 'top_traffic_campaigns', 'event_count', row.label, row.count, '', 'Aggregate UTM campaign only']);
-  }
-
-  for (const row of summary.topReferrerDomains) {
-    rows.push(['site', 'top_referrer_domains', 'event_count', row.label, row.count, '', 'Aggregate external referrer domain only']);
-  }
+  for (const row of summary.topCategoryViews) rows.push(['site', 'top_category_views', 'event_count', row.label, row.count, '', 'Aggregate category id/path only']);
+  for (const row of summary.topSearchTerms) rows.push(['site', 'top_search_terms', 'event_count', row.label, row.count, '', 'Aggregate search term only']);
+  for (const row of summary.topTrafficSources) rows.push(['site', 'top_traffic_sources', 'event_count', row.label, row.count, '', 'Aggregate UTM source only']);
+  for (const row of summary.topTrafficCampaigns) rows.push(['site', 'top_traffic_campaigns', 'event_count', row.label, row.count, '', 'Aggregate UTM campaign only']);
+  for (const row of summary.topReferrerDomains) rows.push(['site', 'top_referrer_domains', 'event_count', row.label, row.count, '', 'Aggregate external referrer domain only']);
 
   return rows.map(csvRow).join('\n');
 }
