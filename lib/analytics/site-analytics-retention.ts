@@ -221,7 +221,19 @@ export const siteAnalyticsRetentionService = {
       return buildSiteAnalyticsRetentionSummary(rows[0], now, retentionDays);
     } catch (error) {
       if (isMissingSiteAnalyticsTableError(error)) {
-        return { ...emptySiteAnalyticsRetentionSummary(now, retentionDays), databaseConfigured: true };
+        const empty = emptySiteAnalyticsRetentionSummary(now, retentionDays);
+        return {
+          ...empty,
+          databaseConfigured: true,
+          cleanupPreview: buildSiteAnalyticsRetentionCleanupPreview({
+            databaseConfigured: true,
+            tableAvailable: false,
+            staleEventCount: 0,
+            cutoffAt: empty.cutoffAt,
+            retentionDays,
+            productionEvidenceConfirmed: empty.cleanupPreview.productionEvidenceConfirmed
+          })
+        };
       }
       throw error;
     }
