@@ -48,9 +48,10 @@ const copy = {
     liveSales: 'Product and category sales from checkout order lines',
     liveExports: 'Aggregate business/site CSV exports',
     livePrivacy: 'Privacy/retention policy and disable guidance',
+    liveRoleVisibility: 'Role-specific analytics visibility for owner-only exports and retention diagnostics',
     pendingCustomRange: 'Custom start/end date range selector',
     pendingRetentionJob: 'Automated raw-event retention cleanup job',
-    pendingRoleViews: 'Role-specific analytics visibility',
+    pendingCustomerCohorts: 'Aggregate customer cohort metrics',
     statusLive: 'Live',
     statusNeedsData: 'Needs data',
     statusPlanned: 'Planned'
@@ -93,9 +94,10 @@ const copy = {
     liveSales: 'فروش محصول و دسته‌بندی از ردیف‌های سفارش',
     liveExports: 'خروجی CSV تجمیعی کسب‌وکار و سایت',
     livePrivacy: 'سیاست حریم خصوصی/نگهداری و راهنمای غیرفعال‌سازی',
+    liveRoleVisibility: 'نمایش تحلیل‌ها بر اساس نقش برای خروجی‌های مالک و وضعیت نگهداری',
     pendingCustomRange: 'انتخابگر بازه تاریخ شروع/پایان سفارشی',
     pendingRetentionJob: 'کار خودکار پاک‌سازی رویدادهای خام پس از دوره نگهداری',
-    pendingRoleViews: 'نمایش تحلیل‌ها بر اساس نقش کاربر',
+    pendingCustomerCohorts: 'شاخص‌های تجمیعی گروه‌های مشتری',
     statusLive: 'فعال',
     statusNeedsData: 'نیازمند داده',
     statusPlanned: 'برنامه‌ریزی‌شده'
@@ -233,6 +235,7 @@ export async function AdminAnalyticsGuidancePanel({
             <li>{labels.liveSales}</li>
             <li>{labels.liveExports}</li>
             <li>{labels.livePrivacy}</li>
+            <li>{labels.liveRoleVisibility}</li>
           </ul>
         </div>
         <div className="rounded-lg border border-stone-200 bg-white p-4">
@@ -240,7 +243,7 @@ export async function AdminAnalyticsGuidancePanel({
           <ul className="mt-3 grid gap-2 text-sm leading-6 text-stone-600">
             <li>{labels.pendingCustomRange}</li>
             <li>{labels.pendingRetentionJob}</li>
-            <li>{labels.pendingRoleViews}</li>
+            <li>{labels.pendingCustomerCohorts}</li>
           </ul>
         </div>
       </div>
