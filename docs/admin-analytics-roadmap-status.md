@@ -19,6 +19,7 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 - Owner-only aggregate Business CSV and Site CSV exports.
 - Scheduled report preview foundation that reuses the selected analytics range and aggregate Business/Site CSV paths.
 - Saved dashboard view preset preview foundation that reuses the selected analytics range and existing section anchors.
+- Dashboard layout grouping preview foundation that preserves the selected range, section index, anchors, and table fallback requirements.
 - Privacy and retention policy visibility.
 - Read-only raw site-event retention status, cleanup preview, and cleanup readiness guidance.
 - Role-aware visibility for owner-only exports and retention diagnostics.
@@ -30,6 +31,7 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 - Advanced customer cohort reporting beyond the current aggregate order/revenue buckets.
 - Scheduled report persistence, delivery configuration, and owner approval workflow.
 - Saved dashboard view persistence, role-policy persistence, and owner/staff management UI.
+- Dashboard group header UI, collapsible groups, or tabbed workspace behavior.
 
 ## Customer cohort analytics note
 
@@ -62,6 +64,12 @@ The saved dashboard view foundation is preview-only. It defines named dashboard 
 
 Actual saved views remain pending until persistence, role-policy storage, and owner/staff management UI are designed and validated.
 
+## Dashboard layout preview note
+
+The dashboard layout foundation is preview-only. It defines Overview, Business, Site, Products and categories, Operations, and Privacy/docs groupings for the existing dashboard anchors without changing the page layout yet.
+
+The preview requires the section index, range links, existing anchors, CSV exports, server rendering, and accessible chart table fallbacks to remain intact. Actual group headers, collapsible groups, or tabs remain pending until a separate UI pass validates mobile layout and accessibility.
+
 ## Retention cleanup preview note
 
 The retention status panel now includes a read-only cleanup preview. It reports the stale raw-event count eligible under the 180-day retention target, whether production migration evidence has been confirmed, whether deletion remains disabled, and the reason future cleanup is still blocked or ready for a guarded job.
@@ -84,3 +92,4 @@ Before treating site analytics as complete in production, verify:
 10. Customer cohort panels and CSV rows remain aggregate-only.
 11. Scheduled report previews preserve the selected range and aggregate Business/Site CSV paths without enabling delivery.
 12. Saved dashboard view presets preserve the selected range and existing section anchors without saving view state.
+13. Dashboard layout preview groups preserve selected range links, the section index, existing anchors, and table fallback requirements without enabling group headers, collapsible groups, or tabs.
