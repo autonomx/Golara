@@ -128,6 +128,10 @@ function normalizeRows(rows: AdminAnalyticsScheduledReportReadRow[], limit: numb
     .slice(0, Math.max(0, Math.min(limit, 50)));
 }
 
+function selectFieldsForRead(fields: string[]): Record<string, true> {
+  return Object.fromEntries(fields.map((field) => [field, true])) as Record<string, true>;
+}
+
 export function buildAdminAnalyticsScheduledReportRepositoryReadPlan(
   maxRows = 25
 ): AdminAnalyticsScheduledReportRepositoryReadPlan {
@@ -147,7 +151,7 @@ export function buildAdminAnalyticsScheduledReportRepositoryReadArgs(
 ): AdminAnalyticsScheduledReportRepositoryReadArgs {
   const readPlan = buildAdminAnalyticsScheduledReportRepositoryReadPlan(maxRows);
   return {
-    select: Object.fromEntries(readPlan.selectFields.map((field) => [field, true])),
+    select: selectFieldsForRead(readPlan.selectFields),
     where: {
       ownerApproved: true,
       isActive: true,
