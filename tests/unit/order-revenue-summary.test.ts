@@ -24,6 +24,12 @@ function source(path: string) {
   return readFileSync(path, 'utf8');
 }
 
+function rowByLabel<T extends { label: string }>(rows: T[], label: string) {
+  const row = rows.find((candidate) => candidate.label === label);
+  assert.ok(row, `expected row for ${label}`);
+  return row;
+}
+
 export async function runOrderRevenueSummaryTests() {
   const comparisonHelper = source('lib/analytics/analytics-comparison.ts');
   const rangeHelper = source('lib/analytics/admin-analytics-range.ts');
@@ -32,6 +38,7 @@ export async function runOrderRevenueSummaryTests() {
   const categorySalesService = source('lib/analytics/category-sales-analytics.ts');
   const productSalesPanel = source('components/admin/AdminProductSalesAnalyticsPanel.tsx');
   const categorySalesPanel = source('components/admin/AdminCategorySalesAnalyticsPanel.tsx');
+  const advancedCohortPanel = source('components/admin/AdminAdvancedCustomerCohortAnalyticsPanel.tsx');
   const analyticsPage = source('app/admin/analytics/page.tsx');
   const exportRoute = source('app/admin/analytics/export/route.ts');
   const panel = source('components/admin/AdminOrderRevenueSummaryPanel.tsx');
@@ -129,6 +136,12 @@ export async function runOrderRevenueSummaryTests() {
   assert.equal(summary.customerCohorts.returningKnownCustomerOrders, 1);
   assert.equal(summary.customerCohorts.returningKnownCustomerRevenueCents, 10000);
   assert.equal(summary.customerCohorts.returningKnownCustomerOrderRatePercent, 50);
+  assert.equal(summary.customerCohorts.advanced.knownCustomerRevenueSharePercent, 66.7);
+  assert.equal(rowByLabel(summary.customerCohorts.advanced.averageOrderValueByCohort, 'Known-customer orders').averageOrderValueCents, 5000);
+  assert.equal(rowByLabel(summary.customerCohorts.advanced.averageOrderValueByCohort, 'Returning known-customer orders').averageOrderValueCents, 10000);
+  assert.equal(rowByLabel(summary.customerCohorts.advanced.orderCountBands, '2 orders').knownCustomerCount, 1);
+  assert.equal(rowByLabel(summary.customerCohorts.advanced.orderCountBands, '2 orders').orderCount, 2);
+  assert.equal(rowByLabel(summary.customerCohorts.advanced.recencyBands, '0-30 days').knownCustomerCount, 1);
   assert.equal(summary.comparison.totalOrders.previousValue, 1);
   assert.equal(summary.comparison.totalOrders.absoluteChange, 2);
   assert.equal(summary.comparison.totalRevenueCents.percentChange, 200);
@@ -152,6 +165,7 @@ export async function runOrderRevenueSummaryTests() {
   assert.equal(customSummary.totalRevenueCents, 10000);
   assert.equal(customSummary.customerCohorts.knownCustomerOrders, 2);
   assert.equal(customSummary.customerCohorts.returningKnownCustomerOrders, 1);
+  assert.equal(customSummary.customerCohorts.advanced.knownCustomerRevenueSharePercent, 100);
   assert.equal(customSummary.recentDaily.length, 2);
   assert.equal(customSummary.recentDaily[0].date, '2026-05-31');
   assert.equal(customSummary.recentDaily[1].date, '2026-06-01');
@@ -160,6 +174,9 @@ export async function runOrderRevenueSummaryTests() {
   assert.equal(annualSummary.analyticsRangeDays, 365);
   assert.equal(annualSummary.totalOrders, 5);
   assert.equal(annualSummary.customerCohorts.knownCustomerCount, 3);
+  assert.equal(rowByLabel(annualSummary.customerCohorts.advanced.orderCountBands, '1 order').knownCustomerCount, 2);
+  assert.equal(rowByLabel(annualSummary.customerCohorts.advanced.orderCountBands, '2 orders').knownCustomerCount, 1);
+  assert.equal(rowByLabel(annualSummary.customerCohorts.advanced.recencyBands, '31-90 days').knownCustomerCount, 2);
   assert.equal(annualSummary.recentDaily.length, 365);
 
   const productSalesRows = [
@@ -219,6 +236,11 @@ export async function runOrderRevenueSummaryTests() {
   assert.match(service, /export type PaymentProviderRevenueSummary/);
   assert.match(service, /export type OrderDiscountImpactSummary/);
   assert.match(service, /export type OrderCustomerCohortSummary/);
+  assert.match(service, /export type OrderAdvancedCustomerCohortSummary/);
+  assert.match(service, /averageOrderValueByCohort/);
+  assert.match(service, /orderCountBands/);
+  assert.match(service, /recencyBands/);
+  assert.match(service, /knownCustomerRevenueSharePercent/);
   assert.match(service, /customerCohorts: OrderCustomerCohortSummary/);
   assert.match(service, /buildOrderCustomerCohorts/);
   assert.match(service, /customerId: true/);
@@ -252,9 +274,16 @@ export async function runOrderRevenueSummaryTests() {
   assert.match(categorySalesPanel, /Category sales performance/);
   assert.match(categorySalesPanel, /Units sold by category/);
   assert.match(categorySalesPanel, /Revenue by category/);
+  assert.match(advancedCohortPanel, /Aggregate customer cohort reporting/);
+  assert.match(advancedCohortPanel, /Average order value by cohort/);
+  assert.match(advancedCohortPanel, /Known-customer order-count bands/);
+  assert.match(advancedCohortPanel, /Known-customer recency bands/);
+  assert.match(advancedCohortPanel, /No aggregate cohort data is available/);
   assert.match(analyticsPage, /resolveAdminAnalyticsRange/);
   assert.match(analyticsPage, /name="start"/);
   assert.match(analyticsPage, /name="end"/);
+  assert.match(analyticsPage, /AdminAdvancedCustomerCohortAnalyticsPanel/);
+  assert.match(analyticsPage, /sectionHref\('customer-cohort-analytics', analyticsRange\)/);
   assert.match(analyticsPage, /productSalesAnalyticsService\.summary\(\{ analyticsRange \}\)/);
   assert.match(analyticsPage, /categorySalesAnalyticsService\.summary\(\{ analyticsRange \}\)/);
   assert.match(analyticsPage, /sectionHref\('product-sales-analytics', analyticsRange\)/);
@@ -265,6 +294,9 @@ export async function runOrderRevenueSummaryTests() {
   assert.match(exportRoute, /customer_cohorts/);
   assert.match(exportRoute, /known_customer_orders/);
   assert.match(exportRoute, /returning_known_customer_order_rate_percent/);
+  assert.match(exportRoute, /advanced_customer_cohorts/);
+  assert.match(exportRoute, /advanced_customer_order_count_bands/);
+  assert.match(exportRoute, /advanced_customer_recency_bands/);
   assert.match(exportRoute, /orderRevenueSummaryService\.summary\(\{ analyticsRange \}\)/);
   assert.match(panel, /summary\.comparison\.totalOrders/);
   assert.match(panel, /summary\.byFulfillmentStatus\.map/);
