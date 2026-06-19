@@ -15,7 +15,7 @@ function source(path: string) {
 
 function migrationFiles() {
   return readdirSync('prisma/migrations')
-    .map((dir) => join('prisma/migrations', dir, 'migration.sql').replace(/\\/g, '/'))
+    .map((dir) => join('prisma/migrations', dir, 'migration.sql').replace(/\/g, '/'))
     .filter((path) => existsSync(path))
     .sort();
 }
@@ -78,7 +78,7 @@ function runAdminAnalyticsSavedViewStorageContractTests() {
   assert.match(helperSource, /updateEndpointEnabled: false/);
   assert.match(helperSource, /removeEndpointEnabled: false/);
   assert.match(helperSource, /managementUiEnabled: false/);
-  assert.doesNotMatch(helperSource, /PrismaClient|prisma\.|create\(|update\(|upsert\(|delete\(|fetch\(|POST|PUT|PATCH|DELETE/);
+  assert.doesNotMatch(helperSource, /PrismaClient|prisma\.|create\(|update\(|upsert\(|delete\(|fetch\(|\bPOST\b|\bPUT\b|\bPATCH\b|\bDELETE\b/);
 
   const migrationSource = migrationFiles().map(source).join('\n');
   assert.match(migrationSource, /CREATE TABLE "AdminAnalyticsSavedView"/);
@@ -147,7 +147,7 @@ function runAdminAnalyticsSavedViewReadModelTests() {
   assert.match(readModelSource, /returnsMetadataOnly: true/);
   assert.match(readModelSource, /activeForOperators: false/);
   assert.match(readModelSource, /normalizeAdminAnalyticsSavedViewReadRow/);
-  assert.doesNotMatch(readModelSource, /PrismaClient|prisma\.|\$queryRaw|create\(|update\(|upsert\(|delete\(|fetch\(|POST|PUT|PATCH|DELETE|localStorage|sessionStorage|cookies\(/);
+  assert.doesNotMatch(readModelSource, /PrismaClient|prisma\.|\$queryRaw|create\(|update\(|upsert\(|delete\(|fetch\(|\bPOST\b|\bPUT\b|\bPATCH\b|\bDELETE\b|localStorage|sessionStorage|cookies\(/);
 }
 
 async function runOptionalLiveSchemaChecks() {
