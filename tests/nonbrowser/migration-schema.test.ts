@@ -7,6 +7,7 @@ import {
   normalizeAdminAnalyticsSavedViewReadRow
 } from '../../lib/analytics/admin-analytics-saved-view-read-model';
 import { buildAdminAnalyticsSavedViewStorageContract } from '../../lib/analytics/admin-analytics-saved-view-storage';
+import { buildAdminAnalyticsScheduledReportStorageContract } from '../../lib/analytics/admin-analytics-scheduled-report-storage';
 import { withIsolatedPrisma } from '../utils/isolated-test-db';
 
 function source(path: string) {
@@ -37,7 +38,8 @@ function runMigrationSourceCoverageTests() {
     'ApiTokenCredential',
     'DashboardExtensionMountPoint',
     'ImportExportJob',
-    'AdminAnalyticsSavedView'
+    'AdminAnalyticsSavedView',
+    'AdminAnalyticsScheduledReport'
   ];
   for (const table of tables) assert.match(content, new RegExp(`"${table}"`), `migration SQL should mention ${table}`);
 }
@@ -87,6 +89,64 @@ function runAdminAnalyticsSavedViewStorageContractTests() {
   assert.match(migrationSource, /"ownerApproved" BOOLEAN NOT NULL DEFAULT false/);
   assert.match(migrationSource, /"isActive" BOOLEAN NOT NULL DEFAULT false/);
   assert.match(migrationSource, /"AdminAnalyticsSavedView_viewKey_scope_key"/);
+}
+
+function runAdminAnalyticsScheduledReportStorageContractTests() {
+  const contract = buildAdminAnalyticsScheduledReportStorageContract();
+  assert.equal(contract.status, 'schema_foundation_only');
+  assert.equal(contract.tableName, 'AdminAnalyticsScheduledReport');
+  assert.equal(contract.enabled, false);
+  assert.equal(contract.schemaMigrationAdded, true);
+  assert.equal(contract.prismaRepositoryEnabled, false);
+  assert.equal(contract.readEndpointEnabled, false);
+  assert.equal(contract.saveEndpointEnabled, false);
+  assert.equal(contract.updateEndpointEnabled, false);
+  assert.equal(contract.removeEndpointEnabled, false);
+  assert.equal(contract.managementUiEnabled, false);
+  assert.equal(contract.deliveryEnabled, false);
+  assert.equal(contract.scheduleActivationEnabled, false);
+  assert.equal(contract.ownerApprovalRequired, true);
+  assert.equal(contract.ownerApprovalRecorded, false);
+  assert.equal(contract.dryRunEvidenceRequired, true);
+  assert.equal(contract.dryRunEvidenceRecorded, false);
+  assert.deepEqual(contract.allowedCadences, ['weekly', 'monthly']);
+  assert.deepEqual(contract.allowedReportTypes, ['business', 'site']);
+  assert.ok(contract.persistedFields.some((field) => field.name === 'rangeQuery' && field.required && field.persisted));
+  assert.ok(contract.persistedFields.some((field) => field.name === 'reportTypes' && field.required && field.persisted));
+  assert.ok(contract.persistedFields.some((field) => field.name === 'ownerApproved' && field.persisted));
+  assert.ok(contract.persistedFields.some((field) => field.name === 'isActive' && field.persisted));
+  assert.ok(contract.persistedFields.some((field) => field.name === 'deliveryEnabled' && field.persisted));
+  assert.ok(contract.blockedPayloadFields.includes('analytics rows'));
+  assert.ok(contract.blockedPayloadFields.includes('customer rows'));
+  assert.ok(contract.blockedPayloadFields.includes('raw event rows'));
+  assert.ok(contract.blockedPayloadFields.includes('delivery recipient lists'));
+  assert.ok(contract.activationBlockers.includes('repository not implemented'));
+  assert.ok(contract.activationBlockers.includes('delivery channel not configured'));
+  assert.ok(contract.activationBlockers.includes('global disable control not validated'));
+
+  const helperSource = source('lib/analytics/admin-analytics-scheduled-report-storage.ts');
+  assert.match(helperSource, /schema_foundation_only/);
+  assert.match(helperSource, /tableName: 'AdminAnalyticsScheduledReport'/);
+  assert.match(helperSource, /schemaMigrationAdded: true/);
+  assert.match(helperSource, /prismaRepositoryEnabled: false/);
+  assert.match(helperSource, /readEndpointEnabled: false/);
+  assert.match(helperSource, /saveEndpointEnabled: false/);
+  assert.match(helperSource, /updateEndpointEnabled: false/);
+  assert.match(helperSource, /removeEndpointEnabled: false/);
+  assert.match(helperSource, /managementUiEnabled: false/);
+  assert.match(helperSource, /deliveryEnabled: false/);
+  assert.match(helperSource, /scheduleActivationEnabled: false/);
+  assert.doesNotMatch(helperSource, /PrismaClient|prisma\.|\$queryRaw|create\(|update\(|upsert\(|delete\(|fetch\(|sendMail|transport|cron|schedule\.create|setInterval|setTimeout|\bPOST\b|\bPUT\b|\bPATCH\b|\bDELETE\b/);
+
+  const migrationSource = migrationFiles().map(source).join('\n');
+  assert.match(migrationSource, /CREATE TABLE "AdminAnalyticsScheduledReport"/);
+  assert.match(migrationSource, /"rangeQuery" TEXT NOT NULL/);
+  assert.match(migrationSource, /"reportTypes" JSONB NOT NULL DEFAULT '\["business", "site"\]'/);
+  assert.match(migrationSource, /"ownerApproved" BOOLEAN NOT NULL DEFAULT false/);
+  assert.match(migrationSource, /"isActive" BOOLEAN NOT NULL DEFAULT false/);
+  assert.match(migrationSource, /"deliveryEnabled" BOOLEAN NOT NULL DEFAULT false/);
+  assert.match(migrationSource, /"lastDryRunSummary" JSONB NOT NULL DEFAULT '\{\}'/);
+  assert.match(migrationSource, /"AdminAnalyticsScheduledReport_reportKey_cadence_key"/);
 }
 
 function runAdminAnalyticsSavedViewReadModelTests() {
@@ -168,6 +228,7 @@ export async function runMigrationSchemaTests() {
   runMigrationSourceCoverageTests();
   runAdminAnalyticsSavedViewStorageContractTests();
   runAdminAnalyticsSavedViewReadModelTests();
+  runAdminAnalyticsScheduledReportStorageContractTests();
   await runOptionalLiveSchemaChecks();
   console.log('migration-schema.test.ts passed');
 }
