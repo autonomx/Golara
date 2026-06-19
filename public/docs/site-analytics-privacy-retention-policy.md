@@ -18,6 +18,17 @@ Golara site analytics are first-party operational signals for understanding stor
 - Aggregate CSV exports and dashboard summaries: generated on demand from the selected range.
 - Long-lived business reporting should prefer aggregate summaries over raw event retention.
 
+## Cleanup readiness
+
+Automated raw-event deletion should remain disabled until production readiness gates are complete:
+
+- `DATABASE_URL` is configured in the target environment.
+- The `SiteAnalyticsEvent` migration has been applied in production.
+- `/admin/analytics` shows the retention status without missing-table warnings.
+- Stale raw-event counts have been reviewed by an owner/admin.
+- Analytics exports remain aggregate-only and do not expose raw visitor/session data.
+- Production migration evidence is captured before enabling scheduled deletion.
+
 ## Disable switch
 
 Set this storefront environment variable to disable first-party analytics reporting from the client:
