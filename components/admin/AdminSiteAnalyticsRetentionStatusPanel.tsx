@@ -9,7 +9,7 @@ const copy = {
   en: {
     eyebrow: 'Site analytics retention',
     title: 'Raw event retention status',
-    body: 'Read-only privacy operations status for the first-party site analytics table. Use this to confirm the migration is present and whether old raw events are past the retention target before adding an automated cleanup job.',
+    body: 'Read-only privacy operations status for the first-party site analytics table. Use this to confirm the migration is present, preview eligible stale events, and verify cleanup gates before any future deletion job is enabled.',
     databaseMissing: 'DATABASE_URL is not configured, so retention status cannot be checked yet.',
     tableMissing: 'Site analytics table is not available yet. Apply the site analytics migration before expecting events or retention counts.',
     ready: 'Site analytics table is available.',
@@ -23,7 +23,21 @@ const copy = {
     retentionTarget: 'Retention target',
     days: 'days',
     none: 'None yet',
-    cleanupPending: 'Automated cleanup is still planned. This panel is status-only and does not delete events.',
+    cleanupPending: 'Automated deletion remains disabled. This panel only previews stale raw-event eligibility and readiness gates.',
+    cleanupPreviewTitle: 'Cleanup preview',
+    cleanupPreviewBody: 'Preview-only estimate for raw events older than the retention cutoff. It does not delete events and stays blocked until production migration evidence is confirmed.',
+    cleanupEligible: 'Eligible stale events',
+    cleanupDeletion: 'Deletion action',
+    cleanupEvidence: 'Production evidence',
+    cleanupReason: 'Preview reason',
+    deletionOff: 'Disabled',
+    evidenceConfirmed: 'Confirmed',
+    evidenceMissing: 'Required',
+    reasonDatabase: 'Database connection required',
+    reasonTable: 'Site analytics table required',
+    reasonEvidence: 'Production evidence required',
+    reasonNoStale: 'No stale events to clean',
+    reasonReady: 'Ready for future guarded cleanup',
     readinessTitle: 'Cleanup readiness checklist',
     readinessBody: 'Use these checks before enabling any deletion job. Raw event cleanup must stay disabled until production migration and analytics-volume evidence are confirmed.',
     statusReady: 'Ready',
@@ -42,7 +56,7 @@ const copy = {
   fa: {
     eyebrow: 'نگهداری تحلیل سایت',
     title: 'وضعیت نگهداری رویداد خام',
-    body: 'وضعیت فقط‌خواندنی عملیات حریم خصوصی برای جدول تحلیل داخلی سایت. از این بخش برای بررسی وجود مهاجرت و رویدادهای خام قدیمی پیش از افزودن پاک‌سازی خودکار استفاده کنید.',
+    body: 'وضعیت فقط‌خواندنی عملیات حریم خصوصی برای جدول تحلیل داخلی سایت. از این بخش برای بررسی وجود مهاجرت، پیش‌نمایش رویدادهای خام قدیمی واجد شرایط، و بررسی دروازه‌های پاک‌سازی پیش از فعال‌سازی هر کار حذف آینده استفاده کنید.',
     databaseMissing: 'DATABASE_URL تنظیم نشده است، بنابراین وضعیت نگهداری هنوز قابل بررسی نیست.',
     tableMissing: 'جدول تحلیل سایت هنوز در دسترس نیست. پیش از انتظار رویداد یا شمارش نگهداری، مهاجرت تحلیل سایت را اعمال کنید.',
     ready: 'جدول تحلیل سایت در دسترس است.',
@@ -56,7 +70,21 @@ const copy = {
     retentionTarget: 'هدف نگهداری',
     days: 'روز',
     none: 'هنوز موردی نیست',
-    cleanupPending: 'پاک‌سازی خودکار هنوز در برنامه است. این پنل فقط وضعیت را نشان می‌دهد و رویدادی را حذف نمی‌کند.',
+    cleanupPending: 'حذف خودکار غیرفعال می‌ماند. این پنل فقط واجد شرایط بودن رویداد خام قدیمی و دروازه‌های آمادگی را پیش‌نمایش می‌کند.',
+    cleanupPreviewTitle: 'پیش‌نمایش پاک‌سازی',
+    cleanupPreviewBody: 'برآورد فقط‌خواندنی برای رویدادهای خام قدیمی‌تر از مرز نگهداری. رویدادی را حذف نمی‌کند و تا تأیید شواهد مهاجرت تولید مسدود می‌ماند.',
+    cleanupEligible: 'رویدادهای قدیمی واجد شرایط',
+    cleanupDeletion: 'اقدام حذف',
+    cleanupEvidence: 'شواهد تولید',
+    cleanupReason: 'دلیل پیش‌نمایش',
+    deletionOff: 'غیرفعال',
+    evidenceConfirmed: 'تأیید شده',
+    evidenceMissing: 'لازم است',
+    reasonDatabase: 'اتصال پایگاه داده لازم است',
+    reasonTable: 'جدول تحلیل سایت لازم است',
+    reasonEvidence: 'شواهد تولید لازم است',
+    reasonNoStale: 'رویداد قدیمی برای پاک‌سازی وجود ندارد',
+    reasonReady: 'آماده برای پاک‌سازی محافظت‌شده آینده',
     readinessTitle: 'چک‌لیست آمادگی پاک‌سازی',
     readinessBody: 'پیش از فعال‌کردن هر کار حذف، این بررسی‌ها را انجام دهید. پاک‌سازی رویداد خام باید تا تأیید مهاجرت تولید و شواهد حجم تحلیل غیرفعال بماند.',
     statusReady: 'آماده',
@@ -85,6 +113,21 @@ function formatDate(value: Date | null, locale: SupportedLocale | string | null 
     timeStyle: 'short',
     timeZone: 'UTC'
   }).format(value);
+}
+
+function cleanupReasonLabel(reason: SiteAnalyticsRetentionSummary['cleanupPreview']['reason'], labels: typeof copy.en) {
+  switch (reason) {
+    case 'database_not_configured':
+      return labels.reasonDatabase;
+    case 'table_unavailable':
+      return labels.reasonTable;
+    case 'production_evidence_required':
+      return labels.reasonEvidence;
+    case 'no_stale_events':
+      return labels.reasonNoStale;
+    case 'preview_ready':
+      return labels.reasonReady;
+  }
 }
 
 function StatusMetric({ label, value, tone = 'neutral' }: { label: string; value: string | number; tone?: 'neutral' | 'warning' | 'success' }) {
@@ -126,6 +169,7 @@ export async function AdminSiteAnalyticsRetentionStatusPanel({ summary }: { summ
       ? labels.tableMissing
       : labels.ready;
   const hasStaleEvents = summary.staleEventCount > 0;
+  const cleanupPreview = summary.cleanupPreview;
 
   const readinessItems = [
     {
@@ -150,8 +194,8 @@ export async function AdminSiteAnalyticsRetentionStatusPanel({ summary }: { summ
     },
     {
       label: labels.productionEvidence,
-      status: labels.statusReview,
-      tone: 'warning'
+      status: cleanupPreview.productionEvidenceConfirmed ? labels.statusReady : labels.statusReview,
+      tone: cleanupPreview.productionEvidenceConfirmed ? 'success' : 'warning'
     },
     {
       label: labels.aggregateOnly,
@@ -184,6 +228,16 @@ export async function AdminSiteAnalyticsRetentionStatusPanel({ summary }: { summ
         <StatusMetric label={labels.newest} value={formatDate(summary.newestEventAt, locale, labels.none)} />
         <StatusMetric label={labels.generated} value={formatDate(summary.generatedAt, locale, labels.none)} />
         <StatusMetric label={labels.retentionTarget} value={`${summary.retentionDays} ${labels.days}`} />
+      </div>
+      <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+        <h3 className="text-sm font-bold uppercase tracking-[0.14em] text-blue-900">{labels.cleanupPreviewTitle}</h3>
+        <p className="mt-2 text-sm leading-6 text-blue-950">{labels.cleanupPreviewBody}</p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <StatusMetric label={labels.cleanupEligible} value={cleanupPreview.eligibleEventCount} tone={cleanupPreview.eligibleEventCount > 0 ? 'warning' : 'neutral'} />
+          <StatusMetric label={labels.cleanupDeletion} value={cleanupPreview.deletionEnabled ? labels.statusReady : labels.deletionOff} tone="warning" />
+          <StatusMetric label={labels.cleanupEvidence} value={cleanupPreview.productionEvidenceConfirmed ? labels.evidenceConfirmed : labels.evidenceMissing} tone={cleanupPreview.productionEvidenceConfirmed ? 'success' : 'warning'} />
+          <StatusMetric label={labels.cleanupReason} value={cleanupReasonLabel(cleanupPreview.reason, labels)} tone={cleanupPreview.readyForFutureCleanup ? 'success' : 'warning'} />
+        </div>
       </div>
       <div className="mt-4 rounded-lg border border-stone-200 bg-stone-50 p-4">
         <h3 className="text-sm font-bold uppercase tracking-[0.14em] text-stone-800">{labels.readinessTitle}</h3>
