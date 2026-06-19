@@ -6,6 +6,7 @@ import { AdminOrderRevenueSummaryPanel } from '@/components/admin/AdminOrderReve
 import { AdminPageShell } from '@/components/admin/AdminPageShell';
 import { AdminProductSalesAnalyticsPanel } from '@/components/admin/AdminProductSalesAnalyticsPanel';
 import { AdminSiteAnalyticsPanel } from '@/components/admin/AdminSiteAnalyticsPanel';
+import { AdminSiteAnalyticsRetentionStatusPanel } from '@/components/admin/AdminSiteAnalyticsRetentionStatusPanel';
 import { ADMIN_ANALYTICS_RANGE_DAYS, normalizeAdminAnalyticsRangeDays } from '@/lib/analytics/admin-analytics-range';
 import { EMPTY_CATEGORY_SALES_ANALYTICS_SUMMARY, categorySalesAnalyticsService } from '@/lib/analytics/category-sales-analytics';
 import { requireAdminRouteSession } from '@/lib/admin-page-auth-boundary';
@@ -13,6 +14,7 @@ import { getAdminIdentity, isAdminAuthConfigured, isAdminAuthenticated } from '@
 import { EMPTY_ORDER_REVENUE_SUMMARY, orderRevenueSummaryService } from '@/lib/analytics/order-revenue-summary';
 import { EMPTY_PRODUCT_SALES_ANALYTICS_SUMMARY, productSalesAnalyticsService } from '@/lib/analytics/product-sales-analytics';
 import { EMPTY_SITE_ANALYTICS_SUMMARY, siteAnalyticsSummaryService } from '@/lib/analytics/site-analytics-summary';
+import { emptySiteAnalyticsRetentionSummary, siteAnalyticsRetentionService } from '@/lib/analytics/site-analytics-retention';
 import { listAdminCategories, listAdminProducts, listMedia } from '@/lib/cms/catalog-repository';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import type { SupportedLocale } from '@/lib/i18n/locales';
@@ -51,6 +53,7 @@ const copy = {
     categorySales: 'Category sales',
     siteFunnel: 'Site funnel',
     privacyControls: 'Privacy',
+    retentionStatus: 'Retention status',
     productPerformance: 'Products',
     inventoryPressure: 'Inventory',
     fulfillmentOps: 'Fulfillment',
@@ -86,6 +89,7 @@ const copy = {
     categorySales: 'فروش دسته‌بندی',
     siteFunnel: 'قیف سایت',
     privacyControls: 'حریم خصوصی',
+    retentionStatus: 'وضعیت نگهداری',
     productPerformance: 'محصولات',
     inventoryPressure: 'موجودی',
     fulfillmentOps: 'ارسال',
@@ -131,6 +135,7 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
     { href: sectionHref('category-sales-analytics', rangeDays), label: labels.categorySales },
     { href: sectionHref('site-analytics', rangeDays), label: labels.siteFunnel },
     { href: sectionHref('analytics-privacy-retention', rangeDays), label: labels.privacyControls },
+    { href: sectionHref('site-analytics-retention-status', rangeDays), label: labels.retentionStatus },
     { href: sectionHref('product-analytics', rangeDays), label: labels.productPerformance },
     { href: sectionHref('inventory-analytics', rangeDays), label: labels.inventoryPressure },
     { href: sectionHref('fulfillment-analytics', rangeDays), label: labels.fulfillmentOps },
@@ -148,7 +153,8 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
     orderRevenueSummary,
     productSalesAnalyticsSummary,
     categorySalesAnalyticsSummary,
-    siteAnalyticsSummary
+    siteAnalyticsSummary,
+    siteAnalyticsRetentionSummary
   ] = await Promise.all([
     listAdminProducts(),
     listAdminCategories(),
@@ -156,7 +162,8 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
     authenticated ? orderRevenueSummaryService.summary({ rangeDays }) : Promise.resolve({ ...EMPTY_ORDER_REVENUE_SUMMARY, analyticsRangeDays: rangeDays }),
     authenticated ? productSalesAnalyticsService.summary({ rangeDays }) : Promise.resolve({ ...EMPTY_PRODUCT_SALES_ANALYTICS_SUMMARY, analyticsRangeDays: rangeDays }),
     authenticated ? categorySalesAnalyticsService.summary({ rangeDays }) : Promise.resolve({ ...EMPTY_CATEGORY_SALES_ANALYTICS_SUMMARY, analyticsRangeDays: rangeDays }),
-    authenticated ? siteAnalyticsSummaryService.summary({ rangeDays }) : Promise.resolve({ ...EMPTY_SITE_ANALYTICS_SUMMARY, analyticsRangeDays: rangeDays })
+    authenticated ? siteAnalyticsSummaryService.summary({ rangeDays }) : Promise.resolve({ ...EMPTY_SITE_ANALYTICS_SUMMARY, analyticsRangeDays: rangeDays }),
+    authenticated ? siteAnalyticsRetentionService.summary() : Promise.resolve(emptySiteAnalyticsRetentionSummary())
   ]);
 
   return (
@@ -262,6 +269,7 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
         <AdminProductSalesAnalyticsPanel summary={productSalesAnalyticsSummary} />
         <AdminCategorySalesAnalyticsPanel summary={categorySalesAnalyticsSummary} />
         <AdminSiteAnalyticsPanel summary={siteAnalyticsSummary} />
+        <AdminSiteAnalyticsRetentionStatusPanel summary={siteAnalyticsRetentionSummary} />
       </div>
     </AdminPageShell>
   );
