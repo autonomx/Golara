@@ -18,7 +18,7 @@ This document summarizes the `/admin/analytics` workspace status.
 - Site analytics event foundation with privacy-safe first-party events.
 - Traffic attribution using capped UTM fields and external referrer domains.
 - Owner-only aggregate Business CSV and Site CSV exports.
-- Scheduled report preview, configuration-plan foundation, and inactive storage table using the selected analytics range and aggregate Business/Site CSV paths.
+- Scheduled report preview, configuration-plan foundation, inactive storage table, and metadata-only read-model foundation using the selected analytics range and aggregate Business/Site CSV paths.
 - Saved dashboard view preset preview, persistence-plan foundation, inactive storage table, and metadata-only read-model foundation for future saves.
 - Dashboard group header UI using the selected range and existing section anchors.
 - Privacy and retention policy visibility.
@@ -30,7 +30,7 @@ This document summarizes the `/admin/analytics` workspace status.
 
 - Automated raw site-event deletion after production migration evidence and cleanup preview evidence are verified.
 - Future customer segmentation beyond aggregate order-count and recency bands, only after a separate privacy review.
-- Scheduled report repository paths, delivery execution, retry visibility, owner approval recording, global disable controls, and owner management UI.
+- Scheduled report active repository paths, delivery execution, retry visibility, owner approval recording, global disable controls, and owner management UI.
 - Saved dashboard active save/update/remove/read endpoints, owner approval recording, role-policy enforcement, active repository access, and owner/staff management UI.
 - Collapsible dashboard groups or tabbed workspace behavior.
 
@@ -40,7 +40,7 @@ Advanced customer cohort reporting is aggregate-only. It shows AOV/share buckets
 
 ## Scheduled report configuration note
 
-The scheduled report foundation includes preview metadata, configuration-plan metadata, and inactive `AdminAnalyticsScheduledReport` storage. It defines weekly and monthly owner report options, selected-range metadata, aggregate Business/Site CSV paths, owner-approval requirements, metadata-only future schedule fields, and activation blockers without saving active schedules or enabling delivery.
+The scheduled report foundation includes preview metadata, configuration-plan metadata, inactive `AdminAnalyticsScheduledReport` storage, and a metadata-only read-model foundation. It defines weekly and monthly owner report options, selected-range metadata, aggregate Business/Site CSV paths, owner-approval requirements, metadata-only future schedule fields, safe DTO normalization, and activation blockers without saving active schedules, reading through active repositories, or enabling delivery.
 
 ## Saved dashboard view storage note
 
@@ -64,6 +64,6 @@ Before treating site analytics as complete in production, verify:
 8. Custom preset and start/end ranges produce matching dashboard, section-link, and export windows.
 9. Customer cohort panels and CSV rows remain aggregate-only.
 10. Advanced cohort panels and CSV rows show only aggregate AOV/share/order-count/recency bands.
-11. Scheduled report previews, config plans, and inactive storage table preserve the selected range and aggregate Business/Site CSV paths without enabling delivery.
+11. Scheduled report previews, config plans, inactive storage table, and read model preserve the selected range and aggregate Business/Site CSV paths without enabling delivery.
 12. Saved dashboard view presets, persistence plans, storage table, and read model preserve selected range metadata, existing section anchors, allowed scopes, blocked fields, disabled endpoints, inactive activation flags, and metadata-only DTOs.
 13. Dashboard group headers preserve selected range links, the section index, existing anchors, and table fallback requirements without enabling collapsible groups or tabs.
