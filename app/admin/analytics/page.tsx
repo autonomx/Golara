@@ -7,7 +7,12 @@ import { AdminPageShell } from '@/components/admin/AdminPageShell';
 import { AdminProductSalesAnalyticsPanel } from '@/components/admin/AdminProductSalesAnalyticsPanel';
 import { AdminSiteAnalyticsPanel } from '@/components/admin/AdminSiteAnalyticsPanel';
 import { AdminSiteAnalyticsRetentionStatusPanel } from '@/components/admin/AdminSiteAnalyticsRetentionStatusPanel';
-import { ADMIN_ANALYTICS_RANGE_DAYS, normalizeAdminAnalyticsRangeDays } from '@/lib/analytics/admin-analytics-range';
+import {
+  ADMIN_ANALYTICS_RANGE_DAYS,
+  adminAnalyticsRangeQueryString,
+  resolveAdminAnalyticsRange,
+  type AdminAnalyticsResolvedRange
+} from '@/lib/analytics/admin-analytics-range';
 import { EMPTY_CATEGORY_SALES_ANALYTICS_SUMMARY, categorySalesAnalyticsService } from '@/lib/analytics/category-sales-analytics';
 import { requireAdminRouteSession } from '@/lib/admin-page-auth-boundary';
 import { getAdminIdentity, isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
@@ -36,22 +41,28 @@ const copy = {
     rangeActiveLabel: 'Selected range',
     rangeActiveBody: 'Charts, section links, and CSV exports use this selected reporting window.',
     rangeSuffix: 'days',
+    customRangeEyebrow: 'Custom range',
+    customRangeBody: 'Use exact UTC start and end dates when preset ranges are not specific enough.',
+    customStartLabel: 'Start date',
+    customEndLabel: 'End date',
+    customApply: 'Apply custom range',
+    customHint: 'Dates must use YYYY-MM-DD. Invalid or reversed dates fall back to the default preset.',
     exportEyebrow: 'CSV exports',
-    exportBody: 'Download aggregate analytics for the selected range. Exports use summaries and charts only; raw visitor sessions are not exported.',
+    exportBody: 'Download aggregate analytics for the selected range. Exports use the same summaries and charts shown on this page.',
     exportOwnerOnly: 'CSV exports are owner-only. Staff can view operational analytics here, but export links are hidden until an owner session is active.',
     businessCsv: 'Download business CSV',
     siteCsv: 'Download site CSV',
     privacyEyebrow: 'Privacy and retention',
-    privacyBody: 'First-party site analytics stay operational and privacy-safe: admin/API routes are excluded, Do Not Track is honored, exports remain aggregate-only, and raw event retention should stay limited.',
+    privacyBody: 'First-party site analytics stay operational and privacy-safe: admin/API routes are excluded, Do Not Track is honored, exports remain aggregate-only, and event retention should stay limited.',
     privacyDoc: 'Read privacy and retention policy',
     disableLabel: 'Disable storefront analytics with NEXT_PUBLIC_SITE_ANALYTICS_ENABLED=false.',
-    retentionLabel: 'Retention target: raw site events up to 180 days; prefer aggregate summaries for long-lived reporting.',
+    retentionLabel: 'Retention target: site events up to 180 days; prefer aggregate summaries for long-lived reporting.',
     roleEyebrow: 'Role-aware visibility',
-    roleOwnerBody: 'Owner session: full analytics visibility, aggregate CSV exports, privacy guidance, and raw-event retention status are available.',
-    roleStaffBody: 'Staff session: operational analytics remain visible, while owner-only exports and raw-event retention details are hidden.',
+    roleOwnerBody: 'Owner session: full analytics visibility, aggregate CSV exports, privacy guidance, and event-retention status are available.',
+    roleStaffBody: 'Staff session: operational analytics remain visible, while owner-only exports and retention details are hidden.',
     roleOwnerBadge: 'Owner controls active',
     roleStaffBadge: 'Staff view',
-    retentionOwnerOnly: 'Raw-event retention status is owner-only. Staff can still review aggregate business and site analytics, but retention diagnostics require an owner session.',
+    retentionOwnerOnly: 'Event-retention status is owner-only. Staff can still review aggregate business and site analytics, but retention diagnostics require an owner session.',
     sectionEyebrow: 'Analytics sections',
     sectionBody: 'Jump directly to the analytics area you need instead of scrolling through the full workspace.',
     sectionLabel: 'Jump to analytics section',
@@ -81,22 +92,28 @@ const copy = {
     rangeActiveLabel: 'بازه انتخاب‌شده',
     rangeActiveBody: 'نمودارها، لینک‌های بخش‌ها و خروجی‌های CSV از همین بازه گزارش استفاده می‌کنند.',
     rangeSuffix: 'روز',
+    customRangeEyebrow: 'بازه سفارشی',
+    customRangeBody: 'وقتی بازه‌های آماده کافی نیستند، تاریخ شروع و پایان UTC را دقیق وارد کنید.',
+    customStartLabel: 'تاریخ شروع',
+    customEndLabel: 'تاریخ پایان',
+    customApply: 'اعمال بازه سفارشی',
+    customHint: 'تاریخ‌ها باید با قالب YYYY-MM-DD باشند. تاریخ نامعتبر یا وارونه به بازه پیش‌فرض برمی‌گردد.',
     exportEyebrow: 'خروجی CSV',
-    exportBody: 'تحلیل‌های تجمیعی بازه انتخاب‌شده را دانلود کنید. خروجی‌ها فقط از خلاصه‌ها و نمودارها استفاده می‌کنند و نشست خام بازدیدکننده صادر نمی‌شود.',
+    exportBody: 'تحلیل‌های تجمیعی بازه انتخاب‌شده را دانلود کنید. خروجی‌ها از همان خلاصه‌ها و نمودارهای این صفحه استفاده می‌کنند.',
     exportOwnerOnly: 'خروجی CSV فقط برای مالک است. کارکنان می‌توانند تحلیل‌های عملیاتی را ببینند، اما لینک‌های خروجی تا زمان ورود مالک پنهان می‌مانند.',
     businessCsv: 'دانلود CSV کسب‌وکار',
     siteCsv: 'دانلود CSV سایت',
     privacyEyebrow: 'حریم خصوصی و نگهداری',
-    privacyBody: 'تحلیل داخلی سایت عملیاتی و حریم‌خصوصی‌محور می‌ماند: مسیرهای مدیریت و API ثبت نمی‌شوند، Do Not Track رعایت می‌شود، خروجی‌ها تجمیعی هستند و نگهداری رویداد خام باید محدود بماند.',
+    privacyBody: 'تحلیل داخلی سایت عملیاتی و حریم‌خصوصی‌محور می‌ماند: مسیرهای مدیریت و API ثبت نمی‌شوند، Do Not Track رعایت می‌شود، خروجی‌ها تجمیعی هستند و نگهداری رویداد باید محدود بماند.',
     privacyDoc: 'خواندن سیاست حریم خصوصی و نگهداری',
     disableLabel: 'برای غیرفعال‌کردن تحلیل سایت، NEXT_PUBLIC_SITE_ANALYTICS_ENABLED=false را تنظیم کنید.',
-    retentionLabel: 'هدف نگهداری: رویداد خام سایت حداکثر تا ۱۸۰ روز؛ برای گزارش‌های بلندمدت از خلاصه‌های تجمیعی استفاده شود.',
+    retentionLabel: 'هدف نگهداری: رویدادهای سایت حداکثر تا ۱۸۰ روز؛ برای گزارش‌های بلندمدت از خلاصه‌های تجمیعی استفاده شود.',
     roleEyebrow: 'نمایش بر اساس نقش',
-    roleOwnerBody: 'نشست مالک: دسترسی کامل به تحلیل‌ها، خروجی‌های CSV تجمیعی، راهنمای حریم خصوصی و وضعیت نگهداری رویداد خام فعال است.',
-    roleStaffBody: 'نشست کارکنان: تحلیل عملیاتی قابل مشاهده است، اما خروجی‌های مالک و جزئیات نگهداری رویداد خام پنهان می‌مانند.',
+    roleOwnerBody: 'نشست مالک: دسترسی کامل به تحلیل‌ها، خروجی‌های CSV تجمیعی، راهنمای حریم خصوصی و وضعیت نگهداری رویداد فعال است.',
+    roleStaffBody: 'نشست کارکنان: تحلیل عملیاتی قابل مشاهده است، اما خروجی‌های مالک و جزئیات نگهداری پنهان می‌مانند.',
     roleOwnerBadge: 'کنترل مالک فعال',
     roleStaffBadge: 'نمای کارکنان',
-    retentionOwnerOnly: 'وضعیت نگهداری رویداد خام فقط برای مالک است. کارکنان همچنان می‌توانند تحلیل‌های تجمیعی کسب‌وکار و سایت را ببینند، اما تشخیص‌های نگهداری نیازمند نشست مالک است.',
+    retentionOwnerOnly: 'وضعیت نگهداری رویداد فقط برای مالک است. کارکنان همچنان می‌توانند تحلیل‌های تجمیعی کسب‌وکار و سایت را ببینند، اما تشخیص‌های نگهداری نیازمند نشست مالک است.',
     sectionEyebrow: 'بخش‌های تحلیل',
     sectionBody: 'بدون پیمایش کل صفحه، مستقیم به بخش تحلیلی موردنیاز بروید.',
     sectionLabel: 'رفتن به بخش تحلیل',
@@ -129,12 +146,16 @@ function rangeHref(days: number) {
   return `/admin/analytics?range=${days}`;
 }
 
-function exportHref(report: 'business' | 'site', days: number) {
-  return `/admin/analytics/export?report=${report}&range=${days}`;
+function analyticsHref(range: AdminAnalyticsResolvedRange, extra: Record<string, string> = {}) {
+  return `/admin/analytics?${adminAnalyticsRangeQueryString(range, extra)}`;
 }
 
-function sectionHref(anchor: string, days: number) {
-  return `${rangeHref(days)}#${anchor}`;
+function exportHref(report: 'business' | 'site', range: AdminAnalyticsResolvedRange) {
+  return `/admin/analytics/export?${adminAnalyticsRangeQueryString(range, { report })}`;
+}
+
+function sectionHref(anchor: string, range: AdminAnalyticsResolvedRange) {
+  return `${analyticsHref(range)}#${anchor}`;
 }
 
 export default async function AdminAnalyticsPage({ searchParams }: { searchParams?: Promise<SearchParams> }) {
@@ -143,23 +164,28 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
   const locale = await resolveStorefrontLocale();
   const labels = copy[localeKey(locale)];
   const params = searchParams ? await searchParams : {};
-  const rangeDays = normalizeAdminAnalyticsRangeDays(firstParam(params.range));
-  const returnTo = rangeHref(rangeDays);
+  const analyticsRange = resolveAdminAnalyticsRange(new Date(), {
+    range: firstParam(params.range),
+    start: firstParam(params.start),
+    end: firstParam(params.end)
+  });
+  const rangeDays = analyticsRange.rangeDays;
+  const returnTo = analyticsHref(analyticsRange);
   const sectionLinks = [
-    { href: sectionHref('analytics-guidance', rangeDays), label: labels.guidanceCenter },
-    { href: sectionHref('order-analytics', rangeDays), label: labels.businessSummary },
-    { href: sectionHref('business-analytics-charts', rangeDays), label: labels.businessCharts },
-    { href: sectionHref('product-sales-analytics', rangeDays), label: labels.productSales },
-    { href: sectionHref('category-sales-analytics', rangeDays), label: labels.categorySales },
-    { href: sectionHref('site-analytics', rangeDays), label: labels.siteFunnel },
-    { href: sectionHref('analytics-privacy-retention', rangeDays), label: labels.privacyControls },
-    { href: sectionHref('site-analytics-retention-status', rangeDays), label: labels.retentionStatus },
-    { href: sectionHref('product-analytics', rangeDays), label: labels.productPerformance },
-    { href: sectionHref('inventory-analytics', rangeDays), label: labels.inventoryPressure },
-    { href: sectionHref('fulfillment-analytics', rangeDays), label: labels.fulfillmentOps },
-    { href: sectionHref('payment-analytics', rangeDays), label: labels.paymentAlerts },
-    { href: sectionHref('inquiry-operations', rangeDays), label: labels.inquiryOps },
-    { href: sectionHref('readiness-analytics', rangeDays), label: labels.readinessHealth }
+    { href: sectionHref('analytics-guidance', analyticsRange), label: labels.guidanceCenter },
+    { href: sectionHref('order-analytics', analyticsRange), label: labels.businessSummary },
+    { href: sectionHref('business-analytics-charts', analyticsRange), label: labels.businessCharts },
+    { href: sectionHref('product-sales-analytics', analyticsRange), label: labels.productSales },
+    { href: sectionHref('category-sales-analytics', analyticsRange), label: labels.categorySales },
+    { href: sectionHref('site-analytics', analyticsRange), label: labels.siteFunnel },
+    { href: sectionHref('analytics-privacy-retention', analyticsRange), label: labels.privacyControls },
+    { href: sectionHref('site-analytics-retention-status', analyticsRange), label: labels.retentionStatus },
+    { href: sectionHref('product-analytics', analyticsRange), label: labels.productPerformance },
+    { href: sectionHref('inventory-analytics', analyticsRange), label: labels.inventoryPressure },
+    { href: sectionHref('fulfillment-analytics', analyticsRange), label: labels.fulfillmentOps },
+    { href: sectionHref('payment-analytics', analyticsRange), label: labels.paymentAlerts },
+    { href: sectionHref('inquiry-operations', analyticsRange), label: labels.inquiryOps },
+    { href: sectionHref('readiness-analytics', analyticsRange), label: labels.readinessHealth }
   ];
   const authenticated = await isAdminAuthenticated();
   const authConfigured = isAdminAuthConfigured();
@@ -178,10 +204,10 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
     listAdminProducts(),
     listAdminCategories(),
     listMedia(),
-    authenticated ? orderRevenueSummaryService.summary({ rangeDays }) : Promise.resolve({ ...EMPTY_ORDER_REVENUE_SUMMARY, analyticsRangeDays: rangeDays }),
-    authenticated ? productSalesAnalyticsService.summary({ rangeDays }) : Promise.resolve({ ...EMPTY_PRODUCT_SALES_ANALYTICS_SUMMARY, analyticsRangeDays: rangeDays }),
-    authenticated ? categorySalesAnalyticsService.summary({ rangeDays }) : Promise.resolve({ ...EMPTY_CATEGORY_SALES_ANALYTICS_SUMMARY, analyticsRangeDays: rangeDays }),
-    authenticated ? siteAnalyticsSummaryService.summary({ rangeDays }) : Promise.resolve({ ...EMPTY_SITE_ANALYTICS_SUMMARY, analyticsRangeDays: rangeDays }),
+    authenticated ? orderRevenueSummaryService.summary({ analyticsRange }) : Promise.resolve({ ...EMPTY_ORDER_REVENUE_SUMMARY, analyticsRangeDays: rangeDays, analyticsRangeLabel: analyticsRange.label, analyticsRangeMode: analyticsRange.mode, analyticsRangeStart: analyticsRange.startDate, analyticsRangeEnd: analyticsRange.endDate }),
+    authenticated ? productSalesAnalyticsService.summary({ analyticsRange }) : Promise.resolve({ ...EMPTY_PRODUCT_SALES_ANALYTICS_SUMMARY, analyticsRangeDays: rangeDays, analyticsRangeLabel: analyticsRange.label, analyticsRangeMode: analyticsRange.mode, analyticsRangeStart: analyticsRange.startDate, analyticsRangeEnd: analyticsRange.endDate }),
+    authenticated ? categorySalesAnalyticsService.summary({ analyticsRange }) : Promise.resolve({ ...EMPTY_CATEGORY_SALES_ANALYTICS_SUMMARY, analyticsRangeDays: rangeDays, analyticsRangeLabel: analyticsRange.label, analyticsRangeMode: analyticsRange.mode, analyticsRangeStart: analyticsRange.startDate, analyticsRangeEnd: analyticsRange.endDate }),
+    authenticated ? siteAnalyticsSummaryService.summary({ analyticsRange }) : Promise.resolve({ ...EMPTY_SITE_ANALYTICS_SUMMARY, analyticsRangeDays: rangeDays, analyticsRangeLabel: analyticsRange.label, analyticsRangeMode: analyticsRange.mode, analyticsRangeStart: analyticsRange.startDate, analyticsRangeEnd: analyticsRange.endDate }),
     authenticated && ownerOnlyAnalyticsControls ? siteAnalyticsRetentionService.summary() : Promise.resolve(emptySiteAnalyticsRetentionSummary())
   ]);
 
@@ -222,12 +248,12 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
               </span>
             </div>
           </div>
-          <div className="mt-4 rounded-lg border border-olive/20 bg-olive/5 p-4">
+          <div id="analytics-range" className="mt-4 scroll-mt-24 rounded-lg border border-olive/20 bg-olive/5 p-4">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-olive">{labels.rangeEyebrow}</p>
             <p className="mt-1 text-sm leading-6 text-stone-600">{labels.rangeBody}</p>
             <div className="mt-3 flex flex-wrap gap-2" aria-label={labels.rangeEyebrow}>
               {ADMIN_ANALYTICS_RANGE_DAYS.map((days) => {
-                const active = days === rangeDays;
+                const active = analyticsRange.mode === 'preset' && days === rangeDays;
                 return (
                   <Link
                     key={days}
@@ -242,9 +268,37 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
                 );
               })}
             </div>
+            <form action="/admin/analytics" className="mt-4 rounded-lg border border-stone-200 bg-white p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">{labels.customRangeEyebrow}</p>
+              <p className="mt-1 text-sm leading-6 text-stone-600">{labels.customRangeBody}</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+                <label className="grid gap-1 text-sm font-semibold text-stone-700">
+                  {labels.customStartLabel}
+                  <input
+                    type="date"
+                    name="start"
+                    defaultValue={analyticsRange.query.start ?? ''}
+                    className="rounded-md border border-stone-300 px-3 py-2 text-sm font-normal text-stone-900"
+                  />
+                </label>
+                <label className="grid gap-1 text-sm font-semibold text-stone-700">
+                  {labels.customEndLabel}
+                  <input
+                    type="date"
+                    name="end"
+                    defaultValue={analyticsRange.query.end ?? ''}
+                    className="rounded-md border border-stone-300 px-3 py-2 text-sm font-normal text-stone-900"
+                  />
+                </label>
+                <button type="submit" className="rounded-full bg-olive px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-olive/90">
+                  {labels.customApply}
+                </button>
+              </div>
+              <p className="mt-2 text-xs leading-5 text-stone-500">{labels.customHint}</p>
+            </form>
             <p className="mt-3 rounded-md border border-olive/20 bg-white px-4 py-3 text-sm leading-6 text-stone-700">
               <span className="font-bold text-stone-950">{labels.rangeActiveLabel}: </span>
-              {rangeDays} {labels.rangeSuffix}. {labels.rangeActiveBody}
+              {analyticsRange.label}. {labels.rangeActiveBody}
             </p>
           </div>
           <div id="analytics-csv-exports" className="mt-4 rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
@@ -253,13 +307,13 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
             {ownerOnlyAnalyticsControls ? (
               <div className="mt-3 flex flex-wrap gap-2" aria-label={labels.exportEyebrow}>
                 <Link
-                  href={exportHref('business', rangeDays)}
+                  href={exportHref('business', analyticsRange)}
                   className="rounded-full border border-olive bg-white px-4 py-2 text-sm font-bold text-olive hover:bg-olive hover:text-white"
                 >
                   {labels.businessCsv}
                 </Link>
                 <Link
-                  href={exportHref('site', rangeDays)}
+                  href={exportHref('site', analyticsRange)}
                   className="rounded-full border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-700 hover:border-olive hover:text-olive"
                 >
                   {labels.siteCsv}
