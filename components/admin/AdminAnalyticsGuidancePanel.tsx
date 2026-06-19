@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 import type { CategorySalesAnalyticsSummary } from '@/lib/analytics/category-sales-analytics';
 import type { OrderRevenueSummary } from '@/lib/analytics/order-revenue-summary';
 import type { ProductSalesAnalyticsSummary } from '@/lib/analytics/product-sales-analytics';
@@ -24,6 +26,10 @@ const copy = {
     orderAction: 'Create or import checkout orders to populate business charts.',
     siteAction: 'Visit storefront product/category/checkout paths with analytics enabled to populate site charts.',
     salesAction: 'Complete eligible product orders to populate product and category sales charts.',
+    exportTitle: 'Using CSV exports',
+    exportBody: 'Owner CSV exports are designed for reporting and reconciliation. Use Business CSV for order, revenue, product, category, payment, discount, and operations summaries. Use Site CSV for aggregate traffic, funnel, attribution, product-view, category-view, and search signals.',
+    exportSafety: 'Exports stay aggregate-only: they do not include raw visitor sessions, full referrer URLs, or raw analytics event payloads.',
+    checklistLabel: 'Open analytics operator checklist',
     statusTitle: 'Analytics implementation status',
     liveLabel: 'Live now',
     pendingLabel: 'Planned next',
@@ -55,6 +61,10 @@ const copy = {
     orderAction: 'برای پر شدن نمودارهای کسب‌وکار، سفارش‌های پرداخت ایجاد یا وارد کنید.',
     siteAction: 'برای پر شدن نمودارهای سایت، مسیرهای محصول/دسته/پرداخت فروشگاه را با تحلیل فعال بازدید کنید.',
     salesAction: 'برای پر شدن نمودارهای فروش، سفارش‌های محصول معتبر را تکمیل کنید.',
+    exportTitle: 'استفاده از خروجی‌های CSV',
+    exportBody: 'خروجی‌های CSV مالک برای گزارش‌گیری و تطبیق هستند. از CSV کسب‌وکار برای خلاصه سفارش، درآمد، محصول، دسته‌بندی، پرداخت، تخفیف و عملیات استفاده کنید. از CSV سایت برای سیگنال‌های تجمیعی ترافیک، قیف، انتساب، بازدید محصول، بازدید دسته‌بندی و جست‌وجو استفاده کنید.',
+    exportSafety: 'خروجی‌ها فقط تجمیعی می‌مانند: نشست خام بازدیدکننده، URL کامل ارجاع‌دهنده یا payload خام رویداد تحلیل صادر نمی‌شود.',
+    checklistLabel: 'باز کردن چک‌لیست عملیاتی تحلیل‌ها',
     statusTitle: 'وضعیت پیاده‌سازی تحلیل‌ها',
     liveLabel: 'اکنون فعال',
     pendingLabel: 'برنامه بعدی',
@@ -151,6 +161,17 @@ export async function AdminAnalyticsGuidancePanel({
             <li>{labels.salesAction}</li>
           </ul>
         </div>
+      </div>
+      <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+        <h3 className="text-sm font-bold text-blue-950">{labels.exportTitle}</h3>
+        <p className="mt-2 text-sm leading-6 text-blue-950">{labels.exportBody}</p>
+        <p className="mt-2 text-sm leading-6 text-blue-950">{labels.exportSafety}</p>
+        <Link
+          href="/docs/admin-analytics-operator-checklist.md"
+          className="mt-3 inline-flex rounded-full border border-blue-300 bg-white px-4 py-2 text-sm font-bold text-blue-800 hover:bg-blue-100"
+        >
+          {labels.checklistLabel}
+        </Link>
       </div>
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <div className="rounded-lg border border-stone-200 bg-white p-4">
