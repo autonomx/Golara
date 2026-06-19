@@ -91,6 +91,6 @@ export async function runScheduledReportRepositoryReadTests() {
   assert.match(repositorySource, /managementUiEnabled: false/);
   assert.match(repositorySource, /deliveryExecutionEnabled: false/);
   assert.doesNotMatch(repositorySource, /PrismaClient|prisma\.|
-    \$queryRaw|create\(|update\(|upsert\(|delete\(|fetch\(|sendMail|transport|cron|schedule\.create|setInterval|setTimeout|\bPOST\b|\bPUT\b|\bPATCH\b|\bDELETE\b|localStorage|sessionStorage|cookies\(/x);
+  \$queryRaw|create\(|update\(|upsert\(|delete\(|fetch\(|sendMail|transport|cron|schedule\.create|setInterval|setTimeout|\bPOST\b|\bPUT\b|\bPATCH\b|\bDELETE\b|localStorage|sessionStorage|cookies\(/);
   console.log('scheduled-report-repository-read.test.ts passed');
 }
