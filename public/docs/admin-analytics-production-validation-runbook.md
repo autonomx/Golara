@@ -20,7 +20,8 @@ Use this checklist after deployment before relying on `/admin/analytics` for ope
 - Saved view presets preserve the selected range and existing section anchors.
 - Saved view persistence plans expose allowed scopes, metadata-only required fields, blocked fields, owner approval required, and owner approval not recorded.
 - Saved view storage schema exists for metadata-only records and keeps owner approval plus active state disabled by default.
-- Saved view save/update/remove endpoints, repository access, and management UI remain disabled.
+- Saved view read model returns metadata-only DTOs and keeps operator activation disabled.
+- Saved view save/update/remove/read endpoints, active repository access, and management UI remain disabled.
 - The site analytics event table is available in production.
 - Storefront product, category, search, cart, checkout, payment method, and order-confirmation activity appears in the selected range.
 - Business/order charts update after eligible checkout orders exist.
@@ -64,6 +65,7 @@ Record one validation note per pass:
 - Saved view preset preview checked:
 - Saved view persistence plan checked:
 - Saved view storage schema checked:
+- Saved view read model checked:
 - Saved view storage table:
 - Saved view allowed scopes checked:
 - Saved view metadata-only fields checked:
@@ -71,7 +73,9 @@ Record one validation note per pass:
 - Saved view owner approval required:
 - Saved view owner approval recorded:
 - Saved view active flag disabled:
+- Saved view read model operator activation disabled:
 - Saved view repository disabled:
+- Saved view read endpoint disabled:
 - Saved view endpoints disabled:
 - Saved view management UI disabled:
 - Saved view selected range preserved:
@@ -96,4 +100,4 @@ An empty panel is acceptable when the selected range has no matching traffic, or
 
 ## Privacy expectations
 
-Analytics must stay first-party and aggregate-only. Admin and API routes should not be tracked, browser Do Not Track should be respected, advanced cohort reporting should remain limited to aggregate AOV/share/order-count/recency buckets, scheduled report config plans should remain inactive until owner approval, dry-run evidence, delivery controls, and schedule storage exist, saved view persistence plans and storage schema should remain inactive until owner approval recording, role policy, endpoints, repository access, and management UI exist, dashboard group headers should stay static until collapsible groups or tabs are validated separately, and raw event cleanup should remain preview-only until a separate guarded cleanup process is shipped after production evidence exists.
+Analytics must stay first-party and aggregate-only. Admin and API routes should not be tracked, browser Do Not Track should be respected, advanced cohort reporting should remain limited to aggregate AOV/share/order-count/recency buckets, scheduled report config plans should remain inactive until owner approval, dry-run evidence, delivery controls, and schedule storage exist, saved view persistence plans, storage schema, and read model should remain inactive until owner approval recording, role policy, endpoints, active repository access, and management UI exist, dashboard group headers should stay static until collapsible groups or tabs are validated separately, and raw event cleanup should remain preview-only until a separate guarded cleanup process is shipped after production evidence exists.
