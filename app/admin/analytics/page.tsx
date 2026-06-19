@@ -1,12 +1,14 @@
 import Link from 'next/link';
 
 import { AdminAnalyticsGuidancePanel } from '@/components/admin/AdminAnalyticsGuidancePanel';
+import { AdminAnalyticsLayoutGroupHeaders } from '@/components/admin/AdminAnalyticsLayoutGroupHeaders';
 import { AdminCategorySalesAnalyticsPanel } from '@/components/admin/AdminCategorySalesAnalyticsPanel';
 import { AdminOrderRevenueSummaryPanel } from '@/components/admin/AdminOrderRevenueSummaryPanel';
 import { AdminPageShell } from '@/components/admin/AdminPageShell';
 import { AdminProductSalesAnalyticsPanel } from '@/components/admin/AdminProductSalesAnalyticsPanel';
 import { AdminSiteAnalyticsPanel } from '@/components/admin/AdminSiteAnalyticsPanel';
 import { AdminSiteAnalyticsRetentionStatusPanel } from '@/components/admin/AdminSiteAnalyticsRetentionStatusPanel';
+import { buildAdminAnalyticsLayoutPreview } from '@/lib/analytics/admin-analytics-layout';
 import {
   ADMIN_ANALYTICS_RANGE_DAYS,
   adminAnalyticsRangeQueryString,
@@ -66,6 +68,7 @@ const copy = {
     sectionEyebrow: 'Analytics sections',
     sectionBody: 'Jump directly to the analytics area you need instead of scrolling through the full workspace.',
     sectionLabel: 'Jump to analytics section',
+    groupHeaders: 'Dashboard groups',
     guidanceCenter: 'Guidance',
     businessSummary: 'Business summary',
     businessCharts: 'Business charts',
@@ -117,6 +120,7 @@ const copy = {
     sectionEyebrow: 'بخش‌های تحلیل',
     sectionBody: 'بدون پیمایش کل صفحه، مستقیم به بخش تحلیلی موردنیاز بروید.',
     sectionLabel: 'رفتن به بخش تحلیل',
+    groupHeaders: 'گروه‌های داشبورد',
     guidanceCenter: 'راهنما',
     businessSummary: 'خلاصه کسب‌وکار',
     businessCharts: 'نمودارهای کسب‌وکار',
@@ -171,7 +175,9 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
   });
   const rangeDays = analyticsRange.rangeDays;
   const returnTo = analyticsHref(analyticsRange);
+  const layoutPreview = buildAdminAnalyticsLayoutPreview(analyticsRange);
   const sectionLinks = [
+    { href: sectionHref('analytics-layout-groups', analyticsRange), label: labels.groupHeaders },
     { href: sectionHref('analytics-guidance', analyticsRange), label: labels.guidanceCenter },
     { href: sectionHref('order-analytics', analyticsRange), label: labels.businessSummary },
     { href: sectionHref('business-analytics-charts', analyticsRange), label: labels.businessCharts },
@@ -353,6 +359,7 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
             </nav>
           </div>
         </section>
+        <AdminAnalyticsLayoutGroupHeaders preview={layoutPreview} />
         <AdminAnalyticsGuidancePanel
           orderSummary={orderRevenueSummary}
           productSalesSummary={productSalesAnalyticsSummary}

@@ -3,7 +3,7 @@ import {
   type AdminAnalyticsResolvedRange
 } from './admin-analytics-range';
 
-export type AdminAnalyticsLayoutPreviewStatus = 'preview_only';
+export type AdminAnalyticsLayoutPreviewStatus = 'group_headers_active';
 export type AdminAnalyticsLayoutGroupKey =
   | 'overview'
   | 'business'
@@ -126,9 +126,9 @@ export function buildAdminAnalyticsLayoutPreview(
   const baseHref = workspaceHref(range);
 
   return {
-    status: 'preview_only',
-    enabled: false,
-    groupHeadersEnabled: false,
+    status: 'group_headers_active',
+    enabled: true,
+    groupHeadersEnabled: true,
     collapsibleGroupsEnabled: false,
     tabsEnabled: false,
     preservesSectionIndex: true,
@@ -148,10 +148,8 @@ export function buildAdminAnalyticsLayoutPreview(
       }))
     })),
     blockers: [
-      'group header UI not implemented',
       'collapsible group behavior not implemented',
-      'tabbed workspace behavior not implemented',
-      'mobile layout evidence not recorded'
+      'tabbed workspace behavior not implemented'
     ]
   };
 }

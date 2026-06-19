@@ -1,29 +1,23 @@
 # Admin analytics layout refinement runbook
 
-This runbook defines the next UI structure pass for `/admin/analytics`.
+This runbook defines the UI structure pass for `/admin/analytics`.
 
 ## Current baseline
 
-The Analytics page is functional and range-aware, but it now contains many panels:
+The Analytics page is functional, range-aware, and now includes static dashboard group headers for the major analytics areas:
 
-- guidance and status
-- business summary
-- order charts
-- site analytics
-- product conversion
-- product sales
-- category sales
-- fulfillment
-- payments
-- inquiries
-- readiness
-- privacy and retention
+- Overview
+- Business
+- Site
+- Products and categories
+- Operations
+- Privacy and docs
 
-The section index helps, but the page can still feel long.
+The existing section index remains available for direct jumps to individual panels.
 
-## Live preview contract
+## Live group header contract
 
-A preview-only layout contract now groups the existing dashboard anchors into six high-level areas while preserving the selected analytics range:
+The layout contract groups the existing dashboard anchors into six high-level areas while preserving the selected analytics range:
 
 1. Overview
 2. Business
@@ -32,9 +26,9 @@ A preview-only layout contract now groups the existing dashboard anchors into si
 5. Operations
 6. Privacy and docs
 
-The preview contract records that:
+The live contract records that:
 
-- group headers are not enabled yet
+- group headers are enabled
 - collapsible groups are not enabled yet
 - tabs are not enabled yet
 - the existing section index must be preserved
@@ -45,22 +39,13 @@ The preview contract records that:
 
 Make the page easier to scan without losing the current server-rendered, accessible chart approach.
 
-## Recommended grouping
-
-Use the same high-level groups defined by the preview contract:
-
-1. Overview
-2. Business
-3. Site
-4. Products and categories
-5. Operations
-6. Privacy and docs
-
-## Implementation options
+## Implemented approach
 
 ### Option A: anchor groups
 
-Keep one page and group panels with stronger section headers. This is the lowest-risk approach and keeps all existing URLs working.
+The current implementation keeps one page and adds stronger group-header cards. This is the lowest-risk approach and keeps all existing URLs working.
+
+## Later options
 
 ### Option B: collapsible groups
 
@@ -72,11 +57,13 @@ Add tabs or segmented controls for major analytics groups. This gives the cleane
 
 ## Recommended next slice
 
-Start with Option A:
+Do not add Option B or C until the static group-header UI has production validation evidence.
 
-- Add stronger group headers based on the preview contract.
-- Keep the current section index.
-- Keep all existing panel anchors.
+If more layout work is needed later:
+
+- Preserve the current section index.
+- Preserve all existing panel anchors.
+- Keep the selected range in generated links.
 - Do not change data services.
 - Do not add a chart dependency.
 
@@ -88,7 +75,8 @@ Start with Option A:
 - CSV exports remain available to owners.
 - Every chart keeps its accessible table fallback.
 - Mobile layout remains readable.
+- Collapsible groups and tabs remain disabled until explicitly implemented.
 
 ## Follow-up slice
 
-After group headers are stable, evaluate collapsible groups for the longest sections.
+After group headers are stable, evaluate collapsible groups for the longest sections only if the page still feels crowded.

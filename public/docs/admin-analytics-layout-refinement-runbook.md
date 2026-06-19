@@ -4,11 +4,11 @@ This page summarizes the layout pass for `/admin/analytics`.
 
 ## Why this is needed
 
-The Analytics page now has many useful panels. The next UI pass should make it easier to scan and navigate.
+The Analytics page now has many useful panels. The layout pass makes it easier to scan and navigate.
 
-## Live preview contract
+## Live group headers
 
-A preview-only layout contract now maps the existing dashboard anchors into six groups while preserving the selected range and current section links:
+The page now renders static dashboard group headers generated from the layout contract:
 
 - Overview
 - Business
@@ -17,12 +17,12 @@ A preview-only layout contract now maps the existing dashboard anchors into six 
 - Operations
 - Privacy and docs
 
-The contract keeps group headers, collapsible groups, and tabbed workspace behavior disabled until a separate UI implementation pass.
+These headers preserve the selected range and current section links.
 
-## First UI implementation slice
+## What stays unchanged
 
-Add stronger section group headers while keeping the current section index, range links, CSV exports, and accessible chart tables.
+The current section index, range links, CSV exports, server-rendered panels, existing anchors, and accessible chart tables remain in place.
 
 ## Later options
 
-After group headers are stable, consider collapsible sections or a tabbed workspace.
+After group headers are stable, consider collapsible sections or a tabbed workspace only if the page still feels crowded.
