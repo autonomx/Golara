@@ -27,6 +27,18 @@ function normalizeRows(rows: AdminAnalyticsChartDatum[]) {
   return rows.map((row) => ({ ...row, value: normalizeChartValue(row.value) }));
 }
 
+function hasPositiveChartData(rows: AdminAnalyticsChartDatum[]) {
+  return rows.some((row) => row.value > 0);
+}
+
+function EmptyChartState({ emptyLabel }: { emptyLabel: string }) {
+  return (
+    <p className="mt-4 rounded-md border border-dashed border-stone-200 bg-stone-50 px-3 py-4 text-sm text-stone-500" role="status">
+      {emptyLabel}
+    </p>
+  );
+}
+
 function AdminAnalyticsDataTable({ title, rows, valueLabel }: { title: string; rows: AdminAnalyticsChartDatum[]; valueLabel: string }) {
   return (
     <details className="mt-4 rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-sm">
@@ -56,6 +68,7 @@ function AdminAnalyticsDataTable({ title, rows, valueLabel }: { title: string; r
 export function AdminAnalyticsBarChart({ title, description, rows, emptyLabel, valueLabel }: AdminAnalyticsChartProps) {
   const normalizedRows = normalizeRows(rows);
   const maxValue = Math.max(0, ...normalizedRows.map((row) => row.value));
+  const hasData = hasPositiveChartData(normalizedRows);
 
   return (
     <article className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm" aria-label={title}>
@@ -64,7 +77,7 @@ export function AdminAnalyticsBarChart({ title, description, rows, emptyLabel, v
         {description ? <p className="mt-1 text-sm leading-6 text-stone-600">{description}</p> : null}
       </div>
 
-      {normalizedRows.length ? (
+      {hasData ? (
         <>
           <div className="mt-4 grid gap-3" role="list" aria-label={title}>
             {normalizedRows.map((row) => {
@@ -92,7 +105,7 @@ export function AdminAnalyticsBarChart({ title, description, rows, emptyLabel, v
           <AdminAnalyticsDataTable title={title} rows={normalizedRows} valueLabel={valueLabel} />
         </>
       ) : (
-        <p className="mt-4 rounded-md border border-dashed border-stone-200 bg-stone-50 px-3 py-4 text-sm text-stone-500">{emptyLabel}</p>
+        <EmptyChartState emptyLabel={emptyLabel} />
       )}
     </article>
   );
@@ -101,6 +114,7 @@ export function AdminAnalyticsBarChart({ title, description, rows, emptyLabel, v
 export function AdminAnalyticsTrendChart({ title, description, rows, emptyLabel, valueLabel }: AdminAnalyticsChartProps) {
   const normalizedRows = normalizeRows(rows);
   const maxValue = Math.max(0, ...normalizedRows.map((row) => row.value));
+  const hasData = hasPositiveChartData(normalizedRows);
   const points = normalizedRows.map((row, index) => {
     const x = normalizedRows.length <= 1 ? 50 : Math.round((index / (normalizedRows.length - 1)) * 100);
     const y = maxValue <= 0 ? 90 : 90 - Math.round((row.value / maxValue) * 80);
@@ -116,7 +130,7 @@ export function AdminAnalyticsTrendChart({ title, description, rows, emptyLabel,
         {description ? <p className="mt-1 text-sm leading-6 text-stone-600">{description}</p> : null}
       </div>
 
-      {normalizedRows.length ? (
+      {hasData ? (
         <>
           <div className="mt-4 rounded-md border border-stone-200 bg-stone-50 p-3" role="img" aria-label={`${title}: ${normalizedRows.map((row) => `${row.label} ${row.displayValue ?? row.value}`).join(', ')}`}>
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-40 w-full overflow-visible text-olive" aria-hidden="true">
@@ -138,7 +152,7 @@ export function AdminAnalyticsTrendChart({ title, description, rows, emptyLabel,
           <AdminAnalyticsDataTable title={title} rows={normalizedRows} valueLabel={valueLabel} />
         </>
       ) : (
-        <p className="mt-4 rounded-md border border-dashed border-stone-200 bg-stone-50 px-3 py-4 text-sm text-stone-500">{emptyLabel}</p>
+        <EmptyChartState emptyLabel={emptyLabel} />
       )}
     </article>
   );
