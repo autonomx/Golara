@@ -1,10 +1,10 @@
 # Admin analytics saved view runbook
 
-This runbook documents the saved dashboard view plan and inactive storage foundation for `/admin/analytics`.
+This runbook documents the saved dashboard view plan, inactive storage foundation, and read-model foundation for `/admin/analytics`.
 
 ## Current state
 
-The implementation is still inactive for operators. It defines named Analytics view presets that reuse the selected Analytics range and existing dashboard section anchors, adds a disabled future-save plan, and now includes an inactive storage table for future view metadata.
+The implementation is still inactive for operators. It defines named Analytics view presets that reuse the selected Analytics range and existing dashboard section anchors, adds a disabled future-save plan, includes an inactive storage table for future view metadata, and now includes a metadata-only read model for future table rows.
 
 The current contract includes:
 
@@ -52,7 +52,13 @@ The inactive table is `AdminAnalyticsSavedView`. It stores metadata only and kee
 - `sectionAnchors` defaults to an empty JSON array
 - metadata defaults to an empty JSON object
 
-No application repository uses this table yet.
+No application repository writes this table yet.
+
+## Read-model foundation
+
+The read model is metadata-only and inactive. It can normalize future table rows into safe saved-view DTOs with id, view label, scope, audience, selected range query, section anchors, approval flag, and active flag.
+
+The read model rejects invalid rows, deduplicates anchors, and keeps operator activation disabled. No page, route, or management UI calls it yet.
 
 ## Disabled until a later phase
 
@@ -64,11 +70,12 @@ Disabled paths:
 - save endpoint
 - update endpoint
 - remove endpoint
+- read endpoint
 - management UI
 - role policy persistence
-- repository reads or writes
+- active repository reads or writes
 
-Do not add an active save endpoint or management UI until permission enforcement, owner approval capture, audit logging, and rollback evidence are approved.
+Do not add an active save endpoint, read endpoint, or management UI until permission enforcement, owner approval capture, audit logging, and rollback evidence are approved.
 
 ## Validation checklist
 
@@ -81,9 +88,10 @@ Before moving from foundation to saved views, confirm:
 5. The plan only allows saved-view metadata.
 6. Blocked fields include report rows, shopper rows, event rows, contact fields, visitor/session identifiers, and export file contents.
 7. Owner approval is required and not yet recorded.
-8. Save/update/remove endpoints, repository access, and management UI remain disabled.
+8. Save/update/remove/read endpoints, active repository access, and management UI remain disabled.
 9. The storage table exists for metadata only.
-10. Source guards prove saved views do not alter analytics calculations.
+10. The read model returns metadata-only DTOs and keeps operator activation disabled.
+11. Source guards prove saved views do not alter analytics calculations.
 
 ## Future implementation notes
 

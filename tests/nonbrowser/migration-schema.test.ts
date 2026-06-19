@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import {
+  buildAdminAnalyticsSavedViewReadModelContract,
+  buildAdminAnalyticsSavedViewReadModelPreview,
+  normalizeAdminAnalyticsSavedViewReadRow
+} from '../../lib/analytics/admin-analytics-saved-view-read-model';
 import { buildAdminAnalyticsSavedViewStorageContract } from '../../lib/analytics/admin-analytics-saved-view-storage';
 import { withIsolatedPrisma } from '../utils/isolated-test-db';
 
@@ -73,7 +78,7 @@ function runAdminAnalyticsSavedViewStorageContractTests() {
   assert.match(helperSource, /updateEndpointEnabled: false/);
   assert.match(helperSource, /removeEndpointEnabled: false/);
   assert.match(helperSource, /managementUiEnabled: false/);
-  assert.doesNotMatch(helperSource, /PrismaClient|prisma\.|create\(|update\(|upsert\(|delete\(|fetch\(|POST|PUT|PATCH|DELETE/);
+  assert.doesNotMatch(helperSource, /PrismaClient|prisma\.|create\(|update\(|upsert\(|delete\(|fetch\(|\bPOST\b|\bPUT\b|\bPATCH\b|\bDELETE\b/);
 
   const migrationSource = migrationFiles().map(source).join('\n');
   assert.match(migrationSource, /CREATE TABLE "AdminAnalyticsSavedView"/);
@@ -82,6 +87,67 @@ function runAdminAnalyticsSavedViewStorageContractTests() {
   assert.match(migrationSource, /"ownerApproved" BOOLEAN NOT NULL DEFAULT false/);
   assert.match(migrationSource, /"isActive" BOOLEAN NOT NULL DEFAULT false/);
   assert.match(migrationSource, /"AdminAnalyticsSavedView_viewKey_scope_key"/);
+}
+
+function runAdminAnalyticsSavedViewReadModelTests() {
+  const readContract = buildAdminAnalyticsSavedViewReadModelContract();
+  assert.equal(readContract.status, 'read_model_foundation_only');
+  assert.equal(readContract.enabled, false);
+  assert.equal(readContract.tableName, 'AdminAnalyticsSavedView');
+  assert.equal(readContract.repositoryReadsEnabled, false);
+  assert.equal(readContract.readEndpointEnabled, false);
+  assert.equal(readContract.managementUiEnabled, false);
+  assert.equal(readContract.requiresOwnerApprovalFilter, true);
+  assert.equal(readContract.requiresActiveFlagFilter, true);
+  assert.equal(readContract.returnsMetadataOnly, true);
+  assert.deepEqual(readContract.allowedScopes, ['owner-private', 'staff-shared', 'store-wide-owner-managed']);
+  assert.deepEqual(readContract.allowedAudiences, ['owner', 'staff']);
+  assert.ok(readContract.outputFields.includes('rangeQuery'));
+  assert.ok(readContract.outputFields.includes('sectionAnchors'));
+  assert.ok(readContract.blockedOutputFields.includes('metricRows'));
+  assert.ok(readContract.blockedOutputFields.includes('customerRows'));
+  assert.ok(readContract.activationBlockers.includes('read endpoint not configured'));
+
+  const validRow = {
+    id: 'view_1',
+    viewKey: 'business-performance',
+    label: 'Business performance view',
+    description: 'Owner dashboard view',
+    scope: 'owner-private',
+    audience: 'owner',
+    rangeMode: 'custom',
+    rangeQuery: 'start=2026-06-01&end=2026-06-15',
+    sectionAnchors: ['#order-analytics', '#business-analytics-charts', '#order-analytics', 'bad-anchor'],
+    ownerApproved: true,
+    isActive: true
+  };
+  const dto = normalizeAdminAnalyticsSavedViewReadRow(validRow);
+  assert.ok(dto);
+  assert.equal(dto.activeForOperators, false);
+  assert.deepEqual(dto.sectionAnchors, ['#order-analytics', '#business-analytics-charts']);
+  assert.equal(dto.firstSectionAnchor, '#order-analytics');
+  assert.equal(dto.rangeQuery, 'start=2026-06-01&end=2026-06-15');
+
+  const preview = buildAdminAnalyticsSavedViewReadModelPreview([
+    validRow,
+    { ...validRow, id: '', viewKey: 'invalid-view' },
+    { ...validRow, id: 'view_2', scope: 'unknown-scope' }
+  ]);
+  assert.equal(preview.status, 'read_model_foundation_only');
+  assert.equal(preview.enabled, false);
+  assert.equal(preview.repositoryReadsEnabled, false);
+  assert.equal(preview.rows.length, 1);
+  assert.equal(preview.omittedRowCount, 2);
+
+  const readModelSource = source('lib/analytics/admin-analytics-saved-view-read-model.ts');
+  assert.match(readModelSource, /read_model_foundation_only/);
+  assert.match(readModelSource, /repositoryReadsEnabled: false/);
+  assert.match(readModelSource, /readEndpointEnabled: false/);
+  assert.match(readModelSource, /managementUiEnabled: false/);
+  assert.match(readModelSource, /returnsMetadataOnly: true/);
+  assert.match(readModelSource, /activeForOperators: false/);
+  assert.match(readModelSource, /normalizeAdminAnalyticsSavedViewReadRow/);
+  assert.doesNotMatch(readModelSource, /PrismaClient|prisma\.|\$queryRaw|create\(|update\(|upsert\(|delete\(|fetch\(|\bPOST\b|\bPUT\b|\bPATCH\b|\bDELETE\b|localStorage|sessionStorage|cookies\(/);
 }
 
 async function runOptionalLiveSchemaChecks() {
@@ -101,6 +167,7 @@ async function runOptionalLiveSchemaChecks() {
 export async function runMigrationSchemaTests() {
   runMigrationSourceCoverageTests();
   runAdminAnalyticsSavedViewStorageContractTests();
+  runAdminAnalyticsSavedViewReadModelTests();
   await runOptionalLiveSchemaChecks();
   console.log('migration-schema.test.ts passed');
 }

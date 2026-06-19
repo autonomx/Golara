@@ -19,7 +19,7 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 - Traffic attribution using capped UTM fields and external referrer domains.
 - Owner-only aggregate Business CSV and Site CSV exports.
 - Scheduled report preview and owner-approved configuration-plan foundation that reuses the selected analytics range and aggregate Business/Site CSV paths.
-- Saved dashboard view preset preview, persistence-plan foundation, and inactive storage schema for metadata-only future saves.
+- Saved dashboard view preset preview, persistence-plan foundation, inactive storage schema, and metadata-only read-model foundation for future saves.
 - Dashboard group header UI that uses the layout grouping contract while preserving the selected range, section index, anchors, and table fallback requirements.
 - Privacy and retention policy visibility.
 - Read-only raw site-event retention status, cleanup preview, and cleanup readiness guidance.
@@ -31,7 +31,7 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 - Automated raw site-event deletion after production migration evidence and cleanup preview evidence are verified.
 - Future customer segmentation beyond aggregate order-count and recency bands, only after a separate privacy review.
 - Scheduled report storage, delivery channel execution, retry visibility, and owner management UI.
-- Saved dashboard active save/update/remove endpoints, owner approval recording, role-policy enforcement, repository access, and owner/staff management UI.
+- Saved dashboard active save/update/remove/read endpoints, owner approval recording, role-policy enforcement, active repository access, and owner/staff management UI.
 - Collapsible dashboard groups or tabbed workspace behavior.
 
 ## Customer cohort analytics note
@@ -65,9 +65,9 @@ Actual scheduled delivery remains pending until schedule storage, delivery confi
 
 ## Saved dashboard view storage note
 
-The saved dashboard view foundation now includes a persistence-plan contract and an inactive storage schema. It defines named dashboard view presets, selected-range metadata, role-aware audience labels, allowed scopes, owner-managed fields, metadata-only persisted columns, and blocked report/customer/event-row fields.
+The saved dashboard view foundation now includes a persistence-plan contract, an inactive storage schema, and a metadata-only read-model foundation. It defines named dashboard view presets, selected-range metadata, role-aware audience labels, allowed scopes, owner-managed fields, metadata-only persisted columns, blocked report/customer/event-row fields, and safe DTO normalization for future table rows.
 
-The `AdminAnalyticsSavedView` table is for future metadata only. Activation defaults remain disabled: `ownerApproved=false` and `isActive=false`. No repository, save/update/remove endpoint, owner approval recording, role-policy enforcement, or management UI is enabled yet.
+The `AdminAnalyticsSavedView` table is for future metadata only. Activation defaults remain disabled: `ownerApproved=false` and `isActive=false`. The read model keeps `activeForOperators=false` and is not called by a page, route, active repository, or management UI yet.
 
 ## Dashboard group header note
 
@@ -97,5 +97,5 @@ Before treating site analytics as complete in production, verify:
 10. Customer cohort panels and CSV rows remain aggregate-only.
 11. Advanced aggregate cohort panels and CSV rows show only AOV/share/order-count/recency bands, never per-customer rows.
 12. Scheduled report previews and config plans preserve the selected range and aggregate Business/Site CSV paths without enabling delivery.
-13. Saved dashboard view presets, persistence plans, and storage schema preserve selected range metadata, existing section anchors, allowed scopes, blocked fields, disabled endpoints, and inactive activation flags.
+13. Saved dashboard view presets, persistence plans, storage schema, and read model preserve selected range metadata, existing section anchors, allowed scopes, blocked fields, disabled endpoints, inactive activation flags, and metadata-only DTOs.
 14. Dashboard group headers preserve selected range links, the section index, existing anchors, and table fallback requirements without enabling collapsible groups or tabs.

@@ -1,6 +1,6 @@
 # Admin analytics implementation backlog
 
-This backlog tracks the remaining admin analytics work after the custom range, aggregate cohort, advanced cohort, retention preview, scheduled report preview/config-plan, saved view preset/persistence-plan/storage-schema, layout grouping preview, and dashboard group header UI passes.
+This backlog tracks the remaining admin analytics work after the custom range, aggregate cohort, advanced cohort, retention preview, scheduled report preview/config-plan, saved view preset/persistence-plan/storage-schema/read-model, layout grouping preview, and dashboard group header UI passes.
 
 ## Current live baseline
 
@@ -13,7 +13,7 @@ This backlog tracks the remaining admin analytics work after the custom range, a
 - First-party site analytics for page, product, category, search, cart, checkout, payment-method, attribution, and funnel signals.
 - Aggregate Business CSV and Site CSV exports.
 - Scheduled report preview and draft configuration-plan foundation for weekly/monthly owner report options using the selected range and aggregate CSV paths.
-- Saved dashboard view preset, persistence-plan, and inactive storage-schema foundation using the selected range, existing section anchors, allowed scopes, and metadata-only future-save rules.
+- Saved dashboard view preset, persistence-plan, inactive storage-schema, and metadata-only read-model foundation using the selected range, existing section anchors, allowed scopes, and metadata-only future-save rules.
 - Dashboard group header UI using the selected range, section index, existing anchors, and chart table fallback requirements.
 - Privacy and retention documentation.
 - Read-only raw event retention status and cleanup preview.
@@ -62,7 +62,7 @@ Completed baseline:
 - Schedule persistence is disabled.
 - No cron, email transport, timer, or background execution path is introduced.
 
-### Saved dashboard view preset, persistence-plan, and storage-schema foundation
+### Saved dashboard view preset, persistence-plan, storage-schema, and read-model foundation
 
 Completed baseline:
 
@@ -72,10 +72,13 @@ Completed baseline:
 - Future saved-view metadata is limited to view labels, selected range/filter metadata, section anchors, scope, audience, owner approval flag, and active flag.
 - Report rows, customer rows, event rows, contact fields, visitor/session identifiers, and export contents are blocked from saved-view records.
 - The inactive `AdminAnalyticsSavedView` migration table exists for metadata-only future saves.
+- The read-model foundation normalizes future table rows into metadata-only DTOs.
+- Invalid scopes, invalid audiences, missing range queries, and missing section anchors are rejected.
+- Operator activation remains disabled even when future approval flags are present.
 - Owner approval is required before active saved views, but approval is not recorded yet.
 - View saving is disabled.
 - Client-side and server-side saved state are disabled.
-- Save/update/remove endpoints, repository access, and management UI are disabled.
+- Save/update/remove/read endpoints, active repository access, and management UI are disabled.
 - No active save endpoint or analytics-calculation change is introduced.
 
 ### Dashboard layout grouping preview foundation
@@ -132,7 +135,7 @@ Acceptance criteria:
 
 ### 3. Saved dashboard view active persistence
 
-Goal: let operators save preferred dashboard range/filter layouts after the storage-schema foundation is validated.
+Goal: let operators save preferred dashboard range/filter layouts after the storage-schema and read-model foundations are validated.
 
 Acceptance criteria:
 
@@ -140,9 +143,9 @@ Acceptance criteria:
 - Views preserve the existing section index and range links.
 - Access remains role-aware.
 - Saved metadata is limited to view labels, selected range/filter metadata, section anchors, scope, audience, owner approval flag, and active flag.
-- Active save/update/remove endpoints require owner approval evidence and management UI.
+- Active save/update/remove/read endpoints require owner approval evidence and management UI.
 - Role-policy enforcement is explicit for owner-private, staff-shared, and store-wide owner-managed scopes.
-- Repository reads/writes remain disabled until owner approval capture and audit logging are implemented.
+- Active repository access remains disabled until owner approval capture and audit logging are implemented.
 
 ### 4. Collapsible groups or tabs
 
@@ -157,7 +160,7 @@ Acceptance criteria:
 
 ## Sequencing recommendation
 
-1. Production validation evidence for custom ranges, exports, aggregate and advanced cohort panels, retention preview, scheduled report config plans, saved view storage schema, and dashboard group headers.
+1. Production validation evidence for custom ranges, exports, aggregate and advanced cohort panels, retention preview, scheduled report config plans, saved view storage schema/read model, and dashboard group headers.
 2. Automated retention cleanup preview, then guarded execution after production evidence exists.
 3. Scheduled report storage and delivery execution.
 4. Saved dashboard view active persistence.
