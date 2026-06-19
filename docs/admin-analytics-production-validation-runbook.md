@@ -2,7 +2,7 @@
 
 This runbook validates the admin analytics workspace after deploy. It is intended for owner/admin operators before treating `/admin/analytics` as an operational source of truth.
 
-Use it to validate the production analytics path end to end: database migration, storefront event capture, checkout funnel capture, custom range parity, aggregate exports, customer cohort aggregates, advanced aggregate customer cohort reporting, retention status, cleanup preview evidence, scheduled report config-plan evidence, saved view persistence-plan evidence, and dashboard group header evidence.
+Use it to validate the production analytics path end to end: database migration, storefront event capture, checkout funnel capture, custom range parity, aggregate exports, customer cohort aggregates, advanced aggregate customer cohort reporting, retention status, cleanup preview evidence, scheduled report config-plan evidence, saved view persistence-plan and storage-schema evidence, and dashboard group header evidence.
 
 ## Scope
 
@@ -17,7 +17,7 @@ Validate that the analytics page can show trustworthy aggregate data for:
 - advanced aggregate customer cohort AOV/share, order-count band, and recency band metrics
 - aggregate CSV exports
 - scheduled report previews and draft config plans
-- saved dashboard view presets and persistence plans
+- saved dashboard view presets, persistence plans, and inactive storage schema
 - dashboard group headers
 - privacy and retention status
 - raw-event cleanup preview without deletion
@@ -27,6 +27,7 @@ Validate that the analytics page can show trustworthy aggregate data for:
 - Production deployment is live.
 - The production database has been migrated.
 - The `SiteAnalyticsEvent` table/model is available in production.
+- The `AdminAnalyticsSavedView` table exists before any future saved-view activation work begins.
 - Admin owner access is available.
 - Storefront analytics is not disabled with `NEXT_PUBLIC_SITE_ANALYTICS_ENABLED=false`.
 - The storefront can receive realistic visits or staging checkout traffic.
@@ -67,12 +68,13 @@ Validate that the analytics page can show trustworthy aggregate data for:
 31. Confirm scheduled report delivery and schedule persistence remain disabled.
 32. Confirm saved view presets preserve the selected range and existing section anchors.
 33. Confirm saved view persistence plans expose allowed scopes, metadata-only required fields, blocked fields, owner approval required, and owner approval not recorded.
-34. Confirm saved view save/update/remove endpoints and management UI remain disabled.
-35. Confirm dashboard group headers render for Overview, Business, Site, Products and categories, Operations, and Privacy/docs.
-36. Confirm group-header links preserve the selected range, existing section anchors, section index expectations, and table fallback requirements.
-37. Confirm collapsible groups and tabbed workspace behavior remain disabled until a separate UI pass.
-38. Confirm neither CSV contains visitor session details, full referrer URLs, analytics event payloads, customer names, phone numbers, emails, addresses, raw customer identifiers, or per-customer rows.
-39. Confirm the cleanup preview does not delete raw events and that deletion remains disabled until production migration evidence and analytics-volume evidence are recorded.
+34. Confirm the `AdminAnalyticsSavedView` storage schema is present, metadata-only, and defaults owner approval and activation to disabled.
+35. Confirm saved view save/update/remove endpoints, repository access, and management UI remain disabled.
+36. Confirm dashboard group headers render for Overview, Business, Site, Products and categories, Operations, and Privacy/docs.
+37. Confirm group-header links preserve the selected range, existing section anchors, section index expectations, and table fallback requirements.
+38. Confirm collapsible groups and tabbed workspace behavior remain disabled until a separate UI pass.
+39. Confirm neither CSV contains visitor session details, full referrer URLs, analytics event payloads, customer names, phone numbers, emails, addresses, raw customer identifiers, or per-customer rows.
+40. Confirm the cleanup preview does not delete raw events and that deletion remains disabled until production migration evidence and analytics-volume evidence are recorded.
 
 ## Evidence record
 
@@ -101,11 +103,15 @@ Record one evidence note per validation pass:
 - Scheduled report persistence disabled:
 - Saved view preset preview checked:
 - Saved view persistence plan checked:
+- Saved view storage schema checked:
+- Saved view storage table:
 - Saved view allowed scopes checked:
 - Saved view metadata-only fields checked:
 - Saved view blocked fields checked:
 - Saved view owner approval required:
 - Saved view owner approval recorded:
+- Saved view active flag disabled:
+- Saved view repository disabled:
 - Saved view endpoints disabled:
 - Saved view management UI disabled:
 - Saved view selected range preserved:
@@ -126,7 +132,7 @@ Record one evidence note per validation pass:
 
 ## Expected result
 
-The analytics page should show aggregate business, site, range, export, customer cohort, advanced cohort, scheduled-report config-plan, saved-view persistence-plan, dashboard group header, retention, and cleanup-preview signals without exposing non-aggregate visitor or customer detail. Empty panels are acceptable only when the selected range has no matching traffic, orders, or production migration evidence.
+The analytics page should show aggregate business, site, range, export, customer cohort, advanced cohort, scheduled-report config-plan, saved-view persistence-plan/storage-schema, dashboard group header, retention, and cleanup-preview signals without exposing non-aggregate visitor or customer detail. Empty panels are acceptable only when the selected range has no matching traffic, orders, or production migration evidence.
 
 ## Blockers
 
@@ -144,7 +150,8 @@ Do not treat analytics as source-of-truth if any of these are true:
 - scheduled report config plans are active before owner approval and dry-run evidence exist
 - saved view presets or persistence plans do not preserve selected range and section anchors
 - saved view persistence plans allow report rows, customer rows, event rows, or contact fields
-- saved view endpoints or management UI are enabled before schema, owner approval recording, and role policy are designed
+- saved view storage stores analytics rows, customer rows, raw events, contact fields, visitor/session identifiers, or export contents
+- saved view endpoints, repository access, or management UI are enabled before owner approval recording, role policy, and audit logging are designed
 - dashboard group headers do not preserve selected range links and existing section anchors
 - collapsible groups or tabs are enabled before mobile layout and accessibility evidence are recorded
 - retention status cannot read the event table
@@ -158,6 +165,6 @@ Do not treat analytics as source-of-truth if any of these are true:
 - Customer cohort reporting must remain aggregate-only and privacy-safe.
 - Advanced cohort reporting must stay limited to non-identifying AOV/share/order-count/recency buckets unless a separate privacy review and permission model exists.
 - Scheduled report config plans must remain inactive and disabled for delivery until schedule storage, owner approval, dry-run evidence, delivery controls, and retry/failure visibility are implemented.
-- Saved view persistence plans must remain inactive and disabled for save/update/remove endpoints until schema, owner approval recording, role policy, and management UI are implemented.
+- Saved view persistence plans and storage schema must remain inactive and disabled for save/update/remove endpoints, repository access, and management UI until owner approval recording, role policy, and audit logging are implemented.
 - Dashboard group headers must remain static links until collapsible groups or tabs are implemented and validated separately.
 - Raw event deletion remains disabled until a separate guarded cleanup job is implemented, cleanup preview evidence is recorded, and production evidence exists.
