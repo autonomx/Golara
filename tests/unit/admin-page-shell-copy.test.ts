@@ -124,11 +124,16 @@ export async function runAdminPageShellCopyTests() {
   assert.match(analyticsExportRouteSource, /normalizeAdminAnalyticsRangeDays\(url\.searchParams\.get\('range'\)\)/);
   assert.match(analyticsExportRouteSource, /normalizeReport\(url\.searchParams\.get\('report'\)\)/);
   assert.match(analyticsExportRouteSource, /orderRevenueSummaryService\.summary\(\{ rangeDays \}\)/);
+  assert.match(analyticsExportRouteSource, /productSalesAnalyticsService\.summary\(\{ rangeDays \}\)/);
+  assert.match(analyticsExportRouteSource, /categorySalesAnalyticsService\.summary\(\{ rangeDays \}\)/);
   assert.match(analyticsExportRouteSource, /siteAnalyticsSummaryService\.summary\(\{ rangeDays \}\)/);
   assert.match(analyticsExportRouteSource, /text\/csv; charset=utf-8/);
   assert.match(analyticsExportRouteSource, /golara-analytics-\$\{report\}-\$\{rangeDays\}d\.csv/);
   assert.match(analyticsExportRouteSource, /raw session export/);
   assert.match(analyticsExportRouteSource, /Revenue excludes cancelled\/refunded\/voided orders/);
+  assert.match(analyticsExportRouteSource, /'product_sales'/);
+  assert.match(analyticsExportRouteSource, /'category_sales'/);
+  assert.match(analyticsExportRouteSource, /average_unit_revenue_cents/);
 
   const chartPrimitiveSource = readFileSync('components/admin/AdminAnalyticsChartPrimitives.tsx', 'utf8');
   assert.match(chartPrimitiveSource, /AdminAnalyticsBarChart/);
