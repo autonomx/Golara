@@ -11,17 +11,17 @@ This page summarizes remaining Analytics improvements.
 - First-party storefront event reporting.
 - Aggregate CSV exports.
 - Scheduled report preview and draft configuration-plan foundation for weekly/monthly owner report options using the selected range and aggregate CSV paths.
-- Saved dashboard view preset preview foundation using the selected range and existing section anchors.
+- Saved dashboard view preset and persistence-plan foundation using the selected range, existing section anchors, allowed scopes, and metadata-only future-save rules.
 - Dashboard group header UI using the selected range and existing section anchors.
 - Privacy and retention guidance.
 - Read-only retention status and cleanup preview.
 
 ## Planned next
 
-- Production validation evidence for custom ranges, exports, aggregate cohort panels, retention preview, scheduled report config plans, saved view presets, and dashboard group headers.
+- Production validation evidence for custom ranges, exports, aggregate cohort panels, retention preview, scheduled report config plans, saved view persistence plans, and dashboard group headers.
 - Retention maintenance workflow.
 - Scheduled report storage and delivery execution.
-- Saved dashboard view persistence.
+- Saved dashboard view active persistence.
 - Collapsible dashboard groups or tabs, only if static group headers are not enough.
 
 ## Export safety
@@ -34,7 +34,7 @@ Scheduled report config plans preserve the selected range and aggregate CSV path
 
 ## Saved view safety
 
-Saved view presets are preview-only. They preserve the selected range and existing section anchors without saving view state or changing analytics calculations.
+Saved view presets and persistence plans preserve the selected range, existing section anchors, allowed scopes, and metadata-only future-save rules. Active save/update/remove endpoints and management UI remain disabled.
 
 ## Layout refinement safety
 

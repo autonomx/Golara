@@ -1,12 +1,12 @@
-# Admin analytics view preset runbook
+# Admin analytics saved view runbook
 
-This runbook documents the saved dashboard view preview foundation for `/admin/analytics`.
+This runbook documents the saved dashboard view plan foundation for `/admin/analytics`.
 
 ## Current state
 
-The implementation is preview-only. It defines named Analytics view presets that reuse the selected Analytics range and existing dashboard section anchors.
+The implementation is plan-only. It defines named Analytics view presets that reuse the selected Analytics range and existing dashboard section anchors, then adds a disabled future-save plan.
 
-The current preview contract includes:
+The current contract includes:
 
 - Business performance view
 - Site funnel view
@@ -17,42 +17,62 @@ Each preset records:
 
 - preset key and label
 - intended audience: owner or staff
+- view scope: owner-private, staff-shared, or store-wide owner-managed
+- allowed manager audience
 - selected range label and query string
 - dashboard URL with the selected range preserved
 - first section anchor for the view
 - ordered section list for the view
 
-## Disabled until a later phase
+## Future-save plan
 
-The preview foundation does not save anything yet.
+The plan defines metadata that a later saved-view implementation may record:
+
+- view key
+- view label
+- scope
+- selected range query
+- section anchors
+
+The plan blocks saved-view records from containing report rows, shopper rows, event rows, or contact fields.
+
+Owner approval is required before the plan can become active, but owner approval is not recorded by this foundation.
+
+## Disabled until a later phase
 
 Disabled paths:
 
 - view saving
 - client-side saved state
 - server-side saved state
-- saved role policy
+- save endpoint
+- update endpoint
+- remove endpoint
+- management UI
+- role policy persistence
 
-Do not add a persistence model, browser-backed state, or save endpoint until a separate design is approved.
+Do not add an active save endpoint or management UI until a separate schema and permission design is approved.
 
 ## Validation checklist
 
-Before moving from preview to saved views, confirm:
+Before moving from plan to saved views, confirm:
 
 1. Presets keep the selected preset or custom date range in their URLs.
 2. Presets use existing section anchors only.
 3. Owner-only view presets remain clearly marked as owner audience.
 4. Staff view presets do not expose owner-only controls by themselves.
-5. Saving remains disabled in the preview contract.
-6. Any future persistence stores only view metadata, not analytics rows.
+5. The plan only allows saved-view metadata.
+6. Blocked fields include report rows, shopper rows, event rows, and contact fields.
+7. Owner approval is required and not yet recorded.
+8. Save/update/remove endpoints and management UI remain disabled.
+9. Source guards prove saved views do not alter analytics calculations.
 
 ## Future implementation notes
 
-A later saved-view persistence phase should define:
+A later saved-view implementation should define:
 
-- the owner/staff permission boundary
-- metadata fields that may be saved
-- whether views are per-user, per-role, or store-wide
-- a delete/update flow for saved metadata
-- migration and rollback evidence
-- source guards proving saved views do not alter analytics calculations
+- migration and rollback evidence for view metadata
+- explicit owner/staff management screens
+- role-policy enforcement for saved view scopes
+- audit log expectations for created, updated, and removed saved view metadata
+- disable controls for owner-managed saved views

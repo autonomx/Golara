@@ -1,6 +1,6 @@
 # Admin analytics implementation backlog
 
-This backlog tracks the remaining admin analytics work after the custom range, aggregate cohort, advanced cohort, retention preview, scheduled report preview/config-plan, saved view preset preview, layout grouping preview, and dashboard group header UI passes.
+This backlog tracks the remaining admin analytics work after the custom range, aggregate cohort, advanced cohort, retention preview, scheduled report preview/config-plan, saved view preset/persistence-plan, layout grouping preview, and dashboard group header UI passes.
 
 ## Current live baseline
 
@@ -13,7 +13,7 @@ This backlog tracks the remaining admin analytics work after the custom range, a
 - First-party site analytics for page, product, category, search, cart, checkout, payment-method, attribution, and funnel signals.
 - Aggregate Business CSV and Site CSV exports.
 - Scheduled report preview and draft configuration-plan foundation for weekly/monthly owner report options using the selected range and aggregate CSV paths.
-- Saved dashboard view preset preview foundation using the selected range and existing section anchors.
+- Saved dashboard view preset and persistence-plan foundation using the selected range, existing section anchors, allowed scopes, and metadata-only future-save rules.
 - Dashboard group header UI using the selected range, section index, existing anchors, and chart table fallback requirements.
 - Privacy and retention documentation.
 - Read-only raw event retention status and cleanup preview.
@@ -62,15 +62,19 @@ Completed baseline:
 - Schedule persistence is disabled.
 - No cron, email transport, timer, or background execution path is introduced.
 
-### Saved dashboard view preset foundation
+### Saved dashboard view preset and persistence-plan foundation
 
 Completed baseline:
 
-- Named view presets are represented as preview-only metadata.
+- Named view presets are represented as metadata.
 - View presets reuse the selected analytics range and existing section anchors.
-- Presets include owner/staff audience labels.
+- Presets include owner/staff audience labels, allowed manager audience, and owner/staff/store-wide scopes.
+- Future saved-view metadata is limited to view key, view label, scope, selected range query, and section anchors.
+- Report rows, customer rows, event rows, and contact fields are blocked from saved-view records.
+- Owner approval is required before active saved views, but approval is not recorded yet.
 - View saving is disabled.
 - Client-side and server-side saved state are disabled.
+- Save/update/remove endpoints and management UI are disabled.
 - No persistence model, save endpoint, or analytics-calculation change is introduced.
 
 ### Dashboard layout grouping preview foundation
@@ -125,9 +129,9 @@ Acceptance criteria:
 - Delivery requires an explicit provider/channel plan, retry/failure visibility, and testable global disable switch.
 - Dry-run evidence records the exact selected range and aggregate CSV paths before delivery is enabled.
 
-### 3. Saved dashboard view persistence
+### 3. Saved dashboard view active persistence
 
-Goal: let operators save preferred dashboard range/filter layouts after the preview contract is validated.
+Goal: let operators save preferred dashboard range/filter layouts after the persistence-plan contract is validated.
 
 Acceptance criteria:
 
@@ -135,7 +139,8 @@ Acceptance criteria:
 - Views preserve the existing section index and range links.
 - Access remains role-aware.
 - Saved metadata is limited to view labels, selected range/filter metadata, and section anchors.
-- Persistence includes owner/staff management and delete/update behavior.
+- Active save/update/remove endpoints require owner approval evidence and management UI.
+- Role-policy enforcement is explicit for owner-private, staff-shared, and store-wide owner-managed scopes.
 
 ### 4. Collapsible groups or tabs
 
@@ -150,8 +155,8 @@ Acceptance criteria:
 
 ## Sequencing recommendation
 
-1. Production validation evidence for custom ranges, exports, aggregate and advanced cohort panels, retention preview, scheduled report config plans, saved view presets, and dashboard group headers.
+1. Production validation evidence for custom ranges, exports, aggregate and advanced cohort panels, retention preview, scheduled report config plans, saved view persistence plans, and dashboard group headers.
 2. Automated retention cleanup preview, then guarded execution after production evidence exists.
 3. Scheduled report storage and delivery execution.
-4. Saved dashboard view persistence.
+4. Saved dashboard view active persistence.
 5. Collapsible groups or tabs only if the static group-header UI is not enough.

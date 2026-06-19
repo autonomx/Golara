@@ -3,8 +3,9 @@ import {
   type AdminAnalyticsResolvedRange
 } from './admin-analytics-range';
 
-export type AdminAnalyticsViewPresetStatus = 'preview_only';
+export type AdminAnalyticsViewPresetStatus = 'persistence_plan_only';
 export type AdminAnalyticsViewPresetAudience = 'owner' | 'staff';
+export type AdminAnalyticsViewScope = 'owner-private' | 'staff-shared' | 'store-wide-owner-managed';
 
 export type AdminAnalyticsViewSection = {
   anchor: string;
@@ -16,10 +17,27 @@ export type AdminAnalyticsViewPreset = {
   label: string;
   description: string;
   audience: AdminAnalyticsViewPresetAudience;
+  scope: AdminAnalyticsViewScope;
   rangeLabel: string;
   rangeQuery: string;
   href: string;
   sections: AdminAnalyticsViewSection[];
+  allowedManagers: AdminAnalyticsViewPresetAudience[];
+};
+
+export type AdminAnalyticsViewPersistencePlan = {
+  status: AdminAnalyticsViewPresetStatus;
+  enabled: boolean;
+  saveEndpointEnabled: boolean;
+  updateEndpointEnabled: boolean;
+  removeEndpointEnabled: boolean;
+  managementUiEnabled: boolean;
+  ownerApprovalRequired: boolean;
+  ownerApprovalRecorded: boolean;
+  allowedScopes: AdminAnalyticsViewScope[];
+  requiredFields: string[];
+  blockedFields: string[];
+  blockers: string[];
 };
 
 export type AdminAnalyticsViewPresetPreview = {
@@ -34,6 +52,7 @@ export type AdminAnalyticsViewPresetPreview = {
   rangeQuery: string;
   workspaceHref: string;
   presets: AdminAnalyticsViewPreset[];
+  persistencePlan: AdminAnalyticsViewPersistencePlan;
   blockers: string[];
 };
 
@@ -43,6 +62,8 @@ const VIEW_PRESETS = [
     label: 'Business performance view',
     description: 'Preview a dashboard view for revenue, orders, products, and category sales using the selected range.',
     audience: 'staff' as const,
+    scope: 'staff-shared' as const,
+    allowedManagers: ['owner'] as AdminAnalyticsViewPresetAudience[],
     sections: [
       { anchor: 'order-analytics', label: 'Business summary' },
       { anchor: 'business-analytics-charts', label: 'Business charts' },
@@ -55,6 +76,8 @@ const VIEW_PRESETS = [
     label: 'Site funnel view',
     description: 'Preview a dashboard view for site funnel analytics and owner-only diagnostics using the selected range.',
     audience: 'owner' as const,
+    scope: 'owner-private' as const,
+    allowedManagers: ['owner'] as AdminAnalyticsViewPresetAudience[],
     sections: [
       { anchor: 'site-analytics', label: 'Site funnel' },
       { anchor: 'analytics-privacy-retention', label: 'Policy guidance' },
@@ -66,8 +89,11 @@ const VIEW_PRESETS = [
     label: 'Order cohort view',
     description: 'Preview a dashboard view for aggregate order cohort cards and chart context.',
     audience: 'staff' as const,
+    scope: 'staff-shared' as const,
+    allowedManagers: ['owner'] as AdminAnalyticsViewPresetAudience[],
     sections: [
       { anchor: 'order-analytics', label: 'Order cohorts' },
+      { anchor: 'advanced-cohort-analytics', label: 'Advanced cohorts' },
       { anchor: 'business-analytics-charts', label: 'Chart context' }
     ]
   },
@@ -76,6 +102,8 @@ const VIEW_PRESETS = [
     label: 'Operations readiness view',
     description: 'Preview a dashboard view for inventory, fulfillment, payments, inquiries, and readiness checks.',
     audience: 'staff' as const,
+    scope: 'store-wide-owner-managed' as const,
+    allowedManagers: ['owner'] as AdminAnalyticsViewPresetAudience[],
     sections: [
       { anchor: 'inventory-analytics', label: 'Inventory' },
       { anchor: 'fulfillment-analytics', label: 'Fulfillment' },
@@ -85,6 +113,27 @@ const VIEW_PRESETS = [
     ]
   }
 ];
+
+const VIEW_PERSISTENCE_PLAN: AdminAnalyticsViewPersistencePlan = {
+  status: 'persistence_plan_only',
+  enabled: false,
+  saveEndpointEnabled: false,
+  updateEndpointEnabled: false,
+  removeEndpointEnabled: false,
+  managementUiEnabled: false,
+  ownerApprovalRequired: true,
+  ownerApprovalRecorded: false,
+  allowedScopes: ['owner-private', 'staff-shared', 'store-wide-owner-managed'],
+  requiredFields: ['view key', 'view label', 'scope', 'selected range query', 'section anchors'],
+  blockedFields: ['analytics rows', 'customer rows', 'raw event rows', 'customer contact fields'],
+  blockers: [
+    'owner approval not recorded',
+    'view metadata model not implemented',
+    'save endpoint not configured',
+    'management UI not implemented',
+    'role policy persistence not configured'
+  ]
+};
 
 function workspaceHref(range: AdminAnalyticsResolvedRange) {
   return `/admin/analytics?${adminAnalyticsRangeQueryString(range)}`;
@@ -101,7 +150,7 @@ export function buildAdminAnalyticsViewPresetPreview(
   const baseHref = workspaceHref(range);
 
   return {
-    status: 'preview_only',
+    status: 'persistence_plan_only',
     enabled: false,
     saveEnabled: false,
     clientSaveEnabled: false,
@@ -118,11 +167,13 @@ export function buildAdminAnalyticsViewPresetPreview(
       href: preset.sections[0] ? sectionHref(range, preset.sections[0].anchor) : baseHref,
       sections: preset.sections.map((section) => ({ ...section }))
     })),
-    blockers: [
-      'view save path not configured',
-      'client save path disabled',
-      'server save path disabled',
-      'role policy not configured'
-    ]
+    persistencePlan: {
+      ...VIEW_PERSISTENCE_PLAN,
+      allowedScopes: [...VIEW_PERSISTENCE_PLAN.allowedScopes],
+      requiredFields: [...VIEW_PERSISTENCE_PLAN.requiredFields],
+      blockedFields: [...VIEW_PERSISTENCE_PLAN.blockedFields],
+      blockers: [...VIEW_PERSISTENCE_PLAN.blockers]
+    },
+    blockers: [...VIEW_PERSISTENCE_PLAN.blockers]
   };
 }

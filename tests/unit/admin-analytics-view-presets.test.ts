@@ -12,7 +12,7 @@ export async function runAdminAnalyticsViewPresetTests() {
   });
   const preview = buildAdminAnalyticsViewPresetPreview(range);
 
-  assert.equal(preview.status, 'preview_only');
+  assert.equal(preview.status, 'persistence_plan_only');
   assert.equal(preview.enabled, false);
   assert.equal(preview.saveEnabled, false);
   assert.equal(preview.clientSaveEnabled, false);
@@ -31,15 +31,39 @@ export async function runAdminAnalyticsViewPresetTests() {
   assert.ok(preview.presets.some((preset) => preset.audience === 'owner'));
   assert.ok(preview.presets.some((preset) => preset.audience === 'staff'));
   assert.ok(preview.presets.every((preset) => preset.sections.length > 0));
-  assert.ok(preview.blockers.includes('view save path not configured'));
-  assert.ok(preview.blockers.includes('client save path disabled'));
-  assert.ok(preview.blockers.includes('server save path disabled'));
+  assert.ok(preview.presets.every((preset) => preset.allowedManagers.includes('owner')));
+  assert.deepEqual(preview.persistencePlan.allowedScopes, [
+    'owner-private',
+    'staff-shared',
+    'store-wide-owner-managed'
+  ]);
+  assert.equal(preview.persistencePlan.status, 'persistence_plan_only');
+  assert.equal(preview.persistencePlan.enabled, false);
+  assert.equal(preview.persistencePlan.saveEndpointEnabled, false);
+  assert.equal(preview.persistencePlan.updateEndpointEnabled, false);
+  assert.equal(preview.persistencePlan.removeEndpointEnabled, false);
+  assert.equal(preview.persistencePlan.managementUiEnabled, false);
+  assert.equal(preview.persistencePlan.ownerApprovalRequired, true);
+  assert.equal(preview.persistencePlan.ownerApprovalRecorded, false);
+  assert.ok(preview.persistencePlan.requiredFields.includes('selected range query'));
+  assert.ok(preview.persistencePlan.requiredFields.includes('section anchors'));
+  assert.ok(preview.persistencePlan.blockedFields.includes('analytics rows'));
+  assert.ok(preview.persistencePlan.blockedFields.includes('customer rows'));
+  assert.ok(preview.persistencePlan.blockedFields.includes('raw event rows'));
+  assert.ok(preview.blockers.includes('owner approval not recorded'));
+  assert.ok(preview.blockers.includes('save endpoint not configured'));
+  assert.ok(preview.blockers.includes('management UI not implemented'));
+  assert.ok(preview.blockers.includes('role policy persistence not configured'));
 
   const helperSource = readFileSync('lib/analytics/admin-analytics-view-presets.ts', 'utf8');
-  assert.match(helperSource, /preview_only/);
+  assert.match(helperSource, /persistence_plan_only/);
   assert.match(helperSource, /saveEnabled: false/);
   assert.match(helperSource, /clientSaveEnabled: false/);
   assert.match(helperSource, /serverSaveEnabled: false/);
+  assert.match(helperSource, /saveEndpointEnabled: false/);
+  assert.match(helperSource, /updateEndpointEnabled: false/);
+  assert.match(helperSource, /removeEndpointEnabled: false/);
+  assert.match(helperSource, /managementUiEnabled: false/);
   assert.match(helperSource, /adminAnalyticsRangeQueryString/);
   assert.doesNotMatch(helperSource, /localStorage|sessionStorage|cookies\(|PrismaClient|prisma\.|create\(|update\(|upsert\(|delete\(/);
 
