@@ -19,7 +19,8 @@ export type AdminAnalyticsScheduledReportPrismaSchemaMapping = {
   modelName: 'AdminAnalyticsScheduledReport';
   tableName: 'AdminAnalyticsScheduledReport';
   mappedInSchemaPrisma: boolean;
-  generatedClientAccessEnabled: boolean;
+  generatedClientTypeVisible: boolean;
+  generatedClientRuntimeAccessEnabled: boolean;
   repositoryReadsEnabled: boolean;
   repositoryWritesEnabled: boolean;
   readEndpointEnabled: boolean;
@@ -202,7 +203,8 @@ export function buildAdminAnalyticsScheduledReportPrismaSchemaMapping(): AdminAn
     modelName: 'AdminAnalyticsScheduledReport',
     tableName: 'AdminAnalyticsScheduledReport',
     mappedInSchemaPrisma: true,
-    generatedClientAccessEnabled: false,
+    generatedClientTypeVisible: true,
+    generatedClientRuntimeAccessEnabled: false,
     repositoryReadsEnabled: false,
     repositoryWritesEnabled: false,
     readEndpointEnabled: false,
@@ -213,7 +215,7 @@ export function buildAdminAnalyticsScheduledReportPrismaSchemaMapping(): AdminAn
     indexes: INDEXES.map((index) => ({ ...index, fields: [...index.fields] })),
     jsonFields: ['reportTypes', 'lastDryRunSummary', 'metadata'],
     activationBlockers: [
-      'generated Prisma client access not enabled',
+      'generated Prisma client runtime access not enabled',
       'repository wiring not enabled',
       'read endpoint not configured',
       'management UI not implemented',
