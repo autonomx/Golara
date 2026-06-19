@@ -19,6 +19,7 @@ export type AdminAnalyticsScheduledReportRepositoryReadFilter = {
 export type AdminAnalyticsScheduledReportRepositoryReadPlan = {
   tableName: 'AdminAnalyticsScheduledReport';
   generatedClientModelName: 'AdminAnalyticsScheduledReport';
+  generatedClientDelegateName: 'adminAnalyticsScheduledReport';
   selectFields: AdminAnalyticsScheduledReportGeneratedClientReadField[];
   requiredFilters: AdminAnalyticsScheduledReportRepositoryReadFilter[];
   orderBy: ['cadence', 'reportKey'];
@@ -64,16 +65,42 @@ export type AdminAnalyticsScheduledReportRepositoryReader = {
   ) => Promise<AdminAnalyticsScheduledReportGeneratedClientReadRow[]>;
 };
 
-export type AdminAnalyticsScheduledReportRepositoryContract = {
-  status: 'repository_read_contract_only';
-  enabled: boolean;
-  tableName: 'AdminAnalyticsScheduledReport';
+export type AdminAnalyticsScheduledReportPrismaReaderFactoryContract = {
+  status: 'prisma_reader_factory_disabled';
+  enabled: false;
+  factoryAvailable: boolean;
+  factoryRuntimeEnabled: boolean;
+  generatedClientDelegateName: 'adminAnalyticsScheduledReport';
   generatedClientModelName: 'AdminAnalyticsScheduledReport';
   generatedClientTypeVisible: boolean;
   generatedClientRuntimeAccessEnabled: boolean;
   repositoryReadsEnabled: boolean;
   repositoryWritesEnabled: boolean;
+  readEndpointEnabled: boolean;
+  managementUiEnabled: boolean;
+  deliveryExecutionEnabled: boolean;
+  readArgs: AdminAnalyticsScheduledReportRepositoryReadArgs;
+  activationBlockers: string[];
+};
+
+export type AdminAnalyticsScheduledReportPrismaReaderFactory = {
+  contract: AdminAnalyticsScheduledReportPrismaReaderFactoryContract;
+  createReader: () => AdminAnalyticsScheduledReportRepositoryReader | null;
+};
+
+export type AdminAnalyticsScheduledReportRepositoryContract = {
+  status: 'repository_read_contract_only';
+  enabled: boolean;
+  tableName: 'AdminAnalyticsScheduledReport';
+  generatedClientModelName: 'AdminAnalyticsScheduledReport';
+  generatedClientDelegateName: 'adminAnalyticsScheduledReport';
+  generatedClientTypeVisible: boolean;
+  generatedClientRuntimeAccessEnabled: boolean;
+  repositoryReadsEnabled: boolean;
+  repositoryWritesEnabled: boolean;
   readAdapterAvailable: boolean;
+  readerFactoryAvailable: boolean;
+  readerFactoryRuntimeEnabled: boolean;
   readEndpointEnabled: boolean;
   managementUiEnabled: boolean;
   deliveryExecutionEnabled: boolean;
@@ -170,6 +197,7 @@ export function buildAdminAnalyticsScheduledReportRepositoryReadPlan(
   return {
     tableName: 'AdminAnalyticsScheduledReport',
     generatedClientModelName: 'AdminAnalyticsScheduledReport',
+    generatedClientDelegateName: 'adminAnalyticsScheduledReport',
     selectFields: [...SELECT_FIELDS],
     requiredFilters: REQUIRED_FILTERS.map((filter) => ({ ...filter })),
     orderBy: ['cadence', 'reportKey'],
@@ -194,6 +222,45 @@ export function buildAdminAnalyticsScheduledReportRepositoryReadArgs(
   };
 }
 
+export function buildAdminAnalyticsScheduledReportPrismaReaderFactoryContract(
+  maxRows = 25
+): AdminAnalyticsScheduledReportPrismaReaderFactoryContract {
+  return {
+    status: 'prisma_reader_factory_disabled',
+    enabled: false,
+    factoryAvailable: true,
+    factoryRuntimeEnabled: false,
+    generatedClientDelegateName: 'adminAnalyticsScheduledReport',
+    generatedClientModelName: 'AdminAnalyticsScheduledReport',
+    generatedClientTypeVisible: true,
+    generatedClientRuntimeAccessEnabled: false,
+    repositoryReadsEnabled: false,
+    repositoryWritesEnabled: false,
+    readEndpointEnabled: false,
+    managementUiEnabled: false,
+    deliveryExecutionEnabled: false,
+    readArgs: buildAdminAnalyticsScheduledReportRepositoryReadArgs(maxRows),
+    activationBlockers: [
+      'reader factory runtime disabled',
+      'generated Prisma client runtime access not enabled',
+      'Prisma repository access not enabled',
+      'read endpoint not configured',
+      'management UI not implemented',
+      'delivery execution remains disabled',
+      'global disable control not validated'
+    ]
+  };
+}
+
+export function createDisabledAdminAnalyticsScheduledReportPrismaReaderFactory(
+  maxRows = 25
+): AdminAnalyticsScheduledReportPrismaReaderFactory {
+  return {
+    contract: buildAdminAnalyticsScheduledReportPrismaReaderFactoryContract(maxRows),
+    createReader: () => null
+  };
+}
+
 export function buildAdminAnalyticsScheduledReportRepositoryContract(): AdminAnalyticsScheduledReportRepositoryContract {
   const readModel = readModelContract();
   return {
@@ -201,11 +268,14 @@ export function buildAdminAnalyticsScheduledReportRepositoryContract(): AdminAna
     enabled: false,
     tableName: readModel.tableName,
     generatedClientModelName: 'AdminAnalyticsScheduledReport',
+    generatedClientDelegateName: 'adminAnalyticsScheduledReport',
     generatedClientTypeVisible: true,
     generatedClientRuntimeAccessEnabled: false,
     repositoryReadsEnabled: false,
     repositoryWritesEnabled: false,
     readAdapterAvailable: true,
+    readerFactoryAvailable: true,
+    readerFactoryRuntimeEnabled: false,
     readEndpointEnabled: false,
     managementUiEnabled: false,
     deliveryExecutionEnabled: false,
@@ -216,6 +286,7 @@ export function buildAdminAnalyticsScheduledReportRepositoryContract(): AdminAna
     blockedOutputFields: [...readModel.blockedOutputFields],
     blockedOperations: [...BLOCKED_OPERATIONS],
     activationBlockers: [
+      'reader factory runtime disabled',
       'generated Prisma client runtime access not enabled',
       'Prisma repository access not enabled',
       'owner approval audit evidence not recorded',

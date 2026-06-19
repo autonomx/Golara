@@ -1,10 +1,10 @@
 # Admin analytics scheduled report runbook
 
-This runbook covers the scheduled report configuration-plan, storage-schema, applied Prisma schema mapping, checked Prisma schema fragment, generated-client type visibility, read-model, repository-read contract, and read-adapter foundations for `/admin/analytics`.
+This runbook covers the scheduled report configuration-plan, storage-schema, applied Prisma schema mapping, checked Prisma schema fragment, generated-client type visibility, read-model, repository-read contract, read-adapter, and disabled Prisma reader-factory foundations for `/admin/analytics`.
 
 ## Current scope
 
-The current scheduled report implementation is configuration, inactive storage, applied Prisma schema mapping, checked Prisma schema fragment, generated-client type visibility, metadata-only read-model, repository-read contract, and read-adapter foundation only.
+The current scheduled report implementation is configuration, inactive storage, applied Prisma schema mapping, checked Prisma schema fragment, generated-client type visibility, metadata-only read-model, repository-read contract, read-adapter, and disabled Prisma reader-factory foundation only.
 
 It defines:
 
@@ -24,13 +24,14 @@ It defines:
 - metadata-only read-model normalization for future stored schedule rows
 - metadata-only repository-read query-plan fields
 - a read adapter that applies the same safe query args to a future reader
+- a disabled Prisma reader-factory contract that names the future delegate and returns no reader while runtime access remains disabled
 - required future read filters for owner approval, active state, and delivery disabled state
 - allowed cadence and aggregate report type validation
 - disabled operator activation and delivery readiness
 - explicit disabled delivery state
 - explicit disabled schedule activation state
 
-It does not save active schedules, expose read routes, enable runtime application access through the generated Prisma client, wire active repository access, run active reads, add schedule execution, send reports, or add owner management UI. The `schema.prisma` model mapping is applied, the generated model type is visible to the adapter boundary, and runtime repository access remains disabled.
+It does not save active schedules, expose read routes, enable runtime application access through the generated Prisma client, wire active repository access, run active reads, add schedule execution, send reports, or add owner management UI. The `schema.prisma` model mapping is applied, the generated model type is visible to the adapter boundary, and the disabled reader factory returns no reader until runtime repository access is explicitly enabled in a later audited slice.
 
 ## Validation steps
 
@@ -58,10 +59,11 @@ It does not save active schedules, expose read routes, enable runtime applicatio
 22. Confirm the repository-read contract requires owner approval, active state, and delivery disabled filters.
 23. Confirm the read adapter builds the same safe query args.
 24. Confirm the read adapter keeps operator activation and delivery readiness disabled.
-25. Confirm active repository wiring remains disabled.
-26. Confirm activation remains disabled.
-27. Confirm delivery is disabled.
-28. Confirm schedule execution is disabled.
+25. Confirm the disabled Prisma reader factory is available and returns no reader.
+26. Confirm active repository wiring remains disabled.
+27. Confirm activation remains disabled.
+28. Confirm delivery is disabled.
+29. Confirm schedule execution is disabled.
 
 ## Evidence record
 
@@ -98,6 +100,8 @@ For each validation run, record:
 - read adapter query args checked: yes/no
 - read adapter operator activation enabled: must be no
 - read adapter delivery ready: must be no
+- disabled Prisma reader factory checked: yes/no
+- disabled Prisma reader factory returned reader: must be no
 - active repository wiring enabled: must be no
 - repository writes enabled: must be no
 - owner approval required: must be yes
@@ -122,4 +126,4 @@ Before enabling actual scheduled delivery, add and validate:
 - tests proving delivery can be disabled globally
 - dry-run evidence for the exact CSV paths and selected reporting window
 
-Do not enable delivery until config-plan evidence, storage-schema evidence, Prisma mapping evidence, checked schema-fragment evidence, generated-type evidence, read-model evidence, repository-read contract evidence, read-adapter evidence, and owner approval workflow are documented.
+Do not enable delivery until config-plan evidence, storage-schema evidence, Prisma mapping evidence, checked schema-fragment evidence, generated-type evidence, read-model evidence, repository-read contract evidence, read-adapter evidence, disabled reader-factory evidence, and owner approval workflow are documented.

@@ -18,7 +18,7 @@ This document summarizes the `/admin/analytics` workspace status.
 - Site analytics event foundation with privacy-safe first-party events.
 - Traffic attribution using capped UTM fields and external referrer domains.
 - Owner-only aggregate Business CSV and Site CSV exports.
-- Scheduled report preview, configuration plan, inactive table, applied `schema.prisma` model mapping, checked schema fragment, generated-client type visibility, metadata read model, read-query contract, and read-adapter foundation using the selected range and aggregate CSV paths.
+- Scheduled report preview, configuration plan, inactive table, applied `schema.prisma` model mapping, checked schema fragment, generated-client type visibility, metadata read model, read-query contract, read-adapter foundation, and disabled Prisma reader-factory contract using the selected range and aggregate CSV paths.
 - Saved dashboard view preset preview, persistence-plan foundation, inactive table, and metadata read model for future saves.
 - Dashboard group header UI using the selected range and existing section anchors.
 - Privacy and retention policy visibility.
@@ -40,7 +40,7 @@ Advanced customer cohort reporting is aggregate-only. It shows AOV/share buckets
 
 ## Scheduled report note
 
-The scheduled report foundation includes preview metadata, configuration metadata, inactive `AdminAnalyticsScheduledReport` storage, an applied `schema.prisma` model mapping, a checked Prisma schema fragment, generated-client type visibility, a metadata read model, a read-query contract, and a read-adapter foundation. It defines weekly and monthly owner report options, selected-range metadata, aggregate CSV paths, owner-approval requirements, future row fields, model-block fields/defaults/indexes, a standalone schema fragment that exactly matches the applied model and guarded block, a generated model type boundary for selected metadata rows, safe DTO normalization, required future filters, safe select fields, and activation blockers. The read adapter validates the same safe query args through an injected reader, while runtime generated Prisma access, active Prisma wiring, routes, schedules, scheduler/timer/background execution, and delivery remain off.
+The scheduled report foundation includes preview metadata, configuration metadata, inactive `AdminAnalyticsScheduledReport` storage, an applied `schema.prisma` model mapping, a checked Prisma schema fragment, generated-client type visibility, a metadata read model, a read-query contract, a read-adapter foundation, and a disabled Prisma reader-factory contract. It defines weekly and monthly owner report options, selected-range metadata, aggregate CSV paths, owner-approval requirements, future row fields, model-block fields/defaults/indexes, a standalone schema fragment that exactly matches the applied model and guarded block, a generated model type boundary for selected metadata rows, safe DTO normalization, required future filters, safe select fields, disabled factory metadata, and activation blockers. The read adapter validates the same safe query args through an injected reader, and the disabled reader factory names the future `adminAnalyticsScheduledReport` delegate while returning no reader. Runtime generated Prisma access, active Prisma wiring, routes, schedules, scheduler/timer/background execution, and delivery remain off.
 
 ## Saved dashboard view storage note
 
@@ -64,6 +64,6 @@ Before treating site analytics as complete in production, verify:
 8. Custom preset and start/end ranges produce matching dashboard, section-link, and export windows.
 9. Customer cohort panels and CSV rows remain aggregate-only.
 10. Advanced cohort panels and CSV rows show only aggregate AOV/share/order-count/recency bands.
-11. Scheduled report preview, config, inactive table, Prisma mapping contract, checked schema fragment, generated-client type visibility, read model, read-query contract, and read adapter preserve the selected range and aggregate CSV paths without enabling delivery.
+11. Scheduled report preview, config, inactive table, Prisma mapping contract, checked schema fragment, generated-client type visibility, read model, read-query contract, read adapter, and disabled reader factory preserve the selected range and aggregate CSV paths without enabling delivery.
 12. Saved dashboard view presets, persistence plans, storage table, and read model preserve selected range metadata, existing section anchors, allowed scopes, blocked fields, disabled endpoints, inactive activation flags, and metadata-only DTOs.
 13. Dashboard group headers preserve selected range links, the section index, existing anchors, and table fallback requirements without enabling collapsible groups or tabs.
