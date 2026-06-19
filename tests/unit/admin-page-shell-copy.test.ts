@@ -78,15 +78,23 @@ export async function runAdminPageShellCopyTests() {
     end: '2026-06-15'
   });
   const scheduledReportPreview = buildAdminAnalyticsScheduledReportPreview(scheduledReportRange);
-  assert.equal(scheduledReportPreview.status, 'preview_only');
+  assert.equal(scheduledReportPreview.status, 'config_plan_only');
   assert.equal(scheduledReportPreview.deliveryEnabled, false);
   assert.equal(scheduledReportPreview.persistenceEnabled, false);
   assert.equal(scheduledReportPreview.businessCsvPath, '/admin/analytics/export?start=2026-06-01&end=2026-06-15&report=business');
   assert.equal(scheduledReportPreview.siteCsvPath, '/admin/analytics/export?start=2026-06-01&end=2026-06-15&report=site');
   assert.deepEqual(scheduledReportPreview.plans.map((plan) => plan.cadence), ['weekly', 'monthly']);
+  assert.deepEqual(scheduledReportPreview.configPlans.map((plan) => plan.status), ['draft_only', 'draft_only']);
+  assert.ok(scheduledReportPreview.configPlans.every((plan) => plan.ownerApprovalRequired));
+  assert.ok(scheduledReportPreview.configPlans.every((plan) => plan.ownerApproved === false));
+  assert.ok(scheduledReportPreview.configPlans.every((plan) => plan.active === false));
 
   const scheduledReportSource = readFileSync('lib/analytics/admin-analytics-scheduled-reports.ts', 'utf8');
-  assert.match(scheduledReportSource, /preview_only/);
+  assert.match(scheduledReportSource, /config_plan_only/);
+  assert.match(scheduledReportSource, /draft_only/);
+  assert.match(scheduledReportSource, /ownerApprovalRequired: true/);
+  assert.match(scheduledReportSource, /ownerApproved: false/);
+  assert.match(scheduledReportSource, /active: false/);
   assert.match(scheduledReportSource, /deliveryEnabled: false/);
   assert.match(scheduledReportSource, /persistenceEnabled: false/);
   assert.match(scheduledReportSource, /adminAnalyticsRangeQueryString/);
