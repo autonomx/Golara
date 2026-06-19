@@ -18,7 +18,7 @@ This document summarizes the `/admin/analytics` workspace status.
 - Site analytics event foundation with privacy-safe first-party events.
 - Traffic attribution using capped UTM fields and external referrer domains.
 - Owner-only aggregate Business CSV and Site CSV exports.
-- Scheduled report preview, configuration plan, inactive table, Prisma mapping contract, checked schema fragment, metadata read model, read-query contract, and read-adapter foundation using the selected range and aggregate CSV paths.
+- Scheduled report preview, configuration plan, inactive table, applied `schema.prisma` model mapping, checked schema fragment, metadata read model, read-query contract, and read-adapter foundation using the selected range and aggregate CSV paths.
 - Saved dashboard view preset preview, persistence-plan foundation, inactive table, and metadata read model for future saves.
 - Dashboard group header UI using the selected range and existing section anchors.
 - Privacy and retention policy visibility.
@@ -30,7 +30,7 @@ This document summarizes the `/admin/analytics` workspace status.
 
 - Automated raw site-event deletion after production migration evidence and cleanup preview evidence are verified.
 - Future customer segmentation beyond aggregate order-count and recency bands, only after a separate privacy review.
-- Scheduled report main Prisma schema application, generated Prisma client access, active repository wiring, writes, read routes, delivery execution, retry visibility, approval recording, disable controls, and owner management UI.
+- Scheduled report generated Prisma client usage in application contracts, active repository wiring, writes, read routes, delivery execution, retry visibility, approval recording, disable controls, schedule activation, scheduler/timer/background execution, and owner management UI.
 - Saved dashboard active save/update/remove/read endpoints, owner approval recording, role-policy enforcement, active repository access, and owner/staff management UI.
 - Collapsible dashboard groups or tabbed workspace behavior.
 
@@ -40,7 +40,7 @@ Advanced customer cohort reporting is aggregate-only. It shows AOV/share buckets
 
 ## Scheduled report note
 
-The scheduled report foundation includes preview metadata, configuration metadata, inactive `AdminAnalyticsScheduledReport` storage, a Prisma mapping contract, a checked Prisma schema fragment, a metadata read model, a read-query contract, and a read-adapter foundation. It defines weekly and monthly owner report options, selected-range metadata, aggregate CSV paths, owner-approval requirements, future row fields, model-block fields/defaults/indexes, a standalone schema fragment that exactly matches the guarded model block, safe DTO normalization, required future filters, safe select fields, and activation blockers. The read adapter validates the same safe query args through an injected reader, while main `schema.prisma` application, generated Prisma client access, active Prisma wiring, routes, schedules, and delivery remain off.
+The scheduled report foundation includes preview metadata, configuration metadata, inactive `AdminAnalyticsScheduledReport` storage, an applied `schema.prisma` model mapping, a checked Prisma schema fragment, a metadata read model, a read-query contract, and a read-adapter foundation. It defines weekly and monthly owner report options, selected-range metadata, aggregate CSV paths, owner-approval requirements, future row fields, model-block fields/defaults/indexes, a standalone schema fragment that exactly matches the applied model and guarded block, safe DTO normalization, required future filters, safe select fields, and activation blockers. The read adapter validates the same safe query args through an injected reader, while application use of the generated Prisma client, active Prisma wiring, routes, schedules, scheduler/timer/background execution, and delivery remain off.
 
 ## Saved dashboard view storage note
 
