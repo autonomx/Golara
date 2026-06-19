@@ -14,6 +14,7 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 - Product view-to-cart conversion from first-party storefront events.
 - Product sales and category sales from eligible checkout order lines.
 - Aggregate customer cohort metrics for guest, known, first-time, and returning-customer order buckets.
+- Advanced aggregate customer cohort reporting for AOV/share buckets, known-customer order-count bands, and recency bands.
 - Site analytics event foundation with privacy-safe first-party events.
 - Traffic attribution using capped UTM fields and external referrer domains.
 - Owner-only aggregate Business CSV and Site CSV exports.
@@ -28,16 +29,16 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 ## Intentionally pending
 
 - Automated raw site-event deletion after production migration evidence and cleanup preview evidence are verified.
-- Advanced customer cohort reporting beyond the current aggregate order/revenue buckets.
+- Future customer segmentation beyond aggregate order-count and recency bands, only after a separate privacy review.
 - Scheduled report persistence, delivery configuration, and owner approval workflow.
 - Saved dashboard view persistence, role-policy persistence, and owner/staff management UI.
 - Collapsible dashboard groups or tabbed workspace behavior.
 
 ## Customer cohort analytics note
 
-Customer cohort analytics are live only as aggregate, privacy-safe reporting. The current implementation avoids exposing customer names, phones, emails, or raw identifiers in charts or CSV exports.
+Customer cohort analytics are live only as aggregate, privacy-safe reporting. The current implementation avoids exposing customer names, phones, emails, addresses, or raw identifiers in charts or CSV exports.
 
-The live cohort slice includes aggregate counts and revenue for:
+The live cohort slice includes aggregate counts, revenue, AOV, share, and banded reporting for:
 
 - known-customer orders
 - guest orders
@@ -45,6 +46,10 @@ The live cohort slice includes aggregate counts and revenue for:
 - first-time known-customer orders
 - returning known-customer orders
 - returning known-customer revenue and order rate
+- average order value by aggregate cohort
+- revenue share by aggregate cohort
+- known-customer order-count bands
+- known-customer recency bands
 
 Any future customer cohort export must remain aggregate-only unless a separate explicit customer-report permission model exists.
 
@@ -90,6 +95,7 @@ Before treating site analytics as complete in production, verify:
 8. Cleanup remains disabled until production migration evidence is confirmed.
 9. Custom preset and start/end ranges produce matching dashboard, section-link, and export windows.
 10. Customer cohort panels and CSV rows remain aggregate-only.
-11. Scheduled report previews preserve the selected range and aggregate Business/Site CSV paths without enabling delivery.
-12. Saved dashboard view presets preserve the selected range and existing section anchors without saving view state.
-13. Dashboard group headers preserve selected range links, the section index, existing anchors, and table fallback requirements without enabling collapsible groups or tabs.
+11. Advanced aggregate cohort panels and CSV rows show only AOV/share/order-count/recency bands, never per-customer rows.
+12. Scheduled report previews preserve the selected range and aggregate Business/Site CSV paths without enabling delivery.
+13. Saved dashboard view presets preserve the selected range and existing section anchors without saving view state.
+14. Dashboard group headers preserve selected range links, the section index, existing anchors, and table fallback requirements without enabling collapsible groups or tabs.
