@@ -78,6 +78,7 @@ export async function runOrderRevenueSummaryTests() {
   const rows = [
     {
       id: '1',
+      customerId: 'known-a',
       status: 'completed',
       fulfillmentStatus: 'delivered',
       currency: 'CAD',
@@ -88,6 +89,7 @@ export async function runOrderRevenueSummaryTests() {
     },
     {
       id: '2',
+      customerId: null,
       status: 'pending',
       fulfillmentStatus: 'not_scheduled',
       currency: 'CAD',
@@ -95,9 +97,9 @@ export async function runOrderRevenueSummaryTests() {
       createdAt: new Date('2026-05-20T12:00:00Z'),
       paymentAttempts: [{ provider: 'zarinpal', status: 'created', amountCents: 5000, currency: 'CAD' }]
     },
-    { id: '3', status: 'cancelled', fulfillmentStatus: 'cancelled', currency: 'CAD', totalCents: 2500, createdAt: new Date('2026-05-31T12:00:00Z') },
-    { id: '4', status: 'fulfilled', fulfillmentStatus: 'out_for_delivery', currency: 'USD', totalCents: 2000, createdAt: new Date('2026-04-01T12:00:00Z') },
-    { id: '5', status: 'completed', fulfillmentStatus: 'delivered', currency: 'CAD', totalCents: 5000, createdAt: new Date('2026-05-02T12:00:00Z') }
+    { id: '3', customerId: 'known-a', status: 'cancelled', fulfillmentStatus: 'cancelled', currency: 'CAD', totalCents: 2500, createdAt: new Date('2026-05-31T12:00:00Z') },
+    { id: '4', customerId: 'known-c', status: 'fulfilled', fulfillmentStatus: 'out_for_delivery', currency: 'USD', totalCents: 2000, createdAt: new Date('2026-04-01T12:00:00Z') },
+    { id: '5', customerId: 'known-b', status: 'completed', fulfillmentStatus: 'delivered', currency: 'CAD', totalCents: 5000, createdAt: new Date('2026-05-02T12:00:00Z') }
   ];
   const summary = buildOrderRevenueSummary(rows, now);
 
@@ -118,6 +120,15 @@ export async function runOrderRevenueSummaryTests() {
   assert.equal(summary.byPaymentProvider.length, 2);
   assert.equal(summary.discountImpact.discountedOrders, 1);
   assert.equal(summary.discountImpact.undiscountedOrders, 2);
+  assert.equal(summary.customerCohorts.guestOrders, 1);
+  assert.equal(summary.customerCohorts.guestRevenueCents, 5000);
+  assert.equal(summary.customerCohorts.knownCustomerOrders, 2);
+  assert.equal(summary.customerCohorts.knownCustomerRevenueCents, 10000);
+  assert.equal(summary.customerCohorts.knownCustomerCount, 1);
+  assert.equal(summary.customerCohorts.firstTimeKnownCustomerOrders, 1);
+  assert.equal(summary.customerCohorts.returningKnownCustomerOrders, 1);
+  assert.equal(summary.customerCohorts.returningKnownCustomerRevenueCents, 10000);
+  assert.equal(summary.customerCohorts.returningKnownCustomerOrderRatePercent, 50);
   assert.equal(summary.comparison.totalOrders.previousValue, 1);
   assert.equal(summary.comparison.totalOrders.absoluteChange, 2);
   assert.equal(summary.comparison.totalRevenueCents.percentChange, 200);
@@ -129,6 +140,8 @@ export async function runOrderRevenueSummaryTests() {
   assert.equal(sevenDaySummary.analyticsRangeDays, 7);
   assert.equal(sevenDaySummary.totalOrders, 2);
   assert.equal(sevenDaySummary.totalRevenueCents, 10000);
+  assert.equal(sevenDaySummary.customerCohorts.knownCustomerOrders, 2);
+  assert.equal(sevenDaySummary.customerCohorts.guestOrders, 0);
   assert.equal(sevenDaySummary.recentDaily.length, 7);
 
   const customSummary = buildOrderRevenueSummary(rows, now, { analyticsRange: customRange });
@@ -137,6 +150,8 @@ export async function runOrderRevenueSummaryTests() {
   assert.equal(customSummary.analyticsRangeLabel, '2026-05-31 to 2026-06-01');
   assert.equal(customSummary.totalOrders, 2);
   assert.equal(customSummary.totalRevenueCents, 10000);
+  assert.equal(customSummary.customerCohorts.knownCustomerOrders, 2);
+  assert.equal(customSummary.customerCohorts.returningKnownCustomerOrders, 1);
   assert.equal(customSummary.recentDaily.length, 2);
   assert.equal(customSummary.recentDaily[0].date, '2026-05-31');
   assert.equal(customSummary.recentDaily[1].date, '2026-06-01');
@@ -144,6 +159,7 @@ export async function runOrderRevenueSummaryTests() {
   const annualSummary = buildOrderRevenueSummary(rows, now, { rangeDays: 365 });
   assert.equal(annualSummary.analyticsRangeDays, 365);
   assert.equal(annualSummary.totalOrders, 5);
+  assert.equal(annualSummary.customerCohorts.knownCustomerCount, 3);
   assert.equal(annualSummary.recentDaily.length, 365);
 
   const productSalesRows = [
@@ -202,6 +218,10 @@ export async function runOrderRevenueSummaryTests() {
   assert.match(service, /export type OrderOperationalStatusSummary/);
   assert.match(service, /export type PaymentProviderRevenueSummary/);
   assert.match(service, /export type OrderDiscountImpactSummary/);
+  assert.match(service, /export type OrderCustomerCohortSummary/);
+  assert.match(service, /customerCohorts: OrderCustomerCohortSummary/);
+  assert.match(service, /buildOrderCustomerCohorts/);
+  assert.match(service, /customerId: true/);
   assert.match(service, /export type OrderRevenueComparisonSummary/);
   assert.match(service, /comparison: OrderRevenueComparisonSummary/);
   assert.match(service, /analyticsRangeDays: number/);
@@ -242,11 +262,17 @@ export async function runOrderRevenueSummaryTests() {
   assert.match(exportRoute, /resolveAdminAnalyticsRange/);
   assert.match(exportRoute, /range_start/);
   assert.match(exportRoute, /range_end/);
+  assert.match(exportRoute, /customer_cohorts/);
+  assert.match(exportRoute, /known_customer_orders/);
+  assert.match(exportRoute, /returning_known_customer_order_rate_percent/);
   assert.match(exportRoute, /orderRevenueSummaryService\.summary\(\{ analyticsRange \}\)/);
   assert.match(panel, /summary\.comparison\.totalOrders/);
   assert.match(panel, /summary\.byFulfillmentStatus\.map/);
   assert.match(panel, /summary\.byPaymentProvider\.map/);
   assert.match(panel, /summary\.discountImpact/);
+  assert.match(panel, /summary\.customerCohorts/);
+  assert.match(panel, /Aggregate customer cohorts/);
+  assert.match(panel, /returningKnownCustomerOrderRatePercent/);
   assert.match(panel, /Payment method mix/);
   assert.match(panel, /Discount usage impact/);
   assert.match(panel, /vs previous range/);
