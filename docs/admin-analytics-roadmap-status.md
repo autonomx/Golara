@@ -18,7 +18,7 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 - Site analytics event foundation with privacy-safe first-party events.
 - Traffic attribution using capped UTM fields and external referrer domains.
 - Owner-only aggregate Business CSV and Site CSV exports.
-- Scheduled report preview, owner-approved configuration-plan foundation, inactive storage schema, and metadata-only read-model foundation that reuse the selected analytics range and aggregate Business/Site CSV paths.
+- Scheduled report preview, owner-approved configuration-plan foundation, inactive storage schema, metadata-only read-model foundation, and repository-read query-plan contract that reuse the selected analytics range and aggregate Business/Site CSV paths.
 - Saved dashboard view preset preview, persistence-plan foundation, inactive storage schema, and metadata-only read-model foundation for future saves.
 - Dashboard group header UI that uses the layout grouping contract while preserving the selected range, section index, anchors, and table fallback requirements.
 - Privacy and retention policy visibility.
@@ -30,7 +30,7 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 
 - Automated raw site-event deletion after production migration evidence and cleanup preview evidence are verified.
 - Future customer segmentation beyond aggregate order-count and recency bands, only after a separate privacy review.
-- Scheduled report active repository read/write paths, delivery channel execution, retry visibility, owner approval recording, global disable controls, and owner management UI.
+- Scheduled report active repository reads/writes, read endpoints, delivery channel execution, retry visibility, owner approval recording, global disable controls, and owner management UI.
 - Saved dashboard active save/update/remove/read endpoints, owner approval recording, role-policy enforcement, active repository access, and owner/staff management UI.
 - Collapsible dashboard groups or tabbed workspace behavior.
 
@@ -59,9 +59,9 @@ The range selector now supports both fixed presets and custom start/end dates. P
 
 ## Scheduled report configuration note
 
-The scheduled report foundation now includes preview metadata, configuration-plan metadata, an inactive `AdminAnalyticsScheduledReport` storage schema, and a metadata-only read-model foundation. It defines weekly and monthly owner report options, selected-range metadata, aggregate Business/Site CSV paths, owner-approval requirements, metadata-only future schedule fields, safe DTO normalization for future table rows, and activation blockers without saving active schedules, sending reports, creating timers, reading through active repositories, or running background jobs.
+The scheduled report foundation now includes preview metadata, configuration-plan metadata, an inactive `AdminAnalyticsScheduledReport` storage schema, a metadata-only read-model foundation, and a repository-read query-plan contract. It defines weekly and monthly owner report options, selected-range metadata, aggregate Business/Site CSV paths, owner-approval requirements, metadata-only future schedule fields, safe DTO normalization for future table rows, required future read filters, safe select fields, and activation blockers without saving active schedules, sending reports, creating timers, reading through active repositories, or running background jobs.
 
-The read model keeps `activeForOperators=false` and `deliveryReady=false` even when future approval, active, delivery, and dry-run fields are present. Actual scheduled delivery remains pending until repository access, owner approval recording, dry-run evidence, delivery configuration, retry/failure visibility, disable controls, and management UI are designed and validated.
+The read model keeps `activeForOperators=false` and `deliveryReady=false` even when future approval, active, delivery, and dry-run fields are present. The repository-read contract defines owner-approved, active, delivery-disabled future filters, but active repository access remains disabled. Actual scheduled delivery remains pending until repository access, owner approval recording, dry-run evidence, delivery configuration, retry/failure visibility, disable controls, and management UI are designed and validated.
 
 ## Saved dashboard view storage note
 
@@ -96,6 +96,6 @@ Before treating site analytics as complete in production, verify:
 9. Custom preset and start/end ranges produce matching dashboard, section-link, and export windows.
 10. Customer cohort panels and CSV rows remain aggregate-only.
 11. Advanced aggregate cohort panels and CSV rows show only AOV/share/order-count/recency bands, never per-customer rows.
-12. Scheduled report previews, config plans, inactive storage schema, and read model preserve the selected range and aggregate Business/Site CSV paths without enabling delivery.
+12. Scheduled report previews, config plans, inactive storage schema, read model, and repository-read contract preserve the selected range and aggregate Business/Site CSV paths without enabling delivery.
 13. Saved dashboard view presets, persistence plans, storage schema, and read model preserve selected range metadata, existing section anchors, allowed scopes, blocked fields, disabled endpoints, inactive activation flags, and metadata-only DTOs.
 14. Dashboard group headers preserve selected range links, the section index, existing anchors, and table fallback requirements without enabling collapsible groups or tabs.
