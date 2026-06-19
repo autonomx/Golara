@@ -1,6 +1,6 @@
 # Admin analytics implementation backlog
 
-This backlog tracks the remaining admin analytics work after the custom range, aggregate cohort, retention preview, and scheduled report preview foundation passes.
+This backlog tracks the remaining admin analytics work after the custom range, aggregate cohort, retention preview, scheduled report preview, and saved view preset foundation passes.
 
 ## Current live baseline
 
@@ -12,6 +12,7 @@ This backlog tracks the remaining admin analytics work after the custom range, a
 - First-party site analytics for page, product, category, search, cart, checkout, payment-method, attribution, and funnel signals.
 - Aggregate Business CSV and Site CSV exports.
 - Scheduled report preview foundation for weekly/monthly owner report options using the selected range and aggregate CSV paths.
+- Saved dashboard view preset preview foundation using the selected range and existing section anchors.
 - Privacy and retention documentation.
 - Read-only raw event retention status and cleanup preview.
 - Owner-only export and retention controls.
@@ -46,6 +47,17 @@ Completed baseline:
 - Delivery is disabled.
 - Schedule persistence is disabled.
 - No cron, email transport, timer, or background execution path is introduced.
+
+### Saved dashboard view preset foundation
+
+Completed baseline:
+
+- Named view presets are represented as preview-only metadata.
+- View presets reuse the selected analytics range and existing section anchors.
+- Presets include owner/staff audience labels.
+- View saving is disabled.
+- Client-side and server-side saved state are disabled.
+- No persistence model, save endpoint, or analytics-calculation change is introduced.
 
 ## Remaining backlog items
 
@@ -96,15 +108,17 @@ Acceptance criteria:
 - Saving schedules requires a persistence model and owner approval evidence.
 - Delivery requires an explicit provider/channel plan and testable disable switch.
 
-### 4. Saved dashboard views
+### 4. Saved dashboard view persistence
 
-Goal: let operators save preferred dashboard range/filter layouts.
+Goal: let operators save preferred dashboard range/filter layouts after the preview contract is validated.
 
 Acceptance criteria:
 
 - Saved views do not change source analytics calculations.
 - Views preserve the existing section index and range links.
 - Access remains role-aware.
+- Saved metadata is limited to view labels, selected range/filter metadata, and section anchors.
+- Persistence includes owner/staff management and delete/update behavior.
 
 ### 5. Dashboard layout refinement
 
@@ -118,9 +132,9 @@ Acceptance criteria:
 
 ## Sequencing recommendation
 
-1. Production validation evidence for custom ranges, exports, aggregate cohort panels, retention preview, and scheduled report previews.
+1. Production validation evidence for custom ranges, exports, aggregate cohort panels, retention preview, scheduled report previews, and saved view presets.
 2. Automated retention cleanup preview, then guarded execution.
 3. Advanced aggregate cohort reporting.
 4. Scheduled report persistence and delivery.
-5. Saved dashboard views.
+5. Saved dashboard view persistence.
 6. Dashboard layout refinement when the page starts feeling crowded.
