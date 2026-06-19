@@ -47,14 +47,17 @@ const copy = {
     liveCustomRange: 'Preset and custom start/end date range resolution',
     liveSite: 'First-party site funnel, attribution, and product view-to-cart analytics',
     liveSales: 'Product and category sales from checkout order lines',
-    liveCustomerCohorts: 'Aggregate customer cohort order/revenue buckets',
+    liveCustomerCohorts: 'Aggregate and advanced customer cohort reporting',
     liveExports: 'Aggregate business/site CSV exports',
+    liveScheduledReports: 'Scheduled report preview and config-plan foundation',
+    liveSavedViews: 'Saved view preset and persistence-plan foundation',
+    liveLayoutGroups: 'Dashboard group header UI',
     livePrivacy: 'Privacy/retention policy and disable guidance',
     liveRoleVisibility: 'Role-specific analytics visibility for owner-only exports and retention diagnostics',
     pendingRetentionJob: 'Automated raw-event retention cleanup job',
-    pendingAdvancedCohorts: 'Advanced aggregate customer cohort reporting',
-    pendingScheduledReports: 'Scheduled analytics reports',
-    pendingSavedViews: 'Saved dashboard views',
+    pendingScheduledDelivery: 'Scheduled report storage and delivery execution',
+    pendingSavedViewManagement: 'Saved view active persistence and management UI',
+    pendingLayoutTabs: 'Collapsible groups or tabbed workspace behavior',
     statusLive: 'Live',
     statusNeedsData: 'Needs data',
     statusPlanned: 'Planned'
@@ -96,14 +99,17 @@ const copy = {
     liveCustomRange: 'حل بازه‌های پیش‌فرض و تاریخ شروع/پایان سفارشی',
     liveSite: 'قیف سایت، انتساب ترافیک و تبدیل بازدید محصول به سبد',
     liveSales: 'فروش محصول و دسته‌بندی از ردیف‌های سفارش',
-    liveCustomerCohorts: 'گروه‌های تجمیعی سفارش/درآمد مشتری',
+    liveCustomerCohorts: 'گزارش تجمیعی و پیشرفته گروه‌های مشتری',
     liveExports: 'خروجی CSV تجمیعی کسب‌وکار و سایت',
+    liveScheduledReports: 'پایه پیش‌نمایش و طرح پیکربندی گزارش زمان‌بندی‌شده',
+    liveSavedViews: 'پایه پیش‌نمایش و طرح ماندگاری نمای داشبورد',
+    liveLayoutGroups: 'رابط سربرگ گروه‌های داشبورد',
     livePrivacy: 'سیاست حریم خصوصی/نگهداری و راهنمای غیرفعال‌سازی',
     liveRoleVisibility: 'نمایش تحلیل‌ها بر اساس نقش برای خروجی‌های مالک و وضعیت نگهداری',
     pendingRetentionJob: 'کار خودکار پاک‌سازی رویدادهای خام پس از دوره نگهداری',
-    pendingAdvancedCohorts: 'گزارش پیشرفته‌تر گروه‌های تجمیعی مشتری',
-    pendingScheduledReports: 'گزارش‌های زمان‌بندی‌شده تحلیل‌ها',
-    pendingSavedViews: 'نماهای ذخیره‌شده داشبورد',
+    pendingScheduledDelivery: 'ذخیره و ارسال گزارش‌های زمان‌بندی‌شده',
+    pendingSavedViewManagement: 'ماندگاری فعال و مدیریت نماهای ذخیره‌شده',
+    pendingLayoutTabs: 'گروه‌های جمع‌شونده یا فضای کاری تب‌دار',
     statusLive: 'فعال',
     statusNeedsData: 'نیازمند داده',
     statusPlanned: 'برنامه‌ریزی‌شده'
@@ -242,6 +248,9 @@ export async function AdminAnalyticsGuidancePanel({
             <li>{labels.liveSales}</li>
             <li>{labels.liveCustomerCohorts}</li>
             <li>{labels.liveExports}</li>
+            <li>{labels.liveScheduledReports}</li>
+            <li>{labels.liveSavedViews}</li>
+            <li>{labels.liveLayoutGroups}</li>
             <li>{labels.livePrivacy}</li>
             <li>{labels.liveRoleVisibility}</li>
           </ul>
@@ -250,9 +259,9 @@ export async function AdminAnalyticsGuidancePanel({
           <h3 className="text-sm font-bold text-stone-950">{labels.pendingLabel}</h3>
           <ul className="mt-3 grid gap-2 text-sm leading-6 text-stone-600">
             <li>{labels.pendingRetentionJob}</li>
-            <li>{labels.pendingAdvancedCohorts}</li>
-            <li>{labels.pendingScheduledReports}</li>
-            <li>{labels.pendingSavedViews}</li>
+            <li>{labels.pendingScheduledDelivery}</li>
+            <li>{labels.pendingSavedViewManagement}</li>
+            <li>{labels.pendingLayoutTabs}</li>
           </ul>
         </div>
       </div>
