@@ -14,6 +14,7 @@ This document summarizes the `/admin/analytics` workspace status.
 - Product view-to-cart conversion from first-party storefront events.
 - Product sales and category sales from eligible checkout order lines.
 - Aggregate customer cohort metrics for guest, known, first-time, and returning-customer order buckets.
+- Advanced aggregate customer cohort reporting for AOV/share buckets, known-customer order-count bands, and recency bands.
 - Site analytics event foundation with privacy-safe first-party events.
 - Traffic attribution using capped UTM fields and external referrer domains.
 - Owner-only aggregate Business CSV and Site CSV exports.
@@ -28,10 +29,14 @@ This document summarizes the `/admin/analytics` workspace status.
 ## Planned next
 
 - Automated raw site-event deletion after production migration evidence and cleanup preview evidence are verified.
-- Advanced customer cohort reporting beyond the current aggregate order/revenue buckets.
+- Future customer segmentation beyond aggregate order-count and recency bands, only after a separate privacy review.
 - Scheduled report persistence, delivery configuration, and owner approval workflow.
 - Saved dashboard view persistence, role-policy persistence, and owner/staff management UI.
 - Collapsible dashboard groups or tabbed workspace behavior.
+
+## Customer cohort note
+
+Advanced customer cohort reporting is aggregate-only. It shows AOV/share buckets, known-customer order-count bands, and recency bands without exposing names, emails, phones, addresses, raw customer identifiers, or per-customer rows.
 
 ## Scheduled report preview note
 
@@ -58,6 +63,7 @@ Before treating site analytics as complete in production, verify:
 7. Cleanup preview reports eligible stale-event counts without deleting data.
 8. Custom preset and start/end ranges produce matching dashboard, section-link, and export windows.
 9. Customer cohort panels and CSV rows remain aggregate-only.
-10. Scheduled report previews preserve the selected range and aggregate Business/Site CSV paths without enabling delivery.
-11. Saved dashboard view presets preserve the selected range and existing section anchors without saving view state.
-12. Dashboard group headers preserve selected range links, the section index, existing anchors, and table fallback requirements without enabling collapsible groups or tabs.
+10. Advanced cohort panels and CSV rows show only aggregate AOV/share/order-count/recency bands.
+11. Scheduled report previews preserve the selected range and aggregate Business/Site CSV paths without enabling delivery.
+12. Saved dashboard view presets preserve the selected range and existing section anchors without saving view state.
+13. Dashboard group headers preserve selected range links, the section index, existing anchors, and table fallback requirements without enabling collapsible groups or tabs.
