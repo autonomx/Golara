@@ -2,7 +2,7 @@
 
 This runbook validates the admin analytics workspace after deploy. It is intended for owner/admin operators before treating `/admin/analytics` as an operational source of truth.
 
-Use it to validate the production analytics path end to end: database migration, storefront event capture, checkout funnel capture, custom range parity, aggregate exports, customer cohort aggregates, and retention status.
+Use it to validate the production analytics path end to end: database migration, storefront event capture, checkout funnel capture, custom range parity, aggregate exports, customer cohort aggregates, retention status, and cleanup preview evidence.
 
 ## Scope
 
@@ -16,6 +16,7 @@ Validate that the analytics page can show trustworthy aggregate data for:
 - aggregate customer cohort metrics
 - aggregate CSV exports
 - privacy and retention status
+- raw-event cleanup preview without deletion
 
 ## Preconditions
 
@@ -37,24 +38,26 @@ Validate that the analytics page can show trustworthy aggregate data for:
 6. Confirm Business CSV and Site CSV links are visible.
 7. Confirm raw-event retention status is visible.
 8. Confirm the retention panel does not report a missing site analytics table after production migration.
-9. Visit storefront product and category pages.
-10. Submit a catalog search.
-11. Submit an add-to-cart flow.
-12. Start checkout.
-13. Select a payment method.
-14. Complete a checkout in staging/test mode or with an approved manual/cash method.
-15. Return to `/admin/analytics` and choose the preset range that includes the test activity.
-16. Record the selected range label shown on the page.
-17. Confirm site event totals increase.
-18. Confirm product views, category views, add-to-cart, checkout started, payment method selected, and checkout completed signals appear where expected.
-19. Confirm business/order analytics update after eligible orders exist.
-20. Confirm aggregate customer cohort panels update after eligible customer-linked orders exist.
-21. Enter a custom `start` and `end` window that includes the same activity.
-22. Confirm dashboard labels, section links, and Business/Site CSV URLs preserve that custom window.
-23. Download Business CSV and confirm aggregate business rows exist for the selected window.
-24. Download Site CSV and confirm aggregate site/funnel rows exist for the selected window.
-25. Confirm Business CSV includes only aggregate customer cohort rows for guest, known, first-time, and returning-customer buckets.
-26. Confirm neither CSV contains visitor session details, full referrer URLs, analytics event payloads, customer names, phone numbers, emails, or per-customer rows.
+9. Confirm the cleanup preview card is visible and reports eligible stale-event count, deletion disabled, production evidence status, and preview reason.
+10. Visit storefront product and category pages.
+11. Submit a catalog search.
+12. Submit an add-to-cart flow.
+13. Start checkout.
+14. Select a payment method.
+15. Complete a checkout in staging/test mode or with an approved manual/cash method.
+16. Return to `/admin/analytics` and choose the preset range that includes the test activity.
+17. Record the selected range label shown on the page.
+18. Confirm site event totals increase.
+19. Confirm product views, category views, add-to-cart, checkout started, payment method selected, and checkout completed signals appear where expected.
+20. Confirm business/order analytics update after eligible orders exist.
+21. Confirm aggregate customer cohort panels update after eligible customer-linked orders exist.
+22. Enter a custom `start` and `end` window that includes the same activity.
+23. Confirm dashboard labels, section links, and Business/Site CSV URLs preserve that custom window.
+24. Download Business CSV and confirm aggregate business rows exist for the selected window.
+25. Download Site CSV and confirm aggregate site/funnel rows exist for the selected window.
+26. Confirm Business CSV includes only aggregate customer cohort rows for guest, known, first-time, and returning-customer buckets.
+27. Confirm neither CSV contains visitor session details, full referrer URLs, analytics event payloads, customer names, phone numbers, emails, or per-customer rows.
+28. Confirm the cleanup preview does not delete raw events and that deletion remains disabled until production migration evidence and analytics-volume evidence are recorded.
 
 ## Evidence record
 
@@ -71,12 +74,16 @@ Record one evidence note per validation pass:
 - Site CSV checked:
 - Customer cohort aggregate rows checked:
 - Retention status checked:
+- Cleanup preview eligible stale-event count:
+- Cleanup preview deletion status:
+- Cleanup preview production evidence status:
+- Cleanup preview reason:
 - Result: pass / fail / blocked
 - Follow-up issue or PR:
 
 ## Expected result
 
-The analytics page should show aggregate business, site, range, export, and customer cohort signals without exposing non-aggregate visitor or customer detail. Empty panels are acceptable only when the selected range has no matching traffic, orders, or production migration evidence.
+The analytics page should show aggregate business, site, range, export, customer cohort, retention, and cleanup-preview signals without exposing non-aggregate visitor or customer detail. Empty panels are acceptable only when the selected range has no matching traffic, orders, or production migration evidence.
 
 ## Blockers
 
@@ -89,10 +96,12 @@ Do not treat analytics as source-of-truth if any of these are true:
 - selected range labels, section links, and CSV URLs disagree
 - customer cohort panels or exports expose per-customer detail
 - retention status cannot read the event table
+- cleanup preview cannot report eligibility status for stale raw events
+- cleanup preview indicates deletion is enabled before production evidence is recorded
 - Do Not Track or analytics disable behavior is not respected
 
 ## Notes
 
 - Exports must stay aggregate-only.
 - Customer cohort reporting must remain aggregate-only and privacy-safe.
-- Raw event deletion remains disabled until a separate guarded cleanup job is implemented and production evidence exists.
+- Raw event deletion remains disabled until a separate guarded cleanup job is implemented, cleanup preview evidence is recorded, and production evidence exists.
