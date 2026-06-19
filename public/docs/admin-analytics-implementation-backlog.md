@@ -10,7 +10,7 @@ This page summarizes remaining Analytics improvements.
 - Business, order, product, category, payment, fulfillment, discount, customer cohort, and site analytics.
 - First-party storefront event reporting.
 - Aggregate CSV exports.
-- Scheduled report preview, draft configuration-plan, and inactive storage-schema foundation for weekly/monthly owner report options using the selected range and aggregate CSV paths.
+- Scheduled report preview, draft configuration-plan, inactive storage-schema, and metadata-only read-model foundation for weekly/monthly owner report options using the selected range and aggregate CSV paths.
 - Saved dashboard view preset, persistence-plan, inactive storage-schema, and metadata-only read-model foundation using the selected range, existing section anchors, allowed scopes, and metadata-only future-save rules.
 - Dashboard group header UI using the selected range and existing section anchors.
 - Privacy and retention guidance.
@@ -18,9 +18,9 @@ This page summarizes remaining Analytics improvements.
 
 ## Planned next
 
-- Production validation evidence for custom ranges, exports, aggregate cohort panels, retention preview, scheduled report storage schema, saved view storage schema/read model, and dashboard group headers.
+- Production validation evidence for custom ranges, exports, aggregate cohort panels, retention preview, scheduled report storage/read-model, saved view storage/read-model, and dashboard group headers.
 - Retention maintenance workflow.
-- Scheduled report repository paths and delivery execution.
+- Scheduled report active repository paths and delivery execution.
 - Saved dashboard view active persistence.
 - Collapsible dashboard groups or tabs, only if static group headers are not enough.
 
@@ -30,7 +30,7 @@ Analytics exports remain aggregate-only.
 
 ## Scheduled report safety
 
-Scheduled report config plans and inactive storage schema preserve the selected range and aggregate CSV paths. They require owner approval but do not activate schedules or send reports yet.
+Scheduled report config plans, inactive storage schema, and metadata-only read model preserve the selected range and aggregate CSV paths. They require owner approval but do not activate schedules, expose read routes, or send reports yet.
 
 ## Saved view safety
 
