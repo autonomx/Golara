@@ -30,6 +30,7 @@ const copy = {
     exportBody: 'Owner CSV exports are designed for reporting and reconciliation. Use Business CSV for order, revenue, product, category, payment, discount, and operations summaries. Use Site CSV for aggregate traffic, funnel, attribution, product-view, category-view, and search signals.',
     exportSafety: 'Exports stay aggregate-only: they do not include raw visitor sessions, full referrer URLs, or raw analytics event payloads.',
     checklistLabel: 'Open analytics operator checklist',
+    roadmapLabel: 'Open analytics roadmap status',
     statusTitle: 'Analytics implementation status',
     liveLabel: 'Live now',
     pendingLabel: 'Planned next',
@@ -65,6 +66,7 @@ const copy = {
     exportBody: 'خروجی‌های CSV مالک برای گزارش‌گیری و تطبیق هستند. از CSV کسب‌وکار برای خلاصه سفارش، درآمد، محصول، دسته‌بندی، پرداخت، تخفیف و عملیات استفاده کنید. از CSV سایت برای سیگنال‌های تجمیعی ترافیک، قیف، انتساب، بازدید محصول، بازدید دسته‌بندی و جست‌وجو استفاده کنید.',
     exportSafety: 'خروجی‌ها فقط تجمیعی می‌مانند: نشست خام بازدیدکننده، URL کامل ارجاع‌دهنده یا payload خام رویداد تحلیل صادر نمی‌شود.',
     checklistLabel: 'باز کردن چک‌لیست عملیاتی تحلیل‌ها',
+    roadmapLabel: 'باز کردن وضعیت نقشه راه تحلیل‌ها',
     statusTitle: 'وضعیت پیاده‌سازی تحلیل‌ها',
     liveLabel: 'اکنون فعال',
     pendingLabel: 'برنامه بعدی',
@@ -166,12 +168,20 @@ export async function AdminAnalyticsGuidancePanel({
         <h3 className="text-sm font-bold text-blue-950">{labels.exportTitle}</h3>
         <p className="mt-2 text-sm leading-6 text-blue-950">{labels.exportBody}</p>
         <p className="mt-2 text-sm leading-6 text-blue-950">{labels.exportSafety}</p>
-        <Link
-          href="/docs/admin-analytics-operator-checklist.md"
-          className="mt-3 inline-flex rounded-full border border-blue-300 bg-white px-4 py-2 text-sm font-bold text-blue-800 hover:bg-blue-100"
-        >
-          {labels.checklistLabel}
-        </Link>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Link
+            href="/docs/admin-analytics-operator-checklist.md"
+            className="inline-flex rounded-full border border-blue-300 bg-white px-4 py-2 text-sm font-bold text-blue-800 hover:bg-blue-100"
+          >
+            {labels.checklistLabel}
+          </Link>
+          <Link
+            href="/docs/admin-analytics-roadmap-status.md"
+            className="inline-flex rounded-full border border-blue-300 bg-white px-4 py-2 text-sm font-bold text-blue-800 hover:bg-blue-100"
+          >
+            {labels.roadmapLabel}
+          </Link>
+        </div>
       </div>
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <div className="rounded-lg border border-stone-200 bg-white p-4">
