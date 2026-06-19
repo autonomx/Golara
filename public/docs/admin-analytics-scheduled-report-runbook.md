@@ -1,10 +1,10 @@
 # Admin analytics scheduled report runbook
 
-This runbook covers the scheduled report configuration-plan, storage-schema, and read-model foundations for `/admin/analytics`.
+This runbook covers the scheduled report configuration-plan, storage-schema, read-model, and repository-read contract foundations for `/admin/analytics`.
 
 ## Current scope
 
-The current scheduled report implementation is a configuration, inactive storage, and metadata-only read-model contract only.
+The current scheduled report implementation is configuration, inactive storage, metadata-only read-model, and repository-read contract only.
 
 It defines:
 
@@ -18,12 +18,14 @@ It defines:
 - inactive `AdminAnalyticsScheduledReport` storage table for future schedule metadata
 - metadata-only persisted fields for selected range, report types, owner approval, active state, delivery state, and dry-run summary
 - metadata-only read-model normalization for future stored schedule rows
+- metadata-only repository-read query-plan fields
+- required future read filters for owner approval, active state, and delivery disabled state
 - allowed cadence and aggregate report type validation
 - disabled operator activation and delivery readiness
 - explicit disabled delivery state
 - explicit disabled schedule activation state
 
-It does not save active schedules, expose read routes, or send reports.
+It does not save active schedules, expose read routes, run repository reads, or send reports.
 
 ## Validation steps
 
@@ -42,9 +44,12 @@ It does not save active schedules, expose read routes, or send reports.
 13. Confirm the read model normalizes metadata-only schedule rows.
 14. Confirm invalid cadences, missing range queries, and unsupported report types are omitted.
 15. Confirm operator activation and delivery readiness remain disabled.
-16. Confirm activation remains disabled.
-17. Confirm delivery is disabled.
-18. Confirm schedule execution is disabled.
+16. Confirm the repository-read contract exposes metadata-only select fields.
+17. Confirm the repository-read contract requires owner approval, active state, and delivery disabled filters.
+18. Confirm repository reads remain disabled.
+19. Confirm activation remains disabled.
+20. Confirm delivery is disabled.
+21. Confirm schedule execution is disabled.
 
 ## Evidence record
 
@@ -68,12 +73,15 @@ For each validation run, record:
 - read model invalid rows omitted: yes/no
 - read model operator activation enabled: must be no
 - read model delivery ready: must be no
+- repository-read contract checked: yes/no
+- repository-read select fields metadata-only: yes/no
+- repository-read required filters checked: yes/no
+- repository reads enabled: must be no
 - owner approval required: must be yes
 - owner approved: must be no
 - active state enabled: must be no
 - delivery enabled: must be no
 - schedule execution enabled: must be no
-- repository path enabled: must be no
 - read endpoint enabled: must be no
 - dry-run evidence requirement present: yes/no
 
@@ -82,7 +90,8 @@ For each validation run, record:
 Before enabling actual scheduled delivery, add and validate:
 
 - owner approval and disable controls
-- repository path with audit evidence
+- repository read path with audit evidence and required filters
+- repository write path with owner-managed controls
 - read endpoint with owner-scoped policy enforcement
 - delivery provider or channel plan
 - retry and failure visibility
@@ -90,4 +99,4 @@ Before enabling actual scheduled delivery, add and validate:
 - tests proving delivery can be disabled globally
 - dry-run evidence for the exact CSV paths and selected reporting window
 
-Do not enable delivery until config-plan evidence, storage-schema evidence, read-model evidence, and owner approval workflow are documented.
+Do not enable delivery until config-plan evidence, storage-schema evidence, read-model evidence, repository-read contract evidence, and owner approval workflow are documented.
