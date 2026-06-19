@@ -33,6 +33,7 @@ const copy = {
     validationFunnel: 'Confirm checkout started, payment method selected, and checkout completed events are visible after a real or staging checkout.',
     validationExports: 'Download Business CSV and Site CSV as an owner and confirm they contain aggregate rows for the selected range.',
     validationRetention: 'Review raw-event retention status and stale-event counts before enabling any future cleanup job.',
+    validationRunbookLabel: 'Open production validation runbook',
     exportTitle: 'Using CSV exports',
     exportBody: 'Owner CSV exports are designed for reporting and reconciliation. Use Business CSV for order, revenue, product, category, payment, discount, and operations summaries. Use Site CSV for aggregate traffic, funnel, attribution, product-view, category-view, and search signals.',
     exportSafety: 'Exports stay aggregate-only: they do not include raw visitor sessions, full referrer URLs, or raw analytics event payloads.',
@@ -76,6 +77,7 @@ const copy = {
     validationFunnel: 'پس از پرداخت واقعی یا staging، نمایش رویدادهای شروع پرداخت، انتخاب روش پرداخت و تکمیل پرداخت را تأیید کنید.',
     validationExports: 'به عنوان مالک CSV کسب‌وکار و CSV سایت را دانلود کنید و ردیف‌های تجمیعی بازه انتخاب‌شده را بررسی کنید.',
     validationRetention: 'پیش از فعال‌سازی هر کار پاک‌سازی آینده، وضعیت نگهداری رویداد خام و تعداد رویدادهای قدیمی را بررسی کنید.',
+    validationRunbookLabel: 'باز کردن راهنمای اعتبارسنجی تولید',
     exportTitle: 'استفاده از خروجی‌های CSV',
     exportBody: 'خروجی‌های CSV مالک برای گزارش‌گیری و تطبیق هستند. از CSV کسب‌وکار برای خلاصه سفارش، درآمد، محصول، دسته‌بندی، پرداخت، تخفیف و عملیات استفاده کنید. از CSV سایت برای سیگنال‌های تجمیعی ترافیک، قیف، انتساب، بازدید محصول، بازدید دسته‌بندی و جست‌وجو استفاده کنید.',
     exportSafety: 'خروجی‌ها فقط تجمیعی می‌مانند: نشست خام بازدیدکننده، URL کامل ارجاع‌دهنده یا payload خام رویداد تحلیل صادر نمی‌شود.',
@@ -188,6 +190,12 @@ export async function AdminAnalyticsGuidancePanel({
           <li>{labels.validationExports}</li>
           <li>{labels.validationRetention}</li>
         </ul>
+        <Link
+          href="/docs/admin-analytics-production-validation-runbook.md"
+          className="mt-3 inline-flex rounded-full border border-emerald-300 bg-white px-4 py-2 text-sm font-bold text-emerald-800 hover:bg-emerald-100"
+        >
+          {labels.validationRunbookLabel}
+        </Link>
       </div>
       <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
         <h3 className="text-sm font-bold text-blue-950">{labels.exportTitle}</h3>

@@ -132,6 +132,8 @@ export async function runAdminPageShellCopyTests() {
   assert.match(guidancePanelSource, /checkout started, payment method selected, and checkout completed events/);
   assert.match(guidancePanelSource, /Download Business CSV and Site CSV as an owner/);
   assert.match(guidancePanelSource, /Review raw-event retention status and stale-event counts/);
+  assert.match(guidancePanelSource, /admin-analytics-production-validation-runbook\.md/);
+  assert.match(guidancePanelSource, /Open production validation runbook/);
   assert.match(guidancePanelSource, /Analytics implementation status/);
   assert.match(guidancePanelSource, /Custom start\/end date range selector/);
   assert.match(guidancePanelSource, /Automated raw-event retention cleanup job/);
@@ -140,6 +142,18 @@ export async function runAdminPageShellCopyTests() {
   assert.match(guidancePanelSource, /siteSummary\.totalEvents/);
   assert.match(guidancePanelSource, /productSalesSummary\.rows\.length/);
   assert.match(guidancePanelSource, /categorySalesSummary\.rows\.length/);
+
+  const validationRunbookSource = readFileSync('docs/admin-analytics-production-validation-runbook.md', 'utf8');
+  assert.match(validationRunbookSource, /Admin analytics production validation runbook/);
+  assert.match(validationRunbookSource, /production analytics path/);
+  assert.match(validationRunbookSource, /SiteAnalyticsEvent/);
+  assert.match(validationRunbookSource, /Business CSV/);
+  assert.match(validationRunbookSource, /Site CSV/);
+
+  const publicValidationRunbookSource = readFileSync('public/docs/admin-analytics-production-validation-runbook.md', 'utf8');
+  assert.match(publicValidationRunbookSource, /Use this checklist after deployment/);
+  assert.match(publicValidationRunbookSource, /Raw visitor sessions/);
+  assert.match(publicValidationRunbookSource, /Retention status/);
 
   const policySource = readFileSync('docs/site-analytics-privacy-retention-policy.md', 'utf8');
   assert.match(policySource, /not a third-party tracking system/);
