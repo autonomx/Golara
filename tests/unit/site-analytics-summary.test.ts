@@ -18,6 +18,8 @@ export async function runSiteAnalyticsSummaryTests() {
   const layout = source('app/layout.tsx');
   const analyticsPage = source('app/admin/analytics/page.tsx');
   const exportRoute = source('app/admin/analytics/export/route.ts');
+  const policyDoc = source('docs/site-analytics-privacy-retention-policy.md');
+  const publicPolicyDoc = source('public/docs/site-analytics-privacy-retention-policy.md');
   const migration = source('prisma/migrations/20260618193000_add_site_analytics_events/migration.sql');
 
   const now = new Date('2026-06-18T12:00:00Z');
@@ -149,6 +151,13 @@ export async function runSiteAnalyticsSummaryTests() {
   assert.match(retentionPanel, /Raw event retention status/);
   assert.match(retentionPanel, /Site analytics table is not available yet/);
   assert.match(retentionPanel, /Automated cleanup is still planned/);
+  assert.match(retentionPanel, /Cleanup readiness checklist/);
+  assert.match(retentionPanel, /DATABASE_URL/);
+  assert.match(retentionPanel, /Apply the site analytics migration before enabling cleanup/);
+  assert.match(retentionPanel, /Deletion action remains disabled in this slice/);
+  assert.match(retentionPanel, /Require production migration evidence/);
+  assert.match(retentionPanel, /Keep exports aggregate-only/);
+  assert.match(retentionPanel, /ReadinessItem/);
   assert.match(retentionPanel, /site-analytics-retention-status/);
 
   assert.match(panel, /export async function AdminSiteAnalyticsPanel/);
@@ -233,6 +242,14 @@ export async function runSiteAnalyticsSummaryTests() {
   assert.match(exportRoute, /product_conversion/);
   assert.match(exportRoute, /view_to_cart_percent/);
   assert.match(exportRoute, /full URLs are not exported/);
+
+  assert.match(policyDoc, /Cleanup readiness gates/);
+  assert.match(policyDoc, /production analytics volume is validated/);
+  assert.match(policyDoc, /Until those gates are met, cleanup controls should remain read-only\/readiness-only/);
+  assert.match(policyDoc, /Do not enable an automated deletion job/);
+  assert.match(publicPolicyDoc, /Cleanup readiness/);
+  assert.match(publicPolicyDoc, /Automated raw-event deletion should remain disabled/);
+  assert.match(publicPolicyDoc, /Production migration evidence/);
 
   assert.match(migration, /CREATE TABLE IF NOT EXISTS "SiteAnalyticsEvent"/);
   assert.match(migration, /anonymousSessionId/);
