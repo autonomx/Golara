@@ -2,6 +2,8 @@
 
 This runbook validates the admin analytics workspace after deploy. It is intended for owner/admin operators before treating `/admin/analytics` as an operational source of truth.
 
+Use it to validate the production analytics path end to end: database migration, storefront event capture, checkout funnel capture, aggregate exports, and retention status.
+
 ## Scope
 
 Validate that the analytics page can show trustworthy aggregate data for:
