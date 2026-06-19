@@ -18,13 +18,13 @@ This document summarizes the `/admin/analytics` workspace status.
 - Traffic attribution using capped UTM fields and external referrer domains.
 - Owner-only aggregate Business CSV and Site CSV exports.
 - Privacy and retention policy visibility.
-- Read-only raw site-event retention status and cleanup readiness guidance.
+- Read-only raw site-event retention status, cleanup preview, and cleanup readiness guidance.
 - Role-aware visibility for owner-only exports and retention diagnostics.
 - Operator checklist for reviewing analytics and interpreting exports.
 
 ## Planned next
 
-- Automated raw site-event cleanup after production migration evidence is verified.
+- Automated raw site-event deletion after production migration evidence and cleanup preview evidence are verified.
 - Advanced customer cohort reporting beyond the current aggregate order/revenue buckets.
 - Scheduled analytics reports.
 - Saved dashboard views.
@@ -39,5 +39,6 @@ Before treating site analytics as complete in production, verify:
 4. Do Not Track is honored in the browser reporter.
 5. CSV exports remain aggregate-only.
 6. Raw event retention status is visible to owner sessions.
-7. Custom preset and start/end ranges produce matching dashboard, section-link, and export windows.
-8. Customer cohort panels and CSV rows remain aggregate-only.
+7. Cleanup preview reports eligible stale-event counts without deleting data.
+8. Custom preset and start/end ranges produce matching dashboard, section-link, and export windows.
+9. Customer cohort panels and CSV rows remain aggregate-only.

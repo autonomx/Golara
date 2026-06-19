@@ -2,7 +2,12 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolveAdminAnalyticsRange } from '../../lib/analytics/admin-analytics-range';
 import { buildSiteAnalyticsSummary } from '../../lib/analytics/site-analytics-summary';
-import { SITE_ANALYTICS_RAW_EVENT_RETENTION_DAYS, buildSiteAnalyticsRetentionSummary } from '../../lib/analytics/site-analytics-retention';
+import {
+  SITE_ANALYTICS_RAW_EVENT_RETENTION_DAYS,
+  SITE_ANALYTICS_RETENTION_CLEANUP_DELETION_ENABLED,
+  SITE_ANALYTICS_RETENTION_PRODUCTION_EVIDENCE_ENV,
+  buildSiteAnalyticsRetentionSummary
+} from '../../lib/analytics/site-analytics-retention';
 
 function source(path: string) {
   return readFileSync(path, 'utf8');
@@ -97,14 +102,17 @@ export async function runSiteAnalyticsSummaryTests() {
   assert.equal(customSummary.recentDaily.length, 1);
   assert.equal(customSummary.recentDaily[0].date, '2026-05-10');
 
-  const retention = buildSiteAnalyticsRetentionSummary({
+  const retentionRow = {
     totalEventCount: BigInt(12),
     retainedEventCount: '10',
     staleEventCount: 2,
     oldestEventAt: '2025-11-01T00:00:00.000Z',
     newestEventAt: new Date('2026-06-18T10:00:00Z')
-  }, now);
+  };
+  const retention = buildSiteAnalyticsRetentionSummary(retentionRow, now, SITE_ANALYTICS_RAW_EVENT_RETENTION_DAYS, { productionEvidenceConfirmed: false });
   assert.equal(SITE_ANALYTICS_RAW_EVENT_RETENTION_DAYS, 180);
+  assert.equal(SITE_ANALYTICS_RETENTION_CLEANUP_DELETION_ENABLED, false);
+  assert.equal(SITE_ANALYTICS_RETENTION_PRODUCTION_EVIDENCE_ENV, 'SITE_ANALYTICS_RETENTION_PRODUCTION_EVIDENCE_CONFIRMED');
   assert.equal(retention.databaseConfigured, true);
   assert.equal(retention.tableAvailable, true);
   assert.equal(retention.totalEventCount, 12);
@@ -113,6 +121,18 @@ export async function runSiteAnalyticsSummaryTests() {
   assert.equal(retention.cutoffAt.toISOString(), '2025-12-20T12:00:00.000Z');
   assert.equal(retention.oldestEventAt?.toISOString(), '2025-11-01T00:00:00.000Z');
   assert.equal(retention.newestEventAt?.toISOString(), '2026-06-18T10:00:00.000Z');
+  assert.equal(retention.cleanupPreview.eligibleEventCount, 2);
+  assert.equal(retention.cleanupPreview.productionEvidenceConfirmed, false);
+  assert.equal(retention.cleanupPreview.deletionEnabled, false);
+  assert.equal(retention.cleanupPreview.readyForFutureCleanup, false);
+  assert.equal(retention.cleanupPreview.reason, 'production_evidence_required');
+
+  const evidenceRetention = buildSiteAnalyticsRetentionSummary(retentionRow, now, SITE_ANALYTICS_RAW_EVENT_RETENTION_DAYS, { productionEvidenceConfirmed: true });
+  assert.equal(evidenceRetention.cleanupPreview.eligibleEventCount, 2);
+  assert.equal(evidenceRetention.cleanupPreview.productionEvidenceConfirmed, true);
+  assert.equal(evidenceRetention.cleanupPreview.deletionEnabled, false);
+  assert.equal(evidenceRetention.cleanupPreview.readyForFutureCleanup, true);
+  assert.equal(evidenceRetention.cleanupPreview.reason, 'preview_ready');
 
   assert.match(rangeHelper, /ADMIN_ANALYTICS_RANGE_DAYS = \[7, 30, 90, 365\]/);
   assert.match(rangeHelper, /normalizeAdminAnalyticsRangeDays/);
@@ -151,6 +171,15 @@ export async function runSiteAnalyticsSummaryTests() {
   assert.match(service, /isMissingSiteAnalyticsTableError/);
 
   assert.match(retentionService, /SITE_ANALYTICS_RAW_EVENT_RETENTION_DAYS = 180/);
+  assert.match(retentionService, /SITE_ANALYTICS_RETENTION_PRODUCTION_EVIDENCE_ENV/);
+  assert.match(retentionService, /SITE_ANALYTICS_RETENTION_CLEANUP_DELETION_ENABLED = false/);
+  assert.match(retentionService, /export type SiteAnalyticsRetentionCleanupPreview/);
+  assert.match(retentionService, /cleanupPreview: SiteAnalyticsRetentionCleanupPreview/);
+  assert.match(retentionService, /eligibleEventCount/);
+  assert.match(retentionService, /productionEvidenceConfirmed/);
+  assert.match(retentionService, /readyForFutureCleanup/);
+  assert.match(retentionService, /production_evidence_required/);
+  assert.match(retentionService, /preview_ready/);
   assert.match(retentionService, /export type SiteAnalyticsRetentionSummary/);
   assert.match(retentionService, /buildSiteAnalyticsRetentionSummary/);
   assert.match(retentionService, /siteAnalyticsRetentionService/);
@@ -160,12 +189,16 @@ export async function runSiteAnalyticsSummaryTests() {
   assert.match(retentionService, /MIN\("createdAt"\) AS "oldestEventAt"/);
   assert.match(retentionService, /MAX\("createdAt"\) AS "newestEventAt"/);
   assert.match(retentionService, /isMissingSiteAnalyticsTableError/);
-  assert.doesNotMatch(retentionService, /\$queryRawUnsafe|\$executeRawUnsafe/);
+  assert.doesNotMatch(retentionService, /DELETE FROM|deleteMany|\$queryRawUnsafe|\$executeRawUnsafe/);
 
   assert.match(retentionPanel, /AdminSiteAnalyticsRetentionStatusPanel/);
   assert.match(retentionPanel, /Raw event retention status/);
   assert.match(retentionPanel, /Site analytics table is not available yet/);
-  assert.match(retentionPanel, /Automated cleanup is still planned/);
+  assert.match(retentionPanel, /Automated deletion remains disabled/);
+  assert.match(retentionPanel, /Cleanup preview/);
+  assert.match(retentionPanel, /Eligible stale events/);
+  assert.match(retentionPanel, /Preview reason/);
+  assert.match(retentionPanel, /Production evidence/);
   assert.match(retentionPanel, /Cleanup readiness checklist/);
   assert.match(retentionPanel, /DATABASE_URL/);
   assert.match(retentionPanel, /Apply the site analytics migration before enabling cleanup/);
@@ -262,9 +295,11 @@ export async function runSiteAnalyticsSummaryTests() {
 
   assert.match(policyDoc, /Cleanup readiness gates/);
   assert.match(policyDoc, /production analytics volume is validated/);
-  assert.match(policyDoc, /Until those gates are met, cleanup controls should remain read-only\/readiness-only/);
+  assert.match(policyDoc, /cleanup preview/);
+  assert.match(policyDoc, /Until those gates are met, cleanup controls should remain preview-only/);
   assert.match(policyDoc, /Do not enable an automated deletion job/);
   assert.match(publicPolicyDoc, /Cleanup readiness/);
+  assert.match(publicPolicyDoc, /cleanup preview/);
   assert.match(publicPolicyDoc, /Automated raw-event deletion should remain disabled/);
   assert.match(publicPolicyDoc, /Production migration evidence/);
 

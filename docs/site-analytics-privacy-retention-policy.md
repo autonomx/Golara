@@ -28,7 +28,7 @@ The operational target is:
 - Aggregate CSV exports and dashboard summaries: generated on demand from the selected range.
 - Long-lived business reporting should prefer aggregate summaries over raw event retention.
 
-A scheduled cleanup job can enforce raw-event retention once production analytics volume is validated.
+The admin retention panel can show a cleanup preview for events older than the cutoff. The preview is a read-only estimate and does not delete events.
 
 ## Cleanup readiness gates
 
@@ -37,11 +37,13 @@ Do not enable an automated deletion job until these gates are true:
 1. `DATABASE_URL` is configured in the target environment.
 2. The `SiteAnalyticsEvent` migration has been applied and the table is visible in production.
 3. `/admin/analytics` shows retention status without missing-table warnings.
-4. Stale raw-event counts have been reviewed by an owner/admin.
-5. Analytics CSV exports remain aggregate-only and do not expose raw visitor/session data.
-6. Production migration evidence is captured in the launch/evidence notes before enabling scheduled deletion.
+4. The cleanup preview shows the stale raw-event count that would be eligible under the retention target.
+5. Stale raw-event counts have been reviewed by an owner/admin.
+6. Analytics CSV exports remain aggregate-only and do not expose raw visitor/session data.
+7. Production migration evidence is captured in the launch/evidence notes before enabling scheduled deletion.
+8. Production analytics volume is validated so cleanup cannot hide missing event capture.
 
-Until those gates are met, cleanup controls should remain read-only/readiness-only. Deleting raw events is intentionally out of scope for the status panel.
+Until those gates are met, cleanup controls should remain preview-only/readiness-only. Deleting raw events is intentionally out of scope for the status panel.
 
 ## Admin visibility
 
