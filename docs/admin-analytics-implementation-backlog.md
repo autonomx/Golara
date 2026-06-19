@@ -1,6 +1,6 @@
 # Admin analytics implementation backlog
 
-This backlog tracks the remaining admin analytics work after the custom range and aggregate cohort implementation pass.
+This backlog tracks the remaining admin analytics work after the custom range, aggregate cohort, retention preview, and scheduled report preview foundation passes.
 
 ## Current live baseline
 
@@ -11,8 +11,9 @@ This backlog tracks the remaining admin analytics work after the custom range an
 - Aggregate customer cohort order/revenue buckets for guest, known, first-time, and returning-customer segments.
 - First-party site analytics for page, product, category, search, cart, checkout, payment-method, attribution, and funnel signals.
 - Aggregate Business CSV and Site CSV exports.
+- Scheduled report preview foundation for weekly/monthly owner report options using the selected range and aggregate CSV paths.
 - Privacy and retention documentation.
-- Read-only raw event retention status.
+- Read-only raw event retention status and cleanup preview.
 - Owner-only export and retention controls.
 
 ## Completed from earlier backlog
@@ -36,6 +37,16 @@ Completed baseline:
 - Cohorts use non-identifying buckets for guest, known, first-time, and returning-customer order/revenue reporting.
 - Admin UI explains privacy boundaries through aggregate-only guidance and export copy.
 
+### Scheduled report preview foundation
+
+Completed baseline:
+
+- Weekly and monthly owner report options are represented as preview-only plans.
+- Preview plans reuse the selected analytics range and aggregate Business/Site CSV paths.
+- Delivery is disabled.
+- Schedule persistence is disabled.
+- No cron, email transport, timer, or background execution path is introduced.
+
 ## Remaining backlog items
 
 ### 1. Automated raw-event retention cleanup
@@ -52,7 +63,7 @@ Acceptance criteria:
 
 Notes:
 
-- The current admin page shows retention status only; it does not delete raw events.
+- The current admin page shows retention status and cleanup preview only; it does not delete raw events.
 - Add operational documentation before enabling the job.
 
 ### 2. Advanced aggregate customer cohort reporting
@@ -73,15 +84,17 @@ Potential metrics:
 - Repeat order trend over time.
 - Known-customer revenue share by selected range.
 
-### 3. Scheduled analytics reports
+### 3. Scheduled report persistence and delivery
 
-Goal: let owners generate recurring aggregate analytics reports after export and range semantics are stable.
+Goal: let owners save recurring aggregate analytics reports after export and range semantics are stable.
 
 Acceptance criteria:
 
 - Scheduled reports use the same resolved range contract as the dashboard/export routes.
 - Delivery remains owner-controlled.
 - Report contents remain aggregate-only.
+- Saving schedules requires a persistence model and owner approval evidence.
+- Delivery requires an explicit provider/channel plan and testable disable switch.
 
 ### 4. Saved dashboard views
 
@@ -105,9 +118,9 @@ Acceptance criteria:
 
 ## Sequencing recommendation
 
-1. Production validation evidence for custom ranges, exports, and aggregate cohort panels.
+1. Production validation evidence for custom ranges, exports, aggregate cohort panels, retention preview, and scheduled report previews.
 2. Automated retention cleanup preview, then guarded execution.
 3. Advanced aggregate cohort reporting.
-4. Scheduled analytics reports.
+4. Scheduled report persistence and delivery.
 5. Saved dashboard views.
 6. Dashboard layout refinement when the page starts feeling crowded.
