@@ -38,12 +38,20 @@ const copy = {
     currency: 'Currency',
     orders: 'Orders',
     aov: 'AOV',
+    customerCohorts: 'Aggregate customer cohorts',
+    customerCohortsBody: 'Privacy-safe order cohorts for the selected range. The dashboard shows counts and revenue buckets only, never per-customer rows.',
+    knownCustomerOrders: 'Known-customer orders',
+    guestOrders: 'Guest orders',
+    knownCustomers: 'Known customers',
+    firstTimeKnownOrders: 'First known-customer orders',
+    returningKnownOrders: 'Returning known-customer orders',
+    returningRate: 'Returning order rate',
     businessCharts: 'Business analytics charts',
-    businessChartsBody: 'Fast visual breakdowns for order state, revenue distribution, operational flow, payment method mix, discount usage, and selected-range trends, with accessible data tables included.',
+    businessChartsBody: 'Fast visual breakdowns for order state, revenue distribution, operational flow, payment method mix, discount usage, customer cohorts, and selected-range trends, with accessible data tables included.',
     trendCharts: 'Trend charts',
     trendChartsBody: 'Daily order, revenue, and average order value trends for the selected analytics range.',
     operationalCharts: 'Operational breakdown charts',
-    operationalChartsBody: 'Highlights where orders sit operationally, which payment methods are being used, and whether discounts are materially affecting the selected order sample.',
+    operationalChartsBody: 'Highlights where orders sit operationally, which payment methods are being used, whether discounts are materially affecting the selected order sample, and how aggregate customer cohorts are split.',
     ordersOverTime: 'Orders over time',
     ordersOverTimeBody: 'Daily order count for the selected analytics range.',
     revenueOverTime: 'Revenue over time',
@@ -68,6 +76,7 @@ const copy = {
     count: 'Count',
     amount: 'Amount',
     attempts: 'Attempts',
+    percent: 'Percent',
     vsPreviousRange: 'vs previous range',
     noChangeVsPreviousRange: 'No change vs previous range'
   },
@@ -87,12 +96,20 @@ const copy = {
     currency: 'ارز',
     orders: 'سفارش‌ها',
     aov: 'میانگین سفارش',
+    customerCohorts: 'گروه‌های تجمیعی مشتری',
+    customerCohortsBody: 'گروه‌بندی حریم‌خصوصی‌محور سفارش‌ها برای بازه انتخاب‌شده. این داشبورد فقط تعداد و درآمد تجمیعی نشان می‌دهد و ردیف جداگانه برای هر مشتری ندارد.',
+    knownCustomerOrders: 'سفارش‌های مشتریان شناخته‌شده',
+    guestOrders: 'سفارش‌های مهمان',
+    knownCustomers: 'مشتریان شناخته‌شده',
+    firstTimeKnownOrders: 'اولین سفارش مشتری شناخته‌شده',
+    returningKnownOrders: 'سفارش‌های بازگشتی مشتری شناخته‌شده',
+    returningRate: 'نرخ سفارش بازگشتی',
     businessCharts: 'نمودارهای تحلیل کسب‌وکار',
-    businessChartsBody: 'نمای سریع وضعیت سفارش، توزیع درآمد، جریان عملیات، ترکیب روش پرداخت، مصرف تخفیف و روند بازه انتخاب‌شده، همراه با جدول داده دسترس‌پذیر.',
+    businessChartsBody: 'نمای سریع وضعیت سفارش، توزیع درآمد، جریان عملیات، ترکیب روش پرداخت، مصرف تخفیف، گروه‌های مشتری و روند بازه انتخاب‌شده، همراه با جدول داده دسترس‌پذیر.',
     trendCharts: 'نمودار روند',
     trendChartsBody: 'روند روزانه سفارش، درآمد و میانگین ارزش سفارش برای بازه انتخاب‌شده.',
     operationalCharts: 'نمودارهای تفکیک عملیاتی',
-    operationalChartsBody: 'نشان می‌دهد سفارش‌ها در کدام مرحله عملیاتی هستند، مشتریان از چه روش‌های پرداختی استفاده می‌کنند و تخفیف‌ها چه اثری روی نمونه سفارش‌ها دارند.',
+    operationalChartsBody: 'نشان می‌دهد سفارش‌ها در کدام مرحله عملیاتی هستند، مشتریان از چه روش‌های پرداختی استفاده می‌کنند، تخفیف‌ها چه اثری دارند و گروه‌های تجمیعی مشتری چگونه تقسیم شده‌اند.',
     ordersOverTime: 'سفارش‌ها در طول زمان',
     ordersOverTimeBody: 'تعداد سفارش روزانه برای بازه انتخاب‌شده.',
     revenueOverTime: 'درآمد در طول زمان',
@@ -117,6 +134,7 @@ const copy = {
     count: 'تعداد',
     amount: 'مبلغ',
     attempts: 'تلاش‌ها',
+    percent: 'درصد',
     vsPreviousRange: 'نسبت به بازه قبلی',
     noChangeVsPreviousRange: 'بدون تغییر نسبت به بازه قبلی'
   }
@@ -179,7 +197,7 @@ export async function AdminOrderRevenueSummaryPanel({ summary }: { summary: Orde
   const locale = await resolveStorefrontLocale();
   const labels = copy[localeKey(locale)];
   const primaryCurrency = summary.primaryCurrency;
-  const rangeLabel = formatRangeLabel(summary.analyticsRangeDays, locale);
+  const rangeLabel = summary.analyticsRangeMode === 'custom' ? summary.analyticsRangeLabel : formatRangeLabel(summary.analyticsRangeDays, locale);
   const formatRevenueDelta = (value: number) => formatRevenueCents(value, primaryCurrency);
   const dailyTrendRows = summary.recentDaily.map((point) => ({ ...point, label: formatDateLabel(point.date, locale) }));
   const orderTrendChartRows = dailyTrendRows.map((point) => ({
@@ -234,6 +252,28 @@ export async function AdminOrderRevenueSummaryPanel({ summary }: { summary: Orde
         }
       ]
     : [];
+  const customerCohortChartRows = summary.totalOrders
+    ? [
+        {
+          label: labels.guestOrders,
+          value: summary.customerCohorts.guestOrders,
+          displayValue: String(summary.customerCohorts.guestOrders),
+          detail: formatRevenueCents(summary.customerCohorts.guestRevenueCents, primaryCurrency)
+        },
+        {
+          label: labels.firstTimeKnownOrders,
+          value: summary.customerCohorts.firstTimeKnownCustomerOrders,
+          displayValue: String(summary.customerCohorts.firstTimeKnownCustomerOrders),
+          detail: formatRevenueCents(summary.customerCohorts.firstTimeKnownCustomerRevenueCents, primaryCurrency)
+        },
+        {
+          label: labels.returningKnownOrders,
+          value: summary.customerCohorts.returningKnownCustomerOrders,
+          displayValue: String(summary.customerCohorts.returningKnownCustomerOrders),
+          detail: formatRevenueCents(summary.customerCohorts.returningKnownCustomerRevenueCents, primaryCurrency)
+        }
+      ]
+    : [];
   const [inquiryOperationsSummary, bestSellingProductsSummary, lowStockAlertsSummary, fulfillmentQueueSummary, recentActivitySummary, failedPaymentNotificationAlertsSummary, launchReadinessHealthSummary] = await Promise.all([
     inquiryOperationsSummaryService.summary(),
     bestSellingProductsService.summary(),
@@ -274,6 +314,16 @@ export async function AdminOrderRevenueSummaryPanel({ summary }: { summary: Orde
           <Metric label={labels.completed} value={summary.completedOrders} detail={rangeLabel} delta={summary.comparison.completedOrders} />
           <Metric label={labels.cancelled} value={summary.cancelledOrders} detail={rangeLabel} />
         </div>
+        <div className="mt-3 rounded-lg border border-stone-200 bg-stone-50 p-4">
+          <p className="text-sm font-bold text-stone-950">{labels.customerCohorts}</p>
+          <p className="mt-1 text-sm leading-6 text-stone-600">{labels.customerCohortsBody}</p>
+          <div className="mt-3 grid gap-3 md:grid-cols-4">
+            <Metric label={labels.knownCustomerOrders} value={summary.customerCohorts.knownCustomerOrders} detail={formatRevenueCents(summary.customerCohorts.knownCustomerRevenueCents, primaryCurrency)} />
+            <Metric label={labels.guestOrders} value={summary.customerCohorts.guestOrders} detail={formatRevenueCents(summary.customerCohorts.guestRevenueCents, primaryCurrency)} />
+            <Metric label={labels.knownCustomers} value={summary.customerCohorts.knownCustomerCount} detail={rangeLabel} />
+            <Metric label={labels.returningRate} value={`${summary.customerCohorts.returningKnownCustomerOrderRatePercent}%`} detail={labels.returningKnownOrders} />
+          </div>
+        </div>
         <div id="business-analytics-charts" className="mt-6 scroll-mt-24 rounded-lg border border-stone-200 bg-stone-50 p-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">{labels.businessCharts}</p>
@@ -283,70 +333,23 @@ export async function AdminOrderRevenueSummaryPanel({ summary }: { summary: Orde
             <p className="text-sm font-bold text-stone-950">{labels.trendCharts}</p>
             <p className="mt-1 text-sm leading-6 text-stone-600">{labels.trendChartsBody}</p>
             <div className="mt-4 grid gap-4 xl:grid-cols-3">
-              <AdminAnalyticsTrendChart
-                title={labels.ordersOverTime}
-                description={labels.ordersOverTimeBody}
-                rows={orderTrendChartRows}
-                emptyLabel={labels.noChartData}
-                valueLabel={labels.count}
-              />
-              <AdminAnalyticsTrendChart
-                title={labels.revenueOverTime}
-                description={labels.revenueOverTimeBody}
-                rows={revenueTrendChartRows}
-                emptyLabel={labels.noChartData}
-                valueLabel={labels.amount}
-              />
-              <AdminAnalyticsTrendChart
-                title={labels.aovOverTime}
-                description={labels.aovOverTimeBody}
-                rows={averageOrderValueTrendRows}
-                emptyLabel={labels.noChartData}
-                valueLabel={labels.amount}
-              />
+              <AdminAnalyticsTrendChart title={labels.ordersOverTime} description={labels.ordersOverTimeBody} rows={orderTrendChartRows} emptyLabel={labels.noChartData} valueLabel={labels.count} />
+              <AdminAnalyticsTrendChart title={labels.revenueOverTime} description={labels.revenueOverTimeBody} rows={revenueTrendChartRows} emptyLabel={labels.noChartData} valueLabel={labels.amount} />
+              <AdminAnalyticsTrendChart title={labels.aovOverTime} description={labels.aovOverTimeBody} rows={averageOrderValueTrendRows} emptyLabel={labels.noChartData} valueLabel={labels.amount} />
             </div>
           </div>
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
-            <AdminAnalyticsBarChart
-              title={labels.statusBreakdown}
-              description={labels.statusBreakdownBody}
-              rows={statusChartRows}
-              emptyLabel={labels.noChartData}
-              valueLabel={labels.count}
-            />
-            <AdminAnalyticsBarChart
-              title={labels.revenueByCurrency}
-              description={labels.revenueByCurrencyBody}
-              rows={currencyRevenueChartRows}
-              emptyLabel={labels.noChartData}
-              valueLabel={labels.amount}
-            />
+            <AdminAnalyticsBarChart title={labels.statusBreakdown} description={labels.statusBreakdownBody} rows={statusChartRows} emptyLabel={labels.noChartData} valueLabel={labels.count} />
+            <AdminAnalyticsBarChart title={labels.revenueByCurrency} description={labels.revenueByCurrencyBody} rows={currencyRevenueChartRows} emptyLabel={labels.noChartData} valueLabel={labels.amount} />
           </div>
           <div className="mt-4 rounded-lg border border-stone-200 bg-white/70 p-4">
             <p className="text-sm font-bold text-stone-950">{labels.operationalCharts}</p>
             <p className="mt-1 text-sm leading-6 text-stone-600">{labels.operationalChartsBody}</p>
-            <div className="mt-4 grid gap-4 xl:grid-cols-3">
-              <AdminAnalyticsBarChart
-                title={labels.fulfillmentByStatus}
-                description={labels.fulfillmentByStatusBody}
-                rows={fulfillmentChartRows}
-                emptyLabel={labels.noChartData}
-                valueLabel={labels.count}
-              />
-              <AdminAnalyticsBarChart
-                title={labels.paymentProviderMix}
-                description={labels.paymentProviderMixBody}
-                rows={paymentProviderChartRows}
-                emptyLabel={labels.noChartData}
-                valueLabel={labels.attempts}
-              />
-              <AdminAnalyticsBarChart
-                title={labels.discountImpact}
-                description={labels.discountImpactBody}
-                rows={discountImpactChartRows}
-                emptyLabel={labels.noChartData}
-                valueLabel={labels.count}
-              />
+            <div className="mt-4 grid gap-4 xl:grid-cols-2">
+              <AdminAnalyticsBarChart title={labels.fulfillmentByStatus} description={labels.fulfillmentByStatusBody} rows={fulfillmentChartRows} emptyLabel={labels.noChartData} valueLabel={labels.count} />
+              <AdminAnalyticsBarChart title={labels.paymentProviderMix} description={labels.paymentProviderMixBody} rows={paymentProviderChartRows} emptyLabel={labels.noChartData} valueLabel={labels.attempts} />
+              <AdminAnalyticsBarChart title={labels.discountImpact} description={labels.discountImpactBody} rows={discountImpactChartRows} emptyLabel={labels.noChartData} valueLabel={labels.count} />
+              <AdminAnalyticsBarChart title={labels.customerCohorts} description={labels.customerCohortsBody} rows={customerCohortChartRows} emptyLabel={labels.noChartData} valueLabel={labels.count} />
             </div>
           </div>
         </div>
@@ -375,27 +378,13 @@ export async function AdminOrderRevenueSummaryPanel({ summary }: { summary: Orde
           </div>
         ) : null}
       </section>
-      <div id="inquiry-operations" className="scroll-mt-24">
-        <AdminInquiryOperationsSummaryPanel summary={inquiryOperationsSummary} locale={locale} />
-      </div>
-      <div id="product-analytics" className="scroll-mt-24">
-        <AdminBestSellingProductsPanel summary={bestSellingProductsSummary} locale={locale} />
-      </div>
-      <div id="inventory-analytics" className="scroll-mt-24">
-        <AdminLowStockAlertsPanel summary={lowStockAlertsSummary} locale={locale} />
-      </div>
-      <div id="fulfillment-analytics" className="scroll-mt-24">
-        <AdminFulfillmentQueueSummaryPanel summary={fulfillmentQueueSummary} locale={locale} />
-      </div>
-      <div id="activity-analytics" className="scroll-mt-24">
-        <AdminRecentActivitySummaryPanel summary={recentActivitySummary} locale={locale} />
-      </div>
-      <div id="payment-analytics" className="scroll-mt-24">
-        <AdminFailedPaymentNotificationAlertsPanel summary={failedPaymentNotificationAlertsSummary} locale={locale} />
-      </div>
-      <div id="readiness-analytics" className="scroll-mt-24">
-        <AdminLaunchReadinessHealthPanel summary={launchReadinessHealthSummary} locale={locale} />
-      </div>
+      <div id="inquiry-operations" className="scroll-mt-24"><AdminInquiryOperationsSummaryPanel summary={inquiryOperationsSummary} locale={locale} /></div>
+      <div id="product-analytics" className="scroll-mt-24"><AdminBestSellingProductsPanel summary={bestSellingProductsSummary} locale={locale} /></div>
+      <div id="inventory-analytics" className="scroll-mt-24"><AdminLowStockAlertsPanel summary={lowStockAlertsSummary} locale={locale} /></div>
+      <div id="fulfillment-analytics" className="scroll-mt-24"><AdminFulfillmentQueueSummaryPanel summary={fulfillmentQueueSummary} locale={locale} /></div>
+      <div id="activity-analytics" className="scroll-mt-24"><AdminRecentActivitySummaryPanel summary={recentActivitySummary} locale={locale} /></div>
+      <div id="payment-analytics" className="scroll-mt-24"><AdminFailedPaymentNotificationAlertsPanel summary={failedPaymentNotificationAlertsSummary} locale={locale} /></div>
+      <div id="readiness-analytics" className="scroll-mt-24"><AdminLaunchReadinessHealthPanel summary={launchReadinessHealthSummary} locale={locale} /></div>
     </>
   );
 }
