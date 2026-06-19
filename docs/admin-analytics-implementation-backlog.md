@@ -1,6 +1,6 @@
 # Admin analytics implementation backlog
 
-This backlog tracks the remaining admin analytics work after the custom range, aggregate cohort, advanced cohort, retention preview, scheduled report preview, saved view preset preview, layout grouping preview, and dashboard group header UI passes.
+This backlog tracks the remaining admin analytics work after the custom range, aggregate cohort, advanced cohort, retention preview, scheduled report preview/config-plan, saved view preset preview, layout grouping preview, and dashboard group header UI passes.
 
 ## Current live baseline
 
@@ -12,7 +12,7 @@ This backlog tracks the remaining admin analytics work after the custom range, a
 - Advanced aggregate customer cohort reporting for AOV/share buckets, known-customer order-count bands, and recency bands.
 - First-party site analytics for page, product, category, search, cart, checkout, payment-method, attribution, and funnel signals.
 - Aggregate Business CSV and Site CSV exports.
-- Scheduled report preview foundation for weekly/monthly owner report options using the selected range and aggregate CSV paths.
+- Scheduled report preview and draft configuration-plan foundation for weekly/monthly owner report options using the selected range and aggregate CSV paths.
 - Saved dashboard view preset preview foundation using the selected range and existing section anchors.
 - Dashboard group header UI using the selected range, section index, existing anchors, and chart table fallback requirements.
 - Privacy and retention documentation.
@@ -50,12 +50,14 @@ Completed baseline:
 - Business CSV exports include advanced aggregate cohort rows for AOV/share buckets, known-customer order-count bands, and known-customer recency bands.
 - New buckets use non-identifying dimensions and never render per-customer rows.
 
-### Scheduled report preview foundation
+### Scheduled report preview and configuration-plan foundation
 
 Completed baseline:
 
-- Weekly and monthly owner report options are represented as preview-only plans.
-- Preview plans reuse the selected analytics range and aggregate Business/Site CSV paths.
+- Weekly and monthly owner report options are represented as preview/config-plan metadata.
+- Preview and config plans reuse the selected analytics range and aggregate Business/Site CSV paths.
+- Draft config plans require owner approval, but approval is not recorded yet.
+- Config plans remain inactive.
 - Delivery is disabled.
 - Schedule persistence is disabled.
 - No cron, email transport, timer, or background execution path is introduced.
@@ -110,17 +112,18 @@ Notes:
 - The current admin page shows retention status and cleanup preview only; it does not delete raw events.
 - Add operational documentation before enabling the job.
 
-### 2. Scheduled report persistence and delivery
+### 2. Scheduled report storage and delivery execution
 
-Goal: let owners save recurring aggregate analytics reports after export and range semantics are stable.
+Goal: let owners save and run recurring aggregate analytics reports after the config-plan contract is validated.
 
 Acceptance criteria:
 
 - Scheduled reports use the same resolved range contract as the dashboard/export routes.
 - Delivery remains owner-controlled.
 - Report contents remain aggregate-only.
-- Saving schedules requires a persistence model and owner approval evidence.
-- Delivery requires an explicit provider/channel plan and testable disable switch.
+- Saving schedules requires a persistence model, owner approval evidence, and disable controls.
+- Delivery requires an explicit provider/channel plan, retry/failure visibility, and testable global disable switch.
+- Dry-run evidence records the exact selected range and aggregate CSV paths before delivery is enabled.
 
 ### 3. Saved dashboard view persistence
 
@@ -147,8 +150,8 @@ Acceptance criteria:
 
 ## Sequencing recommendation
 
-1. Production validation evidence for custom ranges, exports, aggregate and advanced cohort panels, retention preview, scheduled report previews, saved view presets, and dashboard group headers.
+1. Production validation evidence for custom ranges, exports, aggregate and advanced cohort panels, retention preview, scheduled report config plans, saved view presets, and dashboard group headers.
 2. Automated retention cleanup preview, then guarded execution after production evidence exists.
-3. Scheduled report persistence and delivery.
+3. Scheduled report storage and delivery execution.
 4. Saved dashboard view persistence.
 5. Collapsible groups or tabs only if the static group-header UI is not enough.
