@@ -11,6 +11,8 @@ Use this checklist after deployment before relying on `/admin/analytics` for ope
 - Section links preserve the selected preset or custom range.
 - Owner sessions can see aggregate CSV exports.
 - Business CSV and Site CSV URLs preserve the selected range.
+- Scheduled report previews preserve the selected range and aggregate Business/Site CSV paths.
+- Scheduled report delivery and schedule persistence remain disabled.
 - The site analytics event table is available in production.
 - Storefront product, category, search, cart, checkout, payment method, and order-confirmation activity appears in the selected range.
 - Business/order charts update after eligible checkout orders exist.
@@ -38,6 +40,9 @@ Record one validation note per pass:
 - Business CSV checked:
 - Site CSV checked:
 - Customer cohort aggregate rows checked:
+- Scheduled report preview checked:
+- Scheduled report delivery disabled:
+- Scheduled report persistence disabled:
 - Retention status checked:
 - Cleanup preview eligible stale-event count:
 - Cleanup preview deletion status:
@@ -52,4 +57,4 @@ An empty panel is acceptable when the selected range has no matching traffic, or
 
 ## Privacy expectations
 
-Analytics must stay first-party and aggregate-only. Admin and API routes should not be tracked, browser Do Not Track should be respected, and raw event cleanup should remain preview-only until a separate guarded cleanup process is shipped after production evidence exists.
+Analytics must stay first-party and aggregate-only. Admin and API routes should not be tracked, browser Do Not Track should be respected, scheduled report delivery should remain disabled until owner approval and delivery controls exist, and raw event cleanup should remain preview-only until a separate guarded cleanup process is shipped after production evidence exists.
