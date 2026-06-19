@@ -12,6 +12,11 @@ import {
   buildAdminAnalyticsScheduledReportReadModelPreview,
   normalizeAdminAnalyticsScheduledReportReadRow
 } from '../../lib/analytics/admin-analytics-scheduled-report-read-model';
+import {
+  buildAdminAnalyticsScheduledReportRepositoryContract,
+  buildAdminAnalyticsScheduledReportRepositoryPreview,
+  buildAdminAnalyticsScheduledReportRepositoryReadPlan
+} from '../../lib/analytics/admin-analytics-scheduled-report-repository';
 import { buildAdminAnalyticsScheduledReportStorageContract } from '../../lib/analytics/admin-analytics-scheduled-report-storage';
 import { withIsolatedPrisma } from '../utils/isolated-test-db';
 
@@ -215,6 +220,23 @@ function runAdminAnalyticsSavedViewReadModelTests() {
   assert.doesNotMatch(readModelSource, /PrismaClient|prisma\.|\$queryRaw|create\(|update\(|upsert\(|delete\(|fetch\(|\bPOST\b|\bPUT\b|\bPATCH\b|\bDELETE\b|localStorage|sessionStorage|cookies\(/);
 }
 
+function scheduledReportValidRow() {
+  return {
+    id: 'report_1',
+    reportKey: 'weekly-owner-analytics-config',
+    label: 'Weekly owner analytics configuration',
+    description: 'Owner report schedule',
+    cadence: 'weekly',
+    rangeMode: 'custom',
+    rangeQuery: 'start=2026-06-01&end=2026-06-15',
+    reportTypes: ['business', 'site', 'site', 'unsafe'],
+    ownerApproved: true,
+    isActive: true,
+    deliveryEnabled: true,
+    lastDryRunSummary: { checkedAt: '2026-06-15T00:00:00.000Z' }
+  };
+}
+
 function runAdminAnalyticsScheduledReportReadModelTests() {
   const readContract = buildAdminAnalyticsScheduledReportReadModelContract();
   assert.equal(readContract.status, 'read_model_foundation_only');
@@ -239,20 +261,7 @@ function runAdminAnalyticsScheduledReportReadModelTests() {
   assert.ok(readContract.activationBlockers.includes('read endpoint not configured'));
   assert.ok(readContract.activationBlockers.includes('delivery execution remains disabled'));
 
-  const validRow = {
-    id: 'report_1',
-    reportKey: 'weekly-owner-analytics-config',
-    label: 'Weekly owner analytics configuration',
-    description: 'Owner report schedule',
-    cadence: 'weekly',
-    rangeMode: 'custom',
-    rangeQuery: 'start=2026-06-01&end=2026-06-15',
-    reportTypes: ['business', 'site', 'site', 'unsafe'],
-    ownerApproved: true,
-    isActive: true,
-    deliveryEnabled: true,
-    lastDryRunSummary: { checkedAt: '2026-06-15T00:00:00.000Z' }
-  };
+  const validRow = scheduledReportValidRow();
   const dto = normalizeAdminAnalyticsScheduledReportReadRow(validRow);
   assert.ok(dto);
   assert.equal(dto.activeForOperators, false);
@@ -287,6 +296,59 @@ function runAdminAnalyticsScheduledReportReadModelTests() {
   assert.doesNotMatch(readModelSource, /PrismaClient|prisma\.|\$queryRaw|create\(|update\(|upsert\(|delete\(|fetch\(|sendMail|transport|cron|schedule\.create|setInterval|setTimeout|\bPOST\b|\bPUT\b|\bPATCH\b|\bDELETE\b|localStorage|sessionStorage|cookies\(/);
 }
 
+function runAdminAnalyticsScheduledReportRepositoryContractTests() {
+  const readPlan = buildAdminAnalyticsScheduledReportRepositoryReadPlan(500);
+  assert.equal(readPlan.tableName, 'AdminAnalyticsScheduledReport');
+  assert.equal(readPlan.returnsMetadataOnly, true);
+  assert.equal(readPlan.maxRows, 50);
+  assert.deepEqual(readPlan.orderBy, ['cadence', 'reportKey']);
+  assert.ok(readPlan.selectFields.includes('rangeQuery'));
+  assert.ok(readPlan.selectFields.includes('reportTypes'));
+  assert.ok(readPlan.selectFields.includes('lastDryRunSummary'));
+  assert.ok(readPlan.requiredFilters.some((filter) => filter.field === 'ownerApproved' && filter.expected === true));
+  assert.ok(readPlan.requiredFilters.some((filter) => filter.field === 'isActive' && filter.expected === true));
+  assert.ok(readPlan.requiredFilters.some((filter) => filter.field === 'deliveryEnabled' && filter.expected === false));
+
+  const contract = buildAdminAnalyticsScheduledReportRepositoryContract();
+  assert.equal(contract.status, 'repository_read_contract_only');
+  assert.equal(contract.enabled, false);
+  assert.equal(contract.tableName, 'AdminAnalyticsScheduledReport');
+  assert.equal(contract.repositoryReadsEnabled, false);
+  assert.equal(contract.repositoryWritesEnabled, false);
+  assert.equal(contract.readEndpointEnabled, false);
+  assert.equal(contract.managementUiEnabled, false);
+  assert.equal(contract.deliveryExecutionEnabled, false);
+  assert.equal(contract.dryRunEvidenceRequired, true);
+  assert.equal(contract.dryRunEvidenceRecorded, false);
+  assert.ok(contract.blockedOperations.includes('write scheduled report metadata'));
+  assert.ok(contract.blockedOperations.includes('run scheduled report delivery'));
+  assert.ok(contract.activationBlockers.includes('Prisma repository access not enabled'));
+  assert.ok(contract.activationBlockers.includes('delivery execution remains disabled'));
+
+  const validRow = scheduledReportValidRow();
+  const preview = buildAdminAnalyticsScheduledReportRepositoryPreview([
+    validRow,
+    { ...validRow, id: '', reportKey: 'invalid-report' }
+  ]);
+  assert.equal(preview.status, 'repository_read_contract_only');
+  assert.equal(preview.enabled, false);
+  assert.equal(preview.repositoryReadsEnabled, false);
+  assert.equal(preview.deliveryExecutionEnabled, false);
+  assert.equal(preview.rows.length, 1);
+  assert.equal(preview.rows[0].activeForOperators, false);
+  assert.equal(preview.rows[0].deliveryReady, false);
+  assert.equal(preview.omittedRowCount, 1);
+
+  const repositorySource = source('lib/analytics/admin-analytics-scheduled-report-repository.ts');
+  assert.match(repositorySource, /repository_read_contract_only/);
+  assert.match(repositorySource, /repositoryReadsEnabled: false/);
+  assert.match(repositorySource, /repositoryWritesEnabled: false/);
+  assert.match(repositorySource, /readEndpointEnabled: false/);
+  assert.match(repositorySource, /deliveryExecutionEnabled: false/);
+  assert.match(repositorySource, /buildAdminAnalyticsScheduledReportRepositoryReadPlan/);
+  assert.doesNotMatch(repositorySource, /PrismaClient|prisma\.|\$queryRaw|findMany|create\(|update\(|upsert\(|delete\(|fetch\(|sendMail|transport|cron|schedule\.create|setInterval|setTimeout|\bPOST\b|\bPUT\b|\bPATCH\b|\bDELETE\b|localStorage|sessionStorage|cookies\(/);
+}
+
 async function runOptionalLiveSchemaChecks() {
   await withIsolatedPrisma(async (client) => {
     const rows = await client.$queryRaw<Array<{ table_name: string }>>`
@@ -307,6 +369,7 @@ export async function runMigrationSchemaTests() {
   runAdminAnalyticsSavedViewReadModelTests();
   runAdminAnalyticsScheduledReportStorageContractTests();
   runAdminAnalyticsScheduledReportReadModelTests();
+  runAdminAnalyticsScheduledReportRepositoryContractTests();
   await runOptionalLiveSchemaChecks();
   console.log('migration-schema.test.ts passed');
 }
