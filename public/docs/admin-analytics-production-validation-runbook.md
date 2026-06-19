@@ -14,7 +14,8 @@ Use this checklist after deployment before relying on `/admin/analytics` for ope
 - Collapsible groups and tabbed workspace behavior remain disabled until a separate UI pass.
 - Owner sessions can see aggregate CSV exports.
 - Business CSV and Site CSV URLs preserve the selected range.
-- Scheduled report previews preserve the selected range and aggregate Business/Site CSV paths.
+- Scheduled report previews and config plans preserve the selected range and aggregate Business/Site CSV paths.
+- Scheduled report config plans are draft-only, owner-only, inactive, and require owner approval.
 - Scheduled report delivery and schedule persistence remain disabled.
 - Saved view presets preserve the selected range and existing section anchors.
 - Saved view persistence and client/server saved state remain disabled.
@@ -51,6 +52,11 @@ Record one validation note per pass:
 - Advanced cohort order-count band rows checked:
 - Advanced cohort recency band rows checked:
 - Scheduled report preview checked:
+- Scheduled report config plans checked:
+- Scheduled report config status:
+- Scheduled report owner approval required:
+- Scheduled report owner approved:
+- Scheduled report activation disabled:
 - Scheduled report delivery disabled:
 - Scheduled report persistence disabled:
 - Saved view preset preview checked:
@@ -77,4 +83,4 @@ An empty panel is acceptable when the selected range has no matching traffic, or
 
 ## Privacy expectations
 
-Analytics must stay first-party and aggregate-only. Admin and API routes should not be tracked, browser Do Not Track should be respected, advanced cohort reporting should remain limited to aggregate AOV/share/order-count/recency buckets, scheduled report delivery should remain disabled until owner approval and delivery controls exist, saved view presets should remain preview-only until persistence and role policy exist, dashboard group headers should stay static until collapsible groups or tabs are validated separately, and raw event cleanup should remain preview-only until a separate guarded cleanup process is shipped after production evidence exists.
+Analytics must stay first-party and aggregate-only. Admin and API routes should not be tracked, browser Do Not Track should be respected, advanced cohort reporting should remain limited to aggregate AOV/share/order-count/recency buckets, scheduled report config plans should remain inactive until owner approval, dry-run evidence, delivery controls, and schedule storage exist, saved view presets should remain preview-only until persistence and role policy exist, dashboard group headers should stay static until collapsible groups or tabs are validated separately, and raw event cleanup should remain preview-only until a separate guarded cleanup process is shipped after production evidence exists.
