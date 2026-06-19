@@ -36,6 +36,7 @@ const copy = {
     rangeSuffix: 'days',
     exportEyebrow: 'CSV exports',
     exportBody: 'Download aggregate analytics for the selected range. Exports use summaries and charts only; raw visitor sessions are not exported.',
+    exportOwnerOnly: 'CSV exports are owner-only. Staff can view operational analytics here, but export links are hidden until an owner session is active.',
     businessCsv: 'Download business CSV',
     siteCsv: 'Download site CSV',
     privacyEyebrow: 'Privacy and retention',
@@ -43,6 +44,12 @@ const copy = {
     privacyDoc: 'Read privacy and retention policy',
     disableLabel: 'Disable storefront analytics with NEXT_PUBLIC_SITE_ANALYTICS_ENABLED=false.',
     retentionLabel: 'Retention target: raw site events up to 180 days; prefer aggregate summaries for long-lived reporting.',
+    roleEyebrow: 'Role-aware visibility',
+    roleOwnerBody: 'Owner session: full analytics visibility, aggregate CSV exports, privacy guidance, and raw-event retention status are available.',
+    roleStaffBody: 'Staff session: operational analytics remain visible, while owner-only exports and raw-event retention details are hidden.',
+    roleOwnerBadge: 'Owner controls active',
+    roleStaffBadge: 'Staff view',
+    retentionOwnerOnly: 'Raw-event retention status is owner-only. Staff can still review aggregate business and site analytics, but retention diagnostics require an owner session.',
     sectionEyebrow: 'Analytics sections',
     sectionBody: 'Jump directly to the analytics area you need instead of scrolling through the full workspace.',
     sectionLabel: 'Jump to analytics section',
@@ -72,6 +79,7 @@ const copy = {
     rangeSuffix: 'روز',
     exportEyebrow: 'خروجی CSV',
     exportBody: 'تحلیل‌های تجمیعی بازه انتخاب‌شده را دانلود کنید. خروجی‌ها فقط از خلاصه‌ها و نمودارها استفاده می‌کنند و نشست خام بازدیدکننده صادر نمی‌شود.',
+    exportOwnerOnly: 'خروجی CSV فقط برای مالک است. کارکنان می‌توانند تحلیل‌های عملیاتی را ببینند، اما لینک‌های خروجی تا زمان ورود مالک پنهان می‌مانند.',
     businessCsv: 'دانلود CSV کسب‌وکار',
     siteCsv: 'دانلود CSV سایت',
     privacyEyebrow: 'حریم خصوصی و نگهداری',
@@ -79,6 +87,12 @@ const copy = {
     privacyDoc: 'خواندن سیاست حریم خصوصی و نگهداری',
     disableLabel: 'برای غیرفعال‌کردن تحلیل سایت، NEXT_PUBLIC_SITE_ANALYTICS_ENABLED=false را تنظیم کنید.',
     retentionLabel: 'هدف نگهداری: رویداد خام سایت حداکثر تا ۱۸۰ روز؛ برای گزارش‌های بلندمدت از خلاصه‌های تجمیعی استفاده شود.',
+    roleEyebrow: 'نمایش بر اساس نقش',
+    roleOwnerBody: 'نشست مالک: دسترسی کامل به تحلیل‌ها، خروجی‌های CSV تجمیعی، راهنمای حریم خصوصی و وضعیت نگهداری رویداد خام فعال است.',
+    roleStaffBody: 'نشست کارکنان: تحلیل عملیاتی قابل مشاهده است، اما خروجی‌های مالک و جزئیات نگهداری رویداد خام پنهان می‌مانند.',
+    roleOwnerBadge: 'کنترل مالک فعال',
+    roleStaffBadge: 'نمای کارکنان',
+    retentionOwnerOnly: 'وضعیت نگهداری رویداد خام فقط برای مالک است. کارکنان همچنان می‌توانند تحلیل‌های تجمیعی کسب‌وکار و سایت را ببینند، اما تشخیص‌های نگهداری نیازمند نشست مالک است.',
     sectionEyebrow: 'بخش‌های تحلیل',
     sectionBody: 'بدون پیمایش کل صفحه، مستقیم به بخش تحلیلی موردنیاز بروید.',
     sectionLabel: 'رفتن به بخش تحلیل',
@@ -146,6 +160,7 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
   const authenticated = await isAdminAuthenticated();
   const authConfigured = isAdminAuthConfigured();
   const identity = await getAdminIdentity();
+  const ownerOnlyAnalyticsControls = identity.role === 'owner';
   const [
     products,
     categories,
@@ -163,7 +178,7 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
     authenticated ? productSalesAnalyticsService.summary({ rangeDays }) : Promise.resolve({ ...EMPTY_PRODUCT_SALES_ANALYTICS_SUMMARY, analyticsRangeDays: rangeDays }),
     authenticated ? categorySalesAnalyticsService.summary({ rangeDays }) : Promise.resolve({ ...EMPTY_CATEGORY_SALES_ANALYTICS_SUMMARY, analyticsRangeDays: rangeDays }),
     authenticated ? siteAnalyticsSummaryService.summary({ rangeDays }) : Promise.resolve({ ...EMPTY_SITE_ANALYTICS_SUMMARY, analyticsRangeDays: rangeDays }),
-    authenticated ? siteAnalyticsRetentionService.summary() : Promise.resolve(emptySiteAnalyticsRetentionSummary())
+    authenticated && ownerOnlyAnalyticsControls ? siteAnalyticsRetentionService.summary() : Promise.resolve(emptySiteAnalyticsRetentionSummary())
   ]);
 
   return (
@@ -190,6 +205,19 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
             <span className="rounded-full bg-olive/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-olive">{labels.badge}</span>
           </div>
           <p className="mt-4 rounded-md border border-stone-200 bg-stone-50 px-4 py-3 text-sm leading-6 text-stone-600">{labels.note}</p>
+          <div id="analytics-role-visibility" className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-800">{labels.roleEyebrow}</p>
+                <p className="mt-1 text-sm leading-6 text-amber-950">
+                  {ownerOnlyAnalyticsControls ? labels.roleOwnerBody : labels.roleStaffBody}
+                </p>
+              </div>
+              <span className="rounded-full border border-amber-300 bg-white px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-amber-800">
+                {ownerOnlyAnalyticsControls ? labels.roleOwnerBadge : labels.roleStaffBadge}
+              </span>
+            </div>
+          </div>
           <div className="mt-4 rounded-lg border border-olive/20 bg-olive/5 p-4">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-olive">{labels.rangeEyebrow}</p>
             <p className="mt-1 text-sm leading-6 text-stone-600">{labels.rangeBody}</p>
@@ -214,20 +242,24 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
           <div id="analytics-csv-exports" className="mt-4 rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">{labels.exportEyebrow}</p>
             <p className="mt-1 text-sm leading-6 text-stone-600">{labels.exportBody}</p>
-            <div className="mt-3 flex flex-wrap gap-2" aria-label={labels.exportEyebrow}>
-              <Link
-                href={exportHref('business', rangeDays)}
-                className="rounded-full border border-olive bg-white px-4 py-2 text-sm font-bold text-olive hover:bg-olive hover:text-white"
-              >
-                {labels.businessCsv}
-              </Link>
-              <Link
-                href={exportHref('site', rangeDays)}
-                className="rounded-full border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-700 hover:border-olive hover:text-olive"
-              >
-                {labels.siteCsv}
-              </Link>
-            </div>
+            {ownerOnlyAnalyticsControls ? (
+              <div className="mt-3 flex flex-wrap gap-2" aria-label={labels.exportEyebrow}>
+                <Link
+                  href={exportHref('business', rangeDays)}
+                  className="rounded-full border border-olive bg-white px-4 py-2 text-sm font-bold text-olive hover:bg-olive hover:text-white"
+                >
+                  {labels.businessCsv}
+                </Link>
+                <Link
+                  href={exportHref('site', rangeDays)}
+                  className="rounded-full border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-700 hover:border-olive hover:text-olive"
+                >
+                  {labels.siteCsv}
+                </Link>
+              </div>
+            ) : (
+              <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">{labels.exportOwnerOnly}</p>
+            )}
           </div>
           <div id="analytics-privacy-retention" className="mt-4 scroll-mt-24 rounded-lg border border-blue-200 bg-blue-50 p-4">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-800">{labels.privacyEyebrow}</p>
@@ -269,7 +301,14 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
         <AdminProductSalesAnalyticsPanel summary={productSalesAnalyticsSummary} />
         <AdminCategorySalesAnalyticsPanel summary={categorySalesAnalyticsSummary} />
         <AdminSiteAnalyticsPanel summary={siteAnalyticsSummary} />
-        <AdminSiteAnalyticsRetentionStatusPanel summary={siteAnalyticsRetentionSummary} />
+        {ownerOnlyAnalyticsControls ? (
+          <AdminSiteAnalyticsRetentionStatusPanel summary={siteAnalyticsRetentionSummary} />
+        ) : (
+          <section id="site-analytics-retention-status" className="scroll-mt-24 rounded-lg border border-amber-200 bg-amber-50 p-5 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-800">{labels.retentionStatus}</p>
+            <p className="mt-2 text-sm leading-6 text-amber-950">{labels.retentionOwnerOnly}</p>
+          </section>
+        )}
       </div>
     </AdminPageShell>
   );
