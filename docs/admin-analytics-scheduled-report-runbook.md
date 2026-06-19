@@ -1,10 +1,10 @@
 # Admin analytics scheduled report runbook
 
-This runbook covers the scheduled report configuration-plan, storage-schema, applied Prisma schema mapping, checked Prisma schema fragment, read-model, repository-read contract, and read-adapter foundations for `/admin/analytics`.
+This runbook covers the scheduled report configuration-plan, storage-schema, applied Prisma schema mapping, checked Prisma schema fragment, generated-client type visibility, read-model, repository-read contract, and read-adapter foundations for `/admin/analytics`.
 
 ## Current scope
 
-The current scheduled report implementation is a configuration, inactive storage, applied Prisma schema mapping, checked Prisma schema fragment, metadata-only read-model, repository-read contract, and read-adapter foundation only.
+The current scheduled report implementation is a configuration, inactive storage, applied Prisma schema mapping, checked Prisma schema fragment, generated-client type visibility, metadata-only read-model, repository-read contract, and read-adapter foundation only.
 
 It defines:
 
@@ -20,6 +20,7 @@ It defines:
 - Prisma model-block contract for the scheduled-report table fields, defaults, JSON columns, and indexes
 - checked `prisma/schema.admin-analytics-scheduled-report.prisma` fragment that exactly matches the guarded model block
 - `prisma/schema.prisma` model mapping that exactly matches the checked fragment
+- generated-client model type visibility for the repository adapter's injected-reader boundary
 - metadata-only read-model normalization for future stored schedule rows
 - repository-read query-plan metadata for future safe reads
 - a read adapter that accepts a future repository reader and applies the same safe query args
@@ -32,7 +33,7 @@ It defines:
 - explicit disabled schedule activation state
 - activation blockers for future implementation
 
-It does not create active saved schedules, delivery jobs, email sends, timers, queues, background execution, route handlers, application access through the generated Prisma client, Prisma repository wiring, repository writes, or management UI. The `schema.prisma` model mapping is applied and remains runtime-inactive.
+It does not create active saved schedules, delivery jobs, email sends, timers, queues, background execution, route handlers, runtime application access through the generated Prisma client, active Prisma repository wiring, repository writes, or management UI. The `schema.prisma` model mapping is applied, the generated model type is visible to the adapter boundary, and runtime repository access remains disabled.
 
 ## Validation steps
 
@@ -54,22 +55,23 @@ It does not create active saved schedules, delivery jobs, email sends, timers, q
 16. Confirm the Prisma mapping contract lists the future model fields, JSON columns, defaults, and indexes.
 17. Confirm the checked Prisma schema fragment exactly matches the guarded model block.
 18. Confirm the `schema.prisma` model mapping exactly matches the checked fragment.
-19. Confirm generated Prisma client access remains disabled.
-20. Confirm the read-model foundation normalizes metadata-only schedule rows.
-21. Confirm invalid cadences, missing range queries, and unsupported report types are omitted by the read model.
-22. Confirm read-model output keeps operator activation disabled.
-23. Confirm read-model output keeps delivery readiness disabled.
-24. Confirm the repository-read contract exposes metadata-only select fields.
-25. Confirm the repository-read contract requires owner approval, active state, and delivery disabled filters before any future read path.
-26. Confirm the read adapter builds the same owner-approved, active, delivery-disabled query args.
-27. Confirm the read adapter caps rows and normalizes aggregate-only report types.
-28. Confirm the read adapter keeps operator activation disabled.
-29. Confirm the read adapter keeps delivery readiness disabled.
-30. Confirm active repository wiring remains disabled.
-31. Confirm activation remains false.
-32. Confirm delivery is disabled.
-33. Confirm schedule execution remains disabled.
-34. Confirm dry-run evidence is listed as a future activation requirement.
+19. Confirm generated Prisma client model type visibility is present for the injected reader boundary.
+20. Confirm generated Prisma client runtime access remains disabled.
+21. Confirm the read-model foundation normalizes metadata-only schedule rows.
+22. Confirm invalid cadences, missing range queries, and unsupported report types are omitted by the read model.
+23. Confirm read-model output keeps operator activation disabled.
+24. Confirm read-model output keeps delivery readiness disabled.
+25. Confirm the repository-read contract exposes metadata-only select fields.
+26. Confirm the repository-read contract requires owner approval, active state, and delivery disabled filters before any future read path.
+27. Confirm the read adapter builds the same owner-approved, active, delivery-disabled query args.
+28. Confirm the read adapter caps rows and normalizes aggregate-only report types.
+29. Confirm the read adapter keeps operator activation disabled.
+30. Confirm the read adapter keeps delivery readiness disabled.
+31. Confirm active repository wiring remains disabled.
+32. Confirm activation remains false.
+33. Confirm delivery is disabled.
+34. Confirm schedule execution remains disabled.
+35. Confirm dry-run evidence is listed as a future activation requirement.
 
 ## Evidence record
 
@@ -93,7 +95,8 @@ For each validation run, record:
 - Prisma schema fragment checked: yes/no
 - Prisma schema fragment matches guarded model block: yes/no
 - `schema.prisma` model matches checked fragment: yes/no
-- Prisma mapping generated-client access enabled: must be no
+- generated-client model type visible: yes/no
+- generated-client runtime access enabled: must be no
 - read model checked: yes/no
 - read model status
 - read model metadata-only output checked: yes/no
@@ -124,7 +127,7 @@ For each validation run, record:
 Before enabling actual scheduled delivery, add and validate:
 
 - owner approval capture and disable controls
-- generated Prisma client access with audit evidence and the required metadata-only filters
+- generated Prisma client runtime access with audit evidence and the required metadata-only filters
 - repository write path with owner-managed approval and disable controls
 - read endpoint with owner-scoped policy enforcement
 - delivery provider or channel plan
@@ -134,4 +137,4 @@ Before enabling actual scheduled delivery, add and validate:
 - tests proving delivery can be disabled globally
 - dry-run evidence that records the exact CSV paths and selected reporting window
 
-Do not enable delivery until the config-plan evidence, storage-schema evidence, Prisma mapping evidence, checked schema-fragment evidence, read-model evidence, repository-read contract evidence, read-adapter evidence, owner approval workflow, delivery disable switch, and aggregate payload guard are documented.
+Do not enable delivery until the config-plan evidence, storage-schema evidence, Prisma mapping evidence, checked schema-fragment evidence, generated-type evidence, read-model evidence, repository-read contract evidence, read-adapter evidence, owner approval workflow, delivery disable switch, and aggregate payload guard are documented.
