@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { buildSiteAnalyticsSummary } from '../../lib/analytics/site-analytics-summary';
+import { SITE_ANALYTICS_RAW_EVENT_RETENTION_DAYS, buildSiteAnalyticsRetentionSummary } from '../../lib/analytics/site-analytics-retention';
 
 function source(path: string) {
   return readFileSync(path, 'utf8');
@@ -9,6 +10,8 @@ function source(path: string) {
 export async function runSiteAnalyticsSummaryTests() {
   const rangeHelper = source('lib/analytics/admin-analytics-range.ts');
   const service = source('lib/analytics/site-analytics-summary.ts');
+  const retentionService = source('lib/analytics/site-analytics-retention.ts');
+  const retentionPanel = source('components/admin/AdminSiteAnalyticsRetentionStatusPanel.tsx');
   const panel = source('components/admin/AdminSiteAnalyticsPanel.tsx');
   const route = source('app/api/site-analytics/events/route.ts');
   const reporter = source('components/StorefrontSiteAnalyticsReporter.tsx');
@@ -79,6 +82,23 @@ export async function runSiteAnalyticsSummaryTests() {
   assert.equal(sevenDaySummary.recentDaily[0].date, '2026-06-12');
   assert.equal(sevenDaySummary.topPages.some((row) => row.label === '/old'), false);
 
+  const retention = buildSiteAnalyticsRetentionSummary({
+    totalEventCount: BigInt(12),
+    retainedEventCount: '10',
+    staleEventCount: 2,
+    oldestEventAt: '2025-11-01T00:00:00.000Z',
+    newestEventAt: new Date('2026-06-18T10:00:00Z')
+  }, now);
+  assert.equal(SITE_ANALYTICS_RAW_EVENT_RETENTION_DAYS, 180);
+  assert.equal(retention.databaseConfigured, true);
+  assert.equal(retention.tableAvailable, true);
+  assert.equal(retention.totalEventCount, 12);
+  assert.equal(retention.retainedEventCount, 10);
+  assert.equal(retention.staleEventCount, 2);
+  assert.equal(retention.cutoffAt.toISOString(), '2025-12-20T12:00:00.000Z');
+  assert.equal(retention.oldestEventAt?.toISOString(), '2025-11-01T00:00:00.000Z');
+  assert.equal(retention.newestEventAt?.toISOString(), '2026-06-18T10:00:00.000Z');
+
   assert.match(rangeHelper, /ADMIN_ANALYTICS_RANGE_DAYS = \[7, 30, 90\]/);
   assert.match(rangeHelper, /normalizeAdminAnalyticsRangeDays/);
   assert.match(rangeHelper, /getAdminAnalyticsRangeStart/);
@@ -112,6 +132,24 @@ export async function runSiteAnalyticsSummaryTests() {
   assert.match(service, /siteAnalyticsSummaryService/);
   assert.match(service, /SELECT "eventType", "path", "locale", "productId", "categoryId", "searchTerm", "metadata", "createdAt"/);
   assert.match(service, /isMissingSiteAnalyticsTableError/);
+
+  assert.match(retentionService, /SITE_ANALYTICS_RAW_EVENT_RETENTION_DAYS = 180/);
+  assert.match(retentionService, /export type SiteAnalyticsRetentionSummary/);
+  assert.match(retentionService, /buildSiteAnalyticsRetentionSummary/);
+  assert.match(retentionService, /siteAnalyticsRetentionService/);
+  assert.match(retentionService, /COUNT\(\*\) AS "totalEventCount"/);
+  assert.match(retentionService, /COUNT\(\*\) FILTER \(WHERE "createdAt" >= \$\{cutoffAt\}\) AS "retainedEventCount"/);
+  assert.match(retentionService, /COUNT\(\*\) FILTER \(WHERE "createdAt" < \$\{cutoffAt\}\) AS "staleEventCount"/);
+  assert.match(retentionService, /MIN\("createdAt"\) AS "oldestEventAt"/);
+  assert.match(retentionService, /MAX\("createdAt"\) AS "newestEventAt"/);
+  assert.match(retentionService, /isMissingSiteAnalyticsTableError/);
+  assert.doesNotMatch(retentionService, /\$queryRawUnsafe|\$executeRawUnsafe/);
+
+  assert.match(retentionPanel, /AdminSiteAnalyticsRetentionStatusPanel/);
+  assert.match(retentionPanel, /Raw event retention status/);
+  assert.match(retentionPanel, /Site analytics table is not available yet/);
+  assert.match(retentionPanel, /Automated cleanup is still planned/);
+  assert.match(retentionPanel, /site-analytics-retention-status/);
 
   assert.match(panel, /export async function AdminSiteAnalyticsPanel/);
   assert.match(panel, /Storefront traffic and funnel/);
@@ -178,7 +216,12 @@ export async function runSiteAnalyticsSummaryTests() {
   assert.match(layout, /<StorefrontSiteAnalyticsReporter \/>/);
 
   assert.match(analyticsPage, /AdminSiteAnalyticsPanel/);
+  assert.match(analyticsPage, /AdminSiteAnalyticsRetentionStatusPanel/);
   assert.match(analyticsPage, /siteAnalyticsSummaryService\.summary\(\{ rangeDays \}\)/);
+  assert.match(analyticsPage, /siteAnalyticsRetentionService\.summary\(\)/);
+  assert.match(analyticsPage, /emptySiteAnalyticsRetentionSummary/);
+  assert.match(analyticsPage, /site-analytics-retention-status/);
+  assert.match(analyticsPage, /Retention status/);
   assert.match(analyticsPage, /EMPTY_SITE_ANALYTICS_SUMMARY/);
   assert.match(analyticsPage, /privacy-safe first-party events/);
   assert.match(analyticsPage, /Analytics range/);
