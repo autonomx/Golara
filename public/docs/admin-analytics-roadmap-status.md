@@ -10,13 +10,14 @@ This document summarizes the `/admin/analytics` workspace status.
 - Business KPI cards and previous-range deltas.
 - Order, revenue, and average order value trend charts.
 - Orders by status and revenue by currency.
-- Fulfillment status, payment method mix, and discount usage impact.
+- Fulfillment status, payment mix, and discount usage impact.
 - Product view-to-cart conversion from first-party storefront events.
 - Product sales and category sales from eligible checkout order lines.
 - Aggregate customer cohort metrics for guest, known, first-time, and returning-customer order buckets.
 - Site analytics event foundation with privacy-safe first-party events.
 - Traffic attribution using capped UTM fields and external referrer domains.
 - Owner-only aggregate Business CSV and Site CSV exports.
+- Scheduled report preview foundation using the selected analytics range and aggregate Business/Site CSV paths.
 - Privacy and retention policy visibility.
 - Read-only raw site-event retention status, cleanup preview, and cleanup readiness guidance.
 - Role-aware visibility for owner-only exports and retention diagnostics.
@@ -26,8 +27,12 @@ This document summarizes the `/admin/analytics` workspace status.
 
 - Automated raw site-event deletion after production migration evidence and cleanup preview evidence are verified.
 - Advanced customer cohort reporting beyond the current aggregate order/revenue buckets.
-- Scheduled analytics reports.
+- Scheduled report persistence, delivery configuration, and owner approval workflow.
 - Saved dashboard views.
+
+## Scheduled report preview note
+
+The scheduled report foundation is preview-only. It defines weekly and monthly owner report options, selected-range metadata, and aggregate Business/Site CSV paths without saving schedules or enabling delivery.
 
 ## Production validation checklist
 
@@ -42,3 +47,4 @@ Before treating site analytics as complete in production, verify:
 7. Cleanup preview reports eligible stale-event counts without deleting data.
 8. Custom preset and start/end ranges produce matching dashboard, section-link, and export windows.
 9. Customer cohort panels and CSV rows remain aggregate-only.
+10. Scheduled report previews preserve the selected range and aggregate Business/Site CSV paths without enabling delivery.
