@@ -1,6 +1,6 @@
 # Admin analytics implementation backlog
 
-This backlog tracks the remaining admin analytics work after the custom range, aggregate cohort, retention preview, scheduled report preview, saved view preset preview, layout grouping preview, and dashboard group header UI passes.
+This backlog tracks the remaining admin analytics work after the custom range, aggregate cohort, advanced cohort, retention preview, scheduled report preview, saved view preset preview, layout grouping preview, and dashboard group header UI passes.
 
 ## Current live baseline
 
@@ -9,6 +9,7 @@ This backlog tracks the remaining admin analytics work after the custom range, a
 - Validated custom start/end date ranges that share the same resolved range across dashboard panels, section links, comparisons, and CSV exports.
 - Business charts for order status, revenue by currency, trends, fulfillment, payment mix, discounts, products, and categories.
 - Aggregate customer cohort order/revenue buckets for guest, known, first-time, and returning-customer segments.
+- Advanced aggregate customer cohort reporting for AOV/share buckets, known-customer order-count bands, and recency bands.
 - First-party site analytics for page, product, category, search, cart, checkout, payment-method, attribution, and funnel signals.
 - Aggregate Business CSV and Site CSV exports.
 - Scheduled report preview foundation for weekly/monthly owner report options using the selected range and aggregate CSV paths.
@@ -38,6 +39,16 @@ Completed baseline:
 - Customer cohort cards and exports avoid names, emails, phone numbers, addresses, and raw customer identifiers.
 - Cohorts use non-identifying buckets for guest, known, first-time, and returning-customer order/revenue reporting.
 - Admin UI explains privacy boundaries through aggregate-only guidance and export copy.
+
+### Advanced aggregate customer cohort reporting
+
+Completed baseline:
+
+- Metrics remain aggregate-only.
+- No names, emails, phone numbers, addresses, or raw customer identifiers are exported.
+- `/admin/analytics` includes an Advanced cohorts section with selected-range AOV/share, order-count band, and recency band charts.
+- Business CSV exports include advanced aggregate cohort rows for AOV/share buckets, known-customer order-count bands, and known-customer recency bands.
+- New buckets use non-identifying dimensions and never render per-customer rows.
 
 ### Scheduled report preview foundation
 
@@ -99,25 +110,7 @@ Notes:
 - The current admin page shows retention status and cleanup preview only; it does not delete raw events.
 - Add operational documentation before enabling the job.
 
-### 2. Advanced aggregate customer cohort reporting
-
-Goal: expand customer/order analytics while staying aggregate-only.
-
-Acceptance criteria:
-
-- Metrics remain aggregate-only.
-- No names, emails, phone numbers, addresses, or raw customer identifiers are exported.
-- New buckets use non-identifying dimensions such as order-count bands or recency bands.
-- Admin UI explains privacy boundaries.
-
-Potential metrics:
-
-- Average order value by aggregate cohort.
-- Orders by customer recency band.
-- Repeat order trend over time.
-- Known-customer revenue share by selected range.
-
-### 3. Scheduled report persistence and delivery
+### 2. Scheduled report persistence and delivery
 
 Goal: let owners save recurring aggregate analytics reports after export and range semantics are stable.
 
@@ -129,7 +122,7 @@ Acceptance criteria:
 - Saving schedules requires a persistence model and owner approval evidence.
 - Delivery requires an explicit provider/channel plan and testable disable switch.
 
-### 4. Saved dashboard view persistence
+### 3. Saved dashboard view persistence
 
 Goal: let operators save preferred dashboard range/filter layouts after the preview contract is validated.
 
@@ -141,7 +134,7 @@ Acceptance criteria:
 - Saved metadata is limited to view labels, selected range/filter metadata, and section anchors.
 - Persistence includes owner/staff management and delete/update behavior.
 
-### 5. Collapsible groups or tabs
+### 4. Collapsible groups or tabs
 
 Goal: reduce page length only if the static group-header UI is not enough.
 
@@ -154,9 +147,8 @@ Acceptance criteria:
 
 ## Sequencing recommendation
 
-1. Production validation evidence for custom ranges, exports, aggregate cohort panels, retention preview, scheduled report previews, saved view presets, and dashboard group headers.
-2. Automated retention cleanup preview, then guarded execution.
-3. Advanced aggregate cohort reporting.
-4. Scheduled report persistence and delivery.
-5. Saved dashboard view persistence.
-6. Collapsible groups or tabs only if the static group-header UI is not enough.
+1. Production validation evidence for custom ranges, exports, aggregate and advanced cohort panels, retention preview, scheduled report previews, saved view presets, and dashboard group headers.
+2. Automated retention cleanup preview, then guarded execution after production evidence exists.
+3. Scheduled report persistence and delivery.
+4. Saved dashboard view persistence.
+5. Collapsible groups or tabs only if the static group-header UI is not enough.
