@@ -21,6 +21,8 @@ Use this checklist after deployment before relying on `/admin/analytics` for ope
 - Customer cohort CSV rows remain aggregate-only for guest, known, first-time, and returning-customer buckets.
 - Visitor session details, full referrer URLs, analytics event payloads, customer names, phone numbers, emails, and per-customer rows are not exported.
 - Retention status can read event counts and stale-event counts.
+- Cleanup preview reports eligible stale-event count, deletion disabled, production evidence status, and preview reason.
+- Cleanup preview does not delete raw events.
 
 ## Evidence record
 
@@ -37,6 +39,10 @@ Record one validation note per pass:
 - Site CSV checked:
 - Customer cohort aggregate rows checked:
 - Retention status checked:
+- Cleanup preview eligible stale-event count:
+- Cleanup preview deletion status:
+- Cleanup preview production evidence status:
+- Cleanup preview reason:
 - Result: pass / fail / blocked
 - Follow-up issue or PR:
 
@@ -46,4 +52,4 @@ An empty panel is acceptable when the selected range has no matching traffic, or
 
 ## Privacy expectations
 
-Analytics must stay first-party and aggregate-only. Admin and API routes should not be tracked, browser Do Not Track should be respected, and raw event cleanup should not be enabled until a separate guarded cleanup process is shipped.
+Analytics must stay first-party and aggregate-only. Admin and API routes should not be tracked, browser Do Not Track should be respected, and raw event cleanup should remain preview-only until a separate guarded cleanup process is shipped after production evidence exists.
