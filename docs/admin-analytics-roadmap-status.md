@@ -17,6 +17,7 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 - Site analytics event foundation with privacy-safe first-party events.
 - Traffic attribution using capped UTM fields and external referrer domains.
 - Owner-only aggregate Business CSV and Site CSV exports.
+- Scheduled report preview foundation that reuses the selected analytics range and aggregate Business/Site CSV paths.
 - Privacy and retention policy visibility.
 - Read-only raw site-event retention status, cleanup preview, and cleanup readiness guidance.
 - Role-aware visibility for owner-only exports and retention diagnostics.
@@ -26,7 +27,7 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 
 - Automated raw site-event deletion after production migration evidence and cleanup preview evidence are verified.
 - Advanced customer cohort reporting beyond the current aggregate order/revenue buckets.
-- Scheduled analytics reports.
+- Scheduled report persistence, delivery configuration, and owner approval workflow.
 - Saved dashboard views.
 
 ## Customer cohort analytics note
@@ -48,6 +49,12 @@ Any future customer cohort export must remain aggregate-only unless a separate e
 
 The range selector now supports both fixed presets and custom start/end dates. Presets and custom ranges resolve through the same contract across business analytics, site analytics, export routes, comparison deltas, section links, and panel labels.
 
+## Scheduled report preview note
+
+The scheduled report foundation is preview-only. It defines weekly and monthly owner report options, selected-range metadata, and aggregate Business/Site CSV paths without creating saved schedules, delivery jobs, email sends, or background execution.
+
+Actual scheduled delivery remains pending until persistence, delivery configuration, and owner approval evidence are designed and validated.
+
 ## Retention cleanup preview note
 
 The retention status panel now includes a read-only cleanup preview. It reports the stale raw-event count eligible under the 180-day retention target, whether production migration evidence has been confirmed, whether deletion remains disabled, and the reason future cleanup is still blocked or ready for a guarded job.
@@ -68,3 +75,4 @@ Before treating site analytics as complete in production, verify:
 8. Cleanup remains disabled until production migration evidence is confirmed.
 9. Custom preset and start/end ranges produce matching dashboard, section-link, and export windows.
 10. Customer cohort panels and CSV rows remain aggregate-only.
+11. Scheduled report previews preserve the selected range and aggregate Business/Site CSV paths without enabling delivery.
