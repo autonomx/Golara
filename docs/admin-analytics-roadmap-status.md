@@ -78,3 +78,24 @@ The UI keeps the section index, range links, existing anchors, CSV exports, serv
 ## Retention cleanup preview note
 
 The retention status panel now includes a read-only cleanup preview. It reports the stale raw-event count eligible under the 180-day retention target, whether production migration evidence has been confirmed, whether deletion remains disabled, and the reason future cleanup is still blocked or ready for a guarded job.
+
+The preview must not delete data. Automated deletion remains pending until the preview evidence, production migration evidence, and production analytics volume are verified.
+
+## Production validation checklist
+
+Before treating site analytics as complete in production, verify:
+
+1. The site analytics event migration has been applied to the production database.
+2. `NEXT_PUBLIC_SITE_ANALYTICS_ENABLED` is not set to `false` for storefront traffic that should be counted.
+3. Admin, API, and framework routes are excluded from tracking.
+4. Do Not Track is honored in the browser reporter.
+5. CSV exports remain aggregate-only.
+6. Raw event retention status is visible to owner sessions.
+7. Cleanup preview reports eligible stale-event counts without deleting data.
+8. Cleanup remains disabled until production migration evidence is confirmed.
+9. Custom preset and start/end ranges produce matching dashboard, section-link, and export windows.
+10. Customer cohort panels and CSV rows remain aggregate-only.
+11. Advanced aggregate cohort panels and CSV rows show only AOV/share/order-count/recency bands, never per-customer rows.
+12. Scheduled report previews, config plans, inactive storage schema, Prisma mapping contract, read model, repository-read contract, and read adapter preserve the selected range and aggregate Business/Site CSV paths without enabling delivery.
+13. Saved dashboard view presets, persistence plans, storage schema, and read model preserve selected range metadata, existing section anchors, allowed scopes, blocked fields, disabled endpoints, inactive activation flags, and metadata-only DTOs.
+14. Dashboard group headers preserve selected range links, the section index, existing anchors, and table fallback requirements without enabling collapsible groups or tabs.
