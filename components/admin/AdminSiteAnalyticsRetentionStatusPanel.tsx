@@ -5,6 +5,14 @@ import type { SupportedLocale } from '@/lib/i18n/locales';
 type AdminLocale = 'en' | 'fa';
 type ReadinessTone = 'success' | 'warning' | 'blocked';
 
+type CleanupReasonLabels = {
+  reasonDatabase: string;
+  reasonTable: string;
+  reasonEvidence: string;
+  reasonNoStale: string;
+  reasonReady: string;
+};
+
 const copy = {
   en: {
     eyebrow: 'Site analytics retention',
@@ -115,7 +123,7 @@ function formatDate(value: Date | null, locale: SupportedLocale | string | null 
   }).format(value);
 }
 
-function cleanupReasonLabel(reason: SiteAnalyticsRetentionSummary['cleanupPreview']['reason'], labels: typeof copy.en) {
+function cleanupReasonLabel(reason: SiteAnalyticsRetentionSummary['cleanupPreview']['reason'], labels: CleanupReasonLabels) {
   switch (reason) {
     case 'database_not_configured':
       return labels.reasonDatabase;
