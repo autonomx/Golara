@@ -18,7 +18,7 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 - Site analytics event foundation with privacy-safe first-party events.
 - Traffic attribution using capped UTM fields and external referrer domains.
 - Owner-only aggregate Business CSV and Site CSV exports.
-- Scheduled report preview, owner-approved configuration-plan foundation, inactive storage schema, metadata-only read-model foundation, repository-read query-plan contract, and read-adapter foundation that reuse the selected analytics range and aggregate Business/Site CSV paths.
+- Scheduled report preview, owner-approved configuration-plan foundation, inactive storage schema, Prisma mapping contract, metadata-only read-model foundation, repository-read query-plan contract, and read-adapter foundation that reuse the selected analytics range and aggregate Business/Site CSV paths.
 - Saved dashboard view preset preview, persistence-plan foundation, inactive storage schema, and metadata-only read-model foundation for future saves.
 - Dashboard group header UI that uses the layout grouping contract while preserving the selected range, section index, anchors, and table fallback requirements.
 - Privacy and retention policy visibility.
@@ -30,7 +30,7 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 
 - Automated raw site-event deletion after production migration evidence and cleanup preview evidence are verified.
 - Future customer segmentation beyond aggregate order-count and recency bands, only after a separate privacy review.
-- Scheduled report active Prisma repository wiring, repository writes, read endpoints, delivery channel execution, retry visibility, owner approval recording, global disable controls, and owner management UI.
+- Scheduled report generated Prisma client access, active repository wiring, repository writes, read endpoints, delivery channel execution, retry visibility, owner approval recording, global disable controls, and owner management UI.
 - Saved dashboard active save/update/remove/read endpoints, owner approval recording, role-policy enforcement, active repository access, and owner/staff management UI.
 - Collapsible dashboard groups or tabbed workspace behavior.
 
@@ -59,9 +59,9 @@ The range selector now supports both fixed presets and custom start/end dates. P
 
 ## Scheduled report configuration note
 
-The scheduled report foundation now includes preview metadata, configuration-plan metadata, an inactive `AdminAnalyticsScheduledReport` storage schema, a metadata-only read-model foundation, a repository-read query-plan contract, and a read-adapter foundation. It defines weekly and monthly owner report options, selected-range metadata, aggregate Business/Site CSV paths, owner-approval requirements, metadata-only future schedule fields, safe DTO normalization for future table rows, required future read filters, safe select fields, and activation blockers without saving active schedules, sending reports, creating timers, wiring Prisma repository reads, or running background jobs.
+The scheduled report foundation now includes preview metadata, configuration-plan metadata, an inactive `AdminAnalyticsScheduledReport` storage schema, a Prisma mapping contract, a metadata-only read-model foundation, a repository-read query-plan contract, and a read-adapter foundation. It defines weekly and monthly owner report options, selected-range metadata, aggregate Business/Site CSV paths, owner-approval requirements, metadata-only future schedule fields, a future model block, required defaults and indexes, safe DTO normalization for future table rows, required future read filters, safe select fields, and activation blockers without saving active schedules, sending reports, creating timers, enabling generated Prisma client access, wiring Prisma repository reads, or running background jobs.
 
-The read model keeps `activeForOperators=false` and `deliveryReady=false` even when future approval, active, delivery, and dry-run fields are present. The repository-read contract defines owner-approved, active, delivery-disabled future filters. The read adapter builds and applies those same query args to an injected reader for validation, while active Prisma repository wiring remains disabled. Actual scheduled delivery remains pending until repository wiring, owner approval recording, dry-run evidence, delivery configuration, retry/failure visibility, disable controls, and management UI are designed and validated.
+The read model keeps `activeForOperators=false` and `deliveryReady=false` even when future approval, active, delivery, and dry-run fields are present. The repository-read contract defines owner-approved, active, delivery-disabled future filters. The read adapter builds and applies those same query args to an injected reader for validation, while active Prisma repository wiring remains disabled. Actual scheduled delivery remains pending until generated Prisma client access, repository wiring, owner approval recording, dry-run evidence, delivery configuration, retry/failure visibility, disable controls, and management UI are designed and validated.
 
 ## Saved dashboard view storage note
 
@@ -78,24 +78,3 @@ The UI keeps the section index, range links, existing anchors, CSV exports, serv
 ## Retention cleanup preview note
 
 The retention status panel now includes a read-only cleanup preview. It reports the stale raw-event count eligible under the 180-day retention target, whether production migration evidence has been confirmed, whether deletion remains disabled, and the reason future cleanup is still blocked or ready for a guarded job.
-
-The preview must not delete data. Automated deletion remains pending until the preview evidence, production migration evidence, and production analytics volume are verified.
-
-## Production validation checklist
-
-Before treating site analytics as complete in production, verify:
-
-1. The site analytics event migration has been applied to the production database.
-2. `NEXT_PUBLIC_SITE_ANALYTICS_ENABLED` is not set to `false` for storefront traffic that should be counted.
-3. Admin, API, and framework routes are excluded from tracking.
-4. Do Not Track is honored in the browser reporter.
-5. CSV exports remain aggregate-only.
-6. Raw event retention status is visible to owner sessions.
-7. Cleanup preview reports eligible stale-event counts without deleting data.
-8. Cleanup remains disabled until production migration evidence is confirmed.
-9. Custom preset and start/end ranges produce matching dashboard, section-link, and export windows.
-10. Customer cohort panels and CSV rows remain aggregate-only.
-11. Advanced aggregate cohort panels and CSV rows show only AOV/share/order-count/recency bands, never per-customer rows.
-12. Scheduled report previews, config plans, inactive storage schema, read model, repository-read contract, and read adapter preserve the selected range and aggregate Business/Site CSV paths without enabling delivery.
-13. Saved dashboard view presets, persistence plans, storage schema, and read model preserve selected range metadata, existing section anchors, allowed scopes, blocked fields, disabled endpoints, inactive activation flags, and metadata-only DTOs.
-14. Dashboard group headers preserve selected range links, the section index, existing anchors, and table fallback requirements without enabling collapsible groups or tabs.
