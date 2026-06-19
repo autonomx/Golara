@@ -15,6 +15,8 @@ Use this checklist after deployment before relying on `/admin/analytics` for ope
 - Scheduled report delivery and schedule persistence remain disabled.
 - Saved view presets preserve the selected range and existing section anchors.
 - Saved view persistence and client/server saved state remain disabled.
+- Layout grouping previews preserve the selected range, existing section anchors, section index expectations, and table fallback requirements.
+- Layout group-header UI, collapsible groups, and tabbed workspace behavior remain disabled until a separate UI pass.
 - The site analytics event table is available in production.
 - Storefront product, category, search, cart, checkout, payment method, and order-confirmation activity appears in the selected range.
 - Business/order charts update after eligible checkout orders exist.
@@ -49,6 +51,11 @@ Record one validation note per pass:
 - Saved view persistence disabled:
 - Saved view selected range preserved:
 - Saved view section anchors preserved:
+- Layout grouping preview checked:
+- Layout selected range preserved:
+- Layout section anchors preserved:
+- Layout table fallback requirement preserved:
+- Layout group UI disabled:
 - Retention status checked:
 - Cleanup preview eligible stale-event count:
 - Cleanup preview deletion status:
@@ -63,4 +70,4 @@ An empty panel is acceptable when the selected range has no matching traffic, or
 
 ## Privacy expectations
 
-Analytics must stay first-party and aggregate-only. Admin and API routes should not be tracked, browser Do Not Track should be respected, scheduled report delivery should remain disabled until owner approval and delivery controls exist, saved view presets should remain preview-only until persistence and role policy exist, and raw event cleanup should remain preview-only until a separate guarded cleanup process is shipped after production evidence exists.
+Analytics must stay first-party and aggregate-only. Admin and API routes should not be tracked, browser Do Not Track should be respected, scheduled report delivery should remain disabled until owner approval and delivery controls exist, saved view presets should remain preview-only until persistence and role policy exist, layout grouping previews should remain preview-only until group UI is validated, and raw event cleanup should remain preview-only until a separate guarded cleanup process is shipped after production evidence exists.
