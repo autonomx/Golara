@@ -40,6 +40,10 @@ function validRow() {
   };
 }
 
+function normalizeSchema(sourceText: string) {
+  return sourceText.trim().replace(/\r\n/g, '\n');
+}
+
 function runPrismaSchemaMappingChecks() {
   const mapping = buildAdminAnalyticsScheduledReportPrismaSchemaMapping();
   assert.equal(mapping.status, 'prisma_schema_mapping_contract_only');
@@ -88,6 +92,16 @@ function runPrismaSchemaMappingChecks() {
 
   const schemaSource = source('prisma/schema.prisma');
   assert.doesNotMatch(schemaSource, /model AdminAnalyticsScheduledReport\s+\{/);
+
+  const schemaFragment = source('prisma/schema.admin-analytics-scheduled-report.prisma');
+  assert.equal(
+    normalizeSchema(schemaFragment),
+    normalizeSchema(ADMIN_ANALYTICS_SCHEDULED_REPORT_PRISMA_MODEL_BLOCK),
+    'schema fragment should exactly match the guarded Prisma model block'
+  );
+  assert.match(schemaFragment, /@@unique\(\[reportKey, cadence\]\)/);
+  assert.match(schemaFragment, /@@index\(\[ownerApproved, isActive\]\)/);
+  assert.match(schemaFragment, /@@index\(\[deliveryEnabled, isActive\]\)/);
 
   const helperSource = source('lib/analytics/admin-analytics-scheduled-report-prisma-schema.ts');
   assert.match(helperSource, /prisma_schema_mapping_contract_only/);
