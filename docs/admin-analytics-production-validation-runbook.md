@@ -19,6 +19,7 @@ Validate that the analytics page can show trustworthy aggregate data for:
 
 - Production deployment is live.
 - The production database has been migrated.
+- The `SiteAnalyticsEvent` table/model is available in production.
 - Admin owner access is available.
 - Storefront analytics is not disabled with `NEXT_PUBLIC_SITE_ANALYTICS_ENABLED=false`.
 - The storefront can receive realistic visits or staging checkout traffic.
