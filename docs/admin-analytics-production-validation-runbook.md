@@ -2,7 +2,7 @@
 
 This runbook validates the admin analytics workspace after deploy. It is intended for owner/admin operators before treating `/admin/analytics` as an operational source of truth.
 
-Use it to validate the production analytics path end to end: database migration, storefront event capture, checkout funnel capture, custom range parity, aggregate exports, customer cohort aggregates, retention status, and cleanup preview evidence.
+Use it to validate the production analytics path end to end: database migration, storefront event capture, checkout funnel capture, custom range parity, aggregate exports, customer cohort aggregates, retention status, cleanup preview evidence, and scheduled report preview evidence.
 
 ## Scope
 
@@ -15,6 +15,7 @@ Validate that the analytics page can show trustworthy aggregate data for:
 - custom preset and start/end date ranges
 - aggregate customer cohort metrics
 - aggregate CSV exports
+- scheduled report previews
 - privacy and retention status
 - raw-event cleanup preview without deletion
 
@@ -56,8 +57,10 @@ Validate that the analytics page can show trustworthy aggregate data for:
 24. Download Business CSV and confirm aggregate business rows exist for the selected window.
 25. Download Site CSV and confirm aggregate site/funnel rows exist for the selected window.
 26. Confirm Business CSV includes only aggregate customer cohort rows for guest, known, first-time, and returning-customer buckets.
-27. Confirm neither CSV contains visitor session details, full referrer URLs, analytics event payloads, customer names, phone numbers, emails, or per-customer rows.
-28. Confirm the cleanup preview does not delete raw events and that deletion remains disabled until production migration evidence and analytics-volume evidence are recorded.
+27. Confirm scheduled report previews preserve the selected range and aggregate Business/Site CSV paths.
+28. Confirm scheduled report delivery and schedule persistence remain disabled.
+29. Confirm neither CSV contains visitor session details, full referrer URLs, analytics event payloads, customer names, phone numbers, emails, or per-customer rows.
+30. Confirm the cleanup preview does not delete raw events and that deletion remains disabled until production migration evidence and analytics-volume evidence are recorded.
 
 ## Evidence record
 
@@ -73,6 +76,9 @@ Record one evidence note per validation pass:
 - Business CSV checked:
 - Site CSV checked:
 - Customer cohort aggregate rows checked:
+- Scheduled report preview checked:
+- Scheduled report delivery disabled:
+- Scheduled report persistence disabled:
 - Retention status checked:
 - Cleanup preview eligible stale-event count:
 - Cleanup preview deletion status:
@@ -83,7 +89,7 @@ Record one evidence note per validation pass:
 
 ## Expected result
 
-The analytics page should show aggregate business, site, range, export, customer cohort, retention, and cleanup-preview signals without exposing non-aggregate visitor or customer detail. Empty panels are acceptable only when the selected range has no matching traffic, orders, or production migration evidence.
+The analytics page should show aggregate business, site, range, export, customer cohort, scheduled-report preview, retention, and cleanup-preview signals without exposing non-aggregate visitor or customer detail. Empty panels are acceptable only when the selected range has no matching traffic, orders, or production migration evidence.
 
 ## Blockers
 
@@ -95,6 +101,8 @@ Do not treat analytics as source-of-truth if any of these are true:
 - owner CSV exports fail or contain no expected aggregate rows
 - selected range labels, section links, and CSV URLs disagree
 - customer cohort panels or exports expose per-customer detail
+- scheduled report previews do not preserve selected range export paths
+- scheduled report delivery or persistence is enabled without owner approval workflow
 - retention status cannot read the event table
 - cleanup preview cannot report eligibility status for stale raw events
 - cleanup preview indicates deletion is enabled before production evidence is recorded
@@ -104,4 +112,5 @@ Do not treat analytics as source-of-truth if any of these are true:
 
 - Exports must stay aggregate-only.
 - Customer cohort reporting must remain aggregate-only and privacy-safe.
+- Scheduled report previews must remain disabled for delivery until persistence, owner approval, and delivery controls are implemented.
 - Raw event deletion remains disabled until a separate guarded cleanup job is implemented, cleanup preview evidence is recorded, and production evidence exists.

@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { resolveAdminAnalyticsRange } from '../../lib/analytics/admin-analytics-range';
+import { buildAdminAnalyticsScheduledReportPreview } from '../../lib/analytics/admin-analytics-scheduled-reports';
 import { createAdminPageShellTranslator, getAdminPageShellCopy } from '../../lib/localization/admin-page-shell-copy';
 
 export async function runAdminPageShellCopyTests() {
@@ -69,6 +71,25 @@ export async function runAdminPageShellCopyTests() {
   assert.match(analyticsRangeSource, /resolveAdminAnalyticsRange/);
   assert.match(analyticsRangeSource, /getAdminAnalyticsRangeStart/);
   assert.match(analyticsRangeSource, /isWithinAdminAnalyticsRange/);
+
+  const scheduledReportRange = resolveAdminAnalyticsRange(new Date(Date.UTC(2026, 5, 19, 12)), {
+    start: '2026-06-01',
+    end: '2026-06-15'
+  });
+  const scheduledReportPreview = buildAdminAnalyticsScheduledReportPreview(scheduledReportRange);
+  assert.equal(scheduledReportPreview.status, 'preview_only');
+  assert.equal(scheduledReportPreview.deliveryEnabled, false);
+  assert.equal(scheduledReportPreview.persistenceEnabled, false);
+  assert.equal(scheduledReportPreview.businessCsvPath, '/admin/analytics/export?start=2026-06-01&end=2026-06-15&report=business');
+  assert.equal(scheduledReportPreview.siteCsvPath, '/admin/analytics/export?start=2026-06-01&end=2026-06-15&report=site');
+  assert.deepEqual(scheduledReportPreview.plans.map((plan) => plan.cadence), ['weekly', 'monthly']);
+
+  const scheduledReportSource = readFileSync('lib/analytics/admin-analytics-scheduled-reports.ts', 'utf8');
+  assert.match(scheduledReportSource, /preview_only/);
+  assert.match(scheduledReportSource, /deliveryEnabled: false/);
+  assert.match(scheduledReportSource, /persistenceEnabled: false/);
+  assert.match(scheduledReportSource, /adminAnalyticsRangeQueryString/);
+  assert.doesNotMatch(scheduledReportSource, /sendMail|transport|cron|schedule\.create|setInterval|setTimeout/);
 
   const analyticsRouteSource = readFileSync('app/admin/analytics/page.tsx', 'utf8');
   assert.match(analyticsRouteSource, /activeTab="analytics"/);
