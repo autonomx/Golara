@@ -1,3 +1,4 @@
+import type { AdminAnalyticsScheduledReport as PrismaAdminAnalyticsScheduledReport } from '@prisma/client';
 import {
   buildAdminAnalyticsScheduledReportReadModelContract,
   normalizeAdminAnalyticsScheduledReportReadRow,
@@ -17,7 +18,8 @@ export type AdminAnalyticsScheduledReportRepositoryReadFilter = {
 
 export type AdminAnalyticsScheduledReportRepositoryReadPlan = {
   tableName: 'AdminAnalyticsScheduledReport';
-  selectFields: string[];
+  generatedClientModelName: 'AdminAnalyticsScheduledReport';
+  selectFields: AdminAnalyticsScheduledReportGeneratedClientReadField[];
   requiredFilters: AdminAnalyticsScheduledReportRepositoryReadFilter[];
   orderBy: ['cadence', 'reportKey'];
   maxRows: number;
@@ -25,7 +27,7 @@ export type AdminAnalyticsScheduledReportRepositoryReadPlan = {
 };
 
 export type AdminAnalyticsScheduledReportRepositoryReadArgs = {
-  select: Record<string, true>;
+  select: Record<AdminAnalyticsScheduledReportGeneratedClientReadField, true>;
   where: {
     ownerApproved: true;
     isActive: true;
@@ -35,16 +37,40 @@ export type AdminAnalyticsScheduledReportRepositoryReadArgs = {
   take: number;
 };
 
+export type AdminAnalyticsScheduledReportGeneratedClientReadField =
+  | 'id'
+  | 'reportKey'
+  | 'label'
+  | 'description'
+  | 'cadence'
+  | 'rangeMode'
+  | 'rangeQuery'
+  | 'reportTypes'
+  | 'ownerApproved'
+  | 'isActive'
+  | 'deliveryEnabled'
+  | 'lastDryRunSummary'
+  | 'createdAt'
+  | 'updatedAt';
+
+export type AdminAnalyticsScheduledReportGeneratedClientReadRow = Pick<
+  PrismaAdminAnalyticsScheduledReport,
+  AdminAnalyticsScheduledReportGeneratedClientReadField
+>;
+
 export type AdminAnalyticsScheduledReportRepositoryReader = {
   readScheduledReportMetadata: (
     args: AdminAnalyticsScheduledReportRepositoryReadArgs
-  ) => Promise<AdminAnalyticsScheduledReportReadRow[]>;
+  ) => Promise<AdminAnalyticsScheduledReportGeneratedClientReadRow[]>;
 };
 
 export type AdminAnalyticsScheduledReportRepositoryContract = {
   status: 'repository_read_contract_only';
   enabled: boolean;
   tableName: 'AdminAnalyticsScheduledReport';
+  generatedClientModelName: 'AdminAnalyticsScheduledReport';
+  generatedClientTypeVisible: boolean;
+  generatedClientRuntimeAccessEnabled: boolean;
   repositoryReadsEnabled: boolean;
   repositoryWritesEnabled: boolean;
   readAdapterAvailable: boolean;
@@ -69,7 +95,7 @@ export type AdminAnalyticsScheduledReportRepositoryPreview = {
   omittedRowCount: number;
 };
 
-const SELECT_FIELDS = [
+const SELECT_FIELDS: AdminAnalyticsScheduledReportGeneratedClientReadField[] = [
   'id',
   'reportKey',
   'label',
@@ -128,8 +154,13 @@ function normalizeRows(rows: AdminAnalyticsScheduledReportReadRow[], limit: numb
     .slice(0, Math.max(0, Math.min(limit, 50)));
 }
 
-function selectFieldsForRead(fields: string[]): Record<string, true> {
-  return Object.fromEntries(fields.map((field) => [field, true])) as Record<string, true>;
+function selectFieldsForRead(
+  fields: AdminAnalyticsScheduledReportGeneratedClientReadField[]
+): Record<AdminAnalyticsScheduledReportGeneratedClientReadField, true> {
+  return Object.fromEntries(fields.map((field) => [field, true])) as Record<
+    AdminAnalyticsScheduledReportGeneratedClientReadField,
+    true
+  >;
 }
 
 export function buildAdminAnalyticsScheduledReportRepositoryReadPlan(
@@ -138,6 +169,7 @@ export function buildAdminAnalyticsScheduledReportRepositoryReadPlan(
   const cappedMaxRows = Math.max(0, Math.min(maxRows, 50));
   return {
     tableName: 'AdminAnalyticsScheduledReport',
+    generatedClientModelName: 'AdminAnalyticsScheduledReport',
     selectFields: [...SELECT_FIELDS],
     requiredFilters: REQUIRED_FILTERS.map((filter) => ({ ...filter })),
     orderBy: ['cadence', 'reportKey'],
@@ -168,6 +200,9 @@ export function buildAdminAnalyticsScheduledReportRepositoryContract(): AdminAna
     status: 'repository_read_contract_only',
     enabled: false,
     tableName: readModel.tableName,
+    generatedClientModelName: 'AdminAnalyticsScheduledReport',
+    generatedClientTypeVisible: true,
+    generatedClientRuntimeAccessEnabled: false,
     repositoryReadsEnabled: false,
     repositoryWritesEnabled: false,
     readAdapterAvailable: true,
@@ -181,6 +216,7 @@ export function buildAdminAnalyticsScheduledReportRepositoryContract(): AdminAna
     blockedOutputFields: [...readModel.blockedOutputFields],
     blockedOperations: [...BLOCKED_OPERATIONS],
     activationBlockers: [
+      'generated Prisma client runtime access not enabled',
       'Prisma repository access not enabled',
       'owner approval audit evidence not recorded',
       'dry-run evidence not recorded',

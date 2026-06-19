@@ -36,7 +36,9 @@ function validRow() {
     ownerApproved: true,
     isActive: true,
     deliveryEnabled: false,
-    lastDryRunSummary: { checkedAt: '2026-06-15T00:00:00.000Z' }
+    lastDryRunSummary: { checkedAt: '2026-06-15T00:00:00.000Z' },
+    createdAt: new Date('2026-06-15T00:00:00.000Z'),
+    updatedAt: new Date('2026-06-15T00:00:00.000Z')
   };
 }
 
@@ -66,7 +68,8 @@ function runPrismaSchemaMappingChecks() {
   assert.equal(mapping.modelName, 'AdminAnalyticsScheduledReport');
   assert.equal(mapping.tableName, 'AdminAnalyticsScheduledReport');
   assert.equal(mapping.mappedInSchemaPrisma, true);
-  assert.equal(mapping.generatedClientAccessEnabled, false);
+  assert.equal(mapping.generatedClientTypeVisible, true);
+  assert.equal(mapping.generatedClientRuntimeAccessEnabled, false);
   assert.equal(mapping.repositoryReadsEnabled, false);
   assert.equal(mapping.repositoryWritesEnabled, false);
   assert.equal(mapping.readEndpointEnabled, false);
@@ -75,7 +78,7 @@ function runPrismaSchemaMappingChecks() {
   assert.equal(mapping.deliveryExecutionEnabled, false);
   assert.deepEqual(mapping.jsonFields, ['reportTypes', 'lastDryRunSummary', 'metadata']);
   assert.ok(!mapping.activationBlockers.includes('schema.prisma model block not applied'));
-  assert.ok(mapping.activationBlockers.includes('generated Prisma client access not enabled'));
+  assert.ok(mapping.activationBlockers.includes('generated Prisma client runtime access not enabled'));
 
   const fields = new Map(mapping.fields.map((field) => [field.name, field]));
   assert.equal(fields.get('reportKey')?.prismaType, 'String');
@@ -131,7 +134,8 @@ function runPrismaSchemaMappingChecks() {
   const helperSource = source('lib/analytics/admin-analytics-scheduled-report-prisma-schema.ts');
   assert.match(helperSource, /prisma_schema_mapping_contract_only/);
   assert.match(helperSource, /mappedInSchemaPrisma: true/);
-  assert.match(helperSource, /generatedClientAccessEnabled: false/);
+  assert.match(helperSource, /generatedClientTypeVisible: true/);
+  assert.match(helperSource, /generatedClientRuntimeAccessEnabled: false/);
   assert.match(helperSource, /repositoryReadsEnabled: false/);
   assert.match(helperSource, /repositoryWritesEnabled: false/);
   assert.match(helperSource, /deliveryExecutionEnabled: false/);
@@ -163,6 +167,9 @@ export async function runScheduledReportRepositoryReadTests() {
   const contract = buildAdminAnalyticsScheduledReportRepositoryContract();
   assert.equal(contract.status, 'repository_read_contract_only');
   assert.equal(contract.enabled, false);
+  assert.equal(contract.generatedClientModelName, 'AdminAnalyticsScheduledReport');
+  assert.equal(contract.generatedClientTypeVisible, true);
+  assert.equal(contract.generatedClientRuntimeAccessEnabled, false);
   assert.equal(contract.repositoryReadsEnabled, false);
   assert.equal(contract.repositoryWritesEnabled, false);
   assert.equal(contract.readAdapterAvailable, true);
@@ -171,6 +178,7 @@ export async function runScheduledReportRepositoryReadTests() {
   assert.equal(contract.deliveryExecutionEnabled, false);
   assert.ok(contract.readPlan.selectFields.includes('rangeQuery'));
   assert.ok(contract.readPlan.selectFields.includes('reportTypes'));
+  assert.equal(contract.readPlan.generatedClientModelName, 'AdminAnalyticsScheduledReport');
   assert.ok(contract.readPlan.requiredFilters.some((filter) => filter.field === 'ownerApproved' && filter.expected === true));
   assert.ok(contract.readPlan.requiredFilters.some((filter) => filter.field === 'isActive' && filter.expected === true));
   assert.ok(contract.readPlan.requiredFilters.some((filter) => filter.field === 'deliveryEnabled' && filter.expected === false));
@@ -212,6 +220,10 @@ export async function runScheduledReportRepositoryReadTests() {
   assert.equal(preview.omittedRowCount, 2);
 
   const repositorySource = source('lib/analytics/admin-analytics-scheduled-report-repository.ts');
+  assert.match(repositorySource, /import type \{ AdminAnalyticsScheduledReport as PrismaAdminAnalyticsScheduledReport \} from '@prisma\/client';/);
+  assert.match(repositorySource, /AdminAnalyticsScheduledReportGeneratedClientReadRow/);
+  assert.match(repositorySource, /generatedClientTypeVisible: true/);
+  assert.match(repositorySource, /generatedClientRuntimeAccessEnabled: false/);
   assert.match(repositorySource, /readAdapterAvailable: true/);
   assert.match(repositorySource, /readScheduledReportMetadata/);
   assert.match(repositorySource, /ownerApproved: true/);
@@ -221,6 +233,6 @@ export async function runScheduledReportRepositoryReadTests() {
   assert.match(repositorySource, /readEndpointEnabled: false/);
   assert.match(repositorySource, /managementUiEnabled: false/);
   assert.match(repositorySource, /deliveryExecutionEnabled: false/);
-  assert.doesNotMatch(repositorySource, /PrismaClient|prisma\.|\$queryRaw|create\(|update\(|upsert\(|delete\(|fetch\(|sendMail|transport|cron|schedule\.create|setInterval|setTimeout|\bPOST\b|\bPUT\b|\bPATCH\b|\bDELETE\b|localStorage|sessionStorage|cookies\(/);
+  assert.doesNotMatch(repositorySource, /PrismaClient|prisma\.|\$queryRaw|findMany|create\(|update\(|upsert\(|delete\(|fetch\(|sendMail|transport|cron|schedule\.create|setInterval|setTimeout|\bPOST\b|\bPUT\b|\bPATCH\b|\bDELETE\b|localStorage|sessionStorage|cookies\(/);
   console.log('scheduled-report-repository-read.test.ts passed');
 }
