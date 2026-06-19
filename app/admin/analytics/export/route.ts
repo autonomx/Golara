@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { assertAdminRole } from '@/lib/admin-auth';
-import { normalizeAdminAnalyticsRangeDays } from '@/lib/analytics/admin-analytics-range';
+import { resolveAdminAnalyticsRange, type AdminAnalyticsResolvedRange } from '@/lib/analytics/admin-analytics-range';
 import { categorySalesAnalyticsService } from '@/lib/analytics/category-sales-analytics';
 import { orderRevenueSummaryService } from '@/lib/analytics/order-revenue-summary';
 import { productSalesAnalyticsService } from '@/lib/analytics/product-sales-analytics';
@@ -22,19 +22,34 @@ function normalizeReport(value: string | null): AnalyticsExportReport {
   return value === 'site' ? 'site' : 'business';
 }
 
-function analyticsFilename(report: AnalyticsExportReport, rangeDays: number) {
-  return `golara-analytics-${report}-${rangeDays}d.csv`;
+function safeFilenamePart(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '') || 'range';
+}
+
+function analyticsFilename(report: AnalyticsExportReport, range: AdminAnalyticsResolvedRange) {
+  const suffix = range.mode === 'custom' ? safeFilenamePart(range.label) : `${range.rangeDays}d`;
+  return `golara-analytics-${report}-${suffix}.csv`;
+}
+
+function buildRangeMetadataRows(report: AnalyticsExportReport, range: AdminAnalyticsResolvedRange) {
+  return [
+    [report, 'metadata', 'range_mode', 'selected range mode', range.mode, '', ''],
+    [report, 'metadata', 'range_label', 'selected range', range.label, '', ''],
+    [report, 'metadata', 'range_start', 'range start', range.startDate, '', ''],
+    [report, 'metadata', 'range_end', 'range end', range.endDate, '', ''],
+    [report, 'metadata', 'range_days', 'selected range days', range.rangeDays, '', '']
+  ];
 }
 
 function buildBusinessAnalyticsCsv(
-  rangeDays: number,
+  range: AdminAnalyticsResolvedRange,
   summary: Awaited<ReturnType<typeof orderRevenueSummaryService.summary>>,
   productSalesSummary: Awaited<ReturnType<typeof productSalesAnalyticsService.summary>>,
   categorySalesSummary: Awaited<ReturnType<typeof categorySalesAnalyticsService.summary>>
 ) {
   const rows: unknown[][] = [
     ['report', 'section', 'metric', 'label', 'value', 'currency', 'notes'],
-    ['business', 'metadata', 'range_days', 'selected range', rangeDays, '', ''],
+    ...buildRangeMetadataRows('business', range),
     ['business', 'metadata', 'generated_at', 'generated at', summary.generatedAt, '', ''],
     ['business', 'summary', 'total_orders', 'Total orders', summary.totalOrders, '', ''],
     ['business', 'summary', 'total_revenue_cents', 'Total revenue cents', summary.totalRevenueCents, summary.primaryCurrency, 'Revenue excludes cancelled/refunded/voided orders'],
@@ -97,65 +112,65 @@ function buildBusinessAnalyticsCsv(
   return rows.map(csvRow).join('\n');
 }
 
-function buildSiteAnalyticsCsv(rangeDays: number, summary: Awaited<ReturnType<typeof siteAnalyticsSummaryService.summary>>) {
+function buildSiteAnalyticsCsv(range: AdminAnalyticsResolvedRange, summary: Awaited<ReturnType<typeof siteAnalyticsSummaryService.summary>>) {
   const rows: unknown[][] = [
-    ['report', 'section', 'metric', 'label', 'value', 'notes'],
-    ['site', 'metadata', 'range_days', 'selected range', rangeDays, ''],
-    ['site', 'metadata', 'generated_at', 'generated at', summary.generatedAt, ''],
-    ['site', 'summary', 'total_events', 'Total events', summary.totalEvents, ''],
-    ['site', 'summary', 'recent_events', 'Recent events', summary.recentEvents, ''],
-    ['site', 'summary', 'unique_paths', 'Unique paths', summary.uniquePaths, ''],
-    ['site', 'comparison', 'total_events_delta', 'Total events vs previous range', summary.comparison.totalEvents.absoluteChange, `${summary.comparison.totalEvents.percentChange ?? ''}`],
-    ['site', 'comparison', 'page_views_delta', 'Page views vs previous range', summary.comparison.pageViews.absoluteChange, `${summary.comparison.pageViews.percentChange ?? ''}`],
-    ['site', 'comparison', 'product_views_delta', 'Product views vs previous range', summary.comparison.productViews.absoluteChange, `${summary.comparison.productViews.percentChange ?? ''}`],
-    ['site', 'comparison', 'checkout_completed_delta', 'Checkout completed vs previous range', summary.comparison.checkoutCompleted.absoluteChange, `${summary.comparison.checkoutCompleted.percentChange ?? ''}`],
-    ['site', 'funnel', 'page_views', 'Page views', summary.checkoutFunnel.pageViews, ''],
-    ['site', 'funnel', 'product_views', 'Product views', summary.checkoutFunnel.productViews, ''],
-    ['site', 'funnel', 'add_to_cart', 'Add to cart', summary.checkoutFunnel.addToCart, ''],
-    ['site', 'funnel', 'checkout_started', 'Checkout started', summary.checkoutFunnel.checkoutStarted, ''],
-    ['site', 'funnel', 'checkout_completed', 'Checkout completed', summary.checkoutFunnel.checkoutCompleted, '']
+    ['report', 'section', 'metric', 'label', 'value', 'currency', 'notes'],
+    ...buildRangeMetadataRows('site', range),
+    ['site', 'metadata', 'generated_at', 'generated at', summary.generatedAt, '', ''],
+    ['site', 'summary', 'total_events', 'Total events', summary.totalEvents, '', ''],
+    ['site', 'summary', 'recent_events', 'Recent events', summary.recentEvents, '', ''],
+    ['site', 'summary', 'unique_paths', 'Unique paths', summary.uniquePaths, '', ''],
+    ['site', 'comparison', 'total_events_delta', 'Total events vs previous range', summary.comparison.totalEvents.absoluteChange, '', `${summary.comparison.totalEvents.percentChange ?? ''}`],
+    ['site', 'comparison', 'page_views_delta', 'Page views vs previous range', summary.comparison.pageViews.absoluteChange, '', `${summary.comparison.pageViews.percentChange ?? ''}`],
+    ['site', 'comparison', 'product_views_delta', 'Product views vs previous range', summary.comparison.productViews.absoluteChange, '', `${summary.comparison.productViews.percentChange ?? ''}`],
+    ['site', 'comparison', 'checkout_completed_delta', 'Checkout completed vs previous range', summary.comparison.checkoutCompleted.absoluteChange, '', `${summary.comparison.checkoutCompleted.percentChange ?? ''}`],
+    ['site', 'funnel', 'page_views', 'Page views', summary.checkoutFunnel.pageViews, '', ''],
+    ['site', 'funnel', 'product_views', 'Product views', summary.checkoutFunnel.productViews, '', ''],
+    ['site', 'funnel', 'add_to_cart', 'Add to cart', summary.checkoutFunnel.addToCart, '', ''],
+    ['site', 'funnel', 'checkout_started', 'Checkout started', summary.checkoutFunnel.checkoutStarted, '', ''],
+    ['site', 'funnel', 'checkout_completed', 'Checkout completed', summary.checkoutFunnel.checkoutCompleted, '', '']
   ];
 
   for (const point of summary.recentDaily) {
-    rows.push(['site', 'daily', 'event_count', point.date, point.eventCount, '']);
+    rows.push(['site', 'daily', 'event_count', point.date, point.eventCount, '', '']);
   }
 
   for (const row of summary.byEventType) {
-    rows.push(['site', 'events_by_type', 'event_count', row.label, row.count, '']);
+    rows.push(['site', 'events_by_type', 'event_count', row.label, row.count, '', '']);
   }
 
   for (const row of summary.topPages) {
-    rows.push(['site', 'top_pages', 'event_count', row.label, row.count, 'Aggregate path only; no raw session export']);
+    rows.push(['site', 'top_pages', 'event_count', row.label, row.count, '', 'Aggregate path only']);
   }
 
   for (const row of summary.topProductViews) {
-    rows.push(['site', 'top_product_views', 'event_count', row.label, row.count, 'Aggregate product id/path only']);
+    rows.push(['site', 'top_product_views', 'event_count', row.label, row.count, '', 'Aggregate product id/path only']);
   }
 
   for (const row of summary.productConversions) {
-    rows.push(['site', 'product_conversion', 'product_views', row.label, row.productViews, 'Aggregate product id/path only']);
-    rows.push(['site', 'product_conversion', 'add_to_cart', row.label, row.addToCart, 'Aggregate product id/path only']);
-    rows.push(['site', 'product_conversion', 'view_to_cart_percent', row.label, row.viewToCartRatePercent, 'Derived from aggregate product views and add-to-cart events']);
+    rows.push(['site', 'product_conversion', 'product_views', row.label, row.productViews, '', 'Aggregate product id/path only']);
+    rows.push(['site', 'product_conversion', 'add_to_cart', row.label, row.addToCart, '', 'Aggregate product id/path only']);
+    rows.push(['site', 'product_conversion', 'view_to_cart_percent', row.label, row.viewToCartRatePercent, '', 'Derived from aggregate product views and add-to-cart events']);
   }
 
   for (const row of summary.topCategoryViews) {
-    rows.push(['site', 'top_category_views', 'event_count', row.label, row.count, 'Aggregate category id/path only']);
+    rows.push(['site', 'top_category_views', 'event_count', row.label, row.count, '', 'Aggregate category id/path only']);
   }
 
   for (const row of summary.topSearchTerms) {
-    rows.push(['site', 'top_search_terms', 'event_count', row.label, row.count, 'Aggregate search term only']);
+    rows.push(['site', 'top_search_terms', 'event_count', row.label, row.count, '', 'Aggregate search term only']);
   }
 
   for (const row of summary.topTrafficSources) {
-    rows.push(['site', 'top_traffic_sources', 'event_count', row.label, row.count, 'Aggregate UTM source only']);
+    rows.push(['site', 'top_traffic_sources', 'event_count', row.label, row.count, '', 'Aggregate UTM source only']);
   }
 
   for (const row of summary.topTrafficCampaigns) {
-    rows.push(['site', 'top_traffic_campaigns', 'event_count', row.label, row.count, 'Aggregate UTM campaign only']);
+    rows.push(['site', 'top_traffic_campaigns', 'event_count', row.label, row.count, '', 'Aggregate UTM campaign only']);
   }
 
   for (const row of summary.topReferrerDomains) {
-    rows.push(['site', 'top_referrer_domains', 'event_count', row.label, row.count, 'Aggregate external referrer domain only; full URLs are not exported']);
+    rows.push(['site', 'top_referrer_domains', 'event_count', row.label, row.count, '', 'Aggregate external referrer domain only']);
   }
 
   return rows.map(csvRow).join('\n');
@@ -169,23 +184,27 @@ export async function GET(request: Request) {
   }
 
   const url = new URL(request.url);
-  const rangeDays = normalizeAdminAnalyticsRangeDays(url.searchParams.get('range'));
+  const analyticsRange = resolveAdminAnalyticsRange(new Date(), {
+    range: url.searchParams.get('range'),
+    start: url.searchParams.get('start'),
+    end: url.searchParams.get('end')
+  });
   const report = normalizeReport(url.searchParams.get('report'));
   const csv = report === 'site'
-    ? buildSiteAnalyticsCsv(rangeDays, await siteAnalyticsSummaryService.summary({ rangeDays }))
+    ? buildSiteAnalyticsCsv(analyticsRange, await siteAnalyticsSummaryService.summary({ analyticsRange }))
     : buildBusinessAnalyticsCsv(
-      rangeDays,
+      analyticsRange,
       ...(await Promise.all([
-        orderRevenueSummaryService.summary({ rangeDays }),
-        productSalesAnalyticsService.summary({ rangeDays }),
-        categorySalesAnalyticsService.summary({ rangeDays })
+        orderRevenueSummaryService.summary({ analyticsRange }),
+        productSalesAnalyticsService.summary({ analyticsRange }),
+        categorySalesAnalyticsService.summary({ analyticsRange })
       ]))
     );
 
   return new NextResponse(csv, {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': `attachment; filename="${analyticsFilename(report, rangeDays)}"`
+      'Content-Disposition': `attachment; filename="${analyticsFilename(report, analyticsRange)}"`
     }
   });
 }
