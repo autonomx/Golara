@@ -17,7 +17,8 @@ Use this checklist after deployment before relying on `/admin/analytics` for ope
 - Scheduled report previews and config plans preserve the selected range and aggregate Business/Site CSV paths.
 - Scheduled report config plans are draft-only, owner-only, inactive, and require owner approval.
 - Scheduled report storage schema exists for metadata-only records and keeps owner approval, active state, and delivery state disabled by default.
-- Scheduled report delivery, execution, repository access, endpoints, and management UI remain disabled.
+- Scheduled report read model returns metadata-only DTOs, rejects invalid rows, keeps operator activation disabled, and keeps delivery readiness disabled.
+- Scheduled report delivery, execution, active repository access, endpoints, and management UI remain disabled.
 - Saved view presets preserve the selected range and existing section anchors.
 - Saved view persistence plans expose allowed scopes, metadata-only required fields, blocked fields, owner approval required, and owner approval not recorded.
 - Saved view storage schema exists for metadata-only records and keeps owner approval plus active state disabled by default.
@@ -59,6 +60,11 @@ Record one validation note per pass:
 - Scheduled report config plans checked:
 - Scheduled report config status:
 - Scheduled report storage schema checked:
+- Scheduled report read model checked:
+- Scheduled report read model metadata-only output checked:
+- Scheduled report read model invalid rows omitted:
+- Scheduled report read model operator activation disabled:
+- Scheduled report read model delivery readiness disabled:
 - Scheduled report storage table:
 - Scheduled report metadata-only fields checked:
 - Scheduled report owner approval required:
@@ -108,4 +114,4 @@ An empty panel is acceptable when the selected range has no matching traffic, or
 
 ## Privacy expectations
 
-Analytics must stay first-party and aggregate-only. Admin and API routes should not be tracked, browser Do Not Track should be respected, advanced cohort reporting should remain limited to aggregate AOV/share/order-count/recency buckets, scheduled report config plans and storage schema should remain inactive until owner approval, dry-run evidence, delivery controls, global disable controls, and repository/management paths exist, saved view persistence plans, storage schema, and read model should remain inactive until owner approval recording, role policy, endpoints, active repository access, and management UI exist, dashboard group headers should stay static until collapsible groups or tabs are validated separately, and raw event cleanup should remain preview-only until a separate guarded cleanup process is shipped after production evidence exists.
+Analytics must stay first-party and aggregate-only. Admin and API routes should not be tracked, browser Do Not Track should be respected, advanced cohort reporting should remain limited to aggregate AOV/share/order-count/recency buckets, scheduled report config plans, storage schema, and read model should remain inactive until owner approval, dry-run evidence, delivery controls, global disable controls, and active repository/management paths exist, saved view persistence plans, storage schema, and read model should remain inactive until owner approval recording, role policy, endpoints, active repository access, and management UI exist, dashboard group headers should stay static until collapsible groups or tabs are validated separately, and raw event cleanup should remain preview-only until a separate guarded cleanup process is shipped after production evidence exists.
