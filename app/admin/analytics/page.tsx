@@ -33,6 +33,8 @@ const copy = {
     note: 'This workspace includes lightweight server-rendered business and site charts with accessible data-table fallbacks. Site analytics uses privacy-safe first-party events and excludes admin routes.',
     rangeEyebrow: 'Analytics range',
     rangeBody: 'Change the reporting window for business and site charts without leaving the analytics workspace.',
+    rangeActiveLabel: 'Selected range',
+    rangeActiveBody: 'Charts, section links, and CSV exports use this selected reporting window.',
     rangeSuffix: 'days',
     exportEyebrow: 'CSV exports',
     exportBody: 'Download aggregate analytics for the selected range. Exports use summaries and charts only; raw visitor sessions are not exported.',
@@ -76,6 +78,8 @@ const copy = {
     note: 'این فضا نمودارهای سبک کسب‌وکار و سایت را با جدول داده دسترس‌پذیر نمایش می‌دهد. تحلیل سایت از رویدادهای داخلی و حریم‌خصوصی‌محور استفاده می‌کند و مسیرهای مدیریت را ثبت نمی‌کند.',
     rangeEyebrow: 'بازه تحلیل',
     rangeBody: 'بازه گزارش نمودارهای کسب‌وکار و سایت را بدون خروج از فضای تحلیل تغییر دهید.',
+    rangeActiveLabel: 'بازه انتخاب‌شده',
+    rangeActiveBody: 'نمودارها، لینک‌های بخش‌ها و خروجی‌های CSV از همین بازه گزارش استفاده می‌کنند.',
     rangeSuffix: 'روز',
     exportEyebrow: 'خروجی CSV',
     exportBody: 'تحلیل‌های تجمیعی بازه انتخاب‌شده را دانلود کنید. خروجی‌ها فقط از خلاصه‌ها و نمودارها استفاده می‌کنند و نشست خام بازدیدکننده صادر نمی‌شود.',
@@ -238,6 +242,10 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
                 );
               })}
             </div>
+            <p className="mt-3 rounded-md border border-olive/20 bg-white px-4 py-3 text-sm leading-6 text-stone-700">
+              <span className="font-bold text-stone-950">{labels.rangeActiveLabel}: </span>
+              {rangeDays} {labels.rangeSuffix}. {labels.rangeActiveBody}
+            </p>
           </div>
           <div id="analytics-csv-exports" className="mt-4 rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">{labels.exportEyebrow}</p>
