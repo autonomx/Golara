@@ -1,6 +1,6 @@
 # Admin analytics implementation backlog
 
-This backlog tracks the remaining admin analytics work after the custom range, aggregate cohort, advanced cohort, retention preview, scheduled report preview/config-plan/storage-schema/read-model, saved view preset/persistence-plan/storage-schema/read-model, layout grouping preview, and dashboard group header UI passes.
+This backlog tracks the remaining admin analytics work after the custom range, aggregate cohort, advanced cohort, retention preview, scheduled report preview/config-plan/storage-schema/read-model/repository-contract, saved view preset/persistence-plan/storage-schema/read-model, layout grouping preview, and dashboard group header UI passes.
 
 ## Current live baseline
 
@@ -12,7 +12,7 @@ This backlog tracks the remaining admin analytics work after the custom range, a
 - Advanced aggregate customer cohort reporting for AOV/share buckets, known-customer order-count bands, and recency bands.
 - First-party site analytics for page, product, category, search, cart, checkout, payment-method, attribution, and funnel signals.
 - Aggregate Business CSV and Site CSV exports.
-- Scheduled report preview, draft configuration-plan, inactive storage-schema, and metadata-only read-model foundation for weekly/monthly owner report options using the selected range and aggregate CSV paths.
+- Scheduled report preview, draft configuration-plan, inactive storage-schema, metadata-only read-model foundation, and repository-read query-plan contract for weekly/monthly owner report options using the selected range and aggregate CSV paths.
 - Saved dashboard view preset, persistence-plan, inactive storage-schema, and metadata-only read-model foundation using the selected range, existing section anchors, allowed scopes, and metadata-only future-save rules.
 - Dashboard group header UI using the selected range, section index, existing anchors, and chart table fallback requirements.
 - Privacy and retention documentation.
@@ -50,7 +50,7 @@ Completed baseline:
 - Business CSV exports include advanced aggregate cohort rows for AOV/share buckets, known-customer order-count bands, and known-customer recency bands.
 - New buckets use non-identifying dimensions and never render per-customer rows.
 
-### Scheduled report preview, configuration-plan, storage-schema, and read-model foundation
+### Scheduled report preview, configuration-plan, storage-schema, read-model, and repository-read contract foundation
 
 Completed baseline:
 
@@ -62,6 +62,7 @@ Completed baseline:
 - The read-model foundation normalizes future table rows into metadata-only DTOs.
 - Invalid cadences, missing range queries, and unsupported report types are rejected.
 - Operator activation and delivery readiness remain disabled even when future stored flags are true.
+- The repository-read contract defines future metadata-only select fields, owner-approved filter, active-state filter, delivery-disabled filter, ordering, and max-row cap.
 - Config plans and stored defaults remain inactive.
 - Delivery is disabled.
 - Schedule execution is disabled.
@@ -125,9 +126,9 @@ Notes:
 - The current admin page shows retention status and cleanup preview only; it does not delete raw events.
 - Add operational documentation before enabling the job.
 
-### 2. Scheduled report repository and delivery execution
+### 2. Scheduled report active repository and delivery execution
 
-Goal: let owners approve, manage, and run recurring aggregate analytics reports after the storage-schema and read-model contracts are validated.
+Goal: let owners approve, manage, and run recurring aggregate analytics reports after the storage-schema, read-model, and repository-read contracts are validated.
 
 Acceptance criteria:
 
@@ -135,6 +136,7 @@ Acceptance criteria:
 - Delivery remains owner-controlled.
 - Report contents remain aggregate-only.
 - Active repository access requires owner approval evidence, dry-run evidence, and disable controls.
+- Active read queries must use the metadata-only select fields and owner-approved/active/delivery-disabled filters from the repository-read contract until delivery is enabled separately.
 - Read endpoints require owner-scoped policy enforcement and audit evidence.
 - Delivery requires an explicit provider/channel plan, retry/failure visibility, and testable global disable switch.
 - Dry-run evidence records the exact selected range and aggregate CSV paths before delivery is enabled.
@@ -166,7 +168,7 @@ Acceptance criteria:
 
 ## Sequencing recommendation
 
-1. Production validation evidence for custom ranges, exports, aggregate and advanced cohort panels, retention preview, scheduled report storage/read-model, saved view storage/read-model, and dashboard group headers.
+1. Production validation evidence for custom ranges, exports, aggregate and advanced cohort panels, retention preview, scheduled report storage/read-model/repository-contract, saved view storage/read-model, and dashboard group headers.
 2. Automated retention cleanup preview, then guarded execution after production evidence exists.
 3. Scheduled report active repository and delivery execution.
 4. Saved dashboard view active persistence.

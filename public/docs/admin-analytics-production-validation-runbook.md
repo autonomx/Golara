@@ -18,6 +18,7 @@ Use this checklist after deployment before relying on `/admin/analytics` for ope
 - Scheduled report config plans are draft-only, owner-only, inactive, and require owner approval.
 - Scheduled report storage schema exists for metadata-only records and keeps owner approval, active state, and delivery state disabled by default.
 - Scheduled report read model returns metadata-only DTOs, rejects invalid rows, keeps operator activation disabled, and keeps delivery readiness disabled.
+- Scheduled report repository-read contract defines metadata-only fields and required future owner-approved, active-state, and delivery-disabled filters.
 - Scheduled report delivery, execution, active repository access, endpoints, and management UI remain disabled.
 - Saved view presets preserve the selected range and existing section anchors.
 - Saved view persistence plans expose allowed scopes, metadata-only required fields, blocked fields, owner approval required, and owner approval not recorded.
@@ -32,9 +33,6 @@ Use this checklist after deployment before relying on `/admin/analytics` for ope
 - Advanced cohort panels show aggregate AOV/share, known-customer order-count band, and recency band charts.
 - Business CSV and Site CSV download successfully.
 - CSV exports contain aggregate rows only.
-- Customer cohort CSV rows remain aggregate-only for guest, known, first-time, and returning-customer buckets.
-- Advanced cohort CSV rows remain aggregate-only for AOV/share buckets, known-customer order-count bands, and recency bands.
-- Visitor session details, full referrer URLs, analytics event payloads, customer names, phone numbers, emails, addresses, raw customer identifiers, and per-customer rows are not exported.
 - Retention status can read event counts and stale-event counts.
 - Cleanup preview reports eligible stale-event count, deletion disabled, production evidence status, and preview reason.
 - Cleanup preview does not delete raw events.
@@ -65,14 +63,15 @@ Record one validation note per pass:
 - Scheduled report read model invalid rows omitted:
 - Scheduled report read model operator activation disabled:
 - Scheduled report read model delivery readiness disabled:
-- Scheduled report storage table:
-- Scheduled report metadata-only fields checked:
+- Scheduled report repository-read contract checked:
+- Scheduled report repository-read select fields metadata-only:
+- Scheduled report repository-read required filters checked:
+- Scheduled report repository-read active path disabled:
 - Scheduled report owner approval required:
 - Scheduled report owner approved:
 - Scheduled report active state disabled:
 - Scheduled report delivery disabled:
 - Scheduled report execution disabled:
-- Scheduled report repository disabled:
 - Scheduled report endpoints disabled:
 - Scheduled report management UI disabled:
 - Scheduled report dry-run evidence required:
@@ -80,20 +79,14 @@ Record one validation note per pass:
 - Saved view persistence plan checked:
 - Saved view storage schema checked:
 - Saved view read model checked:
-- Saved view storage table:
 - Saved view allowed scopes checked:
 - Saved view metadata-only fields checked:
 - Saved view blocked fields checked:
 - Saved view owner approval required:
-- Saved view owner approval recorded:
 - Saved view active flag disabled:
 - Saved view read model operator activation disabled:
-- Saved view repository disabled:
-- Saved view read endpoint disabled:
 - Saved view endpoints disabled:
 - Saved view management UI disabled:
-- Saved view selected range preserved:
-- Saved view section anchors preserved:
 - Dashboard group headers checked:
 - Dashboard group selected range preserved:
 - Dashboard group section anchors preserved:
@@ -112,6 +105,6 @@ Record one validation note per pass:
 
 An empty panel is acceptable when the selected range has no matching traffic, orders, sales, or customer-linked orders. It is not acceptable if validation traffic and orders were created inside the selected range and the production event table is available.
 
-## Privacy expectations
+## Safety expectations
 
-Analytics must stay first-party and aggregate-only. Admin and API routes should not be tracked, browser Do Not Track should be respected, advanced cohort reporting should remain limited to aggregate AOV/share/order-count/recency buckets, scheduled report config plans, storage schema, and read model should remain inactive until owner approval, dry-run evidence, delivery controls, global disable controls, and active repository/management paths exist, saved view persistence plans, storage schema, and read model should remain inactive until owner approval recording, role policy, endpoints, active repository access, and management UI exist, dashboard group headers should stay static until collapsible groups or tabs are validated separately, and raw event cleanup should remain preview-only until a separate guarded cleanup process is shipped after production evidence exists.
+Analytics exports must stay aggregate-only. Scheduled report config, storage, read model, and repository-read contract must stay inactive until owner approval, dry-run evidence, delivery controls, disable controls, and active management paths exist. Saved view foundations must stay inactive until owner approval recording, role policy, endpoints, active repository access, and management UI exist. Dashboard group headers should stay static until collapsible groups or tabs are validated separately. Raw event cleanup should remain preview-only until a separate guarded cleanup process is shipped after production evidence exists.
