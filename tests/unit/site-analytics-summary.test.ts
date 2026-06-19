@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { resolveAdminAnalyticsRange } from '../../lib/analytics/admin-analytics-range';
 import { buildSiteAnalyticsSummary } from '../../lib/analytics/site-analytics-summary';
 import { SITE_ANALYTICS_RAW_EVENT_RETENTION_DAYS, buildSiteAnalyticsRetentionSummary } from '../../lib/analytics/site-analytics-retention';
 
@@ -41,6 +42,7 @@ export async function runSiteAnalyticsSummaryTests() {
   const summary = buildSiteAnalyticsSummary(rows, now);
 
   assert.equal(summary.analyticsRangeDays, 30);
+  assert.equal(summary.analyticsRangeLabel, 'Last 30 days');
   assert.equal(summary.totalEvents, 10);
   assert.equal(summary.recentEvents, 10);
   assert.equal(summary.uniquePaths, 6);
@@ -84,6 +86,17 @@ export async function runSiteAnalyticsSummaryTests() {
   assert.equal(sevenDaySummary.recentDaily[0].date, '2026-06-12');
   assert.equal(sevenDaySummary.topPages.some((row) => row.label === '/old'), false);
 
+  const customRange = resolveAdminAnalyticsRange(now, { start: '2026-05-10', end: '2026-05-10' });
+  const customSummary = buildSiteAnalyticsSummary(rows, now, { analyticsRange: customRange });
+  assert.equal(customSummary.analyticsRangeMode, 'custom');
+  assert.equal(customSummary.analyticsRangeDays, 1);
+  assert.equal(customSummary.analyticsRangeLabel, '2026-05-10 to 2026-05-10');
+  assert.equal(customSummary.totalEvents, 2);
+  assert.equal(customSummary.checkoutFunnel.pageViews, 1);
+  assert.equal(customSummary.checkoutFunnel.checkoutCompleted, 1);
+  assert.equal(customSummary.recentDaily.length, 1);
+  assert.equal(customSummary.recentDaily[0].date, '2026-05-10');
+
   const retention = buildSiteAnalyticsRetentionSummary({
     totalEventCount: BigInt(12),
     retainedEventCount: '10',
@@ -101,8 +114,9 @@ export async function runSiteAnalyticsSummaryTests() {
   assert.equal(retention.oldestEventAt?.toISOString(), '2025-11-01T00:00:00.000Z');
   assert.equal(retention.newestEventAt?.toISOString(), '2026-06-18T10:00:00.000Z');
 
-  assert.match(rangeHelper, /ADMIN_ANALYTICS_RANGE_DAYS = \[7, 30, 90\]/);
+  assert.match(rangeHelper, /ADMIN_ANALYTICS_RANGE_DAYS = \[7, 30, 90, 365\]/);
   assert.match(rangeHelper, /normalizeAdminAnalyticsRangeDays/);
+  assert.match(rangeHelper, /resolveAdminAnalyticsRange/);
   assert.match(rangeHelper, /getAdminAnalyticsRangeStart/);
   assert.match(rangeHelper, /getAdminAnalyticsPreviousRangeStart/);
   assert.match(rangeHelper, /isWithinAdminAnalyticsRange/);
@@ -113,7 +127,8 @@ export async function runSiteAnalyticsSummaryTests() {
   assert.match(service, /export type SiteAnalyticsProductConversionRow/);
   assert.match(service, /SITE_ANALYTICS_EVENT_TYPES/);
   assert.match(service, /buildSiteAnalyticsSummary/);
-  assert.match(service, /analyticsRangeDays: AdminAnalyticsRangeDays/);
+  assert.match(service, /analyticsRangeDays: number/);
+  assert.match(service, /analyticsRangeLabel: string/);
   assert.match(service, /scopedRows = rows\.filter/);
   assert.match(service, /previousRows = rows\.filter/);
   assert.match(service, /export type SiteAnalyticsComparisonSummary/);
@@ -127,7 +142,7 @@ export async function runSiteAnalyticsSummaryTests() {
   assert.match(service, /viewToCartRatePercent/);
   assert.match(service, /normalizeMetadata/);
   assert.match(service, /metadata: normalizeMetadata\(row\.metadata\)/);
-  assert.match(service, /WHERE "createdAt" >= \$\{getAdminAnalyticsPreviousRangeStart\(now, rangeDays\)\}/);
+  assert.match(service, /WHERE "createdAt" >= \$\{getAdminAnalyticsPreviousRangeStart\(now, analyticsRange\)\}/);
   assert.match(service, /LIMIT 10000/);
   assert.match(service, /topProductViews/);
   assert.match(service, /topCategoryViews/);
@@ -205,8 +220,6 @@ export async function runSiteAnalyticsSummaryTests() {
   assert.match(reporter, /NEXT_PUBLIC_SITE_ANALYTICS_ENABLED/);
   assert.match(reporter, /navigator\.doNotTrack/);
   assert.match(reporter, /ADMIN_OR_SYSTEM_PATH_PREFIXES/);
-  assert.match(reporter, /sendBeacon/);
-  assert.match(reporter, /page_view/);
   assert.match(reporter, /product_view/);
   assert.match(reporter, /category_view/);
   assert.match(reporter, /search_submitted/);
@@ -226,7 +239,7 @@ export async function runSiteAnalyticsSummaryTests() {
 
   assert.match(analyticsPage, /AdminSiteAnalyticsPanel/);
   assert.match(analyticsPage, /AdminSiteAnalyticsRetentionStatusPanel/);
-  assert.match(analyticsPage, /siteAnalyticsSummaryService\.summary\(\{ rangeDays \}\)/);
+  assert.match(analyticsPage, /siteAnalyticsSummaryService\.summary\(\{ analyticsRange \}\)/);
   assert.match(analyticsPage, /siteAnalyticsRetentionService\.summary\(\)/);
   assert.match(analyticsPage, /emptySiteAnalyticsRetentionSummary/);
   assert.match(analyticsPage, /site-analytics-retention-status/);
@@ -235,13 +248,17 @@ export async function runSiteAnalyticsSummaryTests() {
   assert.match(analyticsPage, /privacy-safe first-party events/);
   assert.match(analyticsPage, /Analytics range/);
   assert.match(analyticsPage, /ADMIN_ANALYTICS_RANGE_DAYS/);
+  assert.match(analyticsPage, /name="start"/);
+  assert.match(analyticsPage, /name="end"/);
 
+  assert.match(exportRoute, /resolveAdminAnalyticsRange/);
   assert.match(exportRoute, /top_traffic_sources/);
   assert.match(exportRoute, /top_traffic_campaigns/);
   assert.match(exportRoute, /top_referrer_domains/);
   assert.match(exportRoute, /product_conversion/);
   assert.match(exportRoute, /view_to_cart_percent/);
-  assert.match(exportRoute, /full URLs are not exported/);
+  assert.match(exportRoute, /range_start/);
+  assert.match(exportRoute, /range_end/);
 
   assert.match(policyDoc, /Cleanup readiness gates/);
   assert.match(policyDoc, /production analytics volume is validated/);

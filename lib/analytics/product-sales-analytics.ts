@@ -3,9 +3,9 @@ import 'server-only';
 import {
   getAdminAnalyticsRangeStart,
   isWithinAdminAnalyticsRange,
-  normalizeAdminAnalyticsRangeDays,
-  type AdminAnalyticsRangeDays,
-  type AdminAnalyticsRangeInput
+  resolveAdminAnalyticsRange,
+  type AdminAnalyticsRangeInput,
+  type AdminAnalyticsResolvedRange
 } from '@/lib/analytics/admin-analytics-range';
 import { formatRevenueCents, isRevenueEligibleStatus, normalizeRevenueCents } from '@/lib/analytics/order-revenue-summary';
 import { hasDatabase, prisma } from '@/lib/prisma';
@@ -35,23 +35,43 @@ export type ProductSalesAnalyticsRow = {
 
 export type ProductSalesAnalyticsSummary = {
   rows: ProductSalesAnalyticsRow[];
-  analyticsRangeDays: AdminAnalyticsRangeDays;
+  analyticsRangeDays: number;
+  analyticsRangeLabel: string;
+  analyticsRangeMode: 'preset' | 'custom';
+  analyticsRangeStart: Date;
+  analyticsRangeEnd: Date;
   primaryCurrency: string;
   generatedAt: Date;
 };
 
 export type ProductSalesAnalyticsSummaryOptions = {
   rangeDays?: AdminAnalyticsRangeInput;
+  start?: AdminAnalyticsRangeInput;
+  end?: AdminAnalyticsRangeInput;
+  analyticsRange?: AdminAnalyticsResolvedRange;
 };
 
 const TOP_PRODUCT_SALES_LIMIT = 10;
+const EMPTY_RANGE = resolveAdminAnalyticsRange(new Date(0));
 
 export const EMPTY_PRODUCT_SALES_ANALYTICS_SUMMARY: ProductSalesAnalyticsSummary = {
   rows: [],
   analyticsRangeDays: 30,
+  analyticsRangeLabel: EMPTY_RANGE.label,
+  analyticsRangeMode: EMPTY_RANGE.mode,
+  analyticsRangeStart: EMPTY_RANGE.startDate,
+  analyticsRangeEnd: EMPTY_RANGE.endDate,
   primaryCurrency: 'CAD',
   generatedAt: new Date(0)
 };
+
+function resolveSummaryRange(now: Date, options: ProductSalesAnalyticsSummaryOptions) {
+  return options.analyticsRange ?? resolveAdminAnalyticsRange(now, {
+    range: options.rangeDays,
+    start: options.start,
+    end: options.end
+  });
+}
 
 function normalizeProductLabel(value?: string | null, fallback = 'Unknown product') {
   const trimmed = value?.trim().replace(/\s+/g, ' ');
@@ -73,7 +93,7 @@ export function buildProductSalesAnalyticsSummary(
   now = new Date(),
   options: ProductSalesAnalyticsSummaryOptions = {}
 ): ProductSalesAnalyticsSummary {
-  const analyticsRangeDays = normalizeAdminAnalyticsRangeDays(options.rangeDays);
+  const analyticsRange = resolveSummaryRange(now, options);
   const buckets = new Map<string, {
     productId: string;
     label: string;
@@ -85,7 +105,7 @@ export function buildProductSalesAnalyticsSummary(
   }>();
 
   for (const row of rows) {
-    if (!isWithinAdminAnalyticsRange(row.createdAt, now, analyticsRangeDays)) continue;
+    if (!isWithinAdminAnalyticsRange(row.createdAt, now, analyticsRange)) continue;
     if (!isRevenueEligibleStatus(row.orderStatus)) continue;
 
     const quantity = normalizeQuantity(row.quantity);
@@ -128,7 +148,11 @@ export function buildProductSalesAnalyticsSummary(
 
   return {
     rows: rowsByRevenue,
-    analyticsRangeDays,
+    analyticsRangeDays: analyticsRange.rangeDays,
+    analyticsRangeLabel: analyticsRange.label,
+    analyticsRangeMode: analyticsRange.mode,
+    analyticsRangeStart: analyticsRange.startDate,
+    analyticsRangeEnd: analyticsRange.endDate,
     primaryCurrency: rowsByRevenue[0]?.currency ?? EMPTY_PRODUCT_SALES_ANALYTICS_SUMMARY.primaryCurrency,
     generatedAt: now
   };
@@ -137,14 +161,24 @@ export function buildProductSalesAnalyticsSummary(
 export const productSalesAnalyticsService = {
   async summary(options: ProductSalesAnalyticsSummaryOptions = {}): Promise<ProductSalesAnalyticsSummary> {
     const now = new Date();
-    const rangeDays = normalizeAdminAnalyticsRangeDays(options.rangeDays);
-    if (!hasDatabase()) return { ...EMPTY_PRODUCT_SALES_ANALYTICS_SUMMARY, analyticsRangeDays: rangeDays, generatedAt: now };
+    const analyticsRange = resolveSummaryRange(now, options);
+    if (!hasDatabase()) {
+      return {
+        ...EMPTY_PRODUCT_SALES_ANALYTICS_SUMMARY,
+        analyticsRangeDays: analyticsRange.rangeDays,
+        analyticsRangeLabel: analyticsRange.label,
+        analyticsRangeMode: analyticsRange.mode,
+        analyticsRangeStart: analyticsRange.startDate,
+        analyticsRangeEnd: analyticsRange.endDate,
+        generatedAt: now
+      };
+    }
 
     const items = await prisma.checkoutOrderItem.findMany({
       where: {
         order: {
           createdAt: {
-            gte: getAdminAnalyticsRangeStart(now, rangeDays)
+            gte: getAdminAnalyticsRangeStart(now, analyticsRange)
           }
         }
       },
@@ -177,7 +211,7 @@ export const productSalesAnalyticsService = {
       quantity: item.quantity,
       lineTotalCents: item.lineTotalCents,
       createdAt: item.order.createdAt
-    })), now, { rangeDays });
+    })), now, { analyticsRange });
   },
 
   formatRevenueCents

@@ -3,13 +3,12 @@ import 'server-only';
 import { buildAnalyticsComparisonDelta, type AnalyticsComparisonDelta } from '@/lib/analytics/analytics-comparison';
 import {
   getAdminAnalyticsPreviousRangeStart,
-  getAdminAnalyticsRangeStart,
   isWithinAdminAnalyticsPreviousRange,
   isWithinAdminAnalyticsRange,
-  normalizeAdminAnalyticsRangeDays,
+  resolveAdminAnalyticsRange,
   startOfUtcDay,
-  type AdminAnalyticsRangeDays,
-  type AdminAnalyticsRangeInput
+  type AdminAnalyticsRangeInput,
+  type AdminAnalyticsResolvedRange
 } from '@/lib/analytics/admin-analytics-range';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
@@ -41,7 +40,7 @@ export type SiteAnalyticsSourceRow = {
   createdAt: Date;
 };
 
-type RawSiteAnalyticsSourceRow = Omit<SiteAnalyticsSourceRow, 'createdAt' | 'metadata'> & {
+type StoredSiteAnalyticsSourceRow = Omit<SiteAnalyticsSourceRow, 'createdAt' | 'metadata'> & {
   metadata?: unknown;
   createdAt: Date | string;
 };
@@ -95,17 +94,25 @@ export type SiteAnalyticsSummary = {
   checkoutFunnel: SiteAnalyticsFunnel;
   comparison: SiteAnalyticsComparisonSummary;
   recentDaily: SiteAnalyticsDailyPoint[];
-  analyticsRangeDays: AdminAnalyticsRangeDays;
+  analyticsRangeDays: number;
+  analyticsRangeLabel: string;
+  analyticsRangeMode: 'preset' | 'custom';
+  analyticsRangeStart: Date;
+  analyticsRangeEnd: Date;
   generatedAt: Date;
 };
 
 export type SiteAnalyticsSummaryOptions = {
   rangeDays?: AdminAnalyticsRangeInput;
+  start?: AdminAnalyticsRangeInput;
+  end?: AdminAnalyticsRangeInput;
+  analyticsRange?: AdminAnalyticsResolvedRange;
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const TOP_ROW_LIMIT = 8;
 const ZERO_DELTA = buildAnalyticsComparisonDelta(0, 0);
+const EMPTY_RANGE = resolveAdminAnalyticsRange(new Date(0));
 
 export const SITE_ANALYTICS_EVENT_TYPES = new Set<SiteAnalyticsEventType>([
   'page_view',
@@ -147,8 +154,20 @@ export const EMPTY_SITE_ANALYTICS_SUMMARY: SiteAnalyticsSummary = {
   },
   recentDaily: [],
   analyticsRangeDays: 30,
+  analyticsRangeLabel: EMPTY_RANGE.label,
+  analyticsRangeMode: EMPTY_RANGE.mode,
+  analyticsRangeStart: EMPTY_RANGE.startDate,
+  analyticsRangeEnd: EMPTY_RANGE.endDate,
   generatedAt: new Date(0)
 };
+
+function resolveSummaryRange(now: Date, options: SiteAnalyticsSummaryOptions) {
+  return options.analyticsRange ?? resolveAdminAnalyticsRange(now, {
+    range: options.rangeDays,
+    start: options.start,
+    end: options.end
+  });
+}
 
 function normalizeEventType(value?: string | null): SiteAnalyticsEventType | 'unknown' {
   const normalized = value?.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || '';
@@ -219,19 +238,17 @@ function buildProductConversionRows(buckets: Map<string, { productViews: number;
     .slice(0, limit);
 }
 
-function buildRecentDailyPoints(rows: SiteAnalyticsSourceRow[], now: Date, rangeDays: AdminAnalyticsRangeDays): SiteAnalyticsDailyPoint[] {
-  const end = startOfUtcDay(now);
-  const start = new Date(end.getTime() - (rangeDays - 1) * DAY_MS);
+function buildRecentDailyPoints(rows: SiteAnalyticsSourceRow[], range: AdminAnalyticsResolvedRange): SiteAnalyticsDailyPoint[] {
   const buckets = new Map<string, number>();
 
-  for (let offset = 0; offset < rangeDays; offset += 1) {
-    const day = new Date(start.getTime() + offset * DAY_MS);
+  for (let offset = 0; offset < range.rangeDays; offset += 1) {
+    const day = new Date(range.startDate.getTime() + offset * DAY_MS);
     buckets.set(utcDateKey(day), 0);
   }
 
   for (const row of rows) {
     const day = startOfUtcDay(row.createdAt);
-    if (day < start || day > end) continue;
+    if (day < range.startDate || day > range.endDate) continue;
     const key = utcDateKey(day);
     if (!buckets.has(key)) continue;
     incrementBucket(buckets, key);
@@ -282,10 +299,10 @@ function buildSiteAnalyticsComparison(current: SiteComparisonSnapshot, previous:
 }
 
 export function buildSiteAnalyticsSummary(rows: SiteAnalyticsSourceRow[], now = new Date(), options: SiteAnalyticsSummaryOptions = {}): SiteAnalyticsSummary {
-  const analyticsRangeDays = normalizeAdminAnalyticsRangeDays(options.rangeDays);
-  const scopedRows = rows.filter((row) => isWithinAdminAnalyticsRange(row.createdAt, now, analyticsRangeDays));
-  const previousRows = rows.filter((row) => isWithinAdminAnalyticsPreviousRange(row.createdAt, now, analyticsRangeDays));
-  const recentCutoff = getAdminAnalyticsRangeStart(now, analyticsRangeDays);
+  const analyticsRange = resolveSummaryRange(now, options);
+  const scopedRows = rows.filter((row) => isWithinAdminAnalyticsRange(row.createdAt, now, analyticsRange));
+  const previousRows = rows.filter((row) => isWithinAdminAnalyticsPreviousRange(row.createdAt, now, analyticsRange));
+  const recentCutoff = analyticsRange.startDate;
   const typeBuckets = new Map<string, number>();
   const pathBuckets = new Map<string, number>();
   const productBuckets = new Map<string, number>();
@@ -369,13 +386,17 @@ export function buildSiteAnalyticsSummary(rows: SiteAnalyticsSourceRow[], now = 
     productConversions: buildProductConversionRows(productConversionBuckets),
     checkoutFunnel: funnel,
     comparison: buildSiteAnalyticsComparison(currentSnapshot, previousSnapshot),
-    recentDaily: buildRecentDailyPoints(scopedRows, now, analyticsRangeDays),
-    analyticsRangeDays,
+    recentDaily: buildRecentDailyPoints(scopedRows, analyticsRange),
+    analyticsRangeDays: analyticsRange.rangeDays,
+    analyticsRangeLabel: analyticsRange.label,
+    analyticsRangeMode: analyticsRange.mode,
+    analyticsRangeStart: analyticsRange.startDate,
+    analyticsRangeEnd: analyticsRange.endDate,
     generatedAt: now
   };
 }
 
-function normalizeRawSiteAnalyticsRows(rows: RawSiteAnalyticsSourceRow[]): SiteAnalyticsSourceRow[] {
+function normalizeStoredSiteAnalyticsRows(rows: StoredSiteAnalyticsSourceRow[]): SiteAnalyticsSourceRow[] {
   return rows.map((row) => ({
     ...row,
     metadata: normalizeMetadata(row.metadata),
@@ -392,22 +413,40 @@ function isMissingSiteAnalyticsTableError(error: unknown) {
 export const siteAnalyticsSummaryService = {
   async summary(options: SiteAnalyticsSummaryOptions = {}): Promise<SiteAnalyticsSummary> {
     const now = new Date();
-    const rangeDays = normalizeAdminAnalyticsRangeDays(options.rangeDays);
-    if (!hasDatabase()) return { ...EMPTY_SITE_ANALYTICS_SUMMARY, analyticsRangeDays: rangeDays, generatedAt: now };
+    const analyticsRange = resolveSummaryRange(now, options);
+    if (!hasDatabase()) {
+      return {
+        ...EMPTY_SITE_ANALYTICS_SUMMARY,
+        analyticsRangeDays: analyticsRange.rangeDays,
+        analyticsRangeLabel: analyticsRange.label,
+        analyticsRangeMode: analyticsRange.mode,
+        analyticsRangeStart: analyticsRange.startDate,
+        analyticsRangeEnd: analyticsRange.endDate,
+        generatedAt: now
+      };
+    }
 
     try {
-      const rows = await prisma.$queryRaw<RawSiteAnalyticsSourceRow[]>`
+      const rows = await prisma.$queryRaw<StoredSiteAnalyticsSourceRow[]>`
         SELECT "eventType", "path", "locale", "productId", "categoryId", "searchTerm", "metadata", "createdAt"
         FROM "SiteAnalyticsEvent"
-        WHERE "createdAt" >= ${getAdminAnalyticsPreviousRangeStart(now, rangeDays)}
+        WHERE "createdAt" >= ${getAdminAnalyticsPreviousRangeStart(now, analyticsRange)}
         ORDER BY "createdAt" DESC
         LIMIT 10000
       `;
 
-      return buildSiteAnalyticsSummary(normalizeRawSiteAnalyticsRows(rows), now, { rangeDays });
+      return buildSiteAnalyticsSummary(normalizeStoredSiteAnalyticsRows(rows), now, { analyticsRange });
     } catch (error) {
       if (isMissingSiteAnalyticsTableError(error)) {
-        return { ...EMPTY_SITE_ANALYTICS_SUMMARY, analyticsRangeDays: rangeDays, generatedAt: now };
+        return {
+          ...EMPTY_SITE_ANALYTICS_SUMMARY,
+          analyticsRangeDays: analyticsRange.rangeDays,
+          analyticsRangeLabel: analyticsRange.label,
+          analyticsRangeMode: analyticsRange.mode,
+          analyticsRangeStart: analyticsRange.startDate,
+          analyticsRangeEnd: analyticsRange.endDate,
+          generatedAt: now
+        };
       }
       throw error;
     }

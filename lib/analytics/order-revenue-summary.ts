@@ -3,13 +3,12 @@ import 'server-only';
 import { buildAnalyticsComparisonDelta, type AnalyticsComparisonDelta } from '@/lib/analytics/analytics-comparison';
 import {
   getAdminAnalyticsPreviousRangeStart,
-  getAdminAnalyticsRangeStart,
   isWithinAdminAnalyticsPreviousRange,
   isWithinAdminAnalyticsRange,
-  normalizeAdminAnalyticsRangeDays,
+  resolveAdminAnalyticsRange,
   startOfUtcDay,
-  type AdminAnalyticsRangeDays,
-  type AdminAnalyticsRangeInput
+  type AdminAnalyticsRangeInput,
+  type AdminAnalyticsResolvedRange
 } from '@/lib/analytics/admin-analytics-range';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
@@ -22,6 +21,7 @@ export type OrderRevenuePaymentAttemptSourceRow = {
 
 export type OrderRevenueSourceRow = {
   id: string;
+  customerId?: string | null;
   status: string;
   fulfillmentStatus?: string | null;
   currency: string;
@@ -67,6 +67,19 @@ export type OrderDiscountImpactSummary = {
   undiscountedRevenueCents: number;
 };
 
+export type OrderCustomerCohortSummary = {
+  guestOrders: number;
+  guestRevenueCents: number;
+  knownCustomerOrders: number;
+  knownCustomerRevenueCents: number;
+  knownCustomerCount: number;
+  firstTimeKnownCustomerOrders: number;
+  firstTimeKnownCustomerRevenueCents: number;
+  returningKnownCustomerOrders: number;
+  returningKnownCustomerRevenueCents: number;
+  returningKnownCustomerOrderRatePercent: number;
+};
+
 export type OrderRevenueComparisonSummary = {
   totalOrders: AnalyticsComparisonDelta;
   totalRevenueCents: AnalyticsComparisonDelta;
@@ -89,15 +102,23 @@ export type OrderRevenueSummary = {
   byFulfillmentStatus: OrderOperationalStatusSummary[];
   byPaymentProvider: PaymentProviderRevenueSummary[];
   discountImpact: OrderDiscountImpactSummary;
+  customerCohorts: OrderCustomerCohortSummary;
   comparison: OrderRevenueComparisonSummary;
   recentDaily: OrderRevenueDailyPoint[];
-  analyticsRangeDays: AdminAnalyticsRangeDays;
+  analyticsRangeDays: number;
+  analyticsRangeLabel: string;
+  analyticsRangeMode: 'preset' | 'custom';
+  analyticsRangeStart: Date;
+  analyticsRangeEnd: Date;
   primaryCurrency: string;
   generatedAt: Date;
 };
 
 export type OrderRevenueSummaryOptions = {
   rangeDays?: AdminAnalyticsRangeInput;
+  start?: AdminAnalyticsRangeInput;
+  end?: AdminAnalyticsRangeInput;
+  analyticsRange?: AdminAnalyticsResolvedRange;
 };
 
 const REVENUE_EXCLUDED_STATUSES = new Set(['cancelled', 'canceled', 'refunded', 'voided']);
@@ -105,6 +126,19 @@ const COMPLETED_STATUSES = new Set(['completed', 'fulfilled', 'delivered', 'clos
 const CANCELLED_STATUSES = new Set(['cancelled', 'canceled', 'voided']);
 const DAY_MS = 24 * 60 * 60 * 1000;
 const ZERO_DELTA = buildAnalyticsComparisonDelta(0, 0);
+const EMPTY_RANGE = resolveAdminAnalyticsRange(new Date(0));
+const EMPTY_ORDER_CUSTOMER_COHORTS: OrderCustomerCohortSummary = {
+  guestOrders: 0,
+  guestRevenueCents: 0,
+  knownCustomerOrders: 0,
+  knownCustomerRevenueCents: 0,
+  knownCustomerCount: 0,
+  firstTimeKnownCustomerOrders: 0,
+  firstTimeKnownCustomerRevenueCents: 0,
+  returningKnownCustomerOrders: 0,
+  returningKnownCustomerRevenueCents: 0,
+  returningKnownCustomerOrderRatePercent: 0
+};
 
 export const EMPTY_ORDER_REVENUE_SUMMARY: OrderRevenueSummary = {
   totalOrders: 0,
@@ -126,6 +160,7 @@ export const EMPTY_ORDER_REVENUE_SUMMARY: OrderRevenueSummary = {
     discountedRevenueCents: 0,
     undiscountedRevenueCents: 0
   },
+  customerCohorts: EMPTY_ORDER_CUSTOMER_COHORTS,
   comparison: {
     totalOrders: ZERO_DELTA,
     totalRevenueCents: ZERO_DELTA,
@@ -135,9 +170,21 @@ export const EMPTY_ORDER_REVENUE_SUMMARY: OrderRevenueSummary = {
   },
   recentDaily: [],
   analyticsRangeDays: 30,
+  analyticsRangeLabel: EMPTY_RANGE.label,
+  analyticsRangeMode: EMPTY_RANGE.mode,
+  analyticsRangeStart: EMPTY_RANGE.startDate,
+  analyticsRangeEnd: EMPTY_RANGE.endDate,
   primaryCurrency: 'CAD',
   generatedAt: new Date(0)
 };
+
+function resolveSummaryRange(now: Date, options: OrderRevenueSummaryOptions) {
+  return options.analyticsRange ?? resolveAdminAnalyticsRange(now, {
+    range: options.rangeDays,
+    start: options.start,
+    end: options.end
+  });
+}
 
 function normalizeStatus(value?: string | null) {
   return value?.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'unknown';
@@ -180,19 +227,17 @@ export function formatRevenueCents(value: number, currency = 'CAD') {
   }
 }
 
-function buildRecentDailyPoints(rows: OrderRevenueSourceRow[], now: Date, rangeDays: AdminAnalyticsRangeDays): OrderRevenueDailyPoint[] {
-  const end = startOfUtcDay(now);
-  const start = new Date(end.getTime() - (rangeDays - 1) * DAY_MS);
+function buildRecentDailyPoints(rows: OrderRevenueSourceRow[], range: AdminAnalyticsResolvedRange): OrderRevenueDailyPoint[] {
   const buckets = new Map<string, { orderCount: number; revenueCents: number }>();
 
-  for (let offset = 0; offset < rangeDays; offset += 1) {
-    const day = new Date(start.getTime() + offset * DAY_MS);
+  for (let offset = 0; offset < range.rangeDays; offset += 1) {
+    const day = new Date(range.startDate.getTime() + offset * DAY_MS);
     buckets.set(utcDateKey(day), { orderCount: 0, revenueCents: 0 });
   }
 
   for (const row of rows) {
     const day = startOfUtcDay(row.createdAt);
-    if (day < start || day > end) continue;
+    if (day < range.startDate || day > range.endDate) continue;
     const key = utcDateKey(day);
     const bucket = buckets.get(key);
     if (!bucket) continue;
@@ -256,6 +301,55 @@ function buildOrderComparisonSnapshot(rows: OrderRevenueSourceRow[]): OrderCompa
   };
 }
 
+function buildOrderCustomerCohorts(rows: OrderRevenueSourceRow[]): OrderCustomerCohortSummary {
+  const seenKnownCustomers = new Set<string>();
+  let guestOrders = 0;
+  let guestRevenueCents = 0;
+  let knownCustomerOrders = 0;
+  let knownCustomerRevenueCents = 0;
+  let firstTimeKnownCustomerOrders = 0;
+  let firstTimeKnownCustomerRevenueCents = 0;
+  let returningKnownCustomerOrders = 0;
+  let returningKnownCustomerRevenueCents = 0;
+
+  for (const row of [...rows].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime() || a.id.localeCompare(b.id))) {
+    const status = normalizeStatus(row.status);
+    const revenueCents = isRevenueEligibleStatus(status) ? normalizeRevenueCents(row.totalCents) : 0;
+    const accountKey = row.customerId?.trim();
+
+    if (!accountKey) {
+      guestOrders += 1;
+      guestRevenueCents += revenueCents;
+      continue;
+    }
+
+    knownCustomerOrders += 1;
+    knownCustomerRevenueCents += revenueCents;
+
+    if (seenKnownCustomers.has(accountKey)) {
+      returningKnownCustomerOrders += 1;
+      returningKnownCustomerRevenueCents += revenueCents;
+    } else {
+      seenKnownCustomers.add(accountKey);
+      firstTimeKnownCustomerOrders += 1;
+      firstTimeKnownCustomerRevenueCents += revenueCents;
+    }
+  }
+
+  return {
+    guestOrders,
+    guestRevenueCents,
+    knownCustomerOrders,
+    knownCustomerRevenueCents,
+    knownCustomerCount: seenKnownCustomers.size,
+    firstTimeKnownCustomerOrders,
+    firstTimeKnownCustomerRevenueCents,
+    returningKnownCustomerOrders,
+    returningKnownCustomerRevenueCents,
+    returningKnownCustomerOrderRatePercent: knownCustomerOrders ? Math.round((returningKnownCustomerOrders / knownCustomerOrders) * 1000) / 10 : 0
+  };
+}
+
 function buildOrderRevenueComparison(current: OrderComparisonSnapshot, previous: OrderComparisonSnapshot): OrderRevenueComparisonSummary {
   return {
     totalOrders: buildAnalyticsComparisonDelta(current.totalOrders, previous.totalOrders),
@@ -267,10 +361,10 @@ function buildOrderRevenueComparison(current: OrderComparisonSnapshot, previous:
 }
 
 export function buildOrderRevenueSummary(rows: OrderRevenueSourceRow[], now = new Date(), options: OrderRevenueSummaryOptions = {}): OrderRevenueSummary {
-  const analyticsRangeDays = normalizeAdminAnalyticsRangeDays(options.rangeDays);
-  const scopedRows = rows.filter((row) => isWithinAdminAnalyticsRange(row.createdAt, now, analyticsRangeDays));
-  const previousRows = rows.filter((row) => isWithinAdminAnalyticsPreviousRange(row.createdAt, now, analyticsRangeDays));
-  const cutoff = getAdminAnalyticsRangeStart(now, analyticsRangeDays);
+  const analyticsRange = resolveSummaryRange(now, options);
+  const scopedRows = rows.filter((row) => isWithinAdminAnalyticsRange(row.createdAt, now, analyticsRange));
+  const previousRows = rows.filter((row) => isWithinAdminAnalyticsPreviousRange(row.createdAt, now, analyticsRange));
+  const cutoff = analyticsRange.startDate;
   const byStatus: Record<string, number> = {};
   const currencyBuckets = new Map<string, { orderCount: number; revenueCents: number }>();
   const fulfillmentBuckets = new Map<string, { orderCount: number; revenueCents: number }>();
@@ -370,9 +464,14 @@ export function buildOrderRevenueSummary(rows: OrderRevenueSourceRow[], now = ne
       discountedRevenueCents,
       undiscountedRevenueCents
     },
+    customerCohorts: buildOrderCustomerCohorts(scopedRows),
     comparison: buildOrderRevenueComparison(currentSnapshot, previousSnapshot),
-    recentDaily: buildRecentDailyPoints(scopedRows, now, analyticsRangeDays),
-    analyticsRangeDays,
+    recentDaily: buildRecentDailyPoints(scopedRows, analyticsRange),
+    analyticsRangeDays: analyticsRange.rangeDays,
+    analyticsRangeLabel: analyticsRange.label,
+    analyticsRangeMode: analyticsRange.mode,
+    analyticsRangeStart: analyticsRange.startDate,
+    analyticsRangeEnd: analyticsRange.endDate,
     primaryCurrency,
     generatedAt: now
   };
@@ -381,19 +480,30 @@ export function buildOrderRevenueSummary(rows: OrderRevenueSourceRow[], now = ne
 export const orderRevenueSummaryService = {
   async summary(options: OrderRevenueSummaryOptions = {}): Promise<OrderRevenueSummary> {
     const now = new Date();
-    const rangeDays = normalizeAdminAnalyticsRangeDays(options.rangeDays);
-    if (!hasDatabase()) return { ...EMPTY_ORDER_REVENUE_SUMMARY, analyticsRangeDays: rangeDays, generatedAt: now };
+    const analyticsRange = resolveSummaryRange(now, options);
+    if (!hasDatabase()) {
+      return {
+        ...EMPTY_ORDER_REVENUE_SUMMARY,
+        analyticsRangeDays: analyticsRange.rangeDays,
+        analyticsRangeLabel: analyticsRange.label,
+        analyticsRangeMode: analyticsRange.mode,
+        analyticsRangeStart: analyticsRange.startDate,
+        analyticsRangeEnd: analyticsRange.endDate,
+        generatedAt: now
+      };
+    }
 
     const rows = await prisma.checkoutOrder.findMany({
       where: {
         createdAt: {
-          gte: getAdminAnalyticsPreviousRangeStart(now, rangeDays)
+          gte: getAdminAnalyticsPreviousRangeStart(now, analyticsRange)
         }
       },
       orderBy: { createdAt: 'desc' },
       take: 2000,
       select: {
         id: true,
+        customerId: true,
         status: true,
         fulfillmentStatus: true,
         currency: true,
@@ -411,6 +521,6 @@ export const orderRevenueSummaryService = {
       }
     });
 
-    return buildOrderRevenueSummary(rows, now, { rangeDays });
+    return buildOrderRevenueSummary(rows, now, { analyticsRange });
   }
 };
