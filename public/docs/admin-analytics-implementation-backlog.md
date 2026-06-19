@@ -11,16 +11,17 @@ This page summarizes remaining Analytics improvements.
 - First-party storefront event reporting.
 - Aggregate CSV exports.
 - Scheduled report preview foundation for weekly/monthly owner report options using the selected range and aggregate CSV paths.
+- Saved dashboard view preset preview foundation using the selected range and existing section anchors.
 - Privacy and retention guidance.
 - Read-only retention status and cleanup preview.
 
 ## Planned next
 
-- Production validation evidence for custom ranges, exports, aggregate cohort panels, retention preview, and scheduled report previews.
+- Production validation evidence for custom ranges, exports, aggregate cohort panels, retention preview, scheduled report previews, and saved view presets.
 - Retention maintenance workflow.
 - Advanced aggregate customer cohort reporting.
 - Scheduled report persistence and delivery.
-- Saved dashboard views.
+- Saved dashboard view persistence.
 - Clearer grouping for larger dashboards.
 
 ## Export safety
@@ -30,3 +31,7 @@ Analytics exports remain aggregate-only.
 ## Scheduled report safety
 
 Scheduled report previews are not delivery jobs. They preserve the selected range and aggregate CSV paths without saving schedules or sending reports.
+
+## Saved view safety
+
+Saved view presets are preview-only. They preserve the selected range and existing section anchors without saving view state or changing analytics calculations.
