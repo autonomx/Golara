@@ -1,4 +1,4 @@
-export const ADMIN_ANALYTICS_RANGE_DAYS = [7, 30, 90] as const;
+export const ADMIN_ANALYTICS_RANGE_DAYS = [7, 30, 90, 365] as const;
 export const DEFAULT_ADMIN_ANALYTICS_RANGE_DAYS = 30;
 
 export type AdminAnalyticsRangeDays = typeof ADMIN_ANALYTICS_RANGE_DAYS[number];
