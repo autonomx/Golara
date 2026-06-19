@@ -19,7 +19,7 @@ This document summarizes the `/admin/analytics` workspace status.
 - Owner-only aggregate Business CSV and Site CSV exports.
 - Scheduled report preview foundation using the selected analytics range and aggregate Business/Site CSV paths.
 - Saved dashboard view preset preview foundation using the selected analytics range and existing section anchors.
-- Dashboard layout grouping preview foundation using the selected range and existing section anchors.
+- Dashboard group header UI using the selected range and existing section anchors.
 - Privacy and retention policy visibility.
 - Read-only raw site-event retention status, cleanup preview, and cleanup readiness guidance.
 - Role-aware visibility for owner-only exports and retention diagnostics.
@@ -31,7 +31,7 @@ This document summarizes the `/admin/analytics` workspace status.
 - Advanced customer cohort reporting beyond the current aggregate order/revenue buckets.
 - Scheduled report persistence, delivery configuration, and owner approval workflow.
 - Saved dashboard view persistence, role-policy persistence, and owner/staff management UI.
-- Dashboard group header UI, collapsible groups, or tabbed workspace behavior.
+- Collapsible dashboard groups or tabbed workspace behavior.
 
 ## Scheduled report preview note
 
@@ -41,11 +41,9 @@ The scheduled report foundation is preview-only. It defines weekly and monthly o
 
 The saved dashboard view foundation is preview-only. It defines named dashboard view presets, selected-range metadata, role-aware audience labels, and existing section-anchor links without saving view state or adding storage-backed management flows.
 
-## Dashboard layout preview note
+## Dashboard group header note
 
-The dashboard layout foundation is preview-only. It defines Overview, Business, Site, Products and categories, Operations, and Privacy/docs groupings for the existing dashboard anchors without changing the page layout yet.
-
-Actual group headers, collapsible groups, or tabs remain pending until a separate UI pass validates mobile layout and accessibility.
+The dashboard layout contract now renders static group headers for Overview, Business, Site, Products and categories, Operations, and Privacy/docs. These headers reuse the selected range and existing section anchors without enabling collapsible groups or tabs.
 
 ## Production validation checklist
 
@@ -62,4 +60,4 @@ Before treating site analytics as complete in production, verify:
 9. Customer cohort panels and CSV rows remain aggregate-only.
 10. Scheduled report previews preserve the selected range and aggregate Business/Site CSV paths without enabling delivery.
 11. Saved dashboard view presets preserve the selected range and existing section anchors without saving view state.
-12. Dashboard layout preview groups preserve selected range links, the section index, existing anchors, and table fallback requirements without enabling group headers, collapsible groups, or tabs.
+12. Dashboard group headers preserve selected range links, the section index, existing anchors, and table fallback requirements without enabling collapsible groups or tabs.
