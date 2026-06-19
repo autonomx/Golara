@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { AdminAnalyticsGuidancePanel } from '@/components/admin/AdminAnalyticsGuidancePanel';
 import { AdminCategorySalesAnalyticsPanel } from '@/components/admin/AdminCategorySalesAnalyticsPanel';
 import { AdminOrderRevenueSummaryPanel } from '@/components/admin/AdminOrderRevenueSummaryPanel';
 import { AdminPageShell } from '@/components/admin/AdminPageShell';
@@ -43,6 +44,7 @@ const copy = {
     sectionEyebrow: 'Analytics sections',
     sectionBody: 'Jump directly to the analytics area you need instead of scrolling through the full workspace.',
     sectionLabel: 'Jump to analytics section',
+    guidanceCenter: 'Guidance',
     businessSummary: 'Business summary',
     businessCharts: 'Business charts',
     productSales: 'Product sales',
@@ -77,6 +79,7 @@ const copy = {
     sectionEyebrow: 'بخش‌های تحلیل',
     sectionBody: 'بدون پیمایش کل صفحه، مستقیم به بخش تحلیلی موردنیاز بروید.',
     sectionLabel: 'رفتن به بخش تحلیل',
+    guidanceCenter: 'راهنما',
     businessSummary: 'خلاصه کسب‌وکار',
     businessCharts: 'نمودارهای کسب‌وکار',
     productSales: 'فروش محصول',
@@ -121,6 +124,7 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
   const rangeDays = normalizeAdminAnalyticsRangeDays(firstParam(params.range));
   const returnTo = rangeHref(rangeDays);
   const sectionLinks = [
+    { href: sectionHref('analytics-guidance', rangeDays), label: labels.guidanceCenter },
     { href: sectionHref('order-analytics', rangeDays), label: labels.businessSummary },
     { href: sectionHref('business-analytics-charts', rangeDays), label: labels.businessCharts },
     { href: sectionHref('product-sales-analytics', rangeDays), label: labels.productSales },
@@ -248,6 +252,12 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
             </nav>
           </div>
         </section>
+        <AdminAnalyticsGuidancePanel
+          orderSummary={orderRevenueSummary}
+          productSalesSummary={productSalesAnalyticsSummary}
+          categorySalesSummary={categorySalesAnalyticsSummary}
+          siteSummary={siteAnalyticsSummary}
+        />
         <AdminOrderRevenueSummaryPanel summary={orderRevenueSummary} />
         <AdminProductSalesAnalyticsPanel summary={productSalesAnalyticsSummary} />
         <AdminCategorySalesAnalyticsPanel summary={categorySalesAnalyticsSummary} />
