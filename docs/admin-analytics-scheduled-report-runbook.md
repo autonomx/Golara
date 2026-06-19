@@ -1,10 +1,10 @@
 # Admin analytics scheduled report runbook
 
-This runbook covers the scheduled report configuration-plan foundation for `/admin/analytics`.
+This runbook covers the scheduled report configuration-plan and storage-schema foundations for `/admin/analytics`.
 
 ## Current scope
 
-The current scheduled report implementation is a configuration contract only.
+The current scheduled report implementation is a configuration and inactive storage contract only.
 
 It defines:
 
@@ -15,11 +15,13 @@ It defines:
 - aggregate Site CSV path
 - owner-approval requirement metadata
 - draft-only weekly and monthly configuration plans
+- inactive `AdminAnalyticsScheduledReport` storage table for future schedule metadata
+- metadata-only persisted fields for report key, cadence, selected range query, report types, owner approval, active state, delivery state, and dry-run summary
 - explicit disabled delivery state
-- explicit disabled schedule-persistence state
+- explicit disabled schedule activation state
 - activation blockers for future implementation
 
-It does not create active saved schedules, delivery jobs, email sends, timers, queues, or background execution.
+It does not create active saved schedules, delivery jobs, email sends, timers, queues, background execution, route handlers, repository writes, or management UI.
 
 ## Validation steps
 
@@ -33,10 +35,15 @@ It does not create active saved schedules, delivery jobs, email sends, timers, q
 8. Confirm weekly and monthly config plans are draft-only.
 9. Confirm owner approval is required and not yet recorded.
 10. Confirm the config plans preserve the selected range query.
-11. Confirm activation remains false.
-12. Confirm delivery is disabled.
-13. Confirm schedule persistence is disabled.
-14. Confirm dry-run evidence is listed as a future activation requirement.
+11. Confirm the `AdminAnalyticsScheduledReport` migration table exists before future activation work begins.
+12. Confirm schedule storage fields are metadata-only.
+13. Confirm owner approval defaults to disabled.
+14. Confirm active state defaults to disabled.
+15. Confirm delivery state defaults to disabled.
+16. Confirm activation remains false.
+17. Confirm delivery is disabled.
+18. Confirm schedule execution remains disabled.
+19. Confirm dry-run evidence is listed as a future activation requirement.
 
 ## Evidence record
 
@@ -53,19 +60,24 @@ For each validation run, record:
 - monthly preview present: yes/no
 - weekly config plan status
 - monthly config plan status
+- storage table present: yes/no
+- storage table name
+- storage metadata-only fields checked: yes/no
 - owner approval required: must be yes
 - owner approved: must be no
-- activation enabled: must be no
+- active state enabled: must be no
 - delivery enabled: must be no
-- schedule persistence enabled: must be no
+- schedule execution enabled: must be no
+- repository path enabled: must be no
+- management UI enabled: must be no
 - dry-run evidence requirement present: yes/no
 
 ## Future delivery requirements
 
 Before enabling actual scheduled delivery, add and validate:
 
-- persistence model for owner-approved schedules
-- owner approval and disable controls
+- owner approval capture and disable controls
+- repository read/write path with audit evidence
 - delivery provider or channel plan
 - retry and failure visibility
 - unsubscribe or disable workflow when delivery uses email
@@ -73,4 +85,4 @@ Before enabling actual scheduled delivery, add and validate:
 - tests proving delivery can be disabled globally
 - dry-run evidence that records the exact CSV paths and selected reporting window
 
-Do not enable delivery until the config-plan evidence, owner approval workflow, delivery disable switch, and aggregate payload guard are documented.
+Do not enable delivery until the config-plan evidence, storage-schema evidence, owner approval workflow, delivery disable switch, and aggregate payload guard are documented.
