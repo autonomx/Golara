@@ -19,7 +19,7 @@ export type AdminAnalyticsScheduledReportReadEndpointFlagName =
   | 'ADMIN_ANALYTICS_SCHEDULED_REPORT_OWNER_APPROVAL_POLICY_VALIDATED'
   | 'ADMIN_ANALYTICS_SCHEDULED_REPORT_DRY_RUN_EVIDENCE_VALIDATED';
 
-export type AdminAnalyticsScheduledReportReadEndpointEnv = Partial<Record<AdminAnalyticsScheduledReportReadEndpointFlagName, string>>;
+export type AdminAnalyticsScheduledReportReadEndpointEnv = Readonly<Record<string, string | undefined>>;
 
 export type AdminAnalyticsScheduledReportReadEndpointModel = {
   status: AdminAnalyticsScheduledReportReadEndpointStatus;
