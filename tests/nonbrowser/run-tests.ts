@@ -4,6 +4,7 @@ import { runPropertyNormalizerTests } from './property-normalizers.test';
 import { runRepositoryIntegrationTests } from './repository-integration.test';
 import { runRouteHandlerContractTests } from './route-handler-contracts.test';
 import { runScheduledReportActivationReadinessTests } from './scheduled-report-activation-readiness.test';
+import { runScheduledReportDeliveryExecutionTests as runScheduledReportDeliveryRunTests } from './scheduled-report-delivery-execution.test';
 import { runScheduledReportDeliveryPayloadTests } from './scheduled-report-delivery-payload.test';
 import { runScheduledReportDeliveryReadinessTests } from './scheduled-report-delivery-readiness.test';
 import { runScheduledReportDryRunEvidenceTests } from './scheduled-report-dry-run-evidence.test';
@@ -31,6 +32,7 @@ async function main() {
   await runScheduledReportSchedulePlanTests();
   await runScheduledReportWorkerShellTests();
   await runScheduledReportTransportContractTests();
+  await runScheduledReportDeliveryRunTests();
   runScheduledReportRecordingReadinessTests();
   await runScheduledReportRecordingRepositoryTests();
   await runScheduledReportRepositoryReadTests();
