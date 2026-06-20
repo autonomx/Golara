@@ -1,10 +1,10 @@
 # Admin analytics scheduled report runbook
 
-This runbook covers the scheduled report configuration-plan, storage-schema, applied Prisma schema mapping, checked Prisma schema fragment, generated-client type visibility, read-model, repository-read contract, read-adapter, disabled Prisma reader-factory, owner-approval policy, global kill-switch contract, and dry-run evidence contract foundations for `/admin/analytics`.
+This runbook covers the scheduled report configuration-plan, storage-schema, applied Prisma schema mapping, checked Prisma schema fragment, generated-client type visibility, read-model, repository-read contract, read-adapter, disabled Prisma reader-factory, owner-approval policy, global kill-switch contract, dry-run evidence contract, and delivery-readiness contract foundations for `/admin/analytics`.
 
 ## Current scope
 
-The current scheduled report implementation is a configuration, inactive storage, applied Prisma schema mapping, checked Prisma schema fragment, generated-client type visibility, metadata-only read-model, repository-read contract, read-adapter, disabled Prisma reader-factory, owner-approval policy, global kill-switch contract, and dry-run evidence contract foundation only.
+The current scheduled report implementation is a configuration, inactive storage, applied Prisma schema mapping, checked Prisma schema fragment, generated-client type visibility, metadata-only read-model, repository-read contract, read-adapter, disabled Prisma reader-factory, owner-approval policy, global kill-switch contract, dry-run evidence contract, and delivery-readiness contract foundation only.
 
 It defines:
 
@@ -28,6 +28,7 @@ It defines:
 - owner-approval policy requirements for owner role confirmation, selected-range evidence, aggregate-only report types, dry-run evidence, global disable controls, and delivery-disabled confirmation
 - global kill-switch policy requirements for disable-control ownership, control location, safe default state, owner override policy, dry-run evidence, rollback procedure, and audit log destination
 - dry-run evidence requirements for evidence id, timestamp, selected range, cadence, aggregate report types, CSV preview paths, global disable confirmation, owner approval confirmation, delivery-disabled confirmation, and reviewer identity
+- delivery-readiness contracts for aggregate-only payload shape, disabled channel evidence, retry/failure visibility, and owner/operator preview summary
 - required future read filters for owner approval, active state, and delivery disabled state
 - safe future select fields limited to schedule metadata
 - allowed cadence and aggregate report type validation
@@ -37,7 +38,7 @@ It defines:
 - explicit disabled schedule activation state
 - activation blockers for future implementation
 
-It does not create active saved schedules, dry-run evidence records, owner approval records, global disable state records, owner override state, delivery jobs, email sends, timers, queues, background execution, route handlers, runtime application access through the generated Prisma client, active Prisma repository wiring, repository writes, or management UI. The `schema.prisma` model mapping is applied, the generated model type is visible to the adapter boundary, the disabled reader factory returns no reader, and the dry-run evidence, owner-approval, and global kill-switch policies only document evidence required before runtime repository or delivery work is explicitly enabled in a later audited slice.
+It does not create active saved schedules, delivery payload records, delivery channel records, retry records, failure records, operator preview records, dry-run evidence records, owner approval records, global disable state records, owner override state, delivery jobs, email sends, timers, queues, background execution, route handlers, runtime application access through the generated Prisma client, active Prisma repository wiring, repository writes, or management UI. The `schema.prisma` model mapping is applied, the generated model type is visible to the adapter boundary, the disabled reader factory returns no reader, and the dry-run evidence, owner-approval, global kill-switch, and delivery-readiness policies only document evidence required before runtime repository or delivery work is explicitly enabled in a later audited slice.
 
 ## Validation steps
 
@@ -75,14 +76,20 @@ It does not create active saved schedules, dry-run evidence records, owner appro
 32. Confirm the owner-approval policy requires owner role, selected-range evidence, aggregate-only report types, dry-run evidence, global disable control evidence, and delivery-disabled confirmation.
 33. Confirm the global kill-switch policy requires disable-control ownership, control location, safe default state, owner override policy, dry-run evidence, rollback procedure, and audit log destination.
 34. Confirm the dry-run evidence policy requires evidence id, timestamp, selected range, aggregate report types, Business/Site CSV preview paths, global disable confirmation, owner approval confirmation, delivery-disabled confirmation, and reviewer identity.
-35. Confirm dry-run evidence recording remains disabled.
-36. Confirm global disable state recording remains disabled.
-37. Confirm owner override remains disabled.
-38. Confirm owner approval recording remains disabled.
-39. Confirm active repository wiring remains disabled.
-40. Confirm activation remains false.
-41. Confirm delivery is disabled.
-42. Confirm schedule execution remains disabled.
+35. Confirm the delivery-readiness contract requires aggregate-only Business/Site payload sections, disabled channel evidence, retry/failure visibility, and owner/operator preview summary evidence.
+36. Confirm delivery payload recording remains disabled.
+37. Confirm delivery channel runtime remains disabled.
+38. Confirm retry execution remains disabled.
+39. Confirm failure recording remains disabled.
+40. Confirm operator preview recording remains disabled.
+41. Confirm dry-run evidence recording remains disabled.
+42. Confirm global disable state recording remains disabled.
+43. Confirm owner override remains disabled.
+44. Confirm owner approval recording remains disabled.
+45. Confirm active repository wiring remains disabled.
+46. Confirm activation remains false.
+47. Confirm delivery is disabled.
+48. Confirm schedule execution remains disabled.
 
 ## Evidence record
 
@@ -143,6 +150,13 @@ For each validation run, record:
 - dry-run Business/Site CSV preview path requirements present: must be yes
 - dry-run owner approval confirmation requirement present: must be yes
 - dry-run delivery-disabled confirmation requirement present: must be yes
+- delivery-readiness contract checked: yes/no
+- aggregate payload contract checked: yes/no
+- aggregate payload blocked fields checked: yes/no
+- delivery channel runtime enabled: must be no
+- retry execution enabled: must be no
+- failure recording enabled: must be no
+- operator preview recording enabled: must be no
 - active repository wiring enabled: must be no
 - repository writes enabled: must be no
 - owner approval required: must be yes
@@ -163,11 +177,11 @@ Before enabling actual scheduled delivery, add and validate:
 - generated Prisma client runtime access with audit evidence and the required metadata-only filters
 - repository write path with owner-managed approval and disable controls
 - read endpoint with owner-scoped policy enforcement
-- delivery provider or channel plan
-- retry and failure visibility
+- delivery provider or channel activation plan
+- retry and failure recording
 - unsubscribe or disable workflow when delivery uses email
-- aggregate-only payload guard
+- aggregate-only payload execution guard
 - tests proving delivery can be disabled globally
 - dry-run evidence that records the exact CSV paths and selected reporting window
 
-Do not enable delivery until the config-plan evidence, storage-schema evidence, Prisma mapping evidence, checked schema-fragment evidence, generated-type evidence, read-model evidence, repository-read contract evidence, read-adapter evidence, disabled reader-factory evidence, owner-approval policy evidence, global kill-switch evidence, dry-run evidence contract, delivery disable switch, and aggregate payload guard are documented.
+Do not enable delivery until the config-plan evidence, storage-schema evidence, Prisma mapping evidence, checked schema-fragment evidence, generated-type evidence, read-model evidence, repository-read contract evidence, read-adapter evidence, disabled reader-factory evidence, owner-approval policy evidence, global kill-switch evidence, dry-run evidence contract, delivery-readiness contract, delivery disable switch, and aggregate payload guard are documented.
