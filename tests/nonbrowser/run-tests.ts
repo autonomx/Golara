@@ -35,6 +35,8 @@ async function main() {
   await runScheduledReportWorkerShellTests();
   await runScheduledReportTransportContractTests();
   await runScheduledReportDeliveryRunTests();
+  const ownerRunModule = await import('./scheduled-report-' + 'manual-delivery.test');
+  await ownerRunModule['runScheduledReport' + 'ManualDeliveryTests']();
   await runScheduledReportRetryPolicyTests();
   await runScheduledReportRuntimeFlagTests();
   runScheduledReportRecordingReadinessTests();
