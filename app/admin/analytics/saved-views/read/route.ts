@@ -3,7 +3,8 @@ import { NextResponse } from 'next/server';
 import { assertAdminRole } from '@/lib/admin-auth';
 import {
   loadAdminAnalyticsSavedViewReadEndpointModel,
-  shouldAttachAdminAnalyticsSavedViewReadDelegate
+  shouldAttachAdminAnalyticsSavedViewReadDelegate,
+  type AdminAnalyticsSavedViewGeneratedClientReadDelegate
 } from '@/lib/analytics/admin-analytics-saved-view-read-endpoint';
 
 export const dynamic = 'force-dynamic';
@@ -16,13 +17,13 @@ async function savedViewReadDelegate() {
 
 export async function GET() {
   try {
-    const identity = await assertAdminRole(['owner', 'staff']);
+    const identity = await assertAdminRole('staff');
     const delegate = await savedViewReadDelegate();
     const model = await loadAdminAnalyticsSavedViewReadEndpointModel({
       actorRole: identity.role === 'owner' ? 'owner' : 'staff',
       delegate:
         delegate && typeof delegate === 'object' && 'findMany' in delegate
-          ? (delegate as Parameters<typeof loadAdminAnalyticsSavedViewReadEndpointModel>[0]['delegate'])
+          ? (delegate as AdminAnalyticsSavedViewGeneratedClientReadDelegate)
           : null
     });
 
