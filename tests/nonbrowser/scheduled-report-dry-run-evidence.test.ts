@@ -68,7 +68,7 @@ export function runScheduledReportDryRunEvidenceTests() {
   assert.match(policySource, /globalDisableEvidenceRequired: true/);
   assert.match(policySource, /ownerApprovalEvidenceRequired: true/);
   assert.match(policySource, /deliveryDisabledEvidenceRequired: true/);
-  assert.doesNotMatch(policySource, /PrismaClient|prisma\.|$queryRaw|findMany|create\(|update\(|upsert\(|delete\(|fetch\(|sendMail|transport|cron|schedule\.create|setInterval|setTimeout|\bPOST\b|\bPUT\b|\bPATCH\b|\bDELETE\b|localStorage|sessionStorage|cookies\(/);
+  assert.doesNotMatch(policySource, /PrismaClient|prisma\.|\$queryRaw|findMany|create\(|update\(|upsert\(|delete\(|fetch\(|sendMail|transport|cron|schedule\.create|setInterval|setTimeout|\bPOST\b|\bPUT\b|\bPATCH\b|\bDELETE\b|localStorage|sessionStorage|cookies\(/);
 
   const scheduledReportContractSource = [
     policySource,
@@ -82,7 +82,7 @@ export function runScheduledReportDryRunEvidenceTests() {
 
   assert.doesNotMatch(
     scheduledReportContractSource,
-    /PrismaClient|prisma\.|$queryRaw|create\(|update\(|upsert\(|delete\(|fetch\(|sendMail|transport|cron|schedule\.create|setInterval|setTimeout/,
+    /PrismaClient|prisma\.|\$queryRaw|create\(|update\(|upsert\(|delete\(|fetch\(|sendMail|transport|cron|schedule\.create|setInterval|setTimeout/,
     'scheduled-report dry-run evidence contract should not add writes, direct client construction, scheduler, timer, background, or delivery execution'
   );
 
