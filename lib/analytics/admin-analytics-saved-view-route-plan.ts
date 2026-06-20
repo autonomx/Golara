@@ -2,9 +2,9 @@ import {
   buildAdminAnalyticsSavedViewChangePlan,
   type AdminAnalyticsSavedViewAdapterGateState
 } from './admin-analytics-saved-view-adapter-plan';
+import type { AdminAnalyticsSavedViewManagementActionKey } from './admin-analytics-saved-view-management';
 import type {
   AdminAnalyticsSavedViewActorRole,
-  AdminAnalyticsSavedViewManagementActionKey,
   AdminAnalyticsSavedViewMutationInput
 } from './admin-analytics-saved-view-mutation-policy';
 
