@@ -25,24 +25,24 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 - Scheduled report activation-readiness helper that can produce metadata-only activation args only after owner approval, dry-run evidence, kill-switch, disable-state, and delivery-disabled gates pass.
 - Scheduled report deterministic schedule planning for weekly/monthly reports, owner-page plan visibility, and disabled-by-default scheduler state.
 - Scheduled report disabled worker shell that returns locked/skipped status by default and has no automatic timer, cron, or background registration.
-- Scheduled report transport adapter contract with a disabled default adapter and no live provider/network wiring.
+- Scheduled report disabled/default transport contract, secret-backed outbox/channel validation, manual owner-run orchestration, staging smoke validation, owner-visible history, clock-readiness planning, and ops hardening.
 - Scheduled report gated delivery executor contract with audit/failure result shapes, rollback documentation, and default blocked state unless every gate and an injected adapter are provided.
 - Scheduled report retry planning for failed delivery results only, capped attempts, owner-visible retry status, and no automatic retry loop.
-- Saved dashboard view preset preview, persistence-plan foundation, inactive storage schema, and metadata-only read-model foundation for future saves.
-- Dashboard group header UI that uses the layout grouping contract while preserving the selected range, section index, anchors, and table fallback requirements.
+- Saved dashboard view management surface, owner/staff metadata read route, mutation-policy contract, approved POST route plans, injected-delegate storage-apply helper, owner action core, and dedicated `/admin/analytics/saved-views` status page.
+- Dashboard grouping contract and native collapsible dashboard group UI using `<details>`/`<summary>` while preserving selected-range links, section anchors, section index, and accessible chart table fallback requirements.
 - Privacy and retention policy visibility.
-- Read-only raw site-event retention status, cleanup preview, and cleanup readiness guidance.
+- Raw site-event retention status, cleanup preview, owner-only cleanup plan helper, hard-gated injected-delegate executor, no-delegate owner route, and dedicated `/admin/analytics/site-retention` status/control page.
 - Role-aware visibility for owner-only exports and retention diagnostics.
 - Operator checklist for reviewing analytics and interpreting exports.
 
 ## Intentionally pending
 
-- Automated raw site-event deletion after production migration evidence and cleanup preview evidence are verified.
+- Automated raw site-event deletion with a live delete delegate attached to the owner route. The current plan/executor/route/page prove the gates and default no-delete state, but the route still passes `delegate: null` by default.
 - Future customer segmentation beyond aggregate order-count and recency bands, only after a separate privacy review.
-- Scheduled report schedule activation from the owner page, live scheduler/timer/background registration, automatic worker execution, real delivery transport configuration, live email/provider delivery, and automatic retry execution.
+- Scheduled report live scheduler/timer/background registration, automatic worker execution, real delivery transport provider wiring, live email/provider delivery, and automatic retry execution.
 - Scheduled report repository writes remain gated and owner-only; the current surface records only through explicitly gated endpoints and helpers, not arbitrary write paths.
-- Saved dashboard active save/update/remove/read endpoints, owner approval recording, role-policy enforcement, active repository access, and owner/staff management UI.
-- Collapsible dashboard groups or tabbed workspace behavior.
+- Saved dashboard views still do not use generated Prisma client writes from the live routes by default. Current routes are owner-only and plan/core-backed; storage application remains injected-delegate tested until the generated schema/client path is safely wired.
+- Tabbed workspace behavior remains pending. Native collapsible groups are active and server-rendered.
 
 ## Customer cohort analytics note
 
@@ -69,7 +69,7 @@ The range selector now supports both fixed presets and custom start/end dates. P
 
 ## Scheduled report status note
 
-Scheduled reports are now partially production-ready for owner-only management, preview, payload materialization, planning, disabled execution contracts, and retry visibility. They are not yet production-ready for automatic scheduling or live delivery.
+Scheduled reports are production-hardened for owner-only management, previews, payload materialization, planning, disabled execution contracts, manual owner-run readiness, retry visibility, staging smoke validation, and operator hardening. They are not yet production-ready for automatic scheduling or live provider delivery.
 
 The implemented safe surface includes:
 
@@ -83,7 +83,11 @@ The implemented safe surface includes:
 - aggregate-only delivery payload materialization preview
 - deterministic weekly/monthly next-run planning
 - disabled-by-default worker-shell evaluation
-- disabled default transport adapter contract
+- disabled default transport adapter and secret-backed outbox/channel validation
+- manual owner-run orchestration that still rejects scheduled/queued execution
+- staging smoke validation for the gate matrix
+- owner-visible history/read-model helpers
+- clock-readiness and ops-hardening plans with no live timer or alert loop
 - gated delivery executor contract with audit/failure result shapes
 - retry planning for failed delivery records only, with capped attempts and no automatic loop
 
@@ -91,27 +95,29 @@ The safety boundary remains:
 
 - no live scheduler/timer/cron/background registration
 - no automatic worker execution
-- no live email/provider/transport configuration
+- no live email/provider delivery by default
 - no payload leaving the system by default
 - no unbounded retry loop
 - no public or staff scheduled-report access
 - no arbitrary repository write path
 - no per-customer rows, raw event rows, visitor/session identifiers, delivery recipient lists, or export contents stored in scheduled-report metadata
 
-A future delivery-enablement slice must configure a real transport adapter, enable all owner/approval/dry-run/kill-switch/activation gates, and add deployment rollback evidence before scheduled reports can be considered fully production-ready for live delivery.
+A future delivery-enablement slice must configure a real provider adapter, enable all owner/approval/dry-run/kill-switch/activation gates, and add deployment rollback evidence before scheduled reports can be considered fully production-ready for live delivery.
 
 ## Saved dashboard view storage note
 
-The saved dashboard view foundation now includes a persistence-plan contract, an inactive storage schema, and a metadata-only read-model foundation. It defines named dashboard view presets, selected-range metadata, role-aware audience labels, allowed scopes, owner-managed fields, metadata-only persisted columns, blocked report/customer/event-row fields, and safe DTO normalization for future table rows.
+Saved dashboard views now have a visible management and route-planning surface. The implementation includes named presets, allowed scopes, role-aware metadata normalization, blocked report/customer/event-row fields, metadata-only DTOs, owner/staff read gating, approved owner POST targets, an injected-delegate storage-apply helper, and a shared action core.
 
-The `AdminAnalyticsSavedView` table is for future metadata only. Activation defaults remain disabled: `ownerApproved=false` and `isActive=false`. The read model keeps `activeForOperators=false` and is not called by a page, route, active repository, or management UI yet.
+The live owner routes remain safe by default: they use the action core in plan-only mode unless a storage delegate is explicitly provided. The current generated-client integration is intentionally pending because the main Prisma schema/client path has not been safely wired through the connector; the schema-fragment parity guard remains the source of truth for the intended metadata-only table shape.
 
 ## Dashboard group header note
 
-The dashboard layout grouping contract now powers a static group-header UI on `/admin/analytics`. It renders Overview, Business, Site, Products and categories, Operations, and Privacy/docs groups with selected-range links to the existing dashboard anchors.
+The dashboard layout grouping contract now powers native collapsible groups on `/admin/analytics`. It renders Overview, Business, Site, Products and categories, Operations, and Privacy/docs groups with server-rendered `<details>`/`<summary>` controls and selected-range links to the existing dashboard anchors.
 
-The UI keeps the section index, range links, existing anchors, CSV exports, server rendering, and accessible chart table fallbacks intact. Collapsible groups or tabs remain pending until separate mobile layout and accessibility evidence is recorded.
+The UI keeps the section index, range links, existing anchors, CSV exports, server rendering, mobile readability, and accessible chart table fallbacks intact. Tabbed workspace behavior remains pending until separate mobile layout and accessibility evidence is recorded.
 
-## Retention cleanup preview note
+## Retention cleanup status note
 
-The retention status panel now includes a read-only cleanup preview. It reports the stale raw-event count eligible under the 180-day retention target, whether production migration evidence has been confirmed, whether deletion remains disabled, and the reason future cleanup is still blocked or ready for a guarded job.
+Retention cleanup now has a no-delete-by-default control track. The implemented surface includes read-only stale-event preview, owner-only cleanup plan helper, hard-gated injected-delegate executor, owner-only POST route that passes `delegate: null` by default, and a dedicated owner status page with manual confirmation copy.
+
+Actual raw-event deletion remains pending until a live delete delegate is wired with production evidence, explicit execution flags, rollback evidence, and owner confirmation.
