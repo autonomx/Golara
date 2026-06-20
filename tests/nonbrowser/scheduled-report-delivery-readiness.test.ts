@@ -105,7 +105,7 @@ export function runScheduledReportDeliveryReadinessTests() {
   assert.match(readinessSource, /channelRuntimeEnabled: false/);
   assert.match(readinessSource, /retryExecutionEnabled: false/);
   assert.match(readinessSource, /previewSummaryRecordingEnabled: false/);
-  assert.doesNotMatch(readinessSource, /PrismaClient|prisma\.|$queryRaw|findMany|create\(|update\(|upsert\(|delete\(|fetch\(|sendMail|transport|cron|schedule\.create|setInterval|setTimeout|\bPOST\b|\bPUT\b|\bPATCH\b|\bDELETE\b|localStorage|sessionStorage|cookies\(/);
+  assert.doesNotMatch(readinessSource, /PrismaClient|prisma\.|\$queryRaw|findMany|create\(|update\(|upsert\(|delete\(|fetch\(|sendMail|transport|cron|schedule\.create|setInterval|setTimeout|\bPOST\b|\bPUT\b|\bPATCH\b|\bDELETE\b|localStorage|sessionStorage|cookies\(/);
 
   const scheduledReportContractSource = [
     readinessSource,
@@ -120,7 +120,7 @@ export function runScheduledReportDeliveryReadinessTests() {
 
   assert.doesNotMatch(
     scheduledReportContractSource,
-    /PrismaClient|prisma\.|$queryRaw|create\(|update\(|upsert\(|delete\(|fetch\(|sendMail|transport|cron|schedule\.create|setInterval|setTimeout/,
+    /PrismaClient|prisma\.|\$queryRaw|create\(|update\(|upsert\(|delete\(|fetch\(|sendMail|transport|cron|schedule\.create|setInterval|setTimeout/,
     'scheduled-report delivery-readiness contracts should not add writes, direct client construction, scheduler, timer, background, or delivery execution'
   );
 
