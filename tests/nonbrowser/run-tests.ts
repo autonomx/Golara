@@ -6,6 +6,7 @@ import { runRouteHandlerContractTests } from './route-handler-contracts.test';
 import { runScheduledReportDeliveryReadinessTests } from './scheduled-report-delivery-readiness.test';
 import { runScheduledReportDryRunEvidenceTests } from './scheduled-report-dry-run-evidence.test';
 import { runScheduledReportRecordingReadinessTests } from './scheduled-report-recording-readiness.test';
+import { runScheduledReportRecordingRepositoryTests } from './scheduled-report-recording-repository.test';
 import { runScheduledReportRepositoryReadTests } from './scheduled-report-repository-read.test';
 import { runSeededWorkflowTests } from './seeded-workflows.test';
 import { runServerActionContractTests } from './server-action-contracts.test';
@@ -17,6 +18,7 @@ async function main() {
   runScheduledReportDryRunEvidenceTests();
   runScheduledReportDeliveryReadinessTests();
   runScheduledReportRecordingReadinessTests();
+  await runScheduledReportRecordingRepositoryTests();
   await runScheduledReportRepositoryReadTests();
   await runServerActionContractTests();
   await runRouteHandlerContractTests();
