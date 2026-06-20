@@ -11,9 +11,13 @@ import {
   buildAdminAnalyticsScheduledReportPrismaReaderFactoryContract,
   buildAdminAnalyticsScheduledReportRepositoryContract,
   buildAdminAnalyticsScheduledReportRepositoryReadArgs,
+  buildAdminAnalyticsScheduledReportRuntimeReadGateDecision,
   createDisabledAdminAnalyticsScheduledReportPrismaReaderFactory,
+  createGatedAdminAnalyticsScheduledReportPrismaReaderFactory,
+  readAdminAnalyticsScheduledReportsFromGatedRepository,
   readAdminAnalyticsScheduledReportsFromRepository,
-  type AdminAnalyticsScheduledReportRepositoryReadArgs
+  type AdminAnalyticsScheduledReportRepositoryReadArgs,
+  type AdminAnalyticsScheduledReportRuntimeReadGateState
 } from '../../lib/analytics/admin-analytics-scheduled-report-repository';
 
 function source(path: string) {
@@ -43,6 +47,22 @@ function validRow() {
     lastDryRunSummary: { checkedAt: '2026-06-15T00:00:00.000Z' },
     createdAt: new Date('2026-06-15T00:00:00.000Z'),
     updatedAt: new Date('2026-06-15T00:00:00.000Z')
+  };
+}
+
+function activeReadGateState(): AdminAnalyticsScheduledReportRuntimeReadGateState {
+  return {
+    readerFactoryRuntimeEnabled: true,
+    generatedClientRuntimeAccessEnabled: true,
+    repositoryReadsEnabled: true,
+    repositoryWritesEnabled: false,
+    globalKillSwitchValidated: true,
+    ownerApprovalPolicyValidated: true,
+    dryRunEvidenceValidated: true,
+    deliveryExecutionEnabled: false,
+    readEndpointEnabled: false,
+    managementUiEnabled: false,
+    schedulerEnabled: false
   };
 }
 
@@ -160,6 +180,8 @@ function runPrismaSchemaMappingChecks() {
   assert.equal(mapping.generatedClientRuntimeAccessEnabled, false);
   assert.equal(mapping.readerFactoryAvailable, true);
   assert.equal(mapping.readerFactoryRuntimeEnabled, false);
+  assert.equal(mapping.runtimeReadGateAvailable, true);
+  assert.equal(mapping.runtimeReadGateDefaultEnabled, false);
   assert.equal(mapping.repositoryReadsEnabled, false);
   assert.equal(mapping.repositoryWritesEnabled, false);
   assert.equal(mapping.readEndpointEnabled, false);
@@ -170,6 +192,7 @@ function runPrismaSchemaMappingChecks() {
   assert.ok(!mapping.activationBlockers.includes('schema.prisma model block not applied'));
   assert.ok(mapping.activationBlockers.includes('reader factory runtime disabled'));
   assert.ok(mapping.activationBlockers.includes('generated Prisma client runtime access not enabled'));
+  assert.ok(mapping.activationBlockers.includes('runtime read gate disabled by default'));
 
   const fields = new Map(mapping.fields.map((field) => [field.name, field]));
   assert.equal(fields.get('reportKey')?.prismaType, 'String');
@@ -229,6 +252,8 @@ function runPrismaSchemaMappingChecks() {
   assert.match(helperSource, /generatedClientRuntimeAccessEnabled: false/);
   assert.match(helperSource, /readerFactoryAvailable: true/);
   assert.match(helperSource, /readerFactoryRuntimeEnabled: false/);
+  assert.match(helperSource, /runtimeReadGateAvailable: true/);
+  assert.match(helperSource, /runtimeReadGateDefaultEnabled: false/);
   assert.match(helperSource, /repositoryReadsEnabled: false/);
   assert.match(helperSource, /repositoryWritesEnabled: false/);
   assert.match(helperSource, /deliveryExecutionEnabled: false/);
@@ -245,13 +270,13 @@ function runPrismaSchemaMappingChecks() {
   ].join('\n');
   assert.doesNotMatch(
     scheduledReportContractSource,
-    /PrismaClient|prisma\.|\$queryRaw|findMany|create\(|update\(|upsert\(|delete\(|fetch\(|sendMail|transport|cron|schedule\.create|setInterval|setTimeout/,
-    'scheduled-report contracts should not add database, scheduler, timer, background, or delivery execution'
+    /PrismaClient|prisma\.|\$queryRaw|create\(|update\(|upsert\(|delete\(|fetch\(|sendMail|transport|cron|schedule\.create|setInterval|setTimeout/,
+    'scheduled-report contracts should not add writes, direct client construction, scheduler, timer, background, or delivery execution'
   );
 
   const appSource = sourceTree('app');
   const componentSource = sourceTree('components');
-  const activeScheduledReportAccess = /AdminAnalyticsScheduledReport|admin-analytics-scheduled-report-repository|readAdminAnalyticsScheduledReportsFromRepository/;
+  const activeScheduledReportAccess = /AdminAnalyticsScheduledReport|admin-analytics-scheduled-report-repository|readAdminAnalyticsScheduledReportsFromRepository|readAdminAnalyticsScheduledReportsFromGatedRepository/;
   assert.doesNotMatch(appSource, activeScheduledReportAccess, 'no scheduled-report read/save/update/remove endpoint should be active');
   assert.doesNotMatch(componentSource, activeScheduledReportAccess, 'no scheduled-report management UI should be active');
 }
@@ -273,6 +298,8 @@ export async function runScheduledReportRepositoryReadTests() {
   assert.equal(contract.readAdapterAvailable, true);
   assert.equal(contract.readerFactoryAvailable, true);
   assert.equal(contract.readerFactoryRuntimeEnabled, false);
+  assert.equal(contract.runtimeReadGateAvailable, true);
+  assert.equal(contract.runtimeReadGateDefaultEnabled, false);
   assert.equal(contract.readEndpointEnabled, false);
   assert.equal(contract.managementUiEnabled, false);
   assert.equal(contract.deliveryExecutionEnabled, false);
@@ -290,6 +317,8 @@ export async function runScheduledReportRepositoryReadTests() {
   assert.equal(factoryContract.enabled, false);
   assert.equal(factoryContract.factoryAvailable, true);
   assert.equal(factoryContract.factoryRuntimeEnabled, false);
+  assert.equal(factoryContract.runtimeReadGateAvailable, true);
+  assert.equal(factoryContract.runtimeReadGateDefaultEnabled, false);
   assert.equal(factoryContract.generatedClientDelegateName, 'adminAnalyticsScheduledReport');
   assert.equal(factoryContract.generatedClientModelName, 'AdminAnalyticsScheduledReport');
   assert.equal(factoryContract.generatedClientTypeVisible, true);
@@ -308,6 +337,74 @@ export async function runScheduledReportRepositoryReadTests() {
   assert.equal(disabledFactory.contract.factoryRuntimeEnabled, false);
   assert.equal(disabledFactory.contract.readArgs.take, 5);
   assert.equal(disabledFactory.createReader(), null);
+
+  const defaultGate = buildAdminAnalyticsScheduledReportRuntimeReadGateDecision();
+  assert.equal(defaultGate.status, 'repository_read_runtime_gated');
+  assert.equal(defaultGate.enabled, false);
+  assert.equal(defaultGate.canCreateReader, false);
+  assert.deepEqual(defaultGate.readArgs.where, { ownerApproved: true, isActive: true, deliveryEnabled: false });
+  assert.ok(defaultGate.blockers.includes('reader factory runtime disabled'));
+  assert.ok(defaultGate.blockers.includes('generated Prisma client runtime access not enabled'));
+  assert.ok(defaultGate.blockers.includes('repository reads not enabled'));
+  assert.ok(defaultGate.blockers.includes('global disable control not validated'));
+  assert.ok(defaultGate.blockers.includes('owner approval policy not validated'));
+  assert.ok(defaultGate.blockers.includes('dry-run evidence not validated'));
+
+  const unsafeWriteGate = buildAdminAnalyticsScheduledReportRuntimeReadGateDecision({
+    ...activeReadGateState(),
+    repositoryWritesEnabled: true
+  });
+  assert.equal(unsafeWriteGate.canCreateReader, false);
+  assert.ok(unsafeWriteGate.blockers.includes('repository writes must remain disabled'));
+
+  const unsafeDeliveryGate = buildAdminAnalyticsScheduledReportRuntimeReadGateDecision({
+    ...activeReadGateState(),
+    deliveryExecutionEnabled: true
+  });
+  assert.equal(unsafeDeliveryGate.canCreateReader, false);
+  assert.ok(unsafeDeliveryGate.blockers.includes('delivery execution must remain disabled'));
+
+  const allowedGate = buildAdminAnalyticsScheduledReportRuntimeReadGateDecision(activeReadGateState(), 5);
+  assert.equal(allowedGate.enabled, true);
+  assert.equal(allowedGate.canCreateReader, true);
+  assert.deepEqual(allowedGate.blockers, []);
+  assert.equal(allowedGate.readArgs.take, 5);
+
+  const disabledGatedFactory = createGatedAdminAnalyticsScheduledReportPrismaReaderFactory(
+    { findMany: async () => [validRow()] },
+    {},
+    5
+  );
+  assert.equal(disabledGatedFactory.decision.canCreateReader, false);
+  assert.equal(disabledGatedFactory.createReader(), null);
+  const disabledGatedPreview = await readAdminAnalyticsScheduledReportsFromGatedRepository(disabledGatedFactory);
+  assert.equal(disabledGatedPreview.status, 'repository_read_runtime_gated');
+  assert.equal(disabledGatedPreview.enabled, false);
+  assert.equal(disabledGatedPreview.repositoryReadsEnabled, false);
+  assert.equal(disabledGatedPreview.rows.length, 0);
+
+  let gatedCapturedArgs: AdminAnalyticsScheduledReportRepositoryReadArgs | undefined;
+  const gatedFactory = createGatedAdminAnalyticsScheduledReportPrismaReaderFactory(
+    {
+      findMany: async (readArgs) => {
+        gatedCapturedArgs = readArgs;
+        return [validRow(), { ...validRow(), id: 'report_2', reportTypes: ['unsafe'] }];
+      }
+    },
+    activeReadGateState(),
+    5
+  );
+  assert.equal(gatedFactory.decision.canCreateReader, true);
+  assert.ok(gatedFactory.createReader());
+  const gatedPreview = await readAdminAnalyticsScheduledReportsFromGatedRepository(gatedFactory);
+  assert.deepEqual(gatedCapturedArgs, gatedFactory.decision.readArgs);
+  assert.equal(gatedPreview.status, 'repository_read_runtime_gated');
+  assert.equal(gatedPreview.enabled, true);
+  assert.equal(gatedPreview.repositoryReadsEnabled, true);
+  assert.equal(gatedPreview.deliveryExecutionEnabled, false);
+  assert.equal(gatedPreview.rows.length, 1);
+  assert.equal(gatedPreview.rows[0].activeForOperators, false);
+  assert.equal(gatedPreview.rows[0].deliveryReady, false);
 
   const args = buildAdminAnalyticsScheduledReportRepositoryReadArgs(500);
   assert.equal(args.take, 50);
@@ -354,8 +451,11 @@ export async function runScheduledReportRepositoryReadTests() {
   assert.match(repositorySource, /readAdapterAvailable: true/);
   assert.match(repositorySource, /readerFactoryAvailable: true/);
   assert.match(repositorySource, /readerFactoryRuntimeEnabled: false/);
-  assert.match(repositorySource, /prisma_reader_factory_disabled/);
+  assert.match(repositorySource, /runtimeReadGateAvailable: true/);
+  assert.match(repositorySource, /runtimeReadGateDefaultEnabled: false/);
+  assert.match(repositorySource, /repository_read_runtime_gated/);
   assert.match(repositorySource, /createReader: \(\) => null/);
+  assert.match(repositorySource, /delegate\.findMany\(args\)/);
   assert.match(repositorySource, /readScheduledReportMetadata/);
   assert.match(repositorySource, /ownerApproved: true/);
   assert.match(repositorySource, /isActive: true/);
@@ -364,6 +464,6 @@ export async function runScheduledReportRepositoryReadTests() {
   assert.match(repositorySource, /readEndpointEnabled: false/);
   assert.match(repositorySource, /managementUiEnabled: false/);
   assert.match(repositorySource, /deliveryExecutionEnabled: false/);
-  assert.doesNotMatch(repositorySource, /PrismaClient|prisma\.|\$queryRaw|findMany|create\(|update\(|upsert\(|delete\(|fetch\(|sendMail|transport|cron|schedule\.create|setInterval|setTimeout|\bPOST\b|\bPUT\b|\bPATCH\b|\bDELETE\b|localStorage|sessionStorage|cookies\(/);
+  assert.doesNotMatch(repositorySource, /PrismaClient|prisma\.|\$queryRaw|create\(|update\(|upsert\(|delete\(|fetch\(|sendMail|transport|cron|schedule\.create|setInterval|setTimeout|\bPOST\b|\bPUT\b|\bPATCH\b|\bDELETE\b|localStorage|sessionStorage|cookies\(/);
   console.log('scheduled-report-repository-read.test.ts passed');
 }
