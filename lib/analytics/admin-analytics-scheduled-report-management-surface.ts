@@ -96,3 +96,5 @@ export function buildAdminAnalyticsScheduledReportManagementSurfaceContract(opti
     ]
   };
 }
+
+export const buildScheduledReportManagementSurfaceContract = buildAdminAnalyticsScheduledReportManagementSurfaceContract;
