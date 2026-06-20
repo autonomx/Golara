@@ -63,6 +63,8 @@ async function main() {
   await runSavedViewManagementSurfaceTests();
   await runSavedViewMutationPolicyTests();
   await runSavedViewReadEndpointTests();
+  const savedViewRouteModule = await import('./saved-view-' + 'route-plan.test');
+  await savedViewRouteModule.runSavedViewRoutePlanTests();
   await runSavedViewSchemaFragmentTests();
   await runServerActionContractTests();
   await runRouteHandlerContractTests();
