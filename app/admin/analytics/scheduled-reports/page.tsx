@@ -122,7 +122,7 @@ export default async function ScheduledReportsPage() {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <h3 className="text-sm font-bold text-stone-950">{row.label}</h3>
-                      <p className="mt-1 text-xs text-stone-500">{row.cadence} / {row.rangeLabel}</p>
+                      <p className="mt-1 text-xs text-stone-500">{row.cadence} / {row.rangeMode}</p>
                     </div>
                     <span className="rounded-full bg-white px-2 py-1 text-[0.7rem] font-bold uppercase tracking-[0.12em] text-stone-600">
                       Delivery off
