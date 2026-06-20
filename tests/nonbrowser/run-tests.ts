@@ -3,6 +3,7 @@ import { runMigrationSchemaTests } from './migration-schema.test';
 import { runPropertyNormalizerTests } from './property-normalizers.test';
 import { runRepositoryIntegrationTests } from './repository-integration.test';
 import { runRouteHandlerContractTests } from './route-handler-contracts.test';
+import { runSavedViewManagementSurfaceTests } from './saved-view-management-surface.test';
 import { runScheduledReportActivationReadinessTests } from './scheduled-report-activation-readiness.test';
 import { runScheduledReportDeliveryExecutionTests as runScheduledReportDeliveryRunTests } from './scheduled-report-delivery-execution.test';
 import { runScheduledReportDeliveryPayloadTests } from './scheduled-report-delivery-payload.test';
@@ -56,6 +57,7 @@ async function main() {
   await runScheduledReportRepositoryReadTests();
   await runScheduledReportReadEndpointTests();
   await runScheduledReportManagementSurfaceTests();
+  await runSavedViewManagementSurfaceTests();
   await runServerActionContractTests();
   await runRouteHandlerContractTests();
   await runPropertyNormalizerTests();
