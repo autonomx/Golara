@@ -46,7 +46,7 @@ export const ADMIN_ANALYTICS_SCHEDULED_REPORT_PRISMA_MODEL_BLOCK = `model AdminA
   cadence           String
   rangeMode         String
   rangeQuery        String
-  reportTypes       Json     @default("[\"business\", \"site\"]")
+  reportTypes       Json     @default("[\\\"business\\\", \\\"site\\\"]")
   ownerApproved     Boolean  @default(false)
   isActive          Boolean  @default(false)
   deliveryEnabled   Boolean  @default(false)
