@@ -1,28 +1,40 @@
 # Admin analytics scheduled report management surface
 
-Status: owner-facing surface live, runtime actions disabled.
+Status: owner-facing surface live, read preview runtime-gated, write actions disabled.
 
-The scheduled-report management page is available at `/admin/analytics/scheduled-reports` for admin sessions. It is a readiness surface only: it shows the gated controls and activation checklist, but it does not read scheduled-report rows, write approval metadata, start a scheduler, or run delivery.
+The scheduled-report management page is available at `/admin/analytics/scheduled-reports` for admin sessions. It now shows a read-preview panel backed by an owner-only GET route at `/admin/analytics/scheduled-reports/read`.
+
+The read path remains runtime-gated. It only attaches the generated Prisma delegate when all explicit scheduled-report read flags are enabled and owner authentication succeeds. By default, the page and endpoint return a locked empty preview with gate blockers.
 
 ## Live in this slice
 
 - Owner-aware scheduled-report management route.
-- Pure management-surface contract.
-- Disabled control cards for listing schedules, dry-run evidence, owner approval, global disable state, schedule activation, and delivery.
-- Nonbrowser guard proving the page has no form/action/method, no Prisma client construction, no repository read/write call, and no timer/scheduler call.
+- Owner-only scheduled-report GET route.
+- Page-level read preview panel.
+- Runtime flag helper for read endpoint, reader factory, generated-client runtime access, repository reads, kill-switch evidence, owner-approval evidence, and dry-run evidence.
+- Dynamic delegate attachment only after the read flags pass.
+- Nonbrowser guard proving the route is GET-only and write-free.
 
 ## Still disabled
 
-- Scheduled-report read endpoint.
 - Scheduled-report write endpoint.
-- Repository read calls from the page.
-- Repository write calls from the page.
+- Repository writes from the page or endpoint.
 - Dry-run evidence recording from the page.
 - Owner approval recording from the page.
 - Global disable state recording from the page.
 - Scheduler/timer/background execution.
 - Delivery execution.
 
+## Runtime flags required for a non-empty read preview
+
+- `ADMIN_ANALYTICS_SCHEDULED_REPORT_READ_ENDPOINT_ENABLED=true`
+- `ADMIN_ANALYTICS_SCHEDULED_REPORT_READER_FACTORY_RUNTIME_ENABLED=true`
+- `ADMIN_ANALYTICS_SCHEDULED_REPORT_GENERATED_CLIENT_RUNTIME_ACCESS_ENABLED=true`
+- `ADMIN_ANALYTICS_SCHEDULED_REPORT_REPOSITORY_READS_ENABLED=true`
+- `ADMIN_ANALYTICS_SCHEDULED_REPORT_GLOBAL_KILL_SWITCH_VALIDATED=true`
+- `ADMIN_ANALYTICS_SCHEDULED_REPORT_OWNER_APPROVAL_POLICY_VALIDATED=true`
+- `ADMIN_ANALYTICS_SCHEDULED_REPORT_DRY_RUN_EVIDENCE_VALIDATED=true`
+
 ## Activation prerequisites
 
-Before any control becomes active, add separate reviewed slices for read-only repository access, recording endpoints, owner approval evidence, global disable state evidence, audit logging, scheduler controls, and delivery transport.
+Before any write control becomes active, add separate reviewed slices for recording endpoints, owner approval evidence, global disable state evidence, audit logging, scheduler controls, and delivery transport.
