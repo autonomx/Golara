@@ -6,6 +6,10 @@ import { buildScheduledReportClockActivationReadiness } from '../../lib/analytic
 const CLOCK_PATH = new URL('../../lib/analytics/admin-analytics-scheduled-report-clock-activation.ts', import.meta.url);
 
 const READY_FLAGS = {
+  readPreview: true,
+  recordingWrites: true,
+  dryRunPreview: true,
+  payloadPreview: true,
   workerEvaluation: true,
   scheduleRuntime: true,
   clockRegistration: true,
