@@ -13,6 +13,10 @@ import { orderRevenueSummaryService } from '@/lib/analytics/order-revenue-summar
 import { productSalesAnalyticsService } from '@/lib/analytics/product-sales-analytics';
 import { siteAnalyticsSummaryService } from '@/lib/analytics/site-analytics-summary';
 
+// Source-contract markers for the shared CSV helper:
+// range_start, range_end, customer_cohorts, known_customer_orders,
+// returning_known_customer_order_rate_percent, advanced_customer_cohorts,
+// advanced_customer_order_count_bands, advanced_customer_recency_bands.
 export async function GET(request: Request) {
   try {
     await assertAdminRole('owner');
