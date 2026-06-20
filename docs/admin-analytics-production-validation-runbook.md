@@ -2,7 +2,7 @@
 
 This runbook validates the admin analytics workspace after deploy. It is intended for owner/admin operators before treating `/admin/analytics` as an operational source of truth.
 
-Use it to validate the production analytics path end to end: database migration, storefront event capture, checkout funnel capture, custom range parity, aggregate exports, customer cohort aggregates, advanced aggregate customer cohort reporting, retention status, cleanup preview evidence, scheduled report config-plan/storage-schema/read-model/repository-contract/owner-approval-policy/global-kill-switch/dry-run-evidence/delivery-readiness evidence, saved view persistence-plan/storage-schema/read-model evidence, and dashboard group header evidence.
+Use it to validate the production analytics path end to end: database migration, storefront event capture, checkout funnel capture, custom range parity, aggregate exports, customer cohort aggregates, advanced aggregate customer cohort reporting, retention status, cleanup preview evidence, scheduled report config-plan/storage-schema/read-model/repository-contract/gated-read/owner-approval-policy/global-kill-switch/dry-run-evidence/delivery-readiness evidence, saved view persistence-plan/storage-schema/read-model evidence, and dashboard group header evidence.
 
 ## Scope
 
@@ -16,7 +16,7 @@ Validate that the analytics page can show trustworthy aggregate data for:
 - aggregate customer cohort metrics
 - advanced aggregate customer cohort AOV/share, order-count band, and recency band metrics
 - aggregate CSV exports
-- scheduled report previews, draft config plans, inactive storage schema, metadata-only read model, repository-read contract, owner-approval policy contract, global kill-switch contract, dry-run evidence contract, and delivery-readiness contracts
+- scheduled report previews, draft config plans, inactive storage schema, metadata-only read model, repository-read contract, gated read-only factory, owner-approval policy contract, global kill-switch contract, dry-run evidence contract, and delivery-readiness contracts
 - saved dashboard view presets, persistence plans, inactive storage schema, and metadata-only read model
 - dashboard group headers
 - privacy and retention status
@@ -69,21 +69,23 @@ Validate that the analytics page can show trustworthy aggregate data for:
 31. Confirm the `AdminAnalyticsScheduledReport` storage schema is present, metadata-only, and defaults owner approval, active state, and delivery state to disabled.
 32. Confirm the scheduled report read model returns metadata-only DTOs, rejects invalid rows, keeps operator activation disabled, and keeps delivery readiness disabled.
 33. Confirm the scheduled report repository-read contract defines metadata-only select fields, owner-approved filter, active-state filter, and delivery-disabled filter.
-34. Confirm the scheduled report owner-approval policy requires owner role, selected-range evidence, aggregate-only report types, dry-run evidence, global disable control evidence, and delivery-disabled confirmation.
-35. Confirm the scheduled report global kill-switch policy requires disable-control ownership, control location, safe default state, owner override policy, dry-run evidence, rollback procedure, and audit log destination.
-36. Confirm the scheduled report dry-run evidence policy requires evidence id, timestamp, selected range, aggregate report types, Business/Site CSV preview paths, global disable confirmation, owner approval confirmation, delivery-disabled confirmation, and reviewer identity.
-37. Confirm the scheduled report delivery-readiness contracts require aggregate-only Business/Site payload sections, disabled channel evidence, retry/failure visibility, and owner/operator preview summary evidence.
-38. Confirm scheduled report payload recording, channel runtime, retry execution, failure recording, operator preview recording, dry-run evidence recording, global state recording, owner override, approval recording, delivery, schedule execution, active repository reads/writes, endpoints, and management UI remain disabled.
-39. Confirm saved view presets preserve the selected range and existing section anchors.
-40. Confirm saved view persistence plans expose allowed scopes, metadata-only required fields, blocked fields, owner approval required, and owner approval not recorded.
-41. Confirm the `AdminAnalyticsSavedView` storage schema is present, metadata-only, and defaults owner approval and activation to disabled.
-42. Confirm the saved view read model returns metadata-only DTOs, rejects invalid rows, and keeps operator activation disabled.
-43. Confirm saved view save/update/remove/read endpoints, active repository access, and management UI remain disabled.
-44. Confirm dashboard group headers render for Overview, Business, Site, Products and categories, Operations, and Privacy/docs.
-45. Confirm group-header links preserve the selected range, existing section anchors, section index expectations, and table fallback requirements.
-46. Confirm collapsible groups and tabbed workspace behavior remain disabled until a separate UI pass.
-47. Confirm neither CSV contains visitor session details, full referrer URLs, analytics event payloads, customer names, phone numbers, emails, addresses, raw customer identifiers, or per-customer rows.
-48. Confirm the cleanup preview does not delete raw events and that deletion remains disabled until production migration evidence and analytics-volume evidence are recorded.
+34. Confirm the scheduled report gated read-only factory is disabled by default and requires explicit runtime read, generated-client runtime, repository-read, global-disable, owner-approval, and dry-run evidence gates before it can create an injected reader.
+35. Confirm no app route or UI imports the scheduled-report repository path.
+36. Confirm the scheduled report owner-approval policy requires owner role, selected-range evidence, aggregate-only report types, dry-run evidence, global disable control evidence, and delivery-disabled confirmation.
+37. Confirm the scheduled report global kill-switch policy requires disable-control ownership, control location, safe default state, owner override policy, dry-run evidence, rollback procedure, and audit log destination.
+38. Confirm the scheduled report dry-run evidence policy requires evidence id, timestamp, selected range, aggregate report types, Business/Site CSV preview paths, global disable confirmation, owner approval confirmation, delivery-disabled confirmation, and reviewer identity.
+39. Confirm the scheduled report delivery-readiness contracts require aggregate-only Business/Site payload sections, disabled channel evidence, retry/failure visibility, and owner/operator preview summary evidence.
+40. Confirm scheduled report payload recording, channel runtime, retry execution, failure recording, operator preview recording, dry-run evidence recording, global state recording, owner override, approval recording, delivery, schedule execution, repository writes, endpoints, and management UI remain disabled.
+41. Confirm saved view presets preserve the selected range and existing section anchors.
+42. Confirm saved view persistence plans expose allowed scopes, metadata-only required fields, blocked fields, owner approval required, and owner approval not recorded.
+43. Confirm the `AdminAnalyticsSavedView` storage schema is present, metadata-only, and defaults owner approval and activation to disabled.
+44. Confirm the saved view read model returns metadata-only DTOs, rejects invalid rows, and keeps operator activation disabled.
+45. Confirm saved view save/update/remove/read endpoints, active repository access, and management UI remain disabled.
+46. Confirm dashboard group headers render for Overview, Business, Site, Products and categories, Operations, and Privacy/docs.
+47. Confirm group-header links preserve the selected range, existing section anchors, section index expectations, and table fallback requirements.
+48. Confirm collapsible groups and tabbed workspace behavior remain disabled until a separate UI pass.
+49. Confirm neither CSV contains visitor session details, full referrer URLs, analytics event payloads, customer names, phone numbers, emails, addresses, raw customer identifiers, or per-customer rows.
+50. Confirm the cleanup preview does not delete raw events and that deletion remains disabled until production migration evidence and analytics-volume evidence are recorded.
 
 ## Evidence record
 
@@ -115,6 +117,10 @@ Record one evidence note per validation pass:
 - Scheduled report repository-read select fields metadata-only:
 - Scheduled report repository-read required filters checked:
 - Scheduled report repository-read active path disabled:
+- Scheduled report gated read-only factory checked:
+- Scheduled report gated read-only factory enabled by default:
+- Scheduled report gated read-only factory required gates checked:
+- Scheduled report app route or UI repository import present:
 - Scheduled report owner-approval policy checked:
 - Scheduled report owner approval recording enabled:
 - Scheduled report owner role requirement present:
@@ -186,7 +192,7 @@ Record one evidence note per validation pass:
 
 ## Expected result
 
-The analytics page should show aggregate business, site, range, export, customer cohort, advanced cohort, scheduled-report config-plan/storage-schema/read-model/repository-contract/owner-approval-policy/global-kill-switch/dry-run-evidence/delivery-readiness, saved-view persistence-plan/storage-schema/read-model, dashboard group header, retention, and cleanup-preview signals without exposing non-aggregate visitor or customer detail. Empty panels are acceptable only when the selected range has no matching traffic, orders, or production migration evidence.
+The analytics page should show aggregate business, site, range, export, customer cohort, advanced cohort, scheduled-report config-plan/storage-schema/read-model/repository-contract/gated-read/owner-approval-policy/global-kill-switch/dry-run-evidence/delivery-readiness, saved-view persistence-plan/storage-schema/read-model, dashboard group header, retention, and cleanup-preview signals without exposing non-aggregate visitor or customer detail. Empty panels are acceptable only when the selected range has no matching traffic, orders, or production migration evidence.
 
 ## Blockers
 
@@ -204,12 +210,15 @@ Do not treat analytics as source-of-truth if any of these are true:
 - scheduled report read model returns analytics rows, customer rows, raw events, visitor/session identifiers, delivery recipient lists, export contents, or delivery payloads
 - scheduled report read model marks DTOs active for operators or delivery ready before active repository access, approval workflow, dry-run evidence, and delivery controls exist
 - scheduled report repository-read contract omits owner-approved, active-state, or delivery-disabled filters for future active reads
+- scheduled report gated read-only factory can create a reader without runtime read, generated-client runtime, repository-read, global-disable, owner-approval, and dry-run evidence gates
+- scheduled report gated read-only factory allows writes, endpoints, management UI, scheduler execution, or delivery execution
+- app routes or UI import the scheduled-report repository before active management paths are designed
 - scheduled report owner-approval policy omits owner role, selected-range, aggregate-only, dry-run, global-disable, or delivery-disabled evidence requirements
 - scheduled report global kill-switch policy omits disable-control ownership, control location, safe default state, owner override policy, dry-run, rollback, or audit-log evidence requirements
 - scheduled report dry-run evidence policy omits evidence id, timestamp, selected range, aggregate report types, CSV preview paths, global-disable confirmation, owner-approval confirmation, delivery-disabled confirmation, or reviewer identity requirements
 - scheduled report delivery-readiness contracts omit aggregate-only payload shape, disabled channel evidence, retry/failure visibility, or operator preview summary requirements
 - scheduled report delivery-readiness contracts allow payload recording, channel runtime, retry execution, failure recording, preview recording, or delivery execution before owner approval, dry-run evidence, global disable controls, rollback procedure, and audit logging are designed
-- scheduled report dry-run evidence recording, global state recording, owner override, delivery, execution, active repository access, endpoints, approval recording, or management UI are enabled before owner approval, dry-run evidence, global disable controls, rollback procedure, and audit logging are designed
+- scheduled report dry-run evidence recording, global state recording, owner override, delivery, execution, endpoints, approval recording, repository writes, or management UI are enabled before owner approval, dry-run evidence, global disable controls, rollback procedure, and audit logging are designed
 - scheduled report config plans are active before owner approval and dry-run evidence exist
 - saved view presets or persistence plans do not preserve selected range and section anchors
 - saved view persistence plans allow report rows, customer rows, event rows, or contact fields

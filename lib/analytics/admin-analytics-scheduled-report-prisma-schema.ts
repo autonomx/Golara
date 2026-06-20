@@ -23,6 +23,8 @@ export type AdminAnalyticsScheduledReportPrismaSchemaMapping = {
   generatedClientRuntimeAccessEnabled: boolean;
   readerFactoryAvailable: boolean;
   readerFactoryRuntimeEnabled: boolean;
+  runtimeReadGateAvailable: boolean;
+  runtimeReadGateDefaultEnabled: boolean;
   repositoryReadsEnabled: boolean;
   repositoryWritesEnabled: boolean;
   readEndpointEnabled: boolean;
@@ -209,6 +211,8 @@ export function buildAdminAnalyticsScheduledReportPrismaSchemaMapping(): AdminAn
     generatedClientRuntimeAccessEnabled: false,
     readerFactoryAvailable: true,
     readerFactoryRuntimeEnabled: false,
+    runtimeReadGateAvailable: true,
+    runtimeReadGateDefaultEnabled: false,
     repositoryReadsEnabled: false,
     repositoryWritesEnabled: false,
     readEndpointEnabled: false,
@@ -222,6 +226,7 @@ export function buildAdminAnalyticsScheduledReportPrismaSchemaMapping(): AdminAn
       'reader factory runtime disabled',
       'generated Prisma client runtime access not enabled',
       'repository wiring not enabled',
+      'runtime read gate disabled by default',
       'read endpoint not configured',
       'management UI not implemented',
       'delivery execution remains disabled',

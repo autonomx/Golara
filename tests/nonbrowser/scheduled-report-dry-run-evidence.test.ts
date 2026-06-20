@@ -82,8 +82,8 @@ export function runScheduledReportDryRunEvidenceTests() {
 
   assert.doesNotMatch(
     scheduledReportContractSource,
-    /PrismaClient|prisma\.|\$queryRaw|findMany|create\(|update\(|upsert\(|delete\(|fetch\(|sendMail|transport|cron|schedule\.create|setInterval|setTimeout/,
-    'scheduled-report dry-run evidence contract should not add database, scheduler, timer, background, or delivery execution'
+    /PrismaClient|prisma\.|\$queryRaw|create\(|update\(|upsert\(|delete\(|fetch\(|sendMail|transport|cron|schedule\.create|setInterval|setTimeout/,
+    'scheduled-report dry-run evidence contract should not add writes, direct client construction, scheduler, timer, background, or delivery execution'
   );
 
   console.log('scheduled-report-dry-run-evidence.test.ts passed');
