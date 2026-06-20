@@ -45,6 +45,8 @@ async function main() {
   await runScheduledReportStagingSmokeTests();
   const ledgerModule = await import('./scheduled-report-' + 'history-view.test');
   await ledgerModule['runScheduledReport' + 'HistoryViewTests']();
+  const checkModule = await import('./scheduled-report-' + 'owner-check.test');
+  await checkModule.runScheduledReportOwnerCheckTests();
   runScheduledReportRecordingReadinessTests();
   await runScheduledReportRecordingRepositoryTests();
   await runScheduledReportRepositoryReadTests();
