@@ -47,6 +47,8 @@ async function main() {
   await ledgerModule['runScheduledReport' + 'HistoryViewTests']();
   const checkModule = await import('./scheduled-report-' + 'owner-check.test');
   await checkModule.runScheduledReportOwnerCheckTests();
+  const clockModule = await import('./scheduled-report-' + 'clock-activation.test');
+  await clockModule.runScheduledReportClockActivationTests();
   runScheduledReportRecordingReadinessTests();
   await runScheduledReportRecordingRepositoryTests();
   await runScheduledReportRepositoryReadTests();
