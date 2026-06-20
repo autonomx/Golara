@@ -5,6 +5,7 @@ import {
   ADMIN_ANALYTICS_SCHEDULED_REPORT_PRISMA_MODEL_BLOCK,
   buildAdminAnalyticsScheduledReportPrismaSchemaMapping
 } from '../../lib/analytics/admin-analytics-scheduled-report-prisma-schema';
+import { buildAdminAnalyticsScheduledReportGlobalKillSwitchPolicy } from '../../lib/analytics/admin-analytics-scheduled-report-global-kill-switch';
 import { buildAdminAnalyticsScheduledReportOwnerApprovalPolicy } from '../../lib/analytics/admin-analytics-scheduled-report-owner-approval-policy';
 import {
   buildAdminAnalyticsScheduledReportPrismaReaderFactoryContract,
@@ -63,6 +64,48 @@ function sourceTree(directory: string): string {
       return /\.(?:ts|tsx)$/.test(entry.name) ? [source(entryPath)] : [];
     })
     .join('\n');
+}
+
+function runGlobalKillSwitchPolicyChecks() {
+  const policy = buildAdminAnalyticsScheduledReportGlobalKillSwitchPolicy();
+  assert.equal(policy.status, 'global_kill_switch_contract_only');
+  assert.equal(policy.enabled, false);
+  assert.equal(policy.contractAvailable, true);
+  assert.equal(policy.runtimeStateRecordingEnabled, false);
+  assert.equal(policy.globalDisableControlRequired, true);
+  assert.equal(policy.globalDisableControlValidatedByDefault, false);
+  assert.equal(policy.scheduledReportsDisabledByDefault, true);
+  assert.equal(policy.ownerOverrideEnabled, false);
+  assert.equal(policy.scheduleActivationEnabled, false);
+  assert.equal(policy.deliveryExecutionEnabled, false);
+  assert.equal(policy.repositoryReadsEnabled, false);
+  assert.equal(policy.repositoryWritesEnabled, false);
+  assert.equal(policy.readEndpointEnabled, false);
+  assert.equal(policy.managementUiEnabled, false);
+  assert.equal(policy.safeDefaultState, 'disabled');
+  assert.deepEqual(policy.allowedFutureStates, ['disabled', 'enabled']);
+  assert.ok(policy.requiredEvidenceFields.includes('global disable control owner'));
+  assert.ok(policy.requiredEvidenceFields.includes('global disable control location'));
+  assert.ok(policy.requiredEvidenceFields.includes('rollback procedure'));
+  assert.ok(policy.requiredEvidenceFields.includes('audit log destination'));
+  assert.ok(policy.requirements.some((requirement) => requirement.key === 'disable-control-owner-recorded' && requirement.required));
+  assert.ok(policy.requirements.some((requirement) => requirement.key === 'safe-default-state-recorded' && requirement.required));
+  assert.ok(policy.requirements.every((requirement) => requirement.satisfiedByDefault === false));
+  assert.ok(policy.blockedOperations.includes('record global disable state'));
+  assert.ok(policy.blockedOperations.includes('enable owner override state'));
+  assert.ok(policy.blockedOperations.includes('enable scheduled report delivery'));
+  assert.ok(policy.activationBlockers.includes('global disable state recording not enabled'));
+  assert.ok(policy.activationBlockers.includes('schedule activation remains disabled'));
+  assert.ok(policy.activationBlockers.includes('delivery execution remains disabled'));
+
+  const policySource = source('lib/analytics/admin-analytics-scheduled-report-global-kill-switch.ts');
+  assert.match(policySource, /global_kill_switch_contract_only/);
+  assert.match(policySource, /runtimeStateRecordingEnabled: false/);
+  assert.match(policySource, /globalDisableControlValidatedByDefault: false/);
+  assert.match(policySource, /scheduledReportsDisabledByDefault: true/);
+  assert.match(policySource, /ownerOverrideEnabled: false/);
+  assert.match(policySource, /safeDefaultState: 'disabled'/);
+  assert.doesNotMatch(policySource, /PrismaClient|prisma\.|\$queryRaw|findMany|create\(|update\(|upsert\(|delete\(|fetch\(|sendMail|transport|cron|schedule\.create|setInterval|setTimeout|\bPOST\b|\bPUT\b|\bPATCH\b|\bDELETE\b|localStorage|sessionStorage|cookies\(/);
 }
 
 function runOwnerApprovalPolicyChecks() {
@@ -193,6 +236,7 @@ function runPrismaSchemaMappingChecks() {
 
   const scheduledReportContractSource = [
     helperSource,
+    source('lib/analytics/admin-analytics-scheduled-report-global-kill-switch.ts'),
     source('lib/analytics/admin-analytics-scheduled-report-owner-approval-policy.ts'),
     source('lib/analytics/admin-analytics-scheduled-report-repository.ts'),
     source('lib/analytics/admin-analytics-scheduled-report-read-model.ts'),
@@ -213,6 +257,7 @@ function runPrismaSchemaMappingChecks() {
 }
 
 export async function runScheduledReportRepositoryReadTests() {
+  runGlobalKillSwitchPolicyChecks();
   runOwnerApprovalPolicyChecks();
   runPrismaSchemaMappingChecks();
 
