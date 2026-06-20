@@ -3,7 +3,7 @@ import {
   type AdminAnalyticsResolvedRange
 } from './admin-analytics-range';
 
-export type AdminAnalyticsLayoutPreviewStatus = 'group_headers_active';
+export type AdminAnalyticsLayoutPreviewStatus = 'collapsible_groups_active';
 export type AdminAnalyticsLayoutGroupKey =
   | 'overview'
   | 'business'
@@ -24,6 +24,7 @@ export type AdminAnalyticsLayoutGroup = {
   label: string;
   description: string;
   href: string;
+  defaultOpen: boolean;
   sections: AdminAnalyticsLayoutSection[];
 };
 
@@ -44,7 +45,8 @@ export type AdminAnalyticsLayoutPreview = {
   blockers: string[];
 };
 
-type LayoutGroupDefinition = Omit<AdminAnalyticsLayoutGroup, 'href' | 'sections'> & {
+type LayoutGroupDefinition = Omit<AdminAnalyticsLayoutGroup, 'href' | 'sections' | 'defaultOpen'> & {
+  defaultOpen?: boolean;
   sections: Array<Omit<AdminAnalyticsLayoutSection, 'href' | 'keepsTableFallback'>>;
 };
 
@@ -53,6 +55,7 @@ const LAYOUT_GROUPS: LayoutGroupDefinition[] = [
     key: 'overview',
     label: 'Overview',
     description: 'Entry guidance, selected-range context, CSV exports, and the section index.',
+    defaultOpen: true,
     sections: [
       { anchor: 'analytics-role-visibility', label: 'Role visibility' },
       { anchor: 'analytics-section-index', label: 'Section index' },
@@ -126,10 +129,10 @@ export function buildAdminAnalyticsLayoutPreview(
   const baseHref = workspaceHref(range);
 
   return {
-    status: 'group_headers_active',
+    status: 'collapsible_groups_active',
     enabled: true,
     groupHeadersEnabled: true,
-    collapsibleGroupsEnabled: false,
+    collapsibleGroupsEnabled: true,
     tabsEnabled: false,
     preservesSectionIndex: true,
     preservesRangeLinks: true,
@@ -138,8 +141,9 @@ export function buildAdminAnalyticsLayoutPreview(
     rangeLabel: range.label,
     rangeQuery,
     workspaceHref: baseHref,
-    groups: LAYOUT_GROUPS.map((group) => ({
+    groups: LAYOUT_GROUPS.map((group, index) => ({
       ...group,
+      defaultOpen: group.defaultOpen ?? index < 2,
       href: group.sections[0] ? sectionHref(range, group.sections[0].anchor) : baseHref,
       sections: group.sections.map((section) => ({
         ...section,
@@ -148,7 +152,6 @@ export function buildAdminAnalyticsLayoutPreview(
       }))
     })),
     blockers: [
-      'collapsible group behavior not implemented',
       'tabbed workspace behavior not implemented'
     ]
   };
