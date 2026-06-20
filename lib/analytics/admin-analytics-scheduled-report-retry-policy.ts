@@ -60,7 +60,7 @@ export function buildScheduledReportRetryPlan(options: {
   maxAttempts?: number;
 }): AdminAnalyticsScheduledReportRetryPlan {
   const maxAttempts = options.maxAttempts ?? SCHEDULED_REPORT_RETRY_MAX_ATTEMPTS;
-  const items = options.failures.map((failure) => {
+  const items = options.failures.map((failure): AdminAnalyticsScheduledReportRetryPlanItem => {
     const blockers = retryBlockers(failure, maxAttempts);
     const isFailed = failure.status === 'failed';
     const retryEligible = isFailed && blockers.length === 0;
