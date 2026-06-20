@@ -27,12 +27,12 @@ export type AdminAnalyticsScheduledReportWorkerDecision = {
 };
 
 export type AdminAnalyticsScheduledReportWorkerShellResult = {
-  status: 'worker_shell_disabled';
+  status: 'worker_shell_disabled' | 'worker_shell_gated_preview';
   ownerOnly: true;
-  workerRuntimeEnabled: false;
-  schedulerRuntimeEnabled: false;
-  timerRegistrationEnabled: false;
-  backgroundJobRegistrationEnabled: false;
+  workerRuntimeEnabled: boolean;
+  schedulerRuntimeEnabled: boolean;
+  timerRegistrationEnabled: boolean;
+  backgroundJobRegistrationEnabled: boolean;
   deliveryExecutionEnabled: false;
   deliveryTransportConfigured: false;
   automaticRegistrationEnabled: false;
@@ -61,7 +61,7 @@ function toDate(value: Date | string | null | undefined): Date | null {
 }
 
 function defaultBlockers(state: AdminAnalyticsScheduledReportWorkerGateState): string[] {
-  const blockers = ['worker shell disabled by default'];
+  const blockers: string[] = [];
   if (!state.workerRuntimeEnabled) blockers.push('worker runtime flag is disabled');
   if (!state.schedulerRuntimeEnabled) blockers.push('scheduler runtime flag is disabled');
   if (!state.timerRegistrationEnabled) blockers.push('timer registration is disabled');
@@ -102,20 +102,21 @@ export function evaluateScheduledReportWorkerShell(options: {
       blockers
     };
   });
+  const dueCount = decisions.filter((decision) => decision.status === 'due_for_manual_processing').length;
 
   return {
-    status: 'worker_shell_disabled',
+    status: shellBlockers.length === 0 ? 'worker_shell_gated_preview' : 'worker_shell_disabled',
     ownerOnly: true,
-    workerRuntimeEnabled: false,
-    schedulerRuntimeEnabled: false,
-    timerRegistrationEnabled: false,
-    backgroundJobRegistrationEnabled: false,
+    workerRuntimeEnabled: state.workerRuntimeEnabled,
+    schedulerRuntimeEnabled: state.schedulerRuntimeEnabled,
+    timerRegistrationEnabled: state.timerRegistrationEnabled,
+    backgroundJobRegistrationEnabled: state.backgroundJobRegistrationEnabled,
     deliveryExecutionEnabled: false,
     deliveryTransportConfigured: false,
     automaticRegistrationEnabled: false,
     evaluatedAt: now.toISOString(),
     evaluatedCount: decisions.length,
-    dueCount: 0,
+    dueCount,
     decisions,
     blockers: shellBlockers
   };
