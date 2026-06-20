@@ -22,7 +22,8 @@ Use this checklist after deployment before relying on `/admin/analytics` for ope
 - Scheduled report owner-approval policy requires owner role, selected-range evidence, aggregate-only report types, dry-run evidence, global disable control evidence, and delivery-disabled confirmation.
 - Scheduled report global kill-switch policy requires disable-control ownership, control location, safe default state, owner override policy, dry-run evidence, rollback procedure, and audit log destination.
 - Scheduled report dry-run evidence policy requires evidence id, timestamp, selected range, aggregate report types, Business/Site CSV preview paths, global disable confirmation, owner approval confirmation, delivery-disabled confirmation, and reviewer identity.
-- Scheduled report dry-run evidence recording, global state recording, owner override, delivery, execution, active repository access, endpoints, approval recording, and management UI remain disabled.
+- Scheduled report delivery-readiness contracts require aggregate-only payload shape, disabled channel evidence, retry/failure visibility, and owner/operator preview summary evidence.
+- Scheduled report dry-run evidence recording, global state recording, owner override, payload recording, channel runtime, retry execution, failure recording, preview recording, delivery, execution, active repository access, endpoints, approval recording, and management UI remain disabled.
 - Saved view presets preserve the selected range and existing section anchors.
 - Saved view persistence plans expose allowed scopes, metadata-only required fields, blocked fields, owner approval required, and owner approval not recorded.
 - Saved view storage schema exists for metadata-only records and keeps owner approval plus active state disabled by default.
@@ -90,6 +91,13 @@ Record one validation note per pass:
 - Scheduled report dry-run global disable confirmation requirement present:
 - Scheduled report dry-run owner approval confirmation requirement present:
 - Scheduled report dry-run delivery-disabled confirmation requirement present:
+- Scheduled report delivery-readiness contract checked:
+- Scheduled report aggregate payload contract checked:
+- Scheduled report aggregate payload blocked fields checked:
+- Scheduled report delivery channel runtime enabled:
+- Scheduled report retry execution enabled:
+- Scheduled report failure recording enabled:
+- Scheduled report operator preview recording enabled:
 - Scheduled report owner approval required:
 - Scheduled report owner approved:
 - Scheduled report active state disabled:
@@ -130,4 +138,4 @@ An empty panel is acceptable when the selected range has no matching traffic, or
 
 ## Safety expectations
 
-Analytics exports must stay aggregate-only. Scheduled report config, storage, read model, repository-read contract, owner-approval policy, global kill-switch policy, and dry-run evidence policy must stay inactive until owner approval recording, dry-run evidence recording, delivery controls, global disable controls, rollback procedure, and active management paths exist. Saved view foundations must stay inactive until owner approval recording, role policy, endpoints, active repository access, and management UI exist. Dashboard group headers should stay static until collapsible groups or tabs are validated separately. Raw event cleanup should remain preview-only until a separate guarded cleanup process is shipped after production evidence exists.
+Analytics exports must stay aggregate-only. Scheduled report config, storage, read model, repository-read contract, owner-approval policy, global kill-switch policy, dry-run evidence policy, and delivery-readiness contracts must stay inactive until owner approval recording, dry-run evidence recording, delivery controls, global disable controls, rollback procedure, and active management paths exist. Saved view foundations must stay inactive until owner approval recording, role policy, endpoints, active repository access, and management UI exist. Dashboard group headers should stay static until collapsible groups or tabs are validated separately. Raw event cleanup should remain preview-only until a separate guarded cleanup process is shipped after production evidence exists.
