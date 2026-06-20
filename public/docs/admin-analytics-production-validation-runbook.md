@@ -14,18 +14,18 @@ Use this checklist after deployment before relying on `/admin/analytics` for ope
 - Collapsible groups and tabbed workspace behavior remain disabled until a separate UI pass.
 - Owner sessions can see aggregate CSV exports.
 - Business CSV and Site CSV URLs preserve the selected range.
-- Scheduled report previews and config plans preserve the selected range and aggregate Business/Site CSV paths.
-- Scheduled report config plans are draft-only, owner-only, inactive, and require owner approval.
-- Scheduled report storage schema exists for metadata-only records and keeps owner approval, active state, and delivery state disabled by default.
-- Scheduled report read model returns metadata-only DTOs, rejects invalid rows, keeps operator activation disabled, and keeps delivery readiness disabled.
-- Scheduled report repository-read contract defines metadata-only fields and required future owner-approved, active-state, and delivery-disabled filters.
-- Scheduled report gated read-only factory is disabled by default and requires explicit runtime read, generated-client runtime, repository-read, global-disable, owner-approval, and dry-run evidence gates before it can create an injected reader.
-- Scheduled report owner-approval policy requires owner role, selected-range evidence, aggregate-only report types, dry-run evidence, global disable control evidence, and delivery-disabled confirmation.
-- Scheduled report global kill-switch policy requires disable-control ownership, control location, safe default state, owner override policy, dry-run evidence, rollback procedure, and audit log destination.
-- Scheduled report dry-run evidence policy requires evidence id, timestamp, selected range, aggregate report types, Business/Site CSV preview paths, global disable confirmation, owner approval confirmation, delivery-disabled confirmation, and reviewer identity.
-- Scheduled report delivery-readiness contracts require aggregate-only payload shape, disabled channel evidence, retry/failure visibility, and owner/operator preview summary evidence.
-- Scheduled report dry-run evidence recording, global state recording, owner override, payload recording, channel runtime, retry execution, failure recording, preview recording, delivery, execution, endpoints, approval recording, repository writes, and management UI remain disabled.
-- No app route or UI imports the scheduled-report repository path.
+- Scheduled report owner-only management is available and public/staff access is blocked.
+- Scheduled report read and recording endpoints remain owner-only and runtime-gated.
+- Scheduled report locked controls target only the approved recording endpoints.
+- Scheduled report dry-run preview remains aggregate-only and requires its preview flag.
+- Scheduled report payload preview remains aggregate-only and requires its preview flag.
+- Scheduled report activation-readiness requires dry-run evidence, owner approval, kill-switch permission, disable-state validation, repository persistence gates, and delivery-disabled confirmation.
+- Scheduled report weekly/monthly schedule planning is deterministic and does not register a scheduler.
+- Scheduled report worker shell is disabled by default and has no timer, cron, queue, or background registration.
+- Scheduled report default transport adapter is disabled and no live provider, email, webhook, or network transport is configured.
+- Scheduled report delivery execution is gated and blocked by default unless every required gate and an injected adapter are intentionally provided.
+- Scheduled report retry planning includes failed delivery records only, caps attempts, is owner-visible, and does not start automatic retry execution.
+- Scheduled report metadata does not contain per-customer rows, raw event rows, visitor/session identifiers, delivery recipient lists, or export contents.
 - Saved view presets preserve the selected range and existing section anchors.
 - Saved view persistence plans expose allowed scopes, metadata-only required fields, blocked fields, owner approval required, and owner approval not recorded.
 - Saved view storage schema exists for metadata-only records and keeps owner approval plus active state disabled by default.
@@ -60,58 +60,27 @@ Record one validation note per pass:
 - Advanced cohort AOV/share rows checked:
 - Advanced cohort order-count band rows checked:
 - Advanced cohort recency band rows checked:
-- Scheduled report preview checked:
-- Scheduled report config plans checked:
-- Scheduled report config status:
-- Scheduled report storage schema checked:
-- Scheduled report read model checked:
-- Scheduled report read model metadata-only output checked:
-- Scheduled report read model invalid rows omitted:
-- Scheduled report read model operator activation disabled:
-- Scheduled report read model delivery readiness disabled:
-- Scheduled report repository-read contract checked:
-- Scheduled report repository-read select fields metadata-only:
-- Scheduled report repository-read required filters checked:
-- Scheduled report repository-read active path disabled:
-- Scheduled report gated read-only factory checked:
-- Scheduled report gated read-only factory enabled by default:
-- Scheduled report gated read-only factory required gates checked:
-- Scheduled report app route or UI repository import present:
-- Scheduled report owner-approval policy checked:
-- Scheduled report owner approval recording enabled:
-- Scheduled report owner role requirement present:
-- Scheduled report aggregate-only report type requirement present:
-- Scheduled report global disable control requirement present:
-- Scheduled report global kill-switch policy checked:
-- Scheduled report global disable state recording enabled:
-- Scheduled report global disable safe default state:
-- Scheduled report owner override enabled:
-- Scheduled report rollback procedure requirement present:
-- Scheduled report audit log destination requirement present:
-- Scheduled report dry-run evidence policy checked:
-- Scheduled report dry-run evidence recording enabled:
-- Scheduled report dry-run evidence id requirement present:
-- Scheduled report dry-run timestamp requirement present:
-- Scheduled report dry-run selected range requirement present:
-- Scheduled report dry-run Business/Site CSV preview path requirements present:
-- Scheduled report dry-run global disable confirmation requirement present:
-- Scheduled report dry-run owner approval confirmation requirement present:
-- Scheduled report dry-run delivery-disabled confirmation requirement present:
-- Scheduled report delivery-readiness contract checked:
-- Scheduled report aggregate payload contract checked:
-- Scheduled report aggregate payload blocked fields checked:
-- Scheduled report delivery channel runtime enabled:
-- Scheduled report retry execution enabled:
-- Scheduled report failure recording enabled:
-- Scheduled report operator preview recording enabled:
-- Scheduled report owner approval required:
-- Scheduled report owner approved:
-- Scheduled report active state disabled:
-- Scheduled report delivery disabled:
-- Scheduled report execution disabled:
-- Scheduled report endpoints disabled:
-- Scheduled report management UI disabled:
-- Scheduled report dry-run evidence required:
+- Scheduled report owner management checked:
+- Scheduled report public/staff access blocked:
+- Scheduled report read endpoint checked:
+- Scheduled report locked controls checked:
+- Scheduled report recording endpoints checked:
+- Scheduled report dry-run preview checked:
+- Scheduled report dry-run preview aggregate-only:
+- Scheduled report payload preview checked:
+- Scheduled report payload preview aggregate-only:
+- Scheduled report activation-readiness checked:
+- Scheduled report schedule planning checked:
+- Scheduled report scheduler registered: must be no
+- Scheduled report worker shell checked:
+- Scheduled report automatic worker registered: must be no
+- Scheduled report transport contract checked:
+- Scheduled report live transport configured: must be no
+- Scheduled report gated delivery executor checked:
+- Scheduled report default delivery blocked:
+- Scheduled report retry planning checked:
+- Scheduled report automatic retry loop registered: must be no
+- Scheduled report aggregate-only metadata checked:
 - Saved view preset preview checked:
 - Saved view persistence plan checked:
 - Saved view storage schema checked:
@@ -144,4 +113,4 @@ An empty panel is acceptable when the selected range has no matching traffic, or
 
 ## Safety expectations
 
-Analytics exports must stay aggregate-only. Scheduled report config, storage, read model, repository-read contract, gated read-only factory, owner-approval policy, global kill-switch policy, dry-run evidence policy, and delivery-readiness contracts must stay inactive from routes and UI until owner approval recording, dry-run evidence recording, delivery controls, global disable controls, rollback procedure, and active management paths exist. Saved view foundations must stay inactive until owner approval recording, role policy, endpoints, active repository access, and management UI exist. Dashboard group headers should stay static until collapsible groups or tabs are validated separately. Raw event cleanup should remain preview-only until a separate guarded cleanup process is shipped after production evidence exists.
+Analytics exports must stay aggregate-only. Scheduled reports are partially production-ready for owner-only management, preview, planning, disabled execution contracts, and retry visibility. They are not production-ready for automatic scheduling or live delivery until a future audited transport and scheduler enablement slice passes exact-head validation. Saved view foundations must stay inactive until owner approval recording, role policy, endpoints, active repository access, and management UI exist. Dashboard group headers should stay static until collapsible groups or tabs are validated separately. Raw event cleanup should remain preview-only until a separate guarded cleanup process is shipped after production evidence exists.
