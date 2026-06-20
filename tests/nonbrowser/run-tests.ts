@@ -67,6 +67,8 @@ async function main() {
   const savedViewRouteModule = await import('./saved-view-' + 'route-plan.test');
   await savedViewRouteModule.runSavedViewRoutePlanTests();
   await runSavedViewStorageApplyTests();
+  const savedViewFlowModule = await import('./saved-view-' + 'core-flow.test');
+  await savedViewFlowModule.runSavedViewCoreFlowTests();
   await runSavedViewSchemaFragmentTests();
   await runServerActionContractTests();
   await runRouteHandlerContractTests();
