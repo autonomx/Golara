@@ -23,6 +23,7 @@ const PAGE_PATH = new URL('../../app/admin/analytics/scheduled-reports/page.tsx'
 const RECORD_DRY_RUN_ROUTE = new URL('../../app/admin/analytics/scheduled-reports/record-dry-run/route.ts', import.meta.url);
 const RECORD_OWNER_APPROVAL_ROUTE = new URL('../../app/admin/analytics/scheduled-reports/record-owner-approval/route.ts', import.meta.url);
 const RECORD_DISABLE_STATE_ROUTE = new URL('../../app/admin/analytics/scheduled-reports/record-disable-state/route.ts', import.meta.url);
+const LIVE_EXECUTION_PATTERN = /sendMail|createTransport|transport\.(send|deliver)|setInterval|setTimeout|cron|schedule\.create/i;
 
 function recordingEnv(): AdminAnalyticsScheduledReportRecordingEndpointEnv {
   return {
@@ -171,7 +172,7 @@ export async function runScheduledReportManagementSurfaceTests() {
   const declaredActionPaths = [...managementSurfaceSource.matchAll(/actionPath: '([^']+)'/g)].map((match) => match[1]);
   assert.deepEqual([...new Set(declaredActionPaths)].sort(), approvedPostEndpoints);
   assert.doesNotMatch(managementSurfaceSource, /actionPath: '\/admin\/analytics\/scheduled-reports\/(activate|delivery|run|scheduler)/i);
-  assert.doesNotMatch(managementSurfaceSource, /sendMail|transport|setInterval|setTimeout|cron|schedule\.create/i);
+  assert.doesNotMatch(managementSurfaceSource, LIVE_EXECUTION_PATTERN);
 
   const pageSource = await readFile(PAGE_PATH, 'utf8');
   assert.match(pageSource, /buildScheduledReportManagementSurfaceContract/);
