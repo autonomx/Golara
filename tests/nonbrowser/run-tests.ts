@@ -6,6 +6,7 @@ import { runRouteHandlerContractTests } from './route-handler-contracts.test';
 import { runScheduledReportActivationReadinessTests } from './scheduled-report-activation-readiness.test';
 import { runScheduledReportDeliveryReadinessTests } from './scheduled-report-delivery-readiness.test';
 import { runScheduledReportDryRunEvidenceTests } from './scheduled-report-dry-run-evidence.test';
+import { runScheduledReportDryRunPreviewTests } from './scheduled-report-dry-run-preview.test';
 import { runScheduledReportManagementSurfaceTests } from './scheduled-report-management-surface.test';
 import { runScheduledReportReadEndpointTests } from './scheduled-report-read-endpoint.test';
 import { runScheduledReportRecordingReadinessTests } from './scheduled-report-recording-readiness.test';
@@ -19,6 +20,7 @@ async function main() {
   await runMigrationSchemaTests();
   await runRepositoryIntegrationTests();
   runScheduledReportDryRunEvidenceTests();
+  await runScheduledReportDryRunPreviewTests();
   runScheduledReportDeliveryReadinessTests();
   await runScheduledReportActivationReadinessTests();
   runScheduledReportRecordingReadinessTests();
