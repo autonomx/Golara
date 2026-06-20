@@ -1,5 +1,16 @@
 export type AdminAnalyticsScheduledReportManagementSurfaceStatus = 'management_surface_visible_runtime_disabled';
 
+export type AdminAnalyticsScheduledReportManagementSurfaceApprovedPostEndpoint =
+  | '/admin/analytics/scheduled-reports/record-dry-run'
+  | '/admin/analytics/scheduled-reports/record-owner-approval'
+  | '/admin/analytics/scheduled-reports/record-disable-state';
+
+export const ADMIN_ANALYTICS_SCHEDULED_REPORT_MANAGEMENT_APPROVED_POST_ENDPOINTS = [
+  '/admin/analytics/scheduled-reports/record-dry-run',
+  '/admin/analytics/scheduled-reports/record-owner-approval',
+  '/admin/analytics/scheduled-reports/record-disable-state'
+] as const satisfies readonly AdminAnalyticsScheduledReportManagementSurfaceApprovedPostEndpoint[];
+
 export type AdminAnalyticsScheduledReportManagementSurfaceControl = {
   key:
     | 'list-scheduled-reports'
@@ -11,6 +22,9 @@ export type AdminAnalyticsScheduledReportManagementSurfaceControl = {
   label: string;
   enabled: boolean;
   reason: string;
+  actionPath?: AdminAnalyticsScheduledReportManagementSurfaceApprovedPostEndpoint;
+  method?: 'post';
+  submitLabel?: string;
 };
 
 export type AdminAnalyticsScheduledReportManagementSurfaceContract = {
@@ -41,19 +55,28 @@ const DISABLED_CONTROLS: AdminAnalyticsScheduledReportManagementSurfaceControl[]
     key: 'record-dry-run-evidence',
     label: 'Record dry-run evidence',
     enabled: false,
-    reason: 'Dry-run evidence recording requires an explicit write activation slice.'
+    reason: 'Dry-run evidence recording remains locked until explicit recording runtime gates are enabled.',
+    actionPath: '/admin/analytics/scheduled-reports/record-dry-run',
+    method: 'post',
+    submitLabel: 'Record dry-run evidence'
   },
   {
     key: 'record-owner-approval',
     label: 'Record owner approval',
     enabled: false,
-    reason: 'Owner approval recording requires an explicit approval workflow slice.'
+    reason: 'Owner approval recording remains locked until explicit owner approval runtime gates are enabled.',
+    actionPath: '/admin/analytics/scheduled-reports/record-owner-approval',
+    method: 'post',
+    submitLabel: 'Record owner approval'
   },
   {
     key: 'record-global-disable-state',
     label: 'Record global disable state',
     enabled: false,
-    reason: 'Global disable state recording requires an explicit operational control slice.'
+    reason: 'Global disable state recording remains locked until explicit operational runtime gates are enabled.',
+    actionPath: '/admin/analytics/scheduled-reports/record-disable-state',
+    method: 'post',
+    submitLabel: 'Record disable state'
   },
   {
     key: 'activate-schedule',
@@ -91,7 +114,7 @@ export function buildAdminAnalyticsScheduledReportManagementSurfaceContract(opti
       'record dry-run evidence through the gated recording repository',
       'record owner approval through the gated recording repository',
       'record global disable state before schedule activation',
-      'add owner-only API endpoints with CSRF and audit checks',
+      'keep owner-only API endpoints guarded with runtime gates and audit checks',
       'add scheduler and delivery execution in separate reviewed slices'
     ]
   };
