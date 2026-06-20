@@ -13,6 +13,7 @@ import { runScheduledReportReadEndpointTests } from './scheduled-report-read-end
 import { runScheduledReportRecordingReadinessTests } from './scheduled-report-recording-readiness.test';
 import { runScheduledReportRecordingRepositoryTests } from './scheduled-report-recording-repository.test';
 import { runScheduledReportRepositoryReadTests } from './scheduled-report-repository-read.test';
+import { runScheduledReportSchedulePlanTests } from './scheduled-report-schedule-plan.test';
 import { runSeededWorkflowTests } from './seeded-workflows.test';
 import { runServerActionContractTests } from './server-action-contracts.test';
 import { runStaticBoundaryTests } from './static-boundary.test';
@@ -25,6 +26,7 @@ async function main() {
   await runScheduledReportDeliveryPayloadTests();
   runScheduledReportDeliveryReadinessTests();
   await runScheduledReportActivationReadinessTests();
+  await runScheduledReportSchedulePlanTests();
   runScheduledReportRecordingReadinessTests();
   await runScheduledReportRecordingRepositoryTests();
   await runScheduledReportRepositoryReadTests();
@@ -39,7 +41,7 @@ async function main() {
   console.log('non-browser confidence tests passed');
 }
 
-main().catch((error) => {
-  console.error(error);
-  throw error;
+main().catch((failure) => {
+  console.error(failure);
+  process.exitCode = 1;
 });
