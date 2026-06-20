@@ -74,6 +74,8 @@ async function main() {
   await retentionModule.runSiteAnalyticsRetentionCleanupExecutorTests();
   const retentionRouteModule = await import('./site-retention-' + 'route.test');
   await retentionRouteModule.runSiteRetentionRouteTests();
+  const retentionScreenModule = await import('./site-retention-' + 'screen.test');
+  await retentionScreenModule.runSiteRetentionScreenTests();
   await runServerActionContractTests();
   await runRouteHandlerContractTests();
   await runPropertyNormalizerTests();
