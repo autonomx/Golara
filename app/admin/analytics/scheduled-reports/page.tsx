@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { AdminPageShell } from '@/components/admin/AdminPageShell';
 import { getAdminIdentity, isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
 import { requireAdminRouteSession } from '@/lib/admin-page-auth-boundary';
+import { loadScheduledReportReadEndpointPreview } from '@/lib/analytics/admin-analytics-scheduled-report-read-endpoint';
 import { buildScheduledReportManagementSurfaceContract } from '@/lib/analytics/admin-analytics-scheduled-report-management-surface';
 import { listAdminCategories, listAdminProducts, listMedia } from '@/lib/cms/catalog-repository';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
@@ -18,7 +19,12 @@ export default async function ScheduledReportsPage() {
   const identity = await getAdminIdentity();
   const isOwner = identity.role === 'owner';
   const surface = buildScheduledReportManagementSurfaceContract({ isOwner });
-  const [products, categories, media] = await Promise.all([listAdminProducts(), listAdminCategories(), listMedia()]);
+  const [products, categories, media, readPreview] = await Promise.all([
+    listAdminProducts(),
+    listAdminCategories(),
+    listMedia(),
+    loadScheduledReportReadEndpointPreview({ isOwner })
+  ]);
 
   return (
     <AdminPageShell
@@ -40,19 +46,19 @@ export default async function ScheduledReportsPage() {
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Admin / Analytics / Scheduled reports</p>
               <h1 className="mt-1 text-3xl font-bold text-stone-950">Scheduled report management</h1>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">
-                Owner-facing scheduled-report controls are visible here as a readiness surface. Runtime repository reads,
-                writes, scheduler execution, and delivery remain disabled until separate activation slices are approved.
+                Owner-facing scheduled-report controls are visible here as a readiness surface. Runtime writes, scheduler
+                execution, and delivery remain disabled until separate activation slices are approved.
               </p>
             </div>
             <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-amber-800">
-              Runtime disabled
+              Runtime guarded
             </span>
           </div>
           <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-800">Owner access</p>
             <p className="mt-1 text-sm leading-6 text-amber-950">
               {isOwner
-                ? 'Owner session detected. Controls remain locked until repository and recording gates are explicitly enabled.'
+                ? 'Owner session detected. Read preview loading remains gated by explicit runtime evidence flags.'
                 : 'Staff session detected. Scheduled-report controls are owner-only and remain locked.'}
             </p>
           </div>
@@ -67,10 +73,18 @@ export default async function ScheduledReportsPage() {
         <section className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Gate status</p>
           <h2 className="mt-1 text-xl font-bold text-stone-950">Management controls are present but locked</h2>
-          <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-lg border border-stone-200 bg-stone-50 p-3">
+              <dt className="text-xs font-bold uppercase tracking-[0.14em] text-stone-500">Read endpoint</dt>
+              <dd className="mt-1 text-sm font-bold text-stone-950">
+                {readPreview.readEndpointRuntimeEnabled ? 'Enabled' : 'Disabled'}
+              </dd>
+            </div>
             <div className="rounded-lg border border-stone-200 bg-stone-50 p-3">
               <dt className="text-xs font-bold uppercase tracking-[0.14em] text-stone-500">Read repository</dt>
-              <dd className="mt-1 text-sm font-bold text-stone-950">{surface.repositoryReadPathEnabled ? 'Enabled' : 'Disabled'}</dd>
+              <dd className="mt-1 text-sm font-bold text-stone-950">
+                {readPreview.preview.repositoryReadsEnabled ? 'Enabled' : 'Disabled'}
+              </dd>
             </div>
             <div className="rounded-lg border border-stone-200 bg-stone-50 p-3">
               <dt className="text-xs font-bold uppercase tracking-[0.14em] text-stone-500">Write repository</dt>
@@ -81,6 +95,44 @@ export default async function ScheduledReportsPage() {
               <dd className="mt-1 text-sm font-bold text-stone-950">{surface.deliveryExecutionEnabled ? 'Enabled' : 'Disabled'}</dd>
             </div>
           </dl>
+        </section>
+
+        <section className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Read preview</p>
+              <h2 className="mt-1 text-xl font-bold text-stone-950">Approved scheduled-report rows</h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">
+                Rows appear here only when the owner-only read endpoint and repository read gate are explicitly enabled.
+              </p>
+            </div>
+            <span className="rounded-full border border-stone-300 bg-stone-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-stone-600">
+              {readPreview.rows.length} loaded
+            </span>
+          </div>
+
+          {readPreview.rows.length === 0 ? (
+            <div className="mt-4 rounded-lg border border-dashed border-stone-300 bg-stone-50 p-4 text-sm leading-6 text-stone-600">
+              No scheduled reports are loaded. Current blockers: {readPreview.blockers.slice(0, 3).join('; ') || 'none'}.
+            </div>
+          ) : (
+            <div className="mt-4 grid gap-3">
+              {readPreview.rows.map((row) => (
+                <article key={row.id} className="rounded-lg border border-stone-200 bg-stone-50 p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-sm font-bold text-stone-950">{row.label}</h3>
+                      <p className="mt-1 text-xs text-stone-500">{row.cadence} / {row.rangeLabel}</p>
+                    </div>
+                    <span className="rounded-full bg-white px-2 py-1 text-[0.7rem] font-bold uppercase tracking-[0.12em] text-stone-600">
+                      Delivery off
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-stone-600">{row.description ?? 'No description recorded.'}</p>
+                </article>
+              ))}
+            </div>
+          )}
         </section>
 
         <section className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
