@@ -10,6 +10,7 @@ import { runScheduledReportDeliveryReadinessTests } from './scheduled-report-del
 import { runScheduledReportDryRunEvidenceTests } from './scheduled-report-dry-run-evidence.test';
 import { runScheduledReportDryRunPreviewTests } from './scheduled-report-dry-run-preview.test';
 import { runScheduledReportManagementSurfaceTests } from './scheduled-report-management-surface.test';
+import { runScheduledReportOutboxChannelTests } from './scheduled-report-outbox-channel.test';
 import { runScheduledReportReadEndpointTests } from './scheduled-report-read-endpoint.test';
 import { runScheduledReportRecordingReadinessTests } from './scheduled-report-recording-readiness.test';
 import { runScheduledReportRecordingRepositoryTests } from './scheduled-report-recording-repository.test';
@@ -35,6 +36,7 @@ async function main() {
   await runScheduledReportSchedulePlanTests();
   await runScheduledReportWorkerShellTests();
   await runScheduledReportTransportContractTests();
+  await runScheduledReportOutboxChannelTests();
   await runScheduledReportDeliveryRunTests();
   const ownerRunModule = await import('./scheduled-report-' + 'manual-delivery.test');
   await ownerRunModule['runScheduledReport' + 'ManualDeliveryTests']();
