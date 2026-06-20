@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { AdminPageShell } from '@/components/admin/AdminPageShell';
 import { getAdminIdentity, isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
 import { requireAdminRouteSession } from '@/lib/admin-page-auth-boundary';
-import { buildAdminAnalyticsScheduledReportManagementSurfaceContract } from '@/lib/analytics/admin-analytics-scheduled-report-management-surface';
+import { buildScheduledReportManagementSurfaceContract } from '@/lib/analytics/admin-analytics-scheduled-report-management-surface';
 import { listAdminCategories, listAdminProducts, listMedia } from '@/lib/cms/catalog-repository';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 
@@ -17,7 +17,7 @@ export default async function AdminAnalyticsScheduledReportsPage() {
   const authConfigured = isAdminAuthConfigured();
   const identity = await getAdminIdentity();
   const isOwner = identity.role === 'owner';
-  const surface = buildAdminAnalyticsScheduledReportManagementSurfaceContract({ isOwner });
+  const surface = buildScheduledReportManagementSurfaceContract({ isOwner });
   const [products, categories, media] = await Promise.all([listAdminProducts(), listAdminCategories(), listMedia()]);
 
   return (
