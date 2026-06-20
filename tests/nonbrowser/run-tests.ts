@@ -14,6 +14,7 @@ import { runScheduledReportRecordingReadinessTests } from './scheduled-report-re
 import { runScheduledReportRecordingRepositoryTests } from './scheduled-report-recording-repository.test';
 import { runScheduledReportRepositoryReadTests } from './scheduled-report-repository-read.test';
 import { runScheduledReportSchedulePlanTests } from './scheduled-report-schedule-plan.test';
+import { runScheduledReportTransportContractTests } from './scheduled-report-transport-contract.test';
 import { runScheduledReportWorkerShellTests } from './scheduled-report-worker-shell.test';
 import { runSeededWorkflowTests } from './seeded-workflows.test';
 import { runServerActionContractTests } from './server-action-contracts.test';
@@ -29,6 +30,7 @@ async function main() {
   await runScheduledReportActivationReadinessTests();
   await runScheduledReportSchedulePlanTests();
   await runScheduledReportWorkerShellTests();
+  await runScheduledReportTransportContractTests();
   runScheduledReportRecordingReadinessTests();
   await runScheduledReportRecordingRepositoryTests();
   await runScheduledReportRepositoryReadTests();
