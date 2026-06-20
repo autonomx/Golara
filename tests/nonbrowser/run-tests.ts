@@ -72,6 +72,8 @@ async function main() {
   await runSavedViewSchemaFragmentTests();
   const retentionModule = await import('./site-analytics-' + 'retention-cleanup-executor.test');
   await retentionModule.runSiteAnalyticsRetentionCleanupExecutorTests();
+  const retentionRouteModule = await import('./site-retention-' + 'route.test');
+  await retentionRouteModule.runSiteRetentionRouteTests();
   await runServerActionContractTests();
   await runRouteHandlerContractTests();
   await runPropertyNormalizerTests();
