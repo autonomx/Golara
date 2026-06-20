@@ -129,7 +129,7 @@ export default async function SavedViewsPage() {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <h3 className="text-sm font-bold text-stone-950">{row.label}</h3>
-                      <p className="mt-1 text-xs text-stone-500">{row.scope} / {row.audience} / {row.rangeLabel}</p>
+                      <p className="mt-1 text-xs text-stone-500">{row.scope} / {row.audience} / {row.rangeQuery}</p>
                     </div>
                     <span className="rounded-full bg-white px-2 py-1 text-[0.7rem] font-bold uppercase tracking-[0.12em] text-stone-600">
                       {row.activeForOperators ? 'Active' : 'Pending'}
