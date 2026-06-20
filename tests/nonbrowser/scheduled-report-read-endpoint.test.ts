@@ -107,9 +107,12 @@ export async function runScheduledReportReadEndpointTests() {
   const pageSource = source('app/admin/analytics/scheduled-reports/page.tsx');
   assert.match(pageSource, /loadScheduledReportReadEndpointPreview/);
   assert.match(pageSource, /Rows appear here only when/);
-  assert.doesNotMatch(pageSource, /<form\b/i);
-  assert.doesNotMatch(pageSource, /\baction=/i);
-  assert.doesNotMatch(pageSource, /\bmethod=/i);
+  assert.match(pageSource, /<form\b/i);
+  assert.match(pageSource, /action=\{control\.actionPath\}/);
+  assert.match(pageSource, /method=\{control\.method\}/);
+  assert.match(pageSource, /disabled=\{!control\.enabled\}/);
+  assert.doesNotMatch(pageSource, /recordScheduledReportEndpointRequest/);
+  assert.doesNotMatch(pageSource, /fetch\(|XMLHttpRequest|navigator\.sendBeacon/i);
   assert.doesNotMatch(pageSource, /\.create\(|\.update\(|\.upsert\(|\.delete\(|sendMail|transport|setInterval|setTimeout|cron|schedule\.create/i);
 
   console.log('scheduled-report-read-endpoint.test.ts passed');
