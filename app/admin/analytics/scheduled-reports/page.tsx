@@ -147,6 +147,25 @@ export default async function ScheduledReportsPage() {
                   </span>
                 </div>
                 <p className="mt-2 text-sm leading-6 text-stone-600">{control.reason}</p>
+                {control.actionPath ? (
+                  <form action={control.actionPath} method={control.method} className="mt-3 rounded-lg border border-dashed border-stone-300 bg-white p-3">
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-stone-500">Approved POST target</p>
+                    <code className="mt-1 block break-all rounded bg-stone-100 px-2 py-1 text-xs text-stone-700">
+                      {control.actionPath}
+                    </code>
+                    <p className="mt-2 text-xs leading-5 text-stone-500">
+                      Submit is locked until the corresponding owner-only runtime gate is explicitly enabled.
+                    </p>
+                    <button
+                      type="submit"
+                      disabled={!control.enabled}
+                      aria-disabled={!control.enabled}
+                      className="mt-3 rounded-full border border-stone-300 bg-stone-100 px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-stone-500"
+                    >
+                      {control.submitLabel ?? control.label}
+                    </button>
+                  </form>
+                ) : null}
               </article>
             ))}
           </div>
