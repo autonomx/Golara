@@ -6,6 +6,7 @@ import { runRouteHandlerContractTests } from './route-handler-contracts.test';
 import { runSavedViewManagementSurfaceTests } from './saved-view-management-surface.test';
 import { runSavedViewMutationPolicyTests } from './saved-view-mutation-policy.test';
 import { runSavedViewReadEndpointTests } from './saved-view-read-endpoint.test';
+import { runSavedViewSchemaFragmentTests } from './saved-view-schema-fragment.test';
 import { runScheduledReportActivationReadinessTests } from './scheduled-report-activation-readiness.test';
 import { runScheduledReportDeliveryExecutionTests as runScheduledReportDeliveryRunTests } from './scheduled-report-delivery-execution.test';
 import { runScheduledReportDeliveryPayloadTests } from './scheduled-report-delivery-payload.test';
@@ -62,6 +63,7 @@ async function main() {
   await runSavedViewManagementSurfaceTests();
   await runSavedViewMutationPolicyTests();
   await runSavedViewReadEndpointTests();
+  await runSavedViewSchemaFragmentTests();
   await runServerActionContractTests();
   await runRouteHandlerContractTests();
   await runPropertyNormalizerTests();
