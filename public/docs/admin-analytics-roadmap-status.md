@@ -18,21 +18,21 @@ This document summarizes the `/admin/analytics` workspace status.
 - Site analytics event foundation with privacy-safe first-party events.
 - Traffic attribution using capped UTM fields and external referrer domains.
 - Owner-only aggregate Business CSV and Site CSV exports.
-- Scheduled report owner management surface, owner-only read endpoint, locked recording controls, gated recording endpoints, dry-run preview, payload preview, activation-readiness evaluation, deterministic schedule planning, disabled worker shell, disabled transport contract, gated delivery executor contract, and capped retry planning.
-- Saved dashboard view preset preview, persistence-plan foundation, inactive table, and metadata read model for future saves.
-- Dashboard group header UI using the selected range and existing section anchors.
+- Scheduled report owner management, read/recording endpoints, locked controls, dry-run preview, payload preview, activation readiness, schedule planning, disabled worker shell, disabled transport/outbox contracts, manual owner-run readiness, staging smoke validation, gated delivery executor contract, capped retry planning, and ops hardening.
+- Saved dashboard view management surface, owner/staff metadata read route, approved owner POST route plans, injected-delegate storage apply helper, owner action core, and dedicated saved-view status page.
+- Native collapsible dashboard groups using the selected range and existing section anchors.
 - Privacy and retention policy visibility.
-- Read-only raw site-event retention status, cleanup preview, and cleanup readiness guidance.
+- Raw site-event retention status, cleanup preview, owner-only cleanup plan helper, hard-gated injected-delegate executor, no-delegate owner route, and dedicated retention status/control page.
 - Role-aware visibility for owner-only exports and retention diagnostics.
 - Operator checklist for reviewing analytics and interpreting exports.
 
 ## Planned next
 
-- Automated raw site-event deletion after production migration evidence and cleanup preview evidence are verified.
+- Automated raw site-event deletion with a live delete delegate attached only after production evidence, explicit execution flags, rollback evidence, and owner confirmation.
 - Future customer segmentation beyond aggregate order-count and recency bands, only after a separate privacy review.
-- Scheduled report schedule activation from the owner page, live scheduler/timer/background registration, automatic worker execution, live transport configuration, live email/provider delivery, and automatic retry execution.
-- Saved dashboard active save/update/remove/read endpoints, owner approval recording, role-policy enforcement, active repository access, and owner/staff management UI.
-- Collapsible dashboard groups or tabbed workspace behavior.
+- Scheduled report live scheduler/timer/background registration, automatic worker execution, real transport provider wiring, live email/provider delivery, and automatic retry execution.
+- Saved dashboard generated-client write integration for the live routes. Current routes remain owner-only and plan/core-backed; storage application is injected-delegate tested.
+- Tabbed workspace behavior. Native collapsible groups are active.
 
 ## Customer cohort note
 
@@ -40,15 +40,13 @@ Advanced customer cohort reporting is aggregate-only. It shows AOV/share buckets
 
 ## Scheduled report note
 
-Scheduled reports are partially production-ready for owner-only management, preview, payload materialization, planning, disabled execution contracts, and retry visibility. They are not yet production-ready for automatic scheduling or live delivery.
-
-The available safe surface includes owner-only read/recording endpoints, locked management controls, aggregate-only dry-run preview, aggregate-only payload preview, activation-readiness evaluation, weekly/monthly schedule planning, a disabled worker shell, a disabled default transport adapter, a gated delivery executor contract, and retry planning for failed delivery records only.
+Scheduled reports are production-hardened for owner-only management, previews, payload materialization, planning, disabled execution contracts, manual owner-run readiness, retry visibility, staging smoke validation, and operator hardening. They are not yet production-ready for automatic scheduling or live provider delivery.
 
 The disabled boundary remains important:
 
 - no live scheduler, timer, cron, or background registration
 - no automatic worker execution
-- no live email/provider/transport configuration
+- no live email/provider delivery by default
 - no payload leaving the system by default
 - no unbounded retry loop
 - no public or staff scheduled-report access
@@ -57,11 +55,19 @@ The disabled boundary remains important:
 
 ## Saved dashboard view storage note
 
-The saved dashboard view foundation includes a persistence-plan contract, inactive `AdminAnalyticsSavedView` storage table, and metadata-only read-model foundation. It defines named dashboard view presets, selected-range metadata, role-aware audience labels, allowed scopes, owner-managed fields, metadata-only storage, and safe DTO normalization while keeping save/update/remove/read endpoints, active repository access, and management UI disabled.
+Saved dashboard views now have a visible management and route-planning surface. The implementation includes named presets, allowed scopes, role-aware metadata normalization, blocked report/customer/event-row fields, metadata-only DTOs, owner/staff read gating, approved owner POST targets, injected-delegate storage application, and a shared action core.
+
+Live routes remain plan-only by default unless a storage delegate is explicitly provided. Generated-client write integration remains pending.
 
 ## Dashboard group header note
 
-The dashboard layout contract now renders static group headers for Overview, Business, Site, Products and categories, Operations, and Privacy/docs. These headers reuse the selected range and existing section anchors without enabling collapsible groups or tabs.
+The dashboard layout contract now renders native collapsible groups for Overview, Business, Site, Products and categories, Operations, and Privacy/docs. These groups reuse the selected range and existing section anchors while keeping server rendering and chart table fallbacks intact. Tabbed workspace behavior remains pending.
+
+## Retention cleanup note
+
+Retention cleanup now has a no-delete-by-default control track. The implemented surface includes read-only stale-event preview, owner-only cleanup plan helper, hard-gated injected-delegate executor, owner-only POST route that passes no delegate by default, and a dedicated owner status page with manual confirmation copy.
+
+Actual raw-event deletion remains pending until a live delete delegate is wired with production evidence, explicit execution flags, rollback evidence, and owner confirmation.
 
 ## Production validation checklist
 
@@ -73,11 +79,11 @@ Before treating site analytics as complete in production, verify:
 4. Do Not Track is honored in the browser reporter.
 5. CSV exports remain aggregate-only.
 6. Raw event retention status is visible to owner sessions.
-7. Cleanup preview reports eligible stale-event counts without deleting data.
+7. Cleanup preview and owner cleanup route checks report eligible stale-event counts without deleting data by default.
 8. Custom preset and start/end ranges produce matching dashboard, section-link, and export windows.
 9. Customer cohort panels and CSV rows remain aggregate-only.
 10. Advanced cohort panels and CSV rows show only aggregate AOV/share/order-count/recency bands.
-11. Scheduled report owner-only management, read, recording, dry-run preview, payload preview, activation-readiness, schedule planning, disabled worker shell, disabled transport contract, gated delivery executor, and retry planning preserve aggregate-only data and stay behind their explicit gates.
-12. Scheduled reports still do not run automatic scheduling, live delivery transport, automatic workers, or unbounded retries.
-13. Saved dashboard view presets, persistence plans, storage table, and read model preserve selected range metadata, existing section anchors, allowed scopes, blocked fields, disabled endpoints, inactive activation flags, and metadata-only DTOs.
-14. Dashboard group headers preserve selected range links, the section index, existing anchors, and table fallback requirements without enabling collapsible groups or tabs.
+11. Scheduled report owner-only management, read, recording, dry-run preview, payload preview, activation-readiness, schedule planning, disabled worker shell, disabled transport/outbox contracts, manual owner-run readiness, gated delivery executor, and retry planning preserve aggregate-only data and stay behind their explicit gates.
+12. Scheduled reports still do not run automatic scheduling, live provider delivery, automatic workers, or unbounded retries.
+13. Saved dashboard view management, read routes, owner action plans, storage application contracts, and visible status page preserve selected range metadata, existing section anchors, allowed scopes, blocked fields, inactive activation flags, and metadata-only DTOs.
+14. Native collapsible dashboard groups preserve selected range links, the section index, existing anchors, and table fallback requirements.
