@@ -5,6 +5,7 @@ import {
   ADMIN_ANALYTICS_SCHEDULED_REPORT_PRISMA_MODEL_BLOCK,
   buildAdminAnalyticsScheduledReportPrismaSchemaMapping
 } from '../../lib/analytics/admin-analytics-scheduled-report-prisma-schema';
+import { buildAdminAnalyticsScheduledReportOwnerApprovalPolicy } from '../../lib/analytics/admin-analytics-scheduled-report-owner-approval-policy';
 import {
   buildAdminAnalyticsScheduledReportPrismaReaderFactoryContract,
   buildAdminAnalyticsScheduledReportRepositoryContract,
@@ -62,6 +63,48 @@ function sourceTree(directory: string): string {
       return /\.(?:ts|tsx)$/.test(entry.name) ? [source(entryPath)] : [];
     })
     .join('\n');
+}
+
+function runOwnerApprovalPolicyChecks() {
+  const policy = buildAdminAnalyticsScheduledReportOwnerApprovalPolicy();
+  assert.equal(policy.status, 'owner_approval_policy_contract_only');
+  assert.equal(policy.enabled, false);
+  assert.equal(policy.ownerApprovalRecordingEnabled, false);
+  assert.equal(policy.ownerApprovalRequired, true);
+  assert.equal(policy.ownerApprovedByDefault, false);
+  assert.equal(policy.ownerRoleRequired, 'owner');
+  assert.equal(policy.scheduleActivationEnabled, false);
+  assert.equal(policy.deliveryExecutionEnabled, false);
+  assert.equal(policy.repositoryWritesEnabled, false);
+  assert.equal(policy.managementUiEnabled, false);
+  assert.equal(policy.readEndpointEnabled, false);
+  assert.equal(policy.globalDisableControlRequired, true);
+  assert.equal(policy.dryRunEvidenceRequired, true);
+  assert.equal(policy.aggregateOnlyPayloadRequired, true);
+  assert.equal(policy.selectedRangeRequired, true);
+  assert.equal(policy.deliveryDisabledUntilApproved, true);
+  assert.deepEqual(policy.allowedReportTypes, ['business', 'site']);
+  assert.ok(policy.requiredEvidenceFields.includes('owner reviewer identity'));
+  assert.ok(policy.requiredEvidenceFields.includes('selected range query'));
+  assert.ok(policy.requiredEvidenceFields.includes('dry-run summary'));
+  assert.ok(policy.requiredEvidenceFields.includes('global disable control confirmation'));
+  assert.ok(policy.requirements.some((requirement) => requirement.key === 'owner-role-confirmed' && requirement.required));
+  assert.ok(policy.requirements.every((requirement) => requirement.satisfiedByDefault === false));
+  assert.ok(policy.blockedOperations.includes('record owner approval'));
+  assert.ok(policy.blockedOperations.includes('activate scheduled report metadata'));
+  assert.ok(policy.blockedOperations.includes('enable scheduled report delivery'));
+  assert.ok(policy.activationBlockers.includes('owner approval recording not enabled'));
+  assert.ok(policy.activationBlockers.includes('repository writes remain disabled'));
+  assert.ok(policy.activationBlockers.includes('delivery execution remains disabled'));
+
+  const policySource = source('lib/analytics/admin-analytics-scheduled-report-owner-approval-policy.ts');
+  assert.match(policySource, /owner_approval_policy_contract_only/);
+  assert.match(policySource, /ownerApprovalRecordingEnabled: false/);
+  assert.match(policySource, /ownerApprovedByDefault: false/);
+  assert.match(policySource, /globalDisableControlRequired: true/);
+  assert.match(policySource, /dryRunEvidenceRequired: true/);
+  assert.match(policySource, /aggregateOnlyPayloadRequired: true/);
+  assert.doesNotMatch(policySource, /PrismaClient|prisma\.|\$queryRaw|findMany|create\(|update\(|upsert\(|delete\(|fetch\(|sendMail|transport|cron|schedule\.create|setInterval|setTimeout|\bPOST\b|\bPUT\b|\bPATCH\b|\bDELETE\b|localStorage|sessionStorage|cookies\(/);
 }
 
 function runPrismaSchemaMappingChecks() {
@@ -150,6 +193,7 @@ function runPrismaSchemaMappingChecks() {
 
   const scheduledReportContractSource = [
     helperSource,
+    source('lib/analytics/admin-analytics-scheduled-report-owner-approval-policy.ts'),
     source('lib/analytics/admin-analytics-scheduled-report-repository.ts'),
     source('lib/analytics/admin-analytics-scheduled-report-read-model.ts'),
     source('lib/analytics/admin-analytics-scheduled-report-storage.ts'),
@@ -169,6 +213,7 @@ function runPrismaSchemaMappingChecks() {
 }
 
 export async function runScheduledReportRepositoryReadTests() {
+  runOwnerApprovalPolicyChecks();
   runPrismaSchemaMappingChecks();
 
   const contract = buildAdminAnalyticsScheduledReportRepositoryContract();
