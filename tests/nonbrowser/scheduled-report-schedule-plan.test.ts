@@ -61,7 +61,7 @@ export async function runScheduledReportSchedulePlanTests() {
   assert.equal(preview.deterministicPlanningOnly, true);
   assert.equal(preview.rowsDueNow, 0);
   assert.equal(preview.rowsPlanned, 1);
-  assert.equal(preview.items[0]?.nextRunAt, '2026-01-17T10:00:00.000Z');
+  assert.equal(preview.items[0]?.nextRunAt, '2026-01-10T10:00:00.000Z');
   assert.equal(preview.items[0]?.deliveryEnabled, false);
 
   const locked = buildScheduledReportSchedulePlanPreview({
