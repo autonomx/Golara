@@ -11,7 +11,10 @@ export const dynamic = 'force-dynamic';
 async function scheduledReportRecordingDelegate() {
   if (!shouldAttachScheduledReportRecordingDelegate('dry-run-evidence')) return null;
   const { prisma } = await import('@/lib/prisma');
-  return prisma.adminAnalyticsScheduledReport;
+  return {
+    update: (args: { where: { id: string }; data: Record<string, unknown> }) =>
+      prisma.adminAnalyticsScheduledReport.update({ where: args.where, data: args.data })
+  };
 }
 
 export async function POST(request: Request) {
