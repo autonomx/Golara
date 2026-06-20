@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { AdminPageShell } from '@/components/admin/AdminPageShell';
 import { getAdminIdentity, isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
 import { requireAdminRouteSession } from '@/lib/admin-page-auth-boundary';
+import { buildScheduledReportActivationReadinessPreview } from '@/lib/analytics/admin-analytics-scheduled-report-activation-readiness';
 import { loadScheduledReportReadEndpointPreview } from '@/lib/analytics/admin-analytics-scheduled-report-read-endpoint';
 import { buildScheduledReportManagementSurfaceContract } from '@/lib/analytics/admin-analytics-scheduled-report-management-surface';
 import { listAdminCategories, listAdminProducts, listMedia } from '@/lib/cms/catalog-repository';
@@ -19,6 +20,7 @@ export default async function ScheduledReportsPage() {
   const identity = await getAdminIdentity();
   const isOwner = identity.role === 'owner';
   const surface = buildScheduledReportManagementSurfaceContract({ isOwner });
+  const activationReadiness = buildScheduledReportActivationReadinessPreview({ isOwner });
   const [products, categories, media, readPreview] = await Promise.all([
     listAdminProducts(),
     listAdminCategories(),
@@ -168,6 +170,44 @@ export default async function ScheduledReportsPage() {
                 ) : null}
               </article>
             ))}
+          </div>
+        </section>
+
+        <section className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Activation readiness</p>
+              <h2 className="mt-1 text-xl font-bold text-stone-950">Metadata activation is gated and delivery stays off</h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">
+                Activation can only mark scheduled-report metadata active after owner approval, dry-run evidence, and the
+                global kill switch gate pass. This page does not run schedules or send deliveries.
+              </p>
+            </div>
+            <span className="rounded-full border border-stone-300 bg-stone-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-stone-600">
+              {activationReadiness.canActivate ? 'Ready' : 'Locked'}
+            </span>
+          </div>
+          <dl className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-lg border border-stone-200 bg-stone-50 p-3">
+              <dt className="text-xs font-bold uppercase tracking-[0.14em] text-stone-500">Scheduler</dt>
+              <dd className="mt-1 text-sm font-bold text-stone-950">{activationReadiness.schedulerEnabled ? 'Enabled' : 'Disabled'}</dd>
+            </div>
+            <div className="rounded-lg border border-stone-200 bg-stone-50 p-3">
+              <dt className="text-xs font-bold uppercase tracking-[0.14em] text-stone-500">Background jobs</dt>
+              <dd className="mt-1 text-sm font-bold text-stone-950">{activationReadiness.backgroundJobEnabled ? 'Enabled' : 'Disabled'}</dd>
+            </div>
+            <div className="rounded-lg border border-stone-200 bg-stone-50 p-3">
+              <dt className="text-xs font-bold uppercase tracking-[0.14em] text-stone-500">Delivery after activation</dt>
+              <dd className="mt-1 text-sm font-bold text-stone-950">{activationReadiness.deliveryEnabledAfterActivation ? 'Enabled' : 'Disabled'}</dd>
+            </div>
+          </dl>
+          <div className="mt-4 rounded-lg border border-dashed border-stone-300 bg-stone-50 p-4">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-stone-500">Current activation blockers</p>
+            <ul className="mt-2 grid gap-2 text-sm leading-6 text-stone-700">
+              {activationReadiness.blockers.slice(0, 6).map((blocker) => (
+                <li key={blocker}>{blocker}</li>
+              ))}
+            </ul>
           </div>
         </section>
 
