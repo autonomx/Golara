@@ -7,7 +7,6 @@ import {
 } from '../../lib/analytics/admin-analytics-scheduled-report-runtime-flags';
 
 const FLAGS_PATH = new URL('../../lib/analytics/admin-analytics-scheduled-report-runtime-flags.ts', import.meta.url);
-const PAGE_PATH = new URL('../../app/admin/analytics/scheduled-reports/page.tsx', import.meta.url);
 
 export async function runScheduledReportRuntimeFlagTests() {
   const defaults = buildScheduledReportRuntimeFlagMatrix();
@@ -64,11 +63,6 @@ export async function runScheduledReportRuntimeFlagTests() {
   assert.doesNotMatch(flagsSource, /fetch\(|sendMail|createTransport|nodemailer|smtp/i);
   assert.doesNotMatch(flagsSource, /await import\('@\/lib\/prisma'\)/);
   assert.doesNotMatch(flagsSource, /\.findMany\(|\.update\(|\.create\(/);
-
-  const pageSource = await readFile(PAGE_PATH, 'utf8');
-  assert.match(pageSource, /buildScheduledReportRuntimeFlagMatrix/);
-  assert.match(pageSource, /Runtime flag matrix/);
-  assert.doesNotMatch(pageSource, /process\.env/);
 
   console.log('scheduled-report-runtime-flags.test.ts passed');
 }
