@@ -9,7 +9,7 @@ import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 
 export const dynamic = 'force-dynamic';
 
-export default async function AdminAnalyticsScheduledReportsPage() {
+export default async function ScheduledReportsPage() {
   await requireAdminRouteSession();
 
   const locale = await resolveStorefrontLocale();
