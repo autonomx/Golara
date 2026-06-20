@@ -49,6 +49,8 @@ async function main() {
   await checkModule.runScheduledReportOwnerCheckTests();
   const clockModule = await import('./scheduled-report-' + 'clock-activation.test');
   await clockModule.runScheduledReportClockActivationTests();
+  const opsModule = await import('./scheduled-report-' + 'ops-plan.test');
+  await opsModule.runScheduledReportOpsPlanTests();
   runScheduledReportRecordingReadinessTests();
   await runScheduledReportRecordingRepositoryTests();
   await runScheduledReportRepositoryReadTests();
