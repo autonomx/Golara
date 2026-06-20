@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-import { buildAdminAnalyticsScheduledReportManagementSurfaceContract } from '../../lib/analytics/admin-analytics-scheduled-report-management-surface';
+import {
+  buildAdminAnalyticsScheduledReportManagementSurfaceContract,
+  buildScheduledReportManagementSurfaceContract
+} from '../../lib/analytics/admin-analytics-scheduled-report-management-surface';
 
 const PAGE_PATH = new URL('../../app/admin/analytics/scheduled-reports/page.tsx', import.meta.url);
 
@@ -20,14 +23,18 @@ export async function runScheduledReportManagementSurfaceTests() {
   assert.ok(ownerSurface.controls.length >= 6);
   assert.ok(ownerSurface.controls.every((control) => control.enabled === false));
 
+  const aliasSurface = buildScheduledReportManagementSurfaceContract({ isOwner: true });
+  assert.deepEqual(aliasSurface, ownerSurface);
+
   const staffSurface = buildAdminAnalyticsScheduledReportManagementSurfaceContract({ isOwner: false });
   assert.equal(staffSurface.visibleToStaff, true);
   assert.equal(staffSurface.visibleToOwner, false);
 
   const pageSource = await readFile(PAGE_PATH, 'utf8');
-  assert.match(pageSource, /buildAdminAnalyticsScheduledReportManagementSurfaceContract/);
+  assert.match(pageSource, /buildScheduledReportManagementSurfaceContract/);
   assert.match(pageSource, /requireAdminRouteSession/);
   assert.match(pageSource, /identity\.role === 'owner'/);
+  assert.doesNotMatch(pageSource, /AdminAnalyticsScheduledReport/);
   assert.doesNotMatch(pageSource, /<form\b/i);
   assert.doesNotMatch(pageSource, /\baction=/i);
   assert.doesNotMatch(pageSource, /\bmethod=/i);
