@@ -1,99 +1,104 @@
 # Admin analytics scheduled report runbook
 
-This runbook covers the scheduled report configuration-plan, storage-schema, applied Prisma schema mapping, checked Prisma schema fragment, generated-client type visibility, read-model, repository-read contract, read-adapter, disabled Prisma reader-factory, gated read-only repository factory, owner-approval policy, global kill-switch contract, dry-run evidence contract, and delivery-readiness contract foundations for `/admin/analytics`.
+This runbook covers the current scheduled-report owner management, recording, preview, activation-readiness, planning, disabled worker, transport-contract, gated delivery-execution, and retry-planning surface for `/admin/analytics`.
 
 ## Current scope
 
-The current scheduled report implementation is a configuration, inactive storage, applied Prisma schema mapping, checked Prisma schema fragment, generated-client type visibility, metadata-only read-model, repository-read contract, read-adapter, disabled Prisma reader-factory, gated read-only repository factory, owner-approval policy, global kill-switch contract, dry-run evidence contract, and delivery-readiness contract foundation only.
+Scheduled reports are partially production-ready for owner-only management and validation. They are not yet enabled for automatic scheduling or live delivery.
 
-It defines:
+The current implementation includes:
 
-- weekly owner report preview
-- monthly owner report preview
-- selected analytics range metadata
-- aggregate Business CSV path
-- aggregate Site CSV path
-- owner-approval requirement metadata
-- draft-only weekly and monthly configuration plans
-- inactive `AdminAnalyticsScheduledReport` storage table for future schedule metadata
-- metadata-only persisted fields for report key, cadence, selected range query, report types, owner approval, active state, delivery state, and dry-run summary
-- Prisma model-block contract for the scheduled-report table fields, defaults, JSON columns, and indexes
-- checked `prisma/schema.admin-analytics-scheduled-report.prisma` fragment that exactly matches the guarded model block
-- `prisma/schema.prisma` model mapping that exactly matches the checked fragment
-- generated-client model type visibility for the repository adapter's injected-reader boundary
-- metadata-only read-model normalization for future stored schedule rows
-- repository-read query-plan metadata for future safe reads
-- a read adapter that accepts a future repository reader and applies the same safe query args
-- a disabled Prisma reader-factory contract that names the future delegate and returns no reader while runtime access remains disabled
-- a gated read-only repository factory that can create an injected delegate reader only when runtime read gates, generated-client runtime access, repository reads, global disable validation, owner approval validation, and dry-run evidence validation are all explicit
-- owner-approval policy requirements for owner role confirmation, selected-range evidence, aggregate-only report types, dry-run evidence, global disable controls, and delivery-disabled confirmation
-- global kill-switch policy requirements for disable-control ownership, control location, safe default state, owner override policy, dry-run evidence, rollback procedure, and audit log destination
-- dry-run evidence requirements for evidence id, timestamp, selected range, cadence, aggregate report types, CSV preview paths, global disable confirmation, owner approval confirmation, delivery-disabled confirmation, and reviewer identity
-- delivery-readiness contracts for aggregate-only payload shape, disabled channel evidence, retry/failure visibility, and owner/operator preview summary
-- required future read filters for owner approval, active state, and delivery disabled state
-- safe future select fields limited to schedule metadata
-- allowed cadence and aggregate report type validation
-- disabled operator activation even when future approval and active flags are present
-- disabled delivery readiness even when future delivery flags are present
-- explicit disabled delivery state
-- explicit disabled schedule activation state
-- activation blockers for future implementation
+- owner-only scheduled report management page
+- locked management controls for dry-run evidence, owner approval, and disable-state recording
+- owner-only read endpoint
+- owner-only runtime-gated recording endpoints
+- metadata-only `AdminAnalyticsScheduledReport` storage table
+- applied `schema.prisma` model mapping and checked Prisma schema fragment
+- generated-client type visibility for the injected-reader boundary
+- metadata-only read model and repository-read query-plan contract
+- read adapter and disabled Prisma reader-factory contract
+- gated read-only repository factory
+- owner-approval policy contract
+- global kill-switch contract
+- dry-run evidence contract and aggregate-only dry-run preview route
+- aggregate-only delivery payload preview route
+- activation-readiness helper that produces metadata-only activation args only when all gates pass
+- deterministic weekly/monthly schedule planning and owner-page plan visibility
+- disabled-by-default worker shell with locked/skipped default behavior
+- disabled default transport adapter contract and test-only adapter
+- gated delivery executor contract with audit/failure result shapes and rollback docs
+- retry planning for failed delivery records only, with capped attempts and owner-visible status
 
-It does not create active saved schedules, delivery payload records, delivery channel records, retry records, failure records, operator preview records, dry-run evidence records, owner approval records, global disable state records, owner override state, delivery jobs, email sends, timers, queues, background execution, route handlers, active route/UI access through the generated Prisma client, repository writes, or management UI. The `schema.prisma` model mapping is applied, the generated model type is visible to the adapter boundary, the disabled reader factory returns no reader, and the gated read-only factory remains unreachable from app routes and UI unless all explicit safety gates are provided by a future audited slice. The dry-run evidence, owner-approval, global kill-switch, and delivery-readiness policies only document evidence required before delivery work is explicitly enabled.
+## Enabled owner-only routes
 
-## Validation steps
+These routes exist, but remain runtime-gated and owner-only:
 
-1. Open `/admin/analytics` as an owner.
-2. Select a preset range and record the selected range label.
-3. Select a custom `start` and `end` date and record the selected range label.
-4. Build or inspect the scheduled report preview for the selected range.
-5. Confirm the Business CSV path preserves the selected range query.
-6. Confirm the Site CSV path preserves the selected range query.
-7. Confirm weekly and monthly report options both use aggregate Business/Site report types.
-8. Confirm weekly and monthly config plans are draft-only.
-9. Confirm owner approval is required and not yet recorded.
-10. Confirm the config plans preserve the selected range query.
-11. Confirm the `AdminAnalyticsScheduledReport` migration table exists before future activation work begins.
-12. Confirm schedule storage fields are metadata-only.
-13. Confirm owner approval defaults to disabled.
-14. Confirm active state defaults to disabled.
-15. Confirm delivery state defaults to disabled.
-16. Confirm the Prisma mapping contract lists the future model fields, JSON columns, defaults, and indexes.
-17. Confirm the checked Prisma schema fragment exactly matches the guarded model block.
-18. Confirm the `schema.prisma` model mapping exactly matches the checked fragment.
-19. Confirm generated Prisma client model type visibility is present for the injected reader boundary.
-20. Confirm generated Prisma client runtime access remains disabled by default.
-21. Confirm the read-model foundation normalizes metadata-only schedule rows.
-22. Confirm invalid cadences, missing range queries, and unsupported report types are omitted by the read model.
-23. Confirm read-model output keeps operator activation disabled.
-24. Confirm read-model output keeps delivery readiness disabled.
-25. Confirm the repository-read contract exposes metadata-only select fields.
-26. Confirm the repository-read contract requires owner approval, active state, and delivery disabled filters before any future read path.
-27. Confirm the read adapter builds the same owner-approved, active, delivery-disabled query args.
-28. Confirm the read adapter caps rows and normalizes aggregate-only report types.
-29. Confirm the read adapter keeps operator activation disabled.
-30. Confirm the read adapter keeps delivery readiness disabled.
-31. Confirm the disabled Prisma reader factory is available as a contract and returns no reader.
-32. Confirm the gated read-only factory is disabled by default and blocks reader creation without runtime/type/read/kill-switch/approval/dry-run gates.
-33. Confirm the gated read-only factory blocks repository writes, read endpoints, management UI, scheduler execution, and delivery execution.
-34. Confirm no app route or component imports the scheduled-report repository.
-35. Confirm the owner-approval policy requires owner role, selected-range evidence, aggregate-only report types, dry-run evidence, global disable control evidence, and delivery-disabled confirmation.
-36. Confirm the global kill-switch policy requires disable-control ownership, control location, safe default state, owner override policy, dry-run evidence, rollback procedure, and audit log destination.
-37. Confirm the dry-run evidence policy requires evidence id, timestamp, selected range, aggregate report types, Business/Site CSV preview paths, global disable confirmation, owner approval confirmation, delivery-disabled confirmation, and reviewer identity.
-38. Confirm the delivery-readiness contract requires aggregate-only Business/Site payload sections, disabled channel evidence, retry/failure visibility, and owner/operator preview summary evidence.
-39. Confirm delivery payload recording remains disabled.
-40. Confirm delivery channel runtime remains disabled.
-41. Confirm retry execution remains disabled.
-42. Confirm failure recording remains disabled.
-43. Confirm operator preview recording remains disabled.
-44. Confirm dry-run evidence recording remains disabled.
-45. Confirm global disable state recording remains disabled.
-46. Confirm owner override remains disabled.
-47. Confirm owner approval recording remains disabled.
-48. Confirm repository writes remain disabled.
-49. Confirm activation remains false.
-50. Confirm delivery is disabled.
-51. Confirm schedule execution remains disabled.
+- `/admin/analytics/scheduled-reports/read`
+- `/admin/analytics/scheduled-reports/record-dry-run`
+- `/admin/analytics/scheduled-reports/record-owner-approval`
+- `/admin/analytics/scheduled-reports/record-disable-state`
+- `/admin/analytics/scheduled-reports/dry-run-preview`
+- `/admin/analytics/scheduled-reports/payload-preview`
+
+The dry-run preview and payload preview routes require their explicit runtime preview flags. The recording routes require the existing owner-only and repository-write gates. Public and staff access remain blocked.
+
+## Disabled boundary
+
+The current implementation does not enable:
+
+- live scheduler registration
+- cron, timer, queue, or background job registration
+- automatic worker execution
+- automatic schedule activation from the owner page
+- live email, webhook, provider, or transport configuration
+- default payload send behavior
+- unbounded retry loops
+- public or staff scheduled-report access
+- arbitrary repository writes
+- per-customer rows, raw event rows, visitor/session identifiers, delivery recipient lists, or export contents in scheduled-report metadata
+
+## Gate expectations
+
+Before live delivery can run, an audited caller must prove all of these gates:
+
+- owner session and owner role evidence
+- selected analytics range evidence
+- aggregate-only report types
+- dry-run evidence exists
+- owner approval exists
+- global kill switch permits execution
+- global disable state is validated
+- schedule is active through approved activation metadata
+- delivery remains explicitly enabled by the owner-controlled delivery gate
+- payload materialization remains aggregate-only
+- transport adapter is explicitly configured and not the disabled default adapter
+- audit and rollback evidence exists
+- retry attempts remain capped
+
+## Validation checklist
+
+For each validation pass, confirm:
+
+1. The owner management page is owner-only.
+2. Public and staff sessions cannot access scheduled-report management or routes.
+3. Management forms target only the approved recording endpoints.
+4. Locked controls remain disabled unless explicit runtime gates are enabled.
+5. Recording endpoints require owner-only and write gates.
+6. Dry-run preview is aggregate-only and requires `ADMIN_ANALYTICS_SCHEDULED_REPORT_DRY_RUN_PREVIEW_ENABLED`.
+7. Payload preview is aggregate-only and requires `ADMIN_ANALYTICS_SCHEDULED_REPORT_DELIVERY_PAYLOAD_PREVIEW_ENABLED`.
+8. Activation readiness does not activate schedules without dry-run evidence, owner approval, kill-switch permission, disable-state validation, repository-write permission, and delivery-disabled confirmation.
+9. Weekly/monthly next-run planning is deterministic.
+10. Scheduler runtime remains disabled by default.
+11. The worker shell returns locked/skipped status by default.
+12. No cron, timer, queue, or background job registration exists.
+13. The default transport adapter is disabled and cannot send.
+14. No live provider, SMTP, webhook, or network transport is wired.
+15. Delivery execution is gated and returns blocked unless every gate and an injected adapter are supplied.
+16. Delivery audit/failure result shapes are present.
+17. Retry planning includes failed deliveries only.
+18. Retry attempts are capped.
+19. Retry planning is owner-visible but does not start automatic retry execution.
+20. No scheduled-report path stores per-customer rows, raw event rows, visitor/session identifiers, delivery recipient lists, or export contents.
 
 ## Evidence record
 
@@ -102,95 +107,48 @@ For each validation run, record:
 - reviewer
 - environment
 - validation date
-- selected range label
-- selected range query
-- Business CSV preview path
-- Site CSV preview path
-- weekly preview present: yes/no
-- monthly preview present: yes/no
-- weekly config plan status
-- monthly config plan status
-- storage table present: yes/no
-- storage table name
-- storage metadata-only fields checked: yes/no
-- Prisma mapping contract checked: yes/no
-- Prisma schema fragment checked: yes/no
-- Prisma schema fragment matches guarded model block: yes/no
-- `schema.prisma` model matches checked fragment: yes/no
-- generated-client model type visible: yes/no
-- generated-client runtime access enabled by default: must be no
-- read model checked: yes/no
-- read model status
-- read model metadata-only output checked: yes/no
-- read model invalid rows omitted: yes/no
-- read model operator activation enabled: must be no
-- read model delivery ready: must be no
-- repository-read contract checked: yes/no
-- repository-read contract status
-- repository-read select fields metadata-only: yes/no
-- repository-read required filters checked: yes/no
-- read adapter checked: yes/no
-- read adapter query args checked: yes/no
-- read adapter operator activation enabled: must be no
-- read adapter delivery ready: must be no
-- disabled Prisma reader factory checked: yes/no
-- disabled Prisma reader factory returned reader: must be no
-- gated read-only factory checked: yes/no
-- gated read-only factory enabled by default: must be no
-- gated read-only factory safety gates checked: yes/no
-- gated read-only factory can create reader without required gates: must be no
-- app route or UI imports scheduled-report repository: must be no
-- owner-approval policy checked: yes/no
-- owner approval recording enabled: must be no
-- owner role requirement present: must be yes
-- aggregate-only report type requirement present: must be yes
-- global disable control requirement present: must be yes
-- global kill-switch policy checked: yes/no
-- global disable state recording enabled: must be no
-- global disable safe default state: must be disabled
-- owner override enabled: must be no
-- rollback procedure requirement present: must be yes
-- audit log destination requirement present: must be yes
-- dry-run evidence policy checked: yes/no
-- dry-run evidence recording enabled: must be no
-- dry-run evidence id requirement present: must be yes
-- dry-run timestamp requirement present: must be yes
-- dry-run selected range requirement present: must be yes
-- dry-run Business/Site CSV preview path requirements present: must be yes
-- dry-run owner approval confirmation requirement present: must be yes
-- dry-run delivery-disabled confirmation requirement present: must be yes
-- delivery-readiness contract checked: yes/no
-- aggregate payload contract checked: yes/no
-- aggregate payload blocked fields checked: yes/no
-- delivery channel runtime enabled: must be no
-- retry execution enabled: must be no
-- failure recording enabled: must be no
-- operator preview recording enabled: must be no
-- repository writes enabled: must be no
-- owner approval required: must be yes
-- owner approved: must be no
-- active state enabled: must be no
-- delivery enabled: must be no
-- schedule execution enabled: must be no
-- read endpoint enabled: must be no
-- management UI enabled: must be no
-- dry-run evidence requirement present: yes/no
+- deployment or commit SHA
+- owner page checked: yes/no
+- owner-only routes checked: yes/no
+- public/staff access blocked: yes/no
+- locked recording controls checked: yes/no
+- approved recording endpoints checked: yes/no
+- dry-run preview checked: yes/no
+- dry-run preview flag enabled for test: yes/no
+- dry-run aggregate-only validation passed: yes/no
+- payload preview checked: yes/no
+- payload preview flag enabled for test: yes/no
+- payload aggregate-only validation passed: yes/no
+- activation readiness checked: yes/no
+- activation writes performed by default: must be no
+- schedule plan checked: yes/no
+- scheduler runtime registered: must be no
+- worker shell checked: yes/no
+- worker automatic execution registered: must be no
+- transport contract checked: yes/no
+- disabled transport can send: must be no
+- live provider/network transport configured: must be no
+- gated delivery executor checked: yes/no
+- delivery executes without every gate: must be no
+- retry planning checked: yes/no
+- retry attempts capped: yes/no
+- automatic retry loop registered: must be no
+- rollback documentation checked: yes/no
+- result: pass / fail / blocked
+- follow-up issue or PR
 
-## Future delivery requirements
+## Future delivery-enablement requirements
 
-Before enabling actual scheduled delivery, add and validate:
+Before treating scheduled reports as fully production-ready for live delivery, add a separate audited implementation that:
 
-- owner approval capture and disable controls
-- dry-run evidence recording with owner review
-- generated Prisma client runtime access with audit evidence and the required metadata-only filters
-- read-only repository activation evidence behind the global kill-switch, owner-approval, and dry-run gates
-- repository write path with owner-managed approval and disable controls
-- read endpoint with owner-scoped policy enforcement
-- delivery provider or channel activation plan
-- retry and failure recording
-- unsubscribe or disable workflow when delivery uses email
-- aggregate-only payload execution guard
-- tests proving delivery can be disabled globally
-- dry-run evidence that records the exact CSV paths and selected reporting window
+- enables owner-controlled schedule activation from the management page
+- configures a real transport adapter intentionally
+- proves rollback and audit logging in production-like validation
+- proves dry-run evidence and owner approval exist for the report being delivered
+- proves the global kill switch can block delivery immediately
+- proves delivery payloads remain aggregate-only
+- proves failures are recorded and visible to owners
+- proves retry execution remains capped and bounded
+- documents the operational disable workflow
 
-Do not enable delivery until the config-plan evidence, storage-schema evidence, Prisma mapping evidence, checked schema-fragment evidence, generated-type evidence, read-model evidence, repository-read contract evidence, read-adapter evidence, disabled reader-factory evidence, gated read-only repository evidence, owner-approval policy evidence, global kill-switch evidence, dry-run evidence contract, delivery-readiness contract, delivery disable switch, and aggregate payload guard are documented.
+Do not register automatic scheduler/timer/background execution or send live delivery payloads until every delivery gate, rollback requirement, and audit requirement is proven in GitHub Actions or production-like validation evidence.

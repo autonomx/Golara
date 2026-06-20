@@ -18,7 +18,16 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 - Site analytics event foundation with privacy-safe first-party events.
 - Traffic attribution using capped UTM fields and external referrer domains.
 - Owner-only aggregate Business CSV and Site CSV exports.
-- Scheduled report preview, owner-approved configuration-plan foundation, inactive storage schema, applied `schema.prisma` model mapping, checked Prisma schema fragment, generated-client type visibility, metadata-only read-model foundation, repository-read query-plan contract, read-adapter foundation, disabled Prisma reader-factory contract, gated read-only repository factory, owner-approval policy contract, global kill-switch contract, dry-run evidence contract, and delivery-readiness contracts that reuse the selected analytics range and aggregate Business/Site CSV paths.
+- Scheduled report owner management surface with locked controls for recording dry-run evidence, owner approval, and disable state.
+- Scheduled report owner-only read and recording endpoints guarded by runtime flags and owner checks.
+- Scheduled report dry-run preview endpoint and aggregate-only dry-run evidence builder, gated by `ADMIN_ANALYTICS_SCHEDULED_REPORT_DRY_RUN_PREVIEW_ENABLED`.
+- Scheduled report delivery payload preview endpoint and aggregate-only payload materialization helper, gated by `ADMIN_ANALYTICS_SCHEDULED_REPORT_DELIVERY_PAYLOAD_PREVIEW_ENABLED`.
+- Scheduled report activation-readiness helper that can produce metadata-only activation args only after owner approval, dry-run evidence, kill-switch, disable-state, and delivery-disabled gates pass.
+- Scheduled report deterministic schedule planning for weekly/monthly reports, owner-page plan visibility, and disabled-by-default scheduler state.
+- Scheduled report disabled worker shell that returns locked/skipped status by default and has no automatic timer, cron, or background registration.
+- Scheduled report transport adapter contract with a disabled default adapter and no live provider/network wiring.
+- Scheduled report gated delivery executor contract with audit/failure result shapes, rollback documentation, and default blocked state unless every gate and an injected adapter are provided.
+- Scheduled report retry planning for failed delivery results only, capped attempts, owner-visible retry status, and no automatic retry loop.
 - Saved dashboard view preset preview, persistence-plan foundation, inactive storage schema, and metadata-only read-model foundation for future saves.
 - Dashboard group header UI that uses the layout grouping contract while preserving the selected range, section index, anchors, and table fallback requirements.
 - Privacy and retention policy visibility.
@@ -30,7 +39,8 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 
 - Automated raw site-event deletion after production migration evidence and cleanup preview evidence are verified.
 - Future customer segmentation beyond aggregate order-count and recency bands, only after a separate privacy review.
-- Scheduled report active routes, repository writes, delivery channel execution, delivery payload recording, retry execution, failure recording, owner approval recording, dry-run evidence recording, global disable state recording, owner override state, schedule activation, scheduler/timer/background execution, and owner management UI.
+- Scheduled report schedule activation from the owner page, live scheduler/timer/background registration, automatic worker execution, real delivery transport configuration, live email/provider delivery, and automatic retry execution.
+- Scheduled report repository writes remain gated and owner-only; the current surface records only through explicitly gated endpoints and helpers, not arbitrary write paths.
 - Saved dashboard active save/update/remove/read endpoints, owner approval recording, role-policy enforcement, active repository access, and owner/staff management UI.
 - Collapsible dashboard groups or tabbed workspace behavior.
 
@@ -57,11 +67,38 @@ Any future customer cohort export must remain aggregate-only unless a separate e
 
 The range selector now supports both fixed presets and custom start/end dates. Presets and custom ranges resolve through the same contract across business analytics, site analytics, export routes, comparison deltas, section links, and panel labels.
 
-## Scheduled report configuration note
+## Scheduled report status note
 
-The scheduled report foundation now includes preview metadata, configuration-plan metadata, an inactive `AdminAnalyticsScheduledReport` storage schema, an applied `schema.prisma` model mapping, a checked Prisma schema fragment, generated-client type visibility, a metadata-only read-model foundation, a repository-read query-plan contract, a read-adapter foundation, a disabled Prisma reader-factory contract, a gated read-only repository factory, an owner-approval policy contract, a global kill-switch contract, a dry-run evidence contract, and delivery-readiness contracts. It defines weekly and monthly owner report options, selected-range metadata, aggregate Business/Site CSV paths, owner-approval requirements, metadata-only future schedule fields, an applied model block, a checked standalone schema fragment, generated model type alignment for the injected reader boundary, required defaults and indexes, safe DTO normalization for future table rows, required future read filters, safe select fields, disabled factory metadata, explicit read gate requirements, owner role and evidence requirements, global disable evidence requirements, dry-run evidence requirements, aggregate-only delivery payload shape, disabled channel evidence, retry/failure visibility, owner/operator preview summary, and activation blockers without saving active schedules, sending reports, creating timers, wiring routes/UI, recording approval, recording dry-run evidence, recording global disable state, enabling owner override, recording delivery payloads, recording failures, or running background jobs.
+Scheduled reports are now partially production-ready for owner-only management, preview, payload materialization, planning, disabled execution contracts, and retry visibility. They are not yet production-ready for automatic scheduling or live delivery.
 
-The `schema.prisma` model mapping is applied and exactly matches the checked fragment and guarded model block. The repository adapter references the generated `AdminAnalyticsScheduledReport` model type for selected metadata rows. The disabled reader factory identifies the future `adminAnalyticsScheduledReport` delegate while returning no reader. The gated read-only factory can create an injected delegate reader only after runtime read gates, generated-client runtime access, repository reads, global-disable validation, owner-approval validation, and dry-run evidence validation are explicitly supplied; it remains unreachable from app routes and UI. The owner-approval policy requires owner role confirmation, selected-range evidence, aggregate-only report types, dry-run evidence, global disable control evidence, and delivery-disabled confirmation, but approval recording remains disabled. The global kill-switch policy requires disable-control ownership, control location, safe default state, owner override policy, dry-run evidence, rollback procedure, and audit log destination, but global state recording and owner override remain disabled. The dry-run evidence policy requires an evidence id, timestamp, selected range, aggregate report types, Business/Site CSV preview paths, global disable confirmation, owner approval confirmation, delivery-disabled confirmation, and reviewer identity, but evidence recording remains disabled. The delivery-readiness contracts require aggregate-only Business/Site payload sections, disabled channel evidence, retry/failure visibility, and owner/operator preview summary evidence, but payload recording, channel runtime, retry execution, failure recording, and preview recording remain disabled. The read model keeps `activeForOperators=false` and `deliveryReady=false` even when future approval, active, delivery, and dry-run fields are present. Actual scheduled delivery remains pending until owner approval recording, dry-run evidence recording, delivery channel activation, delivery payload recording, retry/failure recording, disable controls, schedule activation, scheduler/timer/background execution, and management UI are designed and validated.
+The implemented safe surface includes:
+
+- metadata-only storage and read-model foundations
+- owner-only management page
+- owner-only read endpoint
+- owner-only gated recording endpoints for dry-run evidence, owner approval, and disable state
+- locked management forms targeting only the approved recording endpoints
+- activation-readiness evaluation without activating schedules
+- aggregate-only dry-run preview generation and evidence recording
+- aggregate-only delivery payload materialization preview
+- deterministic weekly/monthly next-run planning
+- disabled-by-default worker-shell evaluation
+- disabled default transport adapter contract
+- gated delivery executor contract with audit/failure result shapes
+- retry planning for failed delivery records only, with capped attempts and no automatic loop
+
+The safety boundary remains:
+
+- no live scheduler/timer/cron/background registration
+- no automatic worker execution
+- no live email/provider/transport configuration
+- no payload leaving the system by default
+- no unbounded retry loop
+- no public or staff scheduled-report access
+- no arbitrary repository write path
+- no per-customer rows, raw event rows, visitor/session identifiers, delivery recipient lists, or export contents stored in scheduled-report metadata
+
+A future delivery-enablement slice must configure a real transport adapter, enable all owner/approval/dry-run/kill-switch/activation gates, and add deployment rollback evidence before scheduled reports can be considered fully production-ready for live delivery.
 
 ## Saved dashboard view storage note
 
@@ -78,24 +115,3 @@ The UI keeps the section index, range links, existing anchors, CSV exports, serv
 ## Retention cleanup preview note
 
 The retention status panel now includes a read-only cleanup preview. It reports the stale raw-event count eligible under the 180-day retention target, whether production migration evidence has been confirmed, whether deletion remains disabled, and the reason future cleanup is still blocked or ready for a guarded job.
-
-The preview must not delete data. Automated deletion remains pending until the preview evidence, production migration evidence, and production analytics volume are verified.
-
-## Production validation checklist
-
-Before treating site analytics as complete in production, verify:
-
-1. The site analytics event migration has been applied to the production database.
-2. `NEXT_PUBLIC_SITE_ANALYTICS_ENABLED` is not set to `false` for storefront traffic that should be counted.
-3. Admin, API, and framework routes are excluded from tracking.
-4. Do Not Track is honored in the browser reporter.
-5. CSV exports remain aggregate-only.
-6. Raw event retention status is visible to owner sessions.
-7. Cleanup preview reports eligible stale-event counts without deleting data.
-8. Cleanup remains disabled until production migration evidence is confirmed.
-9. Custom preset and start/end ranges produce matching dashboard, section-link, and export windows.
-10. Customer cohort panels and CSV rows remain aggregate-only.
-11. Advanced aggregate cohort panels and CSV rows show only AOV/share/order-count/recency bands, never per-customer rows.
-12. Scheduled report previews, config plans, inactive storage schema, Prisma mapping contract, checked schema fragment, generated-client type visibility, read model, repository-read contract, read adapter, disabled reader factory, gated read-only factory, owner-approval policy, global kill-switch contract, dry-run evidence contract, and delivery-readiness contracts preserve the selected range and aggregate Business/Site CSV paths without enabling delivery.
-13. Saved dashboard view presets, persistence plans, storage schema, and read model preserve selected range metadata, existing section anchors, allowed scopes, blocked fields, disabled endpoints, inactive activation flags, and metadata-only DTOs.
-14. Dashboard group headers preserve selected range links, the section index, existing anchors, and table fallback requirements without enabling collapsible groups or tabs.
