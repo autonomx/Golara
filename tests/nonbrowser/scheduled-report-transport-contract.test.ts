@@ -11,8 +11,7 @@ import {
 } from '../../lib/analytics/admin-analytics-scheduled-report-transport';
 
 const TRANSPORT_PATH = new URL('../../lib/analytics/admin-analytics-scheduled-report-transport.ts', import.meta.url);
-const LIVE_PATTERNS = ['send' + 'Mail', 'create' + 'Transport', 'nodemailer', 'smtp', 'fetch\(', 'setInterval', 'setTimeout', 'cron'];
-const LIVE_EXECUTION_PATTERN = new RegExp(LIVE_PATTERNS.join('|'), 'i');
+const LIVE_EXECUTION_PATTERN = /sendMail|createTransport|nodemailer|smtp|fetch\(|setInterval|setTimeout|cron/i;
 
 function payload(): AdminAnalyticsScheduledReportTransportPayload {
   return {
