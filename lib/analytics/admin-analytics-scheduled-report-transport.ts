@@ -17,7 +17,7 @@ export type AdminAnalyticsScheduledReportTransportPayload = {
 export type AdminAnalyticsScheduledReportTransportResult = {
   status: 'transport_disabled' | 'transport_dispatched';
   sent: boolean;
-  provider: 'disabled' | 'test';
+  provider: 'disabled' | 'test' | 'owner-email';
   payloadSummary: {
     reportId: string;
     assetCount: number;
@@ -42,6 +42,20 @@ export type AdminAnalyticsScheduledReportTransportContract = {
   defaultAdapter: 'disabled';
   allowedAssetContentTypes: ['text/csv'];
   blockedCapabilities: string[];
+};
+
+export type AdminAnalyticsScheduledReportOwnerEmailTransportOptions = {
+  ownerEmail: string | null | undefined;
+  fromAddress: string | null | undefined;
+  providerKey: string | null | undefined;
+  runtimeEnabled?: boolean;
+};
+
+export type AdminAnalyticsScheduledReportOwnerEmailTransportValidation = {
+  status: 'owner_email_transport_valid' | 'owner_email_transport_invalid';
+  configured: boolean;
+  runtimeEnabled: boolean;
+  blockers: string[];
 };
 
 export function buildScheduledReportTransportContract(): AdminAnalyticsScheduledReportTransportContract {
@@ -71,6 +85,27 @@ function payloadSummary(payload: AdminAnalyticsScheduledReportTransportPayload) 
   };
 }
 
+function looksLikeEmail(value: string | null | undefined): boolean {
+  return typeof value === 'string' && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value);
+}
+
+export function validateScheduledReportOwnerEmailTransport(
+  options: AdminAnalyticsScheduledReportOwnerEmailTransportOptions
+): AdminAnalyticsScheduledReportOwnerEmailTransportValidation {
+  const blockers: string[] = [];
+  if (!looksLikeEmail(options.ownerEmail)) blockers.push('owner email is required');
+  if (!looksLikeEmail(options.fromAddress)) blockers.push('from address is required');
+  if (!options.providerKey) blockers.push('provider key reference is required');
+  if (!options.runtimeEnabled) blockers.push('owner email transport runtime flag is disabled');
+
+  return {
+    status: blockers.length === 0 ? 'owner_email_transport_valid' : 'owner_email_transport_invalid',
+    configured: blockers.filter((blocker) => blocker !== 'owner email transport runtime flag is disabled').length === 0,
+    runtimeEnabled: options.runtimeEnabled === true,
+    blockers
+  };
+}
+
 export function createDisabledScheduledReportTransportAdapter(): AdminAnalyticsScheduledReportTransportAdapter {
   return {
     name: 'disabled-scheduled-report-transport',
@@ -86,6 +121,24 @@ export function createDisabledScheduledReportTransportAdapter(): AdminAnalyticsS
         'live network delivery is not configured',
         'recipient expansion is not enabled'
       ]
+    })
+  };
+}
+
+export function createOwnerEmailScheduledReportTransportAdapter(
+  options: AdminAnalyticsScheduledReportOwnerEmailTransportOptions
+): AdminAnalyticsScheduledReportTransportAdapter {
+  const validation = validateScheduledReportOwnerEmailTransport(options);
+  return {
+    name: 'owner-email-scheduled-report-transport',
+    configured: validation.configured,
+    liveNetworkEnabled: validation.status === 'owner_email_transport_valid',
+    dispatch: async (payload) => ({
+      status: validation.status === 'owner_email_transport_valid' ? 'transport_dispatched' : 'transport_disabled',
+      sent: validation.status === 'owner_email_transport_valid',
+      provider: 'owner-email',
+      payloadSummary: payloadSummary(payload),
+      blockers: validation.blockers
     })
   };
 }
