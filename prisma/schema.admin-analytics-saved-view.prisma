@@ -1,0 +1,24 @@
+model AdminAnalyticsSavedView {
+  id             String   @id @default(cuid())
+  viewKey        String
+  label          String
+  description    String?
+  scope          String
+  audience       String
+  rangeMode      String
+  rangeQuery     String
+  sectionAnchors Json     @default("[]")
+  ownerApproved  Boolean  @default(false)
+  isActive       Boolean  @default(false)
+  createdByRole  String   @default("owner")
+  createdByLabel String?
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
+
+  @@unique([viewKey, scope])
+  @@index([scope, isActive])
+  @@index([audience, scope])
+  @@index([ownerApproved, isActive])
+  @@index([createdAt])
+}
