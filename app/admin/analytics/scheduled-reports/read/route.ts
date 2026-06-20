@@ -5,11 +5,10 @@ import {
   loadScheduledReportReadEndpointPreview,
   shouldAttachScheduledReportReadDelegate
 } from '@/lib/analytics/admin-analytics-scheduled-report-read-endpoint';
-import type { AdminAnalyticsScheduledReportGeneratedClientReadDelegate } from '@/lib/analytics/admin-analytics-scheduled-report-repository';
 
 export const dynamic = 'force-dynamic';
 
-async function scheduledReportReadDelegate(): Promise<AdminAnalyticsScheduledReportGeneratedClientReadDelegate | null> {
+async function scheduledReportReadDelegate() {
   if (!shouldAttachScheduledReportReadDelegate()) return null;
   const { prisma } = await import('@/lib/prisma');
   return prisma.adminAnalyticsScheduledReport;
