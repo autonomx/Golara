@@ -1,6 +1,6 @@
 # Admin analytics implementation backlog
 
-This backlog tracks the remaining admin analytics work after the custom range, aggregate cohort, advanced cohort, retention preview, scheduled report preview/config-plan/storage-schema/read-model/repository-contract, saved view preset/persistence-plan/storage-schema/read-model, layout grouping preview, and dashboard group header UI passes.
+This backlog tracks the remaining admin analytics work after the custom range, aggregate cohort, advanced cohort, retention preview, scheduled report hardening, saved view management, retention cleanup gates, and native collapsible dashboard group passes.
 
 ## Current live baseline
 
@@ -12,11 +12,11 @@ This backlog tracks the remaining admin analytics work after the custom range, a
 - Advanced aggregate customer cohort reporting for AOV/share buckets, known-customer order-count bands, and recency bands.
 - First-party site analytics for page, product, category, search, cart, checkout, payment-method, attribution, and funnel signals.
 - Aggregate Business CSV and Site CSV exports.
-- Scheduled report preview, draft configuration-plan, inactive storage-schema, metadata-only read-model foundation, and repository-read query-plan contract for weekly/monthly owner report options using the selected range and aggregate CSV paths.
-- Saved dashboard view preset, persistence-plan, inactive storage-schema, and metadata-only read-model foundation using the selected range, existing section anchors, allowed scopes, and metadata-only future-save rules.
-- Dashboard group header UI using the selected range, section index, existing anchors, and chart table fallback requirements.
+- Scheduled report owner management, read/recording endpoints, locked controls, dry-run preview, payload preview, activation readiness, schedule planning, disabled worker shell, disabled/outbox transport contracts, manual owner-run readiness, staging smoke validation, history, clock-readiness, ops hardening, gated delivery executor, and capped retry planning.
+- Saved dashboard view management surface, mutation policy, metadata read route, approved owner POST route plans, injected-delegate storage application, owner action core, and visible status page.
+- Native collapsible dashboard group UI using the selected range, section index, existing anchors, and chart table fallback requirements.
 - Privacy and retention documentation.
-- Read-only raw event retention status and cleanup preview.
+- Raw event retention status, cleanup preview, owner-only cleanup plan helper, hard-gated injected-delegate executor, no-delegate owner route, and dedicated owner status page.
 - Owner-only export and retention controls.
 
 ## Completed from earlier backlog
@@ -50,25 +50,16 @@ Completed baseline:
 - Business CSV exports include advanced aggregate cohort rows for AOV/share buckets, known-customer order-count bands, and known-customer recency bands.
 - New buckets use non-identifying dimensions and never render per-customer rows.
 
-### Scheduled report preview, configuration-plan, storage-schema, read-model, and repository-read contract foundation
+### Scheduled report hardening track
 
 Completed baseline:
 
 - Weekly and monthly owner report options are represented as preview/config-plan metadata.
-- Preview and config plans reuse the selected analytics range and aggregate Business/Site CSV paths.
-- Draft config plans require owner approval, but approval is not recorded yet.
-- Inactive `AdminAnalyticsScheduledReport` storage exists for metadata-only future schedules.
-- Future schedule metadata is limited to report key, cadence, selected range query, aggregate report types, owner approval flag, active flag, delivery flag, and dry-run summary.
-- The read-model foundation normalizes future table rows into metadata-only DTOs.
-- Invalid cadences, missing range queries, and unsupported report types are rejected.
-- Operator activation and delivery readiness remain disabled even when future stored flags are true.
-- The repository-read contract defines future metadata-only select fields, owner-approved filter, active-state filter, delivery-disabled filter, ordering, and max-row cap.
-- Config plans and stored defaults remain inactive.
-- Delivery is disabled.
-- Schedule execution is disabled.
-- No active repository path, cron, email transport, timer, background execution path, route handler, or management UI is introduced.
+- Owner-only management, read, recording, dry-run preview, payload preview, activation-readiness, schedule planning, disabled worker shell, disabled/default transport, outbox channel validation, manual owner-run readiness, staging smoke validation, history view, clock-readiness, ops-hardening, gated delivery execution, and retry planning slices are implemented.
+- Dry-run, payload, activation, delivery, retry, and schedule contracts remain aggregate-only.
+- Automatic scheduling, automatic workers, live provider delivery, and automatic retry loops remain disabled by default.
 
-### Saved dashboard view preset, persistence-plan, storage-schema, and read-model foundation
+### Saved dashboard view management track
 
 Completed baseline:
 
@@ -79,15 +70,10 @@ Completed baseline:
 - Report rows, customer rows, event rows, contact fields, visitor/session identifiers, and export contents are blocked from saved-view records.
 - The inactive `AdminAnalyticsSavedView` migration table exists for metadata-only future saves.
 - The read-model foundation normalizes future table rows into metadata-only DTOs.
-- Invalid scopes, invalid audiences, missing range queries, and missing section anchors are rejected.
-- Operator activation remains disabled even when future approval flags are present.
-- Owner approval is required before active saved views, but approval is not recorded yet.
-- View saving is disabled.
-- Client-side and server-side saved state are disabled.
-- Save/update/remove/read endpoints, active repository access, and management UI are disabled.
-- No active save endpoint or analytics-calculation change is introduced.
+- Owner/staff read surfaces, mutation policy, route plans, injected-delegate storage application, action core, and status page are implemented.
+- Live routes remain plan-only by default unless a storage delegate is explicitly provided.
 
-### Dashboard layout grouping preview foundation
+### Native collapsible dashboard grouping
 
 Completed baseline:
 
@@ -95,40 +81,43 @@ Completed baseline:
 - Groups reuse the selected analytics range and existing section anchors.
 - The contract covers Overview, Business, Site, Products and categories, Operations, and Privacy/docs.
 - Existing section index, range links, anchors, and chart table fallback requirements are preserved.
+- Native `<details>`/`<summary>` group controls render on `/admin/analytics` without client-side state.
+- Tabbed workspace behavior remains disabled.
 
-### Dashboard group header UI
+### Retention cleanup gate track
 
 Completed baseline:
 
-- Static group headers render on `/admin/analytics` from the layout grouping contract.
-- Group cards link to existing dashboard anchors with the selected analytics range preserved.
-- The existing section index now includes the Dashboard groups anchor.
-- The page remains server-rendered and mobile-readable.
-- Collapsible groups are disabled.
-- Tabbed workspace behavior is disabled.
+- Retention status and cleanup preview remain owner-visible.
+- The cleanup plan helper is owner-only, production-evidence gated, dry-run-only, and non-destructive.
+- The executor requires an accepted plan, explicit execution flag, manual owner confirmation, and an injected delegate.
+- The owner-only route and status page are wired, but the route passes `delegate: null` by default.
+- No background job, queue, timer, or automatic deletion path is registered.
 
 ## Remaining backlog items
 
-### 1. Automated raw-event retention cleanup
+### 1. Automated raw-event retention cleanup live delegate
 
-Goal: add a guarded cleanup job for raw site analytics events that are older than the retention target.
+Goal: attach a production-safe delete delegate for raw site analytics events that are older than the retention target.
 
 Acceptance criteria:
 
 - Cleanup is disabled by default.
-- A preview/dry-run mode reports how many rows would be affected.
+- The current preview/plan route still reports how many rows would be affected.
 - Production migration evidence is required before enabling deletion.
+- Manual owner confirmation is required for each live cleanup run.
+- The route must cap each batch and report the deleted count.
 - Aggregate exports remain available without exposing raw visitor/session data.
 - Owner-only admin visibility remains in place.
 
 Notes:
 
-- The current admin page shows retention status and cleanup preview only; it does not delete raw events.
-- Add operational documentation before enabling the job.
+- The current admin page and route show retention status, plan, and manual confirmation, but the route does not attach a delete delegate by default.
+- Add operational rollback documentation before enabling the live delegate.
 
-### 2. Scheduled report active repository and delivery execution
+### 2. Scheduled report live delivery enablement
 
-Goal: let owners approve, manage, and run recurring aggregate analytics reports after the storage-schema, read-model, and repository-read contracts are validated.
+Goal: let owners approve, manage, and run recurring aggregate analytics reports after the safe contracts and staging smoke checks are validated.
 
 Acceptance criteria:
 
@@ -136,14 +125,13 @@ Acceptance criteria:
 - Delivery remains owner-controlled.
 - Report contents remain aggregate-only.
 - Active repository access requires owner approval evidence, dry-run evidence, and disable controls.
-- Active read queries must use the metadata-only select fields and owner-approved/active/delivery-disabled filters from the repository-read contract until delivery is enabled separately.
-- Read endpoints require owner-scoped policy enforcement and audit evidence.
-- Delivery requires an explicit provider/channel plan, retry/failure visibility, and testable global disable switch.
+- Live delivery requires an explicit provider/channel adapter, rollback evidence, retry/failure visibility, and testable global disable switch.
 - Dry-run evidence records the exact selected range and aggregate CSV paths before delivery is enabled.
+- Automatic scheduling must have lock/concurrency protection before it can run unattended.
 
-### 3. Saved dashboard view active persistence
+### 3. Saved dashboard generated-client persistence
 
-Goal: let operators save preferred dashboard range/filter layouts after the storage-schema and read-model foundations are validated.
+Goal: let the live saved-view routes use generated-client metadata writes after the storage schema is safely wired into the main Prisma client.
 
 Acceptance criteria:
 
@@ -153,23 +141,24 @@ Acceptance criteria:
 - Saved metadata is limited to view labels, selected range/filter metadata, section anchors, scope, audience, owner approval flag, and active flag.
 - Active save/update/remove/read endpoints require owner approval evidence and management UI.
 - Role-policy enforcement is explicit for owner-private, staff-shared, and store-wide owner-managed scopes.
-- Active repository access remains disabled until owner approval capture and audit logging are implemented.
+- Generated-client access remains metadata-only and avoids raw analytics rows.
 
-### 4. Collapsible groups or tabs
+### 4. Tabbed workspace behavior
 
-Goal: reduce page length only if the static group-header UI is not enough.
+Goal: add true tabbed workspace behavior only if native collapsible groups are insufficient.
 
 Acceptance criteria:
 
 - Preserve the existing section index and range links.
 - Keep accessible table fallbacks for charts.
 - Keep the page server-rendered and mobile-readable.
-- Record accessibility and mobile-layout evidence before enabling collapsible groups or tabbed workspace behavior.
+- Record accessibility and mobile-layout evidence before enabling tabs.
 
 ## Sequencing recommendation
 
-1. Production validation evidence for custom ranges, exports, aggregate and advanced cohort panels, retention preview, scheduled report storage/read-model/repository-contract, saved view storage/read-model, and dashboard group headers.
-2. Automated retention cleanup preview, then guarded execution after production evidence exists.
-3. Scheduled report active repository and delivery execution.
-4. Saved dashboard view active persistence.
-5. Collapsible groups or tabs only if the static group-header UI is not enough.
+1. Status cleanup and production validation evidence for the merged saved-view, retention-gate, and collapsible-group tracks.
+2. Retention cleanup live delegate with explicit rollback evidence.
+3. Scheduled report live delivery provider and controlled manual live pilot.
+4. Scheduled report automatic scheduler only after live manual delivery is proven.
+5. Saved dashboard generated-client persistence when the main Prisma schema/client path can be safely edited.
+6. Tabbed workspace behavior only if native collapsible groups are not enough.
