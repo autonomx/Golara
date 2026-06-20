@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 import {
+  ADMIN_ANALYTICS_SCHEDULED_REPORT_MANAGEMENT_APPROVED_POST_ENDPOINTS,
   buildAdminAnalyticsScheduledReportManagementSurfaceContract,
   buildScheduledReportManagementSurfaceContract
 } from '../../lib/analytics/admin-analytics-scheduled-report-management-surface';
@@ -14,10 +15,15 @@ import {
 } from '../../lib/analytics/admin-analytics-scheduled-report-recording-endpoint';
 import type { AdminAnalyticsScheduledReportRecordingDelegate } from '../../lib/analytics/admin-analytics-scheduled-report-recording-repository';
 
+const MANAGEMENT_SURFACE_PATH = new URL(
+  '../../lib/analytics/admin-analytics-scheduled-report-management-surface.ts',
+  import.meta.url
+);
 const PAGE_PATH = new URL('../../app/admin/analytics/scheduled-reports/page.tsx', import.meta.url);
 const RECORD_DRY_RUN_ROUTE = new URL('../../app/admin/analytics/scheduled-reports/record-dry-run/route.ts', import.meta.url);
 const RECORD_OWNER_APPROVAL_ROUTE = new URL('../../app/admin/analytics/scheduled-reports/record-owner-approval/route.ts', import.meta.url);
 const RECORD_DISABLE_STATE_ROUTE = new URL('../../app/admin/analytics/scheduled-reports/record-disable-state/route.ts', import.meta.url);
+const LIVE_EXECUTION_PATTERN = /sendMail|createTransport|transport\.(send|deliver)|setInterval|setTimeout|cron|schedule\.create/i;
 
 function recordingEnv(): AdminAnalyticsScheduledReportRecordingEndpointEnv {
   return {
@@ -145,6 +151,16 @@ export async function runScheduledReportManagementSurfaceTests() {
   assert.ok(ownerSurface.controls.length >= 6);
   assert.ok(ownerSurface.controls.every((control) => control.enabled === false));
 
+  const approvedPostEndpoints = [...ADMIN_ANALYTICS_SCHEDULED_REPORT_MANAGEMENT_APPROVED_POST_ENDPOINTS].sort();
+  const formControls = ownerSurface.controls.filter((control) => control.actionPath);
+  assert.equal(formControls.length, 3);
+  assert.deepEqual(
+    formControls.map((control) => control.actionPath).sort(),
+    approvedPostEndpoints
+  );
+  assert.ok(formControls.every((control) => control.method === 'post'));
+  assert.ok(formControls.every((control) => control.enabled === false));
+
   const aliasSurface = buildScheduledReportManagementSurfaceContract({ isOwner: true });
   assert.deepEqual(aliasSurface, ownerSurface);
 
@@ -152,14 +168,22 @@ export async function runScheduledReportManagementSurfaceTests() {
   assert.equal(staffSurface.visibleToStaff, true);
   assert.equal(staffSurface.visibleToOwner, false);
 
+  const managementSurfaceSource = await readFile(MANAGEMENT_SURFACE_PATH, 'utf8');
+  const declaredActionPaths = [...managementSurfaceSource.matchAll(/actionPath: '([^']+)'/g)].map((match) => match[1]);
+  assert.deepEqual([...new Set(declaredActionPaths)].sort(), approvedPostEndpoints);
+  assert.doesNotMatch(managementSurfaceSource, /actionPath: '\/admin\/analytics\/scheduled-reports\/(activate|delivery|run|scheduler)/i);
+  assert.doesNotMatch(managementSurfaceSource, LIVE_EXECUTION_PATTERN);
+
   const pageSource = await readFile(PAGE_PATH, 'utf8');
   assert.match(pageSource, /buildScheduledReportManagementSurfaceContract/);
   assert.match(pageSource, /requireAdminRouteSession/);
   assert.match(pageSource, /identity\.role === 'owner'/);
+  assert.match(pageSource, /<form\b/i);
+  assert.match(pageSource, /action=\{control\.actionPath\}/);
+  assert.match(pageSource, /method=\{control\.method\}/);
+  assert.match(pageSource, /disabled=\{!control\.enabled\}/);
   assert.doesNotMatch(pageSource, /AdminAnalyticsScheduledReport/);
-  assert.doesNotMatch(pageSource, /<form\b/i);
-  assert.doesNotMatch(pageSource, /\baction=/i);
-  assert.doesNotMatch(pageSource, /\bmethod=/i);
+  assert.doesNotMatch(pageSource, /fetch\(|XMLHttpRequest|navigator\.sendBeacon/i);
   assert.doesNotMatch(pageSource, /createGatedAdminAnalyticsScheduledReportRecordingRepositoryFactory/);
   assert.doesNotMatch(pageSource, /createGatedAdminAnalyticsScheduledReportPrismaReaderFactory/);
   assert.doesNotMatch(pageSource, /PrismaClient/);

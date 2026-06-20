@@ -140,9 +140,12 @@ export async function runScheduledReportRecordingEndpointTests() {
   }
 
   const pageSource = source('app/admin/analytics/scheduled-reports/page.tsx');
-  assert.doesNotMatch(pageSource, /<form\b/i);
-  assert.doesNotMatch(pageSource, /\bmethod=/i);
+  assert.match(pageSource, /<form\b/i);
+  assert.match(pageSource, /action=\{control\.actionPath\}/);
+  assert.match(pageSource, /method=\{control\.method\}/);
+  assert.match(pageSource, /disabled=\{!control\.enabled\}/);
   assert.doesNotMatch(pageSource, /recordScheduledReportEndpointRequest/);
+  assert.doesNotMatch(pageSource, /fetch\(|XMLHttpRequest|navigator\.sendBeacon/i);
 
   console.log('scheduled-report-recording-endpoints.test.ts passed');
 }
