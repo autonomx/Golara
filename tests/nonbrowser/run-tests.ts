@@ -3,6 +3,7 @@ import { runMigrationSchemaTests } from './migration-schema.test';
 import { runPropertyNormalizerTests } from './property-normalizers.test';
 import { runRepositoryIntegrationTests } from './repository-integration.test';
 import { runRouteHandlerContractTests } from './route-handler-contracts.test';
+import { runScheduledReportDryRunEvidenceTests } from './scheduled-report-dry-run-evidence.test';
 import { runScheduledReportRepositoryReadTests } from './scheduled-report-repository-read.test';
 import { runSeededWorkflowTests } from './seeded-workflows.test';
 import { runServerActionContractTests } from './server-action-contracts.test';
@@ -11,6 +12,7 @@ import { runStaticBoundaryTests } from './static-boundary.test';
 async function main() {
   await runMigrationSchemaTests();
   await runRepositoryIntegrationTests();
+  runScheduledReportDryRunEvidenceTests();
   await runScheduledReportRepositoryReadTests();
   await runServerActionContractTests();
   await runRouteHandlerContractTests();
