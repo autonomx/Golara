@@ -7,9 +7,12 @@ import type { AdminAnalyticsResolvedRange } from '../../lib/analytics/admin-anal
 const range: AdminAnalyticsResolvedRange = {
   mode: 'preset',
   label: 'Last 30 days',
-  days: 30,
-  startDate: new Date('2026-05-21T00:00:00.000Z'),
-  endDate: new Date('2026-06-20T00:00:00.000Z')
+  rangeDays: 30,
+  query: { range: '30' },
+  startDate: new Date('2026-05-22T00:00:00.000Z'),
+  endDate: new Date('2026-06-20T00:00:00.000Z'),
+  previousStartDate: new Date('2026-04-22T00:00:00.000Z'),
+  previousEndDate: new Date('2026-05-21T00:00:00.000Z')
 };
 
 export async function runAdminAnalyticsLayoutGroupTests() {
