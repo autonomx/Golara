@@ -20,7 +20,7 @@ Use this page as the starting point for analytics operations, validation, and pr
 - Use the roadmap status to understand what is live and what remains planned.
 - Use the implementation backlog to plan the next analytics slice.
 - Use the custom range runbook before changing Analytics date-range behavior.
-- Use the scheduled report runbook before enabling report persistence or delivery.
+- Use the scheduled report runbook before enabling automatic scheduling or live delivery; the current surface is owner-only for management, preview, planning, disabled execution contracts, and retry visibility.
 - Use the saved view runbook before enabling saved view persistence or management UI.
 - Use the layout refinement runbook before restructuring the Analytics page.
 - Use the production validation runbook after deploy or database migration changes.
