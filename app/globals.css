@@ -39,7 +39,12 @@ select {
 #main-content section,
 #main-content form,
 #main-content table,
-#main-content details {
+#main-content details,
+.admin-shell-prelude,
+.admin-shell-prelude section,
+.admin-shell-prelude form,
+.admin-shell-prelude table,
+.admin-shell-prelude details {
   min-width: 0;
 }
 
@@ -47,14 +52,20 @@ select {
   overflow-x: hidden;
 }
 
+.admin-shell-prelude {
+  overflow-x: hidden;
+}
+
 @media (min-width: 1024px) {
-  #main-content > div {
+  #main-content > div,
+  .admin-shell-prelude {
     margin-left: 18rem;
     width: calc(100% - 18rem);
     padding-left: 0 !important;
   }
 
-  #main-content > div > div {
+  #main-content > div > div,
+  .admin-shell-prelude > div {
     width: 100%;
   }
 }
@@ -115,43 +126,6 @@ select {
 #main-content form[action='/admin/categories'] select,
 #main-content form[action='/admin/media'] input,
 #main-content form[action='/admin/media'] select {
-  min-width: 0;
-  width: 100%;
-}
-
-@media (min-width: 1024px) {
-  #main-content form[action='/admin'],
-  #main-content form[action='/admin/products'],
-  #main-content form[action='/admin/categories'],
-  #main-content form[action='/admin/media'] {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  }
-
-  #main-content form[action='/admin'] button[type='submit'],
-  #main-content form[action='/admin/products'] button[type='submit'],
-  #main-content form[action='/admin/categories'] button[type='submit'],
-  #main-content form[action='/admin/media'] button[type='submit'] {
-    grid-column: 1 / -1;
-    justify-self: end;
-  }
-}
-
-#media td:last-child details {
-  min-width: 16rem;
-  max-width: min(24rem, calc(100vw - 4rem));
-}
-
-#media td:last-child details form {
-  max-width: 100%;
-}
-
-#media td:last-child details form > div {
-  grid-template-columns: minmax(0, 1fr) !important;
-}
-
-#media td:last-child details input,
-#media td:last-child details select,
-#media td:last-child details textarea {
   min-width: 0;
   width: 100%;
 }
