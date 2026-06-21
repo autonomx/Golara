@@ -5,6 +5,9 @@ import {
 } from './admin-analytics-scheduled-report-delivery-execution';
 import {
   createDisabledScheduledReportTransportAdapter,
+  createProviderScheduledReportTransportAdapter,
+  type AdminAnalyticsScheduledReportProviderDispatch,
+  type AdminAnalyticsScheduledReportProviderDispatchOptions,
   type AdminAnalyticsScheduledReportTransportAdapter,
   type AdminAnalyticsScheduledReportTransportPayload
 } from './admin-analytics-scheduled-report-transport';
@@ -45,6 +48,19 @@ function manualDeliveryBlockers(gates: AdminAnalyticsScheduledReportManualDelive
   return blockers;
 }
 
+function deliveryGatesFromManual(gates: AdminAnalyticsScheduledReportManualDeliveryGateState): AdminAnalyticsScheduledReportDeliveryGateState {
+  return {
+    ownerApproved: gates.ownerApproved,
+    dryRunEvidenceRecorded: gates.dryRunEvidenceRecorded,
+    globalKillSwitchPermitsDelivery: gates.globalKillSwitchPermitsDelivery,
+    activeSchedule: gates.activeSchedule,
+    deliveryPayloadMaterialized: gates.deliveryPayloadMaterialized,
+    deliveryExecutionEnabled: gates.deliveryExecutionEnabled,
+    deliveryTransportConfigured: gates.deliveryTransportConfigured,
+    retryExecutionEnabled: gates.retryExecutionEnabled
+  };
+}
+
 export async function executeScheduledReportManualDelivery(options: {
   payload: AdminAnalyticsScheduledReportTransportPayload;
   gates?: Partial<AdminAnalyticsScheduledReportManualDeliveryGateState>;
@@ -58,14 +74,8 @@ export async function executeScheduledReportManualDelivery(options: {
     const result = await executeScheduledReportDelivery({
       payload: options.payload,
       gates: {
-        ownerApproved: gates.ownerApproved,
-        dryRunEvidenceRecorded: gates.dryRunEvidenceRecorded,
-        globalKillSwitchPermitsDelivery: gates.globalKillSwitchPermitsDelivery,
-        activeSchedule: gates.activeSchedule,
-        deliveryPayloadMaterialized: gates.deliveryPayloadMaterialized,
-        deliveryExecutionEnabled: false,
-        deliveryTransportConfigured: gates.deliveryTransportConfigured,
-        retryExecutionEnabled: gates.retryExecutionEnabled
+        ...deliveryGatesFromManual(gates),
+        deliveryExecutionEnabled: false
       },
       adapter: createDisabledScheduledReportTransportAdapter(),
       now: options.now
@@ -79,16 +89,7 @@ export async function executeScheduledReportManualDelivery(options: {
 
   const result = await executeScheduledReportDelivery({
     payload: options.payload,
-    gates: {
-      ownerApproved: gates.ownerApproved,
-      dryRunEvidenceRecorded: gates.dryRunEvidenceRecorded,
-      globalKillSwitchPermitsDelivery: gates.globalKillSwitchPermitsDelivery,
-      activeSchedule: gates.activeSchedule,
-      deliveryPayloadMaterialized: gates.deliveryPayloadMaterialized,
-      deliveryExecutionEnabled: gates.deliveryExecutionEnabled,
-      deliveryTransportConfigured: gates.deliveryTransportConfigured,
-      retryExecutionEnabled: gates.retryExecutionEnabled
-    },
+    gates: deliveryGatesFromManual(gates),
     adapter: options.adapter ?? createDisabledScheduledReportTransportAdapter(),
     now: options.now
   });
@@ -98,4 +99,23 @@ export async function executeScheduledReportManualDelivery(options: {
     mode: 'manual_owner_run',
     manualBlockers: result.auditRecord.blockers
   };
+}
+
+export async function executeScheduledReportManualProviderDelivery(options: {
+  payload: AdminAnalyticsScheduledReportTransportPayload;
+  gates?: Partial<AdminAnalyticsScheduledReportManualDeliveryGateState>;
+  providerOptions: AdminAnalyticsScheduledReportProviderDispatchOptions;
+  providerDispatch?: AdminAnalyticsScheduledReportProviderDispatch | null;
+  now?: Date;
+}): Promise<AdminAnalyticsScheduledReportManualDeliveryResult> {
+  const providerAdapter = createProviderScheduledReportTransportAdapter(options.providerOptions, options.providerDispatch);
+  return executeScheduledReportManualDelivery({
+    payload: options.payload,
+    gates: {
+      ...options.gates,
+      deliveryTransportConfigured: options.gates?.deliveryTransportConfigured ?? providerAdapter.configured
+    },
+    adapter: providerAdapter,
+    now: options.now
+  });
 }
