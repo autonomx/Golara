@@ -39,21 +39,19 @@ function quantityOptions(current: number) {
 
 function cartReturnTo(pathname: string | null) {
   const path = pathname || '/';
-  if (!path.startsWith('/')) return '/';
-  return path;
+  return path.startsWith('/') ? path : '/';
 }
 
-function cleanCartStatusPath(pathname: string | null, searchParams: URLSearchParams | ReadonlyURLSearchParams) {
-  const path = cartReturnTo(pathname);
+function cleanCartStatusPath(pathname: string | null, searchParams: { toString(): string }) {
   const params = new URLSearchParams(searchParams.toString());
   params.delete('cart');
   const query = params.toString();
+  const path = cartReturnTo(pathname);
   return `${path}${query ? `?${query}` : ''}`;
 }
 
 function cartReassuranceItems(locale?: string | null) {
-  const fa = locale?.toLowerCase().startsWith('fa');
-  return fa
+  return locale?.toLowerCase().startsWith('fa')
     ? ['ارسال و جمع نهایی هنگام پرداخت تایید می‌شود.', 'پرداخت امن و ثبت سفارش روی سرور انجام می‌شود.', 'برای سفارش‌های ویژه می‌توانید با پشتیبانی هماهنگ کنید.']
     : ['Delivery and final totals are confirmed at checkout.', 'Secure payment and order creation happen server-side.', 'Special requests can be coordinated with support.'];
 }
@@ -86,7 +84,6 @@ export function CartDrawer({
     setMounted(true);
     window.requestAnimationFrame(() => setOpen(true));
   };
-
   const closeDrawer = () => setOpen(false);
 
   useEffect(() => {
@@ -145,15 +142,8 @@ export function CartDrawer({
 
       {mounted ? (
         <div className={`fixed inset-0 z-[90] ${open ? 'pointer-events-auto' : 'pointer-events-none'}`} role="dialog" aria-modal="true" aria-labelledby={titleId} dir={direction}>
-          <button
-            type="button"
-            className={`absolute inset-0 cursor-default bg-rosewood/35 backdrop-blur-sm transition-opacity duration-300 ease-out ${open ? 'opacity-100' : 'opacity-0'}`}
-            aria-label={copy('cart.title')}
-            onClick={closeDrawer}
-          />
-          <aside
-            className={`fixed inset-y-0 ${sideClass} flex h-dvh w-full max-w-md transform flex-col overflow-hidden bg-[#fff8f1] text-stone-800 shadow-[0_24px_80px_rgba(88,24,43,0.28)] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${open ? 'translate-x-0' : closedTransformClass}`}
-          >
+          <button type="button" className={`absolute inset-0 cursor-default bg-rosewood/35 backdrop-blur-sm transition-opacity duration-300 ease-out ${open ? 'opacity-100' : 'opacity-0'}`} aria-label={copy('cart.title')} onClick={closeDrawer} />
+          <aside className={`fixed inset-y-0 ${sideClass} flex h-dvh w-full max-w-md transform flex-col overflow-hidden bg-[#fff8f1] text-stone-800 shadow-[0_24px_80px_rgba(88,24,43,0.28)] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${open ? 'translate-x-0' : closedTransformClass}`}>
             <div className="shrink-0 border-b border-rosewood/10 bg-[#fff8f1] px-6 py-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -208,20 +198,12 @@ export function CartDrawer({
                                   {quantityOptions(item.quantity).map((quantity) => <option key={quantity} value={quantity}>{quantity}</option>)}
                                 </select>
                               </label>
-                              <StorefrontSubmitButton
-                                label={updateLabel}
-                                pendingLabel={pendingLabel(updateLabel)}
-                                className="rounded-full bg-rosewood px-3 py-1.5 text-xs font-semibold text-white outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30 disabled:cursor-wait disabled:bg-rosewood/60"
-                              />
+                              <StorefrontSubmitButton label={updateLabel} pendingLabel={pendingLabel(updateLabel)} className="rounded-full bg-rosewood px-3 py-1.5 text-xs font-semibold text-white outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30 disabled:cursor-wait disabled:bg-rosewood/60" />
                             </form>
                             <form action={removeCartItemAction}>
                               <input type="hidden" name="lineKey" value={item.lineKey} />
                               <input type="hidden" name="returnTo" value={returnTo} />
-                              <StorefrontSubmitButton
-                                label={removeLabel}
-                                pendingLabel={pendingLabel(removeLabel)}
-                                className="rounded-full border border-rosewood/20 bg-white px-3 py-1.5 text-xs font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-wait disabled:text-rosewood/50"
-                              />
+                              <StorefrontSubmitButton label={removeLabel} pendingLabel={pendingLabel(removeLabel)} className="rounded-full border border-rosewood/20 bg-white px-3 py-1.5 text-xs font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-wait disabled:text-rosewood/50" />
                             </form>
                           </div>
                         </div>
@@ -233,38 +215,21 @@ export function CartDrawer({
             </div>
 
             <div className="shrink-0 border-t border-rosewood/10 bg-white px-6 py-5 shadow-[0_-18px_40px_rgba(88,24,43,0.08)]">
-              <div className="flex items-center justify-between gap-4 text-sm text-stone-700">
-                <span>{copy('cart.items')}</span>
-                <strong className="text-rosewood">{cart.itemCount}</strong>
-              </div>
-              <div className="mt-3 flex items-center justify-between gap-4 text-lg text-rosewood">
-                <span>{copy('cart.subtotal')}</span>
-                <strong>{cart.subtotalLabel}</strong>
-              </div>
+              <div className="flex items-center justify-between gap-4 text-sm text-stone-700"><span>{copy('cart.items')}</span><strong className="text-rosewood">{cart.itemCount}</strong></div>
+              <div className="mt-3 flex items-center justify-between gap-4 text-lg text-rosewood"><span>{copy('cart.subtotal')}</span><strong>{cart.subtotalLabel}</strong></div>
               <div className="mt-4 grid gap-2 rounded-2xl bg-cream p-3 text-xs font-medium leading-5 text-stone-600">
                 {reassuranceItems.map((item) => (
-                  <div key={item} className="flex gap-2">
-                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-olive" aria-hidden="true" />
-                    <span>{item}</span>
-                  </div>
+                  <div key={item} className="flex gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-olive" aria-hidden="true" /><span>{item}</span></div>
                 ))}
               </div>
               <p className="mt-3 text-xs leading-5 text-stone-500">{copy('cart.finalTotalsNote')}</p>
               <div className="mt-5 grid gap-3">
-                <Link href="/cart/checkout" className={`rounded-full px-6 py-3 text-center text-sm font-semibold shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30 ${hasItems ? 'bg-rosewood text-white' : 'pointer-events-none bg-rosewood/40 text-white/80'}`} aria-disabled={!hasItems} onClick={closeDrawer}>
-                  {copy('cart.checkout')}
-                </Link>
-                <Link href="/cart" className="rounded-full border border-rosewood/20 bg-white px-6 py-3 text-center text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20" onClick={closeDrawer}>
-                  {copy('cart.title')}
-                </Link>
+                <Link href="/cart/checkout" className={`rounded-full px-6 py-3 text-center text-sm font-semibold shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30 ${hasItems ? 'bg-rosewood text-white' : 'pointer-events-none bg-rosewood/40 text-white/80'}`} aria-disabled={!hasItems} onClick={closeDrawer}>{copy('cart.checkout')}</Link>
+                <Link href="/cart" className="rounded-full border border-rosewood/20 bg-white px-6 py-3 text-center text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20" onClick={closeDrawer}>{copy('cart.title')}</Link>
                 {hasItems ? (
                   <form action={clearCartAction}>
                     <input type="hidden" name="returnTo" value={returnTo} />
-                    <StorefrontSubmitButton
-                      label={copy('cart.clear')}
-                      pendingLabel={pendingLabel(copy('cart.clear'))}
-                      className="w-full rounded-full border border-rosewood/20 px-6 py-3 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-wait disabled:text-rosewood/50"
-                    />
+                    <StorefrontSubmitButton label={copy('cart.clear')} pendingLabel={pendingLabel(copy('cart.clear'))} className="w-full rounded-full border border-rosewood/20 px-6 py-3 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-wait disabled:text-rosewood/50" />
                   </form>
                 ) : null}
               </div>
