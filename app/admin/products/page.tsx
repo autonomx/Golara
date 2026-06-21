@@ -12,6 +12,14 @@ const productPageSize = 12;
 
 type AdminProductsSearchParams = { [key: string]: string | undefined };
 
+const workflowFilters = [
+  { key: 'missing-image', label: 'Missing image' },
+  { key: 'inactive', label: 'Inactive' },
+  { key: 'quote-only', label: 'Quote only' },
+  { key: 'available-today', label: 'Available today' },
+  { key: 'best-seller', label: 'Best sellers' }
+] as const;
+
 function parsePage(value?: string) {
   const parsed = Number.parseInt(value ?? '1', 10);
   return Number.isFinite(parsed) ? Math.max(1, parsed) : 1;
@@ -48,6 +56,51 @@ function paginationHref(params: AdminProductsSearchParams, page: number) {
   if (page > 1) query.set('productPage', String(page));
   const serialized = query.toString();
   return serialized ? `/admin/products?${serialized}` : '/admin/products';
+}
+
+function workflowHref(flag?: string) {
+  const query = new URLSearchParams();
+  if (flag) query.set('catalogFlag', flag);
+  const serialized = query.toString();
+  return serialized ? `/admin/products?${serialized}` : '/admin/products';
+}
+
+function ProductWorkflowPanel({ products }: { products: AdminProductFilterIndexItem[] }) {
+  const counts = workflowFilters.map((filter) => ({ ...filter, count: products.filter((product) => productMatchesFlag(product, filter.key)).length }));
+  const needsReview = products.filter((product) => !product.image || product.isActive === false || product.requiresQuote || product.price <= 0).slice(0, 5);
+
+  return (
+    <section className="bg-cream px-4 pt-4 sm:px-6 lg:px-8" aria-labelledby="product-workflow-title">
+      <div className="mx-auto grid max-w-7xl gap-4 rounded-xl border border-rosewood/10 bg-white p-4 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-rosewood/60">Catalog workflow</p>
+            <h2 id="product-workflow-title" className="mt-1 text-xl font-semibold text-stone-900">Product fix-it queue</h2>
+            <p className="mt-1 max-w-3xl text-sm text-stone-600">Use these shortcuts to review incomplete products, merchandising flags, and everyday catalog cleanup before opening full product details.</p>
+          </div>
+          <Link href="/admin/products#products" className="rounded-full bg-rosewood px-4 py-2 text-sm font-semibold text-white">Create product</Link>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {counts.map((item) => (
+            <Link key={item.key} href={workflowHref(item.key)} className="rounded-full border border-rosewood/15 px-3 py-2 text-sm font-semibold text-rosewood hover:border-rosewood">
+              {item.label}: {item.count}
+            </Link>
+          ))}
+        </div>
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+          {needsReview.length === 0 ? (
+            <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800 sm:col-span-2 lg:col-span-5">No routine product cleanup is waiting.</p>
+          ) : needsReview.map((product) => (
+            <Link key={product.id} href={`/admin/products/${product.id}`} className="rounded-lg border border-stone-200 p-3 text-sm hover:border-rosewood/40">
+              <span className="block font-semibold text-stone-900">{product.title}</span>
+              <span className="mt-1 block text-xs text-stone-500">{product.code || product.slug}</span>
+              <span className="mt-2 block text-xs font-semibold text-rosewood">Open details</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
 }
 
 function ProductPaginationBar({ params, total, locale }: { params: AdminProductsSearchParams; total: number; locale: SupportedLocale }) {
@@ -88,6 +141,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
 
   return (
     <>
+      <ProductWorkflowPanel products={productFilterIndex} />
       <AdminConsolePage searchParams={Promise.resolve(resolvedSearchParams)} forcedTab="catalog" catalogSection="products" activeNavKey="products" />
       <ProductPaginationBar params={resolvedSearchParams} total={filteredProducts.length} locale={locale} />
     </>
