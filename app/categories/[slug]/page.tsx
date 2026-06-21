@@ -72,11 +72,12 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     [categoryWithCount.slug, ...descendants.map((child) => child.slug)],
     { locale, take: 72 }
   );
+  const categoryReturnTo = `/categories/${slug}`;
 
   return (
     <main id="main-content" tabIndex={-1} dir={getStorefrontCopyDirection(locale)}>
       <JsonLdScript data={buildCategoryBreadcrumbJsonLd(categoryWithCount)} />
-      <SiteHeader returnTo={`/categories/${slug}`} locale={locale} />
+      <SiteHeader returnTo={categoryReturnTo} locale={locale} />
       <section className="mx-auto max-w-7xl px-5 py-14">
         <PathTrail items={categoryTrail(categoryWithCount, categoriesWithCounts, locale)} />
         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">{categoryWithCount.eyebrow}</p>
@@ -108,6 +109,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
                   product={product}
                   priority={prioritizeProductImages && index < ABOVE_THE_FOLD_PRODUCT_CARD_COUNT}
                   locale={locale}
+                  returnTo={categoryReturnTo}
                 />
               ))}
             </div>
