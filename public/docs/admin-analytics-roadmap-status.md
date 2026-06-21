@@ -20,7 +20,7 @@ This document summarizes the `/admin/analytics` workspace status.
 - Owner-only aggregate Business CSV and Site CSV exports.
 - Scheduled report owner management, read/recording endpoints, locked controls, dry-run preview, payload preview, activation readiness, schedule planning, disabled worker shell, disabled transport/outbox contracts, manual owner-run readiness, staging smoke validation, gated delivery executor contract, capped retry planning, and ops hardening.
 - Saved dashboard view management surface, owner/staff metadata read route, approved owner POST route plans, injected-delegate storage apply helper, owner action core, and dedicated saved-view status page.
-- Native collapsible dashboard groups using the selected range and existing section anchors.
+- Server-rendered analytics workspace tabs plus native collapsible dashboard groups using the selected range and existing section anchors.
 - Privacy and retention policy visibility.
 - Raw site-event retention status, cleanup preview, owner-only cleanup plan helper, hard-gated executor, bounded live delegate factory, owner-only cleanup route, and dedicated retention status/control page. Deletion is still fail-closed unless plan, execution, delegate, production evidence, database/table, stale-event, and manual owner confirmation gates all pass.
 - Role-aware visibility for owner-only exports and retention diagnostics.
@@ -31,7 +31,6 @@ This document summarizes the `/admin/analytics` workspace status.
 - Future customer segmentation beyond aggregate order-count and recency bands, only after a separate privacy review.
 - Scheduled report live scheduler/timer/background registration, automatic worker execution, real transport provider wiring, live email/provider delivery, and automatic retry execution.
 - Saved dashboard generated-client write integration for the live routes. Current routes remain owner-only and plan/core-backed; storage application is injected-delegate tested.
-- Tabbed workspace behavior. Native collapsible groups are active.
 
 ## Customer cohort note
 
@@ -58,9 +57,9 @@ Saved dashboard views now have a visible management and route-planning surface. 
 
 Live routes remain plan-only by default unless a storage delegate is explicitly provided. Generated-client write integration remains pending.
 
-## Dashboard group header note
+## Dashboard workspace note
 
-The dashboard layout contract now renders native collapsible groups for Overview, Business, Site, Products and categories, Operations, and Privacy/docs. These groups reuse the selected range and existing section anchors while keeping server rendering and chart table fallbacks intact. Tabbed workspace behavior remains pending.
+The dashboard layout contract now renders server-side workspace tabs for Overview, Business, Site, Products and categories, Operations, and Privacy/docs, then keeps native collapsible groups below them. Tabs are regular selected-range links, so existing anchors, section index, server rendering, mobile readability, and chart table fallbacks remain intact.
 
 ## Retention cleanup note
 
@@ -85,4 +84,4 @@ Before treating site analytics as complete in production, verify:
 11. Scheduled report owner-only management, read, recording, dry-run preview, payload preview, activation-readiness, schedule planning, disabled worker shell, disabled transport/outbox contracts, manual owner-run readiness, gated delivery executor, and retry planning preserve aggregate-only data and stay behind their explicit gates.
 12. Scheduled reports still do not run automatic scheduling, live provider delivery, automatic workers, or unbounded retries.
 13. Saved dashboard view management, read routes, owner action plans, storage application contracts, and visible status page preserve selected range metadata, existing section anchors, allowed scopes, blocked fields, inactive activation flags, and metadata-only DTOs.
-14. Native collapsible dashboard groups preserve selected range links, the section index, existing anchors, and table fallback requirements.
+14. Server-rendered analytics workspace tabs and native collapsible groups preserve selected range links, the section index, existing anchors, and table fallback requirements.
