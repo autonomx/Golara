@@ -22,13 +22,12 @@ This document summarizes the `/admin/analytics` workspace status.
 - Saved dashboard view management surface, owner/staff metadata read route, approved owner POST route plans, injected-delegate storage apply helper, owner action core, and dedicated saved-view status page.
 - Native collapsible dashboard groups using the selected range and existing section anchors.
 - Privacy and retention policy visibility.
-- Raw site-event retention status, cleanup preview, owner-only cleanup plan helper, hard-gated injected-delegate executor, no-delegate owner route, and dedicated retention status/control page.
+- Raw site-event retention status, cleanup preview, owner-only cleanup plan helper, hard-gated executor, bounded live delegate factory, owner-only cleanup route, and dedicated retention status/control page. Deletion is still fail-closed unless plan, execution, delegate, production evidence, database/table, stale-event, and manual owner confirmation gates all pass.
 - Role-aware visibility for owner-only exports and retention diagnostics.
 - Operator checklist for reviewing analytics and interpreting exports.
 
 ## Planned next
 
-- Automated raw site-event deletion with a live delete delegate attached only after production evidence, explicit execution flags, rollback evidence, and owner confirmation.
 - Future customer segmentation beyond aggregate order-count and recency bands, only after a separate privacy review.
 - Scheduled report live scheduler/timer/background registration, automatic worker execution, real transport provider wiring, live email/provider delivery, and automatic retry execution.
 - Saved dashboard generated-client write integration for the live routes. Current routes remain owner-only and plan/core-backed; storage application is injected-delegate tested.
@@ -65,9 +64,9 @@ The dashboard layout contract now renders native collapsible groups for Overview
 
 ## Retention cleanup note
 
-Retention cleanup now has a no-delete-by-default control track. The implemented surface includes read-only stale-event preview, owner-only cleanup plan helper, hard-gated injected-delegate executor, owner-only POST route that passes no delegate by default, and a dedicated owner status page with manual confirmation copy.
+Retention cleanup now has a gated live delegate track. The implemented surface includes read-only stale-event preview, owner-only cleanup plan helper, hard-gated executor, bounded live delegate factory, owner-only POST route, and a dedicated owner status page with manual confirmation copy.
 
-Actual raw-event deletion remains pending until a live delete delegate is wired with production evidence, explicit execution flags, rollback evidence, and owner confirmation.
+Deletion is still disabled by default and requires `SITE_ANALYTICS_RETENTION_CLEANUP_PLAN_ENABLED`, `SITE_ANALYTICS_RETENTION_CLEANUP_EXECUTION_ENABLED`, `SITE_ANALYTICS_RETENTION_CLEANUP_DELEGATE_ENABLED`, production retention evidence, database/table availability, an accepted stale-event plan, and the exact manual owner confirmation phrase. The route starts no background jobs and the delegate caps each batch at 1000 rows.
 
 ## Production validation checklist
 
@@ -79,7 +78,7 @@ Before treating site analytics as complete in production, verify:
 4. Do Not Track is honored in the browser reporter.
 5. CSV exports remain aggregate-only.
 6. Raw event retention status is visible to owner sessions.
-7. Cleanup preview and owner cleanup route checks report eligible stale-event counts without deleting data by default.
+7. Cleanup preview and owner cleanup route checks report eligible stale-event counts without deleting data unless every retention cleanup gate is explicitly enabled and confirmed.
 8. Custom preset and start/end ranges produce matching dashboard, section-link, and export windows.
 9. Customer cohort panels and CSV rows remain aggregate-only.
 10. Advanced cohort panels and CSV rows show only aggregate AOV/share/order-count/recency bands.

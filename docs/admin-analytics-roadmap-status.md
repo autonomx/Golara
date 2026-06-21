@@ -31,13 +31,12 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 - Saved dashboard view management surface, owner/staff metadata read route, mutation-policy contract, approved POST route plans, injected-delegate storage-apply helper, owner action core, and dedicated `/admin/analytics/saved-views` status page.
 - Dashboard grouping contract and native collapsible dashboard group UI using `<details>`/`<summary>` while preserving selected-range links, section anchors, section index, and accessible chart table fallback requirements.
 - Privacy and retention policy visibility.
-- Raw site-event retention status, cleanup preview, owner-only cleanup plan helper, hard-gated injected-delegate executor, no-delegate owner route, and dedicated `/admin/analytics/site-retention` status/control page.
+- Raw site-event retention status, cleanup preview, owner-only cleanup plan helper, hard-gated executor, live delegate factory, owner-only cleanup route, and dedicated `/admin/analytics/site-retention` status/control page. The delegate is attached only when `SITE_ANALYTICS_RETENTION_CLEANUP_DELEGATE_ENABLED` is enabled and the database/table are available; deletion still requires the plan flag, execution flag, production evidence, and manual owner confirmation.
 - Role-aware visibility for owner-only exports and retention diagnostics.
 - Operator checklist for reviewing analytics and interpreting exports.
 
 ## Intentionally pending
 
-- Automated raw site-event deletion with a live delete delegate attached to the owner route. The current plan/executor/route/page prove the gates and default no-delete state, but the route still passes `delegate: null` by default.
 - Future customer segmentation beyond aggregate order-count and recency bands, only after a separate privacy review.
 - Scheduled report live scheduler/timer/background registration, automatic worker execution, real delivery transport provider wiring, live email/provider delivery, and automatic retry execution.
 - Scheduled report repository writes remain gated and owner-only; the current surface records only through explicitly gated endpoints and helpers, not arbitrary write paths.
@@ -118,6 +117,6 @@ The UI keeps the section index, range links, existing anchors, CSV exports, serv
 
 ## Retention cleanup status note
 
-Retention cleanup now has a no-delete-by-default control track. The implemented surface includes read-only stale-event preview, owner-only cleanup plan helper, hard-gated injected-delegate executor, owner-only POST route that passes `delegate: null` by default, and a dedicated owner status page with manual confirmation copy.
+Retention cleanup now has a gated live delegate track. The implemented surface includes read-only stale-event preview, owner-only cleanup plan helper, hard-gated executor, bounded live delegate factory, owner-only POST route, and a dedicated owner status page with manual confirmation copy.
 
-Actual raw-event deletion remains pending until a live delete delegate is wired with production evidence, explicit execution flags, rollback evidence, and owner confirmation.
+Deletion is still fail-closed by default. It requires `SITE_ANALYTICS_RETENTION_CLEANUP_PLAN_ENABLED`, `SITE_ANALYTICS_RETENTION_CLEANUP_EXECUTION_ENABLED`, `SITE_ANALYTICS_RETENTION_CLEANUP_DELEGATE_ENABLED`, production retention evidence, database/table availability, an accepted plan with stale events, and the exact manual owner confirmation phrase. The route starts no background jobs and the delegate caps each batch at 1000 rows.
