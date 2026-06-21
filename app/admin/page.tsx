@@ -36,7 +36,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
   return (
     <>
-      <div className="bg-cream px-4 pt-4 sm:px-6 lg:px-8">
+      <div className="admin-shell-prelude bg-cream px-4 pt-4 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-4">
           <AdminTodayCommandCenter cards={todayCards} locale={locale} />
           <AdminOverviewActionDashboard cards={todayCards} locale={locale} />
