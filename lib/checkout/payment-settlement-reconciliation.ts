@@ -39,13 +39,13 @@ function cleanAmount(value?: number | null) {
 }
 
 function determinePaymentSettlementStatus(input: {
-  providerReference?: string;
-  orderNumber?: string;
+  providerReference: string | undefined;
+  orderNumber: string | undefined;
   webhookStatus: string;
-  expectedAmountCents?: number;
-  actualAmountCents?: number;
-  expectedCurrency?: string;
-  actualCurrency?: string;
+  expectedAmountCents: number | undefined;
+  actualAmountCents: number | undefined;
+  expectedCurrency: string | undefined;
+  actualCurrency: string | undefined;
 }): PaymentSettlementStatus {
   if (!input.providerReference || !input.orderNumber || input.webhookStatus === 'failed' || input.webhookStatus === 'cancelled') {
     return 'needs_attention';
