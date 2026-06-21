@@ -29,7 +29,8 @@ const baseOrder = {
   currency: 'CAD',
   totalCents: 12000,
   itemCount: 1,
-  latestPaymentStatus: 'succeeded'
+  latestPaymentStatus: 'succeeded',
+  createdAt: new Date('2026-06-18T12:00:00Z')
 } satisfies CheckoutOrderSummary;
 
 export async function runAdminTodayCardsTests() {
