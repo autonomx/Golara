@@ -13,12 +13,31 @@ const productPageSize = 12;
 type AdminProductsSearchParams = { [key: string]: string | undefined };
 
 const workflowFilters = [
-  { key: 'missing-image', label: 'Missing image' },
-  { key: 'inactive', label: 'Inactive' },
-  { key: 'quote-only', label: 'Quote only' },
-  { key: 'available-today', label: 'Available today' },
-  { key: 'best-seller', label: 'Best sellers' }
+  { key: 'missing-image', labelKey: 'Missing image' },
+  { key: 'inactive', labelKey: 'Inactive' },
+  { key: 'quote-only', labelKey: 'Quote only' },
+  { key: 'available-today', labelKey: 'Available today' },
+  { key: 'best-seller', labelKey: 'Best sellers' }
 ] as const;
+
+const productWorkflowCopy = {
+  'en-CA': {
+    eyebrow: 'Catalog workflow',
+    title: 'Product fix-it queue',
+    body: 'Use these shortcuts to review incomplete products, merchandising flags, and everyday catalog cleanup before opening full product details.',
+    create: 'Create product',
+    empty: 'No routine product cleanup is waiting.',
+    open: 'Open details'
+  },
+  'fa-IR': {
+    eyebrow: 'گردش کار کاتالوگ',
+    title: 'صف بررسی محصول',
+    body: 'از این میانبرها برای بررسی محصولات ناقص، پرچم‌های نمایش و پاکسازی روزانه کاتالوگ پیش از باز کردن جزئیات کامل استفاده کنید.',
+    create: 'ایجاد محصول',
+    empty: 'موردی برای پاکسازی معمول محصول در انتظار نیست.',
+    open: 'باز کردن جزئیات'
+  }
+} as const;
 
 function parsePage(value?: string) {
   const parsed = Number.parseInt(value ?? '1', 10);
@@ -65,7 +84,9 @@ function workflowHref(flag?: string) {
   return serialized ? `/admin/products?${serialized}` : '/admin/products';
 }
 
-function ProductWorkflowPanel({ products }: { products: AdminProductFilterIndexItem[] }) {
+function ProductWorkflowPanel({ products, locale }: { products: AdminProductFilterIndexItem[]; locale: SupportedLocale }) {
+  const copy = productWorkflowCopy[locale];
+  const t = createAdminCatalogPageTranslator(locale);
   const counts = workflowFilters.map((filter) => ({ ...filter, count: products.filter((product) => productMatchesFlag(product, filter.key)).length }));
   const needsReview = products.filter((product) => !product.image || product.isActive === false || product.requiresQuote || product.price <= 0).slice(0, 5);
 
@@ -74,27 +95,27 @@ function ProductWorkflowPanel({ products }: { products: AdminProductFilterIndexI
       <div className="mx-auto grid max-w-7xl gap-4 rounded-xl border border-rosewood/10 bg-white p-4 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-rosewood/60">Catalog workflow</p>
-            <h2 id="product-workflow-title" className="mt-1 text-xl font-semibold text-stone-900">Product fix-it queue</h2>
-            <p className="mt-1 max-w-3xl text-sm text-stone-600">Use these shortcuts to review incomplete products, merchandising flags, and everyday catalog cleanup before opening full product details.</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-rosewood/60">{copy.eyebrow}</p>
+            <h2 id="product-workflow-title" className="mt-1 text-xl font-semibold text-stone-900">{copy.title}</h2>
+            <p className="mt-1 max-w-3xl text-sm text-stone-600">{copy.body}</p>
           </div>
-          <Link href="/admin/products#products" className="rounded-full bg-rosewood px-4 py-2 text-sm font-semibold text-white">Create product</Link>
+          <Link href="/admin/products#products" className="rounded-full bg-rosewood px-4 py-2 text-sm font-semibold text-white">{copy.create}</Link>
         </div>
         <div className="flex flex-wrap gap-2">
           {counts.map((item) => (
             <Link key={item.key} href={workflowHref(item.key)} className="rounded-full border border-rosewood/15 px-3 py-2 text-sm font-semibold text-rosewood hover:border-rosewood">
-              {item.label}: {item.count}
+              {t(item.labelKey)}: {item.count}
             </Link>
           ))}
         </div>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
           {needsReview.length === 0 ? (
-            <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800 sm:col-span-2 lg:col-span-5">No routine product cleanup is waiting.</p>
+            <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800 sm:col-span-2 lg:col-span-5">{copy.empty}</p>
           ) : needsReview.map((product) => (
             <Link key={product.slug} href={`/admin/products/${product.slug}`} className="rounded-lg border border-stone-200 p-3 text-sm hover:border-rosewood/40">
               <span className="block font-semibold text-stone-900">{product.title}</span>
               <span className="mt-1 block text-xs text-stone-500">{product.code || product.slug}</span>
-              <span className="mt-2 block text-xs font-semibold text-rosewood">Open details</span>
+              <span className="mt-2 block text-xs font-semibold text-rosewood">{copy.open}</span>
             </Link>
           ))}
         </div>
@@ -141,7 +162,7 @@ export default async function AdminProductsPage({ searchParams }: { searchParams
 
   return (
     <>
-      <ProductWorkflowPanel products={productFilterIndex} />
+      <ProductWorkflowPanel products={productFilterIndex} locale={locale} />
       <AdminConsolePage searchParams={Promise.resolve(resolvedSearchParams)} forcedTab="catalog" catalogSection="products" activeNavKey="products" />
       <ProductPaginationBar params={resolvedSearchParams} total={filteredProducts.length} locale={locale} />
     </>
