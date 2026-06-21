@@ -97,10 +97,6 @@ export function HomepageBannerSlideshow({ slides, homepage, locale }: HomepageBa
             </div> : null}
           </div>
         </div>
-
-        {homepage?.studioBadge !== '' ? <div className="absolute bottom-6 right-6 hidden rounded-full border border-white/35 bg-white/72 px-5 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-rosewood shadow-sm md:block">
-          {firstNonEmpty(homepage?.studioBadge, copy('home.heroStudioBadgeFallback'))}
-        </div> : null}
       </div>
     </section>
   );
