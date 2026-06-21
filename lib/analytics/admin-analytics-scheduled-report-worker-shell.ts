@@ -43,6 +43,38 @@ export type AdminAnalyticsScheduledReportWorkerShellResult = {
   blockers: string[];
 };
 
+export type AdminAnalyticsScheduledReportWorkerExecutionItem = {
+  id: string;
+  label: string;
+  attempted: boolean;
+  status: 'worker_skipped' | 'worker_completed' | 'worker_failed';
+  reason?: string;
+  providerMessageId?: string;
+  blockers: string[];
+};
+
+export type AdminAnalyticsScheduledReportWorkerExecutionResult = {
+  status: 'worker_execution_blocked' | 'worker_execution_completed';
+  ownerOnly: true;
+  automaticWorkerExecutionEnabled: boolean;
+  backgroundLoopStarted: false;
+  timerCreated: false;
+  maxBatchSize: number;
+  attemptedCount: number;
+  completedCount: number;
+  failedCount: number;
+  blockers: string[];
+  items: AdminAnalyticsScheduledReportWorkerExecutionItem[];
+};
+
+export type AdminAnalyticsScheduledReportWorkerRunner = (
+  decision: AdminAnalyticsScheduledReportWorkerDecision
+) => Promise<{ status: 'completed' | 'failed'; providerMessageId?: string | null; reason?: string | null }>;
+
+export const SCHEDULED_REPORT_WORKER_MAX_BATCH_SIZE = 5;
+export const ADMIN_ANALYTICS_SCHEDULED_REPORT_WORKER_EXECUTION_ENABLED_ENV =
+  'ADMIN_ANALYTICS_SCHEDULED_REPORT_WORKER_EXECUTION_ENABLED';
+
 const DEFAULT_GATE_STATE: AdminAnalyticsScheduledReportWorkerGateState = {
   workerRuntimeEnabled: false,
   schedulerRuntimeEnabled: false,
@@ -119,6 +151,91 @@ export function evaluateScheduledReportWorkerShell(options: {
     dueCount,
     decisions,
     blockers: shellBlockers
+  };
+}
+
+function skippedWorkerItem(decision: AdminAnalyticsScheduledReportWorkerDecision, blockers: string[]): AdminAnalyticsScheduledReportWorkerExecutionItem {
+  return {
+    id: decision.id,
+    label: decision.label,
+    attempted: false,
+    status: 'worker_skipped',
+    blockers
+  };
+}
+
+export async function executeScheduledReportWorkerBatch(options: {
+  shell: AdminAnalyticsScheduledReportWorkerShellResult;
+  automaticWorkerExecutionEnabled?: boolean;
+  maxBatchSize?: number;
+  runner?: AdminAnalyticsScheduledReportWorkerRunner | null;
+}): Promise<AdminAnalyticsScheduledReportWorkerExecutionResult> {
+  const maxBatchSize = Math.min(
+    Math.max(0, options.maxBatchSize ?? SCHEDULED_REPORT_WORKER_MAX_BATCH_SIZE),
+    SCHEDULED_REPORT_WORKER_MAX_BATCH_SIZE
+  );
+  const blockers: string[] = [];
+  if (!options.automaticWorkerExecutionEnabled) blockers.push('automatic worker execution flag is disabled');
+  if (options.runner === null || options.runner === undefined) blockers.push('worker runner is not configured');
+  if (options.shell.status !== 'worker_shell_gated_preview') blockers.push('worker shell is not ready');
+  if (maxBatchSize < 1) blockers.push('worker batch size must be at least one');
+
+  const dueDecisions = options.shell.decisions
+    .filter((decision) => decision.status === 'due_for_manual_processing')
+    .slice(0, maxBatchSize);
+  const skippedDecisions = options.shell.decisions
+    .filter((decision) => decision.status !== 'due_for_manual_processing')
+    .map((decision) => skippedWorkerItem(
+      decision,
+      decision.blockers.length > 0 ? decision.blockers : ['scheduled report is not due for worker processing']
+    ));
+
+  if (blockers.length > 0 || options.runner === null || options.runner === undefined) {
+    return {
+      status: 'worker_execution_blocked',
+      ownerOnly: true,
+      automaticWorkerExecutionEnabled: options.automaticWorkerExecutionEnabled === true,
+      backgroundLoopStarted: false,
+      timerCreated: false,
+      maxBatchSize,
+      attemptedCount: 0,
+      completedCount: 0,
+      failedCount: 0,
+      blockers,
+      items: [
+        ...dueDecisions.map((decision) => skippedWorkerItem(decision, blockers)),
+        ...skippedDecisions
+      ]
+    };
+  }
+
+  const runner = options.runner;
+  const attemptedItems: AdminAnalyticsScheduledReportWorkerExecutionItem[] = [];
+  for (const decision of dueDecisions) {
+    const result = await runner(decision);
+    attemptedItems.push({
+      id: decision.id,
+      label: decision.label,
+      attempted: true,
+      status: result.status === 'completed' ? 'worker_completed' : 'worker_failed',
+      providerMessageId: result.providerMessageId ?? undefined,
+      reason: result.reason ?? undefined,
+      blockers: []
+    });
+  }
+
+  return {
+    status: 'worker_execution_completed',
+    ownerOnly: true,
+    automaticWorkerExecutionEnabled: true,
+    backgroundLoopStarted: false,
+    timerCreated: false,
+    maxBatchSize,
+    attemptedCount: attemptedItems.length,
+    completedCount: attemptedItems.filter((item) => item.status === 'worker_completed').length,
+    failedCount: attemptedItems.filter((item) => item.status === 'worker_failed').length,
+    blockers: [],
+    items: [...attemptedItems, ...skippedDecisions]
   };
 }
 
