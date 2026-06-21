@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 import {
-  ADMIN_ANALYTICS_SCHEDULED_REPORT_WORKER_EXECUTION_ENABLED_ENV,
   SCHEDULED_REPORT_WORKER_MAX_BATCH_SIZE,
   createDisabledScheduledReportWorkerShell,
   evaluateScheduledReportWorkerShell,
