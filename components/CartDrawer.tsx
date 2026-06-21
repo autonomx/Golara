@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useId, useState } from 'react';
 import { ShoppingBag, X } from 'lucide-react';
 import { clearCartAction, removeCartItemAction, updateCartItemAction } from '@/app/cart/actions';
@@ -43,6 +43,21 @@ function cartReturnTo(pathname: string | null) {
   return path;
 }
 
+function cleanCartStatusPath(pathname: string | null, searchParams: URLSearchParams | ReadonlyURLSearchParams) {
+  const path = cartReturnTo(pathname);
+  const params = new URLSearchParams(searchParams.toString());
+  params.delete('cart');
+  const query = params.toString();
+  return `${path}${query ? `?${query}` : ''}`;
+}
+
+function cartReassuranceItems(locale?: string | null) {
+  const fa = locale?.toLowerCase().startsWith('fa');
+  return fa
+    ? ['ارسال و جمع نهایی هنگام پرداخت تایید می‌شود.', 'پرداخت امن و ثبت سفارش روی سرور انجام می‌شود.', 'برای سفارش‌های ویژه می‌توانید با پشتیبانی هماهنگ کنید.']
+    : ['Delivery and final totals are confirmed at checkout.', 'Secure payment and order creation happen server-side.', 'Special requests can be coordinated with support.'];
+}
+
 export function CartDrawer({
   cart,
   cartLabel,
@@ -58,10 +73,14 @@ export function CartDrawer({
   const [open, setOpen] = useState(false);
   const titleId = useId();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const returnTo = cartReturnTo(pathname);
+  const continueShoppingHref = cleanCartStatusPath(pathname, searchParams);
   const direction = getCustomerCopyDirection(locale);
   const copy = (key: Parameters<typeof getCustomerCopy>[0]) => getCustomerCopy(key, locale);
   const hasItems = cart.items.length > 0;
+  const showAddConfirmation = searchParams.get('cart') === 'added';
+  const reassuranceItems = cartReassuranceItems(locale);
 
   const openDrawer = () => {
     setMounted(true);
@@ -96,6 +115,7 @@ export function CartDrawer({
 
   const sideClass = direction === 'rtl' ? 'left-0 border-r border-rosewood/10' : 'right-0 border-l border-rosewood/10';
   const closedTransformClass = direction === 'rtl' ? '-translate-x-full' : 'translate-x-full';
+  const confirmationSideClass = direction === 'rtl' ? 'left-4 md:left-6' : 'right-4 md:right-6';
 
   return (
     <>
@@ -107,6 +127,21 @@ export function CartDrawer({
           </span>
         ) : null}
       </button>
+
+      {showAddConfirmation ? (
+        <div className={`fixed bottom-5 ${confirmationSideClass} z-[80] w-[calc(100vw-2rem)] max-w-sm rounded-[1.5rem] border border-olive/20 bg-white p-4 text-stone-800 shadow-[0_18px_60px_rgba(88,24,43,0.2)]`} role="status" aria-live="polite" dir={direction}>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-olive">{copy('cart.eyebrow')}</p>
+          <p className="mt-1 font-display text-2xl text-rosewood">{copy('cart.status.added')}</p>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <Link href="/cart/checkout" className="rounded-full bg-rosewood px-4 py-2 text-center text-xs font-semibold text-white shadow-lg shadow-rosewood/15 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30">
+              {copy('cart.checkout')}
+            </Link>
+            <Link href={continueShoppingHref} className="rounded-full border border-rosewood/20 px-4 py-2 text-center text-xs font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20">
+              {copy('common.continueShopping')}
+            </Link>
+          </div>
+        </div>
+      ) : null}
 
       {mounted ? (
         <div className={`fixed inset-0 z-[90] ${open ? 'pointer-events-auto' : 'pointer-events-none'}`} role="dialog" aria-modal="true" aria-labelledby={titleId} dir={direction}>
@@ -205,6 +240,14 @@ export function CartDrawer({
               <div className="mt-3 flex items-center justify-between gap-4 text-lg text-rosewood">
                 <span>{copy('cart.subtotal')}</span>
                 <strong>{cart.subtotalLabel}</strong>
+              </div>
+              <div className="mt-4 grid gap-2 rounded-2xl bg-cream p-3 text-xs font-medium leading-5 text-stone-600">
+                {reassuranceItems.map((item) => (
+                  <div key={item} className="flex gap-2">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-olive" aria-hidden="true" />
+                    <span>{item}</span>
+                  </div>
+                ))}
               </div>
               <p className="mt-3 text-xs leading-5 text-stone-500">{copy('cart.finalTotalsNote')}</p>
               <div className="mt-5 grid gap-3">
