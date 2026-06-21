@@ -91,7 +91,7 @@ function ProductWorkflowPanel({ products }: { products: AdminProductFilterIndexI
           {needsReview.length === 0 ? (
             <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-800 sm:col-span-2 lg:col-span-5">No routine product cleanup is waiting.</p>
           ) : needsReview.map((product) => (
-            <Link key={product.id} href={`/admin/products/${product.id}`} className="rounded-lg border border-stone-200 p-3 text-sm hover:border-rosewood/40">
+            <Link key={product.slug} href={`/admin/products/${product.slug}`} className="rounded-lg border border-stone-200 p-3 text-sm hover:border-rosewood/40">
               <span className="block font-semibold text-stone-900">{product.title}</span>
               <span className="mt-1 block text-xs text-stone-500">{product.code || product.slug}</span>
               <span className="mt-2 block text-xs font-semibold text-rosewood">Open details</span>
