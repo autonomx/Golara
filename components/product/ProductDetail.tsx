@@ -7,11 +7,12 @@ import type { ProductCheckoutPolicy } from '@/lib/checkout/product-checkout-poli
 import type { SupportedLocale } from '@/lib/i18n/locales';
 import { getCustomerCopy } from '@/lib/localization/customer-copy';
 import { getStorefrontCloudinaryImage } from '@/lib/media/cloudinary-image';
-import { formatStorefrontCopy, getStorefrontCopy } from '@/lib/localization/storefront-copy';
+import { formatStorefrontCopy, getStorefrontCopy, getStorefrontCopyDirection } from '@/lib/localization/storefront-copy';
 
 const categoryLinkClass = 'rounded-full outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20';
 const whatsAppLinkClass = 'rounded-full border border-rosewood/20 px-6 py-3 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20';
-const cartButtonClass = 'rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none';
+const cartButtonClass = 'rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition hover:bg-stone-900 focus-visible:ring-4 focus-visible:ring-olive/30 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none';
+const purchaseSelectClass = 'rounded-full border border-rosewood/15 bg-white px-4 py-3 text-sm font-semibold text-rosewood outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100 disabled:text-stone-400';
 
 type ProductDetailProps = {
   product: Product;
@@ -22,7 +23,6 @@ type ProductDetailProps = {
 };
 
 function cartStatusCopyKey(status?: string): Parameters<typeof getCustomerCopy>[0] | undefined {
-  if (status === 'added') return 'cart.status.added';
   if (status === 'database-required') return 'cart.status.databaseRequired';
   if (status === 'failed') return 'cart.status.failed';
   return undefined;
@@ -34,61 +34,101 @@ export function ProductDetail({ product, category, checkoutPolicy, locale, cartS
   const cartMessageKey = cartStatusCopyKey(cartStatus);
   const cartMessage = cartMessageKey ? getCustomerCopy(cartMessageKey, locale) : undefined;
   const purchasableVariants = product.variants?.filter((variant) => variant.isActive) ?? [];
+  const productReturnTo = `/products/${product.slug}`;
+  const direction = getStorefrontCopyDirection(locale);
 
   return (
-    <section className="mx-auto grid max-w-7xl gap-10 px-5 py-14 lg:grid-cols-2">
-      <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] bg-blush shadow-2xl shadow-rosewood/10">
-        <ProgressiveStorefrontImage src={getStorefrontCloudinaryImage(product.image, 'productDetail')} alt={product.title} fill priority imageClassName="object-cover" sizes="(min-width: 1280px) 620px, (min-width: 1024px) calc(50vw - 40px), 100vw" />
-      </div>
-      <div className="flex flex-col justify-center">
-        <Link href={`/categories/${product.category}`} className={categoryLinkClass}>
-          <span className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">
-            {category?.title ?? product.categoryTitle ?? product.category}
-          </span>
-        </Link>
-        <h1 className="mt-4 font-display text-6xl text-rosewood">{product.title}</h1>
-        <p className="mt-2 text-sm uppercase tracking-[0.25em] text-rosewood/50">{product.code}</p>
-        <p className="mt-6 text-lg leading-8 text-stone-700">{product.description}</p>
-        <div className="mt-8 text-3xl font-semibold text-rosewood">{formatPrice(product, locale)}</div>
-        <div className="mt-4 rounded-2xl border border-olive/20 bg-cream p-4 text-sm text-stone-700">
-          <p className="font-semibold text-rosewood">{checkoutPolicy.summary}</p>
-          <p className="mt-1 leading-6">{checkoutPolicy.detail}</p>
+    <>
+      <section className="mx-auto grid max-w-7xl gap-10 px-5 pb-32 pt-14 lg:grid-cols-2 lg:pb-14">
+        <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] bg-blush shadow-2xl shadow-rosewood/10">
+          <ProgressiveStorefrontImage src={getStorefrontCloudinaryImage(product.image, 'productDetail')} alt={product.title} fill priority imageClassName="object-cover" sizes="(min-width: 1280px) 620px, (min-width: 1024px) calc(50vw - 40px), 100vw" />
         </div>
-        {cartMessage ? (
-          <div className="mt-4 rounded-2xl border border-olive/20 bg-olive/5 p-4 text-sm font-semibold text-olive" role="status" aria-live="polite">
-            {cartMessage}
+        <div className="flex flex-col justify-center">
+          <Link href={`/categories/${product.category}`} className={categoryLinkClass}>
+            <span className="text-sm font-semibold uppercase tracking-[0.3em] text-olive">
+              {category?.title ?? product.categoryTitle ?? product.category}
+            </span>
+          </Link>
+          <h1 className="mt-4 font-display text-6xl text-rosewood">{product.title}</h1>
+          <p className="mt-2 text-sm uppercase tracking-[0.25em] text-rosewood/50">{product.code}</p>
+          <p className="mt-6 text-lg leading-8 text-stone-700">{product.description}</p>
+          <div className="mt-8 text-3xl font-semibold text-rosewood">{formatPrice(product, locale)}</div>
+          <div className="mt-4 rounded-2xl border border-olive/20 bg-cream p-4 text-sm text-stone-700">
+            <p className="font-semibold text-rosewood">{checkoutPolicy.summary}</p>
+            <p className="mt-1 leading-6">{checkoutPolicy.detail}</p>
           </div>
-        ) : null}
-        <div className="mt-6 flex flex-wrap gap-3">
-          {checkoutPolicy.canAddToCart ? (
-            <form action={addToCartAction} className="flex flex-wrap items-center gap-3">
-              <input type="hidden" name="productId" value={product.id ?? ''} />
-              <input type="hidden" name="returnTo" value={`/products/${product.slug}`} />
-              <input type="hidden" name="currency" value={product.currency} />
-              <input type="hidden" name="locale" value={locale ?? 'fa-IR'} />
+          {cartMessage ? (
+            <div className="mt-4 rounded-2xl border border-olive/20 bg-olive/5 p-4 text-sm font-semibold text-olive" role="status" aria-live="polite">
+              {cartMessage}
+            </div>
+          ) : null}
+          <div className="mt-6 flex flex-wrap gap-3">
+            {checkoutPolicy.canAddToCart ? (
+              <form action={addToCartAction} className="flex flex-wrap items-center gap-3">
+                <input type="hidden" name="productId" value={product.id ?? ''} />
+                <input type="hidden" name="returnTo" value={productReturnTo} />
+                <input type="hidden" name="currency" value={product.currency} />
+                <input type="hidden" name="locale" value={locale ?? 'fa-IR'} />
+                {purchasableVariants.length > 1 ? (
+                  <>
+                    <label className="sr-only" htmlFor={`variant-${product.slug}`}>{copy('product.variant')}</label>
+                    <select id={`variant-${product.slug}`} name="variantId" defaultValue={purchasableVariants[0]?.id} disabled={!canAddToCart} className={purchaseSelectClass}>
+                      {purchasableVariants.map((variant) => <option key={variant.id} value={variant.id}>{variant.name} / {variant.sku}</option>)}
+                    </select>
+                  </>
+                ) : <input type="hidden" name="variantId" value={purchasableVariants[0]?.id ?? ''} />}
+                <label className="sr-only" htmlFor={`quantity-${product.slug}`}>{copy('product.quantity')}</label>
+                <select id={`quantity-${product.slug}`} name="quantity" defaultValue="1" disabled={!canAddToCart} className={purchaseSelectClass}>
+                  {[1, 2, 3, 4, 5].map((quantity) => <option key={quantity} value={quantity}>{quantity}</option>)}
+                </select>
+                <button type="submit" className={cartButtonClass} disabled={!canAddToCart}>
+                  {copy('product.addToCart')}
+                </button>
+              </form>
+            ) : null}
+            <a href={`https://wa.me/?text=${encodeURIComponent(formatStorefrontCopy('product.interestedMessage', locale, { title: product.title }))}`} className={whatsAppLinkClass}>{copy('product.orderByWhatsApp')}</a>
+            <span className="rounded-full border border-rosewood/20 px-6 py-3 text-sm font-semibold text-rosewood">
+              {product.availableToday ? copy('product.availableToday') : copy('product.preOrderRequired')}
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {checkoutPolicy.canAddToCart ? (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-rosewood/10 bg-white/95 px-4 py-3 shadow-[0_-16px_40px_rgba(88,24,43,0.14)] backdrop-blur lg:hidden" dir={direction}>
+          <form action={addToCartAction} className="mx-auto grid max-w-7xl gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
+            <input type="hidden" name="productId" value={product.id ?? ''} />
+            <input type="hidden" name="returnTo" value={productReturnTo} />
+            <input type="hidden" name="currency" value={product.currency} />
+            <input type="hidden" name="locale" value={locale ?? 'fa-IR'} />
+            {purchasableVariants.length <= 1 ? <input type="hidden" name="variantId" value={purchasableVariants[0]?.id ?? ''} /> : null}
+            <div className="min-w-0">
+              <p className="truncate text-xs font-semibold uppercase tracking-[0.18em] text-rosewood/55">{product.code}</p>
+              <div className="flex items-center justify-between gap-3">
+                <p className="truncate font-display text-xl text-rosewood">{product.title}</p>
+                <p className="shrink-0 text-sm font-bold text-rosewood">{formatPrice(product, locale)}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 sm:justify-end">
               {purchasableVariants.length > 1 ? (
                 <>
-                  <label className="sr-only" htmlFor={`variant-${product.slug}`}>{copy('product.variant')}</label>
-                  <select id={`variant-${product.slug}`} name="variantId" defaultValue={purchasableVariants[0]?.id} disabled={!canAddToCart} className="rounded-full border border-rosewood/15 bg-white px-4 py-3 text-sm font-semibold text-rosewood outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100 disabled:text-stone-400">
-                    {purchasableVariants.map((variant) => <option key={variant.id} value={variant.id}>{variant.name} / {variant.sku}</option>)}
+                  <label className="sr-only" htmlFor={`sticky-variant-${product.slug}`}>{copy('product.variant')}</label>
+                  <select id={`sticky-variant-${product.slug}`} name="variantId" defaultValue={purchasableVariants[0]?.id} disabled={!canAddToCart} className="min-w-0 flex-1 rounded-full border border-rosewood/15 bg-white px-3 py-2.5 text-xs font-semibold text-rosewood outline-none focus-visible:ring-4 focus-visible:ring-olive/20">
+                    {purchasableVariants.map((variant) => <option key={variant.id} value={variant.id}>{variant.name}</option>)}
                   </select>
                 </>
-              ) : <input type="hidden" name="variantId" value={purchasableVariants[0]?.id ?? ''} />}
-              <label className="sr-only" htmlFor={`quantity-${product.slug}`}>{copy('product.quantity')}</label>
-              <select id={`quantity-${product.slug}`} name="quantity" defaultValue="1" disabled={!canAddToCart} className="rounded-full border border-rosewood/15 bg-white px-4 py-3 text-sm font-semibold text-rosewood outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100 disabled:text-stone-400">
+              ) : null}
+              <label className="sr-only" htmlFor={`sticky-quantity-${product.slug}`}>{copy('product.quantity')}</label>
+              <select id={`sticky-quantity-${product.slug}`} name="quantity" defaultValue="1" disabled={!canAddToCart} className="rounded-full border border-rosewood/15 bg-white px-3 py-2.5 text-xs font-semibold text-rosewood outline-none focus-visible:ring-4 focus-visible:ring-olive/20">
                 {[1, 2, 3, 4, 5].map((quantity) => <option key={quantity} value={quantity}>{quantity}</option>)}
               </select>
-              <button type="submit" className={cartButtonClass} disabled={!canAddToCart}>
+              <button type="submit" className="rounded-full bg-rosewood px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-rosewood/15 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30 disabled:cursor-not-allowed disabled:bg-stone-300" disabled={!canAddToCart}>
                 {copy('product.addToCart')}
               </button>
-            </form>
-          ) : null}
-          <a href={`https://wa.me/?text=${encodeURIComponent(formatStorefrontCopy('product.interestedMessage', locale, { title: product.title }))}`} className={whatsAppLinkClass}>{copy('product.orderByWhatsApp')}</a>
-          <span className="rounded-full border border-rosewood/20 px-6 py-3 text-sm font-semibold text-rosewood">
-            {product.availableToday ? copy('product.availableToday') : copy('product.preOrderRequired')}
-          </span>
+            </div>
+          </form>
         </div>
-      </div>
-    </section>
+      ) : null}
+    </>
   );
 }
