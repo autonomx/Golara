@@ -212,10 +212,11 @@ export function createProviderScheduledReportTransportAdapter(
     liveNetworkEnabled,
     dispatch: async (payload) => {
       const blockers = [...validation.blockers, ...invalidAssetBlockers(payload)];
-      if (providerDispatch === null || providerDispatch === undefined) {
+      const dispatchHandler = providerDispatch ?? null;
+      if (dispatchHandler === null) {
         blockers.push('provider dispatch handler is not configured');
       }
-      if (blockers.length > 0) {
+      if (blockers.length > 0 || dispatchHandler === null) {
         return {
           status: 'transport_disabled',
           sent: false,
@@ -225,7 +226,7 @@ export function createProviderScheduledReportTransportAdapter(
         };
       }
 
-      const providerResult = await providerDispatch(payload, {
+      const providerResult = await dispatchHandler(payload, {
         destinationKey: normalizedValue(options.destinationKey),
         sourceLabel: normalizedValue(options.sourceLabel),
         credentialRef: normalizedValue(options.credentialRef),
