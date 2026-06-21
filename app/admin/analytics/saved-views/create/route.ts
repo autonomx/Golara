@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { assertAdminRole } from '@/lib/admin-auth';
 import { runAdminAnalyticsSavedViewActionCore } from '@/lib/analytics/admin-analytics-saved-view-action-core';
-import { buildAdminAnalyticsSavedViewStorageDelegate } from '@/lib/analytics/admin-analytics-saved-view-storage-delegate';
+import { buildAdminAnalyticsSavedViewPreferredStorageDelegate } from '@/lib/analytics/admin-analytics-saved-view-generated-client-delegate';
 import { savedViewRouteGateStateFromEnv } from '@/lib/analytics/admin-analytics-saved-view-route-plan';
 
 export const dynamic = 'force-dynamic';
@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: Request) {
   try {
     const identity = await assertAdminRole('owner');
-    const delegateAttachment = buildAdminAnalyticsSavedViewStorageDelegate();
+    const delegateAttachment = buildAdminAnalyticsSavedViewPreferredStorageDelegate();
     const result = await runAdminAnalyticsSavedViewActionCore({
       action: 'create-view',
       actorRole: identity.role,

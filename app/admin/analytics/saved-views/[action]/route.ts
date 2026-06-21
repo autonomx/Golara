@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { assertAdminRole } from '@/lib/admin-auth';
 import { runAdminAnalyticsSavedViewActionCore } from '@/lib/analytics/admin-analytics-saved-view-action-core';
-import { buildAdminAnalyticsSavedViewStorageDelegate } from '@/lib/analytics/admin-analytics-saved-view-storage-delegate';
+import { buildAdminAnalyticsSavedViewPreferredStorageDelegate } from '@/lib/analytics/admin-analytics-saved-view-generated-client-delegate';
 import {
   savedViewRouteGateStateFromEnv,
   type AdminAnalyticsSavedViewRouteAction
@@ -23,7 +23,7 @@ export async function POST(request: Request, context: { params: Promise<{ action
     const action = ACTION_BY_SEGMENT[params.action];
     if (!action) return NextResponse.json({ ok: false, error: 'Unknown saved-view action.' }, { status: 404 });
     const identity = await assertAdminRole('owner');
-    const delegateAttachment = buildAdminAnalyticsSavedViewStorageDelegate();
+    const delegateAttachment = buildAdminAnalyticsSavedViewPreferredStorageDelegate();
     const result = await runAdminAnalyticsSavedViewActionCore({
       action,
       actorRole: identity.role,
