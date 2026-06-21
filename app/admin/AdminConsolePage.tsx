@@ -7,13 +7,16 @@ import { AdminFulfillmentSettingsPanel } from '@/components/admin/AdminFulfillme
 import { AdminModulePlaceholder } from '@/components/admin/AdminModulePlaceholder';
 import { AdminOrderPanel } from '@/components/admin/AdminOrderPanel';
 import { AdminOrderRevenueSummaryPanel } from '@/components/admin/AdminOrderRevenueSummaryPanel';
+import { AdminOverviewActionDashboard } from '@/components/admin/AdminOverviewActionDashboard';
 import { AdminPageShell, type AdminNavKey } from '@/components/admin/AdminPageShell';
 import { AdminStaffReadinessPanel } from '@/components/admin/AdminStaffReadinessPanel';
 import { AdminStorefrontNavigationPanel } from '@/components/admin/AdminStorefrontNavigationPanel';
 import { AdminStoreSettingsPanel } from '@/components/admin/AdminStoreSettingsPanel';
+import { AdminTodayCommandCenter } from '@/components/admin/AdminTodayCommandCenter';
 import { AdminTranslationPanel } from '@/components/admin/AdminTranslationPanel';
 import { InquiryBoard } from '@/components/admin/InquiryBoard';
 import { updateHomepageAction } from '@/app/admin/actions';
+import { buildAdminTodayCards } from '@/lib/admin/admin-today-cards';
 import { EMPTY_ORDER_REVENUE_SUMMARY, orderRevenueSummaryService } from '@/lib/analytics/order-revenue-summary';
 import { getAdminIdentity, isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
 import { getAdminAccountReadinessSummary, listAdminAccountReadinessRecords } from '@/lib/admin-account-repository';
@@ -282,6 +285,14 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
   const checkoutReadiness = getPaymentGatewayReadiness(getPaymentGatewayConfig(process.env), process.env);
   const disabled = !runtimeReadiness.databaseUrlPresent || !authenticated;
   const showOverviewExtras = activeTab === 'overview' && overviewSection === 'all';
+  const todayCards = buildAdminTodayCards({
+    products,
+    orders: orderPageData.orders,
+    orderTotalCount: orderPageData.totalCount,
+    inquiryStatusCounts: inquiryCounts,
+    runtimeReadiness,
+    checkoutReadiness
+  });
   const placeholder = adminCopy(locale).discountsPlaceholder;
 
   return (
@@ -289,6 +300,7 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
       <AdminActionBanner status={status} message={message} locale={locale} />
       <AdminModuleHeader header={header} />
       {activeWorkspace ? <AdminDashboard activeWorkspace={activeWorkspace} catalogSection={catalogSection} categories={categories} products={products} productTypes={productTypes} homepage={homepage} homepageTranslations={homepageTranslations} media={media} authEventSummary={authEventSummary} runtimeReadiness={runtimeReadiness} authConfigured={authConfigured} authenticated={authenticated} notificationReadiness={notificationReadiness} notificationRetryRunbook={notificationRetryRunbook} checkoutReadiness={checkoutReadiness} catalogSearch={catalogSearch} catalogCategory={catalogCategory} catalogFlag={catalogFlag} productPage={parsePage(productPage)} categoryPage={parsePage(categoryPage)} mediaPage={parsePage(mediaPage)} productColumns={productColumns} mediaColumns={mediaColumns} status={status} message={message} locale={locale} /> : null}
+      {showOverviewExtras ? <div id="overview-workspace-actions" className="grid gap-4"><AdminTodayCommandCenter cards={todayCards} locale={locale} /><AdminOverviewActionDashboard cards={todayCards} locale={locale} /></div> : null}
       {standaloneContentPage && contentSection === 'homepage' ? <AdminHomepageContentPanel homepage={homepage} disabled={disabled} locale={locale} /> : null}
       {standaloneContentPage && contentSection === 'translations' && authenticated ? <AdminTranslationPanel homepage={homepage} homepageTranslations={homepageTranslations} categories={categories} products={products} disabled={disabled} locale={locale} /> : null}
       {showOverviewExtras && authenticated ? <AdminOrderRevenueSummaryPanel summary={orderRevenueSummary} /> : null}
