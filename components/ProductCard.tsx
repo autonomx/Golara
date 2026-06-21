@@ -8,11 +8,26 @@ import type { SupportedLocale } from '@/lib/i18n/locales';
 import { formatStorefrontCopy, getStorefrontCopy } from '@/lib/localization/storefront-copy';
 import { getStorefrontCloudinaryImage } from '@/lib/media/cloudinary-image';
 
-export function ProductCard({ product, priority = false, locale }: { product: Product; priority?: boolean; locale?: SupportedLocale }) {
+export function ProductCard({
+  product,
+  priority = false,
+  locale,
+  returnTo
+}: {
+  product: Product;
+  priority?: boolean;
+  locale?: SupportedLocale;
+  returnTo?: string;
+}) {
   const requiresQuote = productRequiresQuote(product);
   const canAddToCart = Boolean(product.id && !requiresQuote);
   const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key, locale);
   const addToCartLabel = copy('product.addToCart');
+  const cartReturnTo = returnTo ?? `/products/${product.slug}`;
+  const decisionDetails = [
+    product.availableToday ? copy('product.availableToday') : copy('product.preOrderRequired'),
+    product.productTypeName ?? product.categoryTitle
+  ].filter(Boolean);
 
   return (
     <article className="group overflow-hidden rounded-3xl border border-rosewood/10 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
@@ -36,6 +51,13 @@ export function ProductCard({ product, priority = false, locale }: { product: Pr
           <h3 className="font-display text-2xl text-rosewood">{product.title}</h3>
           <p className="line-clamp-2 text-sm text-stone-600">{product.description}</p>
           <div className="pt-2 text-lg font-semibold text-rosewood">{formatPrice(product, locale)}</div>
+          <div className="flex flex-wrap gap-2 pt-1 text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-rosewood/65">
+            {decisionDetails.map((detail) => (
+              <span key={detail} className="rounded-full bg-cream px-3 py-1">
+                {detail}
+              </span>
+            ))}
+          </div>
         </div>
       </Link>
       {requiresQuote ? (
@@ -48,14 +70,15 @@ export function ProductCard({ product, priority = false, locale }: { product: Pr
         <form action={addToCartAction} className="flex items-center gap-2 px-5 pb-5">
           <input type="hidden" name="productId" value={product.id ?? ''} />
           <input type="hidden" name="variantId" value={product.variants?.[0]?.id ?? ''} />
-          <input type="hidden" name="returnTo" value={`/products/${product.slug}`} />
+          <input type="hidden" name="returnTo" value={cartReturnTo} />
           <input type="hidden" name="currency" value={product.currency} />
+          <input type="hidden" name="locale" value={locale ?? 'fa-IR'} />
           <input type="hidden" name="quantity" value="1" />
           <StorefrontSubmitButton
             label={addToCartLabel}
             pendingLabel={`${addToCartLabel}…`}
             disabled={!canAddToCart}
-            className="w-full rounded-full bg-rosewood px-4 py-2 text-xs font-semibold text-white outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30 disabled:cursor-not-allowed disabled:bg-stone-300"
+            className="w-full rounded-full bg-rosewood px-4 py-2 text-xs font-semibold text-white outline-none transition hover:bg-stone-900 focus-visible:ring-4 focus-visible:ring-olive/30 disabled:cursor-not-allowed disabled:bg-stone-300"
           />
         </form>
       )}
