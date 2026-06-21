@@ -12,16 +12,31 @@ export function AdminAnalyticsLayoutGroupHeaders({ preview }: AdminAnalyticsLayo
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Dashboard groups</p>
-          <h2 className="mt-1 text-2xl font-bold text-stone-950">Analytics at a glance</h2>
+          <h2 className="mt-1 text-2xl font-bold text-stone-950">Analytics workspace tabs</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">
-            Native collapsible group headers organize the analytics workspace by purpose while preserving the selected range,
-            existing anchors, section index, and accessible chart table fallbacks.
+            Server-rendered workspace tabs provide fast jumps between analytics groups while preserving the selected range,
+            native collapsible sections, existing anchors, section index, and accessible chart table fallbacks.
           </p>
         </div>
         <span className="rounded-full border border-olive/30 bg-olive/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-olive">
           {preview.rangeLabel}
         </span>
       </div>
+      <nav aria-label="Analytics workspace tabs" role="tablist" className="mt-5 flex flex-wrap gap-2">
+        {preview.groups.map((group) => (
+          <Link
+            key={group.key}
+            href={group.tabHref}
+            role="tab"
+            aria-selected={group.defaultOpen ? true : undefined}
+            className={group.defaultOpen
+              ? 'rounded-full bg-olive px-4 py-2 text-sm font-bold text-white shadow-sm'
+              : 'rounded-full border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-700 hover:border-olive hover:text-olive'}
+          >
+            {group.tabLabel}
+          </Link>
+        ))}
+      </nav>
       <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {preview.groups.map((group) => (
           <details key={group.key} open={group.defaultOpen} className="rounded-lg border border-stone-200 bg-stone-50 p-4">
@@ -59,7 +74,7 @@ export function AdminAnalyticsLayoutGroupHeaders({ preview }: AdminAnalyticsLayo
         ))}
       </div>
       <p className="mt-4 rounded-md border border-stone-200 bg-stone-50 px-4 py-3 text-xs leading-5 text-stone-600">
-        Collapsible groups use native details/summary controls and keep tabs disabled, so the dashboard remains server-rendered and mobile-readable.
+        Workspace tabs are native links, so the dashboard stays server-rendered and mobile-readable while collapsible groups remain available below.
       </p>
     </section>
   );
