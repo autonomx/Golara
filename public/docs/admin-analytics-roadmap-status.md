@@ -19,7 +19,7 @@ This document summarizes the `/admin/analytics` workspace status.
 - Traffic attribution using capped UTM fields and external referrer domains.
 - Owner-only aggregate Business CSV and Site CSV exports.
 - Scheduled report owner management, read/recording endpoints, locked controls, dry-run preview, payload preview, activation readiness, schedule planning, disabled worker shell, disabled transport/outbox contracts, injected provider-dispatch adapter, provider-client bridge, manual owner-run readiness, staging smoke validation, gated delivery executor contract, capped retry planning, bounded retry execution, injected clock/queue registration boundary, bounded automatic worker execution boundary, and ops hardening.
-- Saved dashboard view management surface, owner/staff metadata read route, approved owner POST route plans, injected-delegate storage apply helper, gated storage delegate, owner action core, and dedicated saved-view status page.
+- Saved dashboard view management surface, owner/staff metadata read route, approved owner POST route plans, injected-delegate storage apply helper, generated-client delegate bridge, gated raw-SQL storage delegate fallback, owner action core, and dedicated saved-view status page.
 - Server-rendered analytics workspace tabs plus native collapsible dashboard groups using the selected range and existing section anchors.
 - Privacy and retention policy visibility.
 - Raw site-event retention status, cleanup preview, owner-only cleanup plan helper, hard-gated executor, bounded live delegate factory, owner-only cleanup route, and dedicated retention status/control page. Deletion is still fail-closed unless plan, execution, delegate, production evidence, database/table, stale-event, and manual owner confirmation gates all pass.
@@ -29,7 +29,6 @@ This document summarizes the `/admin/analytics` workspace status.
 ## Planned next
 
 - Future customer segmentation beyond aggregate order-count and recency bands, only after a separate privacy review.
-- Saved dashboard generated model/client alignment. Current owner routes use the gated storage delegate and retain metadata-only policy checks.
 
 ## Customer cohort note
 
@@ -50,9 +49,9 @@ The disabled boundary remains important:
 
 ## Saved dashboard view storage note
 
-Saved dashboard views now have a visible management and route-planning surface. The implementation includes named presets, allowed scopes, role-aware metadata normalization, blocked report/customer/event-row fields, metadata-only DTOs, owner/staff read gating, approved owner POST targets, injected-delegate storage application, a shared action core, and a gated storage delegate attached to the owner routes.
+Saved dashboard views now have a visible management and route-planning surface. The implementation includes named presets, allowed scopes, role-aware metadata normalization, blocked report/customer/event-row fields, metadata-only DTOs, owner/staff read gating, approved owner POST targets, injected-delegate storage application, a shared action core, a generated-client delegate bridge, and a gated raw-SQL storage delegate fallback attached through the owner routes.
 
-Owner route storage remains fail-closed unless the saved-view storage delegate flag and all saved-view access, endpoint, and role-policy gates pass. The table-shape fragment and guards remain the reference for metadata-only rows.
+Owner route storage prefers the generated-client delegate when `ADMIN_ANALYTICS_SAVED_VIEW_GENERATED_CLIENT_DELEGATE_ENABLED` is enabled and the generated Prisma delegate is available. Otherwise it remains fail-closed or falls back to the gated raw-SQL delegate only when its explicit flag and all saved-view access, endpoint, and role-policy gates pass. The table-shape fragment and guards remain the reference for metadata-only rows.
 
 ## Dashboard workspace note
 
@@ -80,5 +79,5 @@ Before treating site analytics as complete in production, verify:
 10. Advanced cohort panels and CSV rows show only aggregate AOV/share/order-count/recency bands.
 11. Scheduled report owner-only management, read, recording, dry-run preview, payload preview, activation-readiness, schedule planning, disabled worker shell, disabled transport/outbox contracts, injected provider-dispatch/manual owner-run readiness, provider-client bridge, gated delivery executor, retry planning, bounded retry execution, injected clock/queue registration, and bounded worker execution preserve aggregate-only data and stay behind their explicit gates.
 12. Scheduled reports still do not run unbounded retries or arbitrary write paths.
-13. Saved dashboard view management, read routes, owner action plans, storage application contracts, gated storage delegate, and visible status page preserve selected range metadata, existing section anchors, allowed scopes, blocked fields, inactive activation flags, and metadata-only DTOs.
+13. Saved dashboard view management, read routes, owner action plans, storage application contracts, generated-client delegate bridge, gated raw-SQL delegate fallback, and visible status page preserve selected range metadata, existing section anchors, allowed scopes, blocked fields, inactive activation flags, and metadata-only DTOs.
 14. Server-rendered analytics workspace tabs and native collapsible groups preserve selected range links, the section index, existing anchors, and table fallback requirements.
