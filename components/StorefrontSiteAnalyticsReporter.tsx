@@ -50,7 +50,7 @@ function getAnonymousSessionId() {
     if (existing) return existing;
     const next = typeof crypto !== 'undefined' && 'randomUUID' in crypto
       ? crypto.randomUUID()
-      : `sid-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      : `sid-${Date.now().toString(36)}`;
     window.sessionStorage.setItem(key, next);
     return next;
   } catch {
