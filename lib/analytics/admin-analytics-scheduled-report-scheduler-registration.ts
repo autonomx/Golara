@@ -72,14 +72,15 @@ export async function registerScheduledReportScheduler(options: {
 }): Promise<AdminAnalyticsScheduledReportSchedulerRegistrationResult> {
   const plan = buildScheduledReportSchedulerRegistrationPlan({ flags: options.flags });
   const blockers = [...plan.blockers];
+  const lockKey = hasValue(options.lockKey) ? options.lockKey.trim() : null;
   if (!options.isOwner) blockers.push('owner session is required');
   if (!options.operatorApproved) blockers.push('operator approval is required');
-  if (!hasValue(options.lockKey)) blockers.push('lock key is required');
+  if (lockKey === null) blockers.push('lock key is required');
   if (options.staleLockTimeoutMinutes < 5) blockers.push('stale lock timeout must be at least five minutes');
   if (options.maxRunsPerHour < 1 || options.maxRunsPerHour > 4) blockers.push('max runs per hour must be between one and four');
   if (options.registrar === null || options.registrar === undefined) blockers.push('scheduler registrar is not configured');
 
-  if (blockers.length > 0 || options.registrar === null || options.registrar === undefined || !hasValue(options.lockKey)) {
+  if (blockers.length > 0 || options.registrar === null || options.registrar === undefined || lockKey === null) {
     return {
       status: 'scheduler_registration_blocked',
       registered: false,
@@ -92,7 +93,7 @@ export async function registerScheduledReportScheduler(options: {
   }
 
   const result = await options.registrar({
-    lockKey: options.lockKey.trim(),
+    lockKey,
     maxConcurrentRuns: 1,
     staleLockTimeoutMinutes: options.staleLockTimeoutMinutes,
     maxRunsPerHour: options.maxRunsPerHour
