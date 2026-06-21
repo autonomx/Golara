@@ -48,9 +48,9 @@ export default async function ProductPage({
   searchParams
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ inquiry?: string; checkout?: string }>;
+  searchParams: Promise<{ inquiry?: string; checkout?: string; cart?: string }>;
 }) {
-  const [{ slug }, { inquiry, checkout }, locale] = await Promise.all([
+  const [{ slug }, { inquiry, checkout, cart }, locale] = await Promise.all([
     params,
     searchParams,
     resolveStorefrontLocale()
@@ -70,7 +70,7 @@ export default async function ProductPage({
       <section className="mx-auto max-w-7xl px-5 pt-10">
         <PathTrail items={[{ label: getStorefrontCopy('common.home', locale), href: '/' }, { label: category?.title || product.categoryTitle || product.category, href: `/categories/${product.category}` }, { label: product.title }]} />
       </section>
-      <ProductDetail product={product} category={category} checkoutPolicy={checkoutPolicy} locale={locale} />
+      <ProductDetail product={product} category={category} checkoutPolicy={checkoutPolicy} locale={locale} cartStatus={cart} />
       <ProductCheckoutForm product={product} dbReady={dbReady} checkout={checkout} checkoutPolicy={checkoutPolicy} locale={locale} />
       {checkoutPolicy.showInquiryForm ? <ProductInquiryForm product={product} dbReady={dbReady} inquiry={inquiry} locale={locale} /> : null}
     </main>
