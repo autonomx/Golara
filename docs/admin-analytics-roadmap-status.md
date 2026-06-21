@@ -31,7 +31,7 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 - Scheduled report bounded automatic worker execution boundary that consumes due worker-shell decisions only with an explicit execution flag, injected runner, and batch cap; it still creates no timers or background loops by itself.
 - Scheduled report gated delivery executor contract with audit/failure result shapes, rollback documentation, and default blocked state unless every gate and an injected adapter are provided.
 - Scheduled report retry planning and bounded retry execution helpers for failed delivery results only, capped attempts, owner-visible retry status, injected runners, and no automatic retry loop.
-- Saved dashboard view management surface, owner/staff metadata read route, mutation-policy contract, approved POST route plans, injected-delegate storage-apply helper, gated storage delegate, owner action core, and dedicated `/admin/analytics/saved-views` status page.
+- Saved dashboard view management surface, owner/staff metadata read route, mutation-policy contract, approved POST route plans, injected-delegate storage-apply helper, generated-client preferred storage delegate, raw-SQL fallback delegate, owner action core, and dedicated `/admin/analytics/saved-views` status page.
 - Dashboard grouping contract, server-rendered analytics workspace tabs, and native collapsible dashboard group UI using selected-range links while preserving section anchors, section index, and accessible chart table fallback requirements.
 - Privacy and retention policy visibility.
 - Raw site-event retention status, cleanup preview, owner-only cleanup plan helper, hard-gated executor, live delegate factory, owner-only cleanup route, and dedicated `/admin/analytics/site-retention` status/control page. The delegate is attached only when `SITE_ANALYTICS_RETENTION_CLEANUP_DELEGATE_ENABLED` is enabled and the database/table are available; deletion still requires the plan flag, execution flag, production evidence, and manual owner confirmation.
@@ -41,7 +41,6 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 ## Intentionally pending
 
 - Scheduled report repository writes remain gated and owner-only; the current surface records only through explicitly gated endpoints and helpers, not arbitrary write paths.
-- Saved dashboard views still need final generated model/client alignment; current owner routes use the gated storage delegate and retain metadata-only policy checks.
 
 ## Customer cohort analytics note
 
@@ -106,9 +105,9 @@ A future delivery-enablement slice must connect deployment/runtime wiring to the
 
 ## Saved dashboard view storage note
 
-Saved dashboard views now have a visible management and route-planning surface. The implementation includes named presets, allowed scopes, role-aware metadata normalization, blocked report/customer/event-row fields, metadata-only DTOs, owner/staff read gating, approved owner POST targets, an injected-delegate storage-apply helper, a shared action core, and a gated storage delegate attached to the owner routes.
+Saved dashboard views now have a visible management and route-planning surface. The implementation includes named presets, allowed scopes, role-aware metadata normalization, blocked report/customer/event-row fields, metadata-only DTOs, owner/staff read gating, approved owner POST targets, injected-delegate storage application, a shared action core, generated-client preferred storage delegate, raw-SQL fallback delegate, and owner routes wired through the preferred storage bridge.
 
-The owner routes remain fail-closed unless the saved-view storage delegate flag and all saved-view access, endpoint, and role-policy gates pass. The current table-shape fragment and guards remain the reference for metadata-only rows.
+The owner routes remain fail-closed unless the generated-client or fallback storage delegate flag and all saved-view access, endpoint, and role-policy gates pass. The table-shape fragment and guards remain the reference for metadata-only rows.
 
 ## Dashboard workspace note
 
