@@ -25,7 +25,7 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 - Scheduled report activation-readiness helper that can produce metadata-only activation args only after owner approval, dry-run evidence, kill-switch, disable-state, and delivery-disabled gates pass.
 - Scheduled report deterministic schedule planning for weekly/monthly reports, owner-page plan visibility, and disabled-by-default scheduler state.
 - Scheduled report disabled worker shell that returns locked/skipped status by default and has no automatic timer, cron, or background registration.
-- Scheduled report disabled/default transport contract, secret-backed outbox/channel validation, manual owner-run orchestration, staging smoke validation, owner-visible history, clock-readiness planning, and ops hardening.
+- Scheduled report disabled/default transport contract, secret-backed outbox/channel validation, injected provider-dispatch adapter, manual owner-run orchestration, staging smoke validation, owner-visible history, clock-readiness planning, and ops hardening.
 - Scheduled report gated delivery executor contract with audit/failure result shapes, rollback documentation, and default blocked state unless every gate and an injected adapter are provided.
 - Scheduled report retry planning for failed delivery results only, capped attempts, owner-visible retry status, and no automatic retry loop.
 - Saved dashboard view management surface, owner/staff metadata read route, mutation-policy contract, approved POST route plans, injected-delegate storage-apply helper, gated storage delegate, owner action core, and dedicated `/admin/analytics/saved-views` status page.
@@ -38,7 +38,7 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 ## Intentionally pending
 
 - Future customer segmentation beyond aggregate order-count and recency bands, only after a separate privacy review.
-- Scheduled report live scheduler/timer/background registration, automatic worker execution, real delivery transport provider wiring, live email/provider delivery, and automatic retry execution.
+- Scheduled report live scheduler/timer/background registration, automatic worker execution, direct provider-client wiring, and automatic retry execution.
 - Scheduled report repository writes remain gated and owner-only; the current surface records only through explicitly gated endpoints and helpers, not arbitrary write paths.
 - Saved dashboard views still need final generated model/client alignment; current owner routes use the gated storage delegate and retain metadata-only policy checks.
 
@@ -67,7 +67,7 @@ The range selector now supports both fixed presets and custom start/end dates. P
 
 ## Scheduled report status note
 
-Scheduled reports are production-hardened for owner-only management, previews, payload materialization, planning, disabled execution contracts, manual owner-run readiness, retry visibility, staging smoke validation, and operator hardening. They are not yet production-ready for automatic scheduling or live provider delivery.
+Scheduled reports are production-hardened for owner-only management, previews, payload materialization, planning, disabled execution contracts, manual owner-run readiness, retry visibility, staging smoke validation, and operator hardening. They are not yet production-ready for automatic scheduling or direct provider-client delivery.
 
 The implemented safe surface includes:
 
@@ -82,7 +82,7 @@ The implemented safe surface includes:
 - deterministic weekly/monthly next-run planning
 - disabled-by-default worker-shell evaluation
 - disabled default transport adapter and secret-backed outbox/channel validation
-- manual owner-run orchestration that still rejects scheduled/queued execution
+- injected provider-dispatch adapter and manual owner-run orchestration that still reject scheduled/queued execution unless explicitly supplied with a handler and every gate passes
 - staging smoke validation for the gate matrix
 - owner-visible history/read-model helpers
 - clock-readiness and ops-hardening plans with no live timer or alert loop
@@ -93,14 +93,14 @@ The safety boundary remains:
 
 - no live scheduler/timer/cron/background registration
 - no automatic worker execution
-- no live email/provider delivery by default
+- no direct provider client by default
 - no payload leaving the system by default
 - no unbounded retry loop
 - no public or staff scheduled-report access
 - no arbitrary repository write path
 - no per-customer rows, raw event rows, visitor/session identifiers, delivery recipient lists, or export contents stored in scheduled-report metadata
 
-A future delivery-enablement slice must configure a real provider adapter, enable all owner/approval/dry-run/kill-switch/activation gates, and add deployment rollback evidence before scheduled reports can be considered fully production-ready for live delivery.
+A future delivery-enablement slice must configure direct provider-client wiring, enable all owner/approval/dry-run/kill-switch/activation gates, and add deployment rollback evidence before scheduled reports can be considered fully production-ready for automatic live delivery.
 
 ## Saved dashboard view storage note
 
