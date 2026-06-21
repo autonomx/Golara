@@ -144,6 +144,16 @@ const adminCommandLinks = [
   { href: '/admin/analytics', label: 'Analytics', detail: 'Insights and charts' }
 ] as const;
 
+const mobileAdminCards = [
+  { href: '/admin/products', label: 'Products', detail: 'Fix catalog items and images', icon: Package },
+  { href: '/admin/orders', label: 'Orders', detail: 'Process fulfillment queues', icon: ShoppingBag },
+  { href: '/admin/inquiries', label: 'Inquiries', detail: 'Follow up with customers', icon: Users },
+  { href: '/admin/customers', label: 'Customers', detail: 'Review profiles and history', icon: Users },
+  { href: '/admin/media', label: 'Media', detail: 'Upload and tag assets', icon: ImageIcon },
+  { href: '/admin/readiness', label: 'Readiness', detail: 'Check launch blockers', icon: ShieldCheck },
+  { href: '/admin/analytics', label: 'Analytics', detail: 'Review insights', icon: BarChart3 }
+] as const;
+
 function tabHref(tab: AdminTab) {
   if (tab === 'analytics') return '/admin/analytics';
   if (tab === 'catalog') return '/admin/products';
@@ -179,6 +189,25 @@ function AdminSidebar({ activeNavKey, authenticated, authConfigured, adminLabel,
 function AdminMobileNav({ activeTab, locale }: { activeTab: AdminTab; locale: SupportedLocale }) {
   const t = createAdminPageShellTranslator(locale);
   return <nav aria-label={t('Admin workspaces')} className="lg:hidden"><div className="flex gap-2 overflow-x-auto border-b border-stone-200 bg-white px-4 py-3 [scrollbar-width:none]">{adminTabs.map((tab) => { const active = tab.key === activeTab; const Icon = tab.icon; const localized = localizedTab(tab.key, locale); return <Link key={tab.key} href={tabHref(tab.key)} aria-current={active ? 'page' : undefined} className={`inline-flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold ${active ? 'bg-rosewood text-white' : 'bg-stone-100 text-stone-700'}`}><Icon aria-hidden="true" className="h-4 w-4" />{localized.label}</Link>; })}</div></nav>;
+}
+
+function AdminMobileActionCards({ locale }: { locale: SupportedLocale }) {
+  const t = createAdminPageShellTranslator(locale);
+  return (
+    <section className="border-b border-stone-200 bg-stone-50 px-4 py-3 lg:hidden" aria-label={t('Mobile admin shortcuts')}>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {mobileAdminCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <Link key={card.href} href={card.href} className="rounded-xl border border-stone-200 bg-white p-3 shadow-sm transition hover:border-rosewood/30">
+              <span className="flex items-center gap-2 text-sm font-bold text-stone-950"><Icon aria-hidden="true" className="h-4 w-4 text-rosewood" />{t(card.label)}</span>
+              <span className="mt-1 block text-xs leading-5 text-stone-500">{t(card.detail)}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </section>
+  );
 }
 
 function AdminCommandMenu({ locale }: { locale: SupportedLocale }) {
@@ -259,6 +288,7 @@ export function AdminPageShell(props: AdminPageShellProps) {
         <div className="min-w-0">
           <AdminMobileNav activeTab={props.activeTab} locale={props.locale} />
           <AdminTopBar activeTab={props.activeTab} authenticated={props.authenticated} authConfigured={props.authConfigured} locale={props.locale} returnTo={props.returnTo} productCount={props.productCount} categoryCount={props.categoryCount} mediaCount={props.mediaCount} />
+          <AdminMobileActionCards locale={props.locale} />
           {props.activeNavKey === 'overview' ? <AdminOverviewJumpNav locale={props.locale} /> : null}
           {props.activeNavKey === 'analytics' ? <AdminAnalyticsJumpNav locale={props.locale} returnTo={props.returnTo} /> : null}
           <section className="grid gap-6 px-4 py-6 lg:px-6">{props.children}</section>
