@@ -50,9 +50,18 @@ export async function runSavedViewRoutePlanTests() {
   assert.match(helperSource, /persisted: false/);
   assert.match(helperSource, /metadataOnly: true/);
 
+  const createRouteSource = await readFile('app/admin/analytics/saved-views/create/route.ts', 'utf8');
+  assert.match(createRouteSource, /buildAdminAnalyticsSavedViewStorageDelegate/);
+  assert.match(createRouteSource, /delegate: delegateAttachment\.delegate/);
+  assert.match(createRouteSource, /delegate: delegateAttachment\.state/);
+  assert.doesNotMatch(createRouteSource, /sendMail|createTransport|setInterval|setTimeout|cron/);
+
   const dynamicRouteSource = await readFile('app/admin/analytics/saved-views/[action]/route.ts', 'utf8');
   assert.match(dynamicRouteSource, /export async function POST/);
   assert.match(dynamicRouteSource, /assertAdminRole\('owner'\)/);
   assert.match(dynamicRouteSource, /ACTION_BY_SEGMENT/);
+  assert.match(dynamicRouteSource, /buildAdminAnalyticsSavedViewStorageDelegate/);
+  assert.match(dynamicRouteSource, /delegate: delegateAttachment\.delegate/);
+  assert.match(dynamicRouteSource, /delegate: delegateAttachment\.state/);
   assert.doesNotMatch(dynamicRouteSource, /sendMail|createTransport|setInterval|setTimeout|cron/);
 }
