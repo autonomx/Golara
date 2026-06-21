@@ -38,6 +38,26 @@ function cleanAmount(value?: number | null) {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? Math.trunc(value) : undefined;
 }
 
+function determinePaymentSettlementStatus(input: {
+  providerReference?: string;
+  orderNumber?: string;
+  webhookStatus: string;
+  expectedAmountCents?: number;
+  actualAmountCents?: number;
+  expectedCurrency?: string;
+  actualCurrency?: string;
+}): PaymentSettlementStatus {
+  if (!input.providerReference || !input.orderNumber || input.webhookStatus === 'failed' || input.webhookStatus === 'cancelled') {
+    return 'needs_attention';
+  }
+  if (input.webhookStatus !== 'paid') return 'pending';
+  if (input.expectedAmountCents !== undefined && input.actualAmountCents !== undefined && input.expectedAmountCents !== input.actualAmountCents) {
+    return 'amount_mismatch';
+  }
+  if (input.expectedCurrency && input.actualCurrency && input.expectedCurrency !== input.actualCurrency) return 'currency_mismatch';
+  return 'settled';
+}
+
 export function planPaymentSettlementReconciliation(input: PaymentSettlementInput): PaymentSettlementPlan {
   const provider = cleanText(input.provider) || 'unknown';
   const providerReference = cleanText(input.providerReference);
@@ -47,19 +67,15 @@ export function planPaymentSettlementReconciliation(input: PaymentSettlementInpu
   const expectedCurrency = cleanCurrency(input.orderCurrency);
   const actualCurrency = cleanCurrency(input.webhookCurrency);
   const webhookStatus = cleanText(input.webhookStatus)?.toLowerCase() || 'pending';
-
-  let status: PaymentSettlementStatus = 'pending';
-  if (!providerReference || !orderNumber || webhookStatus === 'failed' || webhookStatus === 'cancelled') {
-    status = 'needs_attention';
-  } else if (webhookStatus !== 'paid') {
-    status = 'pending';
-  } else if (expectedAmountCents !== undefined && actualAmountCents !== undefined && expectedAmountCents !== actualAmountCents) {
-    status = 'amount_mismatch';
-  } else if (expectedCurrency && actualCurrency && expectedCurrency !== actualCurrency) {
-    status = 'currency_mismatch';
-  } else {
-    status = 'settled';
-  }
+  const status = determinePaymentSettlementStatus({
+    providerReference,
+    orderNumber,
+    webhookStatus,
+    expectedAmountCents,
+    actualAmountCents,
+    expectedCurrency,
+    actualCurrency
+  });
 
   return {
     status,
