@@ -27,7 +27,7 @@ export function ProductCard({
   const decisionDetails = [
     product.availableToday ? copy('product.availableToday') : copy('product.preOrderRequired'),
     product.productTypeName ?? product.categoryTitle
-  ].filter(Boolean);
+  ].filter((detail): detail is string => Boolean(detail));
 
   return (
     <article className="group overflow-hidden rounded-3xl border border-rosewood/10 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
