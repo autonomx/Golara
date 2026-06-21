@@ -31,8 +31,10 @@ export function HomepageBannerSlideshow({ slides, homepage, locale }: HomepageBa
   const fallbackSlide = slides[0];
   const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key, locale);
   const direction = getStorefrontCopyDirection(locale);
-  const textAlignmentClass = direction === 'rtl' ? 'text-right' : 'text-left';
-  const inlineAlignmentClass = direction === 'rtl' ? 'justify-end' : 'justify-start';
+  const isRtl = direction === 'rtl';
+  const textAlignmentClass = isRtl ? 'text-right' : 'text-left';
+  const inlineAlignmentClass = isRtl ? 'justify-end' : 'justify-start';
+  const contentWidthClass = isRtl ? 'max-w-[30rem] sm:max-w-[34rem] lg:max-w-[36rem]' : 'max-w-xl lg:max-w-2xl';
 
   if (!fallbackSlide && !homepage) {
     return null;
@@ -75,20 +77,20 @@ export function HomepageBannerSlideshow({ slides, homepage, locale }: HomepageBa
           sizes="(min-width: 1520px) 1520px, 100vw"
         />
 
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,248,241,0.97)_0%,rgba(255,248,241,0.9)_32%,rgba(255,248,241,0.44)_56%,rgba(43,29,32,0.12)_100%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_28%,rgba(255,255,255,0.82)_0%,rgba(255,255,255,0.16)_34%,rgba(255,255,255,0)_62%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,248,241,0.98)_0%,rgba(255,248,241,0.92)_34%,rgba(255,248,241,0.5)_58%,rgba(43,29,32,0.14)_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_28%,rgba(255,255,255,0.88)_0%,rgba(255,255,255,0.22)_35%,rgba(255,255,255,0)_62%)]" />
 
         <div className="relative z-10 flex min-h-[460px] items-center justify-start px-6 py-10 md:min-h-[520px] md:px-12 md:py-12 lg:px-16 xl:min-h-[560px]">
-          <div dir={direction} className={`max-w-xl ${textAlignmentClass} text-stone-800 lg:max-w-2xl`}>
+          <div dir={direction} className={`${contentWidthClass} ${textAlignmentClass} text-stone-800`}>
             {heroSlide.eyebrow ? <p className="inline-flex rounded-full border border-rosewood/10 bg-white/72 px-5 py-2 text-xs font-semibold uppercase tracking-[0.32em] text-olive shadow-sm">
               {heroSlide.eyebrow}
             </p> : null}
 
-            <h1 id="home-hero-heading" className="mt-6 max-w-2xl font-display text-4xl leading-[0.98] text-rosewood md:text-6xl lg:text-7xl">
+            <h1 id="home-hero-heading" className="mt-6 max-w-full font-display text-4xl leading-[0.98] text-rosewood md:text-6xl lg:text-7xl">
               {heroSlide.title}
             </h1>
 
-            {heroSlide.body ? <p className="mt-5 max-w-xl text-base leading-7 text-stone-700 md:text-lg md:leading-8">
+            {heroSlide.body ? <p className="mt-5 max-w-full text-base leading-7 text-stone-700 md:text-lg md:leading-8">
               {heroSlide.body}
             </p> : null}
 
