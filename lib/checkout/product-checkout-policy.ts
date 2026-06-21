@@ -2,7 +2,7 @@ import type { Product } from '@/lib/catalog';
 import { productRequiresQuote } from '@/lib/catalog-pricing';
 import type { PaymentGatewayReadiness } from '@/lib/checkout/payment-gateway-config';
 
-export type ProductCheckoutExperience = 'inquiry-only' | 'assisted-draft' | 'gateway-capable';
+export type ProductCheckoutExperience = 'inquiry-only' | 'inquiry-cart' | 'assisted-draft' | 'gateway-capable';
 
 export type ProductCheckoutPolicy = {
   experience: ProductCheckoutExperience;
@@ -40,12 +40,12 @@ const policyCopy: Record<'en' | 'fa', Record<CheckoutPolicyReasonCode, { summary
       detail: 'Order drafts require a database-backed product record. Customers can still send an inquiry.'
     },
     checkout_mode_inquiry: {
-      summary: 'Inquiry-first checkout',
-      detail: 'This storefront is currently configured for inquiry-first customer follow-up.'
+      summary: 'Cart available',
+      detail: 'Customers can add this product to cart before inquiry-first staff follow-up.'
     },
     gateway_not_ready: {
-      summary: 'Gateway checkout not ready',
-      detail: 'Gateway checkout has readiness blockers, so this product falls back to inquiry.'
+      summary: 'Cart available',
+      detail: 'Customers can add this product to cart while payment readiness blockers fall back to staff follow-up.'
     },
     gateway_ready: {
       summary: 'Gateway-capable checkout',
@@ -66,12 +66,12 @@ const policyCopy: Record<'en' | 'fa', Record<CheckoutPolicyReasonCode, { summary
       detail: 'ثبت پیش‌نویس سفارش به رکورد محصول در پایگاه داده نیاز دارد. مشتری همچنان می‌تواند درخواست ارسال کند.'
     },
     checkout_mode_inquiry: {
-      summary: 'پرداخت مبتنی بر درخواست',
-      detail: 'این فروشگاه اکنون برای پیگیری مشتری از طریق درخواست تنظیم شده است.'
+      summary: 'سبد خرید در دسترس است',
+      detail: 'مشتریان می‌توانند این محصول را پیش از پیگیری تیم فروش به سبد خرید اضافه کنند.'
     },
     gateway_not_ready: {
-      summary: 'درگاه پرداخت آماده نیست',
-      detail: 'درگاه پرداخت هنوز مانع آماده‌سازی دارد؛ بنابراین این محصول به درخواست تبدیل می‌شود.'
+      summary: 'سبد خرید در دسترس است',
+      detail: 'مشتریان می‌توانند این محصول را به سبد خرید اضافه کنند و تا آماده شدن پرداخت، تیم فروش پیگیری می‌کند.'
     },
     gateway_ready: {
       summary: 'آماده پرداخت از درگاه',
@@ -126,8 +126,8 @@ export function getProductCheckoutPolicy(input: ProductCheckoutPolicyInput): Pro
 
   if (checkoutReadiness.mode === 'inquiry') {
     return buildPolicy('checkout_mode_inquiry', locale, {
-      experience: 'inquiry-only',
-      canAddToCart: false,
+      experience: 'inquiry-cart',
+      canAddToCart: true,
       showOrderDraftForm: false,
       showInquiryForm: true
     });
@@ -135,8 +135,8 @@ export function getProductCheckoutPolicy(input: ProductCheckoutPolicyInput): Pro
 
   if (checkoutReadiness.mode === 'gateway' && checkoutReadiness.blockers.length > 0) {
     return buildPolicy('gateway_not_ready', locale, {
-      experience: 'inquiry-only',
-      canAddToCart: false,
+      experience: 'inquiry-cart',
+      canAddToCart: true,
       showOrderDraftForm: false,
       showInquiryForm: true
     });
