@@ -18,7 +18,7 @@ This document summarizes the `/admin/analytics` workspace status.
 - Site analytics event foundation with privacy-safe first-party events.
 - Traffic attribution using capped UTM fields and external referrer domains.
 - Owner-only aggregate Business CSV and Site CSV exports.
-- Scheduled report owner management, read/recording endpoints, locked controls, dry-run preview, payload preview, activation readiness, schedule planning, disabled worker shell, disabled transport/outbox contracts, injected provider-dispatch adapter, manual owner-run readiness, staging smoke validation, gated delivery executor contract, capped retry planning, and ops hardening.
+- Scheduled report owner management, read/recording endpoints, locked controls, dry-run preview, payload preview, activation readiness, schedule planning, disabled worker shell, disabled transport/outbox contracts, injected provider-dispatch adapter, provider-client bridge, manual owner-run readiness, staging smoke validation, gated delivery executor contract, capped retry planning, bounded retry execution, injected clock/queue registration boundary, and ops hardening.
 - Saved dashboard view management surface, owner/staff metadata read route, approved owner POST route plans, injected-delegate storage apply helper, gated storage delegate, owner action core, and dedicated saved-view status page.
 - Server-rendered analytics workspace tabs plus native collapsible dashboard groups using the selected range and existing section anchors.
 - Privacy and retention policy visibility.
@@ -29,7 +29,7 @@ This document summarizes the `/admin/analytics` workspace status.
 ## Planned next
 
 - Future customer segmentation beyond aggregate order-count and recency bands, only after a separate privacy review.
-- Scheduled report live scheduler/timer/background registration, automatic worker execution, direct provider-client wiring, and automatic retry execution.
+- Scheduled report automatic worker execution. The current clock/queue boundary registers only through an injected registrar and does not execute workers by itself.
 - Saved dashboard generated model/client alignment. Current owner routes use the gated storage delegate and retain metadata-only policy checks.
 
 ## Customer cohort note
@@ -38,13 +38,12 @@ Advanced customer cohort reporting is aggregate-only. It shows AOV/share buckets
 
 ## Scheduled report note
 
-Scheduled reports are production-hardened for owner-only management, previews, payload materialization, planning, disabled execution contracts, injected provider-dispatch/manual owner-run readiness, retry visibility, staging smoke validation, and operator hardening. They are not yet production-ready for automatic scheduling or direct provider-client delivery.
+Scheduled reports are production-hardened for owner-only management, previews, payload materialization, planning, disabled execution contracts, injected provider-dispatch/manual owner-run readiness, provider-client bridge, retry visibility, bounded retry execution, injected clock/queue registration, staging smoke validation, and operator hardening. They are not yet production-ready for automatic worker execution.
 
 The disabled boundary remains important:
 
-- no live scheduler, timer, cron, or background registration
+- no direct timer, cron, or background implementation in the repo
 - no automatic worker execution
-- no direct provider client by default
 - no payload leaving the system by default
 - no unbounded retry loop
 - no public or staff scheduled-report access
@@ -81,7 +80,7 @@ Before treating site analytics as complete in production, verify:
 8. Custom preset and start/end ranges produce matching dashboard, section-link, and export windows.
 9. Customer cohort panels and CSV rows remain aggregate-only.
 10. Advanced cohort panels and CSV rows show only aggregate AOV/share/order-count/recency bands.
-11. Scheduled report owner-only management, read, recording, dry-run preview, payload preview, activation-readiness, schedule planning, disabled worker shell, disabled transport/outbox contracts, injected provider-dispatch/manual owner-run readiness, gated delivery executor, and retry planning preserve aggregate-only data and stay behind their explicit gates.
-12. Scheduled reports still do not run automatic scheduling, direct provider-client delivery, automatic workers, or unbounded retries.
+11. Scheduled report owner-only management, read, recording, dry-run preview, payload preview, activation-readiness, schedule planning, disabled worker shell, disabled transport/outbox contracts, injected provider-dispatch/manual owner-run readiness, provider-client bridge, gated delivery executor, retry planning, bounded retry execution, and injected clock/queue registration preserve aggregate-only data and stay behind their explicit gates.
+12. Scheduled reports still do not run automatic workers, unbounded retries, or arbitrary write paths.
 13. Saved dashboard view management, read routes, owner action plans, storage application contracts, gated storage delegate, and visible status page preserve selected range metadata, existing section anchors, allowed scopes, blocked fields, inactive activation flags, and metadata-only DTOs.
 14. Server-rendered analytics workspace tabs and native collapsible groups preserve selected range links, the section index, existing anchors, and table fallback requirements.
