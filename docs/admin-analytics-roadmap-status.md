@@ -26,7 +26,8 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 - Scheduled report deterministic schedule planning for weekly/monthly reports, owner-page plan visibility, and disabled-by-default scheduler state.
 - Scheduled report disabled worker shell that returns locked/skipped status by default and has no automatic timer, cron, or background registration.
 - Scheduled report disabled/default transport contract, secret-backed outbox/channel validation, injected provider-dispatch adapter, provider-client bridge, manual owner-run orchestration, staging smoke validation, owner-visible history, clock-readiness planning, and ops hardening.
-- Scheduled report clock/queue registration boundary that requires owner, operator, flag, lock, and injected registrar gates while keeping automatic worker execution disabled.
+- Scheduled report clock/queue registration boundary that requires owner, operator, flag, lock, and injected registrar gates.
+- Scheduled report bounded automatic worker execution boundary that consumes due worker-shell decisions only with an explicit execution flag, injected runner, and batch cap; it still creates no timers or background loops by itself.
 - Scheduled report gated delivery executor contract with audit/failure result shapes, rollback documentation, and default blocked state unless every gate and an injected adapter are provided.
 - Scheduled report retry planning and bounded retry execution helpers for failed delivery results only, capped attempts, owner-visible retry status, injected runners, and no automatic retry loop.
 - Saved dashboard view management surface, owner/staff metadata read route, mutation-policy contract, approved POST route plans, injected-delegate storage-apply helper, gated storage delegate, owner action core, and dedicated `/admin/analytics/saved-views` status page.
@@ -39,7 +40,6 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 ## Intentionally pending
 
 - Future customer segmentation beyond aggregate order-count and recency bands, only after a separate privacy review.
-- Scheduled report automatic worker execution remains pending; the current scheduler boundary can register clock/queue state only through an injected registrar and still does not run workers by itself.
 - Scheduled report repository writes remain gated and owner-only; the current surface records only through explicitly gated endpoints and helpers, not arbitrary write paths.
 - Saved dashboard views still need final generated model/client alignment; current owner routes use the gated storage delegate and retain metadata-only policy checks.
 
@@ -68,7 +68,7 @@ The range selector now supports both fixed presets and custom start/end dates. P
 
 ## Scheduled report status note
 
-Scheduled reports are production-hardened for owner-only management, previews, payload materialization, planning, disabled execution contracts, manual owner-run readiness, retry visibility, staging smoke validation, and operator hardening. They are not yet production-ready for automatic worker execution.
+Scheduled reports are production-hardened for owner-only management, previews, payload materialization, planning, disabled execution contracts, manual owner-run readiness, bounded automatic worker execution, retry visibility, staging smoke validation, and operator hardening.
 
 The implemented safe surface includes:
 
@@ -88,20 +88,20 @@ The implemented safe surface includes:
 - owner-visible history/read-model helpers
 - clock-readiness and ops-hardening plans with no live timer or alert loop
 - injected clock/queue registration boundary that requires owner, operator, flag, lock, and registrar gates
+- bounded automatic worker execution boundary that requires due shell decisions, an explicit worker-execution flag, an injected runner, and a capped batch
 - gated delivery executor contract with audit/failure result shapes
 - retry planning and bounded retry execution for failed delivery records only, with capped attempts, injected runners, and no automatic loop
 
 The safety boundary remains:
 
 - no direct timer/cron/background implementation in the repo
-- no automatic worker execution
 - no payload leaving the system by default
 - no unbounded retry loop
 - no public or staff scheduled-report access
 - no arbitrary repository write path
 - no per-customer rows, raw event rows, visitor/session identifiers, delivery recipient lists, or export contents stored in scheduled-report metadata
 
-A future delivery-enablement slice must connect automatic worker execution to the registered clock/queue state, prove lock/concurrency behavior, and add deployment rollback evidence before scheduled reports can be considered fully production-ready for automatic live delivery.
+A future delivery-enablement slice must connect deployment/runtime wiring to the injected scheduler and worker boundaries, prove lock/concurrency behavior in production, and add rollback evidence before scheduled reports can be considered fully production-ready for unattended live delivery.
 
 ## Saved dashboard view storage note
 
