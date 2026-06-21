@@ -1,5 +1,4 @@
 import { AdminConsolePage } from '@/app/admin/AdminConsolePage';
-import { AdminOverviewActionDashboard } from '@/components/admin/AdminOverviewActionDashboard';
 import { AdminTodayCommandCenter } from '@/components/admin/AdminTodayCommandCenter';
 import { buildAdminTodayCards } from '@/lib/admin/admin-today-cards';
 import { requireAdminRouteSession } from '@/lib/admin-page-auth-boundary';
@@ -38,9 +37,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     <>
       <AdminConsolePage searchParams={Promise.resolve(params)} activeNavKey="overview" />
       <div className="admin-shell-prelude bg-cream px-4 py-4 sm:px-6 lg:px-8">
-        <div className="mx-auto grid max-w-7xl gap-4">
+        <div className="mx-auto max-w-7xl">
           <AdminTodayCommandCenter cards={todayCards} locale={locale} />
-          <AdminOverviewActionDashboard cards={todayCards} locale={locale} />
         </div>
       </div>
     </>
