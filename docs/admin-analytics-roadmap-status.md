@@ -15,6 +15,7 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 - Product sales and category sales from eligible checkout order lines.
 - Aggregate customer cohort metrics for guest, known, first-time, and returning-customer order buckets.
 - Advanced aggregate customer cohort reporting for AOV/share buckets, known-customer order-count bands, and recency bands.
+- Aggregate-only customer segmentation helper with minimum segment-size suppression and no raw identifiers, names, emails, phone numbers, or addresses.
 - Site analytics event foundation with privacy-safe first-party events.
 - Traffic attribution using capped UTM fields and external referrer domains.
 - Owner-only aggregate Business CSV and Site CSV exports.
@@ -39,7 +40,6 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 
 ## Intentionally pending
 
-- Future customer segmentation beyond aggregate order-count and recency bands, only after a separate privacy review.
 - Scheduled report repository writes remain gated and owner-only; the current surface records only through explicitly gated endpoints and helpers, not arbitrary write paths.
 - Saved dashboard views still need final generated model/client alignment; current owner routes use the gated storage delegate and retain metadata-only policy checks.
 
@@ -47,18 +47,19 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 
 Customer cohort analytics are live only as aggregate, privacy-safe reporting. The current implementation avoids exposing customer names, phones, emails, addresses, or raw identifiers in charts or CSV exports.
 
-The live cohort slice includes aggregate counts, revenue, AOV, share, and banded reporting for:
+The live cohort and segmentation slices include aggregate counts, revenue, AOV, share, and banded reporting for:
 
 - known-customer orders
 - guest orders
 - known-customer count
 - first-time known-customer orders
-- returning-customer orders
-- returning-customer revenue and order rate
+- returning known-customer orders
+- returning known-customer revenue and order rate
 - average order value by aggregate cohort
 - revenue share by aggregate cohort
 - known-customer order-count bands
 - known-customer recency bands
+- aggregate-only customer segments for new known, active repeat, high-value, lapsed, other known, and guest order buckets
 
 Any future customer cohort export must remain aggregate-only unless a separate explicit customer-report permission model exists.
 

@@ -15,6 +15,7 @@ This document summarizes the `/admin/analytics` workspace status.
 - Product sales and category sales from eligible checkout order lines.
 - Aggregate customer cohort metrics for guest, known, first-time, and returning-customer order buckets.
 - Advanced aggregate customer cohort reporting for AOV/share buckets, known-customer order-count bands, and recency bands.
+- Aggregate-only customer segmentation helper with minimum segment-size suppression and no raw identifiers or customer contact fields.
 - Site analytics event foundation with privacy-safe first-party events.
 - Traffic attribution using capped UTM fields and external referrer domains.
 - Owner-only aggregate Business CSV and Site CSV exports.
@@ -28,12 +29,11 @@ This document summarizes the `/admin/analytics` workspace status.
 
 ## Planned next
 
-- Future customer segmentation beyond aggregate order-count and recency bands, only after a separate privacy review.
 - Saved dashboard generated model/client alignment. Current owner routes use the gated storage delegate and retain metadata-only policy checks.
 
 ## Customer cohort note
 
-Advanced customer cohort reporting is aggregate-only. It shows AOV/share buckets, known-customer order-count bands, and recency bands without exposing names, emails, phones, addresses, raw customer identifiers, or per-customer rows.
+Advanced customer cohort reporting is aggregate-only. It shows AOV/share buckets, known-customer order-count bands, recency bands, and privacy-suppressed aggregate customer segments without exposing names, emails, phones, addresses, raw customer identifiers, or per-customer rows.
 
 ## Scheduled report note
 
@@ -76,7 +76,7 @@ Before treating site analytics as complete in production, verify:
 6. Raw event retention status is visible to owner sessions.
 7. Cleanup preview and owner cleanup route checks report eligible stale-event counts without deleting data unless every retention cleanup gate is explicitly enabled and confirmed.
 8. Custom preset and start/end ranges produce matching dashboard, section-link, and export windows.
-9. Customer cohort panels and CSV rows remain aggregate-only.
+9. Customer cohort panels, segmentation helpers, and CSV rows remain aggregate-only.
 10. Advanced cohort panels and CSV rows show only aggregate AOV/share/order-count/recency bands.
 11. Scheduled report owner-only management, read, recording, dry-run preview, payload preview, activation-readiness, schedule planning, disabled worker shell, disabled transport/outbox contracts, injected provider-dispatch/manual owner-run readiness, provider-client bridge, gated delivery executor, retry planning, bounded retry execution, injected clock/queue registration, and bounded worker execution preserve aggregate-only data and stay behind their explicit gates.
 12. Scheduled reports still do not run unbounded retries or arbitrary write paths.
