@@ -5,6 +5,7 @@ import type { Category, Product } from '@/lib/catalog';
 import { formatPrice } from '@/lib/catalog-pricing';
 import type { ProductCheckoutPolicy } from '@/lib/checkout/product-checkout-policy';
 import type { SupportedLocale } from '@/lib/i18n/locales';
+import { getCustomerCopy } from '@/lib/localization/customer-copy';
 import { getStorefrontCloudinaryImage } from '@/lib/media/cloudinary-image';
 import { formatStorefrontCopy, getStorefrontCopy } from '@/lib/localization/storefront-copy';
 
@@ -12,9 +13,26 @@ const categoryLinkClass = 'rounded-full outline-none transition focus-visible:ri
 const whatsAppLinkClass = 'rounded-full border border-rosewood/20 px-6 py-3 text-sm font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20';
 const cartButtonClass = 'rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none';
 
-export function ProductDetail({ product, category, checkoutPolicy, locale }: { product: Product; category?: Category; checkoutPolicy: ProductCheckoutPolicy; locale?: SupportedLocale }) {
+type ProductDetailProps = {
+  product: Product;
+  category?: Category;
+  checkoutPolicy: ProductCheckoutPolicy;
+  locale?: SupportedLocale;
+  cartStatus?: string;
+};
+
+function cartStatusCopyKey(status?: string): Parameters<typeof getCustomerCopy>[0] | undefined {
+  if (status === 'added') return 'cart.status.added';
+  if (status === 'database-required') return 'cart.status.databaseRequired';
+  if (status === 'failed') return 'cart.status.failed';
+  return undefined;
+}
+
+export function ProductDetail({ product, category, checkoutPolicy, locale, cartStatus }: ProductDetailProps) {
   const canAddToCart = checkoutPolicy.canAddToCart;
   const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key, locale);
+  const cartMessageKey = cartStatusCopyKey(cartStatus);
+  const cartMessage = cartMessageKey ? getCustomerCopy(cartMessageKey, locale) : undefined;
   const purchasableVariants = product.variants?.filter((variant) => variant.isActive) ?? [];
 
   return (
@@ -36,12 +54,18 @@ export function ProductDetail({ product, category, checkoutPolicy, locale }: { p
           <p className="font-semibold text-rosewood">{checkoutPolicy.summary}</p>
           <p className="mt-1 leading-6">{checkoutPolicy.detail}</p>
         </div>
+        {cartMessage ? (
+          <div className="mt-4 rounded-2xl border border-olive/20 bg-olive/5 p-4 text-sm font-semibold text-olive" role="status" aria-live="polite">
+            {cartMessage}
+          </div>
+        ) : null}
         <div className="mt-6 flex flex-wrap gap-3">
           {checkoutPolicy.canAddToCart ? (
             <form action={addToCartAction} className="flex flex-wrap items-center gap-3">
               <input type="hidden" name="productId" value={product.id ?? ''} />
               <input type="hidden" name="returnTo" value={`/products/${product.slug}`} />
               <input type="hidden" name="currency" value={product.currency} />
+              <input type="hidden" name="locale" value={locale ?? 'fa-IR'} />
               {purchasableVariants.length > 1 ? (
                 <>
                   <label className="sr-only" htmlFor={`variant-${product.slug}`}>{copy('product.variant')}</label>
