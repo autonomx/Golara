@@ -29,7 +29,7 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 - Scheduled report gated delivery executor contract with audit/failure result shapes, rollback documentation, and default blocked state unless every gate and an injected adapter are provided.
 - Scheduled report retry planning for failed delivery results only, capped attempts, owner-visible retry status, and no automatic retry loop.
 - Saved dashboard view management surface, owner/staff metadata read route, mutation-policy contract, approved POST route plans, injected-delegate storage-apply helper, owner action core, and dedicated `/admin/analytics/saved-views` status page.
-- Dashboard grouping contract and native collapsible dashboard group UI using `<details>`/`<summary>` while preserving selected-range links, section anchors, section index, and accessible chart table fallback requirements.
+- Dashboard grouping contract, server-rendered analytics workspace tabs, and native collapsible dashboard group UI using selected-range links while preserving section anchors, section index, and accessible chart table fallback requirements.
 - Privacy and retention policy visibility.
 - Raw site-event retention status, cleanup preview, owner-only cleanup plan helper, hard-gated executor, live delegate factory, owner-only cleanup route, and dedicated `/admin/analytics/site-retention` status/control page. The delegate is attached only when `SITE_ANALYTICS_RETENTION_CLEANUP_DELEGATE_ENABLED` is enabled and the database/table are available; deletion still requires the plan flag, execution flag, production evidence, and manual owner confirmation.
 - Role-aware visibility for owner-only exports and retention diagnostics.
@@ -41,7 +41,6 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 - Scheduled report live scheduler/timer/background registration, automatic worker execution, real delivery transport provider wiring, live email/provider delivery, and automatic retry execution.
 - Scheduled report repository writes remain gated and owner-only; the current surface records only through explicitly gated endpoints and helpers, not arbitrary write paths.
 - Saved dashboard views still do not use generated Prisma client writes from the live routes by default. Current routes are owner-only and plan/core-backed; storage application remains injected-delegate tested until the generated schema/client path is safely wired.
-- Tabbed workspace behavior remains pending. Native collapsible groups are active and server-rendered.
 
 ## Customer cohort analytics note
 
@@ -109,11 +108,11 @@ Saved dashboard views now have a visible management and route-planning surface. 
 
 The live owner routes remain safe by default: they use the action core in plan-only mode unless a storage delegate is explicitly provided. The current generated-client integration is intentionally pending because the main Prisma schema/client path has not been safely wired through the connector; the schema-fragment parity guard remains the source of truth for the intended metadata-only table shape.
 
-## Dashboard group header note
+## Dashboard workspace note
 
-The dashboard layout grouping contract now powers native collapsible groups on `/admin/analytics`. It renders Overview, Business, Site, Products and categories, Operations, and Privacy/docs groups with server-rendered `<details>`/`<summary>` controls and selected-range links to the existing dashboard anchors.
+The dashboard layout grouping contract now powers server-rendered workspace tabs and native collapsible groups on `/admin/analytics`. It renders Overview, Business, Site, Products and categories, Operations, and Privacy/docs tabs as regular range-aware links, then keeps the native `<details>`/`<summary>` groups below.
 
-The UI keeps the section index, range links, existing anchors, CSV exports, server rendering, mobile readability, and accessible chart table fallbacks intact. Tabbed workspace behavior remains pending until separate mobile layout and accessibility evidence is recorded.
+The UI keeps the section index, range links, existing anchors, CSV exports, server rendering, mobile readability, and accessible chart table fallbacks intact. It does not use client-side tab state, local storage, or rewritten analytics calculations.
 
 ## Retention cleanup status note
 
