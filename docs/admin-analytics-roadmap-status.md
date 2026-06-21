@@ -25,9 +25,10 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 - Scheduled report activation-readiness helper that can produce metadata-only activation args only after owner approval, dry-run evidence, kill-switch, disable-state, and delivery-disabled gates pass.
 - Scheduled report deterministic schedule planning for weekly/monthly reports, owner-page plan visibility, and disabled-by-default scheduler state.
 - Scheduled report disabled worker shell that returns locked/skipped status by default and has no automatic timer, cron, or background registration.
-- Scheduled report disabled/default transport contract, secret-backed outbox/channel validation, injected provider-dispatch adapter, manual owner-run orchestration, staging smoke validation, owner-visible history, clock-readiness planning, and ops hardening.
+- Scheduled report disabled/default transport contract, secret-backed outbox/channel validation, injected provider-dispatch adapter, provider-client bridge, manual owner-run orchestration, staging smoke validation, owner-visible history, clock-readiness planning, and ops hardening.
+- Scheduled report clock/queue registration boundary that requires owner, operator, flag, lock, and injected registrar gates while keeping automatic worker execution disabled.
 - Scheduled report gated delivery executor contract with audit/failure result shapes, rollback documentation, and default blocked state unless every gate and an injected adapter are provided.
-- Scheduled report retry planning for failed delivery results only, capped attempts, owner-visible retry status, and no automatic retry loop.
+- Scheduled report retry planning and bounded retry execution helpers for failed delivery results only, capped attempts, owner-visible retry status, injected runners, and no automatic retry loop.
 - Saved dashboard view management surface, owner/staff metadata read route, mutation-policy contract, approved POST route plans, injected-delegate storage-apply helper, gated storage delegate, owner action core, and dedicated `/admin/analytics/saved-views` status page.
 - Dashboard grouping contract, server-rendered analytics workspace tabs, and native collapsible dashboard group UI using selected-range links while preserving section anchors, section index, and accessible chart table fallback requirements.
 - Privacy and retention policy visibility.
@@ -38,7 +39,7 @@ This document tracks the current state of the `/admin/analytics` workspace and t
 ## Intentionally pending
 
 - Future customer segmentation beyond aggregate order-count and recency bands, only after a separate privacy review.
-- Scheduled report live scheduler/timer/background registration, automatic worker execution, direct provider-client wiring, and automatic retry execution.
+- Scheduled report automatic worker execution remains pending; the current scheduler boundary can register clock/queue state only through an injected registrar and still does not run workers by itself.
 - Scheduled report repository writes remain gated and owner-only; the current surface records only through explicitly gated endpoints and helpers, not arbitrary write paths.
 - Saved dashboard views still need final generated model/client alignment; current owner routes use the gated storage delegate and retain metadata-only policy checks.
 
@@ -67,7 +68,7 @@ The range selector now supports both fixed presets and custom start/end dates. P
 
 ## Scheduled report status note
 
-Scheduled reports are production-hardened for owner-only management, previews, payload materialization, planning, disabled execution contracts, manual owner-run readiness, retry visibility, staging smoke validation, and operator hardening. They are not yet production-ready for automatic scheduling or direct provider-client delivery.
+Scheduled reports are production-hardened for owner-only management, previews, payload materialization, planning, disabled execution contracts, manual owner-run readiness, retry visibility, staging smoke validation, and operator hardening. They are not yet production-ready for automatic worker execution.
 
 The implemented safe surface includes:
 
@@ -82,25 +83,25 @@ The implemented safe surface includes:
 - deterministic weekly/monthly next-run planning
 - disabled-by-default worker-shell evaluation
 - disabled default transport adapter and secret-backed outbox/channel validation
-- injected provider-dispatch adapter and manual owner-run orchestration that still reject scheduled/queued execution unless explicitly supplied with a handler and every gate passes
+- injected provider-dispatch adapter, provider-client bridge, and manual owner-run orchestration that still reject scheduled/queued execution unless explicitly supplied with a handler/client and every gate passes
 - staging smoke validation for the gate matrix
 - owner-visible history/read-model helpers
 - clock-readiness and ops-hardening plans with no live timer or alert loop
+- injected clock/queue registration boundary that requires owner, operator, flag, lock, and registrar gates
 - gated delivery executor contract with audit/failure result shapes
-- retry planning for failed delivery records only, with capped attempts and no automatic loop
+- retry planning and bounded retry execution for failed delivery records only, with capped attempts, injected runners, and no automatic loop
 
 The safety boundary remains:
 
-- no live scheduler/timer/cron/background registration
+- no direct timer/cron/background implementation in the repo
 - no automatic worker execution
-- no direct provider client by default
 - no payload leaving the system by default
 - no unbounded retry loop
 - no public or staff scheduled-report access
 - no arbitrary repository write path
 - no per-customer rows, raw event rows, visitor/session identifiers, delivery recipient lists, or export contents stored in scheduled-report metadata
 
-A future delivery-enablement slice must configure direct provider-client wiring, enable all owner/approval/dry-run/kill-switch/activation gates, and add deployment rollback evidence before scheduled reports can be considered fully production-ready for automatic live delivery.
+A future delivery-enablement slice must connect automatic worker execution to the registered clock/queue state, prove lock/concurrency behavior, and add deployment rollback evidence before scheduled reports can be considered fully production-ready for automatic live delivery.
 
 ## Saved dashboard view storage note
 
