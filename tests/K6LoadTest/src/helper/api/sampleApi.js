@@ -8,24 +8,20 @@ const { check_error } = utils;
 
 const sampleApiTrend = new Trend('sampleApi_response_time');
 
-
 export function getCrocodiles(host) {
-    let singleAsset = '';
+    const url = `${host.mobileAPI}/public/crocodiles`;
 
-    let url = `${host.mobileAPI}/public/crocodiles`;
-
-    let params = {
+    const params = {
         headers: {
             'Accept': 'application/json'
         },
         tags: { name: 'crocodiles' } // Adding tags
     };
 
-    let res = http.get(url, params);
+    const res = http.get(url, params);
     sampleApiTrend.add(res.timings.duration);
 
-
-    let jsonResponse = res.json();
+    const jsonResponse = res.json();
 
     // Example threshold: fail if response time exceeds 5000ms
     if (res.timings.duration > 5000) {

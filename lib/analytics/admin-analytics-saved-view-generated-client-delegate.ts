@@ -3,7 +3,6 @@ import 'server-only';
 import { hasDatabase, prisma } from '@/lib/prisma';
 
 import {
-  ADMIN_ANALYTICS_SAVED_VIEW_STORAGE_DELEGATE_ENABLED_ENV,
   buildAdminAnalyticsSavedViewStorageDelegate,
   type AdminAnalyticsSavedViewStorageDelegateAttachment,
   type AdminAnalyticsSavedViewStorageDelegateState

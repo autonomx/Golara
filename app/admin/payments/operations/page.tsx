@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-import { assertAdminRole, getAdminIdentity, isAdminAuthConfigured } from '@/lib/admin-auth';
+import { assertAdminRole, isAdminAuthConfigured } from '@/lib/admin-auth';
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import { createAdminTranslator } from '@/lib/localization/admin-copy';
 import { getStorefrontCopyDirection } from '@/lib/localization/storefront-copy';

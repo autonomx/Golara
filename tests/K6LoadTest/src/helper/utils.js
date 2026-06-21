@@ -1,10 +1,8 @@
 import { Rate } from 'k6/metrics';
-import { check, group, sleep } from 'k6';
-import http from 'k6/http';
+import { check } from 'k6';
 
 // Defining error rate
 export let errorRate = new Rate('errors');
-
 
 export const check_error = (message, response) => {
     const result = check(response, {
@@ -14,7 +12,6 @@ export const check_error = (message, response) => {
         errorRate.add(!result);   // Adding errorRate in case of check failure
     }
 };
-
 
 // Export all constants together
 export default {

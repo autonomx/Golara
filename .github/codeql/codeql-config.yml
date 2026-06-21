@@ -1,0 +1,7 @@
+name: Golara CodeQL configuration
+
+paths-ignore:
+  - tests/**
+  - test-results/**
+  - playwright-report/**
+  - .next/**
