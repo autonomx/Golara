@@ -155,6 +155,7 @@ async function main() {
   await runMediaStorageReadinessTests();
   await runMediaUploadSignatureTests();
   await runDataSafetyReadinessTests();
+  await runDeployReadinessTests();
   await runE2eDbSafetyContractTests();
   await runContentSecurityPolicyConfigTests();
   await runInputXssSafetyTests();
@@ -277,6 +278,7 @@ async function main() {
   await runVariantStockMigrationTests();
   await runVariantStockAuditTests();
   await runVariantStockStatusTests();
+  await runInventoryStockReservationModelTests();
   await runWarehouseLocationModelTests();
   await runVariantLocationStockModelTests();
   await runVariantCheckoutLineModelTests();
