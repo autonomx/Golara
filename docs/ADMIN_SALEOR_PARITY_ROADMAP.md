@@ -218,31 +218,20 @@ Goal: make the overview page useful for daily commerce operations, not only read
 - [x] Add failed payment/notification alerts.
 - [x] Add launch/readiness health cards.
 
-Success criteria:
+## Phase 11+: Admin UX Roadmap
 
-- Staff can start the day from the overview page and know what needs attention.
-- Owners can see operational trends without querying the database.
+Phase 10 completes the Saleor-parity operations-home foundation. The next admin pass is tracked in `docs/ADMIN_UX_ROADMAP.md` and focuses on making the admin panel task-first instead of page-first.
 
-## Suggested Build Order
+Planned UX phases:
 
-1. Admin navigation and list UX.
-2. Product detail pages and variants.
-3. Inventory basics.
-4. Customer admin.
-5. Draft orders and order detail parity.
-6. Discounts/vouchers.
-7. Settings and permissions.
-8. Channel/localization depth.
-9. Integrations.
-10. Analytics home.
+- [ ] Phase 11: Today command center.
+- [ ] Phase 12: Overview action dashboard.
+- [ ] Phase 13: Product workflow polish.
+- [ ] Phase 14: Orders operations queue.
+- [ ] Phase 15: Inquiry CRM pipeline.
+- [ ] Phase 16: Customer timeline polish.
+- [ ] Phase 17: Actionable analytics insights.
+- [ ] Phase 18: Global admin search and command palette.
+- [ ] Phase 19: Mobile admin card layouts.
 
-This order prioritizes the parts that compound: better navigation and detail pages make every later module easier to build, and variants/inventory/order detail unlock most serious commerce workflows.
-
-## Open Decisions
-
-- Whether Golara needs full Saleor-style channels or only locale/currency settings.
-- Whether products should always have variants, even if there is only one default variant.
-- Whether inventory should track floral components, finished products, or both.
-- Whether discounts should apply to quote-only/custom-order flows.
-- Which provider integrations should be configurable by admin versus environment variables.
-- Which modules staff can edit versus owner-only controls.
+The first recommended slice is Phase 11 because it creates the shared action-card vocabulary that later phases can reuse across overview, products, orders, inquiries, readiness, and analytics.
