@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useId, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ShoppingBag, X } from 'lucide-react';
 import { clearCartAction, removeCartItemAction, updateCartItemAction } from '@/app/cart/actions';
 import { ProgressiveStorefrontImage } from '@/components/ProgressiveStorefrontImage';
@@ -113,6 +114,28 @@ export function CartDrawer({
   const sideClass = direction === 'rtl' ? 'left-0 border-r border-rosewood/10' : 'right-0 border-l border-rosewood/10';
   const closedTransformClass = direction === 'rtl' ? '-translate-x-full' : 'translate-x-full';
   const confirmationSideClass = direction === 'rtl' ? 'left-4 md:left-6' : 'right-4 md:right-6';
+  const cartAddConfirmation = showAddConfirmation && !open && typeof document !== 'undefined'
+    ? createPortal(
+        <div
+          className={`fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] ${confirmationSideClass} z-[100] w-[calc(100vw-2rem)] max-w-sm rounded-[1.5rem] border border-olive/20 bg-white p-4 text-stone-800 shadow-[0_18px_60px_rgba(88,24,43,0.2)] md:bottom-6`}
+          role="status"
+          aria-live="polite"
+          dir={direction}
+        >
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-olive">{copy('cart.eyebrow')}</p>
+          <p className="mt-1 font-display text-2xl text-rosewood">{copy('cart.status.added')}</p>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <Link href="/cart/checkout" className="rounded-full bg-rosewood px-4 py-2 text-center text-xs font-semibold text-white shadow-lg shadow-rosewood/15 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30">
+              {copy('cart.checkout')}
+            </Link>
+            <Link href={continueShoppingHref} className="rounded-full border border-rosewood/20 px-4 py-2 text-center text-xs font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20">
+              {copy('common.continueShopping')}
+            </Link>
+          </div>
+        </div>,
+        document.body
+      )
+    : null;
 
   return (
     <>
@@ -125,20 +148,7 @@ export function CartDrawer({
         ) : null}
       </button>
 
-      {showAddConfirmation ? (
-        <div className={`fixed bottom-5 ${confirmationSideClass} z-[80] w-[calc(100vw-2rem)] max-w-sm rounded-[1.5rem] border border-olive/20 bg-white p-4 text-stone-800 shadow-[0_18px_60px_rgba(88,24,43,0.2)]`} role="status" aria-live="polite" dir={direction}>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-olive">{copy('cart.eyebrow')}</p>
-          <p className="mt-1 font-display text-2xl text-rosewood">{copy('cart.status.added')}</p>
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            <Link href="/cart/checkout" className="rounded-full bg-rosewood px-4 py-2 text-center text-xs font-semibold text-white shadow-lg shadow-rosewood/15 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30">
-              {copy('cart.checkout')}
-            </Link>
-            <Link href={continueShoppingHref} className="rounded-full border border-rosewood/20 px-4 py-2 text-center text-xs font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20">
-              {copy('common.continueShopping')}
-            </Link>
-          </div>
-        </div>
-      ) : null}
+      {cartAddConfirmation}
 
       {mounted ? (
         <div className={`fixed inset-0 z-[90] ${open ? 'pointer-events-auto' : 'pointer-events-none'}`} role="dialog" aria-modal="true" aria-labelledby={titleId} dir={direction}>
