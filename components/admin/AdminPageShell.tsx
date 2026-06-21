@@ -112,6 +112,26 @@ const overviewJumpLinks = [
   { href: '#audit-log', label: 'Audit log', detail: 'Audit trail' }
 ] as const;
 
+const analyticsJumpLinks = [
+  { href: '#analytics-layout-groups', label: 'Dashboard groups' },
+  { href: '#analytics-guidance', label: 'Guidance' },
+  { href: '#order-analytics', label: 'Business summary' },
+  { href: '#customer-cohort-analytics', label: 'Advanced cohorts' },
+  { href: '#business-analytics-charts', label: 'Business charts' },
+  { href: '#product-sales-analytics', label: 'Product sales' },
+  { href: '#category-sales-analytics', label: 'Category sales' },
+  { href: '#site-analytics', label: 'Site funnel' },
+  { href: '#analytics-privacy-retention', label: 'Privacy' },
+  { href: '#site-analytics-retention-status', label: 'Retention status' },
+  { href: '#product-analytics', label: 'Products' },
+  { href: '#inventory-analytics', label: 'Inventory' },
+  { href: '#fulfillment-analytics', label: 'Fulfillment' },
+  { href: '#activity-analytics', label: 'Recent activity' },
+  { href: '#payment-analytics', label: 'Payments' },
+  { href: '#inquiry-operations', label: 'Inquiries' },
+  { href: '#readiness-analytics', label: 'Readiness' }
+] as const;
+
 function tabHref(tab: AdminTab) {
   if (tab === 'analytics') return '/admin/analytics';
   if (tab === 'catalog') return '/admin/products';
@@ -173,6 +193,27 @@ function AdminOverviewJumpNav({ locale }: { locale: SupportedLocale }) {
   );
 }
 
+function analyticsJumpHref(returnTo: string, hashHref: string) {
+  const base = returnTo.split('#')[0] || '/admin/analytics';
+  return `${base}${hashHref}`;
+}
+
+function AdminAnalyticsJumpNav({ locale, returnTo }: { locale: SupportedLocale; returnTo: string }) {
+  const t = createAdminPageShellTranslator(locale);
+  return (
+    <nav aria-label={t('Analytics sections')} className="sticky top-16 z-10 border-b border-stone-200 bg-stone-50/95 px-4 py-3 backdrop-blur lg:px-6">
+      <div className="flex max-h-40 flex-wrap items-center gap-2 overflow-y-auto pr-1 [scrollbar-width:thin] [scrollbar-color:#6f2438_#fff8f1]">
+        <span className="mr-1 text-xs font-bold uppercase tracking-[0.16em] text-stone-500">{t('Jump to analytics section')}</span>
+        {analyticsJumpLinks.map((link) => (
+          <a key={link.href} href={analyticsJumpHref(returnTo, link.href)} className="rounded-md border border-stone-200 bg-white px-3 py-2 text-sm font-semibold text-stone-700 shadow-sm transition hover:border-rosewood/30 hover:text-rosewood focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/20">
+            {t(link.label)}
+          </a>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
 export function AdminPageShell(props: AdminPageShellProps) {
   if (!props.authenticated) redirect('/admin/login');
 
@@ -184,6 +225,7 @@ export function AdminPageShell(props: AdminPageShellProps) {
           <AdminMobileNav activeTab={props.activeTab} locale={props.locale} />
           <AdminTopBar activeTab={props.activeTab} authenticated={props.authenticated} authConfigured={props.authConfigured} locale={props.locale} returnTo={props.returnTo} productCount={props.productCount} categoryCount={props.categoryCount} mediaCount={props.mediaCount} />
           {props.activeNavKey === 'overview' ? <AdminOverviewJumpNav locale={props.locale} /> : null}
+          {props.activeNavKey === 'analytics' ? <AdminAnalyticsJumpNav locale={props.locale} returnTo={props.returnTo} /> : null}
           <section className="grid gap-6 px-4 py-6 lg:px-6">{props.children}</section>
         </div>
       </div>
