@@ -9,6 +9,8 @@ import { AdminOrderPanel } from '@/components/admin/AdminOrderPanel';
 import { AdminOrderRevenueSummaryPanel } from '@/components/admin/AdminOrderRevenueSummaryPanel';
 import { AdminOverviewActionDashboard } from '@/components/admin/AdminOverviewActionDashboard';
 import { AdminPageShell, type AdminNavKey } from '@/components/admin/AdminPageShell';
+import { AdminReadinessPanel } from '@/components/admin/AdminReadinessPanel';
+import { AdminSecurityPanel } from '@/components/admin/AdminSecurityPanel';
 import { AdminStaffReadinessPanel } from '@/components/admin/AdminStaffReadinessPanel';
 import { AdminStorefrontNavigationPanel } from '@/components/admin/AdminStorefrontNavigationPanel';
 import { AdminStoreSettingsPanel } from '@/components/admin/AdminStoreSettingsPanel';
@@ -16,6 +18,7 @@ import { AdminTodayCommandCenter } from '@/components/admin/AdminTodayCommandCen
 import { AdminTranslationPanel } from '@/components/admin/AdminTranslationPanel';
 import { InquiryBoard } from '@/components/admin/InquiryBoard';
 import { updateHomepageAction } from '@/app/admin/actions';
+import { logoutAction } from '@/app/admin/logout/actions';
 import { buildAdminTodayCards } from '@/lib/admin/admin-today-cards';
 import { EMPTY_ORDER_REVENUE_SUMMARY, orderRevenueSummaryService } from '@/lib/analytics/order-revenue-summary';
 import { getAdminIdentity, isAdminAuthConfigured, isAdminAuthenticated } from '@/lib/admin-auth';
@@ -60,6 +63,7 @@ type AdminLocale = 'en' | 'fa';
 const inputClass = 'rounded-lg border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100';
 const textAreaClass = 'min-h-28 rounded-lg border border-rosewood/15 bg-white px-4 py-3 text-stone-800 outline-none transition focus:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20 disabled:cursor-not-allowed disabled:bg-stone-100';
 const primaryButtonClass = 'w-fit rounded-full bg-rosewood px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-rosewood/20 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none';
+const secondaryButtonClass = 'rounded-full border border-rosewood/20 px-5 py-2 text-sm font-semibold text-rosewood outline-none transition hover:border-rosewood focus-visible:ring-4 focus-visible:ring-olive/20';
 const panelClass = 'scroll-mt-24 rounded-lg border border-stone-200 bg-white p-5 shadow-sm';
 
 const adminConsoleCopy = {
@@ -197,6 +201,40 @@ function AdminModuleHeader({ header }: { header: AdminModuleHeader }) {
   );
 }
 
+function OverviewMetric({ value, label }: { value: number; label: string }) {
+  return <div className="rounded-md border border-stone-200 bg-stone-50 px-4 py-3"><div className="text-xl font-bold text-stone-950">{value}</div><div className="text-[11px] font-bold uppercase tracking-[0.14em] text-stone-500">{label}</div></div>;
+}
+
+function OverviewWorkspaceIntro({ productCount, categoryCount, mediaCount }: { productCount: number; categoryCount: number; mediaCount: number }) {
+  return (
+    <section className="rounded-lg border border-stone-200 bg-white p-5 shadow-sm">
+      <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
+        <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Overview workspace</p><h2 className="mt-1 text-2xl font-bold text-stone-950">System readiness and access</h2><p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">Check database/auth readiness, security events, staff access, and audit activity before making operational changes.</p></div>
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <OverviewMetric value={productCount} label="Products" />
+          <OverviewMetric value={categoryCount} label="Categories" />
+          <OverviewMetric value={mediaCount} label="Media" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function AdminCmsStatusPanel({ databaseReady, authenticated }: { databaseReady: boolean; authenticated: boolean }) {
+  return (
+    <section className={`rounded-lg border p-6 ${databaseReady && authenticated ? 'border-olive/20 bg-white' : 'border-amber-300 bg-amber-50'}`}>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-olive">CMS status</p>
+          <h2 className="mt-3 font-display text-3xl text-rosewood">{databaseReady && authenticated ? 'Editing enabled' : databaseReady ? 'Login required' : 'Seeded preview mode'}</h2>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-stone-700">{databaseReady && authenticated ? 'Admin forms are live. Changes write to Prisma, then revalidate storefront pages.' : databaseReady ? 'The database is connected, but CMS writes require admin authentication.' : 'The storefront is reading seeded fallback content. Add DATABASE_URL, run npm run db:push and npm run db:seed, then restart the app to enable editing.'}</p>
+        </div>
+        {authenticated ? <form action={logoutAction}><button className={secondaryButtonClass} type="submit">Sign out</button></form> : null}
+      </div>
+    </section>
+  );
+}
+
 function Field({ label, name, defaultValue, placeholder, disabled = false }: { label: string; name: string; defaultValue?: string; placeholder?: string; disabled?: boolean }) {
   return <label className="grid gap-2 text-sm font-semibold text-rosewood">{label}<input className={inputClass} name={name} defaultValue={defaultValue} placeholder={placeholder} disabled={disabled} required /></label>;
 }
@@ -284,6 +322,7 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
   const notificationRetryRunbook = getCurrentInquiryNotificationRetryRunbook();
   const checkoutReadiness = getPaymentGatewayReadiness(getPaymentGatewayConfig(process.env), process.env);
   const disabled = !runtimeReadiness.databaseUrlPresent || !authenticated;
+  const showOverviewWorkspace = activeTab === 'overview' && !standaloneOverviewPage;
   const showOverviewExtras = activeTab === 'overview' && overviewSection === 'all';
   const todayCards = buildAdminTodayCards({
     products,
@@ -299,8 +338,8 @@ export async function AdminConsolePage({ searchParams, forcedTab, catalogSection
     <AdminPageShell activeTab={activeTab} activeNavKey={resolvedActiveNavKey} authenticated={authenticated} authConfigured={authConfigured} adminLabel={adminIdentity?.label ?? adminIdentity?.email} locale={locale} returnTo={languageReturnTo} productCount={products.length} categoryCount={categories.length} mediaCount={media.length}>
       <AdminActionBanner status={status} message={message} locale={locale} />
       <AdminModuleHeader header={header} />
-      {activeWorkspace ? <AdminDashboard activeWorkspace={activeWorkspace} catalogSection={catalogSection} categories={categories} products={products} productTypes={productTypes} homepage={homepage} homepageTranslations={homepageTranslations} media={media} authEventSummary={authEventSummary} runtimeReadiness={runtimeReadiness} authConfigured={authConfigured} authenticated={authenticated} notificationReadiness={notificationReadiness} notificationRetryRunbook={notificationRetryRunbook} checkoutReadiness={checkoutReadiness} catalogSearch={catalogSearch} catalogCategory={catalogCategory} catalogFlag={catalogFlag} productPage={parsePage(productPage)} categoryPage={parsePage(categoryPage)} mediaPage={parsePage(mediaPage)} productColumns={productColumns} mediaColumns={mediaColumns} status={status} message={message} locale={locale} /> : null}
-      {showOverviewExtras ? <div id="overview-workspace-actions" className="grid gap-4"><AdminTodayCommandCenter cards={todayCards} locale={locale} /><AdminOverviewActionDashboard cards={todayCards} locale={locale} /></div> : null}
+      {showOverviewWorkspace ? <div className="space-y-8"><OverviewWorkspaceIntro productCount={products.length} categoryCount={categories.length} mediaCount={media.length} />{showOverviewExtras ? <div id="overview-workspace-actions" className="grid gap-4"><AdminTodayCommandCenter cards={todayCards} locale={locale} /><AdminOverviewActionDashboard cards={todayCards} locale={locale} /></div> : null}<AdminReadinessPanel runtimeReadiness={runtimeReadiness} authConfigured={authConfigured} authenticated={authenticated} notificationReadiness={notificationReadiness} notificationRetryRunbook={notificationRetryRunbook} checkoutReadiness={checkoutReadiness} locale={locale} />{showOverviewExtras && authenticated ? <AdminSecurityPanel summary={authEventSummary} locale={locale} /> : null}{showOverviewExtras ? <AdminCmsStatusPanel databaseReady={runtimeReadiness.databaseUrlPresent} authenticated={authenticated} /> : null}</div> : null}
+      {activeWorkspace && activeWorkspace !== 'overview' ? <AdminDashboard activeWorkspace={activeWorkspace} catalogSection={catalogSection} categories={categories} products={products} productTypes={productTypes} homepage={homepage} homepageTranslations={homepageTranslations} media={media} authEventSummary={authEventSummary} runtimeReadiness={runtimeReadiness} authConfigured={authConfigured} authenticated={authenticated} notificationReadiness={notificationReadiness} notificationRetryRunbook={notificationRetryRunbook} checkoutReadiness={checkoutReadiness} catalogSearch={catalogSearch} catalogCategory={catalogCategory} catalogFlag={catalogFlag} productPage={parsePage(productPage)} categoryPage={parsePage(categoryPage)} mediaPage={parsePage(mediaPage)} productColumns={productColumns} mediaColumns={mediaColumns} status={status} message={message} locale={locale} /> : null}
       {standaloneContentPage && contentSection === 'homepage' ? <AdminHomepageContentPanel homepage={homepage} disabled={disabled} locale={locale} /> : null}
       {standaloneContentPage && contentSection === 'translations' && authenticated ? <AdminTranslationPanel homepage={homepage} homepageTranslations={homepageTranslations} categories={categories} products={products} disabled={disabled} locale={locale} /> : null}
       {showOverviewExtras && authenticated ? <AdminOrderRevenueSummaryPanel summary={orderRevenueSummary} /> : null}
