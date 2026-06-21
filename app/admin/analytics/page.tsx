@@ -82,6 +82,7 @@ const copy = {
     productPerformance: 'Products',
     inventoryPressure: 'Inventory',
     fulfillmentOps: 'Fulfillment',
+    activityAnalytics: 'Recent activity',
     paymentAlerts: 'Payments',
     inquiryOps: 'Inquiries',
     readinessHealth: 'Readiness'
@@ -135,6 +136,7 @@ const copy = {
     productPerformance: 'محصولات',
     inventoryPressure: 'موجودی',
     fulfillmentOps: 'ارسال',
+    activityAnalytics: 'فعالیت اخیر',
     paymentAlerts: 'پرداخت‌ها',
     inquiryOps: 'درخواست‌ها',
     readinessHealth: 'آمادگی'
@@ -193,6 +195,7 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
     { href: sectionHref('product-analytics', analyticsRange), label: labels.productPerformance },
     { href: sectionHref('inventory-analytics', analyticsRange), label: labels.inventoryPressure },
     { href: sectionHref('fulfillment-analytics', analyticsRange), label: labels.fulfillmentOps },
+    { href: sectionHref('activity-analytics', analyticsRange), label: labels.activityAnalytics },
     { href: sectionHref('payment-analytics', analyticsRange), label: labels.paymentAlerts },
     { href: sectionHref('inquiry-operations', analyticsRange), label: labels.inquiryOps },
     { href: sectionHref('readiness-analytics', analyticsRange), label: labels.readinessHealth }
