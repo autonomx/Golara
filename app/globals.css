@@ -47,6 +47,18 @@ select {
   overflow-x: hidden;
 }
 
+@media (min-width: 1024px) {
+  #main-content > div {
+    margin-left: 18rem;
+    width: calc(100% - 18rem);
+    padding-left: 0 !important;
+  }
+
+  #main-content > div > div {
+    width: 100%;
+  }
+}
+
 #main-content table tbody tr {
   transition: transform 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
 }
