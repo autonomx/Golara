@@ -64,15 +64,15 @@ export async function runProductCheckoutPolicyTests() {
   assert.equal(getProductCheckoutPolicy({ product: baseProduct, dbReady: false, checkoutReadiness: gatewayReady }).reasonCode, 'database_or_product_id_missing');
 
   const inquiryPolicy = getProductCheckoutPolicy({ product: baseProduct, dbReady: true, checkoutReadiness: inquiryReadiness });
-  assert.equal(inquiryPolicy.experience, 'inquiry-only');
-  assert.equal(inquiryPolicy.canAddToCart, false);
+  assert.equal(inquiryPolicy.experience, 'inquiry-cart');
+  assert.equal(inquiryPolicy.canAddToCart, true);
   assert.equal(inquiryPolicy.showOrderDraftForm, false);
   assert.equal(inquiryPolicy.showInquiryForm, true);
   assert.equal(inquiryPolicy.reasonCode, 'checkout_mode_inquiry');
 
   const blockedGatewayPolicy = getProductCheckoutPolicy({ product: baseProduct, dbReady: true, checkoutReadiness: gatewayBlocked });
-  assert.equal(blockedGatewayPolicy.experience, 'inquiry-only');
-  assert.equal(blockedGatewayPolicy.canAddToCart, false);
+  assert.equal(blockedGatewayPolicy.experience, 'inquiry-cart');
+  assert.equal(blockedGatewayPolicy.canAddToCart, true);
   assert.equal(blockedGatewayPolicy.showOrderDraftForm, false);
   assert.equal(blockedGatewayPolicy.showInquiryForm, true);
   assert.equal(blockedGatewayPolicy.reasonCode, 'gateway_not_ready');
