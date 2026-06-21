@@ -5,6 +5,11 @@ import { resolve } from 'node:path';
 const dashboardPath = resolve('components/admin/AdminDashboard.tsx');
 let source = readFileSync(dashboardPath, 'utf8');
 
+if (source.includes("import { AdminCatalogWorkspace } from '@/components/admin/AdminCatalogWorkspace';")) {
+  console.log('AdminDashboard workspace swap already applied.');
+  process.exit(0);
+}
+
 function requireIncludes(label, needle) {
   if (!source.includes(needle)) {
     throw new Error(`AdminDashboard workspace swap aborted: missing ${label}`);
@@ -44,7 +49,7 @@ const afterProductSection = after.slice(productSectionEnd);
 const workspaceRender = `      <StatusBanner status={status} message={message} t={t} />
       <DashboardIntro workspace={activeWorkspace} productCount={products.length} categoryCount={categories.length} mediaCount={media.length} t={t} />
       {showOverview ? <AdminOverviewWorkspace runtimeReadiness={runtimeReadiness} authConfigured={authConfigured} authenticated={authenticated} notificationReadiness={notificationReadiness} notificationRetryRunbook={notificationRetryRunbook} checkoutReadiness={checkoutReadiness} authEventSummary={authEventSummary} locale={locale} /> : null}
-      {showCatalog ? <AdminCatalogWorkspace catalogSection={catalogSection} categories={categories} products={products} productTypes={productTypes} media={media} disabled={disabled} catalogSearch={catalogSearch} catalogCategory={catalogCategory} catalogFlag={catalogFlag} productPage={productPage} categoryPage={categoryPage} mediaPage={mediaPage} productColumns={productColumns} mediaColumns={mediaColumns} t={t} /> : null}
+      {showCatalog ? <AdminCatalogWorkspace catalogSection={catalogSection} categories={categories} products={products} productTypes={productTypes} media={media} disabled={disabled} catalogSearch={catalogSearch} catalogCategory={catalogCategory} catalogFlag={catalogFlag} productPage={productPage} categoryPage={categoryPage} mediaPage={mediaPage} productColumns={productColumns} mediaColumns={mediaColumns} locale={locale} t={t} /> : null}
       {showContent ? <AdminContentWorkspace homepage={homepage} homepageTranslations={homepageTranslations} categories={categories} products={products} disabled={disabled} authenticated={authenticated} locale={locale} t={t} /> : null}`;
 
 source = `${before}${workspaceRender}${afterProductSection}`;
