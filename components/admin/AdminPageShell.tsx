@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { BadgePercent, BarChart3, Bell, ClipboardList, CreditCard, FileText, Home, ImageIcon, LayoutDashboard, LogIn, Package, Settings, ShoppingBag, ShieldCheck, Users } from 'lucide-react';
+import { BadgePercent, BarChart3, Bell, ClipboardList, CreditCard, FileText, Home, ImageIcon, LayoutDashboard, LogIn, Package, Search, Settings, ShoppingBag, ShieldCheck, Users } from 'lucide-react';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { getStorefrontCopyDirection } from '@/lib/localization/storefront-copy';
 import { createAdminPageShellTranslator } from '@/lib/localization/admin-page-shell-copy';
@@ -132,6 +132,18 @@ const analyticsJumpLinks = [
   { href: '#readiness-analytics', label: 'Readiness' }
 ] as const;
 
+const adminCommandLinks = [
+  { href: '/admin/products', label: 'Products', detail: 'Search catalog' },
+  { href: '/admin/orders', label: 'Orders', detail: 'Process orders' },
+  { href: '/admin/customers', label: 'Customers', detail: 'Profiles and timelines' },
+  { href: '/admin/inquiries', label: 'Inquiries', detail: 'Customer pipeline' },
+  { href: '/admin/media', label: 'Upload image', detail: 'Media library' },
+  { href: '/admin/products#products', label: 'Create product', detail: 'Add catalog item' },
+  { href: '/admin/orders', label: 'Create draft order', detail: 'Start staff order' },
+  { href: '/admin/readiness', label: 'Readiness', detail: 'Launch blockers' },
+  { href: '/admin/analytics', label: 'Analytics', detail: 'Insights and charts' }
+] as const;
+
 function tabHref(tab: AdminTab) {
   if (tab === 'analytics') return '/admin/analytics';
   if (tab === 'catalog') return '/admin/products';
@@ -169,11 +181,34 @@ function AdminMobileNav({ activeTab, locale }: { activeTab: AdminTab; locale: Su
   return <nav aria-label={t('Admin workspaces')} className="lg:hidden"><div className="flex gap-2 overflow-x-auto border-b border-stone-200 bg-white px-4 py-3 [scrollbar-width:none]">{adminTabs.map((tab) => { const active = tab.key === activeTab; const Icon = tab.icon; const localized = localizedTab(tab.key, locale); return <Link key={tab.key} href={tabHref(tab.key)} aria-current={active ? 'page' : undefined} className={`inline-flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold ${active ? 'bg-rosewood text-white' : 'bg-stone-100 text-stone-700'}`}><Icon aria-hidden="true" className="h-4 w-4" />{localized.label}</Link>; })}</div></nav>;
 }
 
+function AdminCommandMenu({ locale }: { locale: SupportedLocale }) {
+  const t = createAdminPageShellTranslator(locale);
+  return (
+    <details className="group relative">
+      <summary className="inline-flex cursor-pointer list-none items-center gap-2 rounded-md border border-rosewood/20 bg-white px-3 py-2 text-sm font-semibold text-rosewood shadow-sm transition hover:border-rosewood focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/20 [&::-webkit-details-marker]:hidden">
+        <Search aria-hidden="true" className="h-4 w-4" />
+        {t('Search / commands')}
+      </summary>
+      <div className="absolute right-0 z-40 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-stone-200 bg-white p-3 text-left shadow-2xl">
+        <p className="px-2 text-xs font-bold uppercase tracking-[0.16em] text-stone-500">{t('Quick admin commands')}</p>
+        <div className="mt-2 grid gap-1">
+          {adminCommandLinks.map((command) => (
+            <Link key={command.href + command.label} href={command.href} className="rounded-lg px-3 py-2 text-sm transition hover:bg-stone-50">
+              <span className="block font-semibold text-stone-950">{t(command.label)}</span>
+              <span className="block text-xs text-stone-500">{t(command.detail)}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </details>
+  );
+}
+
 function AdminTopBar({ activeTab, productCount = 0, categoryCount = 0, mediaCount = 0, authenticated, authConfigured, locale, returnTo }: Omit<AdminPageShellProps, 'activeNavKey' | 'adminLabel' | 'children'>) {
   const active = localizedTab(activeTab, locale);
   const ActiveIcon = active.icon;
   const t = createAdminPageShellTranslator(locale);
-  return <header className="sticky top-0 z-20 border-b border-stone-200 bg-white/95 backdrop-blur"><div className="flex min-h-16 flex-wrap items-center justify-between gap-3 px-4 py-3 lg:px-6"><div className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-md border border-stone-200 bg-stone-50 text-stone-700"><ActiveIcon aria-hidden="true" className="h-4 w-4" /></span><div><h1 className="text-lg font-bold text-stone-950">{active.label}</h1><p className="text-xs font-medium text-stone-500">{active.description}</p></div></div><div className="flex flex-wrap items-center gap-2"><LanguageSwitcher locale={locale} returnTo={returnTo} /><span className="rounded-md border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-semibold text-stone-700">{productCount} {t(productCount === 1 ? 'product' : 'products')}</span><span className="rounded-md border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-semibold text-stone-700">{categoryCount} {t(categoryCount === 1 ? 'category' : 'categories')}</span><span className="rounded-md border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-semibold text-stone-700">{mediaCount} {t('media')}</span>{!authenticated ? <Link href="/admin/login" className="inline-flex items-center gap-2 rounded-md bg-rosewood px-4 py-2 text-sm font-semibold text-white"><LogIn aria-hidden="true" className="h-4 w-4" />{authConfigured ? t('Sign in') : t('Configure auth')}</Link> : null}</div></div></header>;
+  return <header className="sticky top-0 z-20 border-b border-stone-200 bg-white/95 backdrop-blur"><div className="flex min-h-16 flex-wrap items-center justify-between gap-3 px-4 py-3 lg:px-6"><div className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-md border border-stone-200 bg-stone-50 text-stone-700"><ActiveIcon aria-hidden="true" className="h-4 w-4" /></span><div><h1 className="text-lg font-bold text-stone-950">{active.label}</h1><p className="text-xs font-medium text-stone-500">{active.description}</p></div></div><div className="flex flex-wrap items-center gap-2"><AdminCommandMenu locale={locale} /><LanguageSwitcher locale={locale} returnTo={returnTo} /><span className="rounded-md border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-semibold text-stone-700">{productCount} {t(productCount === 1 ? 'product' : 'products')}</span><span className="rounded-md border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-semibold text-stone-700">{categoryCount} {t(categoryCount === 1 ? 'category' : 'categories')}</span><span className="rounded-md border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-semibold text-stone-700">{mediaCount} {t('media')}</span>{!authenticated ? <Link href="/admin/login" className="inline-flex items-center gap-2 rounded-md bg-rosewood px-4 py-2 text-sm font-semibold text-white"><LogIn aria-hidden="true" className="h-4 w-4" />{authConfigured ? t('Sign in') : t('Configure auth')}</Link> : null}</div></div></header>;
 }
 
 function AdminOverviewJumpNav({ locale }: { locale: SupportedLocale }) {
