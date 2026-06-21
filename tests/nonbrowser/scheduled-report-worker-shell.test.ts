@@ -2,8 +2,11 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 import {
+  ADMIN_ANALYTICS_SCHEDULED_REPORT_WORKER_EXECUTION_ENABLED_ENV,
+  SCHEDULED_REPORT_WORKER_MAX_BATCH_SIZE,
   createDisabledScheduledReportWorkerShell,
   evaluateScheduledReportWorkerShell,
+  executeScheduledReportWorkerBatch,
   type AdminAnalyticsScheduledReportWorkerCandidate,
   type AdminAnalyticsScheduledReportWorkerGateState
 } from '../../lib/analytics/admin-analytics-scheduled-report-worker-shell';
@@ -42,6 +45,8 @@ function candidate(overrides: Partial<AdminAnalyticsScheduledReportWorkerCandida
 }
 
 export async function runScheduledReportWorkerShellTests() {
+  assert.equal(SCHEDULED_REPORT_WORKER_MAX_BATCH_SIZE, 5);
+
   const disabledShell = createDisabledScheduledReportWorkerShell();
   assert.equal(disabledShell.enabled, false);
   const disabled = disabledShell.evaluate({
@@ -88,7 +93,59 @@ export async function runScheduledReportWorkerShellTests() {
   assert.equal(blockedTransport.dueCount, 0);
   assert.ok(blockedTransport.blockers.includes('delivery transport must remain unconfigured in the worker shell'));
 
+  const blockedExecution = await executeScheduledReportWorkerBatch({ shell: gated });
+  assert.equal(blockedExecution.status, 'worker_execution_blocked');
+  assert.equal(blockedExecution.automaticWorkerExecutionEnabled, false);
+  assert.equal(blockedExecution.backgroundLoopStarted, false);
+  assert.equal(blockedExecution.timerCreated, false);
+  assert.equal(blockedExecution.attemptedCount, 0);
+  assert.ok(blockedExecution.blockers.includes('automatic worker execution flag is disabled'));
+  assert.ok(blockedExecution.blockers.includes('worker runner is not configured'));
+
+  const calls: string[] = [];
+  const completedExecution = await executeScheduledReportWorkerBatch({
+    shell: evaluateScheduledReportWorkerShell({
+      candidates: [candidate({ id: 'sched_1' }), candidate({ id: 'sched_2' })],
+      state: activeState(),
+      now: new Date('2026-01-04T00:00:00.000Z')
+    }),
+    automaticWorkerExecutionEnabled: true,
+    runner: async (decision) => {
+      calls.push(decision.id);
+      return decision.id === 'sched_1'
+        ? { status: 'completed', providerMessageId: 'msg_worker_1' }
+        : { status: 'failed', reason: 'provider rejected worker send' };
+    }
+  });
+  assert.equal(completedExecution.status, 'worker_execution_completed');
+  assert.equal(completedExecution.automaticWorkerExecutionEnabled, true);
+  assert.equal(completedExecution.backgroundLoopStarted, false);
+  assert.equal(completedExecution.timerCreated, false);
+  assert.equal(completedExecution.attemptedCount, 2);
+  assert.equal(completedExecution.completedCount, 1);
+  assert.equal(completedExecution.failedCount, 1);
+  assert.deepEqual(calls, ['sched_1', 'sched_2']);
+  assert.equal(completedExecution.items[0]?.status, 'worker_completed');
+  assert.equal(completedExecution.items[0]?.providerMessageId, 'msg_worker_1');
+  assert.equal(completedExecution.items[1]?.status, 'worker_failed');
+  assert.equal(completedExecution.items[1]?.reason, 'provider rejected worker send');
+
+  const cappedExecution = await executeScheduledReportWorkerBatch({
+    shell: evaluateScheduledReportWorkerShell({
+      candidates: [candidate({ id: 'sched_1' }), candidate({ id: 'sched_2' }), candidate({ id: 'sched_3' })],
+      state: activeState(),
+      now: new Date('2026-01-04T00:00:00.000Z')
+    }),
+    automaticWorkerExecutionEnabled: true,
+    maxBatchSize: 2,
+    runner: async (decision) => ({ status: 'completed', providerMessageId: `msg_${decision.id}` })
+  });
+  assert.equal(cappedExecution.maxBatchSize, 2);
+  assert.equal(cappedExecution.attemptedCount, 2);
+  assert.equal(cappedExecution.items.filter((item) => item.attempted).length, 2);
+
   const source = await readFile(WORKER_PATH, 'utf8');
+  assert.match(source, /ADMIN_ANALYTICS_SCHEDULED_REPORT_WORKER_EXECUTION_ENABLED/);
   assert.doesNotMatch(source, LIVE_EXECUTION_PATTERN);
   assert.doesNotMatch(source, /export\s+async\s+function\s+(GET|POST|PUT|PATCH|DELETE)/);
   assert.doesNotMatch(source, /await import\('@\/lib\/prisma'\)/);
