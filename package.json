@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node tools/kill-stale-next-builds.mjs",
+    "prebuild": "node scripts/admin-dashboard-workspace-swap.mjs && node tools/kill-stale-next-builds.mjs",
     "build": "next build",
     "build:vercel": "node tools/vercel-build-with-preflight.mjs",
     "start": "next start",

@@ -1,4 +1,5 @@
-import type { Category, MediaItem, Product, ProductType } from '@/lib/catalog';
+import type { CatalogTranslation, Category, MediaItem, Product, ProductType } from '@/lib/catalog';
+import type { SupportedLocale } from '@/lib/i18n/locales';
 import { AdminCatalogControls } from '@/components/admin/AdminCatalogControls';
 import { AdminCategorySection } from '@/components/admin/AdminCategorySection';
 import { AdminMediaSection } from '@/components/admin/AdminMediaSection';
@@ -16,6 +17,7 @@ import {
   type AdminMediaColumn,
   type AdminProductColumn
 } from '@/lib/admin/admin-catalog-dashboard-helpers';
+import { getLocalizedCategorySeedCopy } from '@/lib/localization/catalog-seed-fallback';
 
 type AdminCatalogWorkspaceProps = {
   catalogSection?: AdminCatalogSection;
@@ -32,8 +34,58 @@ type AdminCatalogWorkspaceProps = {
   mediaPage?: number;
   productColumns?: string | string[];
   mediaColumns?: string | string[];
+  locale?: SupportedLocale | string | null;
   t?: (key: string) => string;
 };
+
+function adminCatalogLocale(locale?: SupportedLocale | string | null): SupportedLocale {
+  return locale?.toLowerCase().startsWith('fa') ? 'fa-IR' : 'en-CA';
+}
+
+function publishedTranslation(translations: CatalogTranslation[] | undefined, locale: SupportedLocale) {
+  return translations?.find((translation) => translation.locale === locale && translation.isPublished !== false);
+}
+
+function localizeCategoryForAdmin(category: Category, locale: SupportedLocale): Category {
+  const translation = publishedTranslation(category.translations, locale);
+  const seedCopy = getLocalizedCategorySeedCopy(category.slug, locale);
+
+  return {
+    ...category,
+    title: translation?.title?.trim() || seedCopy?.title || category.title,
+    eyebrow: translation?.eyebrow?.trim() || seedCopy?.eyebrow || category.eyebrow,
+    description: translation?.description?.trim() || seedCopy?.description || category.description
+  };
+}
+
+function localizeCategoriesForAdmin(categories: Category[], locale?: SupportedLocale | string | null) {
+  const resolvedLocale = adminCatalogLocale(locale);
+  const localizedCategories = categories.map((category) => localizeCategoryForAdmin(category, resolvedLocale));
+  const categoryById = new Map(localizedCategories.filter((category) => category.id).map((category) => [category.id, category]));
+  const categoryBySlug = new Map(localizedCategories.map((category) => [category.slug, category]));
+
+  return localizedCategories.map((category) => {
+    const parent = category.parentId ? categoryById.get(category.parentId) : category.parentSlug ? categoryBySlug.get(category.parentSlug) : undefined;
+    return parent ? { ...category, parentTitle: parent.title } : category;
+  });
+}
+
+function localizeProductsForAdmin(products: Product[], categories: Category[], locale?: SupportedLocale | string | null) {
+  const resolvedLocale = adminCatalogLocale(locale);
+  const categoryBySlug = new Map(categories.map((category) => [category.slug, category]));
+
+  return products.map((product) => {
+    const translation = publishedTranslation(product.translations, resolvedLocale);
+    const category = categoryBySlug.get(product.category);
+
+    return {
+      ...product,
+      title: translation?.title?.trim() || product.title,
+      description: translation?.description?.trim() || product.description,
+      categoryTitle: category?.title ?? product.categoryTitle
+    };
+  });
+}
 
 function filterAdminProducts(products: Product[], catalogSearch?: string, catalogCategory?: string, catalogFlag?: string) {
   const search = catalogSearch?.trim();
@@ -75,8 +127,11 @@ export function AdminCatalogWorkspace({
   mediaPage = 1,
   productColumns,
   mediaColumns,
+  locale,
   t = (key: string) => key
 }: AdminCatalogWorkspaceProps) {
+  const localizedCategories = localizeCategoriesForAdmin(categories, locale);
+  const localizedProducts = localizeProductsForAdmin(products, localizedCategories, locale);
   const path = adminCatalogPath(catalogSection);
   const selectedProductColumns = parseAdminCatalogColumns(productColumns, adminProductColumnOptions, ['product', 'actions']) as AdminProductColumn[];
   const selectedMediaColumns = parseAdminCatalogColumns(mediaColumns, adminMediaColumnOptions, ['image', 'actions']) as AdminMediaColumn[];
@@ -84,8 +139,8 @@ export function AdminCatalogWorkspace({
   const mediaColumnsParam = adminCatalogColumnParam(selectedMediaColumns, adminMediaColumnOptions);
   const columnParams = { productColumns: productColumnsParam, mediaColumns: mediaColumnsParam };
   const paginationParams = { catalogSearch, catalogCategory, catalogFlag, ...columnParams };
-  const filteredProducts = filterAdminProducts(products, catalogSearch, catalogCategory, catalogFlag);
-  const filteredCategories = filterAdminCategories(categories, catalogSearch);
+  const filteredProducts = filterAdminProducts(localizedProducts, catalogSearch, catalogCategory, catalogFlag);
+  const filteredCategories = filterAdminCategories(localizedCategories, catalogSearch);
   const pagedProducts = adminPageSlice(filteredProducts, productPage);
   const pagedCategories = adminPageSlice(filteredCategories, categoryPage);
   const pagedMedia = adminPageSlice(media, mediaPage);
@@ -96,7 +151,7 @@ export function AdminCatalogWorkspace({
   return (
     <>
       <AdminCatalogControls
-        categories={categories}
+        categories={localizedCategories}
         section={catalogSection}
         search={catalogSearch}
         category={catalogCategory}
@@ -107,8 +162,8 @@ export function AdminCatalogWorkspace({
       />
       {showMediaSection ? (
         <AdminMediaSection
-          categories={categories}
-          products={products}
+          categories={localizedCategories}
+          products={localizedProducts}
           disabled={disabled}
           path={path}
           catalogSection={catalogSection}
@@ -125,7 +180,7 @@ export function AdminCatalogWorkspace({
       ) : null}
       {showCategorySection ? (
         <AdminCategorySection
-          categories={categories}
+          categories={localizedCategories}
           media={media}
           pagedCategories={pagedCategories}
           filteredCategoryCount={filteredCategories.length}
@@ -139,7 +194,7 @@ export function AdminCatalogWorkspace({
       {showProductSection ? (
         <AdminProductSection
           products={pagedProducts.items}
-          categories={categories}
+          categories={localizedCategories}
           productTypes={productTypes}
           media={media}
           disabled={disabled}
