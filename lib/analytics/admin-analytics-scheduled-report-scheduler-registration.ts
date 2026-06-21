@@ -34,10 +34,6 @@ export type AdminAnalyticsScheduledReportSchedulerRegistrationResult = {
   blockers: string[];
 };
 
-function hasValue(value: string | null | undefined): boolean {
-  return typeof value === 'string' && value.trim().length > 0;
-}
-
 export function buildScheduledReportSchedulerRegistrationPlan(options: {
   flags?: Partial<ScheduledReportRuntimeFlagState>;
 } = {}): AdminAnalyticsScheduledReportSchedulerRegistrationPlan {
@@ -72,7 +68,9 @@ export async function registerScheduledReportScheduler(options: {
 }): Promise<AdminAnalyticsScheduledReportSchedulerRegistrationResult> {
   const plan = buildScheduledReportSchedulerRegistrationPlan({ flags: options.flags });
   const blockers = [...plan.blockers];
-  const lockKey = hasValue(options.lockKey) ? options.lockKey.trim() : null;
+  const lockKey = typeof options.lockKey === 'string' && options.lockKey.trim().length > 0
+    ? options.lockKey.trim()
+    : null;
   if (!options.isOwner) blockers.push('owner session is required');
   if (!options.operatorApproved) blockers.push('operator approval is required');
   if (lockKey === null) blockers.push('lock key is required');
