@@ -74,6 +74,8 @@ async function main() {
   const savedViewFlowModule = await import('./saved-view-' + 'core-flow.test');
   await savedViewFlowModule.runSavedViewCoreFlowTests();
   await runSavedViewSchemaFragmentTests();
+  const customerSegmentationModule = await import('./customer-' + 'segmentation.test');
+  await customerSegmentationModule.runCustomerSegmentationTests();
   const retentionModule = await import('./site-analytics-' + 'retention-cleanup-executor.test');
   await retentionModule.runSiteAnalyticsRetentionCleanupExecutorTests();
   const retentionRouteModule = await import('./site-retention-' + 'route.test');
