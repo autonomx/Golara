@@ -62,11 +62,11 @@ export async function runAdminPageShellCopyTests() {
   assert.doesNotMatch(scheduledReportSource, /sendMail|transport|cron|schedule\.create|setInterval|setTimeout/);
 
   const layoutPreview = buildAdminAnalyticsLayoutPreview(scheduledReportRange);
-  assert.equal(layoutPreview.status, 'collapsible_groups_active');
+  assert.equal(layoutPreview.status, 'tabbed_workspace_active');
   assert.equal(layoutPreview.enabled, true);
   assert.equal(layoutPreview.groupHeadersEnabled, true);
   assert.equal(layoutPreview.collapsibleGroupsEnabled, true);
-  assert.equal(layoutPreview.tabsEnabled, false);
+  assert.equal(layoutPreview.tabsEnabled, true);
   assert.equal(layoutPreview.preservesSectionIndex, true);
   assert.equal(layoutPreview.preservesRangeLinks, true);
   assert.equal(layoutPreview.requiresAccessibleTableFallbacks, true);
@@ -77,13 +77,14 @@ export async function runAdminPageShellCopyTests() {
   );
   assert.ok(layoutPreview.groups.some((group) => group.defaultOpen));
   assert.ok(layoutPreview.groups.every((group) => group.href.startsWith(layoutPreview.workspaceHref)));
+  assert.ok(layoutPreview.groups.every((group) => group.tabHref === group.href));
   assert.ok(layoutPreview.groups.every((group) => group.sections.every((section) => section.keepsTableFallback)));
 
   const layoutSource = readFileSync('lib/analytics/admin-analytics-layout.ts', 'utf8');
-  assert.match(layoutSource, /collapsible_groups_active/);
+  assert.match(layoutSource, /tabbed_workspace_active/);
   assert.match(layoutSource, /groupHeadersEnabled: true/);
   assert.match(layoutSource, /collapsibleGroupsEnabled: true/);
-  assert.match(layoutSource, /tabsEnabled: false/);
+  assert.match(layoutSource, /tabsEnabled: true/);
   assert.match(layoutSource, /requiresAccessibleTableFallbacks: true/);
   assert.match(layoutSource, /adminAnalyticsRangeQueryString/);
   assert.doesNotMatch(layoutSource, /localStorage|sessionStorage|cookies\(|PrismaClient|prisma\.|create\(|update\(|upsert\(|delete\(/);
@@ -91,12 +92,13 @@ export async function runAdminPageShellCopyTests() {
   const layoutHeaderSource = readFileSync('components/admin/AdminAnalyticsLayoutGroupHeaders.tsx', 'utf8');
   assert.match(layoutHeaderSource, /id="analytics-layout-groups"/);
   assert.match(layoutHeaderSource, /Dashboard groups/);
+  assert.match(layoutHeaderSource, /role="tablist"/);
+  assert.match(layoutHeaderSource, /role="tab"/);
   assert.match(layoutHeaderSource, /<details/);
   assert.match(layoutHeaderSource, /<summary/);
   assert.match(layoutHeaderSource, /preview\.groups\.map/);
   assert.match(layoutHeaderSource, /preview\.rangeLabel/);
-  assert.match(layoutHeaderSource, /tabs disabled/);
-  assert.doesNotMatch(layoutHeaderSource, /tablist|localStorage|sessionStorage|cookies\(/);
+  assert.doesNotMatch(layoutHeaderSource, /useState|onClick|localStorage|sessionStorage|cookies\(/);
 
   const analyticsRouteSource = readFileSync('app/admin/analytics/page.tsx', 'utf8');
   assert.match(analyticsRouteSource, /activeTab="analytics"/);

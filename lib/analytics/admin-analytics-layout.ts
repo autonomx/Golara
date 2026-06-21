@@ -3,7 +3,7 @@ import {
   type AdminAnalyticsResolvedRange
 } from './admin-analytics-range';
 
-export type AdminAnalyticsLayoutPreviewStatus = 'collapsible_groups_active';
+export type AdminAnalyticsLayoutPreviewStatus = 'tabbed_workspace_active';
 export type AdminAnalyticsLayoutGroupKey =
   | 'overview'
   | 'business'
@@ -25,6 +25,8 @@ export type AdminAnalyticsLayoutGroup = {
   description: string;
   href: string;
   defaultOpen: boolean;
+  tabLabel: string;
+  tabHref: string;
   sections: AdminAnalyticsLayoutSection[];
 };
 
@@ -45,7 +47,7 @@ export type AdminAnalyticsLayoutPreview = {
   blockers: string[];
 };
 
-type LayoutGroupDefinition = Omit<AdminAnalyticsLayoutGroup, 'href' | 'sections' | 'defaultOpen'> & {
+type LayoutGroupDefinition = Omit<AdminAnalyticsLayoutGroup, 'href' | 'sections' | 'defaultOpen' | 'tabHref'> & {
   defaultOpen?: boolean;
   sections: Array<Omit<AdminAnalyticsLayoutSection, 'href' | 'keepsTableFallback'>>;
 };
@@ -54,6 +56,7 @@ const LAYOUT_GROUPS: LayoutGroupDefinition[] = [
   {
     key: 'overview',
     label: 'Overview',
+    tabLabel: 'Overview',
     description: 'Entry guidance, selected-range context, CSV exports, and the section index.',
     defaultOpen: true,
     sections: [
@@ -66,6 +69,7 @@ const LAYOUT_GROUPS: LayoutGroupDefinition[] = [
   {
     key: 'business',
     label: 'Business',
+    tabLabel: 'Business',
     description: 'Order summary, revenue trends, and business chart context.',
     sections: [
       { anchor: 'order-analytics', label: 'Order analytics' },
@@ -75,6 +79,7 @@ const LAYOUT_GROUPS: LayoutGroupDefinition[] = [
   {
     key: 'site',
     label: 'Site',
+    tabLabel: 'Site',
     description: 'First-party site funnel, attribution, and storefront behavior signals.',
     sections: [
       { anchor: 'site-analytics', label: 'Site analytics' }
@@ -83,6 +88,7 @@ const LAYOUT_GROUPS: LayoutGroupDefinition[] = [
   {
     key: 'products',
     label: 'Products and categories',
+    tabLabel: 'Products',
     description: 'Product conversion, product sales, and category sales panels.',
     sections: [
       { anchor: 'product-analytics', label: 'Product conversion' },
@@ -93,6 +99,7 @@ const LAYOUT_GROUPS: LayoutGroupDefinition[] = [
   {
     key: 'operations',
     label: 'Operations',
+    tabLabel: 'Operations',
     description: 'Inventory, fulfillment, payment, inquiry, and readiness panels.',
     sections: [
       { anchor: 'inventory-analytics', label: 'Inventory' },
@@ -105,6 +112,7 @@ const LAYOUT_GROUPS: LayoutGroupDefinition[] = [
   {
     key: 'privacy-docs',
     label: 'Privacy and docs',
+    tabLabel: 'Privacy/docs',
     description: 'Privacy policy, retention status, cleanup preview, and operator documentation.',
     sections: [
       { anchor: 'analytics-privacy-retention', label: 'Privacy and retention' },
@@ -129,11 +137,11 @@ export function buildAdminAnalyticsLayoutPreview(
   const baseHref = workspaceHref(range);
 
   return {
-    status: 'collapsible_groups_active',
+    status: 'tabbed_workspace_active',
     enabled: true,
     groupHeadersEnabled: true,
     collapsibleGroupsEnabled: true,
-    tabsEnabled: false,
+    tabsEnabled: true,
     preservesSectionIndex: true,
     preservesRangeLinks: true,
     requiresAccessibleTableFallbacks: true,
@@ -141,18 +149,20 @@ export function buildAdminAnalyticsLayoutPreview(
     rangeLabel: range.label,
     rangeQuery,
     workspaceHref: baseHref,
-    groups: LAYOUT_GROUPS.map((group, index) => ({
-      ...group,
-      defaultOpen: group.defaultOpen ?? index < 2,
-      href: group.sections[0] ? sectionHref(range, group.sections[0].anchor) : baseHref,
-      sections: group.sections.map((section) => ({
-        ...section,
-        href: sectionHref(range, section.anchor),
-        keepsTableFallback: true
-      }))
-    })),
-    blockers: [
-      'tabbed workspace behavior not implemented'
-    ]
+    groups: LAYOUT_GROUPS.map((group, index) => {
+      const href = group.sections[0] ? sectionHref(range, group.sections[0].anchor) : baseHref;
+      return {
+        ...group,
+        defaultOpen: group.defaultOpen ?? index < 2,
+        href,
+        tabHref: href,
+        sections: group.sections.map((section) => ({
+          ...section,
+          href: sectionHref(range, section.anchor),
+          keepsTableFallback: true
+        }))
+      };
+    }),
+    blockers: []
   };
 }
