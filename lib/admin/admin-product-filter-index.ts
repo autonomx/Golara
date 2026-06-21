@@ -1,7 +1,8 @@
 import 'server-only';
 
 import { hasDatabase, prisma } from '@/lib/prisma';
-import { seedProducts } from '@/lib/seed-data';
+import { localizeSeedProducts } from '@/lib/localization/catalog-seed-fallback';
+import { seedCategories, seedProducts } from '@/lib/seed-data';
 
 export type AdminProductFilterIndexItem = {
   title: string;
@@ -17,8 +18,10 @@ export type AdminProductFilterIndexItem = {
   image?: string;
 };
 
-function seedProductFilterIndex(): AdminProductFilterIndexItem[] {
-  return seedProducts.map((product) => ({
+type AdminProductFilterIndexOptions = { locale?: string | null };
+
+function seedProductFilterIndex(options: AdminProductFilterIndexOptions = {}): AdminProductFilterIndexItem[] {
+  return localizeSeedProducts(seedProducts, options.locale, seedCategories).map((product) => ({
     title: product.title,
     code: product.code,
     slug: product.slug,
@@ -33,8 +36,8 @@ function seedProductFilterIndex(): AdminProductFilterIndexItem[] {
   }));
 }
 
-export async function listAdminProductFilterIndex(): Promise<AdminProductFilterIndexItem[]> {
-  if (!hasDatabase()) return seedProductFilterIndex();
+export async function listAdminProductFilterIndex(options: AdminProductFilterIndexOptions = {}): Promise<AdminProductFilterIndexItem[]> {
+  if (!hasDatabase()) return seedProductFilterIndex(options);
 
   const products = await prisma.product.findMany({
     select: {
