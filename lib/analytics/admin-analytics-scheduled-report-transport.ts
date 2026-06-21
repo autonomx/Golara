@@ -79,8 +79,29 @@ export type AdminAnalyticsScheduledReportProviderDispatch = (
   context: AdminAnalyticsScheduledReportProviderDispatchContext
 ) => Promise<{ providerMessageId?: string | null }>;
 
+export type AdminAnalyticsScheduledReportProviderClientRequest = AdminAnalyticsScheduledReportProviderDispatchContext & {
+  payload: AdminAnalyticsScheduledReportTransportPayload;
+};
+
+export type AdminAnalyticsScheduledReportProviderClient = {
+  submitOwnerReport: (
+    request: AdminAnalyticsScheduledReportProviderClientRequest
+  ) => Promise<{ providerMessageId?: string | null }>;
+};
+
+export type AdminAnalyticsScheduledReportProviderClientBridge = {
+  configured: boolean;
+  runtimeEnabled: boolean;
+  liveNetworkEnabled: boolean;
+  blockers: string[];
+  dispatch: AdminAnalyticsScheduledReportProviderDispatch | null;
+};
+
 export const ADMIN_ANALYTICS_SCHEDULED_REPORT_PROVIDER_DISPATCH_ENABLED_ENV =
   'ADMIN_ANALYTICS_SCHEDULED_REPORT_PROVIDER_DISPATCH_ENABLED';
+
+export const ADMIN_ANALYTICS_SCHEDULED_REPORT_PROVIDER_CLIENT_ENABLED_ENV =
+  'ADMIN_ANALYTICS_SCHEDULED_REPORT_PROVIDER_CLIENT_ENABLED';
 
 export function buildScheduledReportTransportContract(): AdminAnalyticsScheduledReportTransportContract {
   return {
@@ -159,6 +180,34 @@ export function validateScheduledReportProviderDispatch(
     configured: configurationBlockers.length === 0,
     runtimeEnabled: options.runtimeEnabled === true,
     blockers
+  };
+}
+
+export function createScheduledReportProviderClientBridge(options: {
+  runtimeEnabled?: boolean;
+  client?: AdminAnalyticsScheduledReportProviderClient | null;
+}): AdminAnalyticsScheduledReportProviderClientBridge {
+  const blockers: string[] = [];
+  if (!options.runtimeEnabled) blockers.push('provider client runtime flag is disabled');
+  if (options.client === null || options.client === undefined) blockers.push('provider client is not configured');
+
+  if (blockers.length > 0 || options.client === null || options.client === undefined) {
+    return {
+      configured: options.client !== null && options.client !== undefined,
+      runtimeEnabled: options.runtimeEnabled === true,
+      liveNetworkEnabled: false,
+      blockers,
+      dispatch: null
+    };
+  }
+
+  const client = options.client;
+  return {
+    configured: true,
+    runtimeEnabled: true,
+    liveNetworkEnabled: true,
+    blockers: [],
+    dispatch: async (payload, context) => client.submitOwnerReport({ ...context, payload })
   };
 }
 
