@@ -17,6 +17,16 @@ function firstNonEmpty(...values: Array<string | undefined>) {
   return values.find((value) => value?.trim()) ?? '';
 }
 
+function heroCtaClass(variant: string) {
+  if (variant === 'primary') {
+    return 'inline-flex rounded-full bg-rosewood px-8 py-4 text-sm font-semibold text-white shadow-[0_16px_34px_rgba(111,36,56,0.22)] transition hover:-translate-y-0.5 hover:bg-stone-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30';
+  }
+  if (variant === 'secondary') {
+    return 'inline-flex rounded-full border border-rosewood/20 bg-white/72 px-6 py-3 text-sm font-semibold text-rosewood transition hover:border-rosewood hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30';
+  }
+  return 'inline-flex px-2 py-2 text-sm font-semibold text-rosewood underline-offset-4 transition hover:text-stone-900 hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30';
+}
+
 export function HomepageBannerSlideshow({ slides, homepage, locale }: HomepageBannerSlideshowProps) {
   const fallbackSlide = slides[0];
   const copy = (key: Parameters<typeof getStorefrontCopy>[0]) => getStorefrontCopy(key, locale);
@@ -83,16 +93,16 @@ export function HomepageBannerSlideshow({ slides, homepage, locale }: HomepageBa
 
             {ctas.length ? <div className="mt-8 flex flex-wrap items-center justify-start gap-3">
               {ctas.map((cta) => (
-                <Link key={`${cta.label}-${cta.href}`} href={cta.href} className={cta.variant === 'primary' ? 'inline-flex rounded-full bg-rosewood px-7 py-3.5 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(111,36,56,0.18)] transition hover:-translate-y-0.5 hover:bg-stone-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30' : cta.variant === 'secondary' ? 'inline-flex rounded-full border border-rosewood/20 bg-white/78 px-7 py-3.5 text-sm font-semibold text-rosewood shadow-sm transition hover:-translate-y-0.5 hover:border-rosewood focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30' : 'inline-flex rounded-full border border-rosewood/15 bg-white/58 px-7 py-3.5 text-sm font-semibold text-rosewood shadow-sm transition hover:-translate-y-0.5 hover:border-rosewood focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-olive/30'}>
+                <Link key={`${cta.label}-${cta.href}`} href={cta.href} className={heroCtaClass(cta.variant)}>
                   {cta.label}
                 </Link>
               ))}
             </div> : null}
 
-            {trustItems.length ? <div className="mt-8 flex flex-wrap justify-start gap-3 text-sm font-semibold text-stone-700">
+            {trustItems.length ? <div className="mt-7 flex flex-wrap justify-start gap-x-5 gap-y-2 text-sm font-semibold text-stone-700">
               {trustItems.map((item) => {
                 const Icon = item.icon;
-                return <div key={item.label} className="inline-flex items-center gap-2 rounded-full border border-rosewood/10 bg-white/72 px-4 py-2 shadow-sm"><Icon aria-hidden="true" className="h-4 w-4 text-rosewood" />{item.label}</div>;
+                return <div key={item.label} className="inline-flex items-center gap-2"><Icon aria-hidden="true" className="h-4 w-4 text-rosewood" />{item.label}</div>;
               })}
             </div> : null}
           </div>
