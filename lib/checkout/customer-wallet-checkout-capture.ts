@@ -96,29 +96,6 @@ function isWalletPaymentMetadata(metadata: Prisma.JsonObject) {
   return metadataText(metadata.paymentMethodType) === 'wallet' || metadataText(metadata.paymentMethodKey) === 'wallet-credit';
 }
 
-function ledgerSelectSql() {
-  return `
-    "id",
-    "walletId",
-    "customerId",
-    "orderId",
-    "paymentAttemptId",
-    "entryType",
-    "direction",
-    "status",
-    "amountCents",
-    "currency",
-    "availableBalanceAfterCents",
-    "reservedBalanceAfterCents",
-    "idempotencyKey",
-    "note",
-    "actorLabel",
-    "actorRole",
-    "metadata",
-    "createdAt"
-  `;
-}
-
 export async function captureCustomerWalletCheckoutPayment(input: CustomerWalletCheckoutCaptureInput) {
   if (!hasDatabase()) throw new Error('DATABASE_URL is required for wallet checkout capture.');
 

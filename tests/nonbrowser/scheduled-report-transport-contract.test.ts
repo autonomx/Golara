@@ -2,8 +2,6 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 import {
-  ADMIN_ANALYTICS_SCHEDULED_REPORT_PROVIDER_CLIENT_ENABLED_ENV,
-  ADMIN_ANALYTICS_SCHEDULED_REPORT_PROVIDER_DISPATCH_ENABLED_ENV,
   buildScheduledReportTransportContract,
   createDisabledScheduledReportTransportAdapter,
   createOwnerOutboxScheduledReportTransportAdapter,
