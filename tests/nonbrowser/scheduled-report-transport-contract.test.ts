@@ -2,14 +2,17 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 import {
+  ADMIN_ANALYTICS_SCHEDULED_REPORT_PROVIDER_CLIENT_ENABLED_ENV,
   ADMIN_ANALYTICS_SCHEDULED_REPORT_PROVIDER_DISPATCH_ENABLED_ENV,
   buildScheduledReportTransportContract,
   createDisabledScheduledReportTransportAdapter,
   createOwnerOutboxScheduledReportTransportAdapter,
   createProviderScheduledReportTransportAdapter,
+  createScheduledReportProviderClientBridge,
   createTestScheduledReportTransportAdapter,
   validateScheduledReportOwnerOutbox,
   validateScheduledReportProviderDispatch,
+  type AdminAnalyticsScheduledReportProviderClientRequest,
   type AdminAnalyticsScheduledReportTransportPayload
 } from '../../lib/analytics/admin-analytics-scheduled-report-transport';
 
@@ -112,6 +115,30 @@ export async function runScheduledReportTransportContractTests() {
   assert.equal(providerNoHandlerResult.provider, 'owner-provider');
   assert.ok(providerNoHandlerResult.blockers.includes('provider dispatch handler is not configured'));
 
+  const bridgeOff = createScheduledReportProviderClientBridge({ runtimeEnabled: false, client: null });
+  assert.equal(bridgeOff.configured, false);
+  assert.equal(bridgeOff.runtimeEnabled, false);
+  assert.equal(bridgeOff.liveNetworkEnabled, false);
+  assert.equal(bridgeOff.dispatch, null);
+  assert.ok(bridgeOff.blockers.includes('provider client runtime flag is disabled'));
+  assert.ok(bridgeOff.blockers.includes('provider client is not configured'));
+
+  const clientRequests: AdminAnalyticsScheduledReportProviderClientRequest[] = [];
+  const bridge = createScheduledReportProviderClientBridge({
+    runtimeEnabled: true,
+    client: {
+      submitOwnerReport: async (request) => {
+        clientRequests.push(request);
+        return { providerMessageId: 'client_msg_1' };
+      }
+    }
+  });
+  assert.equal(bridge.configured, true);
+  assert.equal(bridge.runtimeEnabled, true);
+  assert.equal(bridge.liveNetworkEnabled, true);
+  assert.equal(bridge.blockers.length, 0);
+  assert.notEqual(bridge.dispatch, null);
+
   const calls: Array<{ reportId: string; providerKey: string }> = [];
   const providerAdapter = createProviderScheduledReportTransportAdapter(
     {
@@ -122,19 +149,19 @@ export async function runScheduledReportTransportContractTests() {
       signingRef: 'signing-ref',
       runtimeEnabled: true
     },
-    async (transportPayload, context) => {
-      calls.push({ reportId: transportPayload.reportId, providerKey: context.providerKey });
-      return { providerMessageId: 'msg_1' };
-    }
+    bridge.dispatch
   );
   assert.equal(providerAdapter.configured, true);
   assert.equal(providerAdapter.liveNetworkEnabled, true);
   const providerResult = await providerAdapter.dispatch(payload());
+  calls.push({ reportId: providerResult.payloadSummary.reportId, providerKey: clientRequests[0]?.providerKey ?? '' });
   assert.equal(providerResult.status, 'transport_dispatched');
   assert.equal(providerResult.sent, true);
   assert.equal(providerResult.provider, 'owner-provider');
-  assert.equal(providerResult.providerMessageId, 'msg_1');
+  assert.equal(providerResult.providerMessageId, 'client_msg_1');
   assert.deepEqual(calls, [{ reportId: 'sched_1', providerKey: 'provider-ref' }]);
+  assert.equal(clientRequests[0]?.payload.reportId, 'sched_1');
+  assert.equal(clientRequests[0]?.signingRef, 'signing-ref');
 
   const testAdapter = createTestScheduledReportTransportAdapter();
   assert.equal(testAdapter.liveNetworkEnabled, false);
@@ -145,6 +172,7 @@ export async function runScheduledReportTransportContractTests() {
 
   const source = await readFile(TRANSPORT_PATH, 'utf8');
   assert.match(source, /ADMIN_ANALYTICS_SCHEDULED_REPORT_PROVIDER_DISPATCH_ENABLED/);
+  assert.match(source, /ADMIN_ANALYTICS_SCHEDULED_REPORT_PROVIDER_CLIENT_ENABLED/);
   assert.doesNotMatch(source, LIVE_EXECUTION_PATTERN);
   assert.doesNotMatch(source, /export\s+async\s+function\s+(GET|POST|PUT|PATCH|DELETE)/);
   assert.doesNotMatch(source, /await import\('@\/lib\/prisma'\)/);
