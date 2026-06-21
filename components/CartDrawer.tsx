@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useEffect, useId, useState } from 'react';
 import { ShoppingBag, X } from 'lucide-react';
 import { clearCartAction, removeCartItemAction, updateCartItemAction } from '@/app/cart/actions';
@@ -42,14 +42,6 @@ function cartReturnTo(pathname: string | null) {
   return path.startsWith('/') ? path : '/';
 }
 
-function cleanCartStatusPath(pathname: string | null, searchParams: { toString(): string }) {
-  const params = new URLSearchParams(searchParams.toString());
-  params.delete('cart');
-  const query = params.toString();
-  const path = cartReturnTo(pathname);
-  return `${path}${query ? `?${query}` : ''}`;
-}
-
 function cartReassuranceItems(locale?: string | null) {
   return locale?.toLowerCase().startsWith('fa')
     ? ['ارسال و جمع نهایی هنگام پرداخت تایید می‌شود.', 'پرداخت امن و ثبت سفارش روی سرور انجام می‌شود.', 'برای سفارش‌های ویژه می‌توانید با پشتیبانی هماهنگ کنید.']
@@ -69,15 +61,15 @@ export function CartDrawer({
 }) {
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
+  const [cartStatus, setCartStatus] = useState<string | null>(null);
+  const [continueShoppingHref, setContinueShoppingHref] = useState('/');
   const titleId = useId();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const returnTo = cartReturnTo(pathname);
-  const continueShoppingHref = cleanCartStatusPath(pathname, searchParams);
   const direction = getCustomerCopyDirection(locale);
   const copy = (key: Parameters<typeof getCustomerCopy>[0]) => getCustomerCopy(key, locale);
   const hasItems = cart.items.length > 0;
-  const showAddConfirmation = searchParams.get('cart') === 'added';
+  const showAddConfirmation = cartStatus === 'added';
   const reassuranceItems = cartReassuranceItems(locale);
 
   const openDrawer = () => {
@@ -85,6 +77,14 @@ export function CartDrawer({
     window.requestAnimationFrame(() => setOpen(true));
   };
   const closeDrawer = () => setOpen(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setCartStatus(params.get('cart'));
+    params.delete('cart');
+    const query = params.toString();
+    setContinueShoppingHref(`${cartReturnTo(window.location.pathname || pathname)}${query ? `?${query}` : ''}`);
+  }, [pathname]);
 
   useEffect(() => {
     if (!mounted || open) return;
