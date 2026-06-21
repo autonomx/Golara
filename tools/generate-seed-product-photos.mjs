@@ -88,6 +88,9 @@ function decodeBase64Image(value) {
 }
 
 async function generateImage(prompt, size) {
+  // lgtm[js/file-access-to-http]
+  // This developer-only seed-image tool intentionally sends a checked-in data/ manifest prompt
+  // to the configured image-generation API. The manifest path is constrained by safeManifestPath().
   const response = await fetch(endpointUrl(), {
     method: 'POST',
     headers: {
@@ -128,6 +131,9 @@ async function main() {
     const prompt = `${manifest.styleGuide}\n\nProduct: ${product.title}\nCode: ${product.code}\n\n${product.prompt}`;
     console.log(`Generating ${product.slug} -> ${path.relative(ROOT, outputPath)}`);
     const image = await generateImage(prompt, size);
+    // lgtm[js/http-to-file-access]
+    // This developer-only seed-image tool intentionally writes the generated image response to
+    // public/seed-images after safeOutputDirectory() and assertPathInside() validate the path.
     await writeFile(outputPath, image);
   }
 }
