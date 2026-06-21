@@ -6,9 +6,11 @@ export async function runSiteRetentionRouteTests() {
 
   assert.match(source, /assertAdminRole\('owner'\)/);
   assert.match(source, /buildSiteAnalyticsRetentionCleanupPlan/);
+  assert.match(source, /buildSiteAnalyticsRetentionCleanupDelegate/);
   assert.match(source, /executeSiteAnalyticsRetentionCleanup/);
-  assert.match(source, /delegate: null/);
+  assert.match(source, /databaseConfigured: summary\.databaseConfigured && summary\.tableAvailable/);
   assert.match(source, /manualOwnerConfirmation/);
+  assert.match(source, /delegateAttached: delegateAttachment\.state\.attached/);
   assert.match(source, /backgroundJobStarted: false/);
   assert.doesNotMatch(source, /setInterval|setTimeout|cron|queue|worker|sendMail|createTransport|fetch\(/);
 }
