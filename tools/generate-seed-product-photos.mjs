@@ -3,6 +3,13 @@ import path from 'node:path';
 
 const ROOT = process.cwd();
 const DEFAULT_MANIFEST = 'data/seed-product-photo-prompts.json';
+const DEFAULT_OUTPUT_DIRECTORY = 'public/seed-images/photo-real';
+const ALLOWED_OUTPUT_ROOT = path.resolve(ROOT, 'public/seed-images');
+const DEFAULT_ALLOWED_DOWNLOAD_HOSTS = [
+  'oaidalleapiprodscus.blob.core.windows.net',
+  'cdn.openai.com',
+  'images.openai.com'
+];
 
 function requireEnv(name) {
   const value = process.env[name];
@@ -20,9 +27,40 @@ function safeSlug(value) {
   return value.replace(/[^a-z0-9-]/gi, '-').toLowerCase();
 }
 
+function assertPathInside(parent, candidate) {
+  const relative = path.relative(parent, candidate);
+  if (relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative))) return candidate;
+  throw new Error(`Refusing to access path outside ${path.relative(ROOT, parent)}: ${path.relative(ROOT, candidate)}`);
+}
+
+function safeManifestPath() {
+  const manifestPath = path.resolve(ROOT, argValue('manifest', DEFAULT_MANIFEST));
+  return assertPathInside(path.resolve(ROOT, 'data'), manifestPath);
+}
+
+function safeOutputDirectory(value) {
+  const outputDirectory = path.resolve(ROOT, value || DEFAULT_OUTPUT_DIRECTORY);
+  return assertPathInside(ALLOWED_OUTPUT_ROOT, outputDirectory);
+}
+
+function allowedDownloadHosts() {
+  return (process.env.IMAGE_GENERATION_ALLOWED_DOWNLOAD_HOSTS || DEFAULT_ALLOWED_DOWNLOAD_HOSTS.join(','))
+    .split(',')
+    .map((host) => host.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function safeImageDownloadUrl(value) {
+  const parsed = new URL(value);
+  if (parsed.protocol !== 'https:') throw new Error('Generated image URL must use HTTPS.');
+  const hostname = parsed.hostname.toLowerCase();
+  const allowed = allowedDownloadHosts().some((host) => hostname === host || hostname.endsWith(`.${host}`));
+  if (!allowed) throw new Error(`Generated image URL host is not allowed: ${hostname}`);
+  return parsed.toString();
+}
+
 async function readManifest() {
-  const manifestPath = path.join(ROOT, argValue('manifest', DEFAULT_MANIFEST));
-  return JSON.parse(await readFile(manifestPath, 'utf8'));
+  return JSON.parse(await readFile(safeManifestPath(), 'utf8'));
 }
 
 function endpointUrl() {
@@ -40,7 +78,7 @@ function requestBody(prompt, size) {
 }
 
 async function downloadUrl(url) {
-  const response = await fetch(url);
+  const response = await fetch(safeImageDownloadUrl(url));
   if (!response.ok) throw new Error(`Image download failed: ${response.status} ${response.statusText}`);
   return Buffer.from(await response.arrayBuffer());
 }
@@ -74,7 +112,7 @@ async function generateImage(prompt, size) {
 
 async function main() {
   const manifest = await readManifest();
-  const outputDirectory = path.join(ROOT, manifest.outputDirectory || 'public/seed-images/photo-real');
+  const outputDirectory = safeOutputDirectory(manifest.outputDirectory);
   const size = argValue('size', process.env.IMAGE_GENERATION_SIZE || '1024x1024');
   const only = argValue('only', '');
   const limit = Number.parseInt(argValue('limit', '0'), 10);
@@ -86,7 +124,7 @@ async function main() {
 
   for (const product of products) {
     const filename = `${safeSlug(product.slug)}.png`;
-    const outputPath = path.join(outputDirectory, filename);
+    const outputPath = assertPathInside(outputDirectory, path.join(outputDirectory, filename));
     const prompt = `${manifest.styleGuide}\n\nProduct: ${product.title}\nCode: ${product.code}\n\n${product.prompt}`;
     console.log(`Generating ${product.slug} -> ${path.relative(ROOT, outputPath)}`);
     const image = await generateImage(prompt, size);
