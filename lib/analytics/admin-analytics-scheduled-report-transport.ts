@@ -14,16 +14,19 @@ export type AdminAnalyticsScheduledReportTransportPayload = {
   recipientCount: number;
 };
 
+export type AdminAnalyticsScheduledReportTransportProvider = 'disabled' | 'test' | 'owner-outbox' | 'owner-provider';
+
 export type AdminAnalyticsScheduledReportTransportResult = {
   status: 'transport_disabled' | 'transport_dispatched';
   sent: boolean;
-  provider: 'disabled' | 'test' | 'owner-outbox';
+  provider: AdminAnalyticsScheduledReportTransportProvider;
   payloadSummary: {
     reportId: string;
     assetCount: number;
     recipientCount: number;
   };
   blockers: string[];
+  providerMessageId?: string;
 };
 
 export type AdminAnalyticsScheduledReportTransportAdapter = {
@@ -58,6 +61,27 @@ export type AdminAnalyticsScheduledReportOwnerOutboxValidation = {
   blockers: string[];
 };
 
+export type AdminAnalyticsScheduledReportProviderDispatchOptions = AdminAnalyticsScheduledReportOwnerOutboxOptions & {
+  providerKey: string | null | undefined;
+  signingRef?: string | null | undefined;
+};
+
+export type AdminAnalyticsScheduledReportProviderDispatchContext = {
+  destinationKey: string;
+  sourceLabel: string;
+  credentialRef: string;
+  providerKey: string;
+  signingRef: string | null;
+};
+
+export type AdminAnalyticsScheduledReportProviderDispatch = (
+  payload: AdminAnalyticsScheduledReportTransportPayload,
+  context: AdminAnalyticsScheduledReportProviderDispatchContext
+) => Promise<{ providerMessageId?: string | null }>;
+
+export const ADMIN_ANALYTICS_SCHEDULED_REPORT_PROVIDER_DISPATCH_ENABLED_ENV =
+  'ADMIN_ANALYTICS_SCHEDULED_REPORT_PROVIDER_DISPATCH_ENABLED';
+
 export function buildScheduledReportTransportContract(): AdminAnalyticsScheduledReportTransportContract {
   return {
     status: 'transport_contract_disabled',
@@ -89,6 +113,21 @@ function hasValue(value: string | null | undefined): boolean {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
+function normalizedValue(value: string | null | undefined): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function invalidAssetBlockers(payload: AdminAnalyticsScheduledReportTransportPayload): string[] {
+  const blockers: string[] = [];
+  for (const asset of payload.assets) {
+    if (asset.contentType !== 'text/csv') blockers.push(`unsupported asset content type: ${asset.contentType}`);
+    if (asset.byteLength < 0) blockers.push(`invalid asset byte length: ${asset.filename}`);
+    if (asset.rowCount < 0) blockers.push(`invalid asset row count: ${asset.filename}`);
+  }
+  if (payload.recipientCount < 1) blockers.push('at least one owner recipient is required');
+  return blockers;
+}
+
 export function validateScheduledReportOwnerOutbox(
   options: AdminAnalyticsScheduledReportOwnerOutboxOptions
 ): AdminAnalyticsScheduledReportOwnerOutboxValidation {
@@ -97,6 +136,22 @@ export function validateScheduledReportOwnerOutbox(
   if (!hasValue(options.sourceLabel)) blockers.push('source label is required');
   if (!hasValue(options.credentialRef)) blockers.push('credential reference is required');
   if (!options.runtimeEnabled) blockers.push('owner outbox runtime flag is disabled');
+  const configurationBlockers = blockers.filter((blocker) => blocker !== 'owner outbox runtime flag is disabled');
+
+  return {
+    status: blockers.length === 0 ? 'owner_outbox_valid' : 'owner_outbox_invalid',
+    configured: configurationBlockers.length === 0,
+    runtimeEnabled: options.runtimeEnabled === true,
+    blockers
+  };
+}
+
+export function validateScheduledReportProviderDispatch(
+  options: AdminAnalyticsScheduledReportProviderDispatchOptions
+): AdminAnalyticsScheduledReportOwnerOutboxValidation {
+  const ownerValidation = validateScheduledReportOwnerOutbox(options);
+  const blockers = [...ownerValidation.blockers];
+  if (!hasValue(options.providerKey)) blockers.push('provider key is required');
   const configurationBlockers = blockers.filter((blocker) => blocker !== 'owner outbox runtime flag is disabled');
 
   return {
@@ -141,6 +196,53 @@ export function createOwnerOutboxScheduledReportTransportAdapter(
       payloadSummary: payloadSummary(payload),
       blockers: validation.blockers
     })
+  };
+}
+
+export function createProviderScheduledReportTransportAdapter(
+  options: AdminAnalyticsScheduledReportProviderDispatchOptions,
+  providerDispatch?: AdminAnalyticsScheduledReportProviderDispatch | null
+): AdminAnalyticsScheduledReportTransportAdapter {
+  const validation = validateScheduledReportProviderDispatch(options);
+  const configured = validation.configured;
+  const liveNetworkEnabled = validation.status === 'owner_outbox_valid' && providerDispatch !== null && providerDispatch !== undefined;
+  return {
+    name: 'owner-provider-scheduled-report-transport',
+    configured,
+    liveNetworkEnabled,
+    dispatch: async (payload) => {
+      const blockers = [...validation.blockers, ...invalidAssetBlockers(payload)];
+      const dispatchHandler = providerDispatch ?? null;
+      if (dispatchHandler === null) {
+        blockers.push('provider dispatch handler is not configured');
+      }
+      if (blockers.length > 0 || dispatchHandler === null) {
+        return {
+          status: 'transport_disabled',
+          sent: false,
+          provider: 'owner-provider',
+          payloadSummary: payloadSummary(payload),
+          blockers
+        };
+      }
+
+      const providerResult = await dispatchHandler(payload, {
+        destinationKey: normalizedValue(options.destinationKey),
+        sourceLabel: normalizedValue(options.sourceLabel),
+        credentialRef: normalizedValue(options.credentialRef),
+        providerKey: normalizedValue(options.providerKey),
+        signingRef: hasValue(options.signingRef) ? normalizedValue(options.signingRef) : null
+      });
+
+      return {
+        status: 'transport_dispatched',
+        sent: true,
+        provider: 'owner-provider',
+        payloadSummary: payloadSummary(payload),
+        blockers: [],
+        providerMessageId: providerResult.providerMessageId ?? undefined
+      };
+    }
   };
 }
 
