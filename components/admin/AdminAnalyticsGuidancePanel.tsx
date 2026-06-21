@@ -7,6 +7,7 @@ import type { SiteAnalyticsSummary } from '@/lib/analytics/site-analytics-summar
 import { resolveStorefrontLocale } from '@/lib/i18n/resolve-locale';
 import type { SupportedLocale } from '@/lib/i18n/locales';
 
+
 type AdminLocale = 'en' | 'fa';
 
 const copy = {
@@ -14,6 +15,18 @@ const copy = {
     eyebrow: 'Analytics guidance',
     title: 'What to look at next',
     body: 'Use this summary to understand which analytics are live, which panels need more data, and which roadmap items are still intentionally pending.',
+    actionableTitle: 'Actionable insights',
+    revenueInsight: 'Revenue and order trend',
+    productInsight: 'Best-selling product',
+    categoryInsight: 'Strongest category',
+    funnelInsight: 'Storefront funnel',
+    reviewOrders: 'Review business charts',
+    reviewProducts: 'Review product sales',
+    reviewCategories: 'Review category sales',
+    reviewFunnel: 'Review site funnel',
+    noProductData: 'No product sales yet',
+    noCategoryData: 'No category sales yet',
+    noFunnelData: 'No storefront events yet',
     insightsTitle: 'Current signal summary',
     ordersLive: 'Order analytics are live for this range.',
     ordersEmpty: 'Order analytics are waiting for eligible checkout orders.',
@@ -66,6 +79,18 @@ const copy = {
     eyebrow: 'راهنمای تحلیل‌ها',
     title: 'بعد چه چیزی را بررسی کنید',
     body: 'از این خلاصه برای دیدن بخش‌های فعال، پنل‌های نیازمند داده و موارد برنامه‌ریزی‌شده بعدی استفاده کنید.',
+    actionableTitle: 'بینش‌های قابل اقدام',
+    revenueInsight: 'روند درآمد و سفارش',
+    productInsight: 'پرفروش‌ترین محصول',
+    categoryInsight: 'قوی‌ترین دسته‌بندی',
+    funnelInsight: 'قیف فروشگاه',
+    reviewOrders: 'بررسی نمودارهای کسب‌وکار',
+    reviewProducts: 'بررسی فروش محصول',
+    reviewCategories: 'بررسی فروش دسته‌بندی',
+    reviewFunnel: 'بررسی قیف سایت',
+    noProductData: 'هنوز فروش محصول وجود ندارد',
+    noCategoryData: 'هنوز فروش دسته‌بندی وجود ندارد',
+    noFunnelData: 'هنوز رویداد فروشگاه وجود ندارد',
     insightsTitle: 'خلاصه سیگنال فعلی',
     ordersLive: 'تحلیل سفارش‌ها برای این بازه فعال است.',
     ordersEmpty: 'تحلیل سفارش‌ها منتظر سفارش‌های معتبر پرداخت است.',
@@ -139,6 +164,16 @@ function GuidanceCard({ label, status, tone }: { label: string; status: string; 
   );
 }
 
+function InsightCard({ title, body, href, action }: { title: string; body: string; href: string; action: string }) {
+  return (
+    <Link href={href} className="rounded-md border border-stone-200 bg-white p-3 text-sm hover:border-olive/40">
+      <span className="block font-bold text-stone-950">{title}</span>
+      <span className="mt-2 block leading-6 text-stone-600">{body}</span>
+      <span className="mt-2 block text-xs font-bold uppercase tracking-[0.14em] text-olive">{action}</span>
+    </Link>
+  );
+}
+
 export async function AdminAnalyticsGuidancePanel({
   orderSummary,
   productSalesSummary,
@@ -155,6 +190,8 @@ export async function AdminAnalyticsGuidancePanel({
   const hasOrderData = orderSummary.totalOrders > 0 || orderSummary.recentOrders > 0 || orderSummary.recentRevenueCents > 0;
   const hasSiteData = siteSummary.totalEvents > 0 || siteSummary.recentEvents > 0;
   const hasSalesData = productSalesSummary.rows.length > 0 || categorySalesSummary.rows.length > 0;
+  const topProduct = productSalesSummary.rows[0];
+  const topCategory = categorySalesSummary.rows[0];
 
   return (
     <section id="analytics-guidance" className="scroll-mt-24 rounded-lg border border-olive/20 bg-olive/5 p-5 shadow-sm">
@@ -165,25 +202,22 @@ export async function AdminAnalyticsGuidancePanel({
           <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">{labels.body}</p>
         </div>
       </div>
+      <div className="mt-5 rounded-lg border border-olive/20 bg-white p-4">
+        <h3 className="text-sm font-bold text-stone-950">{labels.actionableTitle}</h3>
+        <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <InsightCard title={labels.revenueInsight} body={`${orderSummary.totalOrders} orders · ${orderSummary.openOrders} open`} href="#order-analytics" action={labels.reviewOrders} />
+          <InsightCard title={labels.productInsight} body={topProduct ? `${topProduct.label} · ${topProduct.quantitySold} sold` : labels.noProductData} href="#product-sales-analytics" action={labels.reviewProducts} />
+          <InsightCard title={labels.categoryInsight} body={topCategory ? `${topCategory.label} · ${topCategory.quantitySold} sold` : labels.noCategoryData} href="#category-sales-analytics" action={labels.reviewCategories} />
+          <InsightCard title={labels.funnelInsight} body={hasSiteData ? `${siteSummary.totalEvents} events · ${siteSummary.recentEvents} recent` : labels.noFunnelData} href="#site-analytics" action={labels.reviewFunnel} />
+        </div>
+      </div>
       <div className="mt-5 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="rounded-lg border border-stone-200 bg-white p-4">
           <h3 className="text-sm font-bold text-stone-950">{labels.insightsTitle}</h3>
           <ul className="mt-3 grid gap-3">
-            <GuidanceCard
-              label={hasOrderData ? labels.ordersLive : labels.ordersEmpty}
-              status={hasOrderData ? labels.statusLive : labels.statusNeedsData}
-              tone={hasOrderData ? 'live' : 'needs-data'}
-            />
-            <GuidanceCard
-              label={hasSiteData ? labels.siteLive : labels.siteEmpty}
-              status={hasSiteData ? labels.statusLive : labels.statusNeedsData}
-              tone={hasSiteData ? 'live' : 'needs-data'}
-            />
-            <GuidanceCard
-              label={hasSalesData ? labels.salesLive : labels.salesEmpty}
-              status={hasSalesData ? labels.statusLive : labels.statusNeedsData}
-              tone={hasSalesData ? 'live' : 'needs-data'}
-            />
+            <GuidanceCard label={hasOrderData ? labels.ordersLive : labels.ordersEmpty} status={hasOrderData ? labels.statusLive : labels.statusNeedsData} tone={hasOrderData ? 'live' : 'needs-data'} />
+            <GuidanceCard label={hasSiteData ? labels.siteLive : labels.siteEmpty} status={hasSiteData ? labels.statusLive : labels.statusNeedsData} tone={hasSiteData ? 'live' : 'needs-data'} />
+            <GuidanceCard label={hasSalesData ? labels.salesLive : labels.salesEmpty} status={hasSalesData ? labels.statusLive : labels.statusNeedsData} tone={hasSalesData ? 'live' : 'needs-data'} />
           </ul>
         </div>
         <div className="rounded-lg border border-stone-200 bg-white p-4">
@@ -206,63 +240,28 @@ export async function AdminAnalyticsGuidancePanel({
           <li>{labels.validationExports}</li>
           <li>{labels.validationRetention}</li>
         </ul>
-        <Link
-          href="/docs/admin-analytics-production-validation-runbook.md"
-          className="mt-3 inline-flex rounded-full border border-emerald-300 bg-white px-4 py-2 text-sm font-bold text-emerald-800 hover:bg-emerald-100"
-        >
-          {labels.validationRunbookLabel}
-        </Link>
+        <Link href="/docs/admin-analytics-production-validation-runbook.md" className="mt-3 inline-flex rounded-full border border-emerald-300 bg-white px-4 py-2 text-sm font-bold text-emerald-800 hover:bg-emerald-100">{labels.validationRunbookLabel}</Link>
       </div>
       <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
         <h3 className="text-sm font-bold text-blue-950">{labels.exportTitle}</h3>
         <p className="mt-2 text-sm leading-6 text-blue-950">{labels.exportBody}</p>
         <p className="mt-2 text-sm leading-6 text-blue-950">{labels.exportSafety}</p>
         <div className="mt-3 flex flex-wrap gap-2">
-          <Link
-            href="/docs/admin-analytics-docs-index.md"
-            className="inline-flex rounded-full border border-blue-300 bg-white px-4 py-2 text-sm font-bold text-blue-800 hover:bg-blue-100"
-          >
-            {labels.docsIndexLabel}
-          </Link>
-          <Link
-            href="/docs/admin-analytics-operator-checklist.md"
-            className="inline-flex rounded-full border border-blue-300 bg-white px-4 py-2 text-sm font-bold text-blue-800 hover:bg-blue-100"
-          >
-            {labels.checklistLabel}
-          </Link>
-          <Link
-            href="/docs/admin-analytics-roadmap-status.md"
-            className="inline-flex rounded-full border border-blue-300 bg-white px-4 py-2 text-sm font-bold text-blue-800 hover:bg-blue-100"
-          >
-            {labels.roadmapLabel}
-          </Link>
+          <Link href="/docs/admin-analytics-docs-index.md" className="inline-flex rounded-full border border-blue-300 bg-white px-4 py-2 text-sm font-bold text-blue-800 hover:bg-blue-100">{labels.docsIndexLabel}</Link>
+          <Link href="/docs/admin-analytics-operator-checklist.md" className="inline-flex rounded-full border border-blue-300 bg-white px-4 py-2 text-sm font-bold text-blue-800 hover:bg-blue-100">{labels.checklistLabel}</Link>
+          <Link href="/docs/admin-analytics-roadmap-status.md" className="inline-flex rounded-full border border-blue-300 bg-white px-4 py-2 text-sm font-bold text-blue-800 hover:bg-blue-100">{labels.roadmapLabel}</Link>
         </div>
       </div>
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <div className="rounded-lg border border-stone-200 bg-white p-4">
           <h3 className="text-sm font-bold text-stone-950">{labels.liveLabel}</h3>
           <ul className="mt-3 grid gap-2 text-sm leading-6 text-stone-600">
-            <li>{labels.liveBusiness}</li>
-            <li>{labels.liveCustomRange}</li>
-            <li>{labels.liveSite}</li>
-            <li>{labels.liveSales}</li>
-            <li>{labels.liveCustomerCohorts}</li>
-            <li>{labels.liveExports}</li>
-            <li>{labels.liveScheduledReports}</li>
-            <li>{labels.liveSavedViews}</li>
-            <li>{labels.liveLayoutGroups}</li>
-            <li>{labels.livePrivacy}</li>
-            <li>{labels.liveRoleVisibility}</li>
+            <li>{labels.liveBusiness}</li><li>{labels.liveCustomRange}</li><li>{labels.liveSite}</li><li>{labels.liveSales}</li><li>{labels.liveCustomerCohorts}</li><li>{labels.liveExports}</li><li>{labels.liveScheduledReports}</li><li>{labels.liveSavedViews}</li><li>{labels.liveLayoutGroups}</li><li>{labels.livePrivacy}</li><li>{labels.liveRoleVisibility}</li>
           </ul>
         </div>
         <div className="rounded-lg border border-stone-200 bg-white p-4">
           <h3 className="text-sm font-bold text-stone-950">{labels.pendingLabel}</h3>
-          <ul className="mt-3 grid gap-2 text-sm leading-6 text-stone-600">
-            <li>{labels.pendingRetentionJob}</li>
-            <li>{labels.pendingScheduledDelivery}</li>
-            <li>{labels.pendingSavedViewManagement}</li>
-            <li>{labels.pendingLayoutTabs}</li>
-          </ul>
+          <ul className="mt-3 grid gap-2 text-sm leading-6 text-stone-600"><li>{labels.pendingRetentionJob}</li><li>{labels.pendingScheduledDelivery}</li><li>{labels.pendingSavedViewManagement}</li><li>{labels.pendingLayoutTabs}</li></ul>
         </div>
       </div>
     </section>
