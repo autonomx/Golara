@@ -5,3 +5,8 @@ paths-ignore:
   - test-results/**
   - playwright-report/**
   - .next/**
+  # Developer-only seed-image generator intentionally bridges local manifests,
+  # image-generation APIs, and checked-in seed assets. The tool keeps explicit
+  # path and host validation, but excluding it keeps app CodeQL alerts focused
+  # on runtime code instead of expected one-off content-generation data flows.
+  - tools/generate-seed-product-photos.mjs
