@@ -74,6 +74,8 @@ async function main() {
   await retentionModule.runSiteAnalyticsRetentionCleanupExecutorTests();
   const retentionRouteModule = await import('./site-retention-' + 'route.test');
   await retentionRouteModule.runSiteRetentionRouteTests();
+  const retentionDelegateModule = await import('./site-retention-' + 'delegate.test');
+  await retentionDelegateModule.runSiteRetentionDelegateTests();
   const retentionScreenModule = await import('./site-retention-' + 'screen.test');
   await retentionScreenModule.runSiteRetentionScreenTests();
   const layoutGroupModule = await import('./admin-analytics-' + 'layout-groups.test');

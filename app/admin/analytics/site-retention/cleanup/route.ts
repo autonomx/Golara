@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { assertAdminRole } from '@/lib/admin-auth';
+import { buildSiteAnalyticsRetentionCleanupDelegate } from '@/lib/analytics/site-analytics-retention-cleanup-delegate';
 import { buildSiteAnalyticsRetentionCleanupPlan } from '@/lib/analytics/site-analytics-retention-cleanup-plan';
 import { executeSiteAnalyticsRetentionCleanup } from '@/lib/analytics/site-analytics-retention-cleanup-executor';
 import { siteAnalyticsRetentionService } from '@/lib/analytics/site-analytics-retention';
@@ -32,9 +33,12 @@ export async function POST(request: Request) {
       deletionPlanEnabled: flagEnabled(PLAN_FLAG),
       maxDeletionBatchSize: 1000
     });
+    const delegateAttachment = buildSiteAnalyticsRetentionCleanupDelegate({
+      databaseConfigured: summary.databaseConfigured && summary.tableAvailable
+    });
     const execution = await executeSiteAnalyticsRetentionCleanup({
       plan,
-      delegate: null,
+      delegate: delegateAttachment.delegate,
       executionEnabled: flagEnabled(EXECUTION_FLAG),
       manualTriggerConfirmed: manualConfirmation(form)
     });
@@ -44,10 +48,11 @@ export async function POST(request: Request) {
         ok: execution.accepted,
         plan,
         execution,
+        delegate: delegateAttachment.state,
         route: {
           ownerOnly: true,
           manualConfirmationField: MANUAL_CONFIRM_FIELD,
-          delegateAttached: false,
+          delegateAttached: delegateAttachment.state.attached,
           backgroundJobStarted: false
         }
       },
