@@ -78,13 +78,19 @@ export function CartDrawer({
     window.requestAnimationFrame(() => setOpen(true));
   };
   const closeDrawer = () => setOpen(false);
+  const dismissCartAddConfirmation = () => setCartStatus(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    setCartStatus(params.get('cart'));
+    const nextCartStatus = params.get('cart');
     params.delete('cart');
     const query = params.toString();
-    setContinueShoppingHref(`${cartReturnTo(window.location.pathname || pathname)}${query ? `?${query}` : ''}`);
+    const nextContinueShoppingHref = `${cartReturnTo(window.location.pathname || pathname)}${query ? `?${query}` : ''}${window.location.hash || ''}`;
+    setCartStatus(nextCartStatus);
+    setContinueShoppingHref(nextContinueShoppingHref);
+    if (nextCartStatus) {
+      window.history.replaceState(null, '', nextContinueShoppingHref);
+    }
   }, [pathname]);
 
   useEffect(() => {
@@ -125,10 +131,10 @@ export function CartDrawer({
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-olive">{copy('cart.eyebrow')}</p>
           <p className="mt-1 font-display text-2xl text-rosewood">{copy('cart.status.added')}</p>
           <div className="mt-4 grid grid-cols-2 gap-2">
-            <Link href="/cart/checkout" className="rounded-full bg-rosewood px-4 py-2 text-center text-xs font-semibold text-white shadow-lg shadow-rosewood/15 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30">
+            <Link href="/cart/checkout" className="rounded-full bg-rosewood px-4 py-2 text-center text-xs font-semibold text-white shadow-lg shadow-rosewood/15 outline-none transition focus-visible:ring-4 focus-visible:ring-olive/30" onClick={dismissCartAddConfirmation}>
               {copy('cart.checkout')}
             </Link>
-            <Link href={continueShoppingHref} className="rounded-full border border-rosewood/20 px-4 py-2 text-center text-xs font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20">
+            <Link href={continueShoppingHref} className="rounded-full border border-rosewood/20 px-4 py-2 text-center text-xs font-semibold text-rosewood outline-none transition focus-visible:ring-4 focus-visible:ring-olive/20" onClick={dismissCartAddConfirmation}>
               {copy('common.continueShopping')}
             </Link>
           </div>
