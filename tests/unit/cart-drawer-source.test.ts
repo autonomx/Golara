@@ -39,6 +39,10 @@ includes(drawerSource, "action={removeCartItemAction}", 'CartDrawer should allow
 includes(drawerSource, "action={clearCartAction}", 'CartDrawer should allow clearing the cart');
 includes(drawerSource, 'href="/cart/checkout"', 'CartDrawer should include checkout navigation');
 includes(drawerSource, 'href="/cart"', 'CartDrawer should preserve full cart page fallback');
+includes(drawerSource, "const dismissCartAddConfirmation = () => setCartStatus(null);", 'CartDrawer should dismiss the add confirmation without requiring a route change');
+includes(drawerSource, "window.history.replaceState(null, '', nextContinueShoppingHref);", 'CartDrawer should remove the cart status query from the address bar after reading it');
+const dismissConfirmationClickCount = (drawerSource.match(/onClick=\{dismissCartAddConfirmation\}/g) || []).length;
+assert.equal(dismissConfirmationClickCount, 2, 'CartDrawer add confirmation CTAs should dismiss the toast immediately when clicked');
 includes(drawerSource, "copy('cart.emptyTitle')", 'CartDrawer empty state should use localized cart copy');
 includes(drawerSource, "copy('cart.checkout')", 'CartDrawer checkout CTA should use localized cart copy');
 excludes(drawerSource, 'Close cart drawer', 'CartDrawer should not use hardcoded English aria copy');
