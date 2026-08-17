@@ -167,12 +167,13 @@ export async function listAdminCheckoutOrders(filters: AdminOrderFilters = {}, l
 }
 
 export async function listAdminCheckoutOrderPage(filters: AdminOrderFilters = {}, page = 1, pageSize = 12): Promise<AdminOrderPage> {
-  if (!hasDatabase()) {
-    return { orders: [], page: 1, pageSize, totalCount: 0, totalPages: 1 };
-  }
-
   const safePageSizeValue = safePageSize(pageSize);
   const currentPage = safePage(page);
+
+  if (!hasDatabase()) {
+    return { orders: [], page: currentPage, pageSize: safePageSizeValue, totalCount: 0, totalPages: 1 };
+  }
+
   const where = buildOrderWhere(filters);
   const [totalCount, orders] = await Promise.all([
     prisma.checkoutOrder.count({ where }),
